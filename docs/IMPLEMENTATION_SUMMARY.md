@@ -14,12 +14,13 @@ What exists:
 - local repo-side state collection with graceful fallback when workspace-state is absent
 - local web UI pages:
   - overview
-  - cycles with filter form
-  - promotions with filter form
+  - cycles
+  - promotions
   - approvals
   - deployments
-  - analytics with recent snapshots/cycles
+  - analytics
   - subagents
+- current blocker analysis for eeepc when process-reflection data is present
 - machine-readable endpoints:
   - `/api/summary`
   - `/api/cycles`

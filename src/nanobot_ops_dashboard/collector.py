@@ -145,6 +145,8 @@ def _normalize_eeepc_payloads(cfg: DashboardConfig, outbox: dict[str, Any], goal
     active_goal = (outbox.get('goal') or {}).get('goal_id') or goals.get('active_goal_id')
     approval = ((outbox.get('capability_gate') or {}).get('approval')) if isinstance(outbox.get('capability_gate'), dict) else None
     artifact_paths = (((outbox.get('goal') or {}).get('follow_through') or {}).get('artifact_paths')) or []
+    process_reflection = outbox.get('process_reflection') if isinstance(outbox.get('process_reflection'), dict) else {}
+    blocked_next_step = (((outbox.get('goal') or {}).get('follow_through') or {}).get('blocked_next_step')) or None
     events = []
     source_report = outbox.get('source')
     if source_report:
@@ -157,6 +159,9 @@ def _normalize_eeepc_payloads(cfg: DashboardConfig, outbox: dict[str, Any], goal
                 'report_source': source_report,
                 'artifact_paths': artifact_paths,
                 'approval': approval,
+                'failure_class': process_reflection.get('failure_class'),
+                'blocked_next_step': blocked_next_step,
+                'improvement_score': process_reflection.get('improvement_score'),
             },
         })
     return {

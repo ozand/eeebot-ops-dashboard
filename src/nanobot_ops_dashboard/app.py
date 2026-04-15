@@ -98,6 +98,16 @@ def create_app(cfg: DashboardConfig):
             if row and (latest_collected is None or row['collected_at'] > latest_collected):
                 latest_collected = row['collected_at']
 
+        eeepc_raw = _json_loads_dict(eeepc_latest['raw_json']) if eeepc_latest else {}
+        eeepc_outbox = eeepc_raw.get('outbox') if isinstance(eeepc_raw.get('outbox'), dict) else {}
+        eeepc_reflection = eeepc_outbox.get('process_reflection') if isinstance(eeepc_outbox.get('process_reflection'), dict) else {}
+        eeepc_follow = (eeepc_outbox.get('goal') or {}).get('follow_through') if isinstance(eeepc_outbox.get('goal'), dict) else {}
+        current_blocker = {
+            'failure_class': eeepc_reflection.get('failure_class'),
+            'improvement_score': eeepc_reflection.get('improvement_score'),
+            'blocked_next_step': (eeepc_follow or {}).get('blocked_next_step'),
+        }
+
         analytics = {
             'total_snapshots': len(repo_rows) + len(eeepc_rows),
             'source_breakdown': {
@@ -105,10 +115,14 @@ def create_app(cfg: DashboardConfig):
                 'eeepc': len(eeepc_rows),
             },
             'cycle_status_breakdown': {},
+            'cycle_failure_breakdown': {},
         }
         for row in cycles:
             status_value = row.get('status') or 'unknown'
             analytics['cycle_status_breakdown'][status_value] = analytics['cycle_status_breakdown'].get(status_value, 0) + 1
+            failure_class = (row.get('detail') or {}).get('failure_class')
+            if failure_class:
+                analytics['cycle_failure_breakdown'][failure_class] = analytics['cycle_failure_breakdown'].get(failure_class, 0) + 1
 
         context = {
             'repo_latest': repo_latest,
@@ -123,6 +137,7 @@ def create_app(cfg: DashboardConfig):
             'eeepc_artifacts': _json_loads_list(eeepc_latest['artifact_paths_json']) if eeepc_latest else [],
             'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
             'analytics': analytics,
+            'current_blocker': current_blocker,
             'request_source': query.get('source', [''])[0],
             'request_status': query.get('status', [''])[0],
             'recent_snapshots': sorted([dict(r) for r in (repo_rows[:5] + eeepc_rows[:5])], key=lambda x: x['collected_at'], reverse=True)[:10],

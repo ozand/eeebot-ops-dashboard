@@ -18,6 +18,9 @@
       {% set detail = row['detail'] %}
       <div><strong>Report source</strong>: <code>{{ detail.get('report_source', row['identity_key']) }}</code></div>
       <div><strong>Approval</strong>: <code>{{ detail.get('approval', 'unknown') }}</code></div>
+      {% if detail.get('failure_class') %}<div><strong>Failure class</strong>: {{ detail.get('failure_class') }}</div>{% endif %}
+      {% if detail.get('blocked_next_step') %}<div><strong>Blocked next step</strong>: {{ detail.get('blocked_next_step') }}</div>{% endif %}
+      {% if detail.get('improvement_score') is not none %}<div><strong>Improvement score</strong>: {{ detail.get('improvement_score') }}</div>{% endif %}
       <div><strong>Artifacts</strong>:</div>
       <ul>
         {% for path in detail.get('artifact_paths', []) %}<li><code>{{ path }}</code></li>{% else %}<li class="muted">none</li>{% endfor %}

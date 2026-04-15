@@ -62,6 +62,8 @@ def test_normalize_eeepc_payloads_extracts_goal_status_and_artifacts(tmp_path: P
     assert result['gate_state'] == 'valid'
     assert result['artifact_paths'] == ['prompts/diagnostics.md']
     assert result['events'][0]['identity_key'] == '/state/reports/evolution-1.json'
+    assert result['events'][0]['detail']['failure_class'] is None
+    assert result['events'][0]['detail']['blocked_next_step'] is None
 
 
 class _StopPolling(Exception):

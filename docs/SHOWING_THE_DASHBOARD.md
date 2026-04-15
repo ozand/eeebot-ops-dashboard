@@ -11,8 +11,13 @@ The dashboard runs on this host and combines:
 - local repo-side Nanobot state when available
 - historical snapshots stored in SQLite
 
-In addition to HTML pages, it now exposes a machine-readable summary endpoint:
-- `/api/summary`
+It is designed so hourly or later state changes can be seen as past snapshots instead of only the latest view.
+
+It also surfaces current blocker analysis for eeepc cycles when the live outbox contains process-reflection data:
+- failure class
+- blocked next step
+- improvement score
+
 
 The UI also supports simple query-string filtering on history pages:
 - `/cycles?source=eeepc&status=BLOCK`

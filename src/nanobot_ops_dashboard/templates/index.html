@@ -26,6 +26,14 @@
     {% else %}<div class="muted">No eeepc data collected yet.</div>{% endif %}
   </div>
   <div class="card">
+    <h3>Current blocker</h3>
+    <div>Failure class: <strong>{{ current_blocker.failure_class or 'none' }}</strong></div>
+    <div>Improvement score: {{ current_blocker.improvement_score if current_blocker.improvement_score is not none else 'unknown' }}</div>
+    <div>Next required step:</div>
+    <div>{{ current_blocker.blocked_next_step or 'none' }}</div>
+    <div><a href="/analytics">Open analytics</a></div>
+  </div>
+  <div class="card">
     <h3>Repo-side</h3>
     {% if repo_latest %}
     <div>Status: <strong>{{ repo_latest['status'] or 'unknown' }}</strong></div>

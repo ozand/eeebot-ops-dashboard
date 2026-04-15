@@ -23,6 +23,23 @@
       {% endfor %}
     </ul>
   </div>
+  <div class="card">
+    <h3>Failure class breakdown</h3>
+    <ul>
+      {% for key, value in analytics.cycle_failure_breakdown.items() %}
+      <li>{{ key }}: {{ value }}</li>
+      {% else %}
+      <li class="muted">no failure-class data</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Current blocker</h3>
+  <div>Failure class: <strong>{{ current_blocker.failure_class or 'none' }}</strong></div>
+  <div>Improvement score: {{ current_blocker.improvement_score if current_blocker.improvement_score is not none else 'unknown' }}</div>
+  <div>Next required step: {{ current_blocker.blocked_next_step or 'none' }}</div>
 </div>
 
 <h3>Recent snapshots</h3>
