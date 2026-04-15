@@ -25,6 +25,8 @@ What exists:
 - top-goal frequency summary for observed cycle history
 - top BLOCK reason summary for observed cycle history
 - latest artifact history extracted from stored cycle events
+- recent cycle timeline summary for operator-facing quick reading
+- recent goal transition summary for operator-facing quick reading
 - machine-readable endpoints:
   - `/api/summary`
   - `/api/cycles`

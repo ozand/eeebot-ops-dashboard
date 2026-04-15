@@ -88,6 +88,36 @@
   {% endfor %}
 </table>
 
+<h3>Recent cycle timeline</h3>
+<table>
+  <tr><th>Collected</th><th>Source</th><th>Status</th><th>Goal</th></tr>
+  {% for item in analytics.recent_cycle_timeline %}
+  <tr>
+    <td>{{ item.collected_at }}</td>
+    <td>{{ item.source }}</td>
+    <td>{{ item.status }}</td>
+    <td>{{ item.title }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">No recent cycle timeline yet.</td></tr>
+  {% endfor %}
+</table>
+
+<h3>Recent goal transitions</h3>
+<table>
+  <tr><th>Collected</th><th>Source</th><th>Goal</th><th>Status</th></tr>
+  {% for item in analytics.recent_goal_transitions %}
+  <tr>
+    <td>{{ item.collected_at }}</td>
+    <td>{{ item.source }}</td>
+    <td>{{ item.goal }}</td>
+    <td>{{ item.status }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">No recent goal transitions yet.</td></tr>
+  {% endfor %}
+</table>
+
 <h3>Recent snapshots</h3>
 <table>
   <tr><th>Source</th><th>Collected</th><th>Status</th><th>Goal</th></tr>

@@ -182,6 +182,24 @@ def create_app(cfg: DashboardConfig):
             'top_goals': _top_goals(cycles),
             'top_block_reasons': _top_block_reasons(cycles),
             'artifact_history': _artifact_history(cycles),
+            'recent_cycle_timeline': [
+                {
+                    'collected_at': row.get('collected_at'),
+                    'source': row.get('source'),
+                    'status': row.get('status'),
+                    'title': row.get('title'),
+                }
+                for row in cycles[:10]
+            ],
+            'recent_goal_transitions': [
+                {
+                    'collected_at': row.get('collected_at'),
+                    'source': row.get('source'),
+                    'goal': row.get('title'),
+                    'status': row.get('status'),
+                }
+                for row in cycles[:10]
+            ],
         }
         for row in cycles:
             status_value = row.get('status') or 'unknown'

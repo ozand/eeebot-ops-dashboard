@@ -53,4 +53,34 @@
     <div class="muted">No durable subagent telemetry detected yet. Page is ready for future instrumentation.</div>
   </div>
 </div>
+
+<h3>Recent cycle timeline</h3>
+<table>
+  <tr><th>Collected</th><th>Source</th><th>Status</th><th>Goal</th></tr>
+  {% for item in analytics.recent_cycle_timeline %}
+  <tr>
+    <td>{{ item.collected_at }}</td>
+    <td>{{ item.source }}</td>
+    <td>{{ item.status }}</td>
+    <td>{{ item.title }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">No cycle history yet.</td></tr>
+  {% endfor %}
+</table>
+
+<h3>Recent goal transitions</h3>
+<table>
+  <tr><th>Collected</th><th>Source</th><th>Goal</th><th>Status</th></tr>
+  {% for item in analytics.recent_goal_transitions %}
+  <tr>
+    <td>{{ item.collected_at }}</td>
+    <td>{{ item.source }}</td>
+    <td>{{ item.goal }}</td>
+    <td>{{ item.status }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" class="muted">No goal transition history yet.</td></tr>
+  {% endfor %}
+</table>
 {% endblock %}

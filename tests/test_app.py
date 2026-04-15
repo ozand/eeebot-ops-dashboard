@@ -115,6 +115,8 @@ def test_app_overview_renders(tmp_path: Path):
     assert 'Rewrite the cycle around one file-level action' in body
     assert 'Collection Summary' in body
     assert 'Outbox:' in body
+    assert 'Recent cycle timeline' in body
+    assert 'Recent goal transitions' in body
 
 
 def test_app_cycles_filters_and_api_render(tmp_path: Path):
@@ -224,6 +226,8 @@ def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
     assert 'Top goals' in body
     assert 'Top BLOCK reasons' in body
     assert 'Latest artifact history' in body
+    assert 'Recent goal transitions' in body
+    assert 'Recent cycle timeline' in body
     assert 'goal-1' in body
     assert 'prompts/diagnostics.md' in body
 
@@ -236,3 +240,5 @@ def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
     assert 'top_goals' in api_body
     assert 'top_block_reasons' in api_body
     assert 'artifact_history' in api_body
+    assert 'recent_goal_transitions' in api_body
+    assert 'recent_cycle_timeline' in api_body

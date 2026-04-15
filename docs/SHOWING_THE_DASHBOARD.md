@@ -26,6 +26,8 @@ The analytics page now also shows:
 - top goals by observed frequency
 - top BLOCK reasons
 - latest artifact history
+- recent cycle timeline
+- recent goal transitions
 
 
 The UI also supports simple query-string filtering on history pages:
