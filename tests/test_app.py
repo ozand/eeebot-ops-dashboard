@@ -112,10 +112,15 @@ def test_app_overview_renders(tmp_path: Path):
     assert 'goal-2' in filtered_cycles
     assert '/workspace/state/reports/evolution-2.json' in filtered_cycles
     assert 'goal-1' not in filtered_cycles
+    assert 'name="source"' in filtered_cycles
+    assert 'name="status"' in filtered_cycles
+    assert 'value="repo"' in filtered_cycles
 
     status, filtered_promotions = _call_app(app, '/promotions', 'source=repo&status=accept')
     assert status.startswith('200')
     assert 'promotion-42 | reviewed | accept' in filtered_promotions
+    assert 'name="source"' in filtered_promotions
+    assert 'name="status"' in filtered_promotions
 
     status, analytics_body = _call_app(app, '/analytics')
     assert status.startswith('200')
@@ -123,6 +128,26 @@ def test_app_overview_renders(tmp_path: Path):
     assert 'Total snapshots' in analytics_body
     assert 'Source breakdown' in analytics_body
     assert 'Cycle status breakdown' in analytics_body
+    assert 'Recent snapshots' in analytics_body
+    assert 'Recent cycles' in analytics_body
+
+    status, cycles_api = _call_app(app, '/api/cycles', 'source=repo&status=BLOCK')
+    assert status.startswith('200')
+    assert 'goal-2' in cycles_api
+    assert 'promotion-42' not in cycles_api
+
+    status, promotions_api = _call_app(app, '/api/promotions', 'source=repo&status=accept')
+    assert status.startswith('200')
+    assert 'promotion-42' in promotions_api
+    assert 'accepted_record' in promotions_api
+
+    status, approvals_api = _call_app(app, '/api/approvals')
+    assert status.startswith('200')
+    assert 'valid' in approvals_api
+
+    status, deployments_api = _call_app(app, '/api/deployments')
+    assert status.startswith('200')
+    assert '/state/reports/evolution-1.json' in deployments_api
 
     status, approvals_body = _call_app(app, '/approvals')
     assert status.startswith('200')

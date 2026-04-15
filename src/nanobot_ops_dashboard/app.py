@@ -123,6 +123,10 @@ def create_app(cfg: DashboardConfig):
             'eeepc_artifacts': _json_loads_list(eeepc_latest['artifact_paths_json']) if eeepc_latest else [],
             'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
             'analytics': analytics,
+            'request_source': query.get('source', [''])[0],
+            'request_status': query.get('status', [''])[0],
+            'recent_snapshots': sorted([dict(r) for r in (repo_rows[:5] + eeepc_rows[:5])], key=lambda x: x['collected_at'], reverse=True)[:10],
+            'recent_cycles': cycles[:10],
         }
 
         if path == '/api/summary':
@@ -133,6 +137,31 @@ def create_app(cfg: DashboardConfig):
                 'promotion_count': len(promotions),
                 'repo_latest': dict(repo_latest) if repo_latest else None,
                 'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
+            }
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/cycles':
+            body = json.dumps({'items': cycles}, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/promotions':
+            body = json.dumps({'items': promotions}, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/approvals':
+            payload = {'items': [dict(r) for r in (eeepc_rows + repo_rows)]}
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/deployments':
+            payload = {
+                'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
+                'repo_latest': dict(repo_latest) if repo_latest else None,
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])

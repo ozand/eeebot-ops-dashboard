@@ -7,6 +7,7 @@
     <div>Stored snapshots: <strong>{{ snapshot_count }}</strong></div>
     <div>Cycle events tracked: <strong>{{ cycles|length }}</strong></div>
     <div>Promotion events tracked: <strong>{{ promotions|length }}</strong></div>
+    <div><a href="/analytics">Open analytics</a></div>
   </div>
   <div class="card">
     <h3>Live eeepc</h3>
@@ -14,8 +15,10 @@
     <div>Status: <strong>{{ eeepc_latest['status'] or 'unknown' }}</strong></div>
     <div>Goal: {{ eeepc_latest['active_goal'] or 'unknown' }}</div>
     <div>Gate: {{ eeepc_latest['gate_state'] or 'unknown' }}</div>
+    <div>Last snapshot: {{ eeepc_latest['collected_at'] }}</div>
     <div>Report: <code>{{ eeepc_latest['report_source'] or 'unknown' }}</code></div>
     <div>Outbox: <code>{{ eeepc_latest['outbox_source'] or 'unknown' }}</code></div>
+    <div><a href="/cycles?source=eeepc">View eeepc cycles</a></div>
     <div>Artifacts:</div>
     <ul>
       {% for path in eeepc_artifacts %}<li><code>{{ path }}</code></li>{% else %}<li class="muted">none</li>{% endfor %}
@@ -27,8 +30,10 @@
     {% if repo_latest %}
     <div>Status: <strong>{{ repo_latest['status'] or 'unknown' }}</strong></div>
     <div>Goal: {{ repo_latest['active_goal'] or 'unknown' }}</div>
+    <div>Last snapshot: {{ repo_latest['collected_at'] }}</div>
     <div>Promotion: {{ repo_latest['promotion_summary'] or 'none' }}</div>
     <div>Decision trail: {{ repo_latest['promotion_decision_record'] or 'unknown' }}</div>
+    <div><a href="/promotions?source=repo">View repo promotions</a></div>
     <div>Artifacts:</div>
     <ul>
       {% for path in repo_artifacts %}<li><code>{{ path }}</code></li>{% else %}<li class="muted">none</li>{% endfor %}

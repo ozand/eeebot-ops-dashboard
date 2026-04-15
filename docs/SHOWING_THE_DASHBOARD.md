@@ -18,6 +18,8 @@ The UI also supports simple query-string filtering on history pages:
 - `/cycles?source=eeepc&status=BLOCK`
 - `/promotions?source=repo&status=accept`
 
+Those filters are also available as visible form inputs on the corresponding pages.
+
 It is designed so hourly or later state changes can be seen as past snapshots instead of only the latest view.
 
 ## Important Current Limitation
@@ -103,10 +105,14 @@ Open:
 - `/promotions` — repo-side promotion event history
 - `/approvals` — latest approval/gate snapshots
 - `/deployments` — deployment and verification-related proof fields
-- `/analytics` — stored snapshot and cycle summary counters
+- `/analytics` — stored snapshot and cycle summary counters, plus recent snapshots/cycles
 - `/subagents` — placeholder page with explicit no-telemetry message
 - `/collect` — trigger one immediate collection
 - `/api/summary` — machine-readable current summary for scripts or future integrations
+- `/api/cycles` — filtered cycle history as JSON
+- `/api/promotions` — filtered promotion history as JSON
+- `/api/approvals` — approval snapshot JSON
+- `/api/deployments` — latest deployment/proof JSON
 
 ## What To Show In A Demo
 

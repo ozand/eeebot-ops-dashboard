@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Cycles</h2>
+<form method="get">
+  <label>Source <input type="text" name="source" value="{{ request_source or '' }}"></label>
+  <label>Status <input type="text" name="status" value="{{ request_status or '' }}"></label>
+  <button type="submit">Filter</button>
+</form>
 <table>
   <tr><th>Source</th><th>Collected</th><th>Status</th><th>Title</th><th>Detail</th></tr>
   {% for row in cycles %}

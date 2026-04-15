@@ -10,14 +10,18 @@ Purpose:
 - present a local web UI for current and past cycles, goals, promotions, approvals, deployments, and any available subagent telemetry
 
 Current scope of v1:
-- overview page
-- cycle history page
-- promotions page
+- overview page with latest-source summaries and quick links
+- cycle history page with visible filter form
+- promotions page with visible filter form
 - approvals/capability page
 - deployments/verification page
-- analytics page
+- analytics page with recent snapshots and recent cycles sections
 - subagents page with graceful "no durable telemetry yet" handling
 - `/api/summary` machine-readable endpoint
+- `/api/cycles` machine-readable history endpoint
+- `/api/promotions` machine-readable history endpoint
+- `/api/approvals` machine-readable operational endpoint
+- `/api/deployments` machine-readable deployment/proof endpoint
 
 The dashboard is intentionally dependency-light:
 - Python stdlib

@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Promotions</h2>
+<form method="get">
+  <label>Source <input type="text" name="source" value="{{ request_source or '' }}"></label>
+  <label>Status <input type="text" name="status" value="{{ request_status or '' }}"></label>
+  <button type="submit">Filter</button>
+</form>
 <table>
   <tr><th>Collected</th><th>Title</th><th>Status</th><th>Candidate path</th><th>Decision record</th><th>Accepted record</th></tr>
   {% for row in promotions %}

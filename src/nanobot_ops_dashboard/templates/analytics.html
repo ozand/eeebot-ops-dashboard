@@ -24,4 +24,30 @@
     </ul>
   </div>
 </div>
+
+<h3>Recent snapshots</h3>
+<table>
+  <tr><th>Source</th><th>Collected</th><th>Status</th><th>Goal</th></tr>
+  {% for row in recent_snapshots %}
+  <tr>
+    <td>{{ row['source'] }}</td>
+    <td>{{ row['collected_at'] }}</td>
+    <td>{{ row['status'] or 'unknown' }}</td>
+    <td>{{ row['active_goal'] or 'unknown' }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>Recent cycles</h3>
+<table>
+  <tr><th>Source</th><th>Collected</th><th>Status</th><th>Title</th></tr>
+  {% for row in recent_cycles %}
+  <tr>
+    <td>{{ row['source'] }}</td>
+    <td>{{ row['collected_at'] }}</td>
+    <td>{{ row['status'] }}</td>
+    <td>{{ row['title'] }}</td>
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}

@@ -14,13 +14,18 @@ What exists:
 - local repo-side state collection with graceful fallback when workspace-state is absent
 - local web UI pages:
   - overview
-  - cycles
-  - promotions
+  - cycles with filter form
+  - promotions with filter form
   - approvals
   - deployments
-  - analytics
+  - analytics with recent snapshots/cycles
   - subagents
-- `/api/summary` machine-readable endpoint
+- machine-readable endpoints:
+  - `/api/summary`
+  - `/api/cycles`
+  - `/api/promotions`
+  - `/api/approvals`
+  - `/api/deployments`
 - tests for storage, collector, polling, and app rendering
 
 What was manually verified:
