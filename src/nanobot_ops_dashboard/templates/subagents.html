@@ -3,7 +3,7 @@
 <div class="section">
   <div class="section-header">
     <h2>Subagents</h2>
-    <div class="section-note">Durable subagent telemetry collected from Nanobot runtime state</div>
+    <div class="section-note">Durable subagent telemetry collected from Nanobot runtime state, newest first</div>
   </div>
 
   {% if subagents_available %}
@@ -21,48 +21,113 @@
         <div class="label">Latest status</div>
         <div class="value"><span class="status-pill status-{{ status_kind(subagent_events[0]['status']) }}">{{ status_label(subagent_events[0]['status']) }}</span></div>
       </div>
+      <div class="kv">
+        <div class="label">Latest goal</div>
+        <div class="value"><strong>{{ subagent_events[0]['detail'].get('goal_id') or 'unknown' }}</strong></div>
+      </div>
+      <div class="kv">
+        <div class="label">Latest cycle</div>
+        <div class="value"><strong class="mono">{{ subagent_events[0]['detail'].get('cycle_id') or 'unknown' }}</strong></div>
+      </div>
     </div>
+  </div>
+
+  <form method="get" class="filter-bar">
+    <label>
+      Source
+      <select name="source">
+        <option value="">All sources</option>
+        {% for source in subagent_sources %}
+        <option value="{{ source }}" {% if request_source == source %}selected{% endif %}>{{ source }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Origin
+      <select name="origin">
+        <option value="">All origins</option>
+        {% for origin in subagent_origins %}
+        <option value="{{ origin }}" {% if request_origin == origin %}selected{% endif %}>{{ origin }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Status
+      <select name="status">
+        <option value="">All statuses</option>
+        {% for status in subagent_statuses %}
+        <option value="{{ status }}" {% if request_status == status %}selected{% endif %}>{{ status }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Apply filters</button>
+    <a class="button" href="/subagents">Clear</a>
+  </form>
+
+  <div class="callout">
+    <strong>Ordering:</strong> newest collected or finished rows appear first. Scan the chips for source, origin, status, goal, and cycle; the expanded telemetry stays available in each row.
   </div>
 
   <table class="history-table">
     <thead>
       <tr>
-        <th>Finished / collected</th>
+        <th>Collected / finished</th>
         <th>Source</th>
+        <th>Origin</th>
         <th>Status</th>
         <th>Subagent ID</th>
-        <th>Title</th>
+        <th>Goal / cycle</th>
+        <th>Title / task</th>
         <th>Telemetry</th>
       </tr>
     </thead>
     <tbody>
       {% for row in subagent_events %}
       {% set detail = row['detail'] %}
-      <tr>
-        <td data-label="Finished / collected" class="mono">{{ detail.get('finished_at') or row['collected_at'] or detail.get('started_at') or 'unknown' }}</td>
-        <td data-label="Source">{{ row['source'] }}</td>
+      {% set origin = detail.get('origin') if detail.get('origin') is mapping else {} %}
+      <tr class="status-{{ status_kind(row['status']) }}">
+        <td data-label="Collected / finished" class="mono">
+          <div>{{ row['collected_at'] or 'unknown' }}</div>
+          <div class="muted">Finished: {{ detail.get('finished_at') or 'unknown' }}</div>
+        </td>
+        <td data-label="Source"><span class="status-pill status-neutral">{{ row['source'] }}</span></td>
+        <td data-label="Origin">
+          <div class="detail-stack">
+            <div class="detail-row"><span class="detail-label">Channel</span><span>{{ origin.get('channel') or 'unknown' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Chat</span><span class="mono">{{ origin.get('chat_id') or 'unknown' }}</span></div>
+          </div>
+        </td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(row['status']) }}">{{ status_label(row['status']) }}</span></td>
         <td data-label="Subagent ID" class="mono">{{ row['identity_key'] }}</td>
-        <td data-label="Title">{{ row['title'] }}</td>
+        <td data-label="Goal / cycle">
+          <div class="detail-stack">
+            <div class="detail-row"><span class="detail-label">Goal</span><span>{{ detail.get('goal_id') or 'unknown' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Cycle</span><span class="mono">{{ detail.get('cycle_id') or 'unknown' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Report source</span><code>{{ detail.get('report_path') or 'unknown' }}</code></div>
+          </div>
+        </td>
+        <td data-label="Title / task">
+          <div class="detail-stack">
+            <div><strong>{{ row['title'] }}</strong></div>
+            <div class="muted">Task: {{ detail.get('task') or 'unknown' }}</div>
+            <div class="muted">Started: <span class="mono">{{ detail.get('started_at') or 'unknown' }}</span></div>
+          </div>
+        </td>
         <td data-label="Telemetry">
           <div class="detail-stack">
-            <div class="detail-row"><span class="detail-label">Task</span><span>{{ detail.get('task') or 'unknown' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Started</span><span class="mono">{{ detail.get('started_at') or 'unknown' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Finished</span><span class="mono">{{ detail.get('finished_at') or 'unknown' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Origin</span><code>{{ detail.get('origin') or 'unknown' }}</code></div>
-            {% if detail.get('parent_context') %}
-            <div class="detail-row"><span class="detail-label">Parent context</span><code>{{ detail.get('parent_context') }}</code></div>
-            {% endif %}
-            {% if detail.get('summary') %}
-            <div class="detail-row"><span class="detail-label">Summary</span><span>{{ detail.get('summary') }}</span></div>
-            {% endif %}
+            <div class="detail-row"><span class="detail-label">Summary</span><span>{{ detail.get('summary') or 'unknown' }}</span></div>
             {% if detail.get('result') and detail.get('result') != detail.get('summary') %}
             <div class="detail-row"><span class="detail-label">Result</span><span>{{ detail.get('result') }}</span></div>
+            {% endif %}
+            {% if detail.get('parent_context') %}
+            <div class="detail-row"><span class="detail-label">Parent context</span><code>{{ detail.get('parent_context') }}</code></div>
             {% endif %}
             <div class="detail-row"><span class="detail-label">Source file</span><code>{{ detail.get('source_path') or 'unknown' }}</code></div>
           </div>
         </td>
       </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">No subagent rows match the selected filters.</td></tr>
       {% endfor %}
     </tbody>
   </table>

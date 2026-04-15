@@ -90,7 +90,16 @@ def _seed_dashboard_data(db: Path) -> None:
         'identity_key': 'sub-1',
         'title': 'widget-fix',
         'status': 'ok',
-        'detail_json': '{"task": "fix the widget", "label": "widget-fix", "started_at": "2026-04-16T12:00:00Z", "finished_at": "2026-04-16T12:01:00Z", "origin": {"channel": "cli", "chat_id": "direct"}, "parent_context": {"session_key": "session-1", "origin": {"channel": "cli", "chat_id": "direct"}}, "summary": "done", "result": "done", "source_path": "/workspace/state/subagents/sub-1.json"}',
+        'detail_json': '{"task": "fix the widget", "label": "widget-fix", "started_at": "2026-04-16T12:00:00Z", "finished_at": "2026-04-16T12:01:00Z", "goal_id": "goal-1", "cycle_id": "cycle-1", "report_path": "/workspace/state/reports/evolution-1.json", "origin": {"channel": "cli", "chat_id": "direct"}, "parent_context": {"session_key": "session-1", "origin": {"channel": "cli", "chat_id": "direct"}}, "summary": "done", "result": "done", "source_path": "/workspace/state/subagents/sub-1.json"}',
+    })
+    upsert_event(db, {
+        'collected_at': '2026-04-16T12:00:04Z',
+        'source': 'eeepc',
+        'event_type': 'subagent',
+        'identity_key': 'sub-2',
+        'title': 'browser-report',
+        'status': 'BLOCK',
+        'detail_json': '{"task": "prepare browser report", "label": "browser-report", "started_at": "2026-04-16T12:00:02Z", "finished_at": "2026-04-16T12:00:05Z", "origin": {"channel": "browser", "chat_id": "ops"}, "summary": "needs more evidence", "result": "needs more evidence", "source_path": "/workspace/state/subagents/sub-2.json"}',
     })
 
 
@@ -244,11 +253,29 @@ def test_app_subagents_renders_durable_history(tmp_path: Path):
     status, body = _call_app(app, '/subagents')
     assert status.startswith('200')
     assert 'Subagents' in body
-    assert 'Durable rows' in body
+    assert 'Visible rows' in body
+    assert 'Goal / cycle' in body
+    assert 'Apply filters' in body
+    assert 'name="origin"' in body
+    assert 'name="status"' in body
+    assert 'browser-report' in body.split('widget-fix')[0]
+    assert 'browser-report' in body
     assert 'widget-fix' in body
+    assert 'goal-1' in body
+    assert 'cycle-1' in body
+    assert '/workspace/state/reports/evolution-1.json' in body
+    assert 'prepare browser report' in body
     assert 'fix the widget' in body
     assert 'session-1' in body
     assert 'state/subagents/sub-1.json' in body
+    assert 'state/subagents/sub-2.json' in body
+
+    status, filtered_body = _call_app(app, '/subagents', 'source=repo&origin=cli:direct&status=ok')
+    assert status.startswith('200')
+    assert 'widget-fix' in filtered_body
+    assert 'browser-report' not in filtered_body
+    assert 'name="origin"' in filtered_body
+    assert 'selected' in filtered_body
 
 
 def test_app_subagents_handles_missing_telemetry(tmp_path: Path):
@@ -261,3 +288,5 @@ def test_app_subagents_handles_missing_telemetry(tmp_path: Path):
     assert status.startswith('200')
     assert 'No durable subagent telemetry has been collected yet.' in body
     assert 'state/subagents/*.json' in body
+    assert 'Apply filters' not in body
+    assert 'No subagent rows match the selected filters.' not in body

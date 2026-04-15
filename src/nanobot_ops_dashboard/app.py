@@ -51,8 +51,14 @@ def _decorate_rows(rows):
 
 
 
+def _row_timestamp(row) -> str:
+    detail = row.get('detail') or {}
+    return row.get('collected_at') or detail.get('finished_at') or detail.get('started_at') or ''
+
+
+
 def _sort_rows_desc(rows):
-    return sorted(rows, key=lambda row: row.get('collected_at') or '', reverse=True)
+    return sorted(rows, key=lambda row: _row_timestamp(row), reverse=True)
 
 
 
@@ -73,12 +79,28 @@ def _status_label(status: str | None) -> str:
 
 
 
-def _filter_rows(rows, source: str | None, status: str | None):
+def _origin_label(detail: dict | None) -> str:
+    if not isinstance(detail, dict):
+        return 'unknown'
+    origin = detail.get('origin')
+    if not isinstance(origin, dict):
+        return 'unknown'
+    channel = origin.get('channel')
+    chat_id = origin.get('chat_id')
+    if channel and chat_id:
+        return f'{channel}:{chat_id}'
+    return channel or chat_id or 'unknown'
+
+
+
+def _filter_rows(rows, source: str | None, status: str | None, origin: str | None = None):
     result = rows
     if source:
         result = [row for row in result if row.get('source') == source]
     if status:
         result = [row for row in result if row.get('status') == status]
+    if origin:
+        result = [row for row in result if _origin_label(row.get('detail')) == origin]
     return result
 
 
@@ -173,7 +195,7 @@ def create_app(cfg: DashboardConfig):
             promotion_source,
             promotion_status,
         )
-        subagent_events = _sort_rows_desc(
+        all_subagent_events = _sort_rows_desc(
             _decorate_rows(
                 fetch_events(cfg.db_path, 'repo', 'subagent', limit=100) +
                 fetch_events(cfg.db_path, 'eeepc', 'subagent', limit=100)
@@ -238,6 +260,15 @@ def create_app(cfg: DashboardConfig):
             if failure_class:
                 analytics['cycle_failure_breakdown'][failure_class] = analytics['cycle_failure_breakdown'].get(failure_class, 0) + 1
 
+        request_source = query.get('source', [''])[0]
+        request_status = query.get('status', [''])[0]
+        request_origin = query.get('origin', [''])[0]
+        subagent_events = _filter_rows(all_subagent_events, request_source, request_status, request_origin)
+        subagent_sources = sorted({row.get('source') for row in all_subagent_events if row.get('source')})
+        subagent_origins = sorted({_origin_label(row.get('detail')) for row in all_subagent_events if _origin_label(row.get('detail')) != 'unknown'})
+        subagent_statuses = sorted({row.get('status') or 'unknown' for row in all_subagent_events})
+        subagent_total = len(all_subagent_events)
+
         context = {
             'repo_latest': repo_latest,
             'eeepc_latest': eeepc_latest,
@@ -246,15 +277,20 @@ def create_app(cfg: DashboardConfig):
             'cycles': cycles,
             'promotions': promotions,
             'subagent_events': subagent_events,
-            'subagents_available': bool(subagent_events),
+            'subagents_available': bool(all_subagent_events),
             'latest_collected': latest_collected,
             'snapshot_count': len(repo_rows) + len(eeepc_rows),
             'eeepc_artifacts': _json_loads_list(eeepc_latest['artifact_paths_json']) if eeepc_latest else [],
             'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
             'analytics': analytics,
             'current_blocker': current_blocker,
-            'request_source': query.get('source', [''])[0],
-            'request_status': query.get('status', [''])[0],
+            'request_source': request_source,
+            'request_status': request_status,
+            'request_origin': request_origin,
+            'subagent_sources': subagent_sources,
+            'subagent_origins': subagent_origins,
+            'subagent_statuses': subagent_statuses,
+            'subagent_total': subagent_total,
             'recent_snapshots': sorted([dict(r) for r in (repo_rows[:5] + eeepc_rows[:5])], key=lambda x: x['collected_at'], reverse=True)[:10],
             'recent_cycles': cycles[:10],
         }

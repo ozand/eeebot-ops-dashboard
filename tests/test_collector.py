@@ -107,6 +107,9 @@ def test_normalize_repo_state_loads_subagent_telemetry(tmp_path: Path):
                 'status': 'ok',
                 'summary': 'done',
                 'result': 'done',
+                'goal_id': 'goal-1',
+                'cycle_id': 'cycle-1',
+                'report_path': '/workspace/state/reports/evolution-1.json',
                 'origin': {'channel': 'cli', 'chat_id': 'direct'},
                 'parent_context': {'session_key': 'session-1', 'origin': {'channel': 'cli', 'chat_id': 'direct'}},
                 'workspace': str(repo / 'workspace'),
@@ -144,6 +147,9 @@ def test_collect_once_persists_subagent_telemetry(tmp_path: Path):
                 'status': 'ok',
                 'summary': 'docs collected',
                 'result': 'docs collected',
+                'goal_id': 'goal-2',
+                'cycle_id': 'cycle-2',
+                'report_path': '/workspace/state/reports/evolution-2.json',
                 'origin': {'channel': 'cli', 'chat_id': 'direct'},
                 'parent_context': {'session_key': 'session-2', 'origin': {'channel': 'cli', 'chat_id': 'direct'}},
                 'workspace': str(repo / 'workspace'),
@@ -172,4 +178,7 @@ def test_collect_once_persists_subagent_telemetry(tmp_path: Path):
     assert row['identity_key'] == 'sub-2'
     assert row['status'] == 'ok'
     assert detail['task'] == 'collect docs'
+    assert detail['goal_id'] == 'goal-2'
+    assert detail['cycle_id'] == 'cycle-2'
+    assert detail['report_path'] == '/workspace/state/reports/evolution-2.json'
     assert detail['source_path'].endswith('workspace/state/subagents/sub-2.json')
