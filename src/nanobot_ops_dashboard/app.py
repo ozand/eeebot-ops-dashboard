@@ -49,14 +49,25 @@ def create_app(cfg: DashboardConfig):
         cycles = fetch_events(cfg.db_path, 'eeepc', 'cycle', limit=100) + fetch_events(cfg.db_path, 'repo', 'cycle', limit=100)
         promotions = fetch_events(cfg.db_path, 'repo', 'promotion', limit=100)
 
+        repo_latest = repo_rows[0] if repo_rows else None
+        eeepc_latest = eeepc_rows[0] if eeepc_rows else None
+        latest_collected = None
+        for row in [eeepc_latest, repo_latest]:
+            if row and (latest_collected is None or row['collected_at'] > latest_collected):
+                latest_collected = row['collected_at']
+
         context = {
-            'repo_latest': repo_rows[0] if repo_rows else None,
-            'eeepc_latest': eeepc_rows[0] if eeepc_rows else None,
+            'repo_latest': repo_latest,
+            'eeepc_latest': eeepc_latest,
             'repo_rows': repo_rows,
             'eeepc_rows': eeepc_rows,
             'cycles': cycles,
             'promotions': promotions,
             'subagents_available': False,
+            'latest_collected': latest_collected,
+            'snapshot_count': len(repo_rows) + len(eeepc_rows),
+            'eeepc_artifacts': _json_loads_list(eeepc_latest['artifact_paths_json']) if eeepc_latest else [],
+            'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
         }
 
         if path == '/cycles':
