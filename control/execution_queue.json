@@ -2,7 +2,7 @@
   "tasks": [
     {
       "created_at": "2026-04-16T07:30:50.705406Z",
-      "status": "pi_dev_bundled",
+      "status": "pi_dev_dispatch_ready",
       "source": "hermes-autonomy-controller",
       "diagnosis": "stagnating_on_quality_blocker",
       "severity": "critical",
@@ -32,7 +32,16 @@
       "pi_dev_bundled_at": "2026-04-16T10:13:40.324240Z",
       "pi_dev_bundle_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_bundles/20260416T095241738173Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
       "pi_dev_bundle_status": "bundled",
-      "pi_dev_bundle_created_by": "consume_pi_dev_bundles.py"
+      "pi_dev_bundle_created_by": "consume_pi_dev_bundles.py",
+      "pi_dev_dispatch_created_at": "2026-04-16T10:48:21.473591Z",
+      "pi_dev_dispatch_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_dispatches/20260416T104821473591Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
+      "pi_dev_dispatch_prompt_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_dispatches/20260416T104821473591Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.prompt.txt",
+      "pi_dev_dispatch_script_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_dispatches/20260416T104821473591Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.sh",
+      "pi_dev_dispatch_status": "pi_dev_dispatch_ready",
+      "pi_dev_dispatch_mode": "bridge_only",
+      "pi_dev_dispatch_created_by": "consume_pi_dev_dispatches.py"
     }
-  ]
+  ],
+  "normalized_at": "2026-04-16T10:50:54.351627Z",
+  "normalized_by": "normalize_execution_queue.py"
 }

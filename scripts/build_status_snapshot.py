@@ -29,6 +29,8 @@ def main() -> None:
         'in_progress': sum(1 for t in tasks if t.get('status') == 'in_progress'),
         'requested_execution': sum(1 for t in tasks if t.get('status') == 'requested_execution'),
         'handed_off': sum(1 for t in tasks if t.get('status') == 'handed_off'),
+        'pi_dev_bundled': sum(1 for t in tasks if t.get('status') == 'pi_dev_bundled'),
+        'pi_dev_dispatch_ready': sum(1 for t in tasks if t.get('status') == 'pi_dev_dispatch_ready'),
     }
     print(json.dumps({
         'active_projects': active.get('projects', []),

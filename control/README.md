@@ -25,6 +25,7 @@ Lifecycle states:
 - pi_dev_requested
 - bundled
 - pi_dev_bundled
+- pi_dev_dispatch_ready
 - completed
 - cancelled
 
@@ -49,6 +50,9 @@ Pi Dev request/outbox consumer:
 Pi Dev bundle consumer:
 - `scripts/consume_pi_dev_bundles.py`
 
+Pi Dev dispatch bridge:
+- `scripts/consume_pi_dev_dispatches.py`
+
 Execution request artifacts:
 - `control/execution_requests/<timestamp>-<task-key>.json`
 
@@ -60,6 +64,12 @@ Pi Dev request artifacts:
 
 Pi Dev execution bundle artifacts:
 - `control/pi_dev_bundles/<timestamp>-<task-key>.json`
+
+Pi Dev dispatch bridge artifacts:
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.json`
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.prompt.txt`
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.sh`
+- `control/pi_dev_dispatch.json`
 
 Dispatch artifacts:
 - `control/execution_dispatch.json`

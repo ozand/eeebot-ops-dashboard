@@ -95,11 +95,20 @@ The control repo now includes:
 - `scripts/consume_execution_queue.py`
 - `scripts/consume_execution_requests.py`
 - `scripts/consume_executor_handoffs.py`
+- `scripts/consume_pi_dev_requests.py`
+- `scripts/consume_pi_dev_bundles.py`
+- `scripts/consume_pi_dev_dispatches.py`
 - `control/execution_queue.json`
 - `control/execution_dispatch.json`
 - `control/dispatched/<timestamp>-<task-key>.json`
 - `control/execution_requests/<timestamp>-<task-key>.json`
 - `control/executor_handoffs/<timestamp>-<task-key>.json`
+- `control/pi_dev_requests/<timestamp>-<task-key>.json`
+- `control/pi_dev_bundles/<timestamp>-<task-key>.json`
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.json`
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.prompt.txt`
+- `control/pi_dev_dispatches/<timestamp>-<task-key>.sh`
+- `control/pi_dev_dispatch.json`
 
 Behavior:
 - read the current remediation analysis
@@ -115,6 +124,10 @@ Behavior:
 - transition that task to `handed_off` and stamp `executor_handoff_at`
 - record the requested executor plus source execution request path
 - if the first task is already handed off, report that and do not advance later tasks
+- then, once a Pi Dev bundle is eligible, create a durable dispatch bridge artifact and prompt/command bundle
+- transition that request/task to `pi_dev_dispatch_ready` and stamp `pi_dev_dispatch_created_at`
+- record the source Pi Dev request path, bundle path, prompt path, script path, and runnable command
+- the bridge layer is intentionally truthful: it may prepare an explicit invocation command without claiming Pi Dev execution succeeded
 - avoid leaving corrective action as a purely verbal recommendation
 - the live queue is cycle-scoped: if a newer task with the same dedupe key appears, normalize the queue to keep the newest live cycle and preserve the earlier dispatch/request/handoff artifacts in their own artifact directories
 - same-cycle status progression is monotonic (`queued` -> `in_progress` -> `requested_execution` -> `handed_off`)
