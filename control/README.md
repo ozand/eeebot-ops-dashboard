@@ -23,6 +23,8 @@ Lifecycle states:
 - requested_execution
 - handed_off
 - pi_dev_requested
+- bundled
+- pi_dev_bundled
 - completed
 - cancelled
 
@@ -44,6 +46,9 @@ Executor handoff consumer:
 Pi Dev request/outbox consumer:
 - `scripts/consume_pi_dev_requests.py`
 
+Pi Dev bundle consumer:
+- `scripts/consume_pi_dev_bundles.py`
+
 Execution request artifacts:
 - `control/execution_requests/<timestamp>-<task-key>.json`
 
@@ -52,6 +57,9 @@ Executor handoff artifacts:
 
 Pi Dev request artifacts:
 - `control/pi_dev_requests/<timestamp>-<task-key>.json`
+
+Pi Dev execution bundle artifacts:
+- `control/pi_dev_bundles/<timestamp>-<task-key>.json`
 
 Dispatch artifacts:
 - `control/execution_dispatch.json`

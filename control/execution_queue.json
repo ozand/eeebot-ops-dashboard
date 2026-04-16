@@ -2,7 +2,7 @@
   "tasks": [
     {
       "created_at": "2026-04-16T07:30:50.705406Z",
-      "status": "handed_off",
+      "status": "pi_dev_bundled",
       "source": "hermes-autonomy-controller",
       "diagnosis": "stagnating_on_quality_blocker",
       "severity": "critical",
@@ -27,8 +27,12 @@
       "execution_handoff_status": "handed_off",
       "pi_dev_requested_at": "2026-04-16T09:52:41.738173Z",
       "pi_dev_request_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_requests/20260416T095241738173Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
-      "pi_dev_request_status": "requested",
-      "pi_dev_request_created_by": "consume_pi_dev_requests.py"
+      "pi_dev_request_status": "bundled",
+      "pi_dev_request_created_by": "consume_pi_dev_requests.py",
+      "pi_dev_bundled_at": "2026-04-16T10:13:40.324240Z",
+      "pi_dev_bundle_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_bundles/20260416T095241738173Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
+      "pi_dev_bundle_status": "bundled",
+      "pi_dev_bundle_created_by": "consume_pi_dev_bundles.py"
     }
   ]
 }

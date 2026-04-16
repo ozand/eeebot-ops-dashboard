@@ -85,10 +85,14 @@ The autonomy control loop now has a clear handoff:
 - dispatch consumer: `scripts/consume_execution_queue.py`
 - execution request consumer: `scripts/consume_execution_requests.py`
 - executor handoff consumer: `scripts/consume_executor_handoffs.py`
+- Pi Dev request consumer: `scripts/consume_pi_dev_requests.py`
+- Pi Dev bundle consumer: `scripts/consume_pi_dev_bundles.py`
 - queue: `control/execution_queue.json`
 - dispatch artifact: `control/execution_dispatch.json` or `control/dispatched/<timestamp>-<task-key>.json`
 - execution request artifact: `control/execution_requests/<timestamp>-<task-key>.json`
 - executor handoff artifact: `control/executor_handoffs/<timestamp>-<task-key>.json`
+- Pi Dev request artifact: `control/pi_dev_requests/<timestamp>-<task-key>.json`
+- Pi Dev execution bundle artifact: `control/pi_dev_bundles/<timestamp>-<task-key>.json`
 
 The consumers must be deterministic and bounded:
 - inspect the first queued task only when dispatching
@@ -103,7 +107,12 @@ The consumers must be deterministic and bounded:
 - stamp `executor_handoff_at`
 - write a durable executor handoff artifact that records the diagnosis, active goal, failure class, remediation class, requested executor, and source execution request path
 - if the first request is already handed off, skip it and do not consume a later request unless it is the first eligible one
+- when a Pi Dev request is eligible, transition at most one request to `bundled` per bundle run and write a concise executor-oriented execution bundle artifact
+- stamp `bundled_at`
+- record the source Pi Dev request path, queue task key, and bounded instruction text in the bundle artifact
+- if the first Pi Dev request is already bundled, skip it and do not consume a later request unless it is the first eligible one
 - treat queued/requested_execution/handed_off as one monotonic lifecycle for a single task record; the live queue should only retain the newest cycle for a dedupe key, while older dispatch/request/handoff artifacts remain in their artifact directories
+- treat requested/bundled as the Pi Dev handoff-preparation lifecycle for a single request record; the live queue/request artifacts should point at the latest bundle path for that request
 - use `scripts/normalize_execution_queue.py` when the live queue drifts and contains multiple records for the same dedupe key
 
 ## Safe operating rules
