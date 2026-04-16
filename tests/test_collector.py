@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 from nanobot_ops_dashboard.collector import (
@@ -11,6 +12,7 @@ from nanobot_ops_dashboard.collector import (
     run_poll_loop,
 )
 from nanobot_ops_dashboard.config import DashboardConfig
+from nanobot_ops_dashboard.reachability import probe_eeepc_reachability
 from nanobot_ops_dashboard.storage import fetch_events, init_db
 
 
@@ -37,6 +39,34 @@ def test_build_ssh_command_uses_sudo_password_when_present(tmp_path: Path):
     joined = ' '.join(cmd)
     assert 'ssh' in cmd[0]
     assert "printf '%s\\n' 'secret' | sudo -S -p '' cat /state/outbox/report.index.json" in joined
+
+
+def test_probe_eeepc_reachability_writes_control_artifact_and_reports_unreachable(tmp_path: Path, monkeypatch):
+    cfg = DashboardConfig(
+        project_root=tmp_path,
+        db_path=tmp_path / 'db.sqlite3',
+        nanobot_repo_root=tmp_path / 'repo',
+        eeepc_ssh_host='192.168.1.44',
+        eeepc_ssh_key=tmp_path / 'id_ed25519',
+        eeepc_state_root='/state',
+    )
+
+    def fake_run(*_args, **_kwargs):
+        raise subprocess.CalledProcessError(
+            returncode=255,
+            cmd=['ssh'],
+            stderr='ssh: connect to host 192.168.1.44 port 22: No route to host\n',
+        )
+
+    monkeypatch.setattr('nanobot_ops_dashboard.reachability.subprocess.run', fake_run)
+
+    result = probe_eeepc_reachability(cfg)
+    assert result['reachable'] is False
+    assert result['ssh_host'] == '192.168.1.44'
+    assert result['target'] == '192.168.1.44'
+    assert result['error'].endswith('No route to host')
+    assert result['recommended_next_action'].startswith('Treat as a control-plane incident')
+    assert (tmp_path / 'control' / 'eeepc_reachability.json').exists()
 
 
 def test_normalize_eeepc_payloads_extracts_goal_status_and_artifacts(tmp_path: Path):
@@ -87,15 +117,24 @@ def test_collect_once_reports_eeepc_errors_instead_of_nulls(tmp_path: Path, monk
     monkeypatch.setattr(
         'nanobot_ops_dashboard.collector._normalize_eeepc_state',
         lambda _cfg: {
-            'status': 'error',
+            'status': 'BLOCK',
             'active_goal': None,
             'collection_status': 'error',
             'collection_error': {
                 'source': 'eeepc',
-                'stage': 'ssh:/state/outbox/report.index.json',
+                'stage': 'reachability',
                 'message': 'ssh: connect to host 192.168.1.44 port 22: No route to host',
-                'error_type': 'CalledProcessError',
+                'error_type': 'ReachabilityProbeError',
                 'returncode': 255,
+            },
+            'reachability': {
+                'reachable': False,
+                'ssh_host': 'eeepc',
+                'target': 'eeepc',
+                'error': 'ssh: connect to host 192.168.1.44 port 22: No route to host',
+                'returncode': 255,
+                'recommended_next_action': 'Treat as a control-plane incident; verify eeepc power/network access, then retry collection.',
+                'control_artifact_path': '/tmp/eeepc_reachability.json',
             },
         },
     )
@@ -105,10 +144,12 @@ def test_collect_once_reports_eeepc_errors_instead_of_nulls(tmp_path: Path, monk
 
     assert result['repo_status'] == 'PASS'
     assert result['repo_collection_status'] == 'ok'
-    assert result['eeepc_status'] == 'error'
+    assert result['eeepc_status'] == 'BLOCK'
     assert result['eeepc_goal'] is None
     assert result['eeepc_collection_status'] == 'error'
-    assert result['eeepc_error']['message'].endswith('No route to host')
+    assert result['eeepc_error']['stage'] == 'reachability'
+    assert result['eeepc_reachability']['reachable'] is False
+    assert result['eeepc_reachability']['recommended_next_action'].startswith('Treat as a control-plane incident')
     assert result['collection_status'] == {'repo': 'ok', 'eeepc': 'error'}
 
 

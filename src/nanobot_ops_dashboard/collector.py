@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import DashboardConfig
+from .reachability import probe_eeepc_reachability
 from .storage import insert_collection, upsert_event
 
 
@@ -399,6 +400,7 @@ def _normalize_eeepc_payloads(
     cfg: DashboardConfig,
     outbox: dict[str, Any],
     goals: dict[str, Any],
+    reachability: dict[str, Any] | None = None,
     collection_error: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     active_goal = (outbox.get('goal') or {}).get('goal_id') or goals.get('active_goal_id')
@@ -437,7 +439,8 @@ def _normalize_eeepc_payloads(
         'promotion_decision_record': None,
         'promotion_accepted_record': None,
         'events': events,
-        'raw': {'outbox': outbox, 'goals': goals},
+        'reachability': reachability,
+        'raw': {'outbox': outbox, 'goals': goals, 'reachability': reachability},
         'collection_status': 'error' if collection_error else 'ok',
         'collection_error': collection_error,
     }
@@ -446,13 +449,19 @@ def _normalize_eeepc_payloads(
 
 def _normalize_eeepc_state(cfg: DashboardConfig) -> dict[str, Any]:
     state_root = cfg.eeepc_state_root
-    outbox, outbox_error = _load_ssh_json(cfg, f"{state_root}/outbox/report.index.json")
-    goals, goals_error = _load_ssh_json(cfg, f"{state_root}/goals/registry.json")
-    collection_error = outbox_error or goals_error
-    if collection_error:
+    reachability = probe_eeepc_reachability(cfg)
+    if not reachability.get('reachable'):
+        collection_error = {
+            'source': 'eeepc',
+            'stage': 'reachability',
+            'message': reachability.get('error') or 'eeepc SSH probe failed',
+            'error_type': 'ReachabilityProbeError',
+            'returncode': reachability.get('returncode'),
+            'recommended_next_action': reachability.get('recommended_next_action'),
+        }
         return {
             'source': 'eeepc',
-            'status': 'error',
+            'status': 'BLOCK',
             'active_goal': None,
             'approval_gate': None,
             'gate_state': None,
@@ -464,11 +473,17 @@ def _normalize_eeepc_state(cfg: DashboardConfig) -> dict[str, Any]:
             'promotion_decision_record': None,
             'promotion_accepted_record': None,
             'events': [],
-            'raw': {'outbox': outbox or {}, 'goals': goals or {}},
+            'reachability': reachability,
+            'raw': {'outbox': {}, 'goals': {}, 'reachability': reachability},
             'collection_status': 'error',
             'collection_error': collection_error,
         }
-    return _normalize_eeepc_payloads(cfg, outbox or {}, goals or {}, None)
+    outbox, outbox_error = _load_ssh_json(cfg, f"{state_root}/outbox/report.index.json")
+    goals, goals_error = _load_ssh_json(cfg, f"{state_root}/goals/registry.json")
+    collection_error = outbox_error or goals_error
+    if collection_error:
+        return _normalize_eeepc_payloads(cfg, outbox or {}, goals or {}, reachability, collection_error)
+    return _normalize_eeepc_payloads(cfg, outbox or {}, goals or {}, reachability, None)
 
 
 def _persist(cfg: DashboardConfig, normalized: dict[str, Any]) -> None:
@@ -515,6 +530,7 @@ def collect_once(cfg: DashboardConfig) -> dict[str, Any]:
         'eeepc_goal': eeepc.get('active_goal'),
         'eeepc_collection_status': eeepc.get('collection_status'),
         'eeepc_error': eeepc.get('collection_error'),
+        'eeepc_reachability': eeepc.get('reachability'),
         'collection_status': {
             'repo': repo.get('collection_status'),
             'eeepc': eeepc.get('collection_status'),

@@ -42,14 +42,17 @@
     <div class="card compact">
       <h3>Current blocker</h3>
       <div class="status-stack" style="margin-bottom: .45rem;">
-        {% set blocker_kind = 'block' if current_blocker.failure_class or current_blocker.blocked_next_step else 'unknown' %}
+        {% set blocker_kind = current_blocker.kind or ('block' if current_blocker.failure_class or current_blocker.blocked_next_step else 'unknown') %}
         <span class="status-pill status-{{ blocker_kind }} status-large">{{ blocker_kind }}</span>
-        <span class="muted">Derived from outbox reflection</span>
+        <span class="muted">Derived from {{ current_blocker.source }}</span>
       </div>
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Failure class</span><span>{{ current_blocker.failure_class or 'none' }}</span></div>
         <div class="detail-row"><span class="detail-label">Improvement score</span><span>{{ current_blocker.improvement_score if current_blocker.improvement_score is not none else 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Next required step</span><span>{{ current_blocker.blocked_next_step or 'none' }}</span></div>
+        {% if current_blocker.error %}
+        <div class="detail-row"><span class="detail-label">Reachability error</span><span>{{ current_blocker.error }}</span></div>
+        {% endif %}
       </div>
     </div>
   </div>

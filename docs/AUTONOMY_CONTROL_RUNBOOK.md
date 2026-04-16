@@ -19,10 +19,12 @@ Machine-readable registry:
 Status heartbeat registries:
 - `control/active_projects.json`
 - `control/active_execution.json`
+- `control/eeepc_reachability.json`
 
 Status heartbeat snapshot generator:
 - `scripts/build_status_snapshot.py`
 - `scripts/stale_execution_watchdog.py`
+- `scripts/eeepc_reachability_watchdog.py`
 
 Human-readable policy summary:
 - this runbook
@@ -50,6 +52,23 @@ Nanobot-specific stagnation thresholds:
 - same report source persists across the last 6 collections
 - same goal persists across the last 6 collections
 - repeated failure class, especially `stagnating_on_quality_blocker`
+
+## eeepc reachability incidents
+
+Host access loss is now a first-class control-plane incident.
+
+The watchdog `scripts/eeepc_reachability_watchdog.py` must be used to distinguish:
+- eeepc reachable, but collection may still fail for state reasons
+- eeepc unreachable, which is a control-plane incident and not a content/collector symptom
+
+When the reachability probe reports `reachable: false`:
+- treat the incident as explicit control-plane loss of host access
+- do not retry with broad network repair or manual probing loops
+- record the watchdog output in `control/eeepc_reachability.json`
+- expect the dashboard to surface the incident in the live eeepc status card and blocker view
+- follow the `recommended_next_action` exactly: verify power/network access, then retry collection after reachability returns
+
+This distinction matters because cadence analysis and blocker diagnosis cannot be trusted when the host is unreachable.
 
 ## Active project ownership
 

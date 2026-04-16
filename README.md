@@ -50,5 +50,6 @@ Canonical runtime assets included:
 - `scripts/run_web.sh`
 - `scripts/run_collector.sh`
 - `scripts/install_user_units.sh`
+- `scripts/eeepc_reachability_watchdog.py`
 - `systemd/nanobot-ops-dashboard-web.service`
 - `systemd/nanobot-ops-dashboard-collector.service`

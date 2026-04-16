@@ -136,6 +136,15 @@ def test_app_collect_endpoint_surfaces_diagnostic_errors(tmp_path: Path, monkeyp
                 'error_type': 'CalledProcessError',
                 'returncode': 255,
             },
+            'eeepc_reachability': {
+                'reachable': False,
+                'ssh_host': 'eeepc',
+                'target': 'eeepc',
+                'error': 'ssh: connect to host 192.168.1.44 port 22: No route to host',
+                'returncode': 255,
+                'recommended_next_action': 'Treat as a control-plane incident; verify eeepc power/network access, then retry collection.',
+                'control_artifact_path': '/tmp/eeepc_reachability.json',
+            },
             'collection_status': {'repo': 'ok', 'eeepc': 'error'},
         },
     )
@@ -143,6 +152,7 @@ def test_app_collect_endpoint_surfaces_diagnostic_errors(tmp_path: Path, monkeyp
     status, body = _call_app(app, '/collect')
     assert status.startswith('200')
     assert 'eeepc_collection_status' in body
+    assert 'eeepc_reachability' in body
     assert 'No route to host' in body
     assert 'collection_status' in body
 

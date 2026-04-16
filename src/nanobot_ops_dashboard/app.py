@@ -213,10 +213,15 @@ def create_app(cfg: DashboardConfig):
         eeepc_outbox = eeepc_raw.get('outbox') if isinstance(eeepc_raw.get('outbox'), dict) else {}
         eeepc_reflection = eeepc_outbox.get('process_reflection') if isinstance(eeepc_outbox.get('process_reflection'), dict) else {}
         eeepc_follow = (eeepc_outbox.get('goal') or {}).get('follow_through') if isinstance(eeepc_outbox.get('goal'), dict) else {}
+        eeepc_reachability = eeepc_raw.get('reachability') if isinstance(eeepc_raw.get('reachability'), dict) else {}
         current_blocker = {
-            'failure_class': eeepc_reflection.get('failure_class'),
+            'kind': 'block' if (eeepc_reachability and not eeepc_reachability.get('reachable')) or eeepc_reflection.get('failure_class') or eeepc_follow.get('blocked_next_step') else 'unknown',
+            'source': 'reachability watchdog' if eeepc_reachability and not eeepc_reachability.get('reachable') else 'outbox reflection',
+            'failure_class': 'control_plane_unreachable' if eeepc_reachability and not eeepc_reachability.get('reachable') else eeepc_reflection.get('failure_class'),
             'improvement_score': eeepc_reflection.get('improvement_score'),
-            'blocked_next_step': (eeepc_follow or {}).get('blocked_next_step'),
+            'blocked_next_step': eeepc_reachability.get('recommended_next_action') if eeepc_reachability and not eeepc_reachability.get('reachable') else (eeepc_follow or {}).get('blocked_next_step'),
+            'error': eeepc_reachability.get('error') if eeepc_reachability and not eeepc_reachability.get('reachable') else None,
+            'reachable': eeepc_reachability.get('reachable') if eeepc_reachability else None,
         }
 
         analytics = {
@@ -284,6 +289,7 @@ def create_app(cfg: DashboardConfig):
             'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
             'analytics': analytics,
             'current_blocker': current_blocker,
+            'eeepc_reachability': eeepc_reachability,
             'request_source': request_source,
             'request_status': request_status,
             'request_origin': request_origin,
@@ -303,6 +309,8 @@ def create_app(cfg: DashboardConfig):
                 'promotion_count': len(promotions),
                 'repo_latest': dict(repo_latest) if repo_latest else None,
                 'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
+                'eeepc_reachability': eeepc_reachability,
+                'current_blocker': current_blocker,
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
