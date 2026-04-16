@@ -1,14 +1,35 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import json
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 ROOT = Path('/home/ozand/herkoot/Projects/nanobot-ops-dashboard')
-ACTIVE = ROOT / 'control' / 'active_projects.json'
+ACTIVE_PROJECTS = ROOT / 'control' / 'active_projects.json'
+ACTIVE_EXECUTION = ROOT / 'control' / 'active_execution.json'
 QUEUE = ROOT / 'control' / 'execution_queue.json'
 
+LIVE_STATUSES = {'in_progress'}
+QUEUED_STATUSES = {'queued'}
+WAITING_STATUSES = {
+    'requested_execution',
+    'dispatched',
+    'handed_off',
+    'pi_dev_requested',
+    'bundled',
+    'pi_dev_bundled',
+    'pi_dev_dispatch_ready',
+}
+TERMINAL_STATUSES = {'completed', 'cancelled'}
 
-def load(path: Path, default):
+
+def now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def load(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
     try:
@@ -17,26 +38,141 @@ def load(path: Path, default):
         return default
 
 
-def main() -> None:
-    active = load(ACTIVE, {'projects': []})
-    queue = load(QUEUE, {'tasks': []})
+def atomic_write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f'.{path.name}.tmp')
+    tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    tmp_path.replace(path)
+
+
+def task_key(task: dict[str, Any]) -> str:
+    for key in ('dedupe_key', 'active_goal', 'report_source', 'diagnosis'):
+        value = task.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return 'task'
+
+
+def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
+    queue_status = task.get('status')
+    if queue_status in TERMINAL_STATUSES:
+        execution_state = 'completed'
+    elif queue_status in LIVE_STATUSES:
+        execution_state = 'in_progress'
+    elif queue_status in QUEUED_STATUSES:
+        execution_state = 'queued'
+    elif queue_status in WAITING_STATUSES:
+        execution_state = 'waiting_for_dispatch'
+    elif task.get('blocked_next_step'):
+        execution_state = 'blocked'
+    else:
+        execution_state = 'waiting_for_dispatch'
+
+    blocked = bool(task.get('blocked_next_step')) and execution_state not in {'completed', 'in_progress'}
+    snapshot = {
+        'task_index': index,
+        'task_key': task_key(task),
+        'queue_status': queue_status,
+        'execution_state': execution_state,
+        'is_live_execution': execution_state == 'in_progress',
+        'is_blocked': blocked,
+        'is_terminal': execution_state == 'completed',
+        'source': task.get('source'),
+        'diagnosis': task.get('diagnosis'),
+        'severity': task.get('severity'),
+        'active_goal': task.get('active_goal'),
+        'report_source': task.get('report_source'),
+        'failure_class': task.get('failure_class'),
+        'remediation_class': task.get('remediation_class'),
+        'recommended_remediation_action': task.get('recommended_remediation_action'),
+        'blocked_next_step': task.get('blocked_next_step'),
+        'requested_executor': task.get('requested_executor'),
+        'execution_request_path': task.get('execution_request_path'),
+        'executor_handoff_path': task.get('executor_handoff_path'),
+        'pi_dev_request_path': task.get('pi_dev_request_path'),
+        'pi_dev_bundle_path': task.get('pi_dev_bundle_path'),
+        'pi_dev_dispatch_path': task.get('pi_dev_dispatch_path'),
+        'dispatched_at': task.get('dispatched_at'),
+        'execution_requested_at': task.get('execution_requested_at'),
+        'executor_handoff_at': task.get('executor_handoff_at'),
+        'pi_dev_requested_at': task.get('pi_dev_requested_at'),
+        'pi_dev_bundled_at': task.get('pi_dev_bundled_at'),
+        'pi_dev_dispatch_created_at': task.get('pi_dev_dispatch_created_at'),
+    }
+    return snapshot
+
+
+def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, Any]:
     tasks = queue.get('tasks') if isinstance(queue, dict) else []
     if not isinstance(tasks, list):
         tasks = []
-    queue_summary = {
+
+    active_tasks: list[dict[str, Any]] = []
+    terminal_tasks: list[dict[str, Any]] = []
+    live_task: dict[str, Any] | None = None
+
+    for index, task in enumerate(tasks):
+        if not isinstance(task, dict):
+            continue
+        snapshot = classify_task(task, index)
+        if snapshot['is_terminal']:
+            terminal_tasks.append(snapshot)
+            continue
+        active_tasks.append(snapshot)
+        if live_task is None and snapshot['is_live_execution']:
+            live_task = snapshot
+
+    summary = {
         'total': len(tasks),
-        'queued': sum(1 for t in tasks if t.get('status') == 'queued'),
-        'in_progress': sum(1 for t in tasks if t.get('status') == 'in_progress'),
-        'requested_execution': sum(1 for t in tasks if t.get('status') == 'requested_execution'),
-        'handed_off': sum(1 for t in tasks if t.get('status') == 'handed_off'),
-        'pi_dev_bundled': sum(1 for t in tasks if t.get('status') == 'pi_dev_bundled'),
-        'pi_dev_dispatch_ready': sum(1 for t in tasks if t.get('status') == 'pi_dev_dispatch_ready'),
+        'active': len(active_tasks),
+        'queued': sum(1 for task in active_tasks if task['execution_state'] == 'queued'),
+        'in_progress': sum(1 for task in active_tasks if task['execution_state'] == 'in_progress'),
+        'waiting_for_dispatch': sum(1 for task in active_tasks if task['execution_state'] == 'waiting_for_dispatch'),
+        'blocked': sum(1 for task in active_tasks if task['is_blocked']),
+        'completed': len(terminal_tasks),
+        'live_execution_tasks': sum(1 for task in active_tasks if task['is_live_execution']),
     }
-    print(json.dumps({
-        'active_projects': active.get('projects', []),
-        'queue_summary': queue_summary,
-        'first_task': tasks[0] if tasks else None,
-    }, ensure_ascii=False, indent=2))
+
+    registry = {
+        'updated_at': updated_at,
+        'source_queue_path': str(QUEUE),
+        'summary': summary,
+        'has_actually_executing_task': live_task is not None,
+        'live_task': live_task,
+        'active_tasks': active_tasks,
+        'terminal_tasks': terminal_tasks,
+    }
+    atomic_write_json(ACTIVE_EXECUTION, registry)
+    return registry
+
+
+def main() -> None:
+    updated_at = now_utc()
+    active_projects = load(ACTIVE_PROJECTS, {'projects': []})
+    queue = load(QUEUE, {'tasks': []})
+    active_execution = build_active_execution(queue, updated_at)
+
+    project_items = active_projects.get('projects', []) if isinstance(active_projects, dict) else []
+    if not isinstance(project_items, list):
+        project_items = []
+
+    print(
+        json.dumps(
+            {
+                'updated_at': updated_at,
+                'active_projects': project_items,
+                'active_execution_tasks': active_execution['active_tasks'],
+                'active_execution_summary': active_execution['summary'],
+                'active_execution': active_execution,
+                'truthful_execution_status': {
+                    'has_live_delegated_execution': active_execution['has_actually_executing_task'],
+                    'live_delegated_execution_task': active_execution['live_task'],
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
 if __name__ == '__main__':

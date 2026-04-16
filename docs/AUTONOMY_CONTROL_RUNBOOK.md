@@ -16,8 +16,9 @@ The control loop has three goals:
 Machine-readable registry:
 - `docs/autonomy_control_registry.json`
 
-Status heartbeat registry:
+Status heartbeat registries:
 - `control/active_projects.json`
+- `control/active_execution.json`
 
 Status heartbeat snapshot generator:
 - `scripts/build_status_snapshot.py`
@@ -68,7 +69,7 @@ Each project entry must include:
 ## How Hermes should behave
 
 When the control job runs:
-1. refresh the status heartbeat snapshot from `control/active_projects.json` and `scripts/build_status_snapshot.py`
+1. refresh the status heartbeat snapshot from `control/active_projects.json`, `control/active_execution.json`, and `scripts/build_status_snapshot.py`
 2. read the registry and current Nanobot stagnation analysis from `scripts/analyze_stagnation.py`
 3. run the active remediation candidate generator in `scripts/analyze_active_remediation.py` to turn a stagnant state into one bounded corrective action
 4. enqueue that action in `control/execution_queue.json` when appropriate
@@ -79,6 +80,12 @@ When the control job runs:
 9. if a project is healthy, still confirm the next review time rather than going silent
 
 ## Execution queue and dispatch
+
+Project ownership and delegated execution are separate facts:
+- `control/active_projects.json` records project-level ownership and stage
+- `control/active_execution.json` records whether a bounded delegated task is queued, in progress, waiting for dispatch, blocked, or completed
+- a project can remain `in_progress` even when there is no live delegated execution task
+- status reporting must not collapse those two layers into one
 
 The autonomy control loop now has a clear handoff:
 - producer: `scripts/enqueue_active_remediation.py`

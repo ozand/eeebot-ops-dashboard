@@ -77,12 +77,14 @@ The dashboard repo now also carries a durable status heartbeat layer so the curr
 
 Included assets:
 - `control/active_projects.json`
+- `control/active_execution.json`
 - `scripts/build_status_snapshot.py`
 
 Behavior:
 - keep the active-project registry explicit and machine-readable
-- summarize active projects alongside the live execution queue
-- make the current project stage and ownership posture easy to inspect as part of the autonomy system
+- keep the execution-work registry separate and machine-readable
+- summarize active projects alongside the current execution-work registry snapshot
+- make the current project stage, ownership posture, and execution-work lifecycle easy to inspect as part of the autonomy system
 - support the control job described above without introducing a new execution model
 
 ## Execution queue layer
@@ -116,6 +118,7 @@ Behavior:
 - deduplicate open tasks against the same goal/report/failure class
 - dispatch at most one queued task per consumer run
 - mark the first queued task `in_progress` and stamp `dispatched_at`
+- record the execution-work registry separately so status reporting can tell whether a delegated task is truly live or only project-owned
 - write a durable dispatch artifact for auditability
 - then, once a dispatched task is eligible, create a durable execution request artifact
 - transition that task to `requested_execution` and stamp `execution_requested_at`
@@ -131,3 +134,4 @@ Behavior:
 - avoid leaving corrective action as a purely verbal recommendation
 - the live queue is cycle-scoped: if a newer task with the same dedupe key appears, normalize the queue to keep the newest live cycle and preserve the earlier dispatch/request/handoff artifacts in their own artifact directories
 - same-cycle status progression is monotonic (`queued` -> `in_progress` -> `requested_execution` -> `handed_off`)
+- project-level `in_progress` is not the same as a live delegated execution task
