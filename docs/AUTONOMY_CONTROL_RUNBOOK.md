@@ -75,15 +75,21 @@ When the control job runs:
 
 The autonomy control loop now has a clear handoff:
 - producer: `scripts/enqueue_active_remediation.py`
+- dispatch consumer: `scripts/consume_execution_queue.py`
+- executor consumer: `scripts/consume_execution_requests.py`
 - queue: `control/execution_queue.json`
-- consumer: `scripts/consume_execution_queue.py`
 - dispatch artifact: `control/execution_dispatch.json` or `control/dispatched/<timestamp>-<task-key>.json`
+- execution request artifact: `control/execution_requests/<timestamp>-<task-key>.json`
 
-The consumer must be deterministic and bounded:
-- inspect the first queued task only
-- transition at most one task to `in_progress` per run
+The consumers must be deterministic and bounded:
+- inspect the first queued task only when dispatching
+- transition at most one task to `in_progress` per dispatch run
 - stamp `dispatched_at`
 - if the first task is already `in_progress`, `completed`, or `cancelled`, report that and do not consume a later task
+- when a task is already `in_progress` or `dispatched`, transition at most one task to `requested_execution` per executor run
+- stamp `execution_requested_at`
+- record the requested executor and source queue/dispatch artifact references
+- if the first task is already handed off, report that and do not advance later tasks
 
 ## Safe operating rules
 

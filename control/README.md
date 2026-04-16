@@ -11,17 +11,24 @@ Purpose:
 Lifecycle states:
 - queued
 - in_progress
+- requested_execution
 - completed
 - cancelled
 
 Current producer:
 - `scripts/enqueue_active_remediation.py`
 
-Current consumer:
+Current dispatch consumer:
 - `scripts/consume_execution_queue.py`
+
+Current executor consumer:
+- `scripts/consume_execution_requests.py`
 
 Upstream analyzer:
 - `scripts/analyze_active_remediation.py`
+
+Execution request artifacts:
+- `control/execution_requests/<timestamp>-<task-key>.json`
 
 Dispatch artifacts:
 - `control/execution_dispatch.json`

@@ -73,21 +73,27 @@ This is the minimum viable process change that removes dependence on a manual nu
 
 ## Execution queue layer
 
-A diagnosis is not enough. The system must translate actionable incidents into durable bounded tasks, and then consume those tasks deterministically.
+A diagnosis is not enough. The system must translate actionable incidents into durable bounded tasks, then hand them off through a deterministic executor request layer.
 
 The control repo now includes:
+- `scripts/analyze_active_remediation.py`
 - `scripts/enqueue_active_remediation.py`
 - `scripts/consume_execution_queue.py`
+- `scripts/consume_execution_requests.py`
 - `control/execution_queue.json`
 - `control/execution_dispatch.json`
 - `control/dispatched/<timestamp>-<task-key>.json`
+- `control/execution_requests/<timestamp>-<task-key>.json`
 
 Behavior:
 - read the current remediation analysis
 - if the diagnosis is actionable, enqueue one bounded remediation task
 - deduplicate open tasks against the same goal/report/failure class
 - dispatch at most one queued task per consumer run
-- mark the first queued task in_progress and stamp `dispatched_at`
+- mark the first queued task `in_progress` and stamp `dispatched_at`
 - write a durable dispatch artifact for auditability
-- if the first task is already in_progress/completed/cancelled, report that and do not advance later tasks
+- then, once a dispatched task is eligible, create a durable execution request artifact
+- transition that task to `requested_execution` and stamp `execution_requested_at`
+- record the requested executor plus source queue/dispatch artifact references
+- if the first task is already handed off, report that and do not advance later tasks
 - avoid leaving corrective action as a purely verbal recommendation
