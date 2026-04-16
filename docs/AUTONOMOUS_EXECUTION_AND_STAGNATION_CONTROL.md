@@ -26,13 +26,14 @@ Treat these as incidents, not passive observations:
 - repeated `failure_class` such as `no_concrete_change`
 
 ### 2. Separate roles explicitly
-The system needs three ongoing functions:
+The system needs four ongoing functions:
 - observer: collects and surfaces truth
 - diagnostician: identifies blocker class and trend
-- executor: takes the next bounded step toward the project goal
+- producer: turns a bounded corrective recommendation into a queued remediation task
+- executor: consumes the first queued task and takes the next bounded step toward the project goal
 
 The dashboard already covers observer truth.
-A supervisor loop must now cover diagnostician escalation.
+A supervisor loop must now cover diagnostician escalation and queue hygiene.
 
 ### 3. Escalation thresholds
 Escalate when any of the following are true:
@@ -72,14 +73,21 @@ This is the minimum viable process change that removes dependence on a manual nu
 
 ## Execution queue layer
 
-A diagnosis is not enough. The system must translate actionable incidents into durable bounded tasks.
+A diagnosis is not enough. The system must translate actionable incidents into durable bounded tasks, and then consume those tasks deterministically.
 
 The control repo now includes:
 - `scripts/enqueue_active_remediation.py`
+- `scripts/consume_execution_queue.py`
 - `control/execution_queue.json`
+- `control/execution_dispatch.json`
+- `control/dispatched/<timestamp>-<task-key>.json`
 
 Behavior:
 - read the current remediation analysis
 - if the diagnosis is actionable, enqueue one bounded remediation task
 - deduplicate open tasks against the same goal/report/failure class
+- dispatch at most one queued task per consumer run
+- mark the first queued task in_progress and stamp `dispatched_at`
+- write a durable dispatch artifact for auditability
+- if the first task is already in_progress/completed/cancelled, report that and do not advance later tasks
 - avoid leaving corrective action as a purely verbal recommendation

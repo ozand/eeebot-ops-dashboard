@@ -64,10 +64,26 @@ Each project entry must include:
 When the control job runs:
 1. read the registry and current Nanobot stagnation analysis from `scripts/analyze_stagnation.py`
 2. run the active remediation candidate generator in `scripts/analyze_active_remediation.py` to turn a stagnant state into one bounded corrective action
-3. identify any overdue review or ownership gap
-4. report the exact next bounded action
-5. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
-6. if a project is healthy, still confirm the next review time rather than going silent
+3. enqueue that action in `control/execution_queue.json` when appropriate
+4. run the execution consumer in `scripts/consume_execution_queue.py` to dispatch at most one queued remediation task and persist a dispatch artifact
+5. identify any overdue review or ownership gap
+6. report the exact next bounded action
+7. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
+8. if a project is healthy, still confirm the next review time rather than going silent
+
+## Execution queue and dispatch
+
+The autonomy control loop now has a clear handoff:
+- producer: `scripts/enqueue_active_remediation.py`
+- queue: `control/execution_queue.json`
+- consumer: `scripts/consume_execution_queue.py`
+- dispatch artifact: `control/execution_dispatch.json` or `control/dispatched/<timestamp>-<task-key>.json`
+
+The consumer must be deterministic and bounded:
+- inspect the first queued task only
+- transition at most one task to `in_progress` per run
+- stamp `dispatched_at`
+- if the first task is already `in_progress`, `completed`, or `cancelled`, report that and do not consume a later task
 
 ## Safe operating rules
 

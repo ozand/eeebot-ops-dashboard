@@ -6,6 +6,7 @@ Purpose:
 - stop leaving remediation as verbal intent
 - record concrete next bounded actions in a machine-readable queue
 - deduplicate repeated stagnation incidents against the same goal/report/failure class
+- support a deterministic consumer that dispatches at most one task per run
 
 Lifecycle states:
 - queued
@@ -13,8 +14,15 @@ Lifecycle states:
 - completed
 - cancelled
 
-Current controller:
+Current producer:
 - `scripts/enqueue_active_remediation.py`
+
+Current consumer:
+- `scripts/consume_execution_queue.py`
 
 Upstream analyzer:
 - `scripts/analyze_active_remediation.py`
+
+Dispatch artifacts:
+- `control/execution_dispatch.json`
+- `control/dispatched/<timestamp>-<task-key>.json`
