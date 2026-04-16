@@ -22,6 +22,7 @@ Lifecycle states:
 - in_progress
 - requested_execution
 - handed_off
+- pi_dev_requested
 - completed
 - cancelled
 
@@ -40,11 +41,17 @@ Current executor consumer:
 Executor handoff consumer:
 - `scripts/consume_executor_handoffs.py`
 
+Pi Dev request/outbox consumer:
+- `scripts/consume_pi_dev_requests.py`
+
 Execution request artifacts:
 - `control/execution_requests/<timestamp>-<task-key>.json`
 
 Executor handoff artifacts:
 - `control/executor_handoffs/<timestamp>-<task-key>.json`
+
+Pi Dev request artifacts:
+- `control/pi_dev_requests/<timestamp>-<task-key>.json`
 
 Dispatch artifacts:
 - `control/execution_dispatch.json`

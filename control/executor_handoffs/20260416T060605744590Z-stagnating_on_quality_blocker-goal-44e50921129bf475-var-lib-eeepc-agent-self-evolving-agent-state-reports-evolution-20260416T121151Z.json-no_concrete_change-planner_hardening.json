@@ -74,5 +74,10 @@
   },
   "source_queue_task_status_before_handoff": "requested_execution",
   "source_queue_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/execution_queue.json",
-  "queue_task_key": "stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening"
+  "queue_task_key": "stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening",
+  "status": "pi_dev_requested",
+  "pi_dev_requested_at": "2026-04-16T09:52:33.541205Z",
+  "pi_dev_request_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_requests/20260416T095233541205Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
+  "pi_dev_request_status": "requested",
+  "pi_dev_request_created_by": "consume_pi_dev_requests.py"
 }
