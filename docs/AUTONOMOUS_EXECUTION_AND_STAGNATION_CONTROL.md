@@ -63,6 +63,7 @@ A scheduled supervisor must proactively review the dashboard state and report.
 
 For now, implement:
 - a local stagnation analysis script in the dashboard project
+- an active remediation candidate generator that reads the same dashboard SQLite state and emits one bounded corrective action without changing anything
 - an autonomous cron supervisor that runs periodically and reports to the current chat
 - a project-level autonomy registry/runbook that records ownership, escalation thresholds, and execution roles for every active project
 - an additional control job that checks ownership drift and review freshness, not just stagnation

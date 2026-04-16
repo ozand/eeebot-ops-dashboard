@@ -62,11 +62,12 @@ Each project entry must include:
 ## How Hermes should behave
 
 When the control job runs:
-1. read the registry and current Nanobot stagnation analysis
-2. identify any overdue review or ownership gap
-3. report the exact next bounded action
-4. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
-5. if a project is healthy, still confirm the next review time rather than going silent
+1. read the registry and current Nanobot stagnation analysis from `scripts/analyze_stagnation.py`
+2. run the active remediation candidate generator in `scripts/analyze_active_remediation.py` to turn a stagnant state into one bounded corrective action
+3. identify any overdue review or ownership gap
+4. report the exact next bounded action
+5. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
+6. if a project is healthy, still confirm the next review time rather than going silent
 
 ## Safe operating rules
 
