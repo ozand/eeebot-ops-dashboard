@@ -47,7 +47,7 @@ def parse_timestamp(value: Any) -> datetime | None:
 
 def task_freshness(task: dict[str, Any]) -> tuple[int, str]:
     timestamps = []
-    for key in ('created_at', 'dispatched_at', 'execution_requested_at', 'executor_handoff_at'):
+    for key in ('created_at', 'dispatched_at', 'execution_requested_at', 'executor_handoff_at', 'delegated_executor_started_at'):
         parsed = parse_timestamp(task.get(key))
         if parsed is not None:
             timestamps.append(parsed)

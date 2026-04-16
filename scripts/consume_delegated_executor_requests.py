@@ -69,6 +69,7 @@ def build_request_payload(
         'created_by': SCRIPT_NAME,
         'status': REQUEST_STATUS,
         'requested_executor': REQUESTED_EXECUTOR,
+        'delegated_executor_started_at': requested_at,
         'fallback_mode': 'pi_dev_provider_model_mismatch',
         'fallback_reason': FALLBACK_REASON,
         'queue_path': str(QUEUE_PATH),
@@ -127,6 +128,7 @@ def main() -> None:
         updated_task = dict(task)
         updated_task['status'] = 'in_progress'
         updated_task['requested_executor'] = REQUESTED_EXECUTOR
+        updated_task['delegated_executor_started_at'] = requested_at
         updated_task['delegated_executor_requested_at'] = requested_at
         updated_task['delegated_executor_request_path'] = str(request_path)
         updated_task['delegated_executor_request_status'] = REQUEST_STATUS

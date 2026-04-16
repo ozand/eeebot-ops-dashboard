@@ -93,6 +93,7 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
         'pi_dev_bundle_path': task.get('pi_dev_bundle_path'),
         'pi_dev_dispatch_path': task.get('pi_dev_dispatch_path'),
         'delegated_executor_request_path': task.get('delegated_executor_request_path'),
+        'delegated_executor_started_at': task.get('delegated_executor_started_at'),
         'delegated_executor_requested_at': task.get('delegated_executor_requested_at'),
         'delegated_executor_request_status': task.get('delegated_executor_request_status'),
         'dispatched_at': task.get('dispatched_at'),

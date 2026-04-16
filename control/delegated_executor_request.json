@@ -3,6 +3,7 @@
   "created_by": "consume_delegated_executor_requests.py",
   "status": "requested",
   "requested_executor": "hermes_subagent",
+  "delegated_executor_started_at": "2026-04-16T11:40:49.015519Z",
   "fallback_mode": "pi_dev_provider_model_mismatch",
   "fallback_reason": "Pi Dev invocation is blocked by a provider/model mismatch on this host; route the remediation slice through a Hermes/subagent executor path instead.",
   "queue_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/execution_queue.json",

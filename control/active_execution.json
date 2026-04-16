@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-16T11:41:43.711853Z",
+  "updated_at": "2026-04-16T16:42:28.529342Z",
   "source_queue_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/execution_queue.json",
   "summary": {
     "total": 1,
@@ -36,6 +36,7 @@
     "pi_dev_bundle_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_bundles/20260416T095241738173Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
     "pi_dev_dispatch_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_dispatches/20260416T104821473591Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
     "delegated_executor_request_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/delegated_executor_requests/20260416T114049015519Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
+    "delegated_executor_started_at": "2026-04-16T11:40:49.015519Z",
     "delegated_executor_requested_at": "2026-04-16T11:40:49.015519Z",
     "delegated_executor_request_status": "requested",
     "dispatched_at": "2026-04-16T07:42:30.781890Z",
@@ -70,6 +71,7 @@
       "pi_dev_bundle_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_bundles/20260416T095241738173Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
       "pi_dev_dispatch_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/pi_dev_dispatches/20260416T104821473591Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
       "delegated_executor_request_path": "/home/ozand/herkoot/Projects/nanobot-ops-dashboard/control/delegated_executor_requests/20260416T114049015519Z-stagnating_on_quality_blocker-goal-44e50921129bf475-var-lib-eeepc-agent-self-evolving-agent-state-reports-evolution-20260416T121151Z.json-no_concrete_change-planner_hardening.json",
+      "delegated_executor_started_at": "2026-04-16T11:40:49.015519Z",
       "delegated_executor_requested_at": "2026-04-16T11:40:49.015519Z",
       "delegated_executor_request_status": "requested",
       "dispatched_at": "2026-04-16T07:42:30.781890Z",
