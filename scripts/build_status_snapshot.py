@@ -133,6 +133,14 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
         'stale_execution_previous_status': task.get('stale_execution_previous_status'),
         'stale_execution_previous_execution_state': task.get('stale_execution_previous_execution_state'),
         'stale_execution_previous_started_at': task.get('stale_execution_previous_started_at'),
+        'execution_completion_path': task.get('execution_completion_path'),
+        'execution_completion_status': task.get('execution_completion_status'),
+        'execution_completed_at': task.get('execution_completed_at'),
+        'execution_completed_by': task.get('execution_completed_by'),
+        'execution_completion_commit': task.get('execution_completion_commit'),
+        'execution_completion_verification_method': task.get('execution_completion_verification_method'),
+        'execution_completion_verification_status': task.get('execution_completion_verification_status'),
+        'execution_completion_summary': task.get('execution_completion_summary'),
         'dispatch_state': task.get('dispatch_state'),
     }
     return snapshot

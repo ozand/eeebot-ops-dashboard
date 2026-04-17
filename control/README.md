@@ -4,8 +4,10 @@
 
 Status heartbeat transparency layer:
 - `control/active_projects.json` is the canonical active-project registry for operator-visible ownership and stage tracking
-- `control/active_execution.json` is the canonical execution-work registry for actually executing bounded tasks and their current lifecycle state
+- `control/active_execution.json` is the canonical execution-work registry for actually executing bounded tasks, their current lifecycle state, and terminal verified completion state
 - `scripts/build_status_snapshot.py` refreshes the execution registry snapshot and renders a compact status view from both registries
+- `control/execution_completion.json` is the latest completion pointer for a bounded task that has finished and been verified
+- `control/execution_completions/<timestamp>-<task-key>.json` stores the durable completion proof artifact
 - `scripts/stale_execution_watchdog.py` inspects the live queue/execution snapshot for in_progress tasks that have gone stale past the 30-minute investigation threshold
 - `scripts/consume_stale_execution_incidents.py` converts a stale live execution into a durable stale-incident record, truthfully marks the queue entry `stale_blocked`, and emits one bounded redispatch candidate
 - `scripts/consume_stale_execution_next_actions.py` converts that redispatch candidate into a queued redispatch line and durable redispatch artifact
@@ -98,6 +100,10 @@ Delegated executor fallback artifacts:
 Delegated execution assignment artifacts:
 - `control/execution_assignments/<timestamp>-<task-key>.json`
 - `control/execution_assignment.json`
+
+Delegated execution completion artifacts:
+- `control/execution_completions/<timestamp>-<task-key>.json`
+- `control/execution_completion.json`
 
 Stale execution incident artifacts:
 - `control/stale_execution_incidents/<timestamp>-<task-key>.json`

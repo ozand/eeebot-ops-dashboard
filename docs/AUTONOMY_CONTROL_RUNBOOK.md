@@ -19,6 +19,7 @@ Machine-readable registry:
 Status heartbeat registries:
 - `control/active_projects.json`
 - `control/active_execution.json`
+- `control/execution_completion.json`
 - `control/eeepc_reachability.json`
 
 Status heartbeat snapshot generator:
@@ -114,6 +115,7 @@ Project ownership and delegated execution are separate facts:
 - `scripts/consume_stale_execution_incidents.py` consumes the watchdog/control state, writes a durable stale incident plus next-action artifact, and truthfully converts the live queue item to `stale_blocked`
 - `scripts/consume_stale_execution_next_actions.py` consumes at most one eligible stale next-action artifact, writes a durable redispatch artifact, and turns the queue item back into a fresh queued redispatch line linked to the stale incident
 - `scripts/consume_queued_redispatch_assignments.py` consumes at most one eligible queued redispatch task, writes a durable execution-assignment artifact, and turns the queue item into a fresh live delegated execution line linked to the stale incident and redispatch artifacts
+- when a delegated execution finishes and the bounded implementation plus eeepc side-by-side verification both pass, write an execution completion artifact, mark the queue/assignment/request pointers `completed`, and let the live snapshot collapse to terminal evidence instead of a pseudo-live executor line
 
 The autonomy control loop now has a clear handoff:
 - producer: `scripts/enqueue_active_remediation.py`
@@ -166,6 +168,7 @@ The consumers must be deterministic and bounded:
 - the bridge layer must not claim Pi Dev execution success unless the command is actually run and its result is captured truthfully
 - when the Pi Dev command is blocked by a local provider/model mismatch, create a durable `delegated_executor_requests/<timestamp>-<task-key>.json` fallback artifact, point the live queue at that fallback request, and mark the task `in_progress` so the execution registry reflects the active delegated fallback path rather than silent waiting
 - the fallback artifact must record the blocked Pi Dev command, the failure reason, the source dispatch bridge, and the requested Hermes/subagent executor path
+- when the bounded delegated executor later completes and verification passes, add `control/execution_completions/<timestamp>-<task-key>.json` and transition the current pointer files to `completed` so the dashboard no longer shows a live executor unless one really exists
 - when `scripts/consume_stale_execution_incidents.py` sees a stale live execution older than 30 minutes, it must write one durable incident artifact, mark exactly one queue item `stale_blocked`/`needs_redispatch`, preserve the prior evidence, and emit exactly one bounded redispatch candidate artifact
 - when `scripts/consume_stale_execution_next_actions.py` sees that redispatch candidate, it must consume at most one eligible stale next-action artifact, write one durable redispatch artifact, and convert the queue item into a fresh queued redispatch line linked to the stale incident
 - the stale incident and stale next-action controllers must both be idempotent; once the queue item already carries stale incident or redispatch markers, a rerun should not fabricate a completion or create a second trail

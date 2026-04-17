@@ -124,6 +124,10 @@ The control repo now includes:
 - `control/pi_dev_dispatch.json`
 - `control/delegated_executor_requests/<timestamp>-<task-key>.json`
 - `control/delegated_executor_request.json`
+- `control/execution_assignments/<timestamp>-<task-key>.json`
+- `control/execution_assignment.json`
+- `control/execution_completions/<timestamp>-<task-key>.json`
+- `control/execution_completion.json`
 - `control/stale_execution_incidents/<timestamp>-<task-key>.json`
 - `control/stale_execution_next_actions/<timestamp>-<task-key>.json`
 - `control/stale_execution_redispatches/<timestamp>-<task-key>.json`
@@ -152,5 +156,7 @@ Behavior:
 - the bridge layer is intentionally truthful: it may prepare an explicit invocation command without claiming Pi Dev execution succeeded
 - avoid leaving corrective action as a purely verbal recommendation
 - the live queue is cycle-scoped: if a newer task with the same dedupe key appears, normalize the queue to keep the newest live cycle and preserve the earlier dispatch/request/handoff artifacts in their own artifact directories
-- same-cycle status progression is monotonic (`queued` -> `in_progress` -> `requested_execution` -> `handed_off`)
+- same-cycle status progression is monotonic (`queued` -> `in_progress` -> `requested_execution` -> `handed_off` -> `completed` when the bounded implementation and verification both finish)
 - project-level `in_progress` is not the same as a live delegated execution task
+- when a bounded delegated execution is verified complete, record the durable completion artifact and clear the pseudo-live executor line from the current snapshot
+- the delegated executor request pointer stays historical, but the current request/assignment/completion pointers must show `completed` once the completion proof exists
