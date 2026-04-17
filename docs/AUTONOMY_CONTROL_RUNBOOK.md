@@ -21,9 +21,11 @@ Status heartbeat registries:
 - `control/active_execution.json`
 - `control/execution_completion.json`
 - `control/eeepc_reachability.json`
+- `control/status_feed.jsonl`
 
-Status heartbeat snapshot generator:
+Status heartbeat snapshot/feed generators:
 - `scripts/build_status_snapshot.py`
+- `scripts/build_status_feed.py`
 - `scripts/stale_execution_watchdog.py`
 - `scripts/eeepc_reachability_watchdog.py`
 
@@ -91,7 +93,7 @@ Each project entry must include:
 ## How Hermes should behave
 
 When the control job runs:
-1. refresh the status heartbeat snapshot from `control/active_projects.json`, `control/active_execution.json`, and `scripts/build_status_snapshot.py`
+1. refresh the status heartbeat snapshot from `control/active_projects.json`, `control/active_execution.json`, `scripts/build_status_snapshot.py`, and append one local line to `control/status_feed.jsonl` via `scripts/build_status_feed.py`
 2. read the registry and current Nanobot stagnation analysis from `scripts/analyze_stagnation.py`
 3. run the active remediation candidate generator in `scripts/analyze_active_remediation.py` to turn a stagnant state into one bounded corrective action
 4. enqueue that action in `control/execution_queue.json` when appropriate
@@ -203,6 +205,6 @@ Action required means any of the following:
 This control loop complements the hourly stagnation reporter:
 - stagnation reporter = incident detection
 - autonomy control job = ownership and execution hygiene
-- status heartbeat transparency layer = durable active-project visibility and live queue context
+- status heartbeat transparency layer = durable active-project visibility, live queue context, and append-only local status feed evidence
 
 The system should use both, so Hermes does not merely report that work is stuck; it also keeps projects owned and moving.
