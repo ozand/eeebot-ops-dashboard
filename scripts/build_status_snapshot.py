@@ -29,6 +29,8 @@ WAITING_STATUSES = {
     'pi_dev_dispatch_ready',
 }
 TERMINAL_STATUSES = {'completed', 'cancelled'}
+STALE_BLOCKED_STATUSES = {'stale_blocked'}
+NEEDS_REDISPATCH_STATUSES = {'needs_redispatch'}
 
 
 def now_utc() -> str:
@@ -63,6 +65,8 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
     queue_status = task.get('status')
     if queue_status in TERMINAL_STATUSES:
         execution_state = 'completed'
+    elif queue_status in STALE_BLOCKED_STATUSES or queue_status in NEEDS_REDISPATCH_STATUSES:
+        execution_state = 'needs_redispatch'
     elif queue_status in LIVE_STATUSES:
         execution_state = 'in_progress'
     elif queue_status in QUEUED_STATUSES:
@@ -74,7 +78,10 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
     else:
         execution_state = 'waiting_for_dispatch'
 
-    blocked = bool(task.get('blocked_next_step')) and execution_state not in {'completed', 'in_progress'}
+    blocked = (
+        execution_state in {'blocked', 'needs_redispatch'}
+        or (bool(task.get('blocked_next_step')) and execution_state not in {'completed', 'in_progress'})
+    )
     snapshot = {
         'task_index': index,
         'task_key': task_key(task),
@@ -108,6 +115,19 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
         'pi_dev_requested_at': task.get('pi_dev_requested_at'),
         'pi_dev_bundled_at': task.get('pi_dev_bundled_at'),
         'pi_dev_dispatch_created_at': task.get('pi_dev_dispatch_created_at'),
+        'stale_execution_detected': bool(task.get('stale_execution_detected')),
+        'stale_execution_detected_at': task.get('stale_execution_detected_at'),
+        'stale_execution_incident_path': task.get('stale_execution_incident_path'),
+        'stale_execution_next_action_path': task.get('stale_execution_next_action_path'),
+        'stale_execution_age_seconds': task.get('stale_execution_age_seconds'),
+        'stale_execution_age': task.get('stale_execution_age'),
+        'stale_execution_threshold_minutes': task.get('stale_execution_threshold_minutes'),
+        'stale_execution_recommended_next_action': task.get('stale_execution_recommended_next_action'),
+        'stale_execution_next_action_summary': task.get('stale_execution_next_action_summary'),
+        'stale_execution_previous_status': task.get('stale_execution_previous_status'),
+        'stale_execution_previous_execution_state': task.get('stale_execution_previous_execution_state'),
+        'stale_execution_previous_started_at': task.get('stale_execution_previous_started_at'),
+        'dispatch_state': task.get('dispatch_state'),
     }
     return snapshot
 
@@ -133,6 +153,16 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
             live_task = snapshot
 
     stale_watch = detect_stale_execution(active_execution={'active_tasks': active_tasks}, queue=queue, threshold_minutes=DEFAULT_THRESHOLD_MINUTES, now=updated_at)
+    stale_incident_tasks = [
+        task
+        for task in active_tasks
+        if task.get('stale_execution_detected')
+        or task.get('stale_execution_incident_path')
+        or task.get('status') == 'stale_blocked'
+        or task.get('execution_state') == 'needs_redispatch'
+    ]
+    stale_incident_task = stale_incident_tasks[0] if stale_incident_tasks else None
+    stale_detected = bool(stale_watch['stale_detected'] or stale_incident_task is not None)
 
     summary = {
         'total': len(tasks),
@@ -140,10 +170,12 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
         'queued': sum(1 for task in active_tasks if task['execution_state'] == 'queued'),
         'in_progress': sum(1 for task in active_tasks if task['execution_state'] == 'in_progress'),
         'waiting_for_dispatch': sum(1 for task in active_tasks if task['execution_state'] == 'waiting_for_dispatch'),
+        'needs_redispatch': sum(1 for task in active_tasks if task['execution_state'] == 'needs_redispatch'),
         'blocked': sum(1 for task in active_tasks if task['is_blocked']),
         'completed': len(terminal_tasks),
         'live_execution_tasks': sum(1 for task in active_tasks if task['is_live_execution']),
-        'stale_execution_detected': stale_watch['stale_detected'],
+        'stale_execution_detected': stale_detected,
+        'stale_execution_incidents': len(stale_incident_tasks),
     }
 
     registry = {
@@ -152,9 +184,10 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
         'summary': summary,
         'has_actually_executing_task': live_task is not None,
         'live_task': live_task,
-        'stale_execution_detected': stale_watch['stale_detected'],
+        'stale_execution_detected': stale_detected,
         'stale_execution_threshold_minutes': stale_watch['threshold_minutes'],
-        'stale_execution_task': stale_watch if stale_watch['stale_detected'] or stale_watch['task_key'] is not None else None,
+        'stale_execution_task': stale_watch if stale_watch['stale_detected'] else None,
+        'stale_execution_incident_task': stale_incident_task,
         'active_tasks': active_tasks,
         'terminal_tasks': terminal_tasks,
     }
@@ -185,6 +218,7 @@ def main() -> None:
                     'live_delegated_execution_task': active_execution['live_task'],
                     'stale_execution_detected': active_execution['stale_execution_detected'],
                     'stale_execution_task': active_execution['stale_execution_task'],
+                    'stale_execution_incident_task': active_execution['stale_execution_incident_task'],
                 },
             },
             ensure_ascii=False,
