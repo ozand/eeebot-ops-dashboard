@@ -82,6 +82,7 @@ Included assets:
 - `scripts/stale_execution_watchdog.py`
 - `scripts/consume_stale_execution_incidents.py`
 - `scripts/consume_stale_execution_next_actions.py`
+- `scripts/consume_queued_redispatch_assignments.py`
 
 Behavior:
 - keep the active-project registry explicit and machine-readable
@@ -90,6 +91,7 @@ Behavior:
 - make the current project stage, ownership posture, and execution-work lifecycle easy to inspect as part of the autonomy system
 - when the watchdog says the live execution is stale, let the stale-incident controller write a durable stale incident record, mark the queue item `stale_blocked`, and emit one bounded redispatch candidate
 - then let the stale-next-action redispatch controller consume that candidate and turn the queue item back into a fresh queued redispatch line linked to the stale incident
+- then let the queued-redispatch assignment controller consume that queued line, write a durable execution-assignment artifact, and restore a fresh live delegated execution line
 - support the control job described above without introducing a new execution model
 
 ## Execution queue layer
@@ -102,6 +104,7 @@ The control repo now includes:
 - `scripts/consume_execution_queue.py`
 - `scripts/consume_stale_execution_incidents.py`
 - `scripts/consume_stale_execution_next_actions.py`
+- `scripts/consume_queued_redispatch_assignments.py`
 - `scripts/consume_execution_requests.py`
 - `scripts/consume_executor_handoffs.py`
 - `scripts/consume_pi_dev_requests.py`

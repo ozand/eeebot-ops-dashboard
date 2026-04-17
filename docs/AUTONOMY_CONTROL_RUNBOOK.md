@@ -95,11 +95,12 @@ When the control job runs:
 4. enqueue that action in `control/execution_queue.json` when appropriate
 5. run `scripts/consume_stale_execution_incidents.py` so any truly stale live execution is truthfully marked `stale_blocked` and a bounded redispatch candidate is emitted
 6. run `scripts/consume_stale_execution_next_actions.py` so one eligible stale next-action artifact becomes a fresh queued redispatch task linked back to the stale incident
-7. run the execution consumer in `scripts/consume_execution_queue.py` to dispatch at most one queued remediation task and persist a dispatch artifact
-8. identify any overdue review or ownership gap
-9. report the exact next bounded action
-10. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
-11. if a project is healthy, still confirm the next review time rather than going silent
+7. run `scripts/consume_queued_redispatch_assignments.py` so one eligible queued redispatch task becomes a fresh live delegated execution assignment
+8. run the execution consumer in `scripts/consume_execution_queue.py` to dispatch at most one queued remediation task and persist a dispatch artifact
+9. identify any overdue review or ownership gap
+10. report the exact next bounded action
+11. if Nanobot is stagnating, prioritize the blocker and the smallest safe fix
+12. if a project is healthy, still confirm the next review time rather than going silent
 
 ## Execution queue and dispatch
 
@@ -111,12 +112,14 @@ Project ownership and delegated execution are separate facts:
 - `scripts/stale_execution_watchdog.py` treats a live `in_progress` task as stale once it exceeds the configured threshold and emits a bounded JSON incident record
 - `scripts/consume_stale_execution_incidents.py` consumes the watchdog/control state, writes a durable stale incident plus next-action artifact, and truthfully converts the live queue item to `stale_blocked`
 - `scripts/consume_stale_execution_next_actions.py` consumes at most one eligible stale next-action artifact, writes a durable redispatch artifact, and turns the queue item back into a fresh queued redispatch line linked to the stale incident
+- `scripts/consume_queued_redispatch_assignments.py` consumes at most one eligible queued redispatch task, writes a durable execution-assignment artifact, and turns the queue item into a fresh live delegated execution line linked to the stale incident and redispatch artifacts
 
 The autonomy control loop now has a clear handoff:
 - producer: `scripts/enqueue_active_remediation.py`
 - dispatch consumer: `scripts/consume_execution_queue.py`
 - stale incident controller: `scripts/consume_stale_execution_incidents.py`
-- stale next-action redispatch controller: `scripts/consume_stale_execution_next_actions.py`
+- stale next-action controller: `scripts/consume_stale_execution_next_actions.py`
+- queued redispatch execution-assignment controller: `scripts/consume_queued_redispatch_assignments.py`
 - execution request consumer: `scripts/consume_execution_requests.py`
 - executor handoff consumer: `scripts/consume_executor_handoffs.py`
 - Pi Dev request consumer: `scripts/consume_pi_dev_requests.py`
@@ -127,9 +130,11 @@ The autonomy control loop now has a clear handoff:
 - stale incident artifact: `control/stale_execution_incidents/<timestamp>-<task-key>.json`
 - stale next-action artifact: `control/stale_execution_next_actions/<timestamp>-<task-key>.json`
 - stale redispatch artifact: `control/stale_execution_redispatches/<timestamp>-<task-key>.json`
+- execution assignment artifact: `control/execution_assignments/<timestamp>-<task-key>.json`
 - stale incident pointer: `control/stale_execution_incident.json`
 - stale next-action pointer: `control/stale_execution_next_action.json`
 - stale redispatch pointer: `control/stale_execution_redispatch.json`
+- execution assignment pointer: `control/execution_assignment.json`
 - execution request artifact: `control/execution_requests/<timestamp>-<task-key>.json`
 - executor handoff artifact: `control/executor_handoffs/<timestamp>-<task-key>.json`
 - Pi Dev request artifact: `control/pi_dev_requests/<timestamp>-<task-key>.json`

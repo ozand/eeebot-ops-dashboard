@@ -8,6 +8,8 @@ Status heartbeat transparency layer:
 - `scripts/build_status_snapshot.py` refreshes the execution registry snapshot and renders a compact status view from both registries
 - `scripts/stale_execution_watchdog.py` inspects the live queue/execution snapshot for in_progress tasks that have gone stale past the configured threshold
 - `scripts/consume_stale_execution_incidents.py` converts a stale live execution into a durable stale-incident record, truthfully marks the queue entry `stale_blocked`, and emits one bounded redispatch candidate
+- `scripts/consume_stale_execution_next_actions.py` converts that redispatch candidate into a queued redispatch line and durable redispatch artifact
+- `scripts/consume_queued_redispatch_assignments.py` converts one queued redispatch line into a fresh live delegated execution assignment and durable assignment artifact
 - the snapshot is intended to make current ownership and execution state durable and easy to inspect without depending on chat history
 
 Project status vs execution status:
@@ -92,6 +94,10 @@ Pi Dev dispatch bridge artifacts:
 Delegated executor fallback artifacts:
 - `control/delegated_executor_requests/<timestamp>-<task-key>.json`
 - `control/delegated_executor_request.json`
+
+Delegated execution assignment artifacts:
+- `control/execution_assignments/<timestamp>-<task-key>.json`
+- `control/execution_assignment.json`
 
 Stale execution incident artifacts:
 - `control/stale_execution_incidents/<timestamp>-<task-key>.json`
