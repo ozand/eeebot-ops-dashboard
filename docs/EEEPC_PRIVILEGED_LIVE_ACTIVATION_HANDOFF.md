@@ -1,23 +1,28 @@
 # eeepc Privileged Live Activation Handoff
 
-Last updated: 2026-04-16 UTC
+Last updated: 2026-04-17 UTC
 
-This is the operator-safe handoff for activating the already-implemented goal-rotation/task-plan fixes on live eeepc.
+This is the operator-safe handoff for activating the already-completed Nanobot fixes on live eeepc:
+- planner hardening
+- goal-rotation loop-breaker
+- task-plan / reward writer
 
 Do not treat this as the switch itself. It is the exact deploy/verify bundle for a privileged operator.
 
 ## Deploy commits
 
-Apply the nanobot commits that contain the fixes:
-- `bfca5f5` — `feat: add bounded task plan snapshots`
-- `d48c777` — `Add loop-breaker goal rotation guard`
+Apply the Nanobot commits that contain the completed fixes:
+- `f557aeb25c70535862aa57f2f192a6c3947e1d73` — `Tighten blocked next-cycle planner output`
+- `d48c77725bdc66b38df8d39b42a8ae6063420434` — `Add loop-breaker goal rotation guard`
+- `bfca5f5887905d8cbc2bcf9ccf7b92c877341403` — `feat: add bounded task plan snapshots`
 
-Deploy the release archive built from `d48c777`:
-- archive: `/tmp/nanobot-d48c777.tar.gz`
-- sha256: `9dd2de92e4723de925e1ac1b91c35578142bd6d24fbad2302c3cb2cb8953ddfe`
+Deploy the release archive built from `f557aeb25c70535862aa57f2f192a6c3947e1d73`:
+- archive: `/tmp/nanobot-f557aeb.tar.gz`
+- sha256: `fb78c28b25b76f5ec71ff30ff67506d3377e1bbb253fef14b27706d452a53eb8`
+- release id: `20260417-0450-f557aeb`
 
 Suggested pinned release directory for the activation step:
-- `/home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777`
+- `/home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb`
 
 ## Live target paths
 
@@ -31,10 +36,10 @@ Suggested pinned release directory for the activation step:
 Run these as the privileged operator on eeepc:
 
 ```bash
-sudo mkdir -p /home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777
-sudo tar -xzf /tmp/nanobot-d48c777.tar.gz -C /home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777
-sudo chown -R opencode:opencode /home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777
-sudo ln -sfn /home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777 /home/opencode/.nanobot-eeepc/runtime/pinned/current
+sudo mkdir -p /home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb
+sudo tar -xzf /tmp/nanobot-f557aeb.tar.gz -C /home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb
+sudo chown -R opencode:opencode /home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb
+sudo ln -sfn /home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb /home/opencode/.nanobot-eeepc/runtime/pinned/current
 sudo systemctl restart nanobot-gateway-eeepc.service
 ```
 
@@ -44,7 +49,7 @@ sudo systemctl restart nanobot-gateway-eeepc.service
 sudo readlink -f /home/opencode/.nanobot-eeepc/runtime/pinned/current
 sudo systemctl is-active nanobot-gateway-eeepc.service
 sudo journalctl -u nanobot-gateway-eeepc.service -n 50 --no-pager
-sudo env PYTHONPATH=/home/opencode/.nanobot-eeepc/runtime/pinned/20260416-2051-d48c777 \
+sudo env PYTHONPATH=/home/opencode/.nanobot-eeepc/runtime/pinned/20260417-0450-f557aeb \
   /home/opencode/.venvs/nanobot/bin/nanobot status \
   --runtime-state-source host_control_plane \
   --runtime-state-root /var/lib/eeepc-agent/self-evolving-agent/state
