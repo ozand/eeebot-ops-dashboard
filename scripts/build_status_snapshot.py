@@ -146,6 +146,13 @@ def classify_task(task: dict[str, Any], index: int) -> dict[str, Any]:
     return snapshot
 
 
+def normalize_historical_stale_metadata(snapshot: dict[str, Any], threshold_minutes: int, policy_summary: str) -> dict[str, Any]:
+    if snapshot.get('stale_execution_detected'):
+        snapshot['stale_execution_threshold_minutes'] = threshold_minutes
+        snapshot['stale_execution_policy_summary'] = policy_summary
+    return snapshot
+
+
 def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, Any]:
     tasks = queue.get('tasks') if isinstance(queue, dict) else []
     if not isinstance(tasks, list):
@@ -154,6 +161,9 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
     active_tasks: list[dict[str, Any]] = []
     terminal_tasks: list[dict[str, Any]] = []
     live_task: dict[str, Any] | None = None
+
+    current_threshold_minutes = DEFAULT_THRESHOLD_MINUTES
+    current_policy_summary = f'in_progress tasks older than {current_threshold_minutes} minutes must be investigated or escalated.'
 
     for index, task in enumerate(tasks):
         if not isinstance(task, dict):
@@ -166,7 +176,7 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
         if live_task is None and snapshot['is_live_execution']:
             live_task = snapshot
 
-    stale_watch = detect_stale_execution(active_execution={'active_tasks': active_tasks}, queue=queue, threshold_minutes=DEFAULT_THRESHOLD_MINUTES, now=updated_at)
+    stale_watch = detect_stale_execution(active_execution={'active_tasks': active_tasks}, queue=queue, threshold_minutes=current_threshold_minutes, now=updated_at)
     stale_incident_tasks = [
         task
         for task in active_tasks
@@ -192,19 +202,27 @@ def build_active_execution(queue: dict[str, Any], updated_at: str) -> dict[str, 
         'stale_execution_incidents': len(stale_incident_tasks),
     }
 
+    normalized_active_tasks = [normalize_historical_stale_metadata(task, current_threshold_minutes, current_policy_summary) for task in active_tasks]
+    normalized_terminal_tasks = [normalize_historical_stale_metadata(task, current_threshold_minutes, current_policy_summary) for task in terminal_tasks]
+    normalized_live_task = normalize_historical_stale_metadata(live_task, current_threshold_minutes, current_policy_summary) if live_task is not None else None
+    normalized_stale_watch = dict(stale_watch)
+    if normalized_stale_watch.get('stale_detected'):
+        normalized_stale_watch['threshold_minutes'] = current_threshold_minutes
+        normalized_stale_watch['policy_summary'] = current_policy_summary
+
     registry = {
         'updated_at': updated_at,
         'source_queue_path': str(QUEUE),
         'summary': summary,
         'has_actually_executing_task': live_task is not None,
-        'live_task': live_task,
+        'live_task': normalized_live_task,
         'stale_execution_detected': stale_detected,
-        'stale_execution_threshold_minutes': stale_watch['threshold_minutes'],
-        'stale_execution_policy_summary': stale_watch['policy_summary'],
-        'stale_execution_task': stale_watch if stale_watch['stale_detected'] else None,
-        'stale_execution_incident_task': stale_incident_task,
-        'active_tasks': active_tasks,
-        'terminal_tasks': terminal_tasks,
+        'stale_execution_threshold_minutes': current_threshold_minutes,
+        'stale_execution_policy_summary': current_policy_summary,
+        'stale_execution_task': normalized_stale_watch if normalized_stale_watch['stale_detected'] else None,
+        'stale_execution_incident_task': normalize_historical_stale_metadata(stale_incident_task, current_threshold_minutes, current_policy_summary) if stale_incident_task is not None else None,
+        'active_tasks': normalized_active_tasks,
+        'terminal_tasks': normalized_terminal_tasks,
     }
     atomic_write_json(ACTIVE_EXECUTION, registry)
     return registry

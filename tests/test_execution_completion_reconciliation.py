@@ -53,6 +53,8 @@ def _completed_task() -> dict[str, object]:
         'stale_execution_redispatch_previous_execution_state': 'needs_redispatch',
         'stale_execution_redispatch_previous_queue_status': 'stale_blocked',
         'stale_execution_redispatch_previous_started_at': '2026-04-16T11:40:49.015519Z',
+        'stale_execution_threshold_minutes': 60,
+        'stale_execution_policy_summary': None,
         'stale_execution_redispatch_next_action_summary': 'Re-dispatch one bounded slice for the goal after preserving the stale incident evidence.',
         'stale_execution_redispatch_candidate': {
             'status': 'needs_redispatch',
@@ -107,6 +109,8 @@ def test_build_status_snapshot_marks_verified_completion_as_non_live(tmp_path: P
     assert registry['terminal_tasks'][0]['execution_completion_status'] == 'verified_completed'
     assert registry['terminal_tasks'][0]['execution_completion_commit'] == COMPLETION_COMMIT
     assert registry['terminal_tasks'][0]['execution_completion_verification_status'] == 'passed'
+    assert registry['terminal_tasks'][0]['stale_execution_threshold_minutes'] == 30
+    assert registry['terminal_tasks'][0]['stale_execution_policy_summary'] == 'in_progress tasks older than 30 minutes must be investigated or escalated.'
     assert active_execution_path.exists()
 
     refreshed = json.loads(active_execution_path.read_text(encoding='utf-8'))
@@ -114,3 +118,5 @@ def test_build_status_snapshot_marks_verified_completion_as_non_live(tmp_path: P
     assert refreshed['live_task'] is None
     assert refreshed['summary']['completed'] == 1
     assert refreshed['terminal_tasks'][0]['execution_completion_status'] == 'verified_completed'
+    assert refreshed['terminal_tasks'][0]['stale_execution_threshold_minutes'] == 30
+    assert refreshed['terminal_tasks'][0]['stale_execution_policy_summary'] == 'in_progress tasks older than 30 minutes must be investigated or escalated.'
