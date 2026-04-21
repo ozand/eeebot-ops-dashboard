@@ -1244,11 +1244,18 @@ def create_app(cfg: DashboardConfig):
         request_source = query.get('source', [''])[0]
         request_status = query.get('status', [''])[0]
         request_origin = query.get('origin', [''])[0]
-        subagent_events = _filter_rows(all_subagent_events, request_source, request_status, request_origin)
+        request_limit_raw = query.get('limit', ['100'])[0]
+        try:
+            request_limit = max(1, min(200, int(request_limit_raw or '100')))
+        except ValueError:
+            request_limit = 100
+        filtered_subagent_events = _filter_rows(all_subagent_events, request_source, request_status, request_origin)
+        subagent_events = filtered_subagent_events[:request_limit]
         subagent_sources = sorted({row.get('source') for row in all_subagent_events if row.get('source')})
         subagent_origins = sorted({_origin_label(row.get('detail')) for row in all_subagent_events if _origin_label(row.get('detail')) != 'unknown'})
         subagent_statuses = sorted({row.get('status') or 'unknown' for row in all_subagent_events})
         subagent_total = len(all_subagent_events)
+        subagent_filtered_total = len(filtered_subagent_events)
 
         approval_rows = [
             {**row, 'plan_snapshot': _plan_snapshot_from_row(row)}
@@ -1333,10 +1340,12 @@ def create_app(cfg: DashboardConfig):
             'request_source': request_source,
             'request_status': request_status,
             'request_origin': request_origin,
+            'request_limit': request_limit,
             'subagent_sources': subagent_sources,
             'subagent_origins': subagent_origins,
             'subagent_statuses': subagent_statuses,
             'subagent_total': subagent_total,
+            'subagent_filtered_total': subagent_filtered_total,
             'eeepc_observation_groups': eeepc_observation_groups,
             'eeepc_latest_observation': eeepc_latest_observation,
             'eeepc_unique_cycle_reports': len(eeepc_cycle_events),
@@ -1520,6 +1529,19 @@ def create_app(cfg: DashboardConfig):
 
         if path == '/api/analytics':
             body = json.dumps({'analytics': analytics, 'current_blocker': current_blocker}, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/system':
+            payload = {
+                'eeepc_goal': system_visibility['eeepc_goal'],
+                'eeepc_status': system_visibility['eeepc_status'],
+                'repo_goal': system_visibility['repo_goal'],
+                'repo_status': system_visibility['repo_status'],
+                'eeepc_files': system_visibility['eeepc_files'],
+                'local_files': system_visibility['local_files'],
+            }
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
             return [body]
 

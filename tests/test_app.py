@@ -506,6 +506,16 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'Deployments / Verification' in deployments_body
     assert 'Live eeepc proof' in deployments_body
     assert '/state/reports/evolution-1.json' in deployments_body
+
+    status, system_body = _call_app(app, '/system')
+    assert status.startswith('200')
+    assert 'System / goal files' in system_body
+    assert 'README.md' in system_body
+
+    status, system_api = _call_app(app, '/api/system')
+    assert status.startswith('200')
+    assert 'eeepc_goal' in system_api
+    assert 'local_files' in system_api
     assert 'Current task' in deployments_body
     assert 'Plan payload' in deployments_body
     assert 'Observation cadence' in deployments_body
@@ -730,6 +740,11 @@ def test_app_subagents_renders_durable_history(tmp_path: Path):
     assert 'browser-report' not in filtered_body
     assert 'name="origin"' in filtered_body
     assert 'selected' in filtered_body
+
+    status, limited_body = _call_app(app, '/subagents', 'limit=1')
+    assert status.startswith('200')
+    assert 'browser-report' in limited_body
+    assert 'widget-fix' not in limited_body
 
 
 def test_app_reports_missing_report_source_and_pending_cadence(tmp_path: Path):

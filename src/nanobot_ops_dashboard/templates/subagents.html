@@ -33,6 +33,14 @@
         <div class="label">Latest task</div>
         <div class="value"><strong>{{ subagent_events[0]['detail'].get('current_task_id') or 'unknown' }}</strong></div>
       </div>
+      <div class="kv">
+        <div class="label">Filtered rows</div>
+        <div class="value"><strong>{{ subagent_filtered_total }}</strong></div>
+      </div>
+      <div class="kv">
+        <div class="label">Page limit</div>
+        <div class="value"><strong>{{ request_limit }}</strong></div>
+      </div>
     </div>
   </div>
 
@@ -67,6 +75,14 @@
         <option value="">All statuses</option>
         {% for status in subagent_statuses %}
         <option value="{{ status }}" {% if request_status == status %}selected{% endif %}>{{ status }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Limit
+      <select name="limit">
+        {% for option in [25, 50, 100, 200] %}
+        <option value="{{ option }}" {% if request_limit == option %}selected{% endif %}>{{ option }}</option>
         {% endfor %}
       </select>
     </label>
