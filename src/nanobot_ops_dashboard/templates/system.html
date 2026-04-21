@@ -32,6 +32,9 @@
         <div class="detail-row"><span class="detail-label">Approval</span><span>{{ control_plane.approval.state or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Approval expiry</span><span>{{ control_plane.approval.expires_at_utc or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Current experiment</span><span>{{ control_plane.experiment.display_status if control_plane.experiment else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Validation status</span><span>{{ control_plane.validation_summary.status if control_plane.validation_summary else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Validation warnings</span><span>{{ (control_plane.validation_warnings | join(', ')) if control_plane.validation_warnings else 'none' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Validation errors</span><span>{{ (control_plane.validation_errors | join(', ')) if control_plane.validation_errors else 'none' }}</span></div>
       </div>
     </div>
     <div class="card">
