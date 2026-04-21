@@ -352,7 +352,13 @@ def _experiment_snapshot_from_payload(payload, source_path: Path) -> dict | None
     title_value = _first_present(experiment_payload, ('title', 'name', 'summary', 'label'))
     status = _first_present(experiment_payload, ('status', 'state', 'result_status', 'outcome')) or 'unknown'
     phase = _first_present(experiment_payload, ('phase', 'stage'))
-    is_experiment_snapshot = any(_has_value(value) for value in (experiment_id, title_value, reward_signal, phase))
+    outcome = _first_present(experiment_payload, ('outcome',))
+    metric_name = _first_present(experiment_payload, ('metric_name', 'metricName'))
+    metric_baseline = _first_present(experiment_payload, ('metric_baseline', 'metricBaseline'))
+    metric_current = _first_present(experiment_payload, ('metric_current', 'metricCurrent'))
+    metric_frontier = _first_present(experiment_payload, ('metric_frontier', 'metricFrontier'))
+    contract_path = _first_present(experiment_payload, ('contract_path', 'contractPath'))
+    is_experiment_snapshot = any(_has_value(value) for value in (experiment_id, title_value, reward_signal, phase, outcome, metric_name, contract_path))
     title = title_value or experiment_id or 'unknown experiment'
     collected_at = _first_present(experiment_payload, ('collected_at', 'collectedAt', 'finished_at', 'finishedAt', 'started_at', 'startedAt'))
     if not collected_at:
@@ -370,6 +376,12 @@ def _experiment_snapshot_from_payload(payload, source_path: Path) -> dict | None
         'reward_text': _reward_signal_text(reward_signal),
         'budget': budget_payload if budget_payload else None,
         'budget_text': _budget_signal_text(budget_payload if budget_payload else None),
+        'outcome': str(outcome) if _has_value(outcome) else None,
+        'metric_name': str(metric_name) if _has_value(metric_name) else None,
+        'metric_baseline': metric_baseline,
+        'metric_current': metric_current,
+        'metric_frontier': metric_frontier,
+        'contract_path': str(contract_path) if _has_value(contract_path) else None,
         'raw': payload,
     }
 

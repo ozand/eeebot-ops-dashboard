@@ -160,7 +160,7 @@ def _seed_experiment_telemetry(repo_root: Path) -> None:
     (state_root / 'budgets').mkdir(parents=True, exist_ok=True)
     (state_root / 'credits').mkdir(parents=True, exist_ok=True)
     (state_root / 'experiments' / 'history.jsonl').write_text(
-        '{"experiment_id": "exp-16", "title": "reward-baseline", "status": "done", "phase": "complete", "reward_signal": {"status": "seed", "value": 0.1}, "budget": {"limit": 1200, "spent": 240, "remaining": 960, "currency": "USD"}}\n',
+        '{"experiment_id": "exp-16", "title": "reward-baseline", "status": "done", "phase": "complete", "result_status": "PASS", "outcome": "keep", "metric_name": "reward_signal.value", "metric_baseline": null, "metric_current": 0.1, "metric_frontier": 0.1, "contract_path": "/workspace/state/experiments/contracts/exp-16.json", "reward_signal": {"status": "seed", "value": 0.1}, "budget": {"limit": 1200, "spent": 240, "remaining": 960, "currency": "USD"}, "budget_used": {"requests": 1, "tool_calls": 2}}\n',
         encoding='utf-8',
     )
     (state_root / 'budgets' / 'current.json').write_text(
@@ -177,7 +177,7 @@ def _seed_experiment_telemetry(repo_root: Path) -> None:
         encoding='utf-8',
     )
     (state_root / 'experiments' / 'current.json').write_text(
-        '{"current_experiment": {"experiment_id": "exp-17", "title": "reward-tuning", "status": "running", "phase": "active", "reward_signal": {"status": "seed", "value": 0.25, "source": "experiment-telemetry"}, "budget": {"limit": 1200, "spent": 275, "remaining": 925, "currency": "USD"}}}',
+        '{"current_experiment": {"experiment_id": "exp-17", "title": "reward-tuning", "status": "running", "phase": "active", "result_status": "PASS", "outcome": "keep", "metric_name": "reward_signal.value", "metric_baseline": 0.1, "metric_current": 0.25, "metric_frontier": 0.25, "contract_path": "/workspace/state/experiments/contracts/exp-17.json", "reward_signal": {"status": "seed", "value": 0.25, "source": "experiment-telemetry"}, "budget": {"limit": 1200, "spent": 275, "remaining": 925, "currency": "USD"}, "budget_used": {"requests": 1, "tool_calls": 4}}}',
         encoding='utf-8',
     )
     now = time.time()
@@ -643,6 +643,10 @@ def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
     assert 'Balance' in body
     assert '3.5' in body
     assert 'Delta' in body
+    assert 'keep' in body
+    assert 'reward_signal.value' in body
+    assert '0.25' in body
+    assert '/workspace/state/experiments/contracts/exp-17.json' in body
     assert 'remaining=925' in body
     assert 'experiment-telemetry' in body
     assert 'workspace/state/experiments/current.json' in body
@@ -665,6 +669,9 @@ def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
     assert 'experiment-telemetry' in api_body
     assert 'credits' in api_body
     assert '3.5' in api_body
+    assert 'outcome' in api_body
+    assert 'metric_frontier' in api_body
+    assert 'contract_path' in api_body
     assert 'workspace/state/experiments/current.json' in api_body
 
     status, credits_api = _call_app(app, '/api/credits')

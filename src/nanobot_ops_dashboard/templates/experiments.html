@@ -107,10 +107,13 @@
         <td data-label="Reward / failure">
           <div>{{ item.reward_text }}</div>
           <div class="muted">{{ item.raw.result_status or item.status }}</div>
+          <div class="muted">outcome={{ item.outcome or 'unknown' }}</div>
+          <div class="muted">metric={{ item.metric_name or 'unknown' }}</div>
+          <div class="muted">baseline={{ item.metric_baseline if item.metric_baseline is not none else 'none' }} current={{ item.metric_current if item.metric_current is not none else 'none' }} frontier={{ item.metric_frontier if item.metric_frontier is not none else 'none' }}</div>
         </td>
         <td data-label="Credits">balance={{ current_credits.balance if current_credits else 'unknown' }} / delta={{ current_credits.delta if current_credits else 'unknown' }}</td>
         <td data-label="Used calls"><code>{{ item.raw.budget_used or {} }}</code></td>
-        <td data-label="Budget">{{ item.budget_text }}</td>
+        <td data-label="Budget">{{ item.budget_text }}{% if item.contract_path %}<div class="muted mono"><code>{{ item.contract_path }}</code></div>{% endif %}</td>
         <td data-label="Source" class="mono"><code>{{ item.source_path }}</code></td>
       </tr>
       {% else %}
