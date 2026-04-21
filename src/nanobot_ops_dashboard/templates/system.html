@@ -65,6 +65,15 @@
         <div class="detail-row"><span class="detail-label">Report path</span><span>{{ control_plane.subagent_correlation.report_path if control_plane.subagent_correlation else 'unknown' }}</span></div>
       </div>
     </div>
+    <div class="card">
+      <h3>Runtime source pin</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Repo root</span><span>{{ control_plane.runtime_source.source_repo_root if control_plane.runtime_source else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Branch</span><span>{{ control_plane.runtime_source.source_branch if control_plane.runtime_source else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Commit</span><span>{{ control_plane.runtime_source.source_commit if control_plane.runtime_source else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Tree</span><span>{{ control_plane.runtime_source.source_tree if control_plane.runtime_source else 'unknown' }}</span></div>
+      </div>
+    </div>
   </div>
 </div>
 

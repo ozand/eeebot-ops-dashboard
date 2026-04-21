@@ -168,6 +168,7 @@ def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, curren
         'current_blocker': current_blocker,
         'current_task': (producer_summary.get('task_plan') or {}).get('current_task') or (repo_latest or {}).get('current_task'),
         'producer_summary': producer_summary if isinstance(producer_summary, dict) else {},
+        'runtime_source': (producer_summary.get('runtime_source') if isinstance(producer_summary, dict) else None),
         'validation_summary': (producer_summary.get('validation_summary') if isinstance(producer_summary, dict) else None),
         'validation_warnings': (producer_summary.get('validation_warnings') if isinstance(producer_summary, dict) else None),
         'validation_errors': (producer_summary.get('validation_errors') if isinstance(producer_summary, dict) else None),
@@ -1696,6 +1697,7 @@ def create_app(cfg: DashboardConfig):
                 'control_plane': control_plane,
                 'host_resources': dict(repo_latest).get('host_resources') if repo_latest else None,
                 'capabilities': control_plane.get('capabilities'),
+                'runtime_source': control_plane.get('runtime_source'),
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
