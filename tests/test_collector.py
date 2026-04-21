@@ -7,6 +7,7 @@ from pathlib import Path
 from nanobot_ops_dashboard.collector import (
     _build_ssh_command,
     _normalize_eeepc_payloads,
+    _normalize_eeepc_state,
     _normalize_repo_state,
     collect_once,
     run_poll_loop,
@@ -96,6 +97,63 @@ def test_normalize_eeepc_payloads_extracts_goal_status_and_artifacts(tmp_path: P
     assert result['events'][0]['identity_key'] == '/state/reports/evolution-1.json'
     assert result['events'][0]['detail']['failure_class'] is None
     assert result['events'][0]['detail']['blocked_next_step'] is None
+
+
+def test_normalize_eeepc_state_falls_back_to_goals_when_report_index_is_permission_denied(tmp_path: Path, monkeypatch):
+    cfg = DashboardConfig(
+        project_root=tmp_path,
+        db_path=tmp_path / 'db.sqlite3',
+        nanobot_repo_root=tmp_path / 'repo',
+        eeepc_ssh_host='eeepc',
+        eeepc_ssh_key=tmp_path / 'id_ed25519',
+        eeepc_state_root='/var/lib/eeepc-agent/self-evolving-agent/state',
+    )
+
+    def fake_probe(_cfg):
+        return {'reachable': True}
+
+    def fake_load_ssh_json(_cfg, remote_path: str):
+        if remote_path.endswith('/outbox/report.index.json'):
+            return None, {
+                'source': 'eeepc',
+                'stage': f'ssh:{remote_path}',
+                'message': 'Permission denied',
+                'error_type': 'CalledProcessError',
+                'returncode': 1,
+            }
+        if remote_path.endswith('/goals/registry.json'):
+            return {'active_goal_id': 'goal-1'}, None
+        if remote_path.endswith('/goals/current.json'):
+            return {
+                'schema_version': 2,
+                'current_task_id': 'task-7',
+                'current_task': 'ship plan view',
+                'task_counts': {'open': 1},
+                'task_list': ['ship plan view', 'wire api'],
+                'reward_signal': {'status': 'dense', 'score': 0.75},
+                'plan_history': [{'current_task': 'draft plan', 'reward_signal': 'seed'}],
+            }, None
+        if remote_path.endswith('/goals/active.json'):
+            return None, None
+        if remote_path.endswith('/goals/history/cycle-1.json'):
+            return {'current_task': 'draft plan', 'reward_signal': 'seed'}, None
+        raise AssertionError(remote_path)
+
+    monkeypatch.setattr('nanobot_ops_dashboard.collector.probe_eeepc_reachability', fake_probe)
+    monkeypatch.setattr('nanobot_ops_dashboard.collector._load_ssh_json', fake_load_ssh_json)
+    monkeypatch.setattr('nanobot_ops_dashboard.collector._run_ssh_lines', lambda *_args, **_kwargs: [f'{cfg.eeepc_state_root}/goals/history/cycle-1.json'])
+
+    result = _normalize_eeepc_state(cfg)
+    assert result['collection_status'] == 'ok'
+    assert result['collection_error'] is None
+    assert result['active_goal'] == 'goal-1'
+    assert result['current_task'] == 'ship plan view'
+    assert result['task_list'] == ['ship plan view', 'wire api']
+    assert result['reward_signal']['score'] == 0.75
+    assert result['plan_history'][0]['current_task'] == 'draft plan'
+    assert result['outbox_source'] == '/var/lib/eeepc-agent/self-evolving-agent/state/goals/current.json'
+    assert result['raw']['source_errors']['outbox']['message'] == 'Permission denied'
+    assert result['raw']['current_plan']['current_task_id'] == 'task-7'
 
 
 

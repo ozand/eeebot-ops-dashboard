@@ -23,6 +23,15 @@ def _safe_json_load(path: Path) -> dict[str, Any] | None:
         return None
 
 
+def _json_loads_any(value: str | None):
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except Exception:
+        return value
+
+
 def _latest_json_file(directory: Path, pattern: str) -> Path | None:
     if not directory.exists():
         return None
@@ -335,11 +344,65 @@ def _extract_plan_state(*payloads: dict[str, Any] | None) -> dict[str, Any]:
         return []
 
     return {
-        'current_task': _pick(('current_task', 'currentTask', 'task', 'task_name', 'taskName', 'current_task_name', 'currentTaskName')),
+        'current_task': _pick(('current_task', 'currentTask', 'task', 'task_name', 'taskName', 'current_task_name', 'currentTaskName', 'current_task_id', 'currentTaskId')),
         'task_list': _pick_list(('task_list', 'taskList', 'tasks', 'task_queue', 'taskQueue')),
         'reward_signal': _pick(('reward_signal', 'rewardSignal', 'reward', 'reward_score', 'rewardScore')),
         'plan_history': _pick_list(('plan_history', 'planHistory', 'recent_plan_history', 'recentPlanHistory', 'history')),
     }
+
+
+def _task_label(value) -> str:
+    if isinstance(value, dict):
+        for key in ('title', 'task', 'label', 'name', 'text', 'summary', 'id', 'task_id', 'taskId'):
+            candidate = value.get(key)
+            if _has_value(candidate):
+                return str(candidate)
+        return json.dumps(value, ensure_ascii=False)
+    if value is None:
+        return 'unknown'
+    return str(value)
+
+
+def _normalize_task_plan_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
+    payload = payload if isinstance(payload, dict) else {}
+    tasks = payload.get('tasks') if isinstance(payload.get('tasks'), list) else payload.get('task_list') if isinstance(payload.get('task_list'), list) else payload.get('taskList') if isinstance(payload.get('taskList'), list) else []
+    if not isinstance(tasks, list):
+        tasks = [tasks] if _has_value(tasks) else []
+    current_task_id = payload.get('current_task_id') or payload.get('currentTaskId')
+    current_task = payload.get('current_task') or payload.get('currentTask') or payload.get('task') or payload.get('task_name') or payload.get('taskName') or payload.get('current_task_name') or payload.get('currentTaskName') or current_task_id
+    if not _has_value(current_task) and tasks:
+        for task in tasks:
+            if isinstance(task, dict) and (task.get('status') or '').lower() == 'active':
+                current_task = _task_label(task)
+                current_task_id = current_task_id or task.get('task_id') or task.get('taskId')
+                break
+    reward_signal = payload.get('reward_signal') if _has_value(payload.get('reward_signal')) else payload.get('rewardSignal') if _has_value(payload.get('rewardSignal')) else payload.get('reward') if _has_value(payload.get('reward')) else None
+    task_counts = payload.get('task_counts') or payload.get('taskCounts')
+    if isinstance(reward_signal, str):
+        parsed_reward = _json_loads_any(reward_signal)
+        if parsed_reward is not None:
+            reward_signal = parsed_reward
+    history = payload.get('plan_history') if isinstance(payload.get('plan_history'), list) else payload.get('planHistory') if isinstance(payload.get('planHistory'), list) else payload.get('history') if isinstance(payload.get('history'), list) else []
+    if not isinstance(history, list):
+        history = [history] if _has_value(history) else []
+    return {
+        'current_task': current_task,
+        'current_task_id': current_task_id,
+        'task_list': tasks,
+        'task_count': len(tasks),
+        'task_counts': task_counts,
+        'reward_signal': reward_signal,
+        'plan_history': history,
+        'schema_version': payload.get('schema_version') or payload.get('schemaVersion'),
+    }
+
+
+def _public_task_plan_snapshot(payload: dict[str, Any] | None) -> dict[str, Any]:
+    snapshot = dict(_normalize_task_plan_payload(payload))
+    snapshot.pop('plan_history', None)
+    return snapshot
+
+
 
 
 def _load_local_runtime_state(workspace: Path) -> dict[str, Any]:
@@ -348,19 +411,24 @@ def _load_local_runtime_state(workspace: Path) -> dict[str, Any]:
     goals_dir = state_root / 'goals'
     outbox_dir = state_root / 'outbox'
     promotions_dir = state_root / 'promotions'
-    plans_dir = state_root / 'plans'
 
     latest_report = _latest_json_file(reports_dir, 'evolution-*.json') or _latest_json_file(reports_dir, '*.json')
-    latest_goal = _latest_json_file(goals_dir, '*.json')
+    latest_goal = (
+        goals_dir / 'current.json'
+        if (goals_dir / 'current.json').exists()
+        else goals_dir / 'active.json'
+        if (goals_dir / 'active.json').exists()
+        else _latest_json_file(goals_dir, '*.json')
+    )
+    latest_goal_history = _latest_json_file(goals_dir / 'history', 'cycle-*.json')
     latest_outbox = _latest_json_file(outbox_dir, 'latest.json') or _latest_json_file(outbox_dir, '*.json')
     latest_promotion = _latest_json_file(promotions_dir, 'latest.json') or _latest_json_file(promotions_dir, '*.json')
-    latest_plan = _latest_json_file(plans_dir, 'latest.json') or _latest_json_file(plans_dir, '*.json')
 
     report_data = _safe_json_load(latest_report)
     goal_data = _safe_json_load(latest_goal)
+    goal_history_data = _safe_json_load(latest_goal_history)
     outbox_data = _safe_json_load(latest_outbox)
     promotion_data = _safe_json_load(latest_promotion)
-    plan_data = _safe_json_load(latest_plan)
 
     active_goal = None
     if isinstance(goal_data, dict):
@@ -425,7 +493,43 @@ def _load_local_runtime_state(workspace: Path) -> dict[str, Any]:
         decision_reason = promotion_data.get('decision_reason') or promotion_data.get('decisionReason')
         promotion_candidate_path = promotion_data.get('candidate_path') or promotion_data.get('candidatePath')
 
-    plan_state = _extract_plan_state(plan_data, report_data, goal_data, outbox_data, promotion_data)
+    plan_sources: list[dict[str, Any]] = []
+    if isinstance(goal_data, dict):
+        plan_sources.append(goal_data)
+    if isinstance(goal_history_data, dict):
+        plan_sources.append(goal_history_data)
+    if isinstance(report_data, dict):
+        plan_sources.append(report_data)
+    if isinstance(outbox_data, dict):
+        plan_sources.append(outbox_data)
+    if isinstance(promotion_data, dict):
+        plan_sources.append(promotion_data)
+
+    plan_state = _extract_plan_state(*plan_sources)
+    normalized_current = _public_task_plan_snapshot(goal_data if isinstance(goal_data, dict) else None)
+    if not _has_value(normalized_current.get('current_task')) and not normalized_current.get('task_count') and not _has_value(normalized_current.get('reward_signal')):
+        normalized_current = _public_task_plan_snapshot(goal_history_data if isinstance(goal_history_data, dict) else None)
+    if not _has_value(normalized_current.get('current_task')) and not normalized_current.get('task_count') and not _has_value(normalized_current.get('reward_signal')):
+        normalized_current = _public_task_plan_snapshot(plan_state if isinstance(plan_state, dict) else None)
+
+    plan_history: list[dict[str, Any]] = []
+    if isinstance(goal_history_data, dict):
+        plan_history.append(_public_task_plan_snapshot(goal_history_data))
+    if isinstance(goal_data, dict):
+        current_snapshot = _public_task_plan_snapshot(goal_data)
+        if current_snapshot not in plan_history:
+            plan_history.insert(0, current_snapshot)
+    if not plan_history and normalized_current:
+        plan_history = [dict(normalized_current)]
+
+    if not _has_value(normalized_current.get('current_task')):
+        normalized_current['current_task'] = plan_state.get('current_task')
+    if not normalized_current.get('task_list'):
+        normalized_current['task_list'] = plan_state.get('task_list') or []
+    if not _has_value(normalized_current.get('reward_signal')):
+        normalized_current['reward_signal'] = plan_state.get('reward_signal')
+    if not normalized_current.get('plan_history'):
+        normalized_current['plan_history'] = plan_history
 
     if promotion_candidate_id or review_status or decision:
         promotion_summary = ' | '.join(
@@ -455,18 +559,19 @@ def _load_local_runtime_state(workspace: Path) -> dict[str, Any]:
         'decision': decision,
         'decision_reason': decision_reason,
         'artifact_paths': artifact_paths,
-        'current_task': plan_state.get('current_task'),
-        'task_list': plan_state.get('task_list') or [],
-        'reward_signal': plan_state.get('reward_signal'),
-        'plan_history': plan_state.get('plan_history') or [],
+        'current_task': normalized_current.get('current_task'),
+        'task_list': normalized_current.get('task_list') or [],
+        'reward_signal': normalized_current.get('reward_signal'),
+        'plan_history': normalized_current.get('plan_history') or [],
         'promotion_path': str(latest_promotion) if latest_promotion else None,
         'subagent_rollup': None,
         'raw': {
             'report': report_data,
             'goal': goal_data,
+            'goal_history': goal_history_data,
             'outbox': outbox_data,
             'promotion': promotion_data,
-            'plan': plan_data,
+            'plan': goal_data,
         },
     }
 
@@ -477,6 +582,8 @@ def _normalize_eeepc_payloads(
     goals: dict[str, Any],
     reachability: dict[str, Any] | None = None,
     collection_error: dict[str, Any] | None = None,
+    outbox_source: str | None = None,
+    source_errors: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     active_goal = (outbox.get('goal') or {}).get('goal_id') or goals.get('active_goal_id')
     approval = ((outbox.get('capability_gate') or {}).get('approval')) if isinstance(outbox.get('capability_gate'), dict) else None
@@ -500,6 +607,9 @@ def _normalize_eeepc_payloads(
                 'improvement_score': process_reflection.get('improvement_score'),
             },
         })
+    raw_payload: dict[str, Any] = {'outbox': outbox, 'goals': goals, 'reachability': reachability}
+    if source_errors:
+        raw_payload['source_errors'] = source_errors
     return {
         'source': 'eeepc',
         'status': outbox.get('status') or 'unknown',
@@ -507,7 +617,7 @@ def _normalize_eeepc_payloads(
         'approval_gate': json.dumps(approval) if approval is not None else None,
         'gate_state': (approval or {}).get('reason') if isinstance(approval, dict) else None,
         'report_source': source_report,
-        'outbox_source': f"{cfg.eeepc_state_root}/outbox/report.index.json",
+        'outbox_source': outbox_source or f"{cfg.eeepc_state_root}/outbox/report.index.json",
         'artifact_paths': artifact_paths,
         'promotion_summary': None,
         'promotion_candidate_path': None,
@@ -515,7 +625,7 @@ def _normalize_eeepc_payloads(
         'promotion_accepted_record': None,
         'events': events,
         'reachability': reachability,
-        'raw': {'outbox': outbox, 'goals': goals, 'reachability': reachability},
+        'raw': raw_payload,
         'collection_status': 'error' if collection_error else 'ok',
         'collection_error': collection_error,
     }
@@ -545,7 +655,7 @@ def _normalize_eeepc_state(cfg: DashboardConfig) -> dict[str, Any]:
             'reward_signal': None,
             'plan_history': [],
             'report_source': None,
-            'outbox_source': f"{cfg.eeepc_state_root}/outbox/report.index.json",
+            'outbox_source': f"{cfg.eeepc_state_root}/goals/current.json",
             'artifact_paths': [],
             'promotion_summary': None,
             'promotion_candidate_path': None,
@@ -559,10 +669,78 @@ def _normalize_eeepc_state(cfg: DashboardConfig) -> dict[str, Any]:
         }
     outbox, outbox_error = _load_ssh_json(cfg, f"{state_root}/outbox/report.index.json")
     goals, goals_error = _load_ssh_json(cfg, f"{state_root}/goals/registry.json")
-    collection_error = outbox_error or goals_error
-    if collection_error:
-        return _normalize_eeepc_payloads(cfg, outbox or {}, goals or {}, reachability, collection_error)
-    return _normalize_eeepc_payloads(cfg, outbox or {}, goals or {}, reachability, None)
+    current_plan, current_plan_error = _load_ssh_json(cfg, f"{state_root}/goals/current.json")
+    active_plan, active_plan_error = _load_ssh_json(cfg, f"{state_root}/goals/active.json")
+    history_paths = _run_ssh_lines(cfg, f"sh -lc 'ls -1t {state_root}/goals/history/cycle-*.json 2>/dev/null | head -n 10'")
+    history_payloads: list[dict[str, Any]] = []
+    history_errors: list[dict[str, Any]] = []
+    for path in history_paths:
+        payload, error = _load_ssh_json(cfg, path)
+        if isinstance(payload, dict):
+            history_payloads.append(payload)
+        if error:
+            history_errors.append(error)
+
+    canonical_sources_available = any(
+        isinstance(payload, dict)
+        for payload in (outbox, goals, current_plan, active_plan)
+    ) or bool(history_payloads)
+    source_errors: dict[str, Any] = {}
+    if outbox_error:
+        source_errors['outbox'] = outbox_error
+    if goals_error:
+        source_errors['goals'] = goals_error
+    if current_plan_error:
+        source_errors['current_plan'] = current_plan_error
+    if active_plan_error:
+        source_errors['active_plan'] = active_plan_error
+    if history_errors:
+        source_errors['history'] = history_errors
+
+    collection_error = None if canonical_sources_available else (outbox_error or goals_error or current_plan_error or active_plan_error or (history_errors[0] if history_errors else None))
+
+    plan_source = None
+    if isinstance(current_plan, dict):
+        plan_source = f"{state_root}/goals/current.json"
+    elif isinstance(active_plan, dict):
+        plan_source = f"{state_root}/goals/active.json"
+    elif isinstance(goals, dict):
+        plan_source = f"{state_root}/goals/registry.json"
+    elif outbox is not None:
+        plan_source = f"{state_root}/outbox/report.index.json"
+
+    normalized = _normalize_eeepc_payloads(
+        cfg,
+        outbox or {},
+        goals or {},
+        reachability,
+        collection_error,
+        plan_source,
+        source_errors or None,
+    )
+
+    current_snapshot = _public_task_plan_snapshot(current_plan if isinstance(current_plan, dict) else active_plan if isinstance(active_plan, dict) else None)
+    if not _has_value(current_snapshot.get('current_task')) and not current_snapshot.get('task_count') and not _has_value(current_snapshot.get('reward_signal')):
+        current_snapshot = _public_task_plan_snapshot(history_payloads[0] if history_payloads else None)
+    plan_history = [_public_task_plan_snapshot(payload) for payload in history_payloads]
+    if not plan_history and current_snapshot:
+        plan_history = [dict(current_snapshot)]
+    if current_snapshot:
+        current_snapshot['plan_history'] = plan_history
+        if not _has_value(current_snapshot.get('current_task')):
+            current_snapshot['current_task'] = normalized.get('current_task')
+        if not current_snapshot.get('task_list'):
+            current_snapshot['task_list'] = normalized.get('task_list') or []
+        if not _has_value(current_snapshot.get('reward_signal')):
+            current_snapshot['reward_signal'] = normalized.get('reward_signal')
+    normalized['current_task'] = current_snapshot.get('current_task') if current_snapshot else normalized.get('current_task')
+    normalized['task_list'] = current_snapshot.get('task_list') if current_snapshot else normalized.get('task_list') or []
+    normalized['reward_signal'] = current_snapshot.get('reward_signal') if current_snapshot else normalized.get('reward_signal')
+    normalized['plan_history'] = current_snapshot.get('plan_history') if current_snapshot else normalized.get('plan_history') or []
+    normalized['raw'] = {'outbox': outbox, 'goals': goals, 'reachability': reachability, 'current_plan': current_plan, 'active_plan': active_plan, 'plan_history': history_payloads}
+    if source_errors:
+        normalized['raw']['source_errors'] = source_errors
+    return normalized
 
 
 def _persist(cfg: DashboardConfig, normalized: dict[str, Any]) -> None:
