@@ -337,6 +337,8 @@ def test_app_overview_renders(tmp_path: Path):
     assert 'Current blocker' in body
     assert 'no_concrete_change' in body
     assert 'Rewrite the cycle around one file-level action' in body
+    assert 'keep' in body or 'blocked' in body
+    assert 'reward_signal.value' in body or 'Experiment frontier' in body
     assert 'Feedback decision mode' in body
     assert 'force_remediation' in body
     assert 'Feedback decision reason' in body
@@ -569,6 +571,8 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     assert 'Hypothesis backlog cross-link' in plan_body
     assert 'Ship dashboard visibility' in plan_body
     assert '/hypotheses' in plan_body
+    assert 'Experiment' in plan_body or 'unknown' in plan_body
+    assert 'Current plan snapshot' in plan_body
 
 
 def test_app_hypotheses_renders_truthful_empty_state_when_file_absent(tmp_path: Path):
@@ -694,6 +698,8 @@ def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
     assert 'Loaded snapshot window' in body
     assert 'Source breakdown' in body
     assert 'Cycle status breakdown' in body
+    assert 'Experiment frontier' in body
+    assert 'reward_signal.value' in body or 'unknown' in body
     assert 'Freshness' in body
     assert 'Recent snapshots' in body
     assert 'Observed eeepc collections' in body

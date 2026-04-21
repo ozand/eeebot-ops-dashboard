@@ -80,6 +80,33 @@
 
 <div class="section">
   <div class="section-header">
+    <h3>Experiment frontier</h3>
+    <div class="section-note">Current bounded experiment frontier and decision signal</div>
+  </div>
+  <div class="cards">
+    <div class="card compact">
+      <h3>Outcome</h3>
+      <div class="status-value">{{ current_experiment.outcome if current_experiment else 'unknown' }}</div>
+      <div class="muted">{{ current_experiment.metric_name if current_experiment else 'unknown' }}</div>
+    </div>
+    <div class="card compact">
+      <h3>Baseline</h3>
+      <div class="status-value">{{ current_experiment.metric_baseline if current_experiment and current_experiment.metric_baseline is not none else 'none' }}</div>
+    </div>
+    <div class="card compact">
+      <h3>Current</h3>
+      <div class="status-value">{{ current_experiment.metric_current if current_experiment and current_experiment.metric_current is not none else 'unknown' }}</div>
+    </div>
+    <div class="card compact">
+      <h3>Frontier</h3>
+      <div class="status-value">{{ current_experiment.metric_frontier if current_experiment and current_experiment.metric_frontier is not none else 'unknown' }}</div>
+      <div class="muted">{{ current_experiment.contract_path if current_experiment and current_experiment.contract_path else 'no contract' }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
     <h3>Cycle status breakdown</h3>
     <div class="section-note">Quick read on the current mix of outcomes</div>
   </div>

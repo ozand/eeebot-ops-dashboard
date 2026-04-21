@@ -48,12 +48,16 @@
         <span class="muted">{{ reward_source }}</span>
       </div>
       <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Current experiment</span><span>{{ current_experiment.title if current_experiment else 'none yet' }}</span></div>
         <div class="detail-row"><span class="detail-label">Reward</span><span>{{ current_reward_text }}</span></div>
-        <div class="detail-row"><span class="detail-label">Source</span><span>{{ reward_source }}</span></div>
         <div class="detail-row"><span class="detail-label">Telemetry source</span><span>{{ current_experiment.reward_signal.get('source') if current_experiment and current_experiment.reward_signal is mapping else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Outcome</span><span>{{ current_experiment.outcome if current_experiment else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Metric</span><span>{{ current_experiment.metric_name if current_experiment else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Baseline / current / frontier</span><span>{{ current_experiment.metric_baseline if current_experiment and current_experiment.metric_baseline is not none else 'none' }} / {{ current_experiment.metric_current if current_experiment and current_experiment.metric_current is not none else 'unknown' }} / {{ current_experiment.metric_frontier if current_experiment and current_experiment.metric_frontier is not none else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Simplicity</span><span>{{ current_experiment.raw.simplicity_judgment if current_experiment and current_experiment.raw else 'unknown' }} · complexity Δ {{ current_experiment.raw.complexity_delta if current_experiment and current_experiment.raw else 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Plan linkage</span><span class="muted">When no experiment file exists, the task plan still provides the live reward signal.</span></div>
       </div>
-      <div style="margin-top: .75rem;"><a href="/plan">Open task plan</a></div>
+
     </div>
 
     <div class="card">
