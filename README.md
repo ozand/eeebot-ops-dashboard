@@ -15,9 +15,10 @@ Current scope of v1:
 - cycle history page with visible filter form and PASS/BLOCK/unknown badges
 - promotions page with visible filter form and promotion-status badges
 - approvals/capability page
-- deployments/verification page
-- experiments page with reward, budget, and credits summary
+- deployments/verification page with repo-vs-eeepc divergence visibility
+- experiments page with reward, budget, credits summary, used-call visibility, and task linkage
 - credits ledger page
+- system files page for eeepc goal/system files and local repo docs
 - analytics page with status-emphasized counters, recent snapshots, recent cycles, failure-class breakdown, streaks, top-goal frequency, top BLOCK reasons, artifact history, and recent goal transitions
 - subagents page with durable task/goal/cycle correlation visibility
 - `/api/summary` machine-readable endpoint

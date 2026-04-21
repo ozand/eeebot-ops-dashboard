@@ -43,6 +43,10 @@ What was manually verified:
 - local web server starts successfully on `127.0.0.1:8787`
 - all pages return HTML and contain expected content
 - canonical user services can run the dashboard web UI and collector continuously
+- `/cycles` correctly renders approval states like `PASS (fresh)` and `BLOCK (missing)`
+- `/system` renders eeepc goal/system-file visibility and local repo docs
+- `/experiments` renders reward/failure, credits, used calls, and task linkage
+- `/subagents` renders current task / reward / feedback correlation
 
 Canonical runtime mode now exists:
 - `scripts/run_web.sh`

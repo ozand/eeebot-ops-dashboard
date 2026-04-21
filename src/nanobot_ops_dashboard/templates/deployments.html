@@ -44,4 +44,21 @@
     {% endif %}
   </div>
 </div>
+
+<div class="section">
+  <div class="section-header">
+    <h3>Repo vs eeepc divergence</h3>
+    <div class="section-note">Makes local bounded-runtime drift visible instead of implicit</div>
+  </div>
+  <div class="card">
+    <ul>
+      <li>eeepc status: <strong>{{ eeepc_latest['status'] if eeepc_latest else 'unknown' }}</strong></li>
+      <li>repo status: <strong>{{ repo_latest['status'] if repo_latest else 'unknown' }}</strong></li>
+      <li>eeepc goal: {{ eeepc_latest['active_goal'] if eeepc_latest else 'unknown' }}</li>
+      <li>repo goal: {{ repo_latest['active_goal'] if repo_latest else 'unknown' }}</li>
+      <li>eeepc gate: {{ eeepc_latest['gate_state'] if eeepc_latest else 'unknown' }}</li>
+      <li>repo gate: {{ repo_latest['gate_state'] if repo_latest else 'unknown' }}</li>
+    </ul>
+  </div>
+</div>
 {% endblock %}

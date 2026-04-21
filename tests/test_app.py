@@ -417,10 +417,14 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'goal-1' in api_body
     assert 'PASS' in api_body
     assert 'snapshot_count' in api_body
+    assert 'raw_json' not in api_body
+
+    status, summary_debug = _call_app(app, '/api/summary/debug')
+    assert status.startswith('200')
+    assert 'raw_json' in summary_debug
     assert 'loaded_snapshot_count' in api_body
     assert 'total_snapshot_count' in api_body
     assert 'plan_latest' in api_body
-    assert 'current_plan' in api_body
 
     status, plan_body = _call_app(app, '/plan')
     assert status.startswith('200')
@@ -489,6 +493,11 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     status, deployments_api = _call_app(app, '/api/deployments')
     assert status.startswith('200')
     assert '/state/reports/evolution-1.json' in deployments_api
+    assert 'raw_json' not in deployments_api
+
+    status, deployments_debug = _call_app(app, '/api/deployments/debug')
+    assert status.startswith('200')
+    assert 'raw_json' in deployments_debug
     assert 'eeepc_latest_observation' in deployments_api
     assert 'plan_snapshot' in deployments_api
 

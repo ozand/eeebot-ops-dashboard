@@ -933,6 +933,99 @@ def _eeepc_observation_groups(rows, limit: int = 10) -> list[dict]:
 
 
 
+def _compact_collection_row(row) -> dict | None:
+    if row is None:
+        return None
+    if not isinstance(row, dict):
+        row = dict(row)
+    return {
+        'id': row.get('id'),
+        'collected_at': row.get('collected_at'),
+        'source': row.get('source'),
+        'status': row.get('status'),
+        'active_goal': row.get('active_goal'),
+        'current_task': row.get('current_task'),
+        'gate_state': row.get('gate_state'),
+        'report_source': row.get('report_source'),
+        'outbox_source': row.get('outbox_source'),
+        'promotion_summary': row.get('promotion_summary'),
+        'promotion_candidate_path': row.get('promotion_candidate_path'),
+        'promotion_decision_record': row.get('promotion_decision_record'),
+        'promotion_accepted_record': row.get('promotion_accepted_record'),
+    }
+
+
+
+def _compact_observation_group(item: dict) -> dict:
+    return {
+        'report_source': item.get('report_source'),
+        'latest_observed_at': item.get('latest_observed_at'),
+        'earliest_observed_at': item.get('earliest_observed_at'),
+        'observed_count': item.get('observed_count'),
+        'status': item.get('status'),
+        'active_goal': item.get('active_goal'),
+        'approx_cadence_minutes': item.get('approx_cadence_minutes'),
+    }
+
+
+
+def _deployment_snapshot(row, plan_snapshot):
+    compact = _compact_collection_row(row)
+    if compact is None:
+        return None
+    compact['plan_snapshot'] = {
+        'current_task': plan_snapshot.get('current_task') if isinstance(plan_snapshot, dict) else None,
+        'task_count': plan_snapshot.get('task_count') if isinstance(plan_snapshot, dict) else None,
+        'reward_signal': plan_snapshot.get('reward_signal') if isinstance(plan_snapshot, dict) else None,
+        'feedback_decision': plan_snapshot.get('feedback_decision') if isinstance(plan_snapshot, dict) else None,
+        'selection_source': plan_snapshot.get('task_selection_source') if isinstance(plan_snapshot, dict) else None,
+    }
+    return compact
+
+
+
+def _file_preview(path: Path, max_chars: int = 800) -> dict:
+    exists = path.exists()
+    preview = None
+    if exists:
+        try:
+            preview = path.read_text(encoding='utf-8')[:max_chars]
+        except Exception as exc:
+            preview = f'<unreadable: {exc}>'
+    return {'path': str(path), 'exists': exists, 'preview': preview}
+
+
+
+def _discover_system_visibility(cfg: DashboardConfig, eeepc_latest, repo_latest) -> dict:
+    repo_root = cfg.nanobot_repo_root
+    local_files = [
+        _file_preview(repo_root / 'README.md'),
+        _file_preview(repo_root / 'docs' / 'PROJECT_CHARTER.md'),
+        _file_preview(repo_root / 'AGENT.md'),
+        _file_preview(repo_root / 'agent.md'),
+    ]
+    eeepc_raw = _json_loads_dict(eeepc_latest['raw_json']) if eeepc_latest else {}
+    goals_payload = eeepc_raw.get('goals') if isinstance(eeepc_raw.get('goals'), dict) else {}
+    outbox_payload = eeepc_raw.get('outbox') if isinstance(eeepc_raw.get('outbox'), dict) else {}
+    eeepc_files = [
+        {'path': f"{cfg.eeepc_state_root}/goals/current.json", 'exists': True, 'preview': json.dumps(goals_payload.get('current') or goals_payload.get('current_goal') or {}, ensure_ascii=False, indent=2)[:800] if goals_payload else '{}'},
+        {'path': f"{cfg.eeepc_state_root}/goals/active.json", 'exists': True, 'preview': json.dumps({'active_goal': eeepc_latest['active_goal'] if eeepc_latest else None}, ensure_ascii=False, indent=2)},
+        {'path': f"{cfg.eeepc_state_root}/goals/registry.json", 'exists': True, 'preview': json.dumps(goals_payload, ensure_ascii=False, indent=2)[:800] if goals_payload else '{}'},
+        {'path': f"{cfg.eeepc_state_root}/AGENT.md", 'exists': False, 'preview': None},
+        {'path': f"{cfg.eeepc_state_root}/agent.md", 'exists': False, 'preview': None},
+    ]
+    return {
+        'eeepc_goal': eeepc_latest['active_goal'] if eeepc_latest else None,
+        'eeepc_status': eeepc_latest['status'] if eeepc_latest else None,
+        'repo_goal': repo_latest['active_goal'] if repo_latest else None,
+        'repo_status': repo_latest['status'] if repo_latest else None,
+        'local_files': local_files,
+        'eeepc_files': eeepc_files,
+        'eeepc_outbox_preview': json.dumps(outbox_payload, ensure_ascii=False, indent=2)[:800] if outbox_payload else '{}',
+    }
+
+
+
 def create_app(cfg: DashboardConfig):
     env = _env(cfg)
     env.globals['status_kind'] = _status_kind
@@ -1061,6 +1154,7 @@ def create_app(cfg: DashboardConfig):
             'selected_task_title': operator_plan.get('selected_task_title') if isinstance(operator_plan, dict) else None,
             'task_selection_source': operator_plan.get('task_selection_source') if isinstance(operator_plan, dict) else None,
         }
+        system_visibility = _discover_system_visibility(cfg, eeepc_latest, repo_latest)
 
         analytics = {
             'total_snapshots': total_snapshot_count,
@@ -1201,6 +1295,8 @@ def create_app(cfg: DashboardConfig):
             'latest_block_age': analytics['latest_block_age'],
             'eeepc_artifacts': _json_loads_list(eeepc_latest['artifact_paths_json']) if eeepc_latest else [],
             'repo_artifacts': _json_loads_list(repo_latest['artifact_paths_json']) if repo_latest else [],
+            'system_visibility': system_visibility,
+            'analytics': analytics,
             'plan_latest': plan_latest,
             'plan_history': plan_history,
             'plan_history_count': len(plan_history),
@@ -1245,21 +1341,47 @@ def create_app(cfg: DashboardConfig):
                 'latest_block_at': latest_block_at,
                 'latest_block_age': analytics['latest_block_age'],
                 'eeepc_unique_cycle_reports': len(eeepc_cycle_events),
-                'eeepc_observation_groups': eeepc_observation_groups,
+                'eeepc_observation_groups': [_compact_observation_group(item) for item in eeepc_observation_groups[:10]],
                 'eeepc_observation_total': eeepc_observation_total,
                 'eeepc_observation_repeat_count': eeepc_observation_repeat_count,
                 'promotion_count': len(promotions),
-                'repo_latest': dict(repo_latest) if repo_latest else None,
-                'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
-                'eeepc_latest_observation': eeepc_latest_observation,
+                'repo_latest': _compact_collection_row(repo_latest),
+                'eeepc_latest': _compact_collection_row(eeepc_latest),
+                'eeepc_latest_observation': _compact_observation_group(eeepc_latest_observation) if eeepc_latest_observation else None,
                 'eeepc_reachability': eeepc_reachability,
                 'current_blocker': current_blocker,
-                'plan_latest': plan_latest,
+                'plan_latest': {
+                    'current_task': plan_latest.get('current_task') if plan_latest else None,
+                    'current_task_id': plan_latest.get('current_task_id') if plan_latest else None,
+                    'task_count': plan_latest.get('task_count') if plan_latest else None,
+                    'reward_signal': plan_latest.get('reward_signal') if plan_latest else None,
+                    'feedback_decision': plan_latest.get('feedback_decision') if plan_latest else None,
+                } if plan_latest else None,
                 'plan_history_count': len(plan_history),
                 'experiments_available': experiment_visibility['available'],
-                'current_experiment': experiment_visibility['current_experiment'],
+                'current_experiment': {
+                    'experiment_id': experiment_visibility['current_experiment'].get('experiment_id') if experiment_visibility['current_experiment'] else None,
+                    'status': experiment_visibility['current_experiment'].get('status') if experiment_visibility['current_experiment'] else None,
+                    'reward_text': experiment_visibility['current_experiment'].get('reward_text') if experiment_visibility['current_experiment'] else None,
+                },
                 'current_budget': experiment_visibility['current_budget'],
                 'current_reward_text': experiment_visibility['current_reward_text'],
+            }
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/summary/debug':
+            payload = {
+                'latest_collected': latest_collected,
+                'repo_latest': dict(repo_latest) if repo_latest else None,
+                'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
+                'eeepc_observation_groups': eeepc_observation_groups,
+                'eeepc_latest_observation': eeepc_latest_observation,
+                'plan_latest': plan_latest,
+                'current_experiment': experiment_visibility['current_experiment'],
+                'current_budget': experiment_visibility['current_budget'],
+                'current_blocker': current_blocker,
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
@@ -1354,6 +1476,16 @@ def create_app(cfg: DashboardConfig):
 
         if path == '/api/deployments':
             payload = {
+                'eeepc_latest': _deployment_snapshot(eeepc_latest, eeepc_plan_snapshot),
+                'repo_latest': _deployment_snapshot(repo_latest, repo_plan_snapshot),
+                'eeepc_latest_observation': _compact_observation_group(eeepc_latest_observation) if eeepc_latest_observation else None,
+            }
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/deployments/debug':
+            payload = {
                 'eeepc_latest': {**dict(eeepc_latest), 'plan_snapshot': eeepc_plan_snapshot} if eeepc_latest else None,
                 'repo_latest': {**dict(repo_latest), 'plan_snapshot': repo_plan_snapshot} if repo_latest else None,
                 'eeepc_latest_observation': eeepc_latest_observation,
@@ -1381,6 +1513,8 @@ def create_app(cfg: DashboardConfig):
             template = env.get_template('experiments.html')
         elif path == '/credits':
             template = env.get_template('credits.html')
+        elif path == '/system':
+            template = env.get_template('system.html')
         elif path == '/subagents':
             template = env.get_template('subagents.html')
         elif path == '/plan':

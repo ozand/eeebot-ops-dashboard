@@ -121,10 +121,11 @@ Open:
 - `/hypotheses` — HADI backlog plus explicit WSJF and execution specs
 - `/promotions` — repo-side promotion event history
 - `/approvals` — latest approval/gate snapshots
-- `/deployments` — deployment and verification-related proof fields
+- `/deployments` — deployment and verification-related proof fields plus repo-vs-eeepc divergence
 - `/analytics` — stored snapshot and cycle summary counters, plus recent snapshots/cycles
-- `/experiments` — experiments, reward, budget, and credits summary
+- `/experiments` — experiments, reward, budget, credits summary, used-call visibility, and task linkage
 - `/credits` — explicit credits ledger history
+- `/system` — eeepc goal/system files plus local repo docs/system files
 - `/subagents` — durable subagent/task correlation visibility
 
 - `/api/cycles` — filtered cycle history as JSON

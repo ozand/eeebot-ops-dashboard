@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="section">
+  <div class="section-header">
+    <h2>System / goal files</h2>
+    <div class="section-note">Goal surfaces, local docs, and key runtime/system files that anchor operator understanding</div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Live eeepc</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Goal</span><span>{{ system_visibility.eeepc_goal or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span>{{ system_visibility.eeepc_status or 'unknown' }}</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Local repo-side</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Goal</span><span>{{ system_visibility.repo_goal or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span>{{ system_visibility.repo_status or 'unknown' }}</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><h3>eeepc goal/system files</h3><div class="section-note">Known live state file paths and collected previews</div></div>
+  <table class="history-table">
+    <thead><tr><th>Path</th><th>Exists</th><th>Preview</th></tr></thead>
+    <tbody>
+      {% for item in system_visibility.eeepc_files %}
+      <tr>
+        <td class="mono"><code>{{ item.path }}</code></td>
+        <td>{{ 'yes' if item.exists else 'no' }}</td>
+        <td><pre>{{ item.preview or 'no preview' }}</pre></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-header"><h3>Local repo docs / control files</h3><div class="section-note">Visible local system files that shape Nanobot behavior</div></div>
+  <table class="history-table">
+    <thead><tr><th>Path</th><th>Exists</th><th>Preview</th></tr></thead>
+    <tbody>
+      {% for item in system_visibility.local_files %}
+      <tr>
+        <td class="mono"><code>{{ item.path }}</code></td>
+        <td>{{ 'yes' if item.exists else 'no' }}</td>
+        <td><pre>{{ item.preview or 'no preview' }}</pre></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-header"><h3>Latest eeepc outbox preview</h3><div class="section-note">Collected excerpt from the latest live eeepc outbox payload</div></div>
+  <div class="card"><pre>{{ system_visibility.eeepc_outbox_preview }}</pre></div>
+</div>
+{% endblock %}
