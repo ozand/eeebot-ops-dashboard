@@ -8,10 +8,12 @@
     <ul>
       <li>Live status: <strong>{{ eeepc_latest['status'] or 'unknown' }}</strong></li>
       <li>Active goal: {{ eeepc_latest['active_goal'] or 'unknown' }}</li>
-      <li>Report source: <code>{{ eeepc_latest['report_source'] or 'unknown' }}</code></li>
+      <li>Report source: <code>{{ eeepc_latest_observation.report_source if eeepc_latest_observation else (eeepc_latest['report_source'] or 'report source unavailable') }}</code></li>
       <li>Outbox source: <code>{{ eeepc_latest['outbox_source'] or 'unknown' }}</code></li>
+      <li>Current task: {{ eeepc_plan_snapshot.current_task if eeepc_plan_snapshot else 'unknown' }}</li>
+      <li>Plan payload: {{ eeepc_plan_snapshot.plan_payload_source if eeepc_plan_snapshot else 'row' }}</li>
       {% if eeepc_latest_observation %}
-      <li>Observation cadence: {{ eeepc_latest_observation.observed_count }} collection(s){% if eeepc_latest_observation.approx_cadence_minutes is not none %} / ~{{ eeepc_latest_observation.approx_cadence_minutes }} min{% endif %}</li>
+      <li>Observation cadence: {{ eeepc_latest_observation.observed_count }} collection(s){% if eeepc_latest_observation.approx_cadence_minutes is not none %} / ~{{ eeepc_latest_observation.approx_cadence_minutes }} min{% else %} / cadence not yet established{% endif %}</li>
       <li>Fresh report first seen: {{ eeepc_latest_observation.earliest_observed_at }}</li>
       {% endif %}
     </ul>
@@ -33,6 +35,8 @@
       <li>Repo status: <strong>{{ repo_latest['status'] or 'unknown' }}</strong></li>
       <li>Repo report source: <code>{{ repo_latest['report_source'] or 'unknown' }}</code></li>
       <li>Repo outbox source: <code>{{ repo_latest['outbox_source'] or 'unknown' }}</code></li>
+      <li>Current task: {{ repo_plan_snapshot.current_task if repo_plan_snapshot else 'unknown' }}</li>
+      <li>Plan payload: {{ repo_plan_snapshot.plan_payload_source if repo_plan_snapshot else 'row' }}</li>
       <li>Promotion summary: {{ repo_latest['promotion_summary'] or 'none' }}</li>
     </ul>
     {% else %}

@@ -55,7 +55,7 @@
         <div class="detail-row"><span class="detail-label">Gate</span><span>{{ eeepc_latest['gate_state'] or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Last snapshot</span><span>{{ eeepc_latest['collected_at'] }}</span></div>
         <div class="detail-row"><span class="detail-label">Snapshot age</span><span>{{ eeepc_latest_age }}</span></div>
-        <div class="detail-row"><span class="detail-label">Report</span><code>{{ eeepc_latest['report_source'] or 'unknown' }}</code></div>
+        <div class="detail-row"><span class="detail-label">Report</span><code>{{ eeepc_latest_observation.report_source if eeepc_latest_observation else (eeepc_latest['report_source'] or 'report source unavailable') }}</code></div>
         <div class="detail-row"><span class="detail-label">Outbox</span><code>{{ eeepc_latest['outbox_source'] or 'unknown' }}</code></div>
         {% if eeepc_latest_observation %}
         <div class="detail-row"><span class="detail-label">Observation cadence</span><span>{{ eeepc_latest_observation.observed_count }} collection(s){% if eeepc_latest_observation.approx_cadence_minutes is not none %} / ~{{ eeepc_latest_observation.approx_cadence_minutes }} min{% endif %}</span></div>
@@ -123,9 +123,11 @@
       {% if plan_latest %}
       <div class="status-stack" style="margin-bottom: .6rem;">
         <span class="status-pill status-large status-neutral">plan</span>
-        <span class="muted">Latest repo snapshot</span>
+        <span class="muted">Latest plan fields from the collected row</span>
       </div>
       <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Collection source</span><span>{{ plan_latest.source or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Plan payload</span><span>{{ plan_latest.plan_payload_source or 'row' }}</span></div>
         <div class="detail-row"><span class="detail-label">Current task</span><span>{{ plan_latest.current_task or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Task list</span><span class="chip-row">{% for task in plan_latest.task_list %}<code>{{ plan_task_label(task) }}</code>{% else %}<span class="muted">none</span>{% endfor %}</span></div>
         <div class="detail-row"><span class="detail-label">Reward signal</span><span>{{ reward_signal_text(plan_latest.reward_signal) }}</span></div>

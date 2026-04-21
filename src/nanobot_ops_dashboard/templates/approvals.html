@@ -2,12 +2,15 @@
 {% block content %}
 <h2>Approvals</h2>
 <table>
-  <tr><th>Source</th><th>Collected</th><th>Status</th><th>Gate state</th><th>Approval raw</th></tr>
-  {% for row in eeepc_rows + repo_rows %}
+  <tr><th>Collection source</th><th>Collected</th><th>Status</th><th>Current task</th><th>Plan payload</th><th>Gate state</th><th>Approval raw</th></tr>
+  {% for row in approval_rows %}
+  {% set plan = row.get('plan_snapshot') or {} %}
   <tr>
     <td>{{ row['source'] }}</td>
     <td>{{ row['collected_at'] }}</td>
     <td>{{ row['status'] or 'unknown' }}</td>
+    <td>{{ plan.current_task or 'unknown' }}</td>
+    <td>{{ plan.plan_payload_source or 'row' }}</td>
     <td>{{ row['gate_state'] or 'unknown' }}</td>
     <td><code>{{ row['approval_gate'] or 'unknown' }}</code></td>
   </tr>

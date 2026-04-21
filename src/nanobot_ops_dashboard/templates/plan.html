@@ -3,7 +3,7 @@
 <div class="section">
   <div class="section-header">
     <h2>Task plan / reward</h2>
-    <div class="section-note">Latest repo-side runtime plan fields, plus a short history of recent plan snapshots</div>
+    <div class="section-note">Latest collected plan fields are read from the nested current_plan/task_plan payload when present.</div>
   </div>
 
   <div class="cards">
@@ -12,9 +12,11 @@
       {% if plan_latest %}
       <div class="status-stack" style="margin-bottom: .6rem;">
         <span class="status-pill status-large status-neutral">plan</span>
-        <span class="muted">Latest collected repo row</span>
+        <span class="muted">Latest collected row</span>
       </div>
       <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Collection source</span><span>{{ plan_latest.source or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Plan payload</span><span>{{ plan_latest.plan_payload_source or 'row' }}</span></div>
         <div class="detail-row"><span class="detail-label">Current task</span><span>{{ plan_latest.current_task or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Task count</span><span class="status-pill status-unknown">{{ plan_latest.task_count }}</span></div>
         <div class="detail-row"><span class="detail-label">Task list</span><span class="chip-row">{% for task in plan_latest.task_list %}<code>{{ plan_task_label(task) }}</code>{% else %}<span class="muted">none</span>{% endfor %}</span></div>
@@ -34,7 +36,7 @@
           <div class="value"><strong>{{ plan_history_count }}</strong></div>
         </div>
         <div class="kv">
-          <div class="label">Latest source</div>
+          <div class="label">Collection source</div>
           <div class="value"><strong>{{ plan_latest.source if plan_latest else 'unknown' }}</strong></div>
         </div>
         <div class="kv">
@@ -60,7 +62,7 @@
   {% if plan_history %}
   <table class="history-table">
     <thead>
-      <tr><th>Collected</th><th>Source</th><th>Current task</th><th>Task list</th><th>Reward signal</th></tr>
+      <tr><th>Collected</th><th>Collection source</th><th>Current task</th><th>Task list</th><th>Reward signal</th></tr>
     </thead>
     <tbody>
       {% for item in plan_history %}

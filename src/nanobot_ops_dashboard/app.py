@@ -103,6 +103,13 @@ def _origin_label(detail: dict | None) -> str:
 
 
 
+def _report_source_label(value) -> str:
+    if isinstance(value, str) and value.strip():
+        return value
+    return 'report source unavailable'
+
+
+
 def _filter_rows(rows, source: str | None, status: str | None, origin: str | None = None):
     result = rows
     if source:
@@ -214,15 +221,19 @@ def _reward_signal_text(value) -> str:
 def _plan_snapshot_from_row(row) -> dict:
     item = dict(row)
     raw = _json_loads_dict(item.get('raw_json'))
+    plan_payload_source = None
     if isinstance(raw, dict):
         item.update(raw)
-        for key in ('plan', 'task_plan'):
+        for key in ('current_plan', 'currentPlan', 'task_plan', 'taskPlan', 'plan'):
             nested = raw.get(key)
             if isinstance(nested, dict):
+                plan_payload_source = plan_payload_source or key
                 item.update(nested)
     task_list = _json_loads_any(item.get('task_list_json'))
     if isinstance(task_list, list):
         item['task_list'] = task_list
+    elif isinstance(item.get('task_list'), list):
+        item['task_list'] = item.get('task_list')
     elif _has_value(item.get('task_list')):
         item['task_list'] = [item.get('task_list')]
     else:
@@ -233,13 +244,18 @@ def _plan_snapshot_from_row(row) -> dict:
         if parsed_reward is not None:
             reward_signal = parsed_reward
     item['reward_signal'] = reward_signal
-    plan_history = _json_loads_any(item.get('plan_history_json'))
-    if isinstance(plan_history, list):
-        item['plan_history'] = plan_history
-    elif _has_value(item.get('plan_history')):
-        item['plan_history'] = [item.get('plan_history')]
+    if isinstance(item.get('plan_history'), list):
+        plan_history = item.get('plan_history')
     else:
-        item['plan_history'] = []
+        plan_history = _json_loads_any(item.get('plan_history_json'))
+        if not isinstance(plan_history, list):
+            if _has_value(plan_history):
+                plan_history = [plan_history]
+            elif _has_value(item.get('plan_history')):
+                plan_history = [item.get('plan_history')]
+            else:
+                plan_history = []
+    item['plan_history'] = plan_history
     return {
         'collected_at': item.get('collected_at'),
         'source': item.get('source'),
@@ -251,6 +267,7 @@ def _plan_snapshot_from_row(row) -> dict:
         'reward_signal_text': _reward_signal_text(item.get('reward_signal')),
         'plan_history': item.get('plan_history') or [],
         'plan_history_count': len(item.get('plan_history') or []),
+        'plan_payload_source': plan_payload_source or 'row',
         'raw_json': item.get('raw_json'),
     }
 
@@ -308,7 +325,7 @@ def _eeepc_observation_groups(rows, limit: int = 10) -> list[dict]:
     groups: list[dict] = []
     for row in rows:
         item = dict(row)
-        report_source = item.get('report_source') or 'unknown'
+        report_source = _report_source_label(item.get('report_source'))
         collected_at = item.get('collected_at') or ''
         if groups and groups[-1]['report_source'] == report_source:
             group = groups[-1]
@@ -383,9 +400,26 @@ def create_app(cfg: DashboardConfig):
 
         repo_latest = repo_rows[0] if repo_rows else None
         eeepc_latest = eeepc_rows[0] if eeepc_rows else None
+        repo_plan_snapshot = _plan_snapshot_from_row(repo_latest) if repo_latest else None
+        eeepc_plan_snapshot = _plan_snapshot_from_row(eeepc_latest) if eeepc_latest else None
+        repo_plan_rows = [
+            row for row in repo_rows
+            if _has_value(_plan_snapshot_from_row(row).get('current_task'))
+            or _plan_snapshot_from_row(row).get('task_count')
+            or _has_value(_plan_snapshot_from_row(row).get('reward_signal'))
+            or _plan_snapshot_from_row(row).get('plan_history_count')
+        ]
+        eeepc_plan_rows = [
+            row for row in eeepc_rows
+            if _has_value(_plan_snapshot_from_row(row).get('current_task'))
+            or _plan_snapshot_from_row(row).get('task_count')
+            or _has_value(_plan_snapshot_from_row(row).get('reward_signal'))
+            or _plan_snapshot_from_row(row).get('plan_history_count')
+        ]
+        plan_rows = repo_plan_rows or eeepc_plan_rows
         plan_history = [
             snapshot
-            for snapshot in (_plan_snapshot_from_row(row) for row in repo_rows)
+            for snapshot in (_plan_snapshot_from_row(row) for row in plan_rows)
             if _has_value(snapshot.get('current_task')) or snapshot.get('task_count') or _has_value(snapshot.get('reward_signal')) or snapshot.get('plan_history_count')
         ]
         plan_latest = plan_history[0] if plan_history else None
@@ -498,11 +532,17 @@ def create_app(cfg: DashboardConfig):
         subagent_statuses = sorted({row.get('status') or 'unknown' for row in all_subagent_events})
         subagent_total = len(all_subagent_events)
 
+        approval_rows = [
+            {**row, 'plan_snapshot': _plan_snapshot_from_row(row)}
+            for row in (eeepc_rows + repo_rows)
+        ]
+
         context = {
             'repo_latest': repo_latest,
             'eeepc_latest': eeepc_latest,
             'repo_rows': repo_rows,
             'eeepc_rows': eeepc_rows,
+            'approval_rows': approval_rows,
             'cycles': cycles,
             'promotions': promotions,
             'subagent_events': subagent_events,
@@ -528,6 +568,8 @@ def create_app(cfg: DashboardConfig):
             'plan_history': plan_history,
             'plan_history_count': len(plan_history),
             'plan_available': bool(plan_history),
+            'repo_plan_snapshot': repo_plan_snapshot,
+            'eeepc_plan_snapshot': eeepc_plan_snapshot,
             'analytics': analytics,
             'current_blocker': current_blocker,
             'eeepc_reachability': eeepc_reachability,
@@ -585,6 +627,7 @@ def create_app(cfg: DashboardConfig):
         if path == '/api/plan':
             payload = {
                 'current_plan': plan_latest,
+                'current_plan_source': plan_latest.get('plan_payload_source') if plan_latest else None,
                 'recent_plan_history': plan_history,
                 'plan_history_count': len(plan_history),
             }
@@ -603,15 +646,20 @@ def create_app(cfg: DashboardConfig):
             return [body]
 
         if path == '/api/approvals':
-            payload = {'items': [dict(r) for r in (eeepc_rows + repo_rows)]}
+            payload = {
+                'items': [
+                    {**dict(r), 'plan_snapshot': _plan_snapshot_from_row(r)}
+                    for r in (eeepc_rows + repo_rows)
+                ],
+            }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
             return [body]
 
         if path == '/api/deployments':
             payload = {
-                'eeepc_latest': dict(eeepc_latest) if eeepc_latest else None,
-                'repo_latest': dict(repo_latest) if repo_latest else None,
+                'eeepc_latest': {**dict(eeepc_latest), 'plan_snapshot': eeepc_plan_snapshot} if eeepc_latest else None,
+                'repo_latest': {**dict(repo_latest), 'plan_snapshot': repo_plan_snapshot} if repo_latest else None,
                 'eeepc_latest_observation': eeepc_latest_observation,
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')

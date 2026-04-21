@@ -77,10 +77,6 @@ def _seed_dashboard_data(db: Path) -> None:
         'source': 'repo',
         'status': 'unknown',
         'active_goal': None,
-        'current_task': 'draft plan',
-        'task_list_json': '["draft plan", "write tests"]',
-        'reward_signal': '{"status": "seed", "score": 0.25}',
-        'plan_history_json': '[{"current_task": "draft plan", "reward_signal": "seed"}]',
         'approval_gate': None,
         'gate_state': None,
         'report_source': None,
@@ -90,17 +86,13 @@ def _seed_dashboard_data(db: Path) -> None:
         'promotion_candidate_path': '/workspace/state/promotions/promotion-42.json',
         'promotion_decision_record': 'present',
         'promotion_accepted_record': 'present',
-        'raw_json': '{"plan": {"current_task": "draft plan", "task_list": ["draft plan", "write tests"], "reward_signal": {"status": "seed", "score": 0.25}, "plan_history": [{"current_task": "draft plan", "reward_signal": "seed"}]}}',
+        'raw_json': '{"current_plan": {"current_task": "draft plan", "task_list": ["draft plan", "write tests"], "reward_signal": {"status": "seed", "score": 0.25}, "plan_history": [{"current_task": "draft plan", "reward_signal": "seed"}]}}',
     })
     insert_collection(db, {
         'collected_at': '2026-04-16T12:05:00Z',
         'source': 'repo',
         'status': 'PASS',
         'active_goal': 'goal-1',
-        'current_task': 'ship plan view',
-        'task_list_json': '["ship plan view", {"title": "wire api"}]',
-        'reward_signal': '{"status": "dense", "score": 0.75}',
-        'plan_history_json': '[{"current_task": "draft plan", "reward_signal": "seed"}, {"current_task": "ship plan view", "reward_signal": {"status": "dense", "score": 0.75}}]',
         'approval_gate': None,
         'gate_state': None,
         'report_source': None,
@@ -110,7 +102,7 @@ def _seed_dashboard_data(db: Path) -> None:
         'promotion_candidate_path': '/workspace/state/promotions/promotion-42.json',
         'promotion_decision_record': 'present',
         'promotion_accepted_record': 'present',
-        'raw_json': '{"plan": {"current_task": "ship plan view", "task_list": ["ship plan view", {"title": "wire api"}], "reward_signal": {"status": "dense", "score": 0.75}, "plan_history": [{"current_task": "draft plan", "reward_signal": "seed"}, {"current_task": "ship plan view", "reward_signal": {"status": "dense", "score": 0.75}}]}}',
+        'raw_json': '{"current_plan": {"current_task": "ship plan view", "task_list": ["ship plan view", {"title": "wire api"}], "reward_signal": {"status": "dense", "score": 0.75}, "plan_history": [{"current_task": "draft plan", "reward_signal": "seed"}, {"current_task": "ship plan view", "reward_signal": {"status": "dense", "score": 0.75}}]}}',
     })
     upsert_event(db, {
         'collected_at': '2026-04-16T12:00:00Z',
@@ -302,6 +294,7 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'loaded_snapshot_count' in api_body
     assert 'total_snapshot_count' in api_body
     assert 'plan_latest' in api_body
+    assert 'current_plan' in api_body
 
     status, plan_body = _call_app(app, '/plan')
     assert status.startswith('200')
@@ -311,10 +304,13 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'dense' in plan_body
     assert 'Recent plan history' in plan_body
     assert 'draft plan' in plan_body
+    assert 'Collection source' in plan_body
+    assert 'Plan payload' in plan_body
 
     status, plan_api = _call_app(app, '/api/plan')
     assert status.startswith('200')
     assert 'current_plan' in plan_api
+    assert 'current_plan_source' in plan_api
     assert 'recent_plan_history' in plan_api
     assert 'ship plan view' in plan_api
     assert 'wire api' in plan_api
@@ -345,7 +341,9 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     status, approvals_body = _call_app(app, '/approvals')
     assert status.startswith('200')
     assert 'Approvals' in approvals_body
-    assert 'Source' in approvals_body
+    assert 'Collection source' in approvals_body
+    assert 'Current task' in approvals_body
+    assert 'Plan payload' in approvals_body
     assert 'Gate state' in approvals_body
     assert 'valid' in approvals_body
 
@@ -353,12 +351,15 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert status.startswith('200')
     assert '/state/reports/evolution-1.json' in deployments_api
     assert 'eeepc_latest_observation' in deployments_api
+    assert 'plan_snapshot' in deployments_api
 
     status, deployments_body = _call_app(app, '/deployments')
     assert status.startswith('200')
     assert 'Deployments / Verification' in deployments_body
     assert 'Live eeepc proof' in deployments_body
     assert '/state/reports/evolution-1.json' in deployments_body
+    assert 'Current task' in deployments_body
+    assert 'Plan payload' in deployments_body
     assert 'Observation cadence' in deployments_body
     assert 'Fresh report first seen' in deployments_body
 
@@ -422,6 +423,44 @@ def test_app_subagents_renders_durable_history(tmp_path: Path):
     assert 'browser-report' not in filtered_body
     assert 'name="origin"' in filtered_body
     assert 'selected' in filtered_body
+
+
+def test_app_reports_missing_report_source_and_pending_cadence(tmp_path: Path):
+    root = tmp_path / 'dashboard'
+    db = root / 'data' / 'db.sqlite3'
+    init_db(db)
+    insert_collection(db, {
+        'collected_at': '2026-04-16T13:00:00Z',
+        'source': 'eeepc',
+        'status': 'PASS',
+        'active_goal': 'goal-null-source',
+        'approval_gate': '{"ok": true, "reason": "valid"}',
+        'gate_state': 'valid',
+        'report_source': None,
+        'outbox_source': None,
+        'artifact_paths_json': '[]',
+        'promotion_summary': None,
+        'promotion_candidate_path': None,
+        'promotion_decision_record': None,
+        'promotion_accepted_record': None,
+        'raw_json': '{"outbox": {"status": "PASS"}}',
+    })
+    app = create_app(_cfg(tmp_path, db))
+
+    status, cycles_body = _call_app(app, '/cycles')
+    assert status.startswith('200')
+    assert 'report source unavailable' in cycles_body
+    assert 'single observation / cadence not yet established' in cycles_body
+
+    status, analytics_body = _call_app(app, '/analytics')
+    assert status.startswith('200')
+    assert 'report source unavailable' in analytics_body
+    assert 'single observation / cadence not yet established' in analytics_body
+
+    status, deployments_body = _call_app(app, '/deployments')
+    assert status.startswith('200')
+    assert 'report source unavailable' in deployments_body
+    assert 'cadence not yet established' in deployments_body
 
 
 def test_app_subagents_handles_missing_telemetry(tmp_path: Path):

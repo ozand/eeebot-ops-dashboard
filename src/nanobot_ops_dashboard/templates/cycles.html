@@ -3,7 +3,7 @@
 <div class="section">
   <div class="section-header">
     <h2>Cycles</h2>
-    <div class="section-note">Unique cycle reports are de-duplicated by report source; observed collections below show cadence and freshness.</div>
+    <div class="section-note">Unique cycle reports are de-duplicated by report source; missing report_source values are shown as report source unavailable.</div>
   </div>
   <form method="get" class="filter-bar">
     <label>Source <input type="text" name="source" value="{{ request_source or '' }}" placeholder="eeepc or repo"></label>
@@ -50,7 +50,7 @@
           {% set approval = detail.get('approval', {}) %}
           {% set approval_state = 'PASS' if approval.get('ok') else 'BLOCK' if approval else 'unknown' %}
           <div class="detail-stack">
-            <div class="detail-row"><span class="detail-label">Report source</span><code>{{ detail.get('report_source', row['identity_key']) }}</code></div>
+            <div class="detail-row"><span class="detail-label">Report source</span><code>{{ detail.get('report_source') or row['identity_key'] }}</code></div>
             <div class="detail-row"><span class="detail-label">Approval</span><span class="status-pill status-{{ status_kind(approval_state) }}">{{ approval_state }}</span>{% if approval.get('reason') %}<span class="muted">{{ approval.get('reason') }}</span>{% endif %}</div>
             {% if detail.get('failure_class') %}<div class="detail-row"><span class="detail-label">Failure class</span><span>{{ detail.get('failure_class') }}</span></div>{% endif %}
             {% if detail.get('blocked_next_step') %}<div class="detail-row"><span class="detail-label">Blocked next step</span><span>{{ detail.get('blocked_next_step') }}</span></div>{% endif %}
@@ -87,7 +87,7 @@
         <td data-label="Latest observed" class="mono">{{ item.latest_observed_at }}</td>
         <td data-label="First seen" class="mono">{{ item.earliest_observed_at }}</td>
         <td data-label="Seen"><span class="status-pill status-unknown">{{ item.observed_count }}</span></td>
-        <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation' }}</td>
+        <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation / cadence not yet established' }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>
         <td data-label="Goal">{{ item.active_goal or 'unknown' }}</td>
       </tr>

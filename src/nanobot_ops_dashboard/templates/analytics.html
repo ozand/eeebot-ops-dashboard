@@ -171,7 +171,7 @@
 <div class="section">
   <div class="section-header">
     <h3>Observed eeepc collections</h3>
-    <div class="section-note">Fresh collections are preserved even when the report source repeats.</div>
+    <div class="section-note">Fresh collections are preserved even when the report source repeats or is temporarily unavailable.</div>
   </div>
   <table class="history-table">
     <thead>
@@ -184,7 +184,7 @@
         <td data-label="Latest observed" class="mono">{{ item.latest_observed_at }}</td>
         <td data-label="First seen" class="mono">{{ item.earliest_observed_at }}</td>
         <td data-label="Seen"><span class="status-pill status-unknown">{{ item.observed_count }}</span></td>
-        <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation' }}</td>
+        <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation / cadence not yet established' }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>
         <td data-label="Goal">{{ item.active_goal or 'unknown' }}</td>
       </tr>
