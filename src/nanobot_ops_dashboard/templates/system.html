@@ -55,6 +55,16 @@
         <div class="detail-row"><span class="detail-label">Cycle budget</span><span>{{ (control_plane.capabilities.cycle_budget.state ~ ' / ' ~ control_plane.capabilities.cycle_budget.reason) if control_plane.capabilities and control_plane.capabilities.cycle_budget else 'unknown' }}</span></div>
       </div>
     </div>
+    <div class="card">
+      <h3>Latest subagent correlation</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Goal</span><span>{{ control_plane.subagent_correlation.goal_id if control_plane.subagent_correlation else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Cycle</span><span>{{ control_plane.subagent_correlation.cycle_id if control_plane.subagent_correlation else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Current task</span><span>{{ control_plane.subagent_correlation.current_task_id if control_plane.subagent_correlation else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span>{{ control_plane.subagent_correlation.status if control_plane.subagent_correlation else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Report path</span><span>{{ control_plane.subagent_correlation.report_path if control_plane.subagent_correlation else 'unknown' }}</span></div>
+      </div>
+    </div>
   </div>
 </div>
 

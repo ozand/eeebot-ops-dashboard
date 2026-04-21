@@ -172,6 +172,7 @@ def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, curren
         'validation_warnings': (producer_summary.get('validation_warnings') if isinstance(producer_summary, dict) else None),
         'validation_errors': (producer_summary.get('validation_errors') if isinstance(producer_summary, dict) else None),
         'capabilities': repo_raw.get('capabilities') if isinstance(repo_raw, dict) else None,
+        'subagent_correlation': repo_raw.get('subagent_correlation') if isinstance(repo_raw, dict) else None,
         'experiment': experiment_truth,
         'active_execution': active_exec if isinstance(active_exec, dict) else {},
         'execution_state': execution_state,
