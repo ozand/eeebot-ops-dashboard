@@ -141,8 +141,41 @@
     </div>
 
     <div class="card">
+      <h3>Experiments / budget</h3>
+      {% if experiments_available or (current_reward_text and current_reward_text != 'unknown') %}
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Current experiment</span><span>{{ current_experiment.title if current_experiment else 'none yet' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Budget</span><span>{{ current_budget.budget_text if current_budget and current_budget.budget else 'none yet' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Reward</span><span>{{ current_reward_text }}</span></div>
+      </div>
+      <div style="margin-top: .75rem;"><a href="/experiments">Open experiments</a></div>
+      {% else %}
+      <div class="muted">No experiment or budget telemetry discovered yet.</div>
+      <div style="margin-top: .75rem;"><a href="/experiments">Open experiments</a></div>
+      {% endif %}
+    </div>
+
+    <div class="card">
       <h3>Subagents</h3>
-      <div class="muted">No durable subagent telemetry detected yet. Page is ready for future instrumentation.</div>
+      {% if subagent_latest_event %}
+      <div class="status-stack" style="margin-bottom: .6rem;">
+        <span class="status-pill status-large status-{{ status_kind(subagent_latest_event['status']) }}">{{ status_label(subagent_latest_event['status']) }}</span>
+        <span class="muted">Latest real telemetry</span>
+      </div>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Source</span><span>{{ subagent_latest_event['source'] }}</span></div>
+        <div class="detail-row"><span class="detail-label">Title</span><span>{{ subagent_latest_event['title'] }}</span></div>
+        <div class="detail-row"><span class="detail-label">Task</span><span>{{ subagent_latest_event['detail'].get('task') or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Goal</span><span>{{ subagent_latest_event['detail'].get('goal_id') or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Cycle</span><span class="mono">{{ subagent_latest_event['detail'].get('cycle_id') or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Collected</span><span class="mono">{{ subagent_latest_event['collected_at'] or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Age</span><span>{{ subagent_latest_age }}</span></div>
+      </div>
+      <div style="margin-top: .75rem;"><a href="/subagents">Open subagents</a></div>
+      {% else %}
+      <div class="muted">No durable subagent telemetry detected yet. The card will light up once state/subagents records exist.</div>
+      <div style="margin-top: .75rem;"><a href="/subagents">Open subagents</a></div>
+      {% endif %}
     </div>
   </div>
 </div>

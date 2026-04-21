@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from wsgiref.util import setup_testing_defaults
 from urllib.parse import parse_qs
 
@@ -218,6 +219,173 @@ def _reward_signal_text(value) -> str:
     return str(value)
 
 
+
+def _budget_signal_text(value) -> str:
+    if value is None:
+        return 'unknown'
+    if isinstance(value, dict):
+        parts = []
+        for key in ('status', 'state', 'spent', 'remaining', 'limit', 'budget', 'currency', 'reason'):
+            candidate = value.get(key)
+            if _has_value(candidate):
+                parts.append(f'{key}={candidate}')
+        if parts:
+            return ' | '.join(parts)
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+
+def _first_present(mapping: dict, keys: tuple[str, ...]):
+    for key in keys:
+        value = mapping.get(key)
+        if _has_value(value):
+            return value
+    return None
+
+
+
+def _structured_file_payload(path: Path):
+    try:
+        content = path.read_text(encoding='utf-8').strip()
+    except Exception:
+        return None
+    if not content:
+        return None
+    if path.suffix == '.jsonl':
+        for line in reversed(content.splitlines()):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                return json.loads(line)
+            except Exception:
+                continue
+        return None
+    try:
+        return json.loads(content)
+    except Exception:
+        return content
+
+
+
+def _experiment_budget_candidates(state_root: Path) -> list[Path]:
+    directories = [state_root / 'experiments', state_root / 'experiment', state_root / 'budgets', state_root / 'budget']
+    files: list[Path] = []
+    for directory in directories:
+        if not directory.exists():
+            continue
+        for pattern in ('*.json', '*.jsonl'):
+            files.extend(directory.glob(pattern))
+    return sorted({path for path in files if path.exists()}, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+
+def _experiment_snapshot_from_payload(payload, source_path: Path) -> dict | None:
+    if not isinstance(payload, dict):
+        return None
+    experiment_payload = payload
+    for key in ('current_experiment', 'currentExperiment', 'experiment', 'current_experiment_snapshot', 'current_experiment_state'):
+        nested = payload.get(key)
+        if isinstance(nested, dict):
+            experiment_payload = nested
+            break
+    reward_signal = _first_present(experiment_payload, ('reward_signal', 'rewardSignal'))
+    if reward_signal is None:
+        reward_signal = _first_present(payload, ('reward_signal', 'rewardSignal'))
+    if isinstance(reward_signal, str):
+        parsed_reward = _json_loads_any(reward_signal)
+        if parsed_reward is not None:
+            reward_signal = parsed_reward
+    budget_payload = _first_present(experiment_payload, ('budget',))
+    if budget_payload is None:
+        budget_payload = _first_present(payload, ('budget',))
+    if not isinstance(budget_payload, dict):
+        budget_payload = {
+            key: value for key, value in {
+                'budget': _first_present(experiment_payload, ('budget',)),
+                'spent': _first_present(experiment_payload, ('budget_spent', 'budgetSpent', 'spent')),
+                'remaining': _first_present(experiment_payload, ('budget_remaining', 'budgetRemaining', 'remaining')),
+                'limit': _first_present(experiment_payload, ('budget_limit', 'budgetLimit', 'limit')),
+                'currency': _first_present(experiment_payload, ('currency', 'budget_currency', 'budgetCurrency')),
+                'status': _first_present(experiment_payload, ('budget_status', 'budgetStatus', 'status')),
+            }.items() if _has_value(value)
+        }
+    experiment_id = _first_present(experiment_payload, ('experiment_id', 'experimentId', 'id', 'name', 'title', 'slug'))
+    title_value = _first_present(experiment_payload, ('title', 'name', 'summary', 'label'))
+    status = _first_present(experiment_payload, ('status', 'state', 'result_status', 'outcome')) or 'unknown'
+    phase = _first_present(experiment_payload, ('phase', 'stage'))
+    is_experiment_snapshot = any(_has_value(value) for value in (experiment_id, title_value, reward_signal, phase))
+    title = title_value or experiment_id or 'unknown experiment'
+    collected_at = _first_present(experiment_payload, ('collected_at', 'collectedAt', 'finished_at', 'finishedAt', 'started_at', 'startedAt'))
+    if not collected_at:
+        collected_at = datetime.fromtimestamp(source_path.stat().st_mtime, tz=timezone.utc).isoformat().replace('+00:00', 'Z') if source_path.exists() else None
+    return {
+        'source_path': str(source_path),
+        'source_file': source_path.name,
+        'collected_at': collected_at,
+        'experiment_id': str(experiment_id) if _has_value(experiment_id) else None,
+        'title': str(title),
+        'status': str(status),
+        'phase': str(phase) if _has_value(phase) else None,
+        'is_experiment_snapshot': is_experiment_snapshot,
+        'reward_signal': reward_signal,
+        'reward_text': _reward_signal_text(reward_signal),
+        'budget': budget_payload if budget_payload else None,
+        'budget_text': _budget_signal_text(budget_payload if budget_payload else None),
+        'raw': payload,
+    }
+
+
+
+def _discover_experiment_visibility(cfg: DashboardConfig, plan_latest: dict | None = None) -> dict:
+    state_roots = [cfg.nanobot_repo_root / 'workspace' / 'state', cfg.nanobot_repo_root / 'state']
+    candidate_files: list[Path] = []
+    for state_root in state_roots:
+        candidate_files.extend(_experiment_budget_candidates(state_root))
+    candidate_files = sorted({path for path in candidate_files if path.exists()}, key=lambda path: path.stat().st_mtime, reverse=True)
+
+    experiment_history: list[dict] = []
+    budget_history: list[dict] = []
+    for path in candidate_files:
+        payload = _structured_file_payload(path)
+        if not isinstance(payload, dict):
+            continue
+        snapshot = _experiment_snapshot_from_payload(payload, path)
+        if snapshot is None:
+            continue
+        has_experiment_fields = bool(snapshot.get('is_experiment_snapshot'))
+        if snapshot.get('budget'):
+            budget_history.append(snapshot)
+        if has_experiment_fields:
+            experiment_history.append(snapshot)
+
+    current_experiment = experiment_history[0] if experiment_history else None
+    current_budget = next((snapshot for snapshot in budget_history if '/budgets/' in (snapshot.get('source_path') or '')), None) or (budget_history[0] if budget_history else None)
+    reward_source = 'experiment telemetry' if current_experiment and current_experiment.get('reward_signal') is not None else 'task plan snapshot' if plan_latest and plan_latest.get('reward_signal') is not None else 'unavailable'
+    reward_signal = current_experiment.get('reward_signal') if current_experiment and current_experiment.get('reward_signal') is not None else (plan_latest.get('reward_signal') if isinstance(plan_latest, dict) else None)
+    reward_text = _reward_signal_text(reward_signal)
+    if current_budget is None and current_experiment and current_experiment.get('budget'):
+        current_budget = current_experiment
+
+    return {
+        'available': bool(experiment_history or current_budget),
+        'state_roots': [str(root) for root in state_roots],
+        'candidate_files': [str(path) for path in candidate_files[:25]],
+        'experiment_history': experiment_history[:10],
+        'budget_history': budget_history[:10],
+        'current_experiment': current_experiment,
+        'current_budget': current_budget,
+        'current_reward_signal': reward_signal,
+        'current_reward_text': reward_text,
+        'reward_source': reward_source,
+        'empty_state_reason': (
+            'No experiment or budget telemetry files were found under workspace/state/experiments or workspace/state/budgets.'
+            if not (experiment_history or current_budget) else None
+        ),
+    }
+
+
 def _plan_snapshot_from_row(row) -> dict:
     item = dict(row)
     raw = _json_loads_dict(item.get('raw_json'))
@@ -360,6 +528,7 @@ def create_app(cfg: DashboardConfig):
     env.globals['status_label'] = _status_label
     env.globals['plan_task_label'] = _plan_item_label
     env.globals['reward_signal_text'] = _reward_signal_text
+    env.globals['budget_signal_text'] = _budget_signal_text
 
     def app(environ, start_response):
         setup_testing_defaults(environ)
@@ -423,6 +592,8 @@ def create_app(cfg: DashboardConfig):
             if _has_value(snapshot.get('current_task')) or snapshot.get('task_count') or _has_value(snapshot.get('reward_signal')) or snapshot.get('plan_history_count')
         ]
         plan_latest = plan_history[0] if plan_history else None
+        experiment_visibility = _discover_experiment_visibility(cfg, plan_latest)
+        subagent_latest_event = all_subagent_events[0] if all_subagent_events else None
         latest_collected = None
         for row in [eeepc_latest, repo_latest]:
             if row and (latest_collected is None or row['collected_at'] > latest_collected):
@@ -547,6 +718,17 @@ def create_app(cfg: DashboardConfig):
             'promotions': promotions,
             'subagent_events': subagent_events,
             'subagents_available': bool(all_subagent_events),
+            'subagent_latest_event': subagent_latest_event,
+            'subagent_latest_age': _age_text(subagent_latest_event.get('collected_at') if subagent_latest_event else None, now),
+            'experiment_visibility': experiment_visibility,
+            'experiments_available': experiment_visibility['available'],
+            'current_experiment': experiment_visibility['current_experiment'],
+            'current_budget': experiment_visibility['current_budget'],
+            'current_reward_signal': experiment_visibility['current_reward_signal'],
+            'current_reward_text': experiment_visibility['current_reward_text'],
+            'experiment_files': experiment_visibility['candidate_files'],
+            'experiment_empty_state_reason': experiment_visibility['empty_state_reason'],
+            'experiment_state_roots': experiment_visibility['state_roots'],
             'latest_collected': latest_collected,
             'latest_collected_age': _age_text(latest_collected, now),
             'latest_collector_success_age': latest_collector_success_age,
@@ -619,6 +801,10 @@ def create_app(cfg: DashboardConfig):
                 'current_blocker': current_blocker,
                 'plan_latest': plan_latest,
                 'plan_history_count': len(plan_history),
+                'experiments_available': experiment_visibility['available'],
+                'current_experiment': experiment_visibility['current_experiment'],
+                'current_budget': experiment_visibility['current_budget'],
+                'current_reward_text': experiment_visibility['current_reward_text'],
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
@@ -630,6 +816,24 @@ def create_app(cfg: DashboardConfig):
                 'current_plan_source': plan_latest.get('plan_payload_source') if plan_latest else None,
                 'recent_plan_history': plan_history,
                 'plan_history_count': len(plan_history),
+            }
+            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+            return [body]
+
+        if path == '/api/experiments':
+            payload = {
+                'available': experiment_visibility['available'],
+                'current_experiment': experiment_visibility['current_experiment'],
+                'current_budget': experiment_visibility['current_budget'],
+                'current_reward_signal': experiment_visibility['current_reward_signal'],
+                'current_reward_text': experiment_visibility['current_reward_text'],
+                'reward_source': experiment_visibility['reward_source'],
+                'experiment_history': experiment_visibility['experiment_history'],
+                'budget_history': experiment_visibility['budget_history'],
+                'experiment_files': experiment_visibility['candidate_files'],
+                'state_roots': experiment_visibility['state_roots'],
+                'empty_state_reason': experiment_visibility['empty_state_reason'],
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
@@ -681,6 +885,8 @@ def create_app(cfg: DashboardConfig):
             template = env.get_template('deployments.html')
         elif path == '/analytics':
             template = env.get_template('analytics.html')
+        elif path == '/experiments':
+            template = env.get_template('experiments.html')
         elif path == '/subagents':
             template = env.get_template('subagents.html')
         elif path == '/plan':

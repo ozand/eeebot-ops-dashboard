@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import time
 from wsgiref.util import setup_testing_defaults
 
 from nanobot_ops_dashboard.app import create_app
@@ -151,6 +153,29 @@ def _seed_dashboard_data(db: Path) -> None:
     })
 
 
+def _seed_experiment_telemetry(repo_root: Path) -> None:
+    state_root = repo_root / 'workspace' / 'state'
+    (state_root / 'experiments').mkdir(parents=True, exist_ok=True)
+    (state_root / 'budgets').mkdir(parents=True, exist_ok=True)
+    (state_root / 'experiments' / 'history.jsonl').write_text(
+        '{"experiment_id": "exp-16", "title": "reward-baseline", "status": "done", "phase": "complete", "reward_signal": {"status": "seed", "value": 0.1}, "budget": {"limit": 1200, "spent": 240, "remaining": 960, "currency": "USD"}}\n',
+        encoding='utf-8',
+    )
+    (state_root / 'budgets' / 'current.json').write_text(
+        '{"budget": {"limit": 1200, "spent": 275, "remaining": 925, "currency": "USD", "status": "tracking"}}',
+        encoding='utf-8',
+    )
+    (state_root / 'experiments' / 'current.json').write_text(
+        '{"current_experiment": {"experiment_id": "exp-17", "title": "reward-tuning", "status": "running", "phase": "active", "reward_signal": {"status": "seed", "value": 0.25, "source": "experiment-telemetry"}, "budget": {"limit": 1200, "spent": 275, "remaining": 925, "currency": "USD"}}}',
+        encoding='utf-8',
+    )
+    now = time.time()
+    os.utime(state_root / 'experiments' / 'history.jsonl', (now - 2, now - 2))
+    os.utime(state_root / 'budgets' / 'current.json', (now - 1, now - 1))
+    os.utime(state_root / 'experiments' / 'current.json', (now, now))
+
+
+
 def _cfg(tmp_path: Path, db: Path) -> DashboardConfig:
     return DashboardConfig(
         project_root=Path('/home/ozand/herkoot/Projects/nanobot-ops-dashboard'),
@@ -229,6 +254,11 @@ def test_app_overview_renders(tmp_path: Path):
     assert 'Open task plan' in body
     assert 'ship plan view' in body
     assert 'Reward signal' in body
+    assert 'Experiments / budget' in body
+    assert 'Open experiments' in body
+    assert 'Current experiment' in body
+    assert 'Latest real telemetry' in body
+    assert 'browser-report' in body
     assert 'Collection Summary' in body
     assert 'Outbox' in body
     assert 'Recent cycle timeline' in body
@@ -362,6 +392,56 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'Plan payload' in deployments_body
     assert 'Observation cadence' in deployments_body
     assert 'Fresh report first seen' in deployments_body
+
+
+def test_app_experiments_renders_truthful_empty_state(tmp_path: Path):
+    root = tmp_path / 'dashboard'
+    db = root / 'data' / 'db.sqlite3'
+    init_db(db)
+    app = create_app(_cfg(tmp_path, db))
+
+    status, body = _call_app(app, '/experiments')
+    assert status.startswith('200')
+    assert 'Experiments & budget' in body
+    assert 'No experiment telemetry yet.' in body
+    assert 'No dedicated budget file has landed yet.' in body
+    assert 'No experiment telemetry files were discovered yet.' in body
+    assert '/api/experiments' in body
+
+    status, api_body = _call_app(app, '/api/experiments')
+    assert status.startswith('200')
+    assert 'available' in api_body
+    assert 'empty_state_reason' in api_body
+    assert 'No experiment or budget telemetry files were found' in api_body
+
+
+def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
+    root = tmp_path / 'dashboard'
+    db = root / 'data' / 'db.sqlite3'
+    init_db(db)
+    _seed_experiment_telemetry(tmp_path / 'nanobot')
+    app = create_app(_cfg(tmp_path, db))
+
+    status, body = _call_app(app, '/experiments')
+    assert status.startswith('200')
+    assert 'reward-tuning' in body
+    assert 'exp-17' in body
+    assert 'status-running' in body or 'status-pass' in body or 'status-neutral' in body
+    assert 'spent=275' in body
+    assert 'remaining=925' in body
+    assert 'experiment-telemetry' in body
+    assert 'workspace/state/experiments/current.json' in body
+    assert 'workspace/state/budgets/current.json' in body
+    assert 'reward-baseline' in body
+
+    status, api_body = _call_app(app, '/api/experiments')
+    assert status.startswith('200')
+    assert 'reward-tuning' in api_body
+    assert 'exp-17' in api_body
+    assert 'budget_history' in api_body
+    assert 'current_reward_signal' in api_body
+    assert 'experiment-telemetry' in api_body
+    assert 'workspace/state/experiments/current.json' in api_body
 
 
 def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
