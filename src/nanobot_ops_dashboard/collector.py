@@ -702,7 +702,7 @@ def _normalize_eeepc_payloads(
         'status': outbox.get('status') or 'unknown',
         'active_goal': active_goal,
         'approval_gate': json.dumps(approval) if approval is not None else None,
-        'gate_state': (approval or {}).get('reason') if isinstance(approval, dict) else None,
+        'gate_state': ((approval or {}).get('reason') or (approval or {}).get('state')) if isinstance(approval, dict) else None,
         'report_source': source_report,
         'outbox_source': outbox_source or f"{cfg.eeepc_state_root}/outbox/report.index.json",
         'artifact_paths': artifact_paths,
