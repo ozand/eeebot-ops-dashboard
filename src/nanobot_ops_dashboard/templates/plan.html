@@ -8,6 +8,21 @@
 
   <div class="cards">
     <div class="card">
+      <h3>Hypothesis backlog cross-link</h3>
+      {% if hypotheses_available %}
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Selected hypothesis</span><span>{{ hypothesis_selected.id or 'none' }} · {{ hypothesis_selected.title or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Priority score</span><span>{{ hypothesis_selected.score_text or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Top-ranked entry</span><span>{{ hypothesis_top_entries[0].hypothesis_id if hypothesis_top_entries else 'none' }} · {{ hypothesis_top_entries[0].title if hypothesis_top_entries else 'unknown' }}</span></div>
+      </div>
+      <div style="margin-top: .75rem;"><a href="/hypotheses">Open hypotheses backlog</a></div>
+      {% else %}
+      <div class="muted">{{ hypotheses_empty_state_reason }}</div>
+      <div style="margin-top: .75rem;"><a href="/hypotheses">Open hypotheses backlog</a></div>
+      {% endif %}
+    </div>
+
+    <div class="card">
       <h3>Current plan snapshot</h3>
       {% if plan_latest %}
       <div class="status-stack" style="margin-bottom: .6rem;">

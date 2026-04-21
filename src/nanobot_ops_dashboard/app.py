@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from wsgiref.util import setup_testing_defaults
@@ -996,6 +997,20 @@ def _file_preview(path: Path, max_chars: int = 800) -> dict:
 
 
 
+def _remote_file_preview(cfg: DashboardConfig, remote_path: str, max_chars: int = 800) -> dict:
+    shell_command = f"if [ -f {remote_path!r} ]; then head -c {max_chars} {remote_path!r}; else echo '__MISSING__'; fi"
+    ssh_cmd = ['ssh', '-F', '/home/ozand/.ssh/config', '-i', str(cfg.eeepc_ssh_key), '-o', 'IdentitiesOnly=yes', cfg.eeepc_ssh_host, f"bash -lc {json.dumps(shell_command)}"]
+    try:
+        proc = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=20, check=True)
+        content = proc.stdout
+        if content.strip() == '__MISSING__':
+            return {'path': remote_path, 'exists': False, 'preview': None}
+        return {'path': remote_path, 'exists': True, 'preview': content[:max_chars]}
+    except Exception as exc:
+        return {'path': remote_path, 'exists': False, 'preview': f'<remote preview failed: {exc}>'}
+
+
+
 def _discover_system_visibility(cfg: DashboardConfig, eeepc_latest, repo_latest) -> dict:
     repo_root = cfg.nanobot_repo_root
     local_files = [
@@ -1011,6 +1026,7 @@ def _discover_system_visibility(cfg: DashboardConfig, eeepc_latest, repo_latest)
         {'path': f"{cfg.eeepc_state_root}/goals/current.json", 'exists': True, 'preview': json.dumps(goals_payload.get('current') or goals_payload.get('current_goal') or {}, ensure_ascii=False, indent=2)[:800] if goals_payload else '{}'},
         {'path': f"{cfg.eeepc_state_root}/goals/active.json", 'exists': True, 'preview': json.dumps({'active_goal': eeepc_latest['active_goal'] if eeepc_latest else None}, ensure_ascii=False, indent=2)},
         {'path': f"{cfg.eeepc_state_root}/goals/registry.json", 'exists': True, 'preview': json.dumps(goals_payload, ensure_ascii=False, indent=2)[:800] if goals_payload else '{}'},
+        _remote_file_preview(cfg, f"{cfg.eeepc_state_root}/ops/AGENT.md"),
         {'path': f"{cfg.eeepc_state_root}/AGENT.md", 'exists': False, 'preview': None},
         {'path': f"{cfg.eeepc_state_root}/agent.md", 'exists': False, 'preview': None},
     ]
@@ -1154,7 +1170,15 @@ def create_app(cfg: DashboardConfig):
             'selected_task_title': operator_plan.get('selected_task_title') if isinstance(operator_plan, dict) else None,
             'task_selection_source': operator_plan.get('task_selection_source') if isinstance(operator_plan, dict) else None,
         }
-        system_visibility = _discover_system_visibility(cfg, eeepc_latest, repo_latest)
+        system_visibility = _discover_system_visibility(cfg, eeepc_latest, repo_latest) if path == '/system' else {
+            'eeepc_goal': eeepc_latest['active_goal'] if eeepc_latest else None,
+            'eeepc_status': eeepc_latest['status'] if eeepc_latest else None,
+            'repo_goal': repo_latest['active_goal'] if repo_latest else None,
+            'repo_status': repo_latest['status'] if repo_latest else None,
+            'local_files': [],
+            'eeepc_files': [],
+            'eeepc_outbox_preview': '{}',
+        }
 
         analytics = {
             'total_snapshots': total_snapshot_count,
