@@ -78,6 +78,15 @@
         <div class="detail-row"><span class="detail-label">Tree</span><span>{{ control_plane.runtime_source.source_tree if control_plane.runtime_source else 'unknown' }}</span></div>
       </div>
     </div>
+    <div class="card">
+      <h3>Owner utility</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">State</span><span>{{ control_plane.owner_utility.state if control_plane.owner_utility else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Reason</span><span>{{ control_plane.owner_utility.reason if control_plane.owner_utility else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Primary action</span><span>{{ control_plane.owner_utility.primary_action if control_plane.owner_utility else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Experiment outcome</span><span>{{ control_plane.owner_utility.evidence.experiment_outcome if control_plane.owner_utility and control_plane.owner_utility.evidence else 'unknown' }}</span></div>
+      </div>
+    </div>
   </div>
 </div>
 

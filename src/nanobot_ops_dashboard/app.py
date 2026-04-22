@@ -170,6 +170,7 @@ def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, curren
         'producer_summary': producer_summary if isinstance(producer_summary, dict) else {},
         'runtime_source': (producer_summary.get('runtime_source') if isinstance(producer_summary, dict) else None),
         'prompt_mass': (producer_summary.get('prompt_mass') if isinstance(producer_summary, dict) else None),
+        'owner_utility': (producer_summary.get('owner_utility') if isinstance(producer_summary, dict) else None),
         'validation_summary': (producer_summary.get('validation_summary') if isinstance(producer_summary, dict) else None),
         'validation_warnings': (producer_summary.get('validation_warnings') if isinstance(producer_summary, dict) else None),
         'validation_errors': (producer_summary.get('validation_errors') if isinstance(producer_summary, dict) else None),
