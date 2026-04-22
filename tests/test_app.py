@@ -439,6 +439,8 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'draft plan' in plan_body
     assert 'Collection source' in plan_body
     assert 'Plan payload' in plan_body
+    assert 'Task boundary title' in plan_body
+    assert 'Task selection source' in plan_body
 
     status, plan_api = _call_app(app, '/api/plan')
     assert status.startswith('200')
@@ -574,6 +576,7 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     assert 'Host resource sensing' in system_body
     assert 'Governance schema' in system_body
     assert 'Governance coverage' in system_body
+    assert 'Task boundary' in system_body
     assert 'Capability reporting' in system_body
     assert 'Memory discipline' in system_body
     assert 'Validation status' in system_body
