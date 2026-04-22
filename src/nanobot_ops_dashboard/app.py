@@ -1618,12 +1618,15 @@ def create_app(cfg: DashboardConfig):
         if path == '/api/plan':
             payload = {
                 'current_plan': plan_latest,
-                'current_plan_source': plan_latest.get('plan_payload_source') if plan_latest else None,
-                'recent_plan_history': plan_history,
-                'plan_history_count': len(plan_history),
+                'current_plan_source': plan_latest['source'] if plan_latest else None,
+                'current_task': plan_latest['current_task'] if plan_latest else None,
+                'selected_task_title': plan_latest['selected_task_title'] if plan_latest else None,
+                'task_selection_source': plan_latest['task_selection_source'] if plan_latest else None,
+                'selected_tasks_text': plan_latest['selected_tasks_text'] if plan_latest else None,
+                'plan_history_count': plan_history_count,
+                'recent_plan_history': plan_history[:10],
             }
-            body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
-            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])
+
             return [body]
 
         if path == '/api/experiments':
