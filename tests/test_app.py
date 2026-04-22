@@ -463,6 +463,7 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
 
     status, promotions_body = _call_app(app, '/promotions')
     assert status.startswith('200')
+    assert 'Replay readiness' in promotions_body
     assert 'promotion-42 | reviewed | accept' in promotions_body
     assert '/workspace/state/promotions/promotion-42.json' in promotions_body
     assert 'Decision record' in promotions_body

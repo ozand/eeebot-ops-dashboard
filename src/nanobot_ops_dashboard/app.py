@@ -1236,6 +1236,9 @@ def create_app(cfg: DashboardConfig):
             promotion_source,
             promotion_status,
         )
+        for row in promotions:
+            ready = 'ready' if row.get('accepted_record') == 'present' and row.get('decision_record') == 'present' and row.get('candidate_path') else 'blocked'
+            row['replay_readiness'] = ready
         all_subagent_events = _sort_rows_desc(
             _decorate_rows(
                 fetch_events(cfg.db_path, 'repo', 'subagent', limit=1000) +
