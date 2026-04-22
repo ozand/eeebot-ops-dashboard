@@ -39,6 +39,7 @@
         <div class="detail-row"><span class="detail-label">Validation warnings</span><span>{{ (control_plane.validation_warnings | join(', ')) if control_plane.validation_warnings else 'none' }}</span></div>
         <div class="detail-row"><span class="detail-label">Validation errors</span><span>{{ (control_plane.validation_errors | join(', ')) if control_plane.validation_errors else 'none' }}</span></div>
         <div class="detail-row"><span class="detail-label">Governance schema</span><span>{{ control_plane.governance_schema.promotion_schema_version if control_plane.governance_schema else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Governance coverage</span><span>{{ (control_plane.governance_coverage.state ~ ' / ' ~ control_plane.governance_coverage.next_action) if control_plane.governance_coverage else 'unknown' }}</span></div>
       </div>
     </div>
     <div class="card">
