@@ -25,6 +25,7 @@
       <h3>Current control plane</h3>
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Execution state</span><span>{{ control_plane.execution_state }}</span></div>
+        <div class="detail-row"><span class="detail-label">Direct host path</span><span>{{ eeepc_reachability.status if eeepc_reachability else 'unknown' }}{% if eeepc_reachability_age %} / {{ eeepc_reachability_age }}{% endif %}</span></div>
         <div class="detail-row"><span class="detail-label">Live execution</span><span>{{ 'yes' if control_plane.live_execution_exists else 'no' }}</span></div>
         <div class="detail-row"><span class="detail-label">Stale execution</span><span>{{ 'yes' if control_plane.stale_execution_detected else 'no' }}</span></div>
         <div class="detail-row"><span class="detail-label">Waiting for dispatch</span><span>{{ 'yes' if control_plane.waiting_for_dispatch else 'no' }}</span></div>

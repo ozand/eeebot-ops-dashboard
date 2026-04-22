@@ -1699,6 +1699,8 @@ def create_app(cfg: DashboardConfig):
                 'host_resources': dict(repo_latest).get('host_resources') if repo_latest else None,
                 'capabilities': control_plane.get('capabilities'),
                 'runtime_source': control_plane.get('runtime_source'),
+                'eeepc_reachability': eeepc_reachability,
+                'eeepc_reachability_age': eeepc_reachability_age,
             }
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode('utf-8')
             start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8')])

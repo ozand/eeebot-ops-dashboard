@@ -521,6 +521,7 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'control_plane' in system_api
     assert 'validation_summary' in system_api
     assert 'runtime_source' in system_api
+    assert 'eeepc_reachability' in system_api
     assert 'local_files' in system_api
     assert 'Current task' in deployments_body
     assert 'Plan payload' in deployments_body
@@ -567,6 +568,7 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     status, system_body = _call_app(app, '/system')
     assert status.startswith('200')
     assert 'Current control plane' in system_body
+    assert 'Direct host path' in system_body
     assert 'Host resource sensing' in system_body
     assert 'Capability reporting' in system_body
     assert 'Validation status' in system_body
