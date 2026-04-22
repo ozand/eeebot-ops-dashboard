@@ -8,6 +8,14 @@
 
   <div class="cards">
     <div class="card">
+      <h3>Execution registry</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Projects tracked</span><span>{{ system_visibility.active_projects|length if system_visibility and system_visibility.active_projects else 0 }}</span></div>
+        <div class="detail-row"><span class="detail-label">Has live execution</span><span>{{ 'yes' if control_plane.live_execution_exists else 'no' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Completion status</span><span>{{ control_plane.active_execution.execution_completion_status if control_plane.active_execution and control_plane.active_execution.execution_completion_status else 'unknown' }}</span></div>
+      </div>
+    </div>
+    <div class="card">
       <h3>Live eeepc</h3>
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Goal</span><span>{{ system_visibility.eeepc_goal or 'unknown' }}</span></div>
