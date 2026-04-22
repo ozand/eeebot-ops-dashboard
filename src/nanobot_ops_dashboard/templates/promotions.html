@@ -13,7 +13,7 @@
 
   <table class="history-table">
     <thead>
-      <tr><th>Collected</th><th>Title</th><th>Status</th><th>Candidate path</th><th>Decision record</th><th>Accepted record</th></tr>
+      <tr><th>Collected</th><th>Title</th><th>Status</th><th>Replay readiness</th><th>Candidate path</th><th>Decision record</th><th>Accepted record</th></tr>
     </thead>
     <tbody>
       {% for row in promotions %}
@@ -21,13 +21,14 @@
         <td data-label="Collected" class="mono">{{ row['collected_at'] }}</td>
         <td data-label="Title">{{ row['title'] }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(row['status']) }}">{{ status_label(row['status']) }}</span></td>
+        <td data-label="Replay readiness">{{ row.get('replay_readiness', 'unknown') }}</td>
         {% set detail = row['detail'] %}
         <td data-label="Candidate path" class="mono"><code>{{ detail.get('candidate_path', 'unknown') }}</code></td>
         <td data-label="Decision record">{{ detail.get('decision_record', 'unknown') }}</td>
         <td data-label="Accepted record">{{ detail.get('accepted_record', 'unknown') }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="6" class="muted">No promotion history yet.</td></tr>
+      <tr><td colspan="7" class="muted">No promotion history yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
