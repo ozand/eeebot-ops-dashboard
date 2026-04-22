@@ -575,6 +575,7 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     status, system_body = _call_app(app, '/system')
     assert status.startswith('200')
     assert 'Current control plane' in system_body
+    assert 'Execution registry' in system_body
     assert 'Direct host path' in system_body
     assert 'Host resource sensing' in system_body
     assert 'Governance schema' in system_body
