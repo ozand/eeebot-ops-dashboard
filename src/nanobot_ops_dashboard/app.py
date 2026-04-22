@@ -1623,7 +1623,7 @@ def create_app(cfg: DashboardConfig):
                 'selected_task_title': plan_latest['selected_task_title'] if plan_latest else None,
                 'task_selection_source': plan_latest['task_selection_source'] if plan_latest else None,
                 'selected_tasks_text': plan_latest['selected_tasks_text'] if plan_latest else None,
-                'plan_history_count': plan_history_count,
+                'plan_history_count': len(plan_history),
                 'recent_plan_history': plan_history[:10],
             }
 
