@@ -439,6 +439,8 @@ def test_app_promotions_and_other_pages_render(tmp_path: Path):
     assert 'draft plan' in plan_body
     assert 'Collection source' in plan_body
     assert 'Plan payload' in plan_body
+    assert 'Hypothesis' in plan_body
+    assert 'Success checks' in plan_body
     assert 'Task boundary title' in plan_body
     assert 'Task selection source' in plan_body
 
@@ -671,6 +673,8 @@ def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
     assert 'Delta' in body
     assert 'keep' in body
     assert 'reward_signal.value' in body
+    assert 'Hypothesis' in body
+    assert 'Success checks' in body
     assert '0.25' in body
     assert '/workspace/state/experiments/contracts/exp-17.json' in body
     assert 'revert=' in body or 'queued' in body or 'none' in body
