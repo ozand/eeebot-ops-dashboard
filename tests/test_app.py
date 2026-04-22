@@ -577,6 +577,7 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     assert 'Timeout budget' in system_body
     assert 'Cycle budget' in system_body
     assert 'Owner utility' in system_body
+    assert 'Operator boost' in system_body
     assert 'Latest subagent correlation' in system_body
     assert 'Runtime source pin' in system_body
 

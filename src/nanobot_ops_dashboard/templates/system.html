@@ -87,6 +87,15 @@
         <div class="detail-row"><span class="detail-label">Experiment outcome</span><span>{{ control_plane.owner_utility.evidence.experiment_outcome if control_plane.owner_utility and control_plane.owner_utility.evidence else 'unknown' }}</span></div>
       </div>
     </div>
+    <div class="card">
+      <h3>Operator boost</h3>
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">Enabled</span><span>{{ control_plane.operator_boost.enabled if control_plane.operator_boost else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Model</span><span>{{ control_plane.operator_boost.model if control_plane.operator_boost else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Reasoning effort</span><span>{{ control_plane.operator_boost.reasoning_effort if control_plane.operator_boost else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Max tokens</span><span>{{ control_plane.operator_boost.max_tokens if control_plane.operator_boost else 'unknown' }}</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
