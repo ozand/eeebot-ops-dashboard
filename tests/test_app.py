@@ -559,6 +559,7 @@ def test_app_hypotheses_renders_live_backlog_and_cross_links(tmp_path: Path):
     assert 'selected_hypothesis_id' in api_body
     assert 'selected_hypothesis_wsjf' in api_body
     assert 'selected_hypothesis_hadi' in api_body
+    assert 'research_feed' in api_body
     assert '"model": "HADI"' in api_body
     assert 'hyp-2' in api_body
     assert 'top_entries' in api_body

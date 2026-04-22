@@ -51,6 +51,7 @@
         <div class="kv"><div class="label">Backlog file</div><div class="value"><strong>{{ hypothesis_backlog_path or 'absent' }}</strong></div></div>
         <div class="kv"><div class="label">Schema version</div><div class="value"><strong>{{ hypotheses_visibility.schema_version if hypotheses_visibility.schema_version is not none else 'unknown' }}</strong></div></div>
         <div class="kv"><div class="label">Backlog age</div><div class="value"><strong>{{ hypothesis_backlog_age or 'unknown' }}</strong></div></div>
+        <div class="kv"><div class="label">Research feed</div><div class="value"><strong>{{ hypotheses_visibility.research_feed.feed_path if hypotheses_visibility.research_feed else 'absent' }}</strong></div></div>
         <div class="kv"><div class="label">Selected id</div><div class="value"><strong>{{ hypothesis_selected.id or 'none' }}</strong></div></div>
       </div>
       <div style="margin-top: .75rem;"><a href="/api/hypotheses">View JSON</a> · <a href="/">Back to overview</a></div>
