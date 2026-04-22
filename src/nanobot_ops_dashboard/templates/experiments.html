@@ -51,6 +51,9 @@
         <div class="detail-row"><span class="detail-label">Current experiment</span><span>{{ current_experiment.title if current_experiment else 'none yet' }}</span></div>
         <div class="detail-row"><span class="detail-label">Reward</span><span>{{ current_reward_text }}</span></div>
         <div class="detail-row"><span class="detail-label">Telemetry source</span><span>{{ current_experiment.reward_signal.get('source') if current_experiment and current_experiment.reward_signal is mapping else 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Contract path</span><span class="mono"><code>{{ current_experiment.contract_path or 'unknown' }}</code></span></div>
+        <div class="detail-row"><span class="detail-label">Hypothesis</span><span>{{ current_experiment.hypothesis or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Success checks</span><span>{% if current_experiment.success_checks %}{{ current_experiment.success_checks|join(', ') }}{% else %}unknown{% endif %}</span></div>
         <div class="detail-row"><span class="detail-label">Outcome</span><span>{{ current_experiment.outcome if current_experiment else 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Metric</span><span>{{ current_experiment.metric_name if current_experiment else 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Baseline / current / frontier</span><span>{{ current_experiment.metric_baseline if current_experiment and current_experiment.metric_baseline is not none else 'none' }} / {{ current_experiment.metric_current if current_experiment and current_experiment.metric_current is not none else 'unknown' }} / {{ current_experiment.metric_frontier if current_experiment and current_experiment.metric_frontier is not none else 'unknown' }}</span></div>
