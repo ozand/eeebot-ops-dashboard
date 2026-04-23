@@ -187,7 +187,7 @@
     <tbody>
       {% for item in analytics.artifact_history %}
       <tr class="status-{{ status_kind(item['status']) }}">
-        <td data-label="Collected" class="mono">{{ item.collected_at }}</td>
+        <td data-label="Collected" class="mono">{{ display_timestamp(item.collected_at) }}</td>
         <td data-label="Source">{{ item.source }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>
         <td data-label="Goal">{{ item.title }}</td>
@@ -213,8 +213,8 @@
       {% for item in analytics.eeepc_observation_groups %}
       <tr class="status-{{ status_kind(item['status']) }}">
         <td data-label="Report source"><code>{{ item.report_source }}</code></td>
-        <td data-label="Latest observed" class="mono">{{ item.latest_observed_at }}</td>
-        <td data-label="First seen" class="mono">{{ item.earliest_observed_at }}</td>
+        <td data-label="Latest observed" class="mono">{{ display_timestamp(item.latest_observed_at) }}</td>
+        <td data-label="First seen" class="mono">{{ display_timestamp(item.earliest_observed_at) }}</td>
         <td data-label="Seen"><span class="status-pill status-unknown">{{ item.observed_count }}</span></td>
         <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation / cadence not yet established' }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>
@@ -240,7 +240,7 @@
       {% for item in analytics.recent_cycle_timeline %}
       <tr class="status-{{ status_kind(item['status']) }}">
         <td data-label="Source">{{ item.source }}</td>
-        <td data-label="Collected" class="mono">{{ item.collected_at }}</td>
+        <td data-label="Collected" class="mono">{{ display_timestamp(item.collected_at) }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>
         <td data-label="Title">{{ item.title }}</td>
       </tr>
@@ -265,7 +265,7 @@
           <span>{{ item.goal }}</span>
         </div>
         <div class="timeline-meta">
-          <span>{{ item.collected_at }}</span>
+          <span>{{ display_timestamp(item.collected_at) }}</span>
           <span>•</span>
           <span>{{ item.source }}</span>
         </div>

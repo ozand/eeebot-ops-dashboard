@@ -43,7 +43,7 @@
       {% set detail = row['detail'] %}
       <tr class="status-{{ status_kind(row['status']) }}">
         <td data-label="Source">{{ row['source'] }}</td>
-        <td data-label="Collected" class="mono">{{ row['collected_at'] }}</td>
+        <td data-label="Collected" class="mono">{{ display_timestamp(row['collected_at']) }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(row['status']) }}">{{ status_label(row['status']) }}</span></td>
         <td data-label="Title">{{ row['title'] }}</td>
         <td data-label="Detail">
@@ -88,8 +88,8 @@
       {% for item in eeepc_observation_groups %}
       <tr class="status-{{ status_kind(item['status']) }}">
         <td data-label="Report source"><code>{{ item.report_source }}</code></td>
-        <td data-label="Latest observed" class="mono">{{ item.latest_observed_at }}</td>
-        <td data-label="First seen" class="mono">{{ item.earliest_observed_at }}</td>
+        <td data-label="Latest observed" class="mono">{{ display_timestamp(item.latest_observed_at) }}</td>
+        <td data-label="First seen" class="mono">{{ display_timestamp(item.earliest_observed_at) }}</td>
         <td data-label="Seen"><span class="status-pill status-unknown">{{ item.observed_count }}</span></td>
         <td data-label="Approx cadence">{{ item.approx_cadence_minutes ~ ' min' if item.approx_cadence_minutes is not none else 'single observation / cadence not yet established' }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(item['status']) }}">{{ status_label(item['status']) }}</span></td>

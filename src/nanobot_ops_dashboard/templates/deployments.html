@@ -14,7 +14,7 @@
       <li>Plan payload: {{ eeepc_plan_snapshot.plan_payload_source if eeepc_plan_snapshot else 'row' }}</li>
       {% if eeepc_latest_observation %}
       <li>Observation cadence: {{ eeepc_latest_observation.observed_count }} collection(s){% if eeepc_latest_observation.approx_cadence_minutes is not none %} / ~{{ eeepc_latest_observation.approx_cadence_minutes }} min{% else %} / cadence not yet established{% endif %}</li>
-      <li>Fresh report first seen: {{ eeepc_latest_observation.earliest_observed_at }}</li>
+      <li>Fresh report first seen: {{ display_timestamp(eeepc_latest_observation.earliest_observed_at) }}</li>
       {% endif %}
     </ul>
     {% if eeepc_reachability %}

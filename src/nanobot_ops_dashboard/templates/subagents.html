@@ -113,8 +113,8 @@
       {% set origin = detail.get('origin') if detail.get('origin') is mapping else {} %}
       <tr class="status-{{ status_kind(row['status']) }}">
         <td data-label="Collected / finished" class="mono">
-          <div>{{ row['collected_at'] or 'unknown' }}</div>
-          <div class="muted">Finished: {{ detail.get('finished_at') or 'unknown' }}</div>
+          <div>{{ display_timestamp(row['collected_at']) if row['collected_at'] else 'unknown' }}</div>
+          <div class="muted">Finished: {{ display_timestamp(detail.get('finished_at')) if detail.get('finished_at') else 'unknown' }}</div>
         </td>
         <td data-label="Source"><span class="status-pill status-neutral">{{ row['source'] }}</span></td>
         <td data-label="Origin">
@@ -136,7 +136,7 @@
           <div class="detail-stack">
             <div><strong>{{ row['title'] }}</strong></div>
             <div class="muted">Task: {{ subagent_detail_value(detail, 'task', 'current_task_id', 'task_id') or 'unknown' }}</div>
-            <div class="muted">Started: <span class="mono">{{ detail.get('started_at') or 'unknown' }}</span></div>
+            <div class="muted">Started: <span class="mono">{{ display_timestamp(detail.get('started_at')) if detail.get('started_at') else 'unknown' }}</span></div>
           </div>
         </td>
         <td data-label="Telemetry">

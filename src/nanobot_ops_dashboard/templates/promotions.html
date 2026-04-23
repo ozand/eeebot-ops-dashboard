@@ -18,7 +18,7 @@
     <tbody>
       {% for row in promotions %}
       <tr class="status-{{ status_kind(row['status']) }}">
-        <td data-label="Collected" class="mono">{{ row['collected_at'] }}</td>
+        <td data-label="Collected" class="mono">{{ display_timestamp(row['collected_at']) }}</td>
         <td data-label="Title">{{ row['title'] }}</td>
         <td data-label="Status"><span class="status-pill status-{{ status_kind(row['status']) }}">{{ status_label(row['status']) }}</span></td>
         <td data-label="Replay readiness">{{ row.get('replay_readiness', 'unknown') }}</td>

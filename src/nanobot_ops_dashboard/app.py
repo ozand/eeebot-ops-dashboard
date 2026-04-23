@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from wsgiref.util import setup_testing_defaults
 from urllib.parse import parse_qs
@@ -13,6 +13,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .collector import collect_once
 from .config import DashboardConfig
 from .storage import count_collections, count_events, fetch_events, fetch_latest_collections
+
+
+MSK = timezone(timedelta(hours=3), name='MSK')
 
 
 def _env(cfg: DashboardConfig) -> Environment:
@@ -1065,9 +1068,19 @@ def _parse_timestamp(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
     except Exception:
         return None
+
+
+def _display_timestamp(value: str | None) -> str:
+    ts = _parse_timestamp(value)
+    if ts is None:
+        return value or 'unknown'
+    return ts.astimezone(MSK).strftime('%Y-%m-%d %H:%M:%S MSK')
 
 
 def _age_text(value: str | None, now: datetime | None = None) -> str:
@@ -1262,6 +1275,7 @@ def create_app(cfg: DashboardConfig):
     env.globals['selected_tasks_text'] = _selected_tasks_text
     env.globals['display_or'] = _display_or
     env.globals['subagent_detail_value'] = _subagent_detail_value
+    env.globals['display_timestamp'] = _display_timestamp
 
     def app(environ, start_response):
         setup_testing_defaults(environ)

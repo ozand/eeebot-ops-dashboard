@@ -36,10 +36,10 @@
     <div class="card">
       <h3>Freshness / reachability</h3>
       <div class="detail-stack">
-        <div class="detail-row"><span class="detail-label">Latest eeepc report</span><span>{{ eeepc_latest_age }}{% if eeepc_latest %} · {{ eeepc_latest['collected_at'] }}{% endif %}</span></div>
-        <div class="detail-row"><span class="detail-label">Latest collector success</span><span>{{ latest_collector_success_age }}{% if latest_collected %} · {{ latest_collected }}{% endif %}</span></div>
-        <div class="detail-row"><span class="detail-label">Latest reachability probe</span><span class="status-pill status-{{ 'pass' if eeepc_reachability and eeepc_reachability.reachable else 'block' if eeepc_reachability else 'unknown' }}">{{ 'reachable' if eeepc_reachability and eeepc_reachability.reachable else 'unreachable' if eeepc_reachability else 'unknown' }}</span> <span class="muted">{{ eeepc_reachability_age }}{% if eeepc_reachability_collected_at %} · {{ eeepc_reachability_collected_at }}{% endif %}</span></div>
-        <div class="detail-row"><span class="detail-label">Latest PASS / BLOCK</span><span>PASS {{ latest_pass_age }}{% if latest_pass_at %} · {{ latest_pass_at }}{% endif %}; BLOCK {{ latest_block_age }}{% if latest_block_at %} · {{ latest_block_at }}{% endif %}</span></div>
+        <div class="detail-row"><span class="detail-label">Latest eeepc report</span><span>{{ eeepc_latest_age }}{% if eeepc_latest %} · {{ display_timestamp(eeepc_latest['collected_at']) }}{% endif %}</span></div>
+        <div class="detail-row"><span class="detail-label">Latest collector success</span><span>{{ latest_collector_success_age }}{% if latest_collected %} · {{ display_timestamp(latest_collected) }}{% endif %}</span></div>
+        <div class="detail-row"><span class="detail-label">Latest reachability probe</span><span class="status-pill status-{{ 'pass' if eeepc_reachability and eeepc_reachability.reachable else 'block' if eeepc_reachability else 'unknown' }}">{{ 'reachable' if eeepc_reachability and eeepc_reachability.reachable else 'unreachable' if eeepc_reachability else 'unknown' }}</span> <span class="muted">{{ eeepc_reachability_age }}{% if eeepc_reachability_collected_at %} · {{ display_timestamp(eeepc_reachability_collected_at) }}{% endif %}</span></div>
+        <div class="detail-row"><span class="detail-label">Latest PASS / BLOCK</span><span>PASS {{ latest_pass_age }}{% if latest_pass_at %} · {{ display_timestamp(latest_pass_at) }}{% endif %}; BLOCK {{ latest_block_age }}{% if latest_block_at %} · {{ display_timestamp(latest_block_at) }}{% endif %}</span></div>
       </div>
     </div>
 
@@ -53,13 +53,13 @@
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Goal</span><span>{{ eeepc_latest['active_goal'] or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Gate</span><span>{{ eeepc_latest['gate_state'] or 'unknown' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Last snapshot</span><span>{{ eeepc_latest['collected_at'] }}</span></div>
+        <div class="detail-row"><span class="detail-label">Last snapshot</span><span>{{ display_timestamp(eeepc_latest['collected_at']) }}</span></div>
         <div class="detail-row"><span class="detail-label">Snapshot age</span><span>{{ eeepc_latest_age }}</span></div>
         <div class="detail-row"><span class="detail-label">Report</span><code>{{ eeepc_latest_observation.report_source if eeepc_latest_observation else (eeepc_latest['report_source'] or 'report source unavailable') }}</code></div>
         <div class="detail-row"><span class="detail-label">Outbox</span><code>{{ eeepc_latest['outbox_source'] or 'unknown' }}</code></div>
         {% if eeepc_latest_observation %}
         <div class="detail-row"><span class="detail-label">Observation cadence</span><span>{{ eeepc_latest_observation.observed_count }} collection(s){% if eeepc_latest_observation.approx_cadence_minutes is not none %} / ~{{ eeepc_latest_observation.approx_cadence_minutes }} min{% endif %}</span></div>
-        <div class="detail-row"><span class="detail-label">Fresh report first seen</span><span>{{ eeepc_latest_observation.earliest_observed_at }}</span></div>
+        <div class="detail-row"><span class="detail-label">Fresh report first seen</span><span>{{ display_timestamp(eeepc_latest_observation.earliest_observed_at) }}</span></div>
         {% endif %}
         {% if eeepc_reachability %}
         <div class="detail-row"><span class="detail-label">Reachability</span><span class="status-pill status-{{ 'pass' if eeepc_reachability.reachable else 'block' }}">{{ 'reachable' if eeepc_reachability.reachable else 'unreachable' }}</span></div>
@@ -108,7 +108,7 @@
       </div>
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Goal</span><span>{{ repo_latest['active_goal'] or 'unknown' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Last snapshot</span><span>{{ repo_latest['collected_at'] }}</span></div>
+        <div class="detail-row"><span class="detail-label">Last snapshot</span><span>{{ display_timestamp(repo_latest['collected_at']) }}</span></div>
         <div class="detail-row"><span class="detail-label">Snapshot age</span><span>{{ repo_latest_age }}</span></div>
         <div class="detail-row"><span class="detail-label">Promotion</span><span>{{ repo_latest['promotion_summary'] or 'none' }}</span></div>
         <div class="detail-row"><span class="detail-label">Decision trail</span><span>{{ repo_latest['promotion_decision_record'] or 'unknown' }}</span></div>
@@ -215,7 +215,7 @@
         <div class="detail-row"><span class="detail-label">Task</span><span>{{ subagent_latest_event['detail'].get('task') or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Goal</span><span>{{ subagent_latest_event['detail'].get('goal_id') or 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Cycle</span><span class="mono">{{ subagent_latest_event['detail'].get('cycle_id') or 'unknown' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Collected</span><span class="mono">{{ subagent_latest_event['collected_at'] or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Collected</span><span class="mono">{{ display_timestamp(subagent_latest_event['collected_at']) if subagent_latest_event['collected_at'] else 'unknown' }}</span></div>
         <div class="detail-row"><span class="detail-label">Age</span><span>{{ subagent_latest_age }}</span></div>
       </div>
       <div style="margin-top: .75rem;"><a href="/subagents">Open subagents</a></div>
@@ -241,7 +241,7 @@
           <span>{{ item.title }}</span>
         </div>
         <div class="timeline-meta">
-          <span>{{ item.collected_at }}</span>
+          <span>{{ display_timestamp(item.collected_at) }}</span>
           <span>•</span>
           <span>{{ item.source }}</span>
         </div>
@@ -267,7 +267,7 @@
           <span>{{ item.goal }}</span>
         </div>
         <div class="timeline-meta">
-          <span>{{ item.collected_at }}</span>
+          <span>{{ display_timestamp(item.collected_at) }}</span>
           <span>•</span>
           <span>{{ item.source }}</span>
         </div>
