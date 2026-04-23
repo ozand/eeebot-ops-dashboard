@@ -254,6 +254,10 @@ def _repo_events(runtime: dict[str, Any]) -> list[dict[str, Any]]:
                 'candidate_path': runtime.get('promotion_candidate_path'),
                 'decision_record': runtime.get('promotion_decision_record'),
                 'accepted_record': runtime.get('promotion_accepted_record'),
+                'artifact_path': runtime.get('promotion_artifact_path'),
+                'readiness_checks': runtime.get('promotion_readiness_checks'),
+                'readiness_reasons': runtime.get('promotion_readiness_reasons'),
+                'governance_packet': runtime.get('promotion_governance_packet'),
             },
         })
     return events
