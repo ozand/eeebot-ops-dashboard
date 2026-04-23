@@ -50,7 +50,7 @@
     <tbody>
       {% for row in credits_history %}
       <tr>
-        <td class="mono">{{ row.recorded_at_utc or 'unknown' }}</td>
+        <td class="mono">{{ display_timestamp(row.recorded_at_utc) if row.recorded_at_utc else 'unknown' }}</td>
         <td>{{ row.goal_id or 'unknown' }}</td>
         <td class="mono">{{ row.cycle_id or 'unknown' }}</td>
         <td>{{ row.delta }}</td>

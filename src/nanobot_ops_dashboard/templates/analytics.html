@@ -35,7 +35,7 @@
         <span class="status-pill status-pass status-large">PASS</span>
         <span class="status-value">{{ analytics.current_pass_streak }}</span>
       </div>
-      <div class="muted">Latest PASS: {{ analytics.latest_pass_at or 'never' }}</div>
+      <div class="muted">Latest PASS: {{ display_timestamp(analytics.latest_pass_at) if analytics.latest_pass_at else 'never' }}</div>
     </div>
     <div class="card compact">
       <h3>Current BLOCK streak</h3>
@@ -43,7 +43,7 @@
         <span class="status-pill status-block status-large">BLOCK</span>
         <span class="status-value">{{ analytics.current_block_streak }}</span>
       </div>
-      <div class="muted">Latest BLOCK: {{ analytics.latest_block_at or 'never' }}</div>
+      <div class="muted">Latest BLOCK: {{ display_timestamp(analytics.latest_block_at) if analytics.latest_block_at else 'never' }}</div>
     </div>
     <div class="card compact">
       <h3>Current blocker</h3>
