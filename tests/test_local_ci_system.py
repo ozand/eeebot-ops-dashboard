@@ -29,6 +29,15 @@ def test_system_page_shows_local_ci_and_export_status(tmp_path: Path, monkeypatc
         payload['local_ci'] = {
             'latest_result': {'ok': True, 'exit_code': 0, 'summary': 'PASS exit=0 | 13 passed in 1.25s'}
         }
+        payload['service_guards'] = {
+            'collector': {
+                'ActiveState': 'active',
+                'SubState': 'running',
+                'MemoryCurrent': '54317056',
+                'MemoryMax': '536870912',
+                'RuntimeMaxUSec': '12h',
+            }
+        }
         return payload
 
     monkeypatch.setattr(dashboard_app, '_control_plane_summary', _patched_control_plane_summary)
@@ -40,3 +49,7 @@ def test_system_page_shows_local_ci_and_export_status(tmp_path: Path, monkeypatc
     assert 'PASS exit=0 | 13 passed in 1.25s' in body
     assert 'Last export' in body
     assert 'ok / exit=0' in body
+    assert 'Collector runtime guard' in body
+    assert 'MemoryMax' in body
+    assert '536870912' in body
+    assert 'RuntimeMaxUSec' in body

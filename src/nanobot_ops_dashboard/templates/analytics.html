@@ -30,6 +30,20 @@
       <div class="muted">The current top slice rendered from SQLite.</div>
     </div>
     <div class="card compact">
+      <h3>Current streak</h3>
+      <div class="status-stack">
+        {% set streak_status = analytics.current_streak.status or 'unknown' %}
+        <span class="status-pill status-{{ status_kind(streak_status) }} status-large">{{ status_label(streak_status) }}</span>
+        <span class="status-value">{{ analytics.current_streak.length }}</span>
+      </div>
+      <div class="muted">Started: {{ display_timestamp(analytics.current_streak.started_at) if analytics.current_streak.started_at else 'unknown' }}</div>
+    </div>
+    <div class="card compact">
+      <h3>Latest status time</h3>
+      <div class="status-value">{{ display_timestamp(analytics.latest_status_at) if analytics.latest_status_at else 'unknown' }}</div>
+      <div class="muted">Most recent unique cycle event timestamp.</div>
+    </div>
+    <div class="card compact">
       <h3>Current PASS streak</h3>
       <div class="status-stack">
         <span class="status-pill status-pass status-large">PASS</span>

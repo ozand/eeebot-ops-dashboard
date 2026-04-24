@@ -183,6 +183,26 @@ def _experiment_truth_summary(snapshot: dict | None) -> dict | None:
     }
 
 
+def _systemd_user_service_guard(unit: str) -> dict:
+    props = ['ActiveState', 'SubState', 'MemoryCurrent', 'MemoryMax', 'RuntimeMaxUSec']
+    try:
+        output = subprocess.check_output(
+            ['systemctl', '--user', 'show', unit, *(f'-p{prop}' for prop in props), '--no-pager'],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+    except Exception as exc:
+        return {'unit': unit, 'available': False, 'error': str(exc)}
+    result = {'unit': unit, 'available': True}
+    for line in output.splitlines():
+        if '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        result[key] = value
+    return result
+
+
 def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, current_blocker, cfg):
     repo_latest = dict(repo_latest) if repo_latest else {}
     eeepc_latest = dict(eeepc_latest) if eeepc_latest else {}
@@ -266,6 +286,10 @@ def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, curren
         'active_execution': active_exec if isinstance(active_exec, dict) else {},
         'execution_completion': execution_completion if isinstance(execution_completion, dict) else {},
         'execution_state': execution_state,
+        'service_guards': {
+            'collector': _systemd_user_service_guard('nanobot-ops-dashboard-collector.service'),
+            'web': _systemd_user_service_guard('nanobot-ops-dashboard-web.service'),
+        },
         'stale_execution_detected': stale_exec,
         'live_execution_exists': live_exec,
         'waiting_for_dispatch': waiting_dispatch,
@@ -378,6 +402,20 @@ def _latest_status_timestamp(rows, status_name: str) -> str | None:
         if (row.get('status') or 'unknown') == status_name:
             return row.get('collected_at')
     return None
+
+
+def _current_streak_summary(rows) -> dict:
+    if not rows:
+        return {'status': None, 'length': 0, 'started_at': None, 'latest_at': None}
+    current_status = rows[0].get('status') or 'unknown'
+    length = _compute_status_streak(rows, current_status)
+    streak_rows = rows[:length]
+    return {
+        'status': current_status,
+        'length': length,
+        'latest_at': rows[0].get('collected_at'),
+        'started_at': streak_rows[-1].get('collected_at') if streak_rows else rows[0].get('collected_at'),
+    }
 
 
 
@@ -1349,11 +1387,11 @@ def create_app(cfg: DashboardConfig):
         cycle_status = query.get('status', [None])[0]
         promotion_source = query.get('source', [None])[0]
         promotion_status = query.get('status', [None])[0]
-        cycles = _filter_rows(
+        cycles = _sort_rows_desc(_filter_rows(
             _decorate_rows(fetch_events(cfg.db_path, 'eeepc', 'cycle', limit=100) + fetch_events(cfg.db_path, 'repo', 'cycle', limit=100)),
             cycle_source,
             cycle_status,
-        )
+        ))
         eeepc_cycle_events = [row for row in cycles if row.get('source') == 'eeepc']
         promotions = _filter_rows(
             _decorate_rows(fetch_events(cfg.db_path, 'repo', 'promotion', limit=100)),
@@ -1494,6 +1532,8 @@ def create_app(cfg: DashboardConfig):
             'cycle_failure_breakdown': {},
             'current_pass_streak': _compute_status_streak(cycles, 'PASS'),
             'current_block_streak': _compute_status_streak(cycles, 'BLOCK'),
+            'current_streak': _current_streak_summary(cycles),
+            'latest_status_at': cycles[0].get('collected_at') if cycles else None,
             'latest_pass_at': latest_pass_at,
             'latest_pass_age': _age_text(latest_pass_at, now),
             'latest_block_at': latest_block_at,
@@ -1523,6 +1563,15 @@ def create_app(cfg: DashboardConfig):
                     'title': row.get('title'),
                 }
                 for row in cycles[:10]
+            ],
+            'recent_status_sequence': [
+                {
+                    'collected_at': row.get('collected_at'),
+                    'source': row.get('source'),
+                    'status': row.get('status'),
+                    'title': row.get('title'),
+                }
+                for row in cycles[:20]
             ],
             'recent_goal_transitions': [
                 {

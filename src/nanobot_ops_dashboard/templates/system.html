@@ -57,6 +57,17 @@
       </div>
     </div>
     <div class="card">
+      <h3>Collector runtime guard</h3>
+      {% set collector_guard = control_plane.service_guards.collector if control_plane.service_guards and control_plane.service_guards.collector else {} %}
+      <div class="detail-stack">
+        <div class="detail-row"><span class="detail-label">ActiveState</span><span>{{ collector_guard.ActiveState or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">SubState</span><span>{{ collector_guard.SubState or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">MemoryCurrent</span><span>{{ collector_guard.MemoryCurrent or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">MemoryMax</span><span>{{ collector_guard.MemoryMax or 'unknown' }}</span></div>
+        <div class="detail-row"><span class="detail-label">RuntimeMaxUSec</span><span>{{ collector_guard.RuntimeMaxUSec or 'unknown' }}</span></div>
+      </div>
+    </div>
+    <div class="card">
       <h3>Host resource sensing</h3>
       <div class="detail-stack">
         <div class="detail-row"><span class="detail-label">Load avg</span><span>{{ control_plane.host_resources.loadavg if control_plane.host_resources else 'not_collected' }}</span></div>

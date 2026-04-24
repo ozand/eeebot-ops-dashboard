@@ -745,7 +745,8 @@ def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
     assert 'Cycle status breakdown' in body
     assert 'Experiment frontier' in body
     assert 'reward_signal.value' in body or 'unknown' in body
-    assert 'Freshness' in body
+    assert 'Current streak' in body
+    assert 'Latest status time' in body
     assert 'Recent snapshots' in body
     assert 'Observed eeepc collections' in body
     assert 'Recent unique cycle reports' in body
@@ -760,6 +761,14 @@ def test_app_analytics_renders_failure_breakdown(tmp_path: Path):
     assert status.startswith('200')
     assert 'eeepc_observation_groups' in analytics_api
     assert 'approx_cadence_minutes' in analytics_api
+    payload = json.loads(analytics_api)
+    analytics_payload = payload['analytics']
+    assert analytics_payload['current_streak']['status'] == 'BLOCK'
+    assert analytics_payload['current_streak']['length'] == 1
+    assert analytics_payload['latest_status_at'] == '2026-04-16T12:00:02Z'
+    assert analytics_payload['latest_pass_at'] == '2026-04-16T12:00:00Z'
+    assert analytics_payload['latest_block_at'] == '2026-04-16T12:00:02Z'
+    assert analytics_payload['recent_status_sequence'][0]['status'] == 'BLOCK'
 
 
 def test_app_subagents_renders_durable_history(tmp_path: Path):
