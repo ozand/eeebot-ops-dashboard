@@ -3,9 +3,14 @@
 Local observability dashboard for eeebot.
 
 Canonical source:
-- durable product source now lives in `ozand/eeebot` under `ops/dashboard/`
-- local canonical path: `/home/ozand/herkoot/Projects/nanobot/ops/dashboard`
-- the sibling repository `ozand/eeebot-ops-dashboard` is a staging/mirror/legacy reference and is not the durable source of truth for future product work
+- **this repository (`ozand/eeebot-ops-dashboard`) is the canonical home** since
+  2026-07-05 (decision: `ozand/eeebot#617`). The code was extracted from
+  `ozand/eeebot` `ops/dashboard/` via subtree split with full history and this
+  copy supersedes anything that previously lived there.
+- status: dormant / not deployed. The dashboard actually running on the eeepc
+  host is a different program (`scripts/eeebot_dashboard.py` in `ozand/eeebot`,
+  port 8080). This app (port 8787, WSGI + SQLite + collectors) is the more
+  capable candidate replacement; deploying it is a separate decision.
 
 Compatibility note:
 - the imported dashboard still exposes the `eeebot-ops-dashboard` project identity where that is user-facing
