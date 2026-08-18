@@ -8,14 +8,6 @@ def _fixture() -> dict[str, object]:
         'portfolio': {
             'current': 'proposer-quality',
             'nodes': {
-                'proposer-quality': {
-                    'lever_metric': 'loop.repeat_failure_rate',
-                    'gain_history': [0.02, -0.01, 0.03],
-                    'status': 'active',
-                    'minted_by': 'hypothesis',
-                    'created_ts': '2026-08-10T00:00:00Z',
-                    'cooldown_until_ts': None,
-                },
                 'cycle-cost': {
                     'lever_metric': 'cost.tokens_per_integration',
                     'gain_history': [],
@@ -24,9 +16,34 @@ def _fixture() -> dict[str, object]:
                     'created_ts': '2026-08-01T00:00:00Z',
                     'cooldown_until_ts': '2026-08-19T00:00:00Z',
                 },
+                'stagnation-guard': {
+                    'lever_metric': 'loop.repeat_failure_rate',
+                    'gain_history': [0.01, 0.02],
+                    'status': 'plateaued',
+                    'minted_by': 'product',
+                    'created_ts': '2026-08-05T00:00:00Z',
+                    'cooldown_until_ts': None,
+                },
+                'proposer-quality': {
+                    'lever_metric': 'loop.repeat_failure_rate',
+                    'gain_history': [0.02, -0.01, 0.03],
+                    'status': 'active',
+                    'minted_by': 'hypothesis',
+                    'created_ts': '2026-08-10T00:00:00Z',
+                    'cooldown_until_ts': None,
+                },
+                'never-visited-direction': {
+                    'lever_metric': 'cost.other',
+                    'gain_history': [],
+                    'status': 'active',
+                    'minted_by': 'product',
+                    'created_ts': '2026-08-11T00:00:00Z',
+                    'cooldown_until_ts': None,
+                },
             },
             'switches': [
-                {'ts': '2026-08-18T04:04:22Z', 'from': 'cycle-cost', 'to': 'proposer-quality', 'reason': 'plateau_switch'},
+                {'ts': '2026-08-17T04:04:22Z', 'from': 'cycle-cost', 'to': 'stagnation-guard', 'reason': 'plateau_switch'},
+                {'ts': '2026-08-18T04:04:22Z', 'from': 'stagnation-guard', 'to': 'proposer-quality', 'reason': 'plateau_switch'},
             ],
         },
         'scorecard': {
@@ -82,21 +99,59 @@ def test_render_page_includes_node_cards_and_panels() -> None:
 
     assert 'Proposer Quality' in html_out
     assert 'Cycle Cost' in html_out
+    assert 'Never Visited Direction' in html_out
     assert 'RESEARCHING' in html_out
     assert 'PLATEAUED' in html_out
-    assert 'MINTED BY HYPOTHESIS' in html_out
+    assert 'AVAILABLE' in html_out
+    assert 'MINTED' in html_out
     assert 'Great Library' in html_out
-    assert 'World History' in html_out
     assert 'EEEBOT EMPIRE' in html_out
     assert 'http://' not in html_out
     assert 'https://' not in html_out
 
 
-def test_world_history_renders_branching_svg_tree() -> None:
+def test_canvas_is_one_wide_svg_with_lane_labels() -> None:
     html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
 
-    # A real inline SVG tree, not a flat card/list timeline.
-    assert '<svg' in html_out
+    assert 'class="tech-canvas"' in html_out
+    assert 'RESEARCH</text>' in html_out
+    assert 'WORLD HISTORY</text>' in html_out
+
+    # The canvas must be a genuinely wide panorama, not a vertical list.
+    import re
+    match = re.search(r'<svg class="tech-canvas" width="(\d+)"', html_out)
+    assert match is not None
+    assert int(match.group(1)) >= 1200
+
+
+def test_visited_directions_form_spine_in_switch_order_with_elbows() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # switches trace cycle-cost -> stagnation-guard -> proposer-quality;
+    # the spine boxes must appear left-to-right in that same order.
+    pos_cost = html_out.index('Cycle Cost')
+    pos_guard = html_out.index('Stagnation Guard')
+    pos_quality = html_out.index('Proposer Quality')
+    assert pos_cost < pos_guard < pos_quality
+
+    # Orthogonal elbow connectors join the spine boxes.
+    assert 'class="dir-elbow"' in html_out
+
+    # The never-visited direction sits apart in the reserve column,
+    # rendered dim (available, not part of the switch chronicle).
+    assert 'dir-box-dim' in html_out
+
+    # Hypothesis-minted direction gets a dashed gold Great Library edge.
+    assert 'class="mint-elbow"' in html_out
+    assert '&#127979;' in html_out
+
+
+def test_world_history_renders_branching_boxes_with_elbows() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # Real branching boxes (not bare circles), joined by orthogonal elbows.
+    assert 'class="evo-box' in html_out
+    assert 'class="evo-elbow"' in html_out
     # Both fork children (from the same parent) must have visible labels.
     assert 'cycle-a-child1s' in html_out
     # The second child's branch name is untrusted (LLM-authored) and
@@ -105,18 +160,10 @@ def test_world_history_renders_branching_svg_tree() -> None:
     assert '<script>bad' not in html_out
     assert '&lt;script&gt;' in html_out
     assert 'child2s' in html_out
-    # current-sha highlight + switch marker glyphs.
-    assert '&#9672;' in html_out or 'evo-node-current' in html_out
+    # current-sha highlight (gold diamond ribbon) + switch marker glyph.
+    assert 'evo-box-current' in html_out
+    assert '&#9672;' in html_out
     assert '&#8634;' in html_out
-
-
-def test_research_switch_path_is_numbered() -> None:
-    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
-
-    # The switches list (cycle-cost -> proposer-quality) must be traced as
-    # a numbered path across cards, not just prose in the chronicle.
-    assert '①' in html_out
-    assert 'civ-switch-edge' in html_out
 
 
 def test_render_page_fails_soft_on_missing_sources() -> None:
@@ -125,9 +172,39 @@ def test_render_page_fails_soft_on_missing_sources() -> None:
 
     assert 'unavailable' in html_out.lower()
     assert '<html' in html_out
+    # Canvas still renders (both lanes fail-soft to an unavailable strip)
+    # rather than crashing the page.
+    assert 'class="tech-canvas"' in html_out
 
 
-def test_world_history_falls_back_to_list_below_two_nodes() -> None:
+def test_empty_switches_falls_back_to_reserve_column_only() -> None:
+    no_journey = {
+        'portfolio': {
+            'current': None,
+            'nodes': {
+                'solo-direction': {
+                    'lever_metric': 'loop.repeat_failure_rate',
+                    'gain_history': [],
+                    'status': 'active',
+                    'minted_by': 'product',
+                    'created_ts': '2026-08-01T00:00:00Z',
+                },
+            },
+            'switches': [],
+        },
+        'scorecard': None,
+        'evolution_tree': None,
+        'hypotheses': None,
+        'ledger_tail': [],
+    }
+    html_out = tv.render_page(no_journey, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    assert 'no research journey yet' in html_out
+    assert 'class="dir-elbow"' not in html_out
+    assert 'Solo Direction' in html_out
+
+
+def test_world_history_falls_back_to_simple_list_below_two_nodes() -> None:
     single_node = {
         'portfolio': None,
         'scorecard': None,
@@ -147,5 +224,5 @@ def test_world_history_falls_back_to_list_below_two_nodes() -> None:
     }
     html_out = tv.render_page(single_node, host='eeepc', generated_at='2026-08-18 12:00:00')
 
-    assert '<svg' not in html_out
+    assert 'class="evo-box' not in html_out
     assert 'timeline-list' in html_out
