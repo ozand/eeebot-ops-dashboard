@@ -76,7 +76,7 @@ Tech-tree viewer:
   ```bash
   python scripts/techtree_viewer.py --host eeepc --open
   ```
-  flags: `--host` (default `eeepc`), `--out` (default `techtree.html`), `--open` (launch the default browser)
+  flags: `--host` (default `eeepc`), `--out` (default `techtree.html`), `--open` (launch the default browser), `--publish` (also push the snapshot to GitHub Pages — https://ozand.github.io/eeebot-ops-dashboard/ — via the authenticated `gh` CLI; the repo and therefore the page are public)
 
 More details:
 - `docs/SHOWING_THE_DASHBOARD.md`

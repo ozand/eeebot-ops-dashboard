@@ -838,7 +838,92 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument('--host', default='eeepc', help='SSH host alias for the eeepc authority host (default: eeepc)')
     parser.add_argument('--out', default='techtree.html', help='output HTML file path (default: techtree.html)')
     parser.add_argument('--open', action='store_true', help='open the rendered page in the default browser')
+    parser.add_argument(
+        '--publish', action='store_true',
+        help='also publish the page to GitHub Pages (gh-pages branch of '
+             f'{PUBLISH_REPO} as index.html, via the authenticated `gh` CLI); '
+             'the page then lives at ' + PUBLISH_URL,
+    )
     return parser.parse_args(argv)
+
+
+# ─── GitHub Pages publishing (optional, --publish) ───────────────────────────
+#
+# Simplest possible free hosting: the repo is already PUBLIC on GitHub, so a
+# `gh-pages` branch + GitHub Pages serves the snapshot with zero new accounts,
+# tokens or services. Publishing goes through the GitHub *contents API* via the
+# already-authenticated `gh` CLI — it never touches the local git clone (which
+# may be dirty or on a diverged history) and needs no checkout of gh-pages.
+# NOTE: the repo (and therefore the published page — loop metrics + hypothesis
+# titles) is public by design; do not add secrets to the page.
+
+PUBLISH_REPO = 'ozand/eeebot-ops-dashboard'
+PUBLISH_BRANCH = 'gh-pages'
+PUBLISH_FILE = 'index.html'
+PUBLISH_URL = f'https://ozand.github.io/eeebot-ops-dashboard/'
+
+
+def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ['gh'] + args, capture_output=True, text=True, timeout=60,
+        input=input_text,
+    )
+
+
+def publish_to_pages(html_out: str) -> int:
+    """Upsert the rendered page as ``index.html`` on the ``gh-pages`` branch
+    and make sure GitHub Pages is enabled for that branch. Returns 0 on
+    success, 1 on any failure (with a message on stderr). Uses only the
+    ``gh`` CLI (already authenticated on the operator machine)."""
+    import base64
+
+    content_b64 = base64.b64encode(html_out.encode('utf-8')).decode('ascii')
+
+    # Branch may not exist yet: the contents API creates it only if the repo
+    # has it; bootstrap it from the default branch's HEAD when absent.
+    branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+    if branch_probe.returncode != 0:
+        head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
+                    '--jq', '.object.sha'])
+        if head.returncode != 0:
+            print(f'publish: cannot resolve master HEAD: {head.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1
+        made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
+                    '-f', f'ref=refs/heads/{PUBLISH_BRANCH}',
+                    '-f', f'sha={head.stdout.strip()}'])
+        if made.returncode != 0:
+            print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1
+
+    # Upsert index.html (need the existing blob sha for an update).
+    sha_probe = _gh(['api',
+                     f'repos/{PUBLISH_REPO}/contents/{PUBLISH_FILE}?ref={PUBLISH_BRANCH}',
+                     '--jq', '.sha'])
+    put_args = ['api', '-X', 'PUT', f'repos/{PUBLISH_REPO}/contents/{PUBLISH_FILE}',
+                '-f', 'message=techtree snapshot (techtree_viewer --publish)',
+                '-f', f'branch={PUBLISH_BRANCH}',
+                '-f', f'content={content_b64}']
+    if sha_probe.returncode == 0 and sha_probe.stdout.strip():
+        put_args += ['-f', f'sha={sha_probe.stdout.strip()}']
+    put = _gh(put_args)
+    if put.returncode != 0:
+        print(f'publish: contents PUT failed: {put.stderr.strip()[:300]}', file=sys.stderr)
+        return 1
+
+    # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
+    pages = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
+    if pages.returncode != 0:
+        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
+                      '--input', '-'],
+                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
+        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
+            print(f'publish: Pages enable failed (page pushed anyway): '
+                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
+
+    print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту)')
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -855,6 +940,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.open:
         webbrowser.open(out_path.resolve().as_uri())
+
+    if args.publish:
+        return publish_to_pages(html_out)
 
     return 0
 
