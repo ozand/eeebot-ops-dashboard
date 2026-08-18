@@ -70,6 +70,14 @@ PYTHONPATH=src NANOBOT_EEEPC_SUDO_PASSWORD='<set-in-env-file>' python3 -m nanobo
 Then open:
 - `http://127.0.0.1:8787/`
 
+Tech-tree viewer:
+- `scripts/techtree_viewer.py` is a standalone, stdlib-only operator page, separate from the collector/SQLite/web-app path above. It does one SSH round-trip to `eeepc`, reads the self-evolving loop's direction portfolio, trust ladder, hypothesis verdicts, and evolution-tree history, and renders a self-contained, Civilization-style static HTML page (no external assets, opens as `file://`). Every source is read fail-soft: a missing/corrupt state file renders an "unavailable" panel instead of crashing the page.
+- run it with:
+  ```bash
+  python scripts/techtree_viewer.py --host eeepc --open
+  ```
+  flags: `--host` (default `eeepc`), `--out` (default `techtree.html`), `--open` (launch the default browser)
+
 More details:
 - `docs/SHOWING_THE_DASHBOARD.md`
 - `docs/operations/2026-04-24-eeebot-ops-dashboard-baseline.md`
