@@ -117,11 +117,71 @@
       font-family: Georgia, serif;
     }
 
-    .tech-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
+    .civ-grid-wrap {
+      overflow-x: auto;
+      padding-bottom: 6px;
     }
+    .civ-grid {
+      position: relative;
+      display: grid;
+      gap: 24px;
+    }
+    .civ-grid .tech-card {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      margin: 0;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+    .civ-edges {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .civ-mint-edge { fill: none; stroke: #c9a227; stroke-width: 2; stroke-dasharray: 6 5; opacity: 0.85; }
+    .civ-switch-edge { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .civ-switch-num {
+      fill: #2fd3c4;
+      font-size: 13px;
+      font-weight: 700;
+      text-anchor: middle;
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+    .library-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #c9a227;
+      border: 1px dashed #6d5a1f;
+      border-radius: 8px;
+      background: rgba(201, 162, 39, 0.06);
+    }
+    .library-glyph { font-size: 1.8em; }
+    .library-label { font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px; }
+
+    .evo-tree-wrap {
+      overflow: auto;
+      max-height: 520px;
+    }
+    .evo-tree-svg { display: block; margin: 4px auto; max-width: 100%; }
+    .evo-trunc-note { color: #6a7590; font-style: italic; font-size: 0.8em; text-align: center; margin: 0 0 6px; }
+    .evo-edge { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
+    .evo-node { fill: #1c2740; stroke: #4a5878; stroke-width: 1.5; }
+    .evo-node-current {
+      fill: #2fd3c4;
+      stroke: #c9a227;
+      stroke-width: 2.4;
+      filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
+    }
+    .evo-node-abandoned { fill: #1c2740; stroke: #3a4a6e; opacity: 0.45; }
+    .evo-label { fill: #c7cfe0; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
+    .evo-current-tag { fill: #c9a227; font-weight: 700; }
+
     .tech-card {
       position: relative;
       flex: 1 1 200px;
@@ -263,74 +323,82 @@
     <header class="empire-strip">
       <div class="empire-title">EEEBOT EMPIRE</div>
       <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">108</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">8.2%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate</span><span class="stat-value">78.9%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.6M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-computed">computed 2026-08-18 13:11:45.443599 UTC</div>
+      <div class="empire-computed">computed 2026-08-18 13:41:54.867452 UTC</div>
     </header>
     
 <main>
 
     <section class="panel panel-research">
       <h2 class="panel-title">Research</h2>
-      <div class="tech-row">
-        <div class="tech-card tech-card-current">
-          
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">Proposer Quality</span>
+      
+        <div class="civ-grid-wrap">
+          <div class="civ-grid" style="grid-template-columns: repeat(1, 220px); grid-auto-rows: 230px;">
+            
+            
+    <div class="tech-card" style="grid-column:1;grid-row:1;">
+      
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">Proposer Quality</span>
+      </div>
+      <div class="tech-lever">loop.repeat_failure_rate</div>
+      <span class="badge badge-available">AVAILABLE</span>
+      <div class="spark-empty">no observations yet</div>
+      
+    </div>
+    
+    <div class="tech-card" style="grid-column:1;grid-row:2;">
+      
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">Cycle Cost</span>
+      </div>
+      <div class="tech-lever">cost.tokens_per_integration</div>
+      <span class="badge badge-available">AVAILABLE</span>
+      <div class="spark-empty">no observations yet</div>
+      
+    </div>
+    
+    <div class="tech-card" style="grid-column:1;grid-row:3;">
+      
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">Tool Reuse</span>
+      </div>
+      <div class="tech-lever">loop.confirmed_integration_ratio</div>
+      <span class="badge badge-available">AVAILABLE</span>
+      <div class="spark-empty">no observations yet</div>
+      
+    </div>
+    
+    <div class="tech-card" style="grid-column:1;grid-row:4;">
+      
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">Heldout Robustness</span>
+      </div>
+      <div class="tech-lever">heldout.heldout_gap</div>
+      <span class="badge badge-available">AVAILABLE</span>
+      <div class="spark-empty">no observations yet</div>
+      
+    </div>
+    
+    <div class="tech-card tech-card-current" style="grid-column:1;grid-row:5;">
+      
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">Compile Health</span>
+      </div>
+      <div class="tech-lever">quality.compile_clean_ratio</div>
+      <span class="badge badge-researching">RESEARCHING</span>
+      <div class="spark-empty">no observations yet</div>
+      
+    </div>
+    
+            <svg class="civ-edges" width="220" height="1246" viewBox="0 0 220 1246"><defs><marker id="civ-arrow-switch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2fd3c4" /></marker><marker id="civ-arrow-mint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c9a227" /></marker></defs><path d="M110,466 C110,750 110,750 110,1034" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="750" class="civ-switch-num">①</text><path d="M110,1228 C110,1004 110,1004 110,780" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="1004" class="civ-switch-num">②</text><path d="M110,974 C110,750 110,750 110,526" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="750" class="civ-switch-num">③</text><path d="M110,720 C110,369 110,369 110,18" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="369" class="civ-switch-num">④</text></svg>
           </div>
-          <div class="tech-lever">loop.repeat_failure_rate</div>
-          <span class="badge badge-researching">RESEARCHING</span>
-          <div class="spark-empty">no observations yet</div>
-          
         </div>
         
-        <div class="tech-card">
-          
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">Cycle Cost</span>
-          </div>
-          <div class="tech-lever">cost.tokens_per_integration</div>
-          <span class="badge badge-available">AVAILABLE</span>
-          <div class="spark-empty">no observations yet</div>
-          
-        </div>
-        
-        <div class="tech-card">
-          
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">Tool Reuse</span>
-          </div>
-          <div class="tech-lever">loop.confirmed_integration_ratio</div>
-          <span class="badge badge-available">AVAILABLE</span>
-          <div class="spark-empty">no observations yet</div>
-          
-        </div>
-        
-        <div class="tech-card">
-          
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">Heldout Robustness</span>
-          </div>
-          <div class="tech-lever">heldout.heldout_gap</div>
-          <span class="badge badge-available">AVAILABLE</span>
-          <div class="spark-empty">no observations yet</div>
-          
-        </div>
-        
-        <div class="tech-card">
-          
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">Compile Health</span>
-          </div>
-          <div class="tech-lever">quality.compile_clean_ratio</div>
-          <span class="badge badge-available">AVAILABLE</span>
-          <div class="spark-empty">no observations yet</div>
-          
-        </div>
-        </div>
       <details class="chronicle" open>
         <summary>Research chronicle</summary>
         <ul class="chronicle-list"><li><span class="chronicle-ts">2026-08-18 04:04:22.417334 UTC</span> &mdash; <span class="chronicle-from">Tool Reuse</span> &rarr; <span class="chronicle-to">Proposer Quality</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 03:33:49.122079 UTC</span> &mdash; <span class="chronicle-from">Heldout Robustness</span> &rarr; <span class="chronicle-to">Tool Reuse</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 03:03:17.491679 UTC</span> &mdash; <span class="chronicle-from">Compile Health</span> &rarr; <span class="chronicle-to">Heldout Robustness</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 02:17:32.918716 UTC</span> &mdash; <span class="chronicle-from">Cycle Cost</span> &rarr; <span class="chronicle-to">Compile Health</span> <span class="chronicle-reason">(plateau_switch)</span></li></ul>
@@ -379,46 +447,10 @@
         <div><span class="stat-label">nodes</span><span class="stat-value">8</span></div>
         <div><span class="stat-label">switches</span><span class="stat-value">0</span></div>
       </div>
-      <ul class="timeline-list">
-        <li>
-          <span class="timeline-sha">6010d06</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-32b812e428f3</span>
-          <span class="timeline-ts">2026-08-18 09:01:12.887320 UTC</span>
-        </li>
-        
-        <li>
-          <span class="timeline-sha">4d2a914</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-1f14e9135176</span>
-          <span class="timeline-ts">2026-08-17 22:35:06.378436 UTC</span>
-        </li>
-        
-        <li>
-          <span class="timeline-sha">1e5eea9</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-da6f975337ee</span>
-          <span class="timeline-ts">2026-08-17 22:03:05.756024 UTC</span>
-        </li>
-        
-        <li>
-          <span class="timeline-sha">32c5bc8</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-ba8bb245c7ab</span>
-          <span class="timeline-ts">2026-08-17 21:14:03.088968 UTC</span>
-        </li>
-        
-        <li>
-          <span class="timeline-sha">b2e6d02</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-2f240f24f39f</span>
-          <span class="timeline-ts">2026-08-17 19:44:45.089415 UTC</span>
-        </li>
-        
-        <li>
-          <span class="timeline-sha">8a1fe38</span>
-          <span class="timeline-branch">selfevo/cycle-cycle-874abbb6f2f5</span>
-          <span class="timeline-ts">2026-08-17 18:12:06.752156 UTC</span>
-        </li>
-        </ul>
+      <div class="evo-tree-wrap"><svg class="evo-tree-svg" width="280" height="516" viewBox="0 0 280 516"><g><circle cx="70" cy="90" r="7" class="evo-node evo-node-current" /><text x="82" y="94" class="evo-label">cycle-cycle-32b812e428f3-6010d06 <tspan class="evo-current-tag">&#9672; current</tspan></text></g><g><circle cx="70" cy="426" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="430" class="evo-label">cycle-cycle-1f14e9135176-4d2a914</text></g><g><circle cx="70" cy="258" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="262" class="evo-label">cycle-cycle-da6f975337ee-1e5eea9</text></g><g><circle cx="70" cy="370" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="374" class="evo-label">cycle-cycle-ba8bb245c7ab-32c5bc8</text></g><g><circle cx="70" cy="146" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="150" class="evo-label">cycle-cycle-2f240f24f39f-b2e6d02</text></g><g><circle cx="70" cy="34" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="38" class="evo-label">cycle-cycle-874abbb6f2f5-8a1fe38</text></g><g><circle cx="70" cy="314" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="318" class="evo-label">cycle-cycle-325990784c3a-a364151</text></g><g><circle cx="70" cy="202" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="206" class="evo-label">cycle-cycle-cce1adc70adc-6301993</text></g></svg></div>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-18 16:38:26 local time &middot; host eeepc</footer>
+<footer class="page-footer">generated 2026-08-18 16:57:57 local time &middot; host eeepc</footer>
 </body>
 </html>
