@@ -9,77 +9,111 @@
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #101c30 0%, #0b1220 60%, #070c16 100%);
       color: #d8dce6;
       font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-      padding: 0 0 48px 0;
+      padding: 0 0 32px 0;
     }
     h1, h2, h3, .panel-title, .empire-title {
       font-family: Georgia, 'Times New Roman', serif;
     }
     a { color: #c9a227; }
 
+    /* --- top strip: slim, one line --- */
     .empire-strip {
       background: linear-gradient(180deg, #14213a 0%, #0d1626 100%);
       border-bottom: 2px solid #c9a227;
-      padding: 18px 28px;
+      padding: 8px 20px;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
       align-items: center;
       gap: 18px;
-      justify-content: space-between;
     }
     .empire-title {
       color: #c9a227;
-      font-size: 1.6em;
+      font-size: 1.05em;
       letter-spacing: 2px;
-      text-shadow: 0 0 12px rgba(201, 162, 39, 0.45);
+      text-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+      white-space: nowrap;
     }
     .empire-stats {
       display: flex;
-      flex-wrap: wrap;
-      gap: 22px;
+      flex-wrap: nowrap;
+      gap: 18px;
     }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 90px; }
-    .empire-computed { color: #7d8aa3; font-size: 0.85em; }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-computed { color: #7d8aa3; font-size: 0.78em; white-space: nowrap; margin-left: auto; }
 
     .stat-label {
       text-transform: uppercase;
-      font-size: 0.68em;
+      font-size: 0.64em;
       letter-spacing: 1px;
       color: #8b96ad;
     }
     .stat-value {
-      font-size: 1.15em;
+      font-size: 1.02em;
       color: #eae3c8;
       font-weight: 600;
     }
 
-    main {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 24px 20px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 22px;
+    /* --- overall layout: fixed-width left rail + dominant canvas --- */
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px;
+      max-width: 100vw;
     }
+
+    .rail {
+      flex: 0 0 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .canvas-outer {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border: 1px solid #24314f;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(20, 33, 58, 0.55) 0%, rgba(11, 18, 32, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .era-grid-line { stroke: #1c2740; stroke-width: 1; }
+    .lane-label {
+      fill: #c9a227;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #6a7590; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #6a7590; font-style: italic; font-size: 12px; }
 
     .panel {
       background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
       border: 1px solid #24314f;
       border-radius: 10px;
-      padding: 18px 20px 22px 20px;
+      padding: 14px 14px 16px 14px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
-      margin: 0 0 14px 0;
+      margin: 0 0 10px 0;
       color: #c9a227;
-      font-size: 1.3em;
+      font-size: 1.05em;
       letter-spacing: 1px;
       border-bottom: 1px solid #2c3a5c;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
     .panel-unavailable {
       text-align: center;
@@ -90,121 +124,61 @@
       font-style: italic;
     }
 
-    .era-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    /* --- eras rail: vertical medallions --- */
+    .era-rail { display: flex; flex-direction: column; gap: 8px; }
     .era-medallion {
-      width: 130px;
-      padding: 14px 8px;
-      border-radius: 50% / 22%;
+      padding: 8px 6px;
+      border-radius: 10px;
       text-align: center;
       border: 2px solid #2c3a5c;
     }
     .era-lit {
       border-color: #2fd3c4;
-      box-shadow: 0 0 16px rgba(47, 211, 196, 0.5);
+      box-shadow: 0 0 12px rgba(47, 211, 196, 0.5);
       background: rgba(47, 211, 196, 0.08);
     }
     .era-locked {
       opacity: 0.55;
       background: rgba(90, 90, 90, 0.08);
     }
-    .era-glyph { font-size: 1.6em; }
-    .era-name { font-size: 0.78em; margin-top: 6px; color: #c7cfe0; }
+    .era-glyph { font-size: 1.2em; }
+    .era-name { font-size: 0.7em; margin-top: 4px; color: #c7cfe0; }
     .era-caption {
       text-align: center;
-      margin-top: 12px;
+      margin-top: 8px;
       color: #c9a227;
       letter-spacing: 1px;
       font-family: Georgia, serif;
+      font-size: 0.85em;
     }
 
-    .civ-grid-wrap {
-      overflow-x: auto;
-      padding-bottom: 6px;
-    }
-    .civ-grid {
-      position: relative;
-      display: grid;
-      gap: 24px;
-    }
-    .civ-grid .tech-card {
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
       width: 100%;
       height: 100%;
-      max-width: none;
-      margin: 0;
-      box-sizing: border-box;
-      z-index: 1;
-    }
-    .civ-edges {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .civ-mint-edge { fill: none; stroke: #c9a227; stroke-width: 2; stroke-dasharray: 6 5; opacity: 0.85; }
-    .civ-switch-edge { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
-    .civ-switch-num {
-      fill: #2fd3c4;
-      font-size: 13px;
-      font-weight: 700;
-      text-anchor: middle;
-      font-family: Georgia, 'Times New Roman', serif;
-    }
-    .library-node {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: #c9a227;
-      border: 1px dashed #6d5a1f;
-      border-radius: 8px;
-      background: rgba(201, 162, 39, 0.06);
-    }
-    .library-glyph { font-size: 1.8em; }
-    .library-label { font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px; }
-
-    .evo-tree-wrap {
-      overflow: auto;
-      max-height: 520px;
-    }
-    .evo-tree-svg { display: block; margin: 4px auto; max-width: 100%; }
-    .evo-trunc-note { color: #6a7590; font-style: italic; font-size: 0.8em; text-align: center; margin: 0 0 6px; }
-    .evo-edge { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
-    .evo-node { fill: #1c2740; stroke: #4a5878; stroke-width: 1.5; }
-    .evo-node-current {
-      fill: #2fd3c4;
-      stroke: #c9a227;
-      stroke-width: 2.4;
-      filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
-    }
-    .evo-node-abandoned { fill: #1c2740; stroke: #3a4a6e; opacity: 0.45; }
-    .evo-label { fill: #c7cfe0; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
-    .evo-current-tag { fill: #c9a227; font-weight: 700; }
-
-    .tech-card {
-      position: relative;
-      flex: 1 1 200px;
-      max-width: 240px;
-      background: rgba(15, 24, 42, 0.9);
+      background: rgba(15, 24, 42, 0.94);
       border: 1px solid #2c3a5c;
       border-radius: 8px;
-      padding: 14px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+      color: #d8dce6;
     }
-    .tech-card-current {
-      border-color: #2fd3c4;
-      box-shadow: 0 0 18px rgba(47, 211, 196, 0.55);
+    .dir-box-current {
+      border-color: #c9a227;
+      box-shadow: 0 0 16px rgba(201, 162, 39, 0.65);
     }
-    .tech-card-plateaued { opacity: 0.65; }
-    .tech-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .tech-icon { font-size: 1.2em; color: #c9a227; }
-    .tech-name { font-weight: 600; color: #eae3c8; }
-    .tech-lever {
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #c9a227; }
+    .dir-name { font-weight: 600; color: #eae3c8; font-size: 0.92em; }
+    .dir-lever {
       font-variant: small-caps;
       letter-spacing: 0.5px;
       color: #8b96ad;
-      font-size: 0.82em;
-      margin-bottom: 8px;
+      font-size: 0.76em;
+      margin-bottom: 6px;
     }
     .ribbon {
       position: absolute;
@@ -212,108 +186,121 @@
       right: -8px;
       background: #c9a227;
       color: #1a1406;
-      font-size: 0.62em;
+      font-size: 0.6em;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       transform: rotate(4deg);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
+    .cooldown { font-size: 0.68em; color: #8b96ad; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #c9a227; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / WORLD HISTORY) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 24, 42, 0.9);
+      border: 1.5px solid #4a5878;
+      border-radius: 7px;
+      padding: 0 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #c7cfe0;
+    }
+    .evo-box-current {
+      border-color: #c9a227;
+      box-shadow: 0 0 12px rgba(201, 162, 39, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-diamond { color: #c9a227; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
+    .evo-fallback { color: #d8dce6; }
 
     .badge {
       display: inline-block;
-      font-size: 0.68em;
+      font-size: 0.64em;
       font-weight: 700;
       letter-spacing: 0.5px;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
-    .badge-researching { background: rgba(47, 211, 196, 0.18); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
-    .badge-verdict, .verdict-supported, .verdict-refuted, .verdict-inconclusive {
-      display: inline-block;
-    }
     .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
     .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
 
-    .spark { margin-bottom: 4px; }
+    .spark { margin-bottom: 2px; }
     .spark-top, .spark-bottom {
       display: flex;
       align-items: flex-end;
       gap: 2px;
-      height: 16px;
+      height: 14px;
     }
     .spark-bottom { align-items: flex-start; }
     .spark-baseline { border-top: 1px dashed #3a4a6e; }
-    .bar { width: 6px; border-radius: 1px; display: block; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
     .bar-pos { background: #c9a227; }
     .bar-neg { background: #b23a3a; }
     .bar-placeholder { height: 0; background: transparent; }
-    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.82em; margin-bottom: 8px; }
-    .spark-mean { font-size: 0.76em; margin-top: 2px; }
+    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
     .mean-pos { color: #c9a227; }
     .mean-neg { color: #d97b7b; }
-    .cooldown { font-size: 0.72em; color: #8b96ad; margin-top: 6px; }
 
-    details.chronicle { margin-top: 16px; }
-    details.chronicle summary {
-      cursor: pointer;
-      color: #c9a227;
-      font-family: Georgia, serif;
-      font-size: 1.02em;
-      margin-bottom: 8px;
-    }
-    ul.chronicle-list, ul.verdict-list, ul.timeline-list {
+    ul.verdict-list, ul.timeline-list {
       list-style: none;
       margin: 0;
       padding: 0;
-      max-height: 260px;
+      max-height: 220px;
       overflow-y: auto;
     }
-    ul.chronicle-list li, ul.verdict-list li, ul.timeline-list li {
-      padding: 6px 0;
+    ul.verdict-list li, ul.timeline-list li {
+      padding: 5px 0;
       border-bottom: 1px solid #1c2740;
-      font-size: 0.86em;
+      font-size: 0.78em;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
-    .chronicle-ts, .verdict-at, .timeline-ts { color: #6a7590; font-size: 0.9em; }
-    .chronicle-from { color: #b7c0d4; }
-    .chronicle-to { color: #eae3c8; font-weight: 600; }
-    .chronicle-reason { color: #6a7590; font-size: 0.85em; }
-    .verdict-title { color: #eae3c8; flex: 1 1 auto; }
+    .verdict-list-compact .verdict-title { color: #eae3c8; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
     .timeline-sha { font-family: 'Consolas', 'Courier New', monospace; color: #2fd3c4; }
-    .timeline-branch { color: #b7c0d4; font-size: 0.85em; }
+    .timeline-branch { color: #b7c0d4; font-size: 0.9em; }
+    .timeline-ts { color: #6a7590; font-size: 0.85em; }
 
-    .count-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+    .count-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .count-chip {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 78px;
-      padding: 8px 10px;
+      min-width: 56px;
+      padding: 6px 6px;
       border-radius: 6px;
       border: 1px solid #2c3a5c;
       background: rgba(15, 24, 42, 0.7);
     }
-    .count-value { font-size: 1.3em; font-weight: 700; color: #eae3c8; }
-    .count-label { font-size: 0.68em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
+    .count-value { font-size: 1.05em; font-weight: 700; color: #eae3c8; }
+    .count-label { font-size: 0.6em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
     .count-supported .count-value { color: #c9a227; }
     .count-refuted .count-value { color: #d97b7b; }
-
-    .history-summary { display: flex; gap: 26px; margin-bottom: 14px; flex-wrap: wrap; }
-    .history-summary > div { display: flex; flex-direction: column; }
 
     footer.page-footer {
       text-align: center;
       color: #4f5a76;
       font-size: 0.78em;
-      margin-top: 28px;
+      margin-top: 20px;
       padding-top: 14px;
     }
 </style>
@@ -323,92 +310,14 @@
     <header class="empire-strip">
       <div class="empire-title">EEEBOT EMPIRE</div>
       <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">108</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">8.2%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate</span><span class="stat-value">78.9%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.6M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-computed">computed 2026-08-18 13:41:54.867452 UTC</div>
+      <div class="empire-computed">computed 2026-08-18 16:14:13.392112 UTC</div>
     </header>
     
-<main>
-
-    <section class="panel panel-research">
-      <h2 class="panel-title">Research</h2>
-      
-        <div class="civ-grid-wrap">
-          <div class="civ-grid" style="grid-template-columns: repeat(1, 220px); grid-auto-rows: 230px;">
-            
-            
-    <div class="tech-card" style="grid-column:1;grid-row:1;">
-      
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">Proposer Quality</span>
-      </div>
-      <div class="tech-lever">loop.repeat_failure_rate</div>
-      <span class="badge badge-available">AVAILABLE</span>
-      <div class="spark-empty">no observations yet</div>
-      
-    </div>
-    
-    <div class="tech-card" style="grid-column:1;grid-row:2;">
-      
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">Cycle Cost</span>
-      </div>
-      <div class="tech-lever">cost.tokens_per_integration</div>
-      <span class="badge badge-available">AVAILABLE</span>
-      <div class="spark-empty">no observations yet</div>
-      
-    </div>
-    
-    <div class="tech-card" style="grid-column:1;grid-row:3;">
-      
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">Tool Reuse</span>
-      </div>
-      <div class="tech-lever">loop.confirmed_integration_ratio</div>
-      <span class="badge badge-available">AVAILABLE</span>
-      <div class="spark-empty">no observations yet</div>
-      
-    </div>
-    
-    <div class="tech-card" style="grid-column:1;grid-row:4;">
-      
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">Heldout Robustness</span>
-      </div>
-      <div class="tech-lever">heldout.heldout_gap</div>
-      <span class="badge badge-available">AVAILABLE</span>
-      <div class="spark-empty">no observations yet</div>
-      
-    </div>
-    
-    <div class="tech-card tech-card-current" style="grid-column:1;grid-row:5;">
-      
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">Compile Health</span>
-      </div>
-      <div class="tech-lever">quality.compile_clean_ratio</div>
-      <span class="badge badge-researching">RESEARCHING</span>
-      <div class="spark-empty">no observations yet</div>
-      
-    </div>
-    
-            <svg class="civ-edges" width="220" height="1246" viewBox="0 0 220 1246"><defs><marker id="civ-arrow-switch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2fd3c4" /></marker><marker id="civ-arrow-mint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c9a227" /></marker></defs><path d="M110,466 C110,750 110,750 110,1034" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="750" class="civ-switch-num">①</text><path d="M110,1228 C110,1004 110,1004 110,780" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="1004" class="civ-switch-num">②</text><path d="M110,974 C110,750 110,750 110,526" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="750" class="civ-switch-num">③</text><path d="M110,720 C110,369 110,369 110,18" class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" /><text x="110" y="369" class="civ-switch-num">④</text></svg>
-          </div>
-        </div>
-        
-      <details class="chronicle" open>
-        <summary>Research chronicle</summary>
-        <ul class="chronicle-list"><li><span class="chronicle-ts">2026-08-18 04:04:22.417334 UTC</span> &mdash; <span class="chronicle-from">Tool Reuse</span> &rarr; <span class="chronicle-to">Proposer Quality</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 03:33:49.122079 UTC</span> &mdash; <span class="chronicle-from">Heldout Robustness</span> &rarr; <span class="chronicle-to">Tool Reuse</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 03:03:17.491679 UTC</span> &mdash; <span class="chronicle-from">Compile Health</span> &rarr; <span class="chronicle-to">Heldout Robustness</span> <span class="chronicle-reason">(plateau_switch)</span></li><li><span class="chronicle-ts">2026-08-18 02:17:32.918716 UTC</span> &mdash; <span class="chronicle-from">Cycle Cost</span> &rarr; <span class="chronicle-to">Compile Health</span> <span class="chronicle-reason">(plateau_switch)</span></li></ul>
-      </details>
-    </section>
-    
-
+<div class="layout">
+<aside class="rail">
     <section class="panel panel-eras">
       <h2 class="panel-title">Eras</h2>
-      <div class="era-row">
+      <div class="era-rail">
         <div class="era-medallion era-locked">
           <div class="era-glyph">&#128274;</div>
           <div class="era-name">Existence Index</div>
@@ -432,25 +341,14 @@
       <div class="era-caption">Trust Level 0</div>
     </section>
     
-
     <section class="panel panel-library">
       <h2 class="panel-title">Great Library</h2>
       <div class="count-row"><div class="count-chip count-active"><span class="count-value">0</span><span class="count-label">active</span></div><div class="count-chip count-answered"><span class="count-value">2</span><span class="count-label">answered</span></div><div class="count-chip count-supported"><span class="count-value">0</span><span class="count-label">supported</span></div><div class="count-chip count-refuted"><span class="count-value">0</span><span class="count-label">refuted</span></div><div class="count-chip count-inconclusive"><span class="count-value">0</span><span class="count-label">inconclusive</span></div></div>
       <p class="unavailable-note">no verdicts recorded yet</p>
     </section>
-    
-
-    <section class="panel panel-history">
-      <h2 class="panel-title">World History</h2>
-      <div class="history-summary">
-        <div><span class="stat-label">current sha</span><span class="stat-value">6010d0623e28</span></div>
-        <div><span class="stat-label">nodes</span><span class="stat-value">8</span></div>
-        <div><span class="stat-label">switches</span><span class="stat-value">0</span></div>
-      </div>
-      <div class="evo-tree-wrap"><svg class="evo-tree-svg" width="280" height="516" viewBox="0 0 280 516"><g><circle cx="70" cy="90" r="7" class="evo-node evo-node-current" /><text x="82" y="94" class="evo-label">cycle-cycle-32b812e428f3-6010d06 <tspan class="evo-current-tag">&#9672; current</tspan></text></g><g><circle cx="70" cy="426" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="430" class="evo-label">cycle-cycle-1f14e9135176-4d2a914</text></g><g><circle cx="70" cy="258" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="262" class="evo-label">cycle-cycle-da6f975337ee-1e5eea9</text></g><g><circle cx="70" cy="370" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="374" class="evo-label">cycle-cycle-ba8bb245c7ab-32c5bc8</text></g><g><circle cx="70" cy="146" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="150" class="evo-label">cycle-cycle-2f240f24f39f-b2e6d02</text></g><g><circle cx="70" cy="34" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="38" class="evo-label">cycle-cycle-874abbb6f2f5-8a1fe38</text></g><g><circle cx="70" cy="314" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="318" class="evo-label">cycle-cycle-325990784c3a-a364151</text></g><g><circle cx="70" cy="202" r="7" class="evo-node evo-node-abandoned" /><text x="82" y="206" class="evo-label">cycle-cycle-cce1adc70adc-6301993</text></g></svg></div>
-    </section>
-    
-</main>
-<footer class="page-footer">generated 2026-08-18 16:57:57 local time &middot; host eeepc</footer>
+    </aside>
+<div class="canvas-outer"><svg class="tech-canvas" width="1540" height="904" viewBox="0 0 1540 904"><line x1="40" y1="0" x2="40" y2="904" class="era-grid-line" /><line x1="270" y1="0" x2="270" y2="904" class="era-grid-line" /><line x1="290" y1="0" x2="290" y2="904" class="era-grid-line" /><line x1="520" y1="0" x2="520" y2="904" class="era-grid-line" /><line x1="770" y1="0" x2="770" y2="904" class="era-grid-line" /><line x1="1020" y1="0" x2="1020" y2="904" class="era-grid-line" /><line x1="1270" y1="0" x2="1270" y2="904" class="era-grid-line" /><line x1="1520" y1="0" x2="1520" y2="904" class="era-grid-line" /><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-available">AVAILABLE</span><div class="spark-empty">no observations yet</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-researching">RESEARCHING</span><div class="spark-empty">no observations yet</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark-empty">no observations yet</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark-empty">no observations yet</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark-empty">no observations yet</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">WORLD HISTORY</text><foreignObject x="60" y="122" width="150" height="46"><div class="evo-box evo-box-current"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-cycle-32b812e428f3-6010d06</span></div></foreignObject><foreignObject x="60" y="494" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-1f14e9135176-4d2a914</span></div></foreignObject><foreignObject x="60" y="308" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-da6f975337ee-1e5eea9</span></div></foreignObject><foreignObject x="60" y="432" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-ba8bb245c7ab-32c5bc8</span></div></foreignObject><foreignObject x="60" y="184" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-2f240f24f39f-b2e6d02</span></div></foreignObject><foreignObject x="60" y="60" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-874abbb6f2f5-8a1fe38</span></div></foreignObject><foreignObject x="60" y="370" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-325990784c3a-a364151</span></div></foreignObject><foreignObject x="60" y="246" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-cce1adc70adc-6301993</span></div></foreignObject></g></svg></div>
+</div>
+<footer class="page-footer">generated 2026-08-18 19:35:13 local time &middot; host eeepc</footer>
 </body>
 </html>
