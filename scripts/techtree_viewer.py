@@ -207,6 +207,24 @@ def unavailable_panel(title: str, reason: str = 'source unavailable') -> str:
 
 
 # ---------------------------------------------------------------------------
+# Civ-style tree geometry shared by the Research grid + World History SVG
+# ---------------------------------------------------------------------------
+
+CARD_W = 220
+CARD_H = 230
+GRID_GAP = 24
+WRAP_COLS = 5  # discovered (hypothesis-minted) nodes per era-row before wrapping
+
+EVO_COL_W = 190
+EVO_ROW_H = 56
+EVO_MARGIN_X = 70
+EVO_MARGIN_Y = 34
+EVO_MAX_DISPLAY = 30
+
+_CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
+
+
+# ---------------------------------------------------------------------------
 # Panel builders
 # ---------------------------------------------------------------------------
 
@@ -251,6 +269,125 @@ def build_sparkline(gain_history: list[Any] | None) -> str:
     )
 
 
+def _tech_card_html(name: str, node: dict[str, Any], is_current: bool, grid_style: str) -> str:
+    status = node.get('status') or 'active'
+    minted_by = node.get('minted_by')
+    ribbon = '<div class="ribbon">MINTED BY HYPOTHESIS</div>' if minted_by == 'hypothesis' else ''
+
+    if is_current:
+        badge_class, badge_text = 'badge-researching', 'RESEARCHING'
+    elif status == 'plateaued':
+        badge_class, badge_text = 'badge-plateaued', 'PLATEAUED'
+    else:
+        badge_class, badge_text = 'badge-available', 'AVAILABLE'
+
+    cooldown_note = ''
+    if status == 'plateaued' and node.get('cooldown_until_ts'):
+        cooldown_note = f'<div class="cooldown">cooldown until {fmt_ts(node.get("cooldown_until_ts"))}</div>'
+
+    card_class = 'tech-card'
+    if is_current:
+        card_class += ' tech-card-current'
+    elif status == 'plateaued':
+        card_class += ' tech-card-plateaued'
+
+    return f'''
+    <div class="{card_class}" style="{grid_style}">
+      {ribbon}
+      <div class="tech-card-head">
+        <span class="tech-icon">&#9881;</span>
+        <span class="tech-name">{title_case_name(name)}</span>
+      </div>
+      <div class="tech-lever">{small_caps_metric(node.get('lever_metric'))}</div>
+      <span class="badge {badge_class}">{badge_text}</span>
+      {build_sparkline(node.get('gain_history'))}
+      {cooldown_note}
+    </div>
+    '''
+
+
+def _civ_positions(nodes: dict[str, dict[str, Any]]) -> tuple[dict[str, tuple[int, int]], bool, int, int]:
+    """Derive an honest Civ-era grid position for every research node.
+
+    Column 1 ("SEEDED") holds every product-authored node, one per row,
+    ordered by ``created_ts``. Column 2+ ("DISCOVERED") holds every
+    hypothesis-minted node, one per column in creation order, wrapping to
+    a new row every :data:`WRAP_COLS` columns. Column 0 is reserved for
+    the "Great Library" mint-origin glyph, present only when at least one
+    discovered node exists. Never invents lineage -- this is purely a
+    layout derived from ``minted_by``/``created_ts``, the only honestly
+    available origin signal in the (structurally flat) portfolio.
+    """
+    seeded = sorted(
+        (item for item in nodes.items() if item[1].get('minted_by') != 'hypothesis'),
+        key=lambda kv: kv[1].get('created_ts') or '',
+    )
+    discovered = sorted(
+        (item for item in nodes.items() if item[1].get('minted_by') == 'hypothesis'),
+        key=lambda kv: kv[1].get('created_ts') or '',
+    )
+    has_discovered = bool(discovered)
+    seeded_col = 1 if has_discovered else 0
+    discovered_start = 2 if has_discovered else 1
+
+    pos: dict[str, tuple[int, int]] = {}
+    for row, (name, _node) in enumerate(seeded):
+        pos[name] = (seeded_col, row)
+    for idx, (name, _node) in enumerate(discovered):
+        pos[name] = (discovered_start + (idx % WRAP_COLS), idx // WRAP_COLS)
+
+    max_col = max((c for c, _r in pos.values()), default=seeded_col)
+    max_row = max((r for _c, r in pos.values()), default=0)
+    return pos, has_discovered, max_col + 1, max_row + 1
+
+
+def _mint_edge_svg(pos_xy: tuple[int, int]) -> str:
+    """Dashed gold edge from the Great Library glyph (col 0, row 0) into
+    one hypothesis-minted card at ``pos_xy``."""
+    col, row = pos_xy
+    x1, y1 = CARD_W / 2, CARD_H / 2
+    x2 = col * (CARD_W + GRID_GAP) + CARD_W / 2
+    y2 = row * (CARD_H + GRID_GAP) + 22
+    midx = (x1 + x2) / 2
+    return (
+        f'<path d="M{x1:.0f},{y1:.0f} C{midx:.0f},{y1:.0f} {midx:.0f},{y2:.0f} {x2:.0f},{y2:.0f}" '
+        'class="civ-mint-edge" marker-end="url(#civ-arrow-mint)" />'
+    )
+
+
+def _switch_edges_svg(switches: list[Any] | None, pos: dict[str, tuple[int, int]]) -> tuple[str, int]:
+    """Numbered teal arrows tracing the empire's research journey: one per
+    ``switches`` entry, in chronological order, from the source card's
+    bottom edge to the target card's top edge. Entries naming a node that
+    no longer exists in ``pos`` are skipped (fail-soft); the numbering
+    only counts edges actually drawn."""
+    if not isinstance(switches, list):
+        return '', 0
+    parts: list[str] = []
+    n = 0
+    for switch in switches:
+        if not isinstance(switch, dict):
+            continue
+        src, dst = switch.get('from'), switch.get('to')
+        if src not in pos or dst not in pos:
+            continue
+        n += 1
+        c1, r1 = pos[src]
+        c2, r2 = pos[dst]
+        x1 = c1 * (CARD_W + GRID_GAP) + CARD_W / 2
+        y1 = r1 * (CARD_H + GRID_GAP) + CARD_H - 18
+        x2 = c2 * (CARD_W + GRID_GAP) + CARD_W / 2
+        y2 = r2 * (CARD_H + GRID_GAP) + 18
+        midx, midy = (x1 + x2) / 2, (y1 + y2) / 2
+        label = _CIRCLED_DIGITS[n - 1] if n <= len(_CIRCLED_DIGITS) else f'({n})'
+        parts.append(
+            f'<path d="M{x1:.0f},{y1:.0f} C{x1:.0f},{midy:.0f} {x2:.0f},{midy:.0f} {x2:.0f},{y2:.0f}" '
+            'class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" />'
+        )
+        parts.append(f'<text x="{midx:.0f}" y="{midy:.0f}" class="civ-switch-num">{esc(label)}</text>')
+    return ''.join(parts), n
+
+
 def build_research_panel(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | None) -> str:
     if not isinstance(portfolio, dict):
         return unavailable_panel('Research', 'portfolio.json unavailable')
@@ -260,47 +397,9 @@ def build_research_panel(portfolio: dict[str, Any] | None, ledger_tail: list[Any
     if not isinstance(nodes, dict) or not nodes:
         return unavailable_panel('Research', 'no research nodes recorded')
 
-    cards = []
-    for name, node in nodes.items():
-        if not isinstance(node, dict):
-            continue
-        status = node.get('status') or 'active'
-        is_current = name == current
-        minted_by = node.get('minted_by')
-        ribbon = ''
-        if minted_by == 'hypothesis':
-            ribbon = '<div class="ribbon">MINTED BY HYPOTHESIS</div>'
-
-        if is_current:
-            badge_class, badge_text = 'badge-researching', 'RESEARCHING'
-        elif status == 'plateaued':
-            badge_class, badge_text = 'badge-plateaued', 'PLATEAUED'
-        else:
-            badge_class, badge_text = 'badge-available', 'AVAILABLE'
-
-        cooldown_note = ''
-        if status == 'plateaued' and node.get('cooldown_until_ts'):
-            cooldown_note = f'<div class="cooldown">cooldown until {fmt_ts(node.get("cooldown_until_ts"))}</div>'
-
-        card_class = 'tech-card'
-        if is_current:
-            card_class += ' tech-card-current'
-        elif status == 'plateaued':
-            card_class += ' tech-card-plateaued'
-
-        cards.append(f'''
-        <div class="{card_class}">
-          {ribbon}
-          <div class="tech-card-head">
-            <span class="tech-icon">&#9881;</span>
-            <span class="tech-name">{title_case_name(name)}</span>
-          </div>
-          <div class="tech-lever">{small_caps_metric(node.get('lever_metric'))}</div>
-          <span class="badge {badge_class}">{badge_text}</span>
-          {build_sparkline(node.get('gain_history'))}
-          {cooldown_note}
-        </div>
-        ''')
+    valid_nodes = {name: node for name, node in nodes.items() if isinstance(node, dict)}
+    if not valid_nodes:
+        return unavailable_panel('Research', 'no research nodes recorded')
 
     switches = portfolio.get('switches')
     if not isinstance(switches, list) or not switches:
@@ -311,6 +410,62 @@ def build_research_panel(portfolio: dict[str, Any] | None, ledger_tail: list[Any
             if isinstance(entry, dict) and entry.get('phase') == 'tech_tree' and entry.get('from') and entry.get('to'):
                 derived.append(entry)
         switches = derived
+
+    try:
+        pos, has_discovered, n_cols, n_rows = _civ_positions(valid_nodes)
+
+        cards = []
+        for name, node in valid_nodes.items():
+            col, row = pos.get(name, (0, 0))
+            style = f'grid-column:{col + 1};grid-row:{row + 1};'
+            cards.append(_tech_card_html(name, node, name == current, style))
+
+        library_html = ''
+        mint_svg = ''
+        if has_discovered:
+            library_html = (
+                '<div class="library-node" style="grid-column:1;grid-row:1;" '
+                'title="Great Library -- hypothesis mint origin">'
+                '<span class="library-glyph">&#127979;</span>'
+                '<span class="library-label">Great Library</span></div>'
+            )
+            mint_svg = ''.join(
+                _mint_edge_svg(pos[name])
+                for name, node in valid_nodes.items()
+                if node.get('minted_by') == 'hypothesis' and name in pos
+            )
+
+        switch_svg, _switch_count = _switch_edges_svg(switches, pos)
+
+        edges_svg = ''
+        if mint_svg or switch_svg:
+            width = n_cols * CARD_W + max(n_cols - 1, 0) * GRID_GAP
+            height = n_rows * CARD_H + max(n_rows - 1, 0) * GRID_GAP
+            edges_svg = (
+                f'<svg class="civ-edges" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+                '<defs>'
+                '<marker id="civ-arrow-switch" viewBox="0 0 10 10" refX="9" refY="5" '
+                'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+                '<path d="M0,0 L10,5 L0,10 z" fill="#2fd3c4" /></marker>'
+                '<marker id="civ-arrow-mint" viewBox="0 0 10 10" refX="9" refY="5" '
+                'markerWidth="6" markerHeight="6" orient="auto-start-reverse">'
+                '<path d="M0,0 L10,5 L0,10 z" fill="#c9a227" /></marker>'
+                '</defs>'
+                f'{mint_svg}{switch_svg}</svg>'
+            )
+
+        grid_style = f'grid-template-columns: repeat({n_cols}, {CARD_W}px); grid-auto-rows: {CARD_H}px;'
+        grid_html = f'''
+        <div class="civ-grid-wrap">
+          <div class="civ-grid" style="{grid_style}">
+            {library_html}
+            {''.join(cards)}
+            {edges_svg}
+          </div>
+        </div>
+        '''
+    except Exception:  # noqa: BLE001 - a layout bug must never break the page
+        grid_html = '<p class="unavailable-note">research layout render error</p>'
 
     chronicle_rows = []
     for switch in reversed(switches[-15:]):
@@ -330,7 +485,7 @@ def build_research_panel(portfolio: dict[str, Any] | None, ledger_tail: list[Any
     return f'''
     <section class="panel panel-research">
       <h2 class="panel-title">Research</h2>
-      <div class="tech-row">{''.join(cards)}</div>
+      {grid_html}
       <details class="chronicle" open>
         <summary>Research chronicle</summary>
         {chronicle_html}
@@ -431,6 +586,115 @@ def build_library_panel(scorecard: dict[str, Any] | None, hypotheses: dict[str, 
     '''
 
 
+def build_evolution_tree_svg(
+    nodes: dict[str, dict[str, Any]],
+    current_sha: 'str | None',
+    switches: list[Any] | None,
+    max_display: int = EVO_MAX_DISPLAY,
+) -> tuple[str, 'str | None']:
+    """Render the git-native evolution DAG (real ``parent_sha`` branching)
+    as an inline SVG tree: generations left->right by depth, multiple
+    children of one parent fan out vertically -- VISIBLE branching, not a
+    flat timeline. Caps at the most recent ``max_display`` nodes by ``ts``;
+    returns a "showing last N of M" note when truncated (else ``None``).
+    """
+    items = sorted(nodes.items(), key=lambda kv: kv[1].get('ts') or '', reverse=True)
+    total = len(items)
+    note = None
+    if total > max_display:
+        items = items[:max_display]
+        note = f'showing last {max_display} of {total} nodes'
+    kept = dict(items)
+
+    depth: dict[str, int] = {}
+
+    def _depth(sha: str, guard: 'frozenset[str]' = frozenset()) -> int:
+        if sha in depth:
+            return depth[sha]
+        if sha in guard:  # defensive cycle guard -- a real git DAG never cycles
+            depth[sha] = 0
+            return 0
+        node = kept.get(sha) or {}
+        parent = node.get('parent_sha')
+        if not parent or parent not in kept:
+            depth[sha] = 0
+        else:
+            depth[sha] = _depth(parent, guard | {sha}) + 1
+        return depth[sha]
+
+    for sha in kept:
+        _depth(sha)
+
+    children_count: dict[str, int] = {}
+    for sha, node in kept.items():
+        parent = node.get('parent_sha')
+        if parent in kept:
+            children_count[parent] = children_count.get(parent, 0) + 1
+
+    # Order by (depth, parent, ts) so siblings of one parent land in
+    # adjacent slots -- the fan-out reads as one visual cluster.
+    ordered = sorted(kept.items(), key=lambda kv: (depth[kv[0]], kv[1].get('parent_sha') or '', kv[1].get('ts') or ''))
+    slot: dict[int, int] = {}
+    pos: dict[str, tuple[int, int]] = {}
+    for sha, _node in ordered:
+        d = depth[sha]
+        s = slot.get(d, 0)
+        slot[d] = s + 1
+        pos[sha] = (EVO_MARGIN_X + d * EVO_COL_W, EVO_MARGIN_Y + s * EVO_ROW_H)
+
+    max_depth = max(depth.values(), default=0)
+    max_slot = max(slot.values(), default=1)
+    width = EVO_MARGIN_X * 2 + max_depth * EVO_COL_W + 140
+    height = EVO_MARGIN_Y * 2 + max_slot * EVO_ROW_H
+
+    switch_shas: set[str] = set()
+    for switch in (switches or []):
+        if isinstance(switch, dict):
+            for key in ('from_sha', 'to_sha'):
+                sha_ref = switch.get(key)
+                if sha_ref:
+                    switch_shas.add(sha_ref)
+
+    edges = []
+    for sha, node in kept.items():
+        parent = node.get('parent_sha')
+        if parent in pos:
+            x1, y1 = pos[parent]
+            x2, y2 = pos[sha]
+            mx = (x1 + x2) / 2
+            edges.append(f'<path d="M{x1},{y1} C{mx},{y1} {mx},{y2} {x2},{y2}" class="evo-edge" />')
+
+    dots = []
+    for sha, node in kept.items():
+        x, y = pos[sha]
+        is_current = sha == current_sha
+        is_abandoned = (not is_current) and children_count.get(sha, 0) == 0
+        node_class = 'evo-node'
+        if is_current:
+            node_class += ' evo-node-current'
+        elif is_abandoned:
+            node_class += ' evo-node-abandoned'
+
+        branch = str(node.get('branch') or '')
+        tail = branch.rsplit('/', 1)[-1] if branch else ''
+        label = f'{tail}-{sha[:7]}' if tail else sha[:7]
+        switch_mark = ' &#8634;' if sha in switch_shas else ''
+        current_tag = ' <tspan class="evo-current-tag">&#9672; current</tspan>' if is_current else ''
+
+        dots.append(
+            f'<g>'
+            f'<circle cx="{x}" cy="{y}" r="7" class="{node_class}" />'
+            f'<text x="{x + 12}" y="{y + 4}" class="evo-label">{esc(label)}{switch_mark}{current_tag}</text>'
+            f'</g>'
+        )
+
+    svg = (
+        f'<svg class="evo-tree-svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        + ''.join(edges) + ''.join(dots) + '</svg>'
+    )
+    return svg, note
+
+
 def build_world_history_panel(evolution_tree: dict[str, Any] | None) -> str:
     if not isinstance(evolution_tree, dict):
         return unavailable_panel('World History', 'evolution tree unavailable')
@@ -442,27 +706,32 @@ def build_world_history_panel(evolution_tree: dict[str, Any] | None) -> str:
 
     if not isinstance(nodes, dict):
         nodes = {}
+    valid_nodes = {sha: node for sha, node in nodes.items() if isinstance(node, dict)}
 
-    node_list = []
-    for sha, node in nodes.items():
-        if isinstance(node, dict):
-            node_list.append((sha, node))
-    node_list.sort(key=lambda item: item[1].get('ts') or '', reverse=True)
-
-    timeline_rows = []
-    for sha, node in node_list[:6]:
-        timeline_rows.append(f'''
-        <li>
-          <span class="timeline-sha">{short_sha(sha)}</span>
-          <span class="timeline-branch">{esc(node.get('branch') or 'n/a')}</span>
-          <span class="timeline-ts">{fmt_ts(node.get('ts'))}</span>
-        </li>
-        ''')
-
-    timeline_html = (
-        '<ul class="timeline-list">' + ''.join(timeline_rows) + '</ul>'
-        if timeline_rows else '<p class="unavailable-note">no evolution nodes recorded yet</p>'
-    )
+    if len(valid_nodes) >= 2:
+        try:
+            tree_svg, trunc_note = build_evolution_tree_svg(valid_nodes, current_sha, switches)
+            note_html = f'<p class="evo-trunc-note">{esc(trunc_note)}</p>' if trunc_note else ''
+            body_html = f'<div class="evo-tree-wrap">{note_html}{tree_svg}</div>'
+        except Exception:  # noqa: BLE001 - a layout bug must never break the page
+            body_html = '<p class="unavailable-note">evolution tree render error</p>'
+    else:
+        # Fail-soft fallback for <2 nodes: not enough to show real
+        # branching, keep the simple chronological list.
+        node_list = sorted(valid_nodes.items(), key=lambda item: item[1].get('ts') or '', reverse=True)
+        timeline_rows = []
+        for sha, node in node_list[:6]:
+            timeline_rows.append(f'''
+            <li>
+              <span class="timeline-sha">{short_sha(sha)}</span>
+              <span class="timeline-branch">{esc(node.get('branch') or 'n/a')}</span>
+              <span class="timeline-ts">{fmt_ts(node.get('ts'))}</span>
+            </li>
+            ''')
+        body_html = (
+            '<ul class="timeline-list">' + ''.join(timeline_rows) + '</ul>'
+            if timeline_rows else '<p class="unavailable-note">no evolution nodes recorded yet</p>'
+        )
 
     return f'''
     <section class="panel panel-history">
@@ -472,7 +741,7 @@ def build_world_history_panel(evolution_tree: dict[str, Any] | None) -> str:
         <div><span class="stat-label">nodes</span><span class="stat-value">{esc(len(nodes))}</span></div>
         <div><span class="stat-label">switches</span><span class="stat-value">{esc(switches_count)}</span></div>
       </div>
-      {timeline_html}
+      {body_html}
     </section>
     '''
 
@@ -625,11 +894,71 @@ CSS = '''
       font-family: Georgia, serif;
     }
 
-    .tech-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
+    .civ-grid-wrap {
+      overflow-x: auto;
+      padding-bottom: 6px;
     }
+    .civ-grid {
+      position: relative;
+      display: grid;
+      gap: 24px;
+    }
+    .civ-grid .tech-card {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      margin: 0;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+    .civ-edges {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .civ-mint-edge { fill: none; stroke: #c9a227; stroke-width: 2; stroke-dasharray: 6 5; opacity: 0.85; }
+    .civ-switch-edge { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .civ-switch-num {
+      fill: #2fd3c4;
+      font-size: 13px;
+      font-weight: 700;
+      text-anchor: middle;
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+    .library-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #c9a227;
+      border: 1px dashed #6d5a1f;
+      border-radius: 8px;
+      background: rgba(201, 162, 39, 0.06);
+    }
+    .library-glyph { font-size: 1.8em; }
+    .library-label { font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px; }
+
+    .evo-tree-wrap {
+      overflow: auto;
+      max-height: 520px;
+    }
+    .evo-tree-svg { display: block; margin: 4px auto; max-width: 100%; }
+    .evo-trunc-note { color: #6a7590; font-style: italic; font-size: 0.8em; text-align: center; margin: 0 0 6px; }
+    .evo-edge { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
+    .evo-node { fill: #1c2740; stroke: #4a5878; stroke-width: 1.5; }
+    .evo-node-current {
+      fill: #2fd3c4;
+      stroke: #c9a227;
+      stroke-width: 2.4;
+      filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
+    }
+    .evo-node-abandoned { fill: #1c2740; stroke: #3a4a6e; opacity: 0.45; }
+    .evo-label { fill: #c7cfe0; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
+    .evo-current-tag { fill: #c9a227; font-weight: 700; }
+
     .tech-card {
       position: relative;
       flex: 1 1 200px;
