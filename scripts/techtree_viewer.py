@@ -4,8 +4,9 @@
 Standalone operator tooling. Fetches four state files (plus a short ledger
 tail) from the `eeepc` authority host in a single SSH round-trip, then
 renders a self-contained static HTML page styled like a strategy-game
-research screen. No external assets, no CDNs -- the output opens fine as a
-plain `file://` document.
+research screen: one wide horizontal canvas, time flowing left to right,
+in the spirit of the Civilization 5 tech tree. No external assets, no
+CDNs -- the output opens fine as a plain `file://` document.
 
 Usage:
     python scripts/techtree_viewer.py [--host eeepc] [--out techtree.html] [--open]
@@ -13,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import subprocess
@@ -206,28 +208,6 @@ def unavailable_panel(title: str, reason: str = 'source unavailable') -> str:
     '''
 
 
-# ---------------------------------------------------------------------------
-# Civ-style tree geometry shared by the Research grid + World History SVG
-# ---------------------------------------------------------------------------
-
-CARD_W = 220
-CARD_H = 230
-GRID_GAP = 24
-WRAP_COLS = 5  # discovered (hypothesis-minted) nodes per era-row before wrapping
-
-EVO_COL_W = 190
-EVO_ROW_H = 56
-EVO_MARGIN_X = 70
-EVO_MARGIN_Y = 34
-EVO_MAX_DISPLAY = 30
-
-_CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
-
-
-# ---------------------------------------------------------------------------
-# Panel builders
-# ---------------------------------------------------------------------------
-
 def build_sparkline(gain_history: list[Any] | None) -> str:
     if not gain_history:
         return '<div class="spark-empty">no observations yet</div>'
@@ -269,232 +249,429 @@ def build_sparkline(gain_history: list[Any] | None) -> str:
     )
 
 
-def _tech_card_html(name: str, node: dict[str, Any], is_current: bool, grid_style: str) -> str:
+# ---------------------------------------------------------------------------
+# Wide horizontal canvas -- Civilization 5 tech-tree style.
+#
+# Time flows left -> right. Two lanes share one canvas: Lane A ("RESEARCH")
+# is the directions chronicle (portfolio.switches), Lane B ("WORLD HISTORY")
+# is the git-native evolution DAG. Both lanes place nodes as small HTML
+# boxes via SVG <foreignObject> so the existing escaped-HTML card markup
+# (sparkline, badges, etc.) can be reused verbatim inside one <svg>, and
+# orthogonal "elbow" connectors (native SVG <path>, right-angle bends) join
+# box edges Civ-style instead of curvy timeline arrows.
+# ---------------------------------------------------------------------------
+
+DIR_BOX_W = 210
+DIR_BOX_H = 150
+DIR_ROW_GAP = 16
+RESERVE_COL_W = 210
+COL_PITCH = 250  # era-column pitch, shared by both lanes for the grid lines
+LANE_TOP_PAD = 60  # room above the spine row for the mint-origin axis row
+MINT_AXIS_Y = 18
+CANVAS_MARGIN_X = 40
+CANVAS_MARGIN_Y = 20
+LANE_GAP = 50
+MIN_CANVAS_W = 1200
+
+EVO_BOX_W = 150
+EVO_BOX_H = 46
+EVO_ROW_H = 62
+EVO_MARGIN_X = 60
+EVO_MAX_DISPLAY = 30
+
+# Fixed, deterministic glyph table for research directions -- plain numeric
+# character references (matches the rest of this file's convention of never
+# embedding literal multi-byte glyphs in source) so rendering never depends
+# on the terminal/editor encoding. Picked to read as "tech tree" icons
+# without relying on emoji font coverage.
+_DIRECTION_GLYPH_CODES = (9672, 9958, 9879, 9750, 10070, 11041, 11042, 9959, 9751, 9874, 10057)
+
+
+def _direction_glyph(name: Any) -> str:
+    """Deterministic (stable across runs/processes) unicode glyph per
+    direction name -- purely cosmetic, never invents identity."""
+    key = str(name or '')
+    digest = hashlib.md5(key.encode('utf-8')).hexdigest()
+    idx = int(digest[:8], 16) % len(_DIRECTION_GLYPH_CODES)
+    return f'&#{_DIRECTION_GLYPH_CODES[idx]};'
+
+
+def _elbow_path(x1: float, y1: float, x2: float, y2: float, css_class: str, dashed: bool = False) -> str:
+    """Orthogonal 2-bend "elbow" connector (horizontal / vertical /
+    horizontal) from (x1, y1) to (x2, y2), Civ-tech-tree style."""
+    midx = (x1 + x2) / 2
+    d = f'M{x1:.0f},{y1:.0f} L{midx:.0f},{y1:.0f} L{midx:.0f},{y2:.0f} L{x2:.0f},{y2:.0f}'
+    dash_attr = ' stroke-dasharray="6 5"' if dashed else ''
+    return f'<path d="{d}" class="{css_class}"{dash_attr} />'
+
+
+def _visited_sequence(switches: list[Any], valid_names: set[str]) -> list[str]:
+    """The empire's research spine: from0 -> to0 -> to1 -> ... in
+    ``switches`` order, deduplicated consecutively, restricted to
+    directions that still exist in the portfolio (fail-soft against stale
+    switch entries naming a retired/renamed node)."""
+    seq: list[str] = []
+    for switch in switches:
+        if not isinstance(switch, dict):
+            continue
+        for key in ('from', 'to'):
+            name = switch.get(key)
+            if name in valid_names and (not seq or seq[-1] != name):
+                seq.append(name)
+    return seq
+
+
+def _direction_box_html(name: str, node: dict[str, Any], is_current: bool, x: float, y: float, dim: bool = False) -> str:
     status = node.get('status') or 'active'
     minted_by = node.get('minted_by')
-    ribbon = '<div class="ribbon">MINTED BY HYPOTHESIS</div>' if minted_by == 'hypothesis' else ''
 
     if is_current:
         badge_class, badge_text = 'badge-researching', 'RESEARCHING'
+        box_class = 'dir-box dir-box-current'
     elif status == 'plateaued':
         badge_class, badge_text = 'badge-plateaued', 'PLATEAUED'
+        box_class = 'dir-box dir-box-plateaued'
     else:
         badge_class, badge_text = 'badge-available', 'AVAILABLE'
+        box_class = 'dir-box'
+    if dim and not is_current:
+        box_class += ' dir-box-dim'
 
+    ribbon = '<div class="ribbon">MINTED</div>' if minted_by == 'hypothesis' else ''
     cooldown_note = ''
     if status == 'plateaued' and node.get('cooldown_until_ts'):
         cooldown_note = f'<div class="cooldown">cooldown until {fmt_ts(node.get("cooldown_until_ts"))}</div>'
 
-    card_class = 'tech-card'
-    if is_current:
-        card_class += ' tech-card-current'
-    elif status == 'plateaued':
-        card_class += ' tech-card-plateaued'
-
-    return f'''
-    <div class="{card_class}" style="{grid_style}">
-      {ribbon}
-      <div class="tech-card-head">
-        <span class="tech-icon">&#9881;</span>
-        <span class="tech-name">{title_case_name(name)}</span>
-      </div>
-      <div class="tech-lever">{small_caps_metric(node.get('lever_metric'))}</div>
-      <span class="badge {badge_class}">{badge_text}</span>
-      {build_sparkline(node.get('gain_history'))}
-      {cooldown_note}
-    </div>
-    '''
-
-
-def _civ_positions(nodes: dict[str, dict[str, Any]]) -> tuple[dict[str, tuple[int, int]], bool, int, int]:
-    """Derive an honest Civ-era grid position for every research node.
-
-    Column 1 ("SEEDED") holds every product-authored node, one per row,
-    ordered by ``created_ts``. Column 2+ ("DISCOVERED") holds every
-    hypothesis-minted node, one per column in creation order, wrapping to
-    a new row every :data:`WRAP_COLS` columns. Column 0 is reserved for
-    the "Great Library" mint-origin glyph, present only when at least one
-    discovered node exists. Never invents lineage -- this is purely a
-    layout derived from ``minted_by``/``created_ts``, the only honestly
-    available origin signal in the (structurally flat) portfolio.
-    """
-    seeded = sorted(
-        (item for item in nodes.items() if item[1].get('minted_by') != 'hypothesis'),
-        key=lambda kv: kv[1].get('created_ts') or '',
+    body = (
+        f'<div class="{box_class}">'
+        f'{ribbon}'
+        '<div class="dir-box-head">'
+        f'<span class="dir-glyph">{_direction_glyph(name)}</span>'
+        f'<span class="dir-name">{title_case_name(name)}</span>'
+        '</div>'
+        f'<div class="dir-lever">{small_caps_metric(node.get("lever_metric"))}</div>'
+        f'<span class="badge {badge_class}">{badge_text}</span>'
+        f'{build_sparkline(node.get("gain_history"))}'
+        f'{cooldown_note}'
+        '</div>'
     )
-    discovered = sorted(
-        (item for item in nodes.items() if item[1].get('minted_by') == 'hypothesis'),
-        key=lambda kv: kv[1].get('created_ts') or '',
-    )
-    has_discovered = bool(discovered)
-    seeded_col = 1 if has_discovered else 0
-    discovered_start = 2 if has_discovered else 1
-
-    pos: dict[str, tuple[int, int]] = {}
-    for row, (name, _node) in enumerate(seeded):
-        pos[name] = (seeded_col, row)
-    for idx, (name, _node) in enumerate(discovered):
-        pos[name] = (discovered_start + (idx % WRAP_COLS), idx // WRAP_COLS)
-
-    max_col = max((c for c, _r in pos.values()), default=seeded_col)
-    max_row = max((r for _c, r in pos.values()), default=0)
-    return pos, has_discovered, max_col + 1, max_row + 1
+    return f'<foreignObject x="{x:.0f}" y="{y:.0f}" width="{DIR_BOX_W}" height="{DIR_BOX_H}">{body}</foreignObject>'
 
 
-def _mint_edge_svg(pos_xy: tuple[int, int]) -> str:
-    """Dashed gold edge from the Great Library glyph (col 0, row 0) into
-    one hypothesis-minted card at ``pos_xy``."""
-    col, row = pos_xy
-    x1, y1 = CARD_W / 2, CARD_H / 2
-    x2 = col * (CARD_W + GRID_GAP) + CARD_W / 2
-    y2 = row * (CARD_H + GRID_GAP) + 22
-    midx = (x1 + x2) / 2
-    return (
-        f'<path d="M{x1:.0f},{y1:.0f} C{midx:.0f},{y1:.0f} {midx:.0f},{y2:.0f} {x2:.0f},{y2:.0f}" '
-        'class="civ-mint-edge" marker-end="url(#civ-arrow-mint)" />'
-    )
-
-
-def _switch_edges_svg(switches: list[Any] | None, pos: dict[str, tuple[int, int]]) -> tuple[str, int]:
-    """Numbered teal arrows tracing the empire's research journey: one per
-    ``switches`` entry, in chronological order, from the source card's
-    bottom edge to the target card's top edge. Entries naming a node that
-    no longer exists in ``pos`` are skipped (fail-soft); the numbering
-    only counts edges actually drawn."""
-    if not isinstance(switches, list):
-        return '', 0
-    parts: list[str] = []
-    n = 0
-    for switch in switches:
-        if not isinstance(switch, dict):
-            continue
-        src, dst = switch.get('from'), switch.get('to')
-        if src not in pos or dst not in pos:
-            continue
-        n += 1
-        c1, r1 = pos[src]
-        c2, r2 = pos[dst]
-        x1 = c1 * (CARD_W + GRID_GAP) + CARD_W / 2
-        y1 = r1 * (CARD_H + GRID_GAP) + CARD_H - 18
-        x2 = c2 * (CARD_W + GRID_GAP) + CARD_W / 2
-        y2 = r2 * (CARD_H + GRID_GAP) + 18
-        midx, midy = (x1 + x2) / 2, (y1 + y2) / 2
-        label = _CIRCLED_DIGITS[n - 1] if n <= len(_CIRCLED_DIGITS) else f'({n})'
-        parts.append(
-            f'<path d="M{x1:.0f},{y1:.0f} C{x1:.0f},{midy:.0f} {x2:.0f},{midy:.0f} {x2:.0f},{y2:.0f}" '
-            'class="civ-switch-edge" marker-end="url(#civ-arrow-switch)" />'
-        )
-        parts.append(f'<text x="{midx:.0f}" y="{midy:.0f}" class="civ-switch-num">{esc(label)}</text>')
-    return ''.join(parts), n
-
-
-def build_research_panel(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | None) -> str:
+def _lane_a_layout(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | None) -> dict[str, Any]:
+    """Lane A geometry: DIRECTIONS. Returns a dict describing either an
+    'unavailable' state or the full set of SVG fragments + bounding box."""
     if not isinstance(portfolio, dict):
-        return unavailable_panel('Research', 'portfolio.json unavailable')
+        return {'available': False, 'reason': 'portfolio.json unavailable'}
 
-    current = portfolio.get('current')
     nodes = portfolio.get('nodes')
     if not isinstance(nodes, dict) or not nodes:
-        return unavailable_panel('Research', 'no research nodes recorded')
+        return {'available': False, 'reason': 'no research nodes recorded'}
 
     valid_nodes = {name: node for name, node in nodes.items() if isinstance(node, dict)}
     if not valid_nodes:
-        return unavailable_panel('Research', 'no research nodes recorded')
+        return {'available': False, 'reason': 'no research nodes recorded'}
 
+    current = portfolio.get('current')
     switches = portfolio.get('switches')
     if not isinstance(switches, list) or not switches:
-        # Fail-soft fallback: derive the chronicle from the ledger tail's
-        # tech_tree phase entries when portfolio.json has none recorded.
         derived = []
         for entry in (ledger_tail or []):
             if isinstance(entry, dict) and entry.get('phase') == 'tech_tree' and entry.get('from') and entry.get('to'):
                 derived.append(entry)
         switches = derived
 
-    try:
-        pos, has_discovered, n_cols, n_rows = _civ_positions(valid_nodes)
+    visited = _visited_sequence(switches, set(valid_nodes))
 
-        cards = []
-        for name, node in valid_nodes.items():
-            col, row = pos.get(name, (0, 0))
-            style = f'grid-column:{col + 1};grid-row:{row + 1};'
-            cards.append(_tech_card_html(name, node, name == current, style))
-
-        library_html = ''
-        mint_svg = ''
-        if has_discovered:
-            library_html = (
-                '<div class="library-node" style="grid-column:1;grid-row:1;" '
-                'title="Great Library -- hypothesis mint origin">'
-                '<span class="library-glyph">&#127979;</span>'
-                '<span class="library-label">Great Library</span></div>'
-            )
-            mint_svg = ''.join(
-                _mint_edge_svg(pos[name])
-                for name, node in valid_nodes.items()
-                if node.get('minted_by') == 'hypothesis' and name in pos
-            )
-
-        switch_svg, _switch_count = _switch_edges_svg(switches, pos)
-
-        edges_svg = ''
-        if mint_svg or switch_svg:
-            width = n_cols * CARD_W + max(n_cols - 1, 0) * GRID_GAP
-            height = n_rows * CARD_H + max(n_rows - 1, 0) * GRID_GAP
-            edges_svg = (
-                f'<svg class="civ-edges" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
-                '<defs>'
-                '<marker id="civ-arrow-switch" viewBox="0 0 10 10" refX="9" refY="5" '
-                'markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
-                '<path d="M0,0 L10,5 L0,10 z" fill="#2fd3c4" /></marker>'
-                '<marker id="civ-arrow-mint" viewBox="0 0 10 10" refX="9" refY="5" '
-                'markerWidth="6" markerHeight="6" orient="auto-start-reverse">'
-                '<path d="M0,0 L10,5 L0,10 z" fill="#c9a227" /></marker>'
-                '</defs>'
-                f'{mint_svg}{switch_svg}</svg>'
-            )
-
-        grid_style = f'grid-template-columns: repeat({n_cols}, {CARD_W}px); grid-auto-rows: {CARD_H}px;'
-        grid_html = f'''
-        <div class="civ-grid-wrap">
-          <div class="civ-grid" style="{grid_style}">
-            {library_html}
-            {''.join(cards)}
-            {edges_svg}
-          </div>
-        </div>
-        '''
-    except Exception:  # noqa: BLE001 - a layout bug must never break the page
-        grid_html = '<p class="unavailable-note">research layout render error</p>'
-
-    chronicle_rows = []
-    for switch in reversed(switches[-15:]):
-        if not isinstance(switch, dict):
-            continue
-        chronicle_rows.append(
-            f'<li><span class="chronicle-ts">{fmt_ts(switch.get("ts"))}</span>'
-            f' &mdash; <span class="chronicle-from">{title_case_name(switch.get("from"))}</span>'
-            f' &rarr; <span class="chronicle-to">{title_case_name(switch.get("to"))}</span>'
-            f' <span class="chronicle-reason">({esc(switch.get("reason") or "switch")})</span></li>'
+    if visited:
+        visited_set = set(visited)
+        reserve = sorted(
+            (name for name in valid_nodes if name not in visited_set),
+            key=lambda n: valid_nodes[n].get('created_ts') or '',
         )
-    chronicle_html = (
-        '<ul class="chronicle-list">' + ''.join(chronicle_rows) + '</ul>'
-        if chronicle_rows else '<p class="unavailable-note">no research switches recorded yet</p>'
+        note = None
+    else:
+        # No switch chronicle at all -- everything (including any
+        # in-progress `current`) sits in the reserve column.
+        reserve = sorted(valid_nodes, key=lambda n: valid_nodes[n].get('created_ts') or '')
+        note = 'no research journey yet'
+
+    reserve_x = CANVAS_MARGIN_X
+    spine_x0 = CANVAS_MARGIN_X + RESERVE_COL_W + 40
+    spine_y = LANE_TOP_PAD
+
+    pos: dict[str, tuple[float, float]] = {}
+    boxes: list[str] = []
+    elbows: list[str] = []
+    mint: list[str] = []
+
+    for idx, name in enumerate(visited):
+        x = spine_x0 + idx * COL_PITCH
+        pos[name] = (x, spine_y)
+        is_current = name == current or (current not in valid_nodes and idx == len(visited) - 1)
+        boxes.append(_direction_box_html(name, valid_nodes[name], is_current, x, spine_y))
+
+    for i in range(len(visited) - 1):
+        x1, y1 = pos[visited[i]]
+        x2, y2 = pos[visited[i + 1]]
+        elbows.append(_elbow_path(x1 + DIR_BOX_W, y1 + DIR_BOX_H / 2, x2, y2 + DIR_BOX_H / 2, 'dir-elbow'))
+
+    for ridx, name in enumerate(reserve):
+        y = spine_y + ridx * (DIR_BOX_H + DIR_ROW_GAP)
+        pos[name] = (reserve_x, y)
+        is_current = name == current
+        boxes.append(_direction_box_html(name, valid_nodes[name], is_current, reserve_x, y, dim=True))
+
+    for name, node in valid_nodes.items():
+        if node.get('minted_by') == 'hypothesis' and name in pos:
+            bx, by = pos[name]
+            gx = bx + DIR_BOX_W / 2
+            mint.append(f'<text x="{gx:.0f}" y="{MINT_AXIS_Y}" class="mint-glyph" text-anchor="middle">&#127979;</text>')
+            mint.append(_elbow_path(gx, MINT_AXIS_Y + 8, gx, by, 'mint-elbow', dashed=True))
+
+    reserve_height = len(reserve) * DIR_BOX_H + max(len(reserve) - 1, 0) * DIR_ROW_GAP
+    lane_content_height = max(DIR_BOX_H, reserve_height)
+    height = spine_y + lane_content_height + 24
+
+    width = reserve_x + RESERVE_COL_W + CANVAS_MARGIN_X
+    if visited:
+        width = max(width, spine_x0 + len(visited) * COL_PITCH)
+
+    return {
+        'available': True,
+        'boxes': boxes,
+        'elbows': elbows,
+        'mint': mint,
+        'note': note,
+        'width': width,
+        'height': height,
+        'grid_cols': len(visited),
+        'grid_x0': spine_x0,
+        'grid_pitch': COL_PITCH,
+    }
+
+
+def _evo_box_html(sha: str, node: dict[str, Any], is_current: bool, is_abandoned: bool, switch_marked: bool, x: float, y: float) -> str:
+    branch = str(node.get('branch') or '')
+    tail = branch.rsplit('/', 1)[-1] if branch else ''
+    raw_label = f'{tail}-{sha[:7]}' if tail else sha[:7]
+    label = esc(raw_label)
+    marker = ' &#8634;' if switch_marked else ''
+
+    box_class = 'evo-box'
+    if is_current:
+        box_class += ' evo-box-current'
+    elif is_abandoned:
+        box_class += ' evo-box-abandoned'
+
+    diamond = '<span class="evo-diamond">&#9672;</span>' if is_current else ''
+    body = (
+        f'<div class="{box_class}">'
+        f'{diamond}<span class="evo-box-label">{label}{marker}</span>'
+        '</div>'
+    )
+    return f'<foreignObject x="{x:.0f}" y="{y:.0f}" width="{EVO_BOX_W}" height="{EVO_BOX_H}">{body}</foreignObject>'
+
+
+def _lane_b_layout(evolution_tree: dict[str, Any] | None) -> dict[str, Any]:
+    """Lane B geometry: EVOLUTION (git-native DAG). Mirrors Lane A's
+    contract: an 'unavailable' dict, a 'fallback_html' dict (<2 nodes,
+    simple list), or the full SVG-fragment layout."""
+    if not isinstance(evolution_tree, dict):
+        return {'available': False, 'reason': 'evolution tree unavailable'}
+
+    current_sha = evolution_tree.get('current_sha')
+    nodes = evolution_tree.get('nodes')
+    switches = evolution_tree.get('switches')
+    switches_count = len(switches) if isinstance(switches, list) else (switches if isinstance(switches, int) else 0)
+
+    if not isinstance(nodes, dict):
+        nodes = {}
+    valid_nodes = {sha: node for sha, node in nodes.items() if isinstance(node, dict)}
+
+    summary = {'current_sha': current_sha, 'total_nodes': len(nodes), 'switches_count': switches_count}
+
+    if len(valid_nodes) < 2:
+        node_list = sorted(valid_nodes.items(), key=lambda item: item[1].get('ts') or '', reverse=True)
+        rows = []
+        for sha, node in node_list[:6]:
+            rows.append(
+                '<li>'
+                f'<span class="timeline-sha">{short_sha(sha)}</span>'
+                f'<span class="timeline-branch">{esc(node.get("branch") or "n/a")}</span>'
+                f'<span class="timeline-ts">{fmt_ts(node.get("ts"))}</span>'
+                '</li>'
+            )
+        list_html = (
+            '<ul class="timeline-list">' + ''.join(rows) + '</ul>' if rows
+            else '<p class="unavailable-note">no evolution nodes recorded yet</p>'
+        )
+        return {'available': True, 'fallback_html': list_html, 'summary': summary, 'height': 150}
+
+    items = sorted(valid_nodes.items(), key=lambda kv: kv[1].get('ts') or '', reverse=True)
+    total = len(items)
+    trunc_note = None
+    if total > EVO_MAX_DISPLAY:
+        items = items[:EVO_MAX_DISPLAY]
+        trunc_note = f'showing last {EVO_MAX_DISPLAY} of {total} nodes'
+    kept = dict(items)
+
+    depth: dict[str, int] = {}
+
+    def _depth(sha: str, guard: frozenset[str] = frozenset()) -> int:
+        if sha in depth:
+            return depth[sha]
+        if sha in guard:  # defensive cycle guard -- a real git DAG never cycles
+            depth[sha] = 0
+            return 0
+        node = kept.get(sha) or {}
+        parent = node.get('parent_sha')
+        if not parent or parent not in kept:
+            depth[sha] = 0
+        else:
+            depth[sha] = _depth(parent, guard | {sha}) + 1
+        return depth[sha]
+
+    for sha in kept:
+        _depth(sha)
+
+    children_count: dict[str, int] = {}
+    for sha, node in kept.items():
+        parent = node.get('parent_sha')
+        if parent in kept:
+            children_count[parent] = children_count.get(parent, 0) + 1
+
+    ordered = sorted(kept.items(), key=lambda kv: (depth[kv[0]], kv[1].get('parent_sha') or '', kv[1].get('ts') or ''))
+    slot: dict[int, int] = {}
+    pos: dict[str, tuple[float, float]] = {}
+    for sha, _node in ordered:
+        d = depth[sha]
+        s = slot.get(d, 0)
+        slot[d] = s + 1
+        pos[sha] = (EVO_MARGIN_X + d * COL_PITCH, LANE_TOP_PAD + s * EVO_ROW_H)
+
+    max_depth = max(depth.values(), default=0)
+    max_slot = max(slot.values(), default=1)
+
+    switch_shas: set[str] = set()
+    for switch in (switches or []):
+        if isinstance(switch, dict):
+            for key in ('from_sha', 'to_sha'):
+                sha_ref = switch.get(key)
+                if sha_ref:
+                    switch_shas.add(sha_ref)
+
+    elbows = []
+    for sha, node in kept.items():
+        parent = node.get('parent_sha')
+        if parent in pos:
+            x1, y1 = pos[parent]
+            x2, y2 = pos[sha]
+            elbows.append(_elbow_path(x1 + EVO_BOX_W, y1 + EVO_BOX_H / 2, x2, y2 + EVO_BOX_H / 2, 'evo-elbow'))
+
+    boxes = []
+    for sha, node in kept.items():
+        x, y = pos[sha]
+        is_current = sha == current_sha
+        is_abandoned = (not is_current) and children_count.get(sha, 0) == 0
+        boxes.append(_evo_box_html(sha, node, is_current, is_abandoned, sha in switch_shas, x, y))
+
+    width = EVO_MARGIN_X * 2 + (max_depth + 1) * COL_PITCH
+    height = LANE_TOP_PAD + max_slot * EVO_ROW_H + 24
+
+    return {
+        'available': True,
+        'boxes': boxes,
+        'elbows': elbows,
+        'note': trunc_note,
+        'summary': summary,
+        'width': width,
+        'height': height,
+        'grid_cols': max_depth + 1,
+        'grid_x0': EVO_MARGIN_X,
+        'grid_pitch': COL_PITCH,
+    }
+
+
+def build_tech_canvas(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | None, evolution_tree: dict[str, Any] | None) -> str:
+    """The main area: ONE wide horizontally-scrollable SVG canvas holding
+    both lanes on a shared left-to-right time axis. Fail-soft per lane."""
+    lane_a = _lane_a_layout(portfolio, ledger_tail)
+    lane_b = _lane_b_layout(evolution_tree)
+
+    canvas_width = MIN_CANVAS_W
+    if lane_a.get('available') and 'width' in lane_a:
+        canvas_width = max(canvas_width, lane_a['width'])
+    if lane_b.get('available') and 'width' in lane_b:
+        canvas_width = max(canvas_width, lane_b['width'])
+
+    grid_xs: set[float] = set()
+    groups: list[str] = []
+    y_cursor = CANVAS_MARGIN_Y
+
+    # --- Lane A: RESEARCH -----------------------------------------------
+    label_a = '<text x="10" y="14" class="lane-label">RESEARCH</text>'
+    if lane_a.get('available'):
+        note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_a["note"])}</text>' if lane_a.get('note') else ''
+        body = ''.join(lane_a['boxes']) + ''.join(lane_a['elbows']) + ''.join(lane_a['mint'])
+        groups.append(f'<g class="lane lane-a" transform="translate(0,{y_cursor})">{label_a}{note_html}{body}</g>')
+        for i in range(lane_a.get('grid_cols', 0) + 1):
+            grid_xs.add(lane_a['grid_x0'] + i * lane_a['grid_pitch'] - 20)
+        lane_a_height = lane_a['height']
+    else:
+        unavailable_html = f'<text x="10" y="36" class="lane-unavailable">&#8968; {esc(lane_a["reason"])} &#8969;</text>'
+        groups.append(f'<g class="lane lane-a" transform="translate(0,{y_cursor})">{label_a}{unavailable_html}</g>')
+        lane_a_height = 60
+    y_cursor += lane_a_height + LANE_GAP
+
+    # --- Lane B: WORLD HISTORY -------------------------------------------
+    label_b = '<text x="10" y="14" class="lane-label">WORLD HISTORY</text>'
+    if lane_b.get('available'):
+        if 'fallback_html' in lane_b:
+            fo_width = max(canvas_width - 40, 400)
+            fo_height = lane_b['height']
+            fallback = (
+                f'<foreignObject x="10" y="22" width="{fo_width}" height="{fo_height}">'
+                f'<div class="evo-fallback">{lane_b["fallback_html"]}</div>'
+                '</foreignObject>'
+            )
+            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{fallback}</g>')
+            lane_b_height = fo_height + 22
+        else:
+            note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_b["note"])}</text>' if lane_b.get('note') else ''
+            body = ''.join(lane_b['boxes']) + ''.join(lane_b['elbows'])
+            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{body}</g>')
+            for i in range(lane_b.get('grid_cols', 0) + 1):
+                grid_xs.add(lane_b['grid_x0'] + i * lane_b['grid_pitch'] - 20)
+            lane_b_height = lane_b['height']
+    else:
+        unavailable_html = f'<text x="10" y="36" class="lane-unavailable">&#8968; {esc(lane_b["reason"])} &#8969;</text>'
+        groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{unavailable_html}</g>')
+        lane_b_height = 60
+    y_cursor += lane_b_height + CANVAS_MARGIN_Y
+
+    canvas_height = y_cursor
+    canvas_width = max(canvas_width, MIN_CANVAS_W)
+
+    grid_svg = ''.join(
+        f'<line x1="{x:.0f}" y1="0" x2="{x:.0f}" y2="{canvas_height}" class="era-grid-line" />'
+        for x in sorted(grid_xs) if x > 0
     )
 
-    return f'''
-    <section class="panel panel-research">
-      <h2 class="panel-title">Research</h2>
-      {grid_html}
-      <details class="chronicle" open>
-        <summary>Research chronicle</summary>
-        {chronicle_html}
-      </details>
-    </section>
-    '''
+    svg = (
+        f'<svg class="tech-canvas" width="{canvas_width}" height="{canvas_height}" '
+        f'viewBox="0 0 {canvas_width} {canvas_height}">'
+        f'{grid_svg}{"".join(groups)}'
+        '</svg>'
+    )
+    return f'<div class="canvas-outer">{svg}</div>'
 
 
-def build_eras_band(scorecard: dict[str, Any] | None) -> str:
+# ---------------------------------------------------------------------------
+# Left rail -- ERAS (trust-ladder medallions) + GREAT LIBRARY summary.
+# ---------------------------------------------------------------------------
+
+def build_eras_rail(scorecard: dict[str, Any] | None) -> str:
     control_plane = scorecard.get('control_plane') if isinstance(scorecard, dict) else None
     ladder_info = control_plane.get('runtime_trust_ladder') if isinstance(control_plane, dict) else None
     if not isinstance(ladder_info, dict):
@@ -526,13 +703,13 @@ def build_eras_band(scorecard: dict[str, Any] | None) -> str:
     return f'''
     <section class="panel panel-eras">
       <h2 class="panel-title">Eras</h2>
-      <div class="era-row">{''.join(medallions)}</div>
+      <div class="era-rail">{''.join(medallions)}</div>
       <div class="era-caption">Trust Level {level_text}</div>
     </section>
     '''
 
 
-def build_library_panel(scorecard: dict[str, Any] | None, hypotheses: dict[str, Any] | None) -> str:
+def build_library_rail(scorecard: dict[str, Any] | None, hypotheses: dict[str, Any] | None) -> str:
     control_plane = scorecard.get('control_plane') if isinstance(scorecard, dict) else None
     counts = control_plane.get('hypothesis_loop') if isinstance(control_plane, dict) else None
 
@@ -556,7 +733,7 @@ def build_library_panel(scorecard: dict[str, Any] | None, hypotheses: dict[str, 
             if isinstance(entry, dict) and entry.get('verdict')
         ]
         verdicted.sort(key=lambda kv: kv[1].get('verdict_at') or '', reverse=True)
-        for key, entry in verdicted[:20]:
+        for key, entry in verdicted[:12]:
             verdict = str(entry.get('verdict') or '').upper()
             badge_class = {
                 'SUPPORTED': 'verdict-supported',
@@ -568,12 +745,11 @@ def build_library_panel(scorecard: dict[str, Any] | None, hypotheses: dict[str, 
             <li>
               <span class="verdict-title">{esc(title)}</span>
               <span class="badge {badge_class}">{esc(verdict) or 'UNKNOWN'}</span>
-              <span class="verdict-at">{fmt_ts(entry.get('verdict_at'))}</span>
             </li>
             ''')
 
     verdicts_html = (
-        '<ul class="verdict-list">' + ''.join(verdict_rows) + '</ul>'
+        '<ul class="verdict-list verdict-list-compact">' + ''.join(verdict_rows) + '</ul>'
         if verdict_rows else '<p class="unavailable-note">no verdicts recorded yet</p>'
     )
 
@@ -586,164 +762,8 @@ def build_library_panel(scorecard: dict[str, Any] | None, hypotheses: dict[str, 
     '''
 
 
-def build_evolution_tree_svg(
-    nodes: dict[str, dict[str, Any]],
-    current_sha: 'str | None',
-    switches: list[Any] | None,
-    max_display: int = EVO_MAX_DISPLAY,
-) -> tuple[str, 'str | None']:
-    """Render the git-native evolution DAG (real ``parent_sha`` branching)
-    as an inline SVG tree: generations left->right by depth, multiple
-    children of one parent fan out vertically -- VISIBLE branching, not a
-    flat timeline. Caps at the most recent ``max_display`` nodes by ``ts``;
-    returns a "showing last N of M" note when truncated (else ``None``).
-    """
-    items = sorted(nodes.items(), key=lambda kv: kv[1].get('ts') or '', reverse=True)
-    total = len(items)
-    note = None
-    if total > max_display:
-        items = items[:max_display]
-        note = f'showing last {max_display} of {total} nodes'
-    kept = dict(items)
-
-    depth: dict[str, int] = {}
-
-    def _depth(sha: str, guard: 'frozenset[str]' = frozenset()) -> int:
-        if sha in depth:
-            return depth[sha]
-        if sha in guard:  # defensive cycle guard -- a real git DAG never cycles
-            depth[sha] = 0
-            return 0
-        node = kept.get(sha) or {}
-        parent = node.get('parent_sha')
-        if not parent or parent not in kept:
-            depth[sha] = 0
-        else:
-            depth[sha] = _depth(parent, guard | {sha}) + 1
-        return depth[sha]
-
-    for sha in kept:
-        _depth(sha)
-
-    children_count: dict[str, int] = {}
-    for sha, node in kept.items():
-        parent = node.get('parent_sha')
-        if parent in kept:
-            children_count[parent] = children_count.get(parent, 0) + 1
-
-    # Order by (depth, parent, ts) so siblings of one parent land in
-    # adjacent slots -- the fan-out reads as one visual cluster.
-    ordered = sorted(kept.items(), key=lambda kv: (depth[kv[0]], kv[1].get('parent_sha') or '', kv[1].get('ts') or ''))
-    slot: dict[int, int] = {}
-    pos: dict[str, tuple[int, int]] = {}
-    for sha, _node in ordered:
-        d = depth[sha]
-        s = slot.get(d, 0)
-        slot[d] = s + 1
-        pos[sha] = (EVO_MARGIN_X + d * EVO_COL_W, EVO_MARGIN_Y + s * EVO_ROW_H)
-
-    max_depth = max(depth.values(), default=0)
-    max_slot = max(slot.values(), default=1)
-    width = EVO_MARGIN_X * 2 + max_depth * EVO_COL_W + 140
-    height = EVO_MARGIN_Y * 2 + max_slot * EVO_ROW_H
-
-    switch_shas: set[str] = set()
-    for switch in (switches or []):
-        if isinstance(switch, dict):
-            for key in ('from_sha', 'to_sha'):
-                sha_ref = switch.get(key)
-                if sha_ref:
-                    switch_shas.add(sha_ref)
-
-    edges = []
-    for sha, node in kept.items():
-        parent = node.get('parent_sha')
-        if parent in pos:
-            x1, y1 = pos[parent]
-            x2, y2 = pos[sha]
-            mx = (x1 + x2) / 2
-            edges.append(f'<path d="M{x1},{y1} C{mx},{y1} {mx},{y2} {x2},{y2}" class="evo-edge" />')
-
-    dots = []
-    for sha, node in kept.items():
-        x, y = pos[sha]
-        is_current = sha == current_sha
-        is_abandoned = (not is_current) and children_count.get(sha, 0) == 0
-        node_class = 'evo-node'
-        if is_current:
-            node_class += ' evo-node-current'
-        elif is_abandoned:
-            node_class += ' evo-node-abandoned'
-
-        branch = str(node.get('branch') or '')
-        tail = branch.rsplit('/', 1)[-1] if branch else ''
-        label = f'{tail}-{sha[:7]}' if tail else sha[:7]
-        switch_mark = ' &#8634;' if sha in switch_shas else ''
-        current_tag = ' <tspan class="evo-current-tag">&#9672; current</tspan>' if is_current else ''
-
-        dots.append(
-            f'<g>'
-            f'<circle cx="{x}" cy="{y}" r="7" class="{node_class}" />'
-            f'<text x="{x + 12}" y="{y + 4}" class="evo-label">{esc(label)}{switch_mark}{current_tag}</text>'
-            f'</g>'
-        )
-
-    svg = (
-        f'<svg class="evo-tree-svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
-        + ''.join(edges) + ''.join(dots) + '</svg>'
-    )
-    return svg, note
-
-
-def build_world_history_panel(evolution_tree: dict[str, Any] | None) -> str:
-    if not isinstance(evolution_tree, dict):
-        return unavailable_panel('World History', 'evolution tree unavailable')
-
-    current_sha = evolution_tree.get('current_sha')
-    nodes = evolution_tree.get('nodes')
-    switches = evolution_tree.get('switches')
-    switches_count = len(switches) if isinstance(switches, list) else (switches if isinstance(switches, int) else 0)
-
-    if not isinstance(nodes, dict):
-        nodes = {}
-    valid_nodes = {sha: node for sha, node in nodes.items() if isinstance(node, dict)}
-
-    if len(valid_nodes) >= 2:
-        try:
-            tree_svg, trunc_note = build_evolution_tree_svg(valid_nodes, current_sha, switches)
-            note_html = f'<p class="evo-trunc-note">{esc(trunc_note)}</p>' if trunc_note else ''
-            body_html = f'<div class="evo-tree-wrap">{note_html}{tree_svg}</div>'
-        except Exception:  # noqa: BLE001 - a layout bug must never break the page
-            body_html = '<p class="unavailable-note">evolution tree render error</p>'
-    else:
-        # Fail-soft fallback for <2 nodes: not enough to show real
-        # branching, keep the simple chronological list.
-        node_list = sorted(valid_nodes.items(), key=lambda item: item[1].get('ts') or '', reverse=True)
-        timeline_rows = []
-        for sha, node in node_list[:6]:
-            timeline_rows.append(f'''
-            <li>
-              <span class="timeline-sha">{short_sha(sha)}</span>
-              <span class="timeline-branch">{esc(node.get('branch') or 'n/a')}</span>
-              <span class="timeline-ts">{fmt_ts(node.get('ts'))}</span>
-            </li>
-            ''')
-        body_html = (
-            '<ul class="timeline-list">' + ''.join(timeline_rows) + '</ul>'
-            if timeline_rows else '<p class="unavailable-note">no evolution nodes recorded yet</p>'
-        )
-
-    return f'''
-    <section class="panel panel-history">
-      <h2 class="panel-title">World History</h2>
-      <div class="history-summary">
-        <div><span class="stat-label">current sha</span><span class="stat-value">{short_sha(current_sha, 12)}</span></div>
-        <div><span class="stat-label">nodes</span><span class="stat-value">{esc(len(nodes))}</span></div>
-        <div><span class="stat-label">switches</span><span class="stat-value">{esc(switches_count)}</span></div>
-      </div>
-      {body_html}
-    </section>
-    '''
+def build_left_rail(scorecard: dict[str, Any] | None, hypotheses: dict[str, Any] | None) -> str:
+    return f'<aside class="rail">{build_eras_rail(scorecard)}{build_library_rail(scorecard, hypotheses)}</aside>'
 
 
 def build_empire_stats_strip(scorecard: dict[str, Any] | None) -> str:
@@ -786,77 +806,111 @@ CSS = '''
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #101c30 0%, #0b1220 60%, #070c16 100%);
       color: #d8dce6;
       font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-      padding: 0 0 48px 0;
+      padding: 0 0 32px 0;
     }
     h1, h2, h3, .panel-title, .empire-title {
       font-family: Georgia, 'Times New Roman', serif;
     }
     a { color: #c9a227; }
 
+    /* --- top strip: slim, one line --- */
     .empire-strip {
       background: linear-gradient(180deg, #14213a 0%, #0d1626 100%);
       border-bottom: 2px solid #c9a227;
-      padding: 18px 28px;
+      padding: 8px 20px;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
       align-items: center;
       gap: 18px;
-      justify-content: space-between;
     }
     .empire-title {
       color: #c9a227;
-      font-size: 1.6em;
+      font-size: 1.05em;
       letter-spacing: 2px;
-      text-shadow: 0 0 12px rgba(201, 162, 39, 0.45);
+      text-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+      white-space: nowrap;
     }
     .empire-stats {
       display: flex;
-      flex-wrap: wrap;
-      gap: 22px;
+      flex-wrap: nowrap;
+      gap: 18px;
     }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 90px; }
-    .empire-computed { color: #7d8aa3; font-size: 0.85em; }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-computed { color: #7d8aa3; font-size: 0.78em; white-space: nowrap; margin-left: auto; }
 
     .stat-label {
       text-transform: uppercase;
-      font-size: 0.68em;
+      font-size: 0.64em;
       letter-spacing: 1px;
       color: #8b96ad;
     }
     .stat-value {
-      font-size: 1.15em;
+      font-size: 1.02em;
       color: #eae3c8;
       font-weight: 600;
     }
 
-    main {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 24px 20px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 22px;
+    /* --- overall layout: fixed-width left rail + dominant canvas --- */
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px;
+      max-width: 100vw;
     }
+
+    .rail {
+      flex: 0 0 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .canvas-outer {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border: 1px solid #24314f;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(20, 33, 58, 0.55) 0%, rgba(11, 18, 32, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .era-grid-line { stroke: #1c2740; stroke-width: 1; }
+    .lane-label {
+      fill: #c9a227;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #6a7590; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #6a7590; font-style: italic; font-size: 12px; }
 
     .panel {
       background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
       border: 1px solid #24314f;
       border-radius: 10px;
-      padding: 18px 20px 22px 20px;
+      padding: 14px 14px 16px 14px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
-      margin: 0 0 14px 0;
+      margin: 0 0 10px 0;
       color: #c9a227;
-      font-size: 1.3em;
+      font-size: 1.05em;
       letter-spacing: 1px;
       border-bottom: 1px solid #2c3a5c;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
     .panel-unavailable {
       text-align: center;
@@ -867,121 +921,61 @@ CSS = '''
       font-style: italic;
     }
 
-    .era-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    /* --- eras rail: vertical medallions --- */
+    .era-rail { display: flex; flex-direction: column; gap: 8px; }
     .era-medallion {
-      width: 130px;
-      padding: 14px 8px;
-      border-radius: 50% / 22%;
+      padding: 8px 6px;
+      border-radius: 10px;
       text-align: center;
       border: 2px solid #2c3a5c;
     }
     .era-lit {
       border-color: #2fd3c4;
-      box-shadow: 0 0 16px rgba(47, 211, 196, 0.5);
+      box-shadow: 0 0 12px rgba(47, 211, 196, 0.5);
       background: rgba(47, 211, 196, 0.08);
     }
     .era-locked {
       opacity: 0.55;
       background: rgba(90, 90, 90, 0.08);
     }
-    .era-glyph { font-size: 1.6em; }
-    .era-name { font-size: 0.78em; margin-top: 6px; color: #c7cfe0; }
+    .era-glyph { font-size: 1.2em; }
+    .era-name { font-size: 0.7em; margin-top: 4px; color: #c7cfe0; }
     .era-caption {
       text-align: center;
-      margin-top: 12px;
+      margin-top: 8px;
       color: #c9a227;
       letter-spacing: 1px;
       font-family: Georgia, serif;
+      font-size: 0.85em;
     }
 
-    .civ-grid-wrap {
-      overflow-x: auto;
-      padding-bottom: 6px;
-    }
-    .civ-grid {
-      position: relative;
-      display: grid;
-      gap: 24px;
-    }
-    .civ-grid .tech-card {
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
       width: 100%;
       height: 100%;
-      max-width: none;
-      margin: 0;
-      box-sizing: border-box;
-      z-index: 1;
-    }
-    .civ-edges {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .civ-mint-edge { fill: none; stroke: #c9a227; stroke-width: 2; stroke-dasharray: 6 5; opacity: 0.85; }
-    .civ-switch-edge { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
-    .civ-switch-num {
-      fill: #2fd3c4;
-      font-size: 13px;
-      font-weight: 700;
-      text-anchor: middle;
-      font-family: Georgia, 'Times New Roman', serif;
-    }
-    .library-node {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: #c9a227;
-      border: 1px dashed #6d5a1f;
-      border-radius: 8px;
-      background: rgba(201, 162, 39, 0.06);
-    }
-    .library-glyph { font-size: 1.8em; }
-    .library-label { font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px; }
-
-    .evo-tree-wrap {
-      overflow: auto;
-      max-height: 520px;
-    }
-    .evo-tree-svg { display: block; margin: 4px auto; max-width: 100%; }
-    .evo-trunc-note { color: #6a7590; font-style: italic; font-size: 0.8em; text-align: center; margin: 0 0 6px; }
-    .evo-edge { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
-    .evo-node { fill: #1c2740; stroke: #4a5878; stroke-width: 1.5; }
-    .evo-node-current {
-      fill: #2fd3c4;
-      stroke: #c9a227;
-      stroke-width: 2.4;
-      filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
-    }
-    .evo-node-abandoned { fill: #1c2740; stroke: #3a4a6e; opacity: 0.45; }
-    .evo-label { fill: #c7cfe0; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
-    .evo-current-tag { fill: #c9a227; font-weight: 700; }
-
-    .tech-card {
-      position: relative;
-      flex: 1 1 200px;
-      max-width: 240px;
-      background: rgba(15, 24, 42, 0.9);
+      background: rgba(15, 24, 42, 0.94);
       border: 1px solid #2c3a5c;
       border-radius: 8px;
-      padding: 14px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+      color: #d8dce6;
     }
-    .tech-card-current {
-      border-color: #2fd3c4;
-      box-shadow: 0 0 18px rgba(47, 211, 196, 0.55);
+    .dir-box-current {
+      border-color: #c9a227;
+      box-shadow: 0 0 16px rgba(201, 162, 39, 0.65);
     }
-    .tech-card-plateaued { opacity: 0.65; }
-    .tech-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .tech-icon { font-size: 1.2em; color: #c9a227; }
-    .tech-name { font-weight: 600; color: #eae3c8; }
-    .tech-lever {
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #c9a227; }
+    .dir-name { font-weight: 600; color: #eae3c8; font-size: 0.92em; }
+    .dir-lever {
       font-variant: small-caps;
       letter-spacing: 0.5px;
       color: #8b96ad;
-      font-size: 0.82em;
-      margin-bottom: 8px;
+      font-size: 0.76em;
+      margin-bottom: 6px;
     }
     .ribbon {
       position: absolute;
@@ -989,108 +983,121 @@ CSS = '''
       right: -8px;
       background: #c9a227;
       color: #1a1406;
-      font-size: 0.62em;
+      font-size: 0.6em;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       transform: rotate(4deg);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
+    .cooldown { font-size: 0.68em; color: #8b96ad; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #c9a227; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / WORLD HISTORY) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 24, 42, 0.9);
+      border: 1.5px solid #4a5878;
+      border-radius: 7px;
+      padding: 0 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #c7cfe0;
+    }
+    .evo-box-current {
+      border-color: #c9a227;
+      box-shadow: 0 0 12px rgba(201, 162, 39, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-diamond { color: #c9a227; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
+    .evo-fallback { color: #d8dce6; }
 
     .badge {
       display: inline-block;
-      font-size: 0.68em;
+      font-size: 0.64em;
       font-weight: 700;
       letter-spacing: 0.5px;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
-    .badge-researching { background: rgba(47, 211, 196, 0.18); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
-    .badge-verdict, .verdict-supported, .verdict-refuted, .verdict-inconclusive {
-      display: inline-block;
-    }
     .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
     .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
 
-    .spark { margin-bottom: 4px; }
+    .spark { margin-bottom: 2px; }
     .spark-top, .spark-bottom {
       display: flex;
       align-items: flex-end;
       gap: 2px;
-      height: 16px;
+      height: 14px;
     }
     .spark-bottom { align-items: flex-start; }
     .spark-baseline { border-top: 1px dashed #3a4a6e; }
-    .bar { width: 6px; border-radius: 1px; display: block; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
     .bar-pos { background: #c9a227; }
     .bar-neg { background: #b23a3a; }
     .bar-placeholder { height: 0; background: transparent; }
-    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.82em; margin-bottom: 8px; }
-    .spark-mean { font-size: 0.76em; margin-top: 2px; }
+    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
     .mean-pos { color: #c9a227; }
     .mean-neg { color: #d97b7b; }
-    .cooldown { font-size: 0.72em; color: #8b96ad; margin-top: 6px; }
 
-    details.chronicle { margin-top: 16px; }
-    details.chronicle summary {
-      cursor: pointer;
-      color: #c9a227;
-      font-family: Georgia, serif;
-      font-size: 1.02em;
-      margin-bottom: 8px;
-    }
-    ul.chronicle-list, ul.verdict-list, ul.timeline-list {
+    ul.verdict-list, ul.timeline-list {
       list-style: none;
       margin: 0;
       padding: 0;
-      max-height: 260px;
+      max-height: 220px;
       overflow-y: auto;
     }
-    ul.chronicle-list li, ul.verdict-list li, ul.timeline-list li {
-      padding: 6px 0;
+    ul.verdict-list li, ul.timeline-list li {
+      padding: 5px 0;
       border-bottom: 1px solid #1c2740;
-      font-size: 0.86em;
+      font-size: 0.78em;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
-    .chronicle-ts, .verdict-at, .timeline-ts { color: #6a7590; font-size: 0.9em; }
-    .chronicle-from { color: #b7c0d4; }
-    .chronicle-to { color: #eae3c8; font-weight: 600; }
-    .chronicle-reason { color: #6a7590; font-size: 0.85em; }
-    .verdict-title { color: #eae3c8; flex: 1 1 auto; }
+    .verdict-list-compact .verdict-title { color: #eae3c8; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
     .timeline-sha { font-family: 'Consolas', 'Courier New', monospace; color: #2fd3c4; }
-    .timeline-branch { color: #b7c0d4; font-size: 0.85em; }
+    .timeline-branch { color: #b7c0d4; font-size: 0.9em; }
+    .timeline-ts { color: #6a7590; font-size: 0.85em; }
 
-    .count-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+    .count-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .count-chip {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 78px;
-      padding: 8px 10px;
+      min-width: 56px;
+      padding: 6px 6px;
       border-radius: 6px;
       border: 1px solid #2c3a5c;
       background: rgba(15, 24, 42, 0.7);
     }
-    .count-value { font-size: 1.3em; font-weight: 700; color: #eae3c8; }
-    .count-label { font-size: 0.68em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
+    .count-value { font-size: 1.05em; font-weight: 700; color: #eae3c8; }
+    .count-label { font-size: 0.6em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
     .count-supported .count-value { color: #c9a227; }
     .count-refuted .count-value { color: #d97b7b; }
-
-    .history-summary { display: flex; gap: 26px; margin-bottom: 14px; flex-wrap: wrap; }
-    .history-summary > div { display: flex; flex-direction: column; }
 
     footer.page-footer {
       text-align: center;
       color: #4f5a76;
       font-size: 0.78em;
-      margin-top: 28px;
+      margin-top: 20px;
       padding-top: 14px;
     }
 '''
@@ -1105,12 +1112,10 @@ PAGE_TEMPLATE = '''<!doctype html>
 </head>
 <body>
 {empire_strip}
-<main>
-{research_panel}
-{eras_panel}
-{library_panel}
-{history_panel}
-</main>
+<div class="layout">
+{rail}
+{canvas}
+</div>
 <footer class="page-footer">generated {generated_at} local time &middot; host {host}{error_note}</footer>
 </body>
 </html>
@@ -1124,7 +1129,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     REMOTE_READER_SCRIPT: keys portfolio / scorecard / evolution_tree /
     hypotheses / ledger_tail, any of which may be None. Never raises on
     missing/malformed data -- every panel fails soft to an "unavailable"
-    card instead.
+    strip instead.
     """
     if generated_at is None:
         generated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1140,18 +1145,14 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         error_note = f' &middot; fetch note: {esc(data["_error"])}'
 
     empire_strip = build_empire_stats_strip(scorecard)
-    research_panel = build_research_panel(portfolio, ledger_tail)
-    eras_panel = build_eras_band(scorecard)
-    library_panel = build_library_panel(scorecard, hypotheses)
-    history_panel = build_world_history_panel(evolution_tree)
+    rail_html = build_left_rail(scorecard, hypotheses)
+    canvas_html = build_tech_canvas(portfolio, ledger_tail, evolution_tree)
 
     return PAGE_TEMPLATE.format(
         css=CSS,
         empire_strip=empire_strip,
-        research_panel=research_panel,
-        eras_panel=eras_panel,
-        library_panel=library_panel,
-        history_panel=history_panel,
+        rail=rail_html,
+        canvas=canvas_html,
         generated_at=esc(generated_at),
         host=esc(host),
         error_note=error_note,
