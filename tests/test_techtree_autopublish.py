@@ -257,16 +257,61 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
     assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
 
 
-def test_missing_tree_source_file_also_refuses_to_publish(
+def test_missing_tree_source_file_still_publishes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Same gate, simpler trigger: one of the three tree source files is
-    absent outright (read_local_state returns None for it), which must be
-    treated the same as a torn file -- refuse, don't publish a blank page."""
+    """An ABSENT tree source file must NOT be treated the same as a torn
+    one (issue #27 review round 3, blocker BL1). tv.read_local_state's
+    read_json returns None indistinguishably for "file does not exist" and
+    "file exists but failed to parse", but only the latter is what the
+    torn-source guard is for. hypotheses/lifecycle.json and
+    evolution/tree.json are not created until the first hypothesis
+    candidate / node exists respectively, so an absent file is a normal,
+    permanent state on a fresh host, a rebuilt state tree, or a pruned
+    state dir. Refusing to publish here would wedge the publisher forever:
+    should_publish keeps returning True ("no prior successful publish
+    recorded") on every single bridge cycle, the guard would keep firing,
+    and the page would never publish at all -- worse than the bug the
+    guard exists to fix."""
     root = tmp_path / 'state'
     _write_state_root(root)
     (root / 'tech_tree/portfolio.json').unlink()
     state_dir = tmp_path / 'techtree-state'
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    published: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: published.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc == 0
+    assert len(published) == 1
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == ap.compute_tree_digest(root)
+    assert state['published_at'] is not None
+
+
+def test_present_but_truncated_hypotheses_file_still_refuses_to_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The flip side of the missing-file case above (issue #27 review
+    round 3, blocker BL1): a source file that IS present on disk but fails
+    to parse must still refuse to publish, exactly like the existing torn
+    evolution_tree case, but exercised against a different source file to
+    confirm the presence check (not just the parse-failure check) is keyed
+    correctly per file rather than incidentally passing for only one of
+    the three sources."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+
+    # Present on disk, different raw bytes (digest changes), but not valid
+    # JSON (parse fails) -- simulates a source caught mid-write.
+    (root / 'hypotheses/lifecycle.json').write_text('{"entries": {"h1"', encoding='utf-8')
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called = []
@@ -277,7 +322,38 @@ def test_missing_tree_source_file_also_refuses_to_publish(
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None}
+    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
+
+
+# --- note N4: a present source that parses to a non-dict must also refuse --
+
+def test_present_source_parsing_to_non_dict_refuses_to_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A source file that IS present and IS valid JSON but parses to
+    something other than a dict (here, a bare list) is not None, so the
+    old `data[key] is None` check would have let it through even though
+    render_page has no usable tree/portfolio/hypotheses shape to work with
+    (issue #27 review round 3, note N4). Must refuse, same as a torn file."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+
+    (root / 'evolution/tree.json').write_text('[]', encoding='utf-8')
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc != 0
+    assert called == []
+    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
 
 
 # --- blocker B4: a state-write failure must be loud, not silent -----------

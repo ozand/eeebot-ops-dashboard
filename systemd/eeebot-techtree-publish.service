@@ -34,12 +34,22 @@ ExecStart=/usr/bin/python3 /opt/eeebot-techtree/techtree_autopublish.py
 # cost. Counted directly against the code (issue #27 review, blocker B5):
 # steady-state publish makes 4 `gh` calls -- branch probe, sha probe,
 # contents PUT, Pages-enabled probe -- each with its own independent 60s
-# subprocess timeout, so 4*60s = 240s is the steady-state worst case. A
-# first-ever run (bootstrapping the gh-pages branch and enabling Pages) adds
-# up to 3 more calls (resolve master HEAD, create the branch ref, enable
-# Pages) for a worst case of 7*60s = 420s, but that only happens once. 300s
-# covers the steady-state worst case with headroom for a slow round or one
-# retried call without letting a wedged run hang indefinitely.
+# subprocess timeout, so 4*60s = 240s is the steady-state worst case. 300s
+# leaves exactly 60s of headroom over that -- room for one retried call,
+# not "a slow round or one retried call" as an earlier version of this
+# comment claimed (issue #27 review round 3, note N7): there is only
+# budget for one of those, not either interchangeably.
+#
+# A first-ever run (bootstrapping the gh-pages branch and enabling Pages)
+# adds up to 3 more calls (resolve master HEAD, create the branch ref,
+# enable Pages) for a worst case of 7*60s = 420s, which this 300s timeout
+# does NOT cover -- a first-ever run that hits every worst case will be
+# killed by systemd before finishing. That is acceptable, not silently
+# swept under the rug: a killed bootstrap attempt simply retries in full on
+# the next bridge cycle (~3.5 minutes later) with no state to clean up
+# (save_publish_state is only reached after a successful publish), so the
+# cost of hitting this is a few extra minutes' delay on first-ever setup,
+# never a wedge.
 TimeoutStartSec=300
 
 # --- sandboxing (issue #27; consistent with the self-evolving loop's own

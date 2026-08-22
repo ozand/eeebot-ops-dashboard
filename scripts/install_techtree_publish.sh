@@ -80,9 +80,15 @@ run systemctl daemon-reload
 #    that it is a system-scope unit our system-scope drop-in (step 4) can
 #    even attach to -- an absent or --user-only bridge unit would leave the
 #    drop-in permanently inert with no error anywhere.
+#    Skipped entirely under --dry-run (issue #27 review round 3, note N6):
+#    step 4 above (drop-in install + daemon-reload) is itself skipped on a
+#    dry run, so systemd could never see the trigger as live regardless of
+#    the host's real state -- running this check on a dry run would print
+#    an alarming "trigger not live" WARNING on every first-time --dry-run
+#    invocation, even on a host where a real (non-dry) run would succeed.
 BRIDGE_UNIT=eeepc-self-evolving-subagent-bridge.service
 TRIGGER_LIVE=0
-if systemctl cat "$BRIDGE_UNIT" >/dev/null 2>&1; then
+if [[ "$DRY_RUN" == "0" ]] && systemctl cat "$BRIDGE_UNIT" >/dev/null 2>&1; then
   ONSUCCESS_VALUE="$(systemctl show -p OnSuccess --value "$BRIDGE_UNIT" 2>/dev/null || true)"
   case " $ONSUCCESS_VALUE " in
     *" eeebot-techtree-publish.service "*) TRIGGER_LIVE=1 ;;
@@ -108,7 +114,17 @@ into a script or commit it anywhere):
   \$EDITOR $ENV_FILE   # add: GH_TOKEN=...
 EOF
 
-if [[ "$TRIGGER_LIVE" == "1" ]]; then
+if [[ "$DRY_RUN" == "1" ]]; then
+  cat <<EOF
+
+[dry-run] Trigger-live check skipped: step 4 (drop-in install +
+daemon-reload) was not actually performed on a dry run, so this check
+cannot say anything meaningful about it. Re-run without --dry-run, then
+check with:
+  systemctl cat $BRIDGE_UNIT
+  systemctl show -p OnSuccess $BRIDGE_UNIT
+EOF
+elif [[ "$TRIGGER_LIVE" == "1" ]]; then
   cat <<EOF
 
 Once that file exists, eeebot-techtree-publish.service will run

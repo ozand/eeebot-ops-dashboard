@@ -1293,7 +1293,14 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         # ssh/API stderr, and this page is published publicly. The real
         # message belongs on stderr at the call site (see main() below and
         # techtree_autopublish.run()), never inside HTML that leaves the host.
-        error_note = ' &middot; fetch note: state read failed (see host logs)'
+        # "see host logs" was misleading (issue #27 review round 3, note
+        # N8): `_error` can be an ssh transport failure produced on the
+        # OPERATOR'S workstation running this viewer remotely, not on the
+        # authority host -- "host logs" reads as an instruction to go look
+        # at the wrong machine. Word it so it is honest for both the local
+        # (autopublisher, running on the host) and remote (operator's own
+        # machine) readers.
+        error_note = ' &middot; fetch note: state read failed (details in the publisher\'s logs)'
 
     # Age of the newest source file this page was built from (issue #27) --
     # the second half of the freshness marker. Never fabricated: if no
@@ -1377,6 +1384,18 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
         return subprocess.run(
             ['gh'] + args, capture_output=True, text=True, timeout=60,
             input=input_text,
+        )
+    except subprocess.TimeoutExpired as exc:
+        # str(exc) on a TimeoutExpired can include output captured before
+        # the timeout fired -- for the contents-PUT call that's the
+        # base64-encoded page body being sent as input, which would bloat
+        # this into pointless (if bounded -- callers truncate to 300 chars)
+        # journal noise (issue #27 review round 3, note N9). Report only
+        # that it timed out, never str(exc).
+        subcommand = args[0] if args else ''
+        return subprocess.CompletedProcess(
+            args=['gh'] + args, returncode=1, stdout='',
+            stderr=f'{exc.__class__.__name__}: gh {subcommand} timed out',
         )
     except (subprocess.SubprocessError, OSError) as exc:
         return subprocess.CompletedProcess(

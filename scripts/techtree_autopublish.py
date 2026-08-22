@@ -47,21 +47,27 @@ STATE_FILENAME = 'publish_state.json'
 # the publish gate would mean a fresh gh-pages commit on almost every one
 # of the ~410 cycles/day, for numbers that have nothing to do with whether
 # the tech tree itself actually changed.
-TREE_DIGEST_SOURCES = (
-    'evolution/tree.json',
-    'tech_tree/portfolio.json',
-    'hypotheses/lifecycle.json',
-)
+#
+# Keyed explicitly by the tv.read_local_state() dict key that backs each
+# file (issue #27 review round 3, blocker BL1) -- NOT two parallel tuples
+# paired by list index. A previous version of this file did exactly that
+# via a separate _TREE_SOURCE_KEYS tuple with a comment claiming it was
+# "in the same order"; pairing by position is exactly the kind of thing
+# that silently breaks the moment either collection is reordered on its
+# own, so it is a single dict instead.
+_TREE_SOURCE_FILES: dict[str, str] = {
+    'evolution_tree': 'evolution/tree.json',
+    'portfolio': 'tech_tree/portfolio.json',
+    'hypotheses': 'hypotheses/lifecycle.json',
+}
+TREE_DIGEST_SOURCES = tuple(_TREE_SOURCE_FILES.values())
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
 
-# The parsed-data keys (in tv.read_local_state's return shape) that back the
-# three TREE_DIGEST_SOURCES files above, in the same order.
-_TREE_SOURCE_KEYS = ('evolution_tree', 'portfolio', 'hypotheses')
 
-
-def _unreadable_tree_source(data: dict[str, Any]) -> str | None:
-    """Detects a torn/unreadable tree source (issue #27 review, blocker B1).
+def _unreadable_tree_source(data: dict[str, Any], state_root: Path) -> str | None:
+    """Detects a tree source file that is PRESENT on disk but failed to
+    parse into a usable shape (issue #27 review round 3, blocker BL1).
 
     compute_tree_digest hashes RAW BYTES of the three tree-shaped source
     files, so a source caught mid-write by this script's own loop (the
@@ -73,13 +79,39 @@ def _unreadable_tree_source(data: dict[str, Any]) -> str | None:
     and (absent this check) record the bad digest, wedging the page broken
     until the tree next changes for real or the staleness floor fires.
 
-    Returns a human-readable reason, or None if all three parsed cleanly.
+    Deliberately does NOT refuse when a source file is simply ABSENT.
+    tv.read_local_state's read_json returns None indistinguishably for
+    "file does not exist", "file exists but failed to parse", EACCES, and
+    "path is a directory" -- but only the parse-failure/unreadable cases
+    are what this guard exists for. hypotheses/lifecycle.json is not
+    created until the first hypothesis candidate exists, and
+    evolution/tree.json is not created until the first node is recorded,
+    so an absent file is a normal, permanent state on a fresh host, a
+    rebuilt state tree, or a pruned state dir -- refusing on it would mean
+    should_publish's "no prior successful publish recorded" keeps
+    returning True forever, this guard fires on every single bridge cycle
+    (~410/day), and the page never publishes at all, which is worse than
+    the bug this guard fixes. compute_tree_digest already treats a missing
+    file as a distinct-but-valid sentinel for exactly this reason, and
+    render_page is designed to fail soft with a "source unavailable" panel
+    per source.
+
+    Also refuses when a present file parses to something other than a
+    dict (e.g. `[]`, `"oops"`, `5`, or literal `null`) -- render_page does
+    not crash on those, but they are not a usable tree/portfolio/hypotheses
+    shape either (issue #27 review round 3, note N4).
+
+    Returns a human-readable reason, or None if every source either parsed
+    to a dict or is legitimately absent.
     """
     if data.get('_error'):
         return f"state read error: {data['_error']}"
-    for key in _TREE_SOURCE_KEYS:
-        if data.get(key) is None:
-            return f'{key} could not be parsed (torn or unreadable source file)'
+    for key, relpath in _TREE_SOURCE_FILES.items():
+        if isinstance(data.get(key), dict):
+            continue
+        if not (state_root / relpath).exists():
+            continue  # legitimately absent -- not this guard's concern
+        return f'{key} could not be parsed (present but unreadable or wrong-shape: {relpath})'
     return None
 
 
@@ -128,9 +160,7 @@ def save_publish_state(state_dir: Path, digest: str, published_at: float) -> Non
     The whole thing is wrapped in try/except OSError: a missing or
     unexpectedly read-only state_dir (e.g. StateDirectory= not applied, or
     applied to the wrong path) must fail loudly to the journal rather than
-    silently -- silently swallowing this write is exactly what caused the
-    ~410-republishes/day bug this function exists to prevent (issue #27
-    review, blocker B4)."""
+    silently (issue #27 review, blocker B4)."""
     try:
         state_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = state_dir / f'.{STATE_FILENAME}.tmp{os.getpid()}'
@@ -190,8 +220,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f'authority-host state root to read (default: {tv.STATE_ROOT})',
     )
     parser.add_argument(
-        '--state-dir', default=DEFAULT_STATE_DIR,
-        help=f'directory holding this publisher\'s own digest/timestamp state (default: {DEFAULT_STATE_DIR})',
+        # Default to $STATE_DIRECTORY when systemd has set it (it does so
+        # automatically for any unit with StateDirectory=, expanded to the
+        # absolute path under /var/lib) rather than hardcoding
+        # DEFAULT_STATE_DIR -- otherwise the unit's StateDirectory= and this
+        # default could silently diverge if either is ever changed without
+        # the other (issue #27 review round 3, note N5). DEFAULT_STATE_DIR
+        # remains the fallback for direct/manual invocation outside systemd.
+        '--state-dir', default=os.environ.get('STATE_DIRECTORY', DEFAULT_STATE_DIR),
+        help=f'directory holding this publisher\'s own digest/timestamp state (default: $STATE_DIRECTORY if set, else {DEFAULT_STATE_DIR})',
     )
     parser.add_argument(
         '--staleness-floor-hours', type=float, default=DEFAULT_STALENESS_FLOOR_HOURS,
@@ -219,7 +256,7 @@ def run(args: argparse.Namespace) -> int:
     now = time.time()
     publish, reason = should_publish(digest, state, staleness_floor_seconds, now)
 
-    source_problem = _unreadable_tree_source(data)
+    source_problem = _unreadable_tree_source(data, state_root)
 
     if args.dry_run:
         html_out = tv.render_page(data, args.host_label)
