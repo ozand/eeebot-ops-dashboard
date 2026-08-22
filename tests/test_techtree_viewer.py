@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from scripts import techtree_viewer as tv
 
 
@@ -226,3 +229,79 @@ def test_world_history_falls_back_to_simple_list_below_two_nodes() -> None:
 
     assert 'class="evo-box' not in html_out
     assert 'timeline-list' in html_out
+
+
+# --- local state reading (issue #27, Task 1) --------------------------------
+
+def _write_local_state_root(root: Path) -> None:
+    (root / 'tech_tree').mkdir(parents=True)
+    (root / 'scorecard').mkdir(parents=True)
+    (root / 'evolution').mkdir(parents=True)
+    (root / 'hypotheses').mkdir(parents=True)
+    (root / 'ledger').mkdir(parents=True)
+    (root / 'tech_tree' / 'portfolio.json').write_text(json.dumps({'current': None, 'nodes': {}}), encoding='utf-8')
+    (root / 'scorecard' / 'latest.json').write_text(json.dumps({'computed_at_utc': '2026-08-18T00:00:00Z'}), encoding='utf-8')
+    (root / 'evolution' / 'tree.json').write_text(json.dumps({'current_sha': 'a', 'nodes': {}}), encoding='utf-8')
+    (root / 'hypotheses' / 'lifecycle.json').write_text(json.dumps({'entries': {}}), encoding='utf-8')
+    (root / 'ledger' / 'cycles.jsonl').write_text(
+        json.dumps({'phase': 'tech_tree', 'from': 'a', 'to': 'b'}) + '\n', encoding='utf-8',
+    )
+
+
+def test_read_local_state_matches_remote_shape(tmp_path: Path) -> None:
+    _write_local_state_root(tmp_path)
+    data = tv.read_local_state(str(tmp_path))
+
+    assert set(data) >= {'portfolio', 'scorecard', 'evolution_tree', 'hypotheses', 'ledger_tail'}
+    assert data['portfolio'] == {'current': None, 'nodes': {}}
+    assert data['evolution_tree'] == {'current_sha': 'a', 'nodes': {}}
+    assert data['hypotheses'] == {'entries': {}}
+    assert data['ledger_tail'] == [{'phase': 'tech_tree', 'from': 'a', 'to': 'b'}]
+    assert data.get('_error') is None
+    # A real mtime was read, so an age must be available (not fabricated).
+    assert isinstance(data['_newest_source_age_seconds'], (int, float))
+    assert data['_newest_source_age_seconds'] >= 0
+
+
+def test_read_local_state_missing_root_reports_error(tmp_path: Path) -> None:
+    missing = tmp_path / 'does-not-exist'
+    data = tv.read_local_state(str(missing))
+
+    assert data['portfolio'] is None
+    assert data['scorecard'] is None
+    assert data['evolution_tree'] is None
+    assert data['hypotheses'] is None
+    assert data['ledger_tail'] is None
+    assert data.get('_error')
+    assert data['_newest_source_age_seconds'] is None
+
+
+def test_read_local_state_partial_root_fails_soft_per_file(tmp_path: Path) -> None:
+    # Only the state root itself exists; none of the five source files do.
+    # This must behave like fetch_remote_state on a reachable-but-empty
+    # state tree: no top-level `_error`, each field individually None.
+    data = tv.read_local_state(str(tmp_path))
+
+    assert data.get('_error') is None
+    assert data['portfolio'] is None
+    assert data['ledger_tail'] == []
+
+
+# --- freshness footer (issue #27, Task 2) -----------------------------------
+
+def test_footer_shows_utc_label_and_known_source_age() -> None:
+    fixture = _fixture()
+    fixture['_newest_source_age_seconds'] = 125  # 2m
+
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    assert 'generated 2026-08-18 12:00:00 UTC' in html_out
+    assert 'newest source 2m old' in html_out
+
+
+def test_footer_says_age_unknown_when_no_mtime_available() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # _fixture() carries no _newest_source_age_seconds key -- this must
+    # read as an honest "unknown", never a fabricated 0 or omitted marker.
+    assert 'age unknown' in html_out

@@ -1,0 +1,57 @@
+[Unit]
+# Renders the tech-tree page from the self-evolving loop's local state and
+# publishes it to gh-pages (issue #27). Triggered by
+# eeepc-self-evolving-subagent-bridge.service via the OnSuccess= drop-in in
+# drop-ins/eeepc-self-evolving-subagent-bridge.service.d/ -- once per
+# completed bridge iteration, not on a wall-clock timer.
+#
+# Runs as its own unprivileged user (eeebot-publish), never as
+# eeepc-agent (the loop's own uid): the loop must not be able to publish
+# arbitrary content to a public page, and must not be able to read the
+# publish credential. Sandboxed with ProtectSystem=strict so the entire
+# filesystem -- including the loop's state tree this unit reads -- is
+# mounted read-only except for this publisher's own small state directory,
+# carved out below.
+Description=eeebot tech-tree page autopublisher (issue #27)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=eeebot-publish
+Group=eeebot-publish
+
+# Root-owned, 0600, deliberately NOT prefixed with "-": a missing credential
+# file must be a loud unit-start failure, not a silent no-op. systemd reads
+# this file as root before dropping privileges to User=/Group=, so the
+# token in it never becomes readable by eeebot-publish (or by
+# eeepc-agent, which cannot read it either).
+EnvironmentFile=/etc/eeepc-agent/techtree-publish.env
+
+ExecStart=/usr/bin/python3 /opt/eeebot-techtree/techtree_autopublish.py
+
+# Render is near-instant; the `gh` calls in publish_to_pages are the real
+# cost -- normally 2-3 API round-trips, each with its own 60s subprocess
+# timeout, so the 90s systemd default is too tight for even one retried
+# call. 180s leaves headroom for a slow API round or a transient stall
+# without letting a wedged run hang indefinitely.
+TimeoutStartSec=180
+
+# --- sandboxing (issue #27; consistent with the self-evolving loop's own
+# units) ---
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+# The "-" prefix is required: without it, systemd fails namespace setup
+# with 226/NAMESPACE whenever this directory doesn't exist yet (e.g. first
+# boot before the installer has run), and that failure happens even though
+# ExecStartPre could otherwise be marked "+" to lift privilege
+# restrictions -- "+" does not lift mount-namespace construction. This
+# exact failure has already been hit twice in this project; do not drop
+# the "-" to "fix" a lint warning.
+ReadWritePaths=-/var/lib/eeebot-techtree
+
+# No [Install] section: this unit is never started at boot and is never
+# `systemctl enable`d. It exists purely to be started as an independent job
+# by the OnSuccess= drop-in below, once per completed bridge iteration.

@@ -19,14 +19,28 @@ import html
 import json
 import subprocess
 import sys
+import time
 import webbrowser
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
 SSH_TIMEOUT_SECONDS = 45
+
+# Authority-host state root. Shared by both read paths: fetch_remote_state
+# (below) uses it only as the default embedded in REMOTE_READER_SCRIPT, and
+# read_local_state (issue #27) takes it as a real default argument so the
+# viewer can run *on* eeepc without SSHing to itself.
+STATE_ROOT = '/var/lib/eeepc-agent/self-evolving-agent/state'
+
+# Ledger-tail filter, mirrored inside REMOTE_READER_SCRIPT's own copy of
+# these same three constants (issue #27) -- see the duplication note on
+# read_local_state for why that copy is not imported from here instead.
+LEDGER_PHASES = {'tech_tree', 'hypothesis', 'evolution_tree'}
+LEDGER_TAIL_LIMIT = 40
+LEDGER_SCAN_WINDOW = 5000
 
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
@@ -40,12 +54,20 @@ LEDGER_PHASES = {"tech_tree", "hypothesis", "evolution_tree"}
 LEDGER_TAIL_LIMIT = 40
 LEDGER_SCAN_WINDOW = 5000
 
+# mtimes of every source file this process actually managed to read, so the
+# caller (running on a different machine/clock, over SSH) can still report
+# a "newest source age" freshness marker on the page (issue #27) instead of
+# only a generation timestamp that a stale snapshot cannot be told apart by.
+_mtimes = []
+
 
 def read_json(relpath):
     path = os.path.join(STATE_ROOT, relpath)
     try:
         with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh)
+            data = json.load(fh)
+        _mtimes.append(os.path.getmtime(path))
+        return data
     except Exception:
         return None
 
@@ -55,6 +77,7 @@ def read_ledger_tail(relpath):
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as fh:
             lines = fh.readlines()
+        _mtimes.append(os.path.getmtime(path))
     except Exception:
         return []
     matched = []
@@ -80,9 +103,18 @@ result = {
     "evolution_tree": read_json("evolution/tree.json"),
     "hypotheses": read_json("hypotheses/lifecycle.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
+    "_source_mtimes": _mtimes,
 }
 print(json.dumps(result))
 '''.lstrip('\n')
+# NOTE (issue #27): REMOTE_READER_SCRIPT duplicates STATE_ROOT/LEDGER_* and
+# the read_json/read_ledger_tail bodies that also exist as real module code
+# above and in read_local_state below. That is deliberate, not an oversight:
+# this string is piped as-is into a bare `python3 -` on the remote host and
+# cannot `import` anything from this file, so it has to stand entirely on
+# its own. Do not "fix" this duplication by making REMOTE_READER_SCRIPT
+# import techtree_viewer -- that would break the one thing this string
+# exists to do. Keep the two copies in sync by hand if the filter changes.
 
 
 def fetch_remote_state(host: str) -> dict[str, Any]:
@@ -98,6 +130,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'evolution_tree': None,
         'hypotheses': None,
         'ledger_tail': None,
+        '_newest_source_age_seconds': None,
     }
     command = [
         'ssh',
@@ -129,6 +162,98 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
 
     for key in empty:
         data.setdefault(key, None)
+
+    # The remote script reports raw mtimes (its own host clock); age is
+    # computed here, against *this* machine's clock, since that is the
+    # clock the "generated at" timestamp on the page will also use. Over a
+    # healthy LAN/Tailscale link the skew is negligible; this path is
+    # workstation tooling, not the autopublisher, so exactness isn't
+    # required -- only "not fabricated when we don't actually know" is.
+    mtimes = data.pop('_source_mtimes', None)
+    if isinstance(mtimes, list) and mtimes:
+        data['_newest_source_age_seconds'] = max(0.0, time.time() - max(mtimes))
+    return data
+
+
+def read_local_state(state_root: str) -> dict[str, Any]:
+    """Read all five state sources directly from `state_root` -- no SSH (issue
+    #27: for running the viewer *on* eeepc itself, e.g. from the
+    autopublisher). Returns the exact same dict shape as fetch_remote_state,
+    including the `_error` convention on a missing/unreadable state root, so
+    render_page needs no change to its input contract regardless of which
+    reader produced `data`.
+
+    This intentionally duplicates the read_json / read_ledger_tail bodies
+    that also live inside REMOTE_READER_SCRIPT above, in miniature.
+    REMOTE_READER_SCRIPT is piped as a bare string to a remote `python3 -`
+    and cannot import this function, so the two copies cannot be unified
+    without breaking the remote path -- this is the accepted trade, not
+    something a later cleanup should "fix".
+    """
+    empty: dict[str, Any] = {
+        'portfolio': None,
+        'scorecard': None,
+        'evolution_tree': None,
+        'hypotheses': None,
+        'ledger_tail': None,
+        '_newest_source_age_seconds': None,
+    }
+    root = Path(state_root)
+    if not root.is_dir():
+        empty['_error'] = f'state root not found or not a directory: {root}'
+        return empty
+    try:
+        next(root.iterdir(), None)
+    except OSError as exc:
+        empty['_error'] = f'state root unreadable: {exc.__class__.__name__}: {exc}'
+        return empty
+
+    mtimes: list[float] = []
+
+    def read_json(relpath: str) -> Any:
+        path = root / relpath
+        try:
+            with path.open('r', encoding='utf-8') as fh:
+                data = json.load(fh)
+            mtimes.append(path.stat().st_mtime)
+            return data
+        except Exception:  # noqa: BLE001 - fail-soft per source, matches REMOTE_READER_SCRIPT
+            return None
+
+    def read_ledger_tail(relpath: str) -> list[Any]:
+        path = root / relpath
+        try:
+            with path.open('r', encoding='utf-8', errors='replace') as fh:
+                lines = fh.readlines()
+            mtimes.append(path.stat().st_mtime)
+        except Exception:  # noqa: BLE001
+            return []
+        matched: list[Any] = []
+        for line in reversed(lines[-LEDGER_SCAN_WINDOW:]):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:  # noqa: BLE001
+                continue
+            if obj.get('phase') in LEDGER_PHASES:
+                matched.append(obj)
+                if len(matched) >= LEDGER_TAIL_LIMIT:
+                    break
+        matched.reverse()
+        return matched
+
+    data: dict[str, Any] = {
+        'portfolio': read_json('tech_tree/portfolio.json'),
+        'scorecard': read_json('scorecard/latest.json'),
+        'evolution_tree': read_json('evolution/tree.json'),
+        'hypotheses': read_json('hypotheses/lifecycle.json'),
+        'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
+        '_newest_source_age_seconds': None,
+    }
+    if mtimes:
+        data['_newest_source_age_seconds'] = max(0.0, time.time() - max(mtimes))
     return data
 
 
@@ -197,6 +322,24 @@ def small_caps_metric(name: Any) -> str:
     if not name:
         return 'n/a'
     return esc(str(name))
+
+
+def humanize_age(seconds: float) -> str:
+    """Coarse, glanceable age string for the footer freshness marker (issue
+    #27). Callers must only invoke this when a real source mtime was found
+    -- there is no "unknown" case here by design, so a fabricated age can
+    never be produced by this function itself."""
+    seconds = max(0.0, seconds)
+    if seconds < 60:
+        return f'{int(seconds)}s'
+    minutes = seconds / 60
+    if minutes < 60:
+        return f'{int(minutes)}m'
+    hours = minutes / 60
+    if hours < 24:
+        return f'{hours:.1f}h'
+    days = hours / 24
+    return f'{days:.1f}d'
 
 
 def unavailable_panel(title: str, reason: str = 'source unavailable') -> str:
@@ -1116,7 +1259,7 @@ PAGE_TEMPLATE = '''<!doctype html>
 {rail}
 {canvas}
 </div>
-<footer class="page-footer">generated {generated_at} local time &middot; host {host}{error_note}</footer>
+<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{error_note}</footer>
 </body>
 </html>
 '''
@@ -1132,7 +1275,9 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     strip instead.
     """
     if generated_at is None:
-        generated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # UTC, explicitly (issue #27): a reader with no idea what timezone
+        # "local time" meant had no way to judge staleness at a glance.
+        generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
     portfolio = data.get('portfolio')
     scorecard = data.get('scorecard')
@@ -1143,6 +1288,16 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     error_note = ''
     if data.get('_error'):
         error_note = f' &middot; fetch note: {esc(data["_error"])}'
+
+    # Age of the newest source file this page was built from (issue #27) --
+    # the second half of the freshness marker. Never fabricated: if no
+    # reader (local or remote) could establish a real mtime, say so plainly
+    # instead of printing a 0 or omitting the field silently.
+    age_seconds = data.get('_newest_source_age_seconds')
+    if isinstance(age_seconds, (int, float)):
+        source_age = f'{humanize_age(age_seconds)} old'
+    else:
+        source_age = 'age unknown'
 
     empire_strip = build_empire_stats_strip(scorecard)
     rail_html = build_left_rail(scorecard, hypotheses)
@@ -1155,6 +1310,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         canvas=canvas_html,
         generated_at=esc(generated_at),
         host=esc(host),
+        source_age=esc(source_age),
         error_note=error_note,
     )
 
@@ -1168,6 +1324,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument('--host', default='eeepc', help='SSH host alias for the eeepc authority host (default: eeepc)')
     parser.add_argument('--out', default='techtree.html', help='output HTML file path (default: techtree.html)')
     parser.add_argument('--open', action='store_true', help='open the rendered page in the default browser')
+    parser.add_argument(
+        '--local', action='store_true',
+        help='read state directly from --state-root instead of SSHing to --host '
+             '(issue #27: for running the viewer on the authority host itself, '
+             'e.g. from the autopublisher)',
+    )
+    parser.add_argument(
+        '--state-root', default=STATE_ROOT,
+        help=f'local state root to read when --local is set (default: {STATE_ROOT})',
+    )
     parser.add_argument(
         '--publish', action='store_true',
         help='also publish the page to GitHub Pages (gh-pages branch of '
@@ -1258,7 +1424,10 @@ def publish_to_pages(html_out: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    data = fetch_remote_state(args.host)
+    if args.local:
+        data = read_local_state(args.state_root)
+    else:
+        data = fetch_remote_state(args.host)
     html_out = render_page(data, args.host)
 
     out_path = Path(args.out)
