@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -220,3 +221,130 @@ def test_dry_run_makes_no_publish_call_even_without_credential(tmp_path: Path, m
     out = capsys.readouterr()
     assert 'dry-run' in out.out
     assert 'WOULD PUBLISH' in out.out
+
+
+# --- blocker B1: torn/unreadable source must never publish a blank page ----
+
+def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A source caught mid-write (issue #27 review, B1): its raw bytes
+    differ from before (so the digest changes and a naive gate would
+    publish), but json.load on it fails, so read_local_state reports
+    evolution_tree=None. The autopublisher must refuse -- return non-zero,
+    never call publish_to_pages, and never record the bad digest."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    # Simulate: this digest/state pair was already published successfully.
+    good_digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+
+    # Now the loop's next write is caught half-done: different raw bytes
+    # (so the digest changes) but not valid JSON (so it fails to parse).
+    (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc != 0
+    assert called == []  # publish_to_pages must never be called
+    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
+
+
+def test_missing_tree_source_file_also_refuses_to_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Same gate, simpler trigger: one of the three tree source files is
+    absent outright (read_local_state returns None for it), which must be
+    treated the same as a torn file -- refuse, don't publish a blank page."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    (root / 'tech_tree/portfolio.json').unlink()
+    state_dir = tmp_path / 'techtree-state'
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc != 0
+    assert called == []
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None}
+
+
+# --- blocker B4: a state-write failure must be loud, not silent -----------
+
+def test_save_publish_state_failure_is_logged_loudly(
+    tmp_path: Path, capsys: pytest.CaptureFixture,
+) -> None:
+    """If state_dir can't be created/written (e.g. a StateDirectory=
+    misconfiguration leaves it missing or read-only), save_publish_state
+    must not swallow the OSError silently -- that silent swallow is exactly
+    what previously caused every subsequent cycle to republish needlessly."""
+    # A regular file where a directory is expected: state_dir.mkdir() will
+    # raise (FileExistsError / NotADirectoryError, both OSError subclasses).
+    blocked_path = tmp_path / 'not-a-directory'
+    blocked_path.write_text('i am a file, not a directory', encoding='utf-8')
+    state_dir = blocked_path / 'techtree-state'
+
+    ap.save_publish_state(state_dir, digest='abc', published_at=1.0)
+
+    out = capsys.readouterr()
+    assert out.out == ''
+    assert 'FAILED to save publish state' in out.err
+    assert str(state_dir) in out.err
+
+
+def test_a_failed_state_save_does_not_raise(tmp_path: Path) -> None:
+    """save_publish_state must degrade to a loud log, never an uncaught
+    exception, so a state-directory misconfiguration can't crash a
+    publish that otherwise succeeded."""
+    blocked_path = tmp_path / 'not-a-directory'
+    blocked_path.write_text('x', encoding='utf-8')
+    state_dir = blocked_path / 'techtree-state'
+
+    ap.save_publish_state(state_dir, digest='abc', published_at=1.0)  # must not raise
+
+
+# --- blocker B7: a backward clock jump must not disable the floor forever --
+
+def test_negative_age_from_backward_clock_jump_publishes() -> None:
+    """A clock set backward after the last publish would otherwise make
+    `age` negative and permanently below the staleness floor, disabling it
+    forever. A negative age must be treated as stale instead."""
+    state = {'digest': 'same', 'published_at': 10_000.0}
+    publish, reason = ap.should_publish('same', state, staleness_floor_seconds=3600, now=1000.0)  # clock moved back
+
+    assert publish is True
+    assert 'backward' in reason.lower() or 'clock' in reason.lower()
+
+
+def test_run_publishes_on_backward_clock_jump_even_with_unchanged_digest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    digest = ap.compute_tree_digest(root)
+    # published_at is in the "future" relative to now(), simulating a
+    # backward wall-clock jump since the last publish.
+    ap.save_publish_state(state_dir, digest=digest, published_at=time.time() + 10_000.0)
+
+    published: list[str] = []
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: published.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc == 0
+    assert len(published) == 1

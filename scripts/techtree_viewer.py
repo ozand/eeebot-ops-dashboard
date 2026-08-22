@@ -1287,7 +1287,13 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
 
     error_note = ''
     if data.get('_error'):
-        error_note = f' &middot; fetch note: {esc(data["_error"])}'
+        # Fixed, generic string only (issue #27 review, blocker B2): the raw
+        # `_error` text can embed a host filesystem path (read_local_state's
+        # "state root not found or not a directory: <path>") or remote
+        # ssh/API stderr, and this page is published publicly. The real
+        # message belongs on stderr at the call site (see main() below and
+        # techtree_autopublish.run()), never inside HTML that leaves the host.
+        error_note = ' &middot; fetch note: state read failed (see host logs)'
 
     # Age of the newest source file this page was built from (issue #27) --
     # the second half of the freshness marker. Never fabricated: if no
@@ -1360,10 +1366,23 @@ PUBLISH_URL = f'https://ozand.github.io/eeebot-ops-dashboard/'
 
 
 def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ['gh'] + args, capture_output=True, text=True, timeout=60,
-        input=input_text,
-    )
+    """Run `gh` and return its CompletedProcess. Never raises (issue #27
+    review, blocker B3): subprocess.run(timeout=...) can raise
+    subprocess.TimeoutExpired (gh hangs), and a missing `gh` binary raises
+    FileNotFoundError (an OSError subclass) -- both are caught here and
+    turned into a synthetic non-zero CompletedProcess instead of an
+    uncaught traceback, so every caller in publish_to_pages can keep
+    treating "returncode != 0" as the one and only failure signal."""
+    try:
+        return subprocess.run(
+            ['gh'] + args, capture_output=True, text=True, timeout=60,
+            input=input_text,
+        )
+    except (subprocess.SubprocessError, OSError) as exc:
+        return subprocess.CompletedProcess(
+            args=['gh'] + args, returncode=1, stdout='',
+            stderr=f'{exc.__class__.__name__}: {exc}',
+        )
 
 
 def publish_to_pages(html_out: str) -> int:

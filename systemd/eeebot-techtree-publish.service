@@ -31,11 +31,16 @@ EnvironmentFile=/etc/eeepc-agent/techtree-publish.env
 ExecStart=/usr/bin/python3 /opt/eeebot-techtree/techtree_autopublish.py
 
 # Render is near-instant; the `gh` calls in publish_to_pages are the real
-# cost -- normally 2-3 API round-trips, each with its own 60s subprocess
-# timeout, so the 90s systemd default is too tight for even one retried
-# call. 180s leaves headroom for a slow API round or a transient stall
-# without letting a wedged run hang indefinitely.
-TimeoutStartSec=180
+# cost. Counted directly against the code (issue #27 review, blocker B5):
+# steady-state publish makes 4 `gh` calls -- branch probe, sha probe,
+# contents PUT, Pages-enabled probe -- each with its own independent 60s
+# subprocess timeout, so 4*60s = 240s is the steady-state worst case. A
+# first-ever run (bootstrapping the gh-pages branch and enabling Pages) adds
+# up to 3 more calls (resolve master HEAD, create the branch ref, enable
+# Pages) for a worst case of 7*60s = 420s, but that only happens once. 300s
+# covers the steady-state worst case with headroom for a slow round or one
+# retried call without letting a wedged run hang indefinitely.
+TimeoutStartSec=300
 
 # --- sandboxing (issue #27; consistent with the self-evolving loop's own
 # units) ---
@@ -43,14 +48,28 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectHome=yes
 ProtectSystem=strict
-# The "-" prefix is required: without it, systemd fails namespace setup
-# with 226/NAMESPACE whenever this directory doesn't exist yet (e.g. first
-# boot before the installer has run), and that failure happens even though
-# ExecStartPre could otherwise be marked "+" to lift privilege
-# restrictions -- "+" does not lift mount-namespace construction. This
-# exact failure has already been hit twice in this project; do not drop
-# the "-" to "fix" a lint warning.
-ReadWritePaths=-/var/lib/eeebot-techtree
+# StateDirectory= (issue #27 review, blocker B4), not a hand-rolled
+# ReadWritePaths=-/var/lib/eeebot-techtree: systemd creates
+# /var/lib/eeebot-techtree itself before ExecStart runs, chowns it to
+# User=/Group= above, and that creation implies read-write access -- so
+# there is no "directory doesn't exist yet" case left to guard against, and
+# no need for the ReadWritePaths "-" (optional-path) prefix this replaces.
+# That "-" prefix was previously load-bearing (a missing directory made the
+# path merely optional, which let a misconfigured/absent directory degrade
+# silently to a read-only EROFS on every write instead of failing loudly);
+# StateDirectory= removes the trap at the source instead of papering over it.
+StateDirectory=eeebot-techtree
+StateDirectoryMode=0700
+
+# Precautionary, not smoke-tested on the host (issue #27 review, blocker
+# B9): eeebot-publish is a system user created with --no-create-home, so
+# $HOME does not exist, and `gh` has not been confirmed to behave under
+# ProtectSystem=strict/ProtectHome=yes with no home and no GH_CONFIG_DIR --
+# it may want somewhere writable for a config/cache file. Point both at the
+# state directory, which StateDirectory= above guarantees is writable by
+# this user, so `gh` always has somewhere to go if it wants one.
+Environment=HOME=/var/lib/eeebot-techtree
+Environment=GH_CONFIG_DIR=/var/lib/eeebot-techtree/gh-config
 
 # No [Install] section: this unit is never started at boot and is never
 # `systemctl enable`d. It exists purely to be started as an independent job

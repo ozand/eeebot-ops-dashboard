@@ -55,6 +55,33 @@ TREE_DIGEST_SOURCES = (
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
 
+# The parsed-data keys (in tv.read_local_state's return shape) that back the
+# three TREE_DIGEST_SOURCES files above, in the same order.
+_TREE_SOURCE_KEYS = ('evolution_tree', 'portfolio', 'hypotheses')
+
+
+def _unreadable_tree_source(data: dict[str, Any]) -> str | None:
+    """Detects a torn/unreadable tree source (issue #27 review, blocker B1).
+
+    compute_tree_digest hashes RAW BYTES of the three tree-shaped source
+    files, so a source caught mid-write by this script's own loop (the
+    trigger fires the instant the loop finishes writing, so this is a live
+    race, not a corner case) still changes the digest -- but
+    tv.read_local_state's json.load on that same half-written file fails
+    and the corresponding key comes back None. Publishing in that state
+    would replace a good public page with an all-panels-unavailable one,
+    and (absent this check) record the bad digest, wedging the page broken
+    until the tree next changes for real or the staleness floor fires.
+
+    Returns a human-readable reason, or None if all three parsed cleanly.
+    """
+    if data.get('_error'):
+        return f"state read error: {data['_error']}"
+    for key in _TREE_SOURCE_KEYS:
+        if data.get(key) is None:
+            return f'{key} could not be parsed (torn or unreadable source file)'
+    return None
+
 
 def compute_tree_digest(state_root: Path) -> str:
     """SHA-256 over the raw bytes of TREE_DIGEST_SOURCES only, in a fixed
@@ -96,15 +123,31 @@ def save_publish_state(state_dir: Path, digest: str, published_at: float) -> Non
     on both POSIX and Windows, so a process killed mid-write can never
     leave a corrupt/partial state file that would wedge publishing forever
     -- worst case the temp file is orphaned and the next run just re-reads
-    the last good state (or "never published", see load_publish_state)."""
-    state_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = state_dir / f'.{STATE_FILENAME}.tmp{os.getpid()}'
-    payload = {'digest': digest, 'published_at': published_at}
-    with tmp_path.open('w', encoding='utf-8') as fh:
-        json.dump(payload, fh)
-        fh.flush()
-        os.fsync(fh.fileno())
-    os.replace(tmp_path, state_dir / STATE_FILENAME)
+    the last good state (or "never published", see load_publish_state).
+
+    The whole thing is wrapped in try/except OSError: a missing or
+    unexpectedly read-only state_dir (e.g. StateDirectory= not applied, or
+    applied to the wrong path) must fail loudly to the journal rather than
+    silently -- silently swallowing this write is exactly what caused the
+    ~410-republishes/day bug this function exists to prevent (issue #27
+    review, blocker B4)."""
+    try:
+        state_dir.mkdir(parents=True, exist_ok=True)
+        tmp_path = state_dir / f'.{STATE_FILENAME}.tmp{os.getpid()}'
+        payload = {'digest': digest, 'published_at': published_at}
+        with tmp_path.open('w', encoding='utf-8') as fh:
+            json.dump(payload, fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, state_dir / STATE_FILENAME)
+    except OSError as exc:
+        print(
+            f'techtree-autopublish: FAILED to save publish state to {state_dir} '
+            f'({exc.__class__.__name__}: {exc}) -- the page just published '
+            'successfully, but every future cycle will republish unnecessarily '
+            'until this is fixed',
+            file=sys.stderr,
+        )
 
 
 def should_publish(
@@ -117,7 +160,14 @@ def should_publish(
     changed, OR the last successful publish is older than the staleness
     floor -- the floor exists so metrics deliberately excluded from the
     digest (scorecard, ledger) cannot drift on the published page forever
-    while the tree itself sits quiet."""
+    while the tree itself sits quiet.
+
+    The floor itself is computed from wall-clock time.time() (unlike the
+    digest-change trigger above, which is event-driven off the loop and so
+    never depends on any clock). A backward clock jump (NTP correction,
+    manual reset) would otherwise make `age` negative and permanently
+    smaller than the floor, disabling the floor forever (issue #27 review,
+    blocker B7) -- so a negative age is treated the same as "stale"."""
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
@@ -126,6 +176,8 @@ def should_publish(
     if not isinstance(prev_published_at, (int, float)):
         return True, 'no prior successful publish recorded'
     age = now - prev_published_at
+    if age < 0:
+        return True, f'clock moved backward since last publish ({age:.0f}s); treating as stale'
     if age >= staleness_floor_seconds:
         return True, f'staleness floor exceeded ({age:.0f}s >= {staleness_floor_seconds:.0f}s)'
     return False, 'digest unchanged and within staleness floor'
@@ -167,13 +219,24 @@ def run(args: argparse.Namespace) -> int:
     now = time.time()
     publish, reason = should_publish(digest, state, staleness_floor_seconds, now)
 
+    source_problem = _unreadable_tree_source(data)
+
     if args.dry_run:
         html_out = tv.render_page(data, args.host_label)
-        verdict = 'WOULD PUBLISH' if publish else 'would NOT publish'
-        print(f'[dry-run] {verdict}: {reason}')
+        if publish and source_problem:
+            verdict = 'would REFUSE to publish'
+            shown_reason = source_problem
+        else:
+            verdict = 'WOULD PUBLISH' if publish else 'would NOT publish'
+            shown_reason = reason
+        print(f'[dry-run] {verdict}: {shown_reason}')
         print(f'[dry-run] digest={digest} rendered_bytes={len(html_out)}')
         if data.get('_error'):
-            print(f'[dry-run] state read note: {data["_error"]}')
+            # Detailed message (may include a host filesystem path) goes to
+            # stderr only, never stdout/the page (issue #27 review, blocker
+            # B2) -- this is an operator-facing dry-run log line, not the
+            # published page, but keep the convention consistent regardless.
+            print(f'[dry-run] state read note: {data["_error"]}', file=sys.stderr)
         return 0
 
     if not publish:
@@ -181,6 +244,18 @@ def run(args: argparse.Namespace) -> int:
         # cycle, roughly every 3.5 minutes including idle ones, so logging
         # on the no-op happy path would bury the journal in noise.
         return 0
+
+    if source_problem:
+        # Blocker B1: a torn/unreadable tree source must never publish a
+        # blank page over the good one, and must never have its bad digest
+        # recorded -- next cycle re-reads the same (still torn, or by then
+        # fixed) source and tries again.
+        print(
+            f'techtree-autopublish: refusing to publish -- {source_problem}; '
+            'previous page and state left untouched',
+            file=sys.stderr,
+        )
+        return 1
 
     html_out = tv.render_page(data, args.host_label)
 

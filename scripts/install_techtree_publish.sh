@@ -16,7 +16,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OPT_DIR=/opt/eeebot-techtree
-STATE_DIR=/var/lib/eeebot-techtree
+# No STATE_DIR here: /var/lib/eeebot-techtree is created and owned by
+# systemd itself via StateDirectory= in the unit (see step 3 below).
 UNIT_DIR=/etc/systemd/system
 DROPIN_DIR="$UNIT_DIR/eeepc-self-evolving-subagent-bridge.service.d"
 PUBLISH_USER=eeebot-publish
@@ -56,11 +57,13 @@ run mkdir -p "$OPT_DIR"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_viewer.py" "$OPT_DIR/techtree_viewer.py"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_autopublish.py" "$OPT_DIR/techtree_autopublish.py"
 
-# 3. The publisher's own state dir (digest + last-publish timestamp).
-#    Owned by the publisher; nothing else needs to touch it.
-run mkdir -p "$STATE_DIR"
-run chown "$PUBLISH_USER:$PUBLISH_USER" "$STATE_DIR"
-run chmod 0700 "$STATE_DIR"
+# 3. The publisher's own state dir (digest + last-publish timestamp) is
+#    NOT created here: eeebot-techtree-publish.service declares
+#    StateDirectory=eeebot-techtree, so systemd itself creates
+#    /var/lib/eeebot-techtree (mode 0700, owned by the service's User=/
+#    Group=) the first time the unit starts, and re-creates it if it's ever
+#    removed. Pre-creating it here would only risk drifting out of sync
+#    with the unit's own StateDirectoryMode=/ownership.
 
 # 4. Service unit + bridge drop-in, then reload so systemd picks them up.
 run mkdir -p "$DROPIN_DIR"
@@ -70,7 +73,23 @@ run install -o root -g root -m 0644 \
   "$DROPIN_DIR/20-techtree-publish.conf"
 run systemctl daemon-reload
 
-# 5. Deliberately NOT done here: creating, requesting, or templating the
+# 5. Verify the trigger this whole publisher depends on is actually live,
+#    instead of just asserting it (issue #27 review, blocker B8): this
+#    repo's other units are `systemctl --user`, so nothing here guarantees
+#    that eeepc-self-evolving-subagent-bridge.service exists at all, or
+#    that it is a system-scope unit our system-scope drop-in (step 4) can
+#    even attach to -- an absent or --user-only bridge unit would leave the
+#    drop-in permanently inert with no error anywhere.
+BRIDGE_UNIT=eeepc-self-evolving-subagent-bridge.service
+TRIGGER_LIVE=0
+if systemctl cat "$BRIDGE_UNIT" >/dev/null 2>&1; then
+  ONSUCCESS_VALUE="$(systemctl show -p OnSuccess --value "$BRIDGE_UNIT" 2>/dev/null || true)"
+  case " $ONSUCCESS_VALUE " in
+    *" eeebot-techtree-publish.service "*) TRIGGER_LIVE=1 ;;
+  esac
+fi
+
+# 6. Deliberately NOT done here: creating, requesting, or templating the
 # credential. It is created by hand by the operator, outside any script,
 # and this installer never touches its value.
 cat <<EOF
@@ -87,11 +106,34 @@ Example (run as root, fill in the real token yourself -- never paste it
 into a script or commit it anywhere):
   install -o root -g root -m 0600 /dev/null $ENV_FILE
   \$EDITOR $ENV_FILE   # add: GH_TOKEN=...
+EOF
+
+if [[ "$TRIGGER_LIVE" == "1" ]]; then
+  cat <<EOF
 
 Once that file exists, eeebot-techtree-publish.service will run
 automatically the next time eeepc-self-evolving-subagent-bridge.service
 completes a cycle -- no further action needed here.
 EOF
+else
+  cat <<EOF
+
+WARNING: could not confirm the publish trigger is actually live -- do NOT
+assume publishing will happen automatically. Checked for a system-scope
+$BRIDGE_UNIT with OnSuccess= listing eeebot-techtree-publish.service, and
+did not find it. Either:
+  - $BRIDGE_UNIT does not exist as a system-scope unit on this host
+    (it may only exist as a \`systemctl --user\` unit, which this
+    system-scope drop-in cannot attach to at all), or
+  - it exists but its OnSuccess= does not list
+    eeebot-techtree-publish.service (the drop-in in $DROPIN_DIR may not
+    have been picked up, or the bridge unit was reinstalled after it).
+Check by hand with:
+  systemctl cat $BRIDGE_UNIT
+  systemctl show -p OnSuccess $BRIDGE_UNIT
+Publishing will not happen automatically until this is resolved.
+EOF
+fi
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo

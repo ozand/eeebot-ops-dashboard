@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from scripts import techtree_viewer as tv
 
@@ -305,3 +308,74 @@ def test_footer_says_age_unknown_when_no_mtime_available() -> None:
     # _fixture() carries no _newest_source_age_seconds key -- this must
     # read as an honest "unknown", never a fabricated 0 or omitted marker.
     assert 'age unknown' in html_out
+
+
+# --- blocker B2: the public page must never leak a host filesystem path ----
+
+def test_render_page_never_leaks_host_path_from_error(tmp_path: Path) -> None:
+    fixture = _fixture()
+    host_path = str(tmp_path / 'var' / 'lib' / 'eeepc-agent' / 'self-evolving-agent' / 'state')
+    fixture['_error'] = f'state root not found or not a directory: {host_path}'
+
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    assert host_path not in html_out
+    assert '/var/lib' not in html_out
+    # A fixed, generic notice still appears -- the reader is told *something*
+    # went wrong, just not the host's internal filesystem layout.
+    assert 'fetch note' in html_out
+
+
+def test_read_local_state_missing_root_error_message_not_echoed_on_page() -> None:
+    """End-to-end: read_local_state's own real error message (which does
+    contain the state root path) must not survive into render_page's HTML.
+    Checked via distinctive path segments rather than the full path string
+    so this holds regardless of the platform's path-separator rendering."""
+    missing_root = '/var/lib/eeepc-agent/self-evolving-agent/state'
+    data = tv.read_local_state(missing_root)
+    error_text = data.get('_error') or ''
+    # Sanity: the raw error really does carry host-specific path detail.
+    assert 'eeepc-agent' in error_text
+    assert 'self-evolving-agent' in error_text
+
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'eeepc-agent' not in html_out
+    assert 'self-evolving-agent' not in html_out
+
+
+# --- blocker B3: _gh must return non-zero, never raise -----------------
+
+def test_gh_timeout_returns_nonzero_instead_of_raising(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    result = tv._gh(['api', 'repos/foo/bar'])  # must not raise
+
+    assert result.returncode != 0
+
+
+def test_gh_missing_binary_returns_nonzero_instead_of_raising(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_not_found(*args, **kwargs):
+        raise FileNotFoundError('gh: command not found')
+
+    monkeypatch.setattr(subprocess, 'run', _raise_not_found)
+
+    result = tv._gh(['api', 'repos/foo/bar'])  # must not raise
+
+    assert result.returncode != 0
+
+
+def test_publish_to_pages_returns_one_when_gh_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """publish_to_pages's docstring promises 'Returns 0 on success, 1 on
+    any failure' -- this must hold even when the underlying `gh` subprocess
+    itself raises (timeout, missing binary), not just when it exits nonzero."""
+    def _raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    rc = tv.publish_to_pages('<html></html>')  # must not raise
+
+    assert rc == 1
