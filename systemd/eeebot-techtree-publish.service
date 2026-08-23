@@ -1,0 +1,86 @@
+[Unit]
+# Renders the tech-tree page from the self-evolving loop's local state and
+# publishes it to gh-pages (issue #27). Triggered by
+# eeepc-self-evolving-subagent-bridge.service via the OnSuccess= drop-in in
+# drop-ins/eeepc-self-evolving-subagent-bridge.service.d/ -- once per
+# completed bridge iteration, not on a wall-clock timer.
+#
+# Runs as its own unprivileged user (eeebot-publish), never as
+# eeepc-agent (the loop's own uid): the loop must not be able to publish
+# arbitrary content to a public page, and must not be able to read the
+# publish credential. Sandboxed with ProtectSystem=strict so the entire
+# filesystem -- including the loop's state tree this unit reads -- is
+# mounted read-only except for this publisher's own small state directory,
+# carved out below.
+Description=eeebot tech-tree page autopublisher (issue #27)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=eeebot-publish
+Group=eeebot-publish
+
+# Root-owned, 0600, deliberately NOT prefixed with "-": a missing credential
+# file must be a loud unit-start failure, not a silent no-op. systemd reads
+# this file as root before dropping privileges to User=/Group=, so the
+# token in it never becomes readable by eeebot-publish (or by
+# eeepc-agent, which cannot read it either).
+EnvironmentFile=/etc/eeepc-agent/techtree-publish.env
+
+ExecStart=/usr/bin/python3 /opt/eeebot-techtree/techtree_autopublish.py
+
+# Render is near-instant; the `gh` calls in publish_to_pages are the real
+# cost. Counted directly against the code (issue #27 review, blocker B5):
+# steady-state publish makes 4 `gh` calls -- branch probe, sha probe,
+# contents PUT, Pages-enabled probe -- each with its own independent 60s
+# subprocess timeout, so 4*60s = 240s is the steady-state worst case. 300s
+# leaves exactly 60s of headroom over that -- room for one retried call,
+# not "a slow round or one retried call" as an earlier version of this
+# comment claimed (issue #27 review round 3, note N7): there is only
+# budget for one of those, not either interchangeably.
+#
+# A first-ever run (bootstrapping the gh-pages branch and enabling Pages)
+# adds up to 3 more calls (resolve master HEAD, create the branch ref,
+# enable Pages) for a worst case of 7*60s = 420s, which this 300s timeout
+# does NOT cover -- a first-ever run that hits every worst case will be
+# killed by systemd before finishing. That is acceptable, not silently
+# swept under the rug: a killed bootstrap attempt simply retries in full on
+# the next bridge cycle (~3.5 minutes later) with no state to clean up
+# (save_publish_state is only reached after a successful publish), so the
+# cost of hitting this is a few extra minutes' delay on first-ever setup,
+# never a wedge.
+TimeoutStartSec=300
+
+# --- sandboxing (issue #27; consistent with the self-evolving loop's own
+# units) ---
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+# StateDirectory= (issue #27 review, blocker B4), not a hand-rolled
+# ReadWritePaths=-/var/lib/eeebot-techtree: systemd creates
+# /var/lib/eeebot-techtree itself before ExecStart runs, chowns it to
+# User=/Group= above, and that creation implies read-write access -- so
+# there is no "directory doesn't exist yet" case left to guard against, and
+# no need for the ReadWritePaths "-" (optional-path) prefix this replaces.
+# That "-" prefix was previously load-bearing (a missing directory made the
+# path merely optional, which let a misconfigured/absent directory degrade
+# silently to a read-only EROFS on every write instead of failing loudly);
+# StateDirectory= removes the trap at the source instead of papering over it.
+StateDirectory=eeebot-techtree
+StateDirectoryMode=0700
+
+# Precautionary, not smoke-tested on the host (issue #27 review, blocker
+# B9): eeebot-publish is a system user created with --no-create-home, so
+# $HOME does not exist, and `gh` has not been confirmed to behave under
+# ProtectSystem=strict/ProtectHome=yes with no home and no GH_CONFIG_DIR --
+# it may want somewhere writable for a config/cache file. Point both at the
+# state directory, which StateDirectory= above guarantees is writable by
+# this user, so `gh` always has somewhere to go if it wants one.
+Environment=HOME=/var/lib/eeebot-techtree
+Environment=GH_CONFIG_DIR=/var/lib/eeebot-techtree/gh-config
+
+# No [Install] section: this unit is never started at boot and is never
+# `systemctl enable`d. It exists purely to be started as an independent job
+# by the OnSuccess= drop-in below, once per completed bridge iteration.

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import json
+import subprocess
+from pathlib import Path
+
+import pytest
+
 from scripts import techtree_viewer as tv
 
 
@@ -226,3 +232,193 @@ def test_world_history_falls_back_to_simple_list_below_two_nodes() -> None:
 
     assert 'class="evo-box' not in html_out
     assert 'timeline-list' in html_out
+
+
+# --- local state reading (issue #27, Task 1) --------------------------------
+
+def _write_local_state_root(root: Path) -> None:
+    (root / 'tech_tree').mkdir(parents=True)
+    (root / 'scorecard').mkdir(parents=True)
+    (root / 'evolution').mkdir(parents=True)
+    (root / 'hypotheses').mkdir(parents=True)
+    (root / 'ledger').mkdir(parents=True)
+    (root / 'tech_tree' / 'portfolio.json').write_text(json.dumps({'current': None, 'nodes': {}}), encoding='utf-8')
+    (root / 'scorecard' / 'latest.json').write_text(json.dumps({'computed_at_utc': '2026-08-18T00:00:00Z'}), encoding='utf-8')
+    (root / 'evolution' / 'tree.json').write_text(json.dumps({'current_sha': 'a', 'nodes': {}}), encoding='utf-8')
+    (root / 'hypotheses' / 'lifecycle.json').write_text(json.dumps({'entries': {}}), encoding='utf-8')
+    (root / 'ledger' / 'cycles.jsonl').write_text(
+        json.dumps({'phase': 'tech_tree', 'from': 'a', 'to': 'b'}) + '\n', encoding='utf-8',
+    )
+
+
+def test_read_local_state_matches_remote_shape(tmp_path: Path) -> None:
+    _write_local_state_root(tmp_path)
+    data = tv.read_local_state(str(tmp_path))
+
+    assert set(data) >= {'portfolio', 'scorecard', 'evolution_tree', 'hypotheses', 'ledger_tail'}
+    assert data['portfolio'] == {'current': None, 'nodes': {}}
+    assert data['evolution_tree'] == {'current_sha': 'a', 'nodes': {}}
+    assert data['hypotheses'] == {'entries': {}}
+    assert data['ledger_tail'] == [{'phase': 'tech_tree', 'from': 'a', 'to': 'b'}]
+    assert data.get('_error') is None
+    # A real mtime was read, so an age must be available (not fabricated).
+    assert isinstance(data['_newest_source_age_seconds'], (int, float))
+    assert data['_newest_source_age_seconds'] >= 0
+
+
+def test_read_local_state_missing_root_reports_error(tmp_path: Path) -> None:
+    missing = tmp_path / 'does-not-exist'
+    data = tv.read_local_state(str(missing))
+
+    assert data['portfolio'] is None
+    assert data['scorecard'] is None
+    assert data['evolution_tree'] is None
+    assert data['hypotheses'] is None
+    assert data['ledger_tail'] is None
+    assert data.get('_error')
+    assert data['_newest_source_age_seconds'] is None
+
+
+def test_read_local_state_partial_root_fails_soft_per_file(tmp_path: Path) -> None:
+    # Only the state root itself exists; none of the five source files do.
+    # This must behave like fetch_remote_state on a reachable-but-empty
+    # state tree: no top-level `_error`, each field individually None.
+    data = tv.read_local_state(str(tmp_path))
+
+    assert data.get('_error') is None
+    assert data['portfolio'] is None
+    assert data['ledger_tail'] == []
+
+
+# --- freshness footer (issue #27, Task 2) -----------------------------------
+
+def test_footer_shows_utc_label_and_known_source_age() -> None:
+    fixture = _fixture()
+    fixture['_newest_source_age_seconds'] = 125  # 2m
+
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    assert 'generated 2026-08-18 12:00:00 UTC' in html_out
+    assert 'newest source 2m old' in html_out
+
+
+def test_footer_says_age_unknown_when_no_mtime_available() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # _fixture() carries no _newest_source_age_seconds key -- this must
+    # read as an honest "unknown", never a fabricated 0 or omitted marker.
+    assert 'age unknown' in html_out
+
+
+# --- blocker B2: the public page must never leak a host filesystem path ----
+
+def test_render_page_never_leaks_host_path_from_error(tmp_path: Path) -> None:
+    fixture = _fixture()
+    host_path = str(tmp_path / 'var' / 'lib' / 'eeepc-agent' / 'self-evolving-agent' / 'state')
+    fixture['_error'] = f'state root not found or not a directory: {host_path}'
+
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    assert host_path not in html_out
+    assert '/var/lib' not in html_out
+    # A fixed, generic notice still appears -- the reader is told *something*
+    # went wrong, just not the host's internal filesystem layout.
+    assert 'fetch note' in html_out
+
+
+def test_read_local_state_missing_root_error_message_not_echoed_on_page() -> None:
+    """End-to-end: read_local_state's own real error message (which does
+    contain the state root path) must not survive into render_page's HTML.
+    Checked via distinctive path segments rather than the full path string
+    so this holds regardless of the platform's path-separator rendering."""
+    missing_root = '/var/lib/eeepc-agent/self-evolving-agent/state'
+    data = tv.read_local_state(missing_root)
+    error_text = data.get('_error') or ''
+    # Sanity: the raw error really does carry host-specific path detail.
+    assert 'eeepc-agent' in error_text
+    assert 'self-evolving-agent' in error_text
+
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'eeepc-agent' not in html_out
+    assert 'self-evolving-agent' not in html_out
+
+
+# --- blocker B3: _gh must return non-zero, never raise -----------------
+
+def test_gh_timeout_returns_nonzero_instead_of_raising(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    result = tv._gh(['api', 'repos/foo/bar'])  # must not raise
+
+    assert result.returncode != 0
+
+
+def test_gh_timeout_does_not_leak_payload_from_exc_cmd(monkeypatch: pytest.MonkeyPatch) -> None:
+    """N9 (issue #27 review round 3) claimed the leak path was str(exc)
+    including captured output; item D (round 4) found that's wrong --
+    TimeoutExpired.__str__ never includes output/stderr, so the tests
+    above using a short cmd='gh' string can never exercise the real leak
+    path, which is exc.cmd being the full argv list (item D/N9, round 4).
+    Use a list-shaped cmd carrying a base64-sized payload, as the contents
+    PUT call's argv actually would, and confirm it never reaches stderr."""
+    payload = 'A' * 100
+    args = ['api', '-X', 'PUT', 'repos/foo/bar/contents/index.html',
+            '-f', f'content={payload}']
+
+    def _raise_timeout(*a, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=['gh'] + args, timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    result = tv._gh(args)  # must not raise
+
+    assert result.returncode != 0
+    assert payload not in result.stderr
+
+
+def test_gh_timeout_message_identifies_the_failing_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Item G (issue #27 review round 4): args[0] is always 'api' for
+    every _gh call in publish_to_pages, so a timeout message built from
+    args[0] alone ("gh api timed out") can never say which of the several
+    `gh api` calls in one run actually hung. The message must name the
+    endpoint instead -- args[1] normally, or the slot after a leading
+    '-X <verb>' pair for the POST/PUT calls."""
+    def _raise_timeout(*a, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    plain = tv._gh(['api', 'repos/foo/bar/branches/gh-pages'])
+    assert 'repos/foo/bar/branches/gh-pages' in plain.stderr
+
+    posted = tv._gh(['api', '-X', 'POST', 'repos/foo/bar/git/refs', '-f', 'ref=x'])
+    assert 'repos/foo/bar/git/refs' in posted.stderr
+    assert 'gh api -X timed out' not in posted.stderr
+
+
+def test_gh_missing_binary_returns_nonzero_instead_of_raising(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_not_found(*args, **kwargs):
+        raise FileNotFoundError('gh: command not found')
+
+    monkeypatch.setattr(subprocess, 'run', _raise_not_found)
+
+    result = tv._gh(['api', 'repos/foo/bar'])  # must not raise
+
+    assert result.returncode != 0
+
+
+def test_publish_to_pages_returns_one_when_gh_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    """publish_to_pages's docstring promises 'Returns 0 on success, 1 on
+    any failure' -- this must hold even when the underlying `gh` subprocess
+    itself raises (timeout, missing binary), not just when it exits nonzero."""
+    def _raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    rc = tv.publish_to_pages('<html></html>')  # must not raise
+
+    assert rc == 1
