@@ -64,6 +64,31 @@ TREE_DIGEST_SOURCES = tuple(_TREE_SOURCE_FILES.values())
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
 
+# A floor on the floor (issue #27 review round 4, item A). The torn/
+# unreadable-source guard below (_unreadable_tree_source) is right to
+# refuse publishing a blank/broken page over a good one -- but refusing
+# FOREVER once a source goes bad is not the right default either. This is
+# reachable, not theoretical: evolution_tree.py, tech_tree.py, and
+# hypothesis_backlog.py all write their state files with plain
+# Path.write_text() (truncate-then-write), so a SIGKILL between the
+# truncate and the write -- plausible on a 2 GB eeepc host under memory
+# pressure -- leaves a permanent 0-byte file. The guard then refuses on
+# every single firing after that, forever, and the staleness floor cannot
+# rescue it because the guard is applied AFTER should_publish and
+# overrides it. The public page freezes at its last good version with no
+# signal anywhere except ~410 refusal lines/day in the journal. The same
+# is true of an EACCES source: stat() still succeeds, only the read fails.
+#
+# So: once a refusal streak has persisted beyond this many multiples of
+# the staleness floor, stop refusing and publish the fail-soft "source
+# unavailable" page instead (render_page already fails soft per source --
+# this reuses that, it does not add a second rendering path). Turns a
+# silent freeze into an honest, visible degraded page. 2x is a deliberately
+# generous grace period: it must clearly exceed one staleness-floor cycle
+# (which can itself legitimately trigger a publish attempt) before
+# assuming the source is stuck rather than just mid-write.
+REFUSAL_FREEZE_MULTIPLE = 2.0
+
 
 def _unreadable_tree_source(data: dict[str, Any], state_root: Path) -> str | None:
     """Detects a tree source file that is PRESENT on disk but failed to
@@ -133,29 +158,52 @@ def compute_tree_digest(state_root: Path) -> str:
 
 
 def load_publish_state(state_dir: Path) -> dict[str, Any]:
-    """Read back {"digest", "published_at"} from the last successful
-    publish. Any read/parse problem (including a half-written file left by
-    an interrupted run, before the atomic-replace in save_publish_state
-    existed to prevent that) is treated as "never published" rather than
-    raised -- one extra publish is cheap; a wedged publisher is not."""
+    """Read back {"digest", "published_at", "refusing_since"} from the last
+    successful publish. Any read/parse problem (including a half-written
+    file left by an interrupted run, before the atomic-replace in
+    save_publish_state existed to prevent that) is treated as "never
+    published" rather than raised -- one extra publish is cheap; a wedged
+    publisher is not.
+
+    "refusing_since" (issue #27 review round 4, item A) is the wall-clock
+    time.time() at which the CURRENT source-refusal streak started, or
+    None when there is no ongoing refusal. It is stored here rather than
+    in a second state file so there is exactly one place tracking this
+    publisher's state, and so a state_dir wipe/rebuild clears both
+    consistently. A state file written before this field existed simply
+    lacks the key -- setdefault below treats that the same as "no ongoing
+    refusal", which is correct: there cannot have been one recorded by
+    code that didn't know about this field yet."""
     path = state_dir / STATE_FILENAME
     try:
         with path.open('r', encoding='utf-8') as fh:
             data = json.load(fh)
         if isinstance(data, dict) and 'digest' in data and 'published_at' in data:
+            data.setdefault('refusing_since', None)
             return data
     except Exception:  # noqa: BLE001
         pass
-    return {'digest': None, 'published_at': None}
+    return {'digest': None, 'published_at': None, 'refusing_since': None}
 
 
-def save_publish_state(state_dir: Path, digest: str, published_at: float) -> None:
+def save_publish_state(
+    state_dir: Path, digest: str, published_at: float,
+    refusing_since: float | None = None,
+) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
     on both POSIX and Windows, so a process killed mid-write can never
     leave a corrupt/partial state file that would wedge publishing forever
     -- worst case the temp file is orphaned and the next run just re-reads
     the last good state (or "never published", see load_publish_state).
+
+    `refusing_since` defaults to None (issue #27 review round 4, item A):
+    every call site on the successful-publish path omits it, which is what
+    clears a previously-recorded refusal streak the moment a publish (fail
+    -soft or otherwise) actually goes through. The one call site that is
+    mid-refusal passes the streak's start time explicitly, and passes
+    through the PRIOR digest/published_at unchanged so a still-refusing
+    cycle never overwrites the last known-good publish record.
 
     The whole thing is wrapped in try/except OSError: a missing or
     unexpectedly read-only state_dir (e.g. StateDirectory= not applied, or
@@ -164,7 +212,10 @@ def save_publish_state(state_dir: Path, digest: str, published_at: float) -> Non
     try:
         state_dir.mkdir(parents=True, exist_ok=True)
         tmp_path = state_dir / f'.{STATE_FILENAME}.tmp{os.getpid()}'
-        payload = {'digest': digest, 'published_at': published_at}
+        payload = {
+            'digest': digest, 'published_at': published_at,
+            'refusing_since': refusing_since,
+        }
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
             fh.flush()
@@ -213,6 +264,24 @@ def should_publish(
     return False, 'digest unchanged and within staleness floor'
 
 
+def _first_state_directory(value: str) -> str:
+    """$STATE_DIRECTORY is colon-separated when a unit's StateDirectory=
+    lists more than one name (issue #27 review round 4, item I; confirmed
+    against man/systemd.exec.xml at v252: "these options take a
+    whitespace-separated list of directory names ... if multiple
+    directories are set, then in the environment variable the paths are
+    concatenated with colon"). This unit's StateDirectory= sets exactly
+    one name today, so os.environ.get('STATE_DIRECTORY', ...) currently
+    always yields a single absolute path -- but if a second directory is
+    ever added to the unit, the same code would silently start pointing
+    Path() at "/var/lib/a:/var/lib/b", which is not a path that exists,
+    rather than at either real directory. Take only the first
+    colon-separated segment so that failure mode can't reoccur silently;
+    a single-directory STATE_DIRECTORY (today's only case) is unaffected,
+    since split(':', 1)[0] on a string with no colon is the whole string."""
+    return value.split(':', 1)[0]
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -227,7 +296,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         # default could silently diverge if either is ever changed without
         # the other (issue #27 review round 3, note N5). DEFAULT_STATE_DIR
         # remains the fallback for direct/manual invocation outside systemd.
-        '--state-dir', default=os.environ.get('STATE_DIRECTORY', DEFAULT_STATE_DIR),
+        # _first_state_directory guards against a future second
+        # StateDirectory= name making this colon-separated (item I).
+        '--state-dir', default=_first_state_directory(
+            os.environ.get('STATE_DIRECTORY', DEFAULT_STATE_DIR),
+        ),
         help=f'directory holding this publisher\'s own digest/timestamp state (default: $STATE_DIRECTORY if set, else {DEFAULT_STATE_DIR})',
     )
     parser.add_argument(
@@ -243,6 +316,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help='compute the digest and render the page, print the publish decision, and make no gh API call',
     )
     return parser.parse_args(argv)
+
+
+def _refusal_freeze_status(
+    state: dict[str, Any], staleness_floor_seconds: float, now: float,
+) -> tuple[float, float, float, bool]:
+    """Given the persisted state and the current source-refusal streak
+    (issue #27 review round 4, item A), return (refusing_since,
+    refusal_age, freeze_limit, past_limit): the streak's start time, how
+    long it has run, the bounded limit before this publisher gives up on
+    refusing, and whether it has already exceeded that limit. If state has
+    no recorded start for the streak yet (this is the first refusing
+    cycle, or the state predates this field), treats it as having just
+    started now (age 0) rather than inventing a past time -- run() is
+    responsible for persisting this start time once it has decided this is
+    in fact a fresh streak."""
+    refusing_since = state.get('refusing_since')
+    if not isinstance(refusing_since, (int, float)):
+        refusing_since = now
+    refusal_age = now - refusing_since
+    freeze_limit = REFUSAL_FREEZE_MULTIPLE * staleness_floor_seconds
+    return refusing_since, refusal_age, freeze_limit, refusal_age >= freeze_limit
 
 
 def run(args: argparse.Namespace) -> int:
@@ -261,8 +355,22 @@ def run(args: argparse.Namespace) -> int:
     if args.dry_run:
         html_out = tv.render_page(data, args.host_label)
         if publish and source_problem:
-            verdict = 'would REFUSE to publish'
-            shown_reason = source_problem
+            _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
+                state, staleness_floor_seconds, now,
+            )
+            if past_limit:
+                verdict = 'would PUBLISH the fail-soft "source unavailable" page'
+                shown_reason = (
+                    f'{source_problem} (refused for {refusal_age:.0f}s >= '
+                    f'{freeze_limit:.0f}s freeze limit -- giving up on refusing)'
+                )
+            else:
+                verdict = 'would REFUSE to publish'
+                shown_reason = (
+                    f'{source_problem} (refusing for {refusal_age:.0f}s of a '
+                    f'{freeze_limit:.0f}s limit before falling back to the '
+                    'fail-soft page)'
+                )
         else:
             verdict = 'WOULD PUBLISH' if publish else 'would NOT publish'
             shown_reason = reason
@@ -287,12 +395,51 @@ def run(args: argparse.Namespace) -> int:
         # blank page over the good one, and must never have its bad digest
         # recorded -- next cycle re-reads the same (still torn, or by then
         # fixed) source and tries again.
+        #
+        # But not forever (issue #27 review round 4, item A): a source
+        # that never recovers (permanent 0-byte file from a SIGKILL mid
+        # write, a persistent EACCES) must not freeze the public page at
+        # its last good version indefinitely with nothing but journal
+        # noise as a signal. Once this refusal streak has run longer than
+        # REFUSAL_FREEZE_MULTIPLE x the staleness floor, give up on
+        # refusing and fall through to publish the fail-soft "source
+        # unavailable" page below instead -- render_page already renders
+        # each affected panel as unavailable from this same `data`, so
+        # this is not a second rendering path, just choosing to use the
+        # normal one instead of refusing.
+        refusing_since, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
+            state, staleness_floor_seconds, now,
+        )
+
+        if not past_limit:
+            if not isinstance(state.get('refusing_since'), (int, float)):
+                # First refusing cycle of a new streak: record when it
+                # started, without touching the last known-good
+                # digest/published_at (state.get(...) here is exactly
+                # that last-good pair, or None/None if never published).
+                save_publish_state(
+                    state_dir, state.get('digest'), state.get('published_at'),
+                    refusing_since=refusing_since,
+                )
+            print(
+                f'techtree-autopublish: refusing to publish -- {source_problem}; '
+                f'previous page and state left untouched (refusing for '
+                f'{refusal_age:.0f}s of a {freeze_limit:.0f}s limit before '
+                'falling back to a fail-soft publish)',
+                file=sys.stderr,
+            )
+            return 1
+
         print(
-            f'techtree-autopublish: refusing to publish -- {source_problem}; '
-            'previous page and state left untouched',
+            f'techtree-autopublish: source has been unreadable for '
+            f'{refusal_age:.0f}s (>= {freeze_limit:.0f}s, '
+            f'{REFUSAL_FREEZE_MULTIPLE:g}x the staleness floor) -- giving up '
+            f'on refusing and publishing the fail-soft "source unavailable" '
+            f'page instead of freezing forever ({source_problem})',
             file=sys.stderr,
         )
-        return 1
+        # Fall through: publish below using the same (still-broken) data;
+        # render_page fails soft per source already.
 
     html_out = tv.render_page(data, args.host_label)
 

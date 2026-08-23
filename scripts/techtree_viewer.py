@@ -1386,16 +1386,31 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
             input=input_text,
         )
     except subprocess.TimeoutExpired as exc:
-        # str(exc) on a TimeoutExpired can include output captured before
-        # the timeout fired -- for the contents-PUT call that's the
-        # base64-encoded page body being sent as input, which would bloat
-        # this into pointless (if bounded -- callers truncate to 300 chars)
-        # journal noise (issue #27 review round 3, note N9). Report only
-        # that it timed out, never str(exc).
-        subcommand = args[0] if args else ''
+        # NOT str(exc): TimeoutExpired.__str__ is just "Command '%s' timed
+        # out after %s seconds" -- it never includes output/stderr, so that
+        # isn't the leak. The real leak is exc.cmd, which is the full argv
+        # list passed to subprocess.run(['gh'] + args, ...): for the
+        # contents-PUT call, args contains '-f content=<base64 page body>'
+        # as a single element (issue #27 review round 4, item D correcting
+        # round 3's note N9), so str(exc.cmd) -- or str(exc) if Python ever
+        # changes to include cmd -- would dump the whole base64 payload as
+        # journal noise. Build the message from a known-short piece of args
+        # instead of ever touching exc.cmd or str(exc).
+        #
+        # args[0] is always 'api' here (every caller in publish_to_pages
+        # invokes _gh(['api', ...])), so reporting args[0] alone can never
+        # distinguish which of the several `gh api` calls in one
+        # publish_to_pages run timed out (issue #27 review round 4, item
+        # G). Report the endpoint instead: args[1], or args[3] when a
+        # leading '-X <verb>' flag pair pushes the endpoint back one slot
+        # (the POST/PUT calls above).
+        rest = args[1:]
+        if rest[:1] == ['-X']:
+            rest = rest[2:]
+        endpoint = rest[0] if rest else (args[0] if args else '')
         return subprocess.CompletedProcess(
             args=['gh'] + args, returncode=1, stdout='',
-            stderr=f'{exc.__class__.__name__}: gh {subcommand} timed out',
+            stderr=f'{exc.__class__.__name__}: gh api {endpoint} timed out',
         )
     except (subprocess.SubprocessError, OSError) as exc:
         return subprocess.CompletedProcess(

@@ -356,6 +356,49 @@ def test_gh_timeout_returns_nonzero_instead_of_raising(monkeypatch: pytest.Monke
     assert result.returncode != 0
 
 
+def test_gh_timeout_does_not_leak_payload_from_exc_cmd(monkeypatch: pytest.MonkeyPatch) -> None:
+    """N9 (issue #27 review round 3) claimed the leak path was str(exc)
+    including captured output; item D (round 4) found that's wrong --
+    TimeoutExpired.__str__ never includes output/stderr, so the tests
+    above using a short cmd='gh' string can never exercise the real leak
+    path, which is exc.cmd being the full argv list (item D/N9, round 4).
+    Use a list-shaped cmd carrying a base64-sized payload, as the contents
+    PUT call's argv actually would, and confirm it never reaches stderr."""
+    payload = 'A' * 100
+    args = ['api', '-X', 'PUT', 'repos/foo/bar/contents/index.html',
+            '-f', f'content={payload}']
+
+    def _raise_timeout(*a, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=['gh'] + args, timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    result = tv._gh(args)  # must not raise
+
+    assert result.returncode != 0
+    assert payload not in result.stderr
+
+
+def test_gh_timeout_message_identifies_the_failing_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Item G (issue #27 review round 4): args[0] is always 'api' for
+    every _gh call in publish_to_pages, so a timeout message built from
+    args[0] alone ("gh api timed out") can never say which of the several
+    `gh api` calls in one run actually hung. The message must name the
+    endpoint instead -- args[1] normally, or the slot after a leading
+    '-X <verb>' pair for the POST/PUT calls."""
+    def _raise_timeout(*a, **kwargs):
+        raise subprocess.TimeoutExpired(cmd='gh', timeout=60)
+
+    monkeypatch.setattr(subprocess, 'run', _raise_timeout)
+
+    plain = tv._gh(['api', 'repos/foo/bar/branches/gh-pages'])
+    assert 'repos/foo/bar/branches/gh-pages' in plain.stderr
+
+    posted = tv._gh(['api', '-X', 'POST', 'repos/foo/bar/git/refs', '-f', 'ref=x'])
+    assert 'repos/foo/bar/git/refs' in posted.stderr
+    assert 'gh api -X timed out' not in posted.stderr
+
+
 def test_gh_missing_binary_returns_nonzero_instead_of_raising(monkeypatch: pytest.MonkeyPatch) -> None:
     def _raise_not_found(*args, **kwargs):
         raise FileNotFoundError('gh: command not found')

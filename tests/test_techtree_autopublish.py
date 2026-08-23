@@ -93,6 +93,30 @@ def test_should_publish_when_never_published_before() -> None:
     assert publish is True
 
 
+# --- item I (issue #27 review round 4): $STATE_DIRECTORY may become -------
+# --- colon-separated if a second directory name is ever added -------------
+
+def test_first_state_directory_takes_single_path_unchanged() -> None:
+    """Today's only real case: one StateDirectory= name, no colon."""
+    assert ap._first_state_directory('/var/lib/eeebot-techtree') == '/var/lib/eeebot-techtree'
+
+
+def test_first_state_directory_takes_first_segment_of_colon_joined_value() -> None:
+    """man/systemd.exec.xml (v252): if a unit's StateDirectory= ever lists
+    more than one name, $STATE_DIRECTORY becomes colon-separated. Must not
+    silently become Path("/var/lib/a:/var/lib/b") -- take the first."""
+    joined = '/var/lib/eeebot-techtree:/var/lib/something-else'
+    assert ap._first_state_directory(joined) == '/var/lib/eeebot-techtree'
+
+
+def test_parse_args_state_dir_defaults_to_first_segment_of_env_var(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv('STATE_DIRECTORY', '/var/lib/eeebot-techtree:/var/lib/other')
+    args = ap.parse_args([])
+    assert args.state_dir == '/var/lib/eeebot-techtree'
+
+
 # --- state file persistence (acceptance tests 4, 5) -------------------------
 
 def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
@@ -100,13 +124,13 @@ def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'abc123', 'published_at': 12345.0}
+    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None}
 
 
 def test_load_publish_state_missing_file_reads_as_never_published(tmp_path: Path) -> None:
     state_dir = tmp_path / 'does-not-exist-yet'
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': None, 'published_at': None}
+    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None}
 
 
 def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
@@ -122,7 +146,7 @@ def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
     stray.write_text('{"digest": "half-written', encoding='utf-8')  # deliberately truncated/invalid JSON
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'good', 'published_at': 500.0}
+    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None}
 
 
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -140,7 +164,7 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     rc = ap.run(args)
 
     assert rc != 0
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None}
 
 
 def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -179,7 +203,7 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None}
 
 
 def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
@@ -232,7 +256,15 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
     differ from before (so the digest changes and a naive gate would
     publish), but json.load on it fails, so read_local_state reports
     evolution_tree=None. The autopublisher must refuse -- return non-zero,
-    never call publish_to_pages, and never record the bad digest."""
+    never call publish_to_pages, and never record the bad digest.
+
+    It IS allowed (issue #27 review round 4, item A) to record that a
+    refusal streak has started -- refusing_since -- since that is what the
+    freeze-on-a-persistent-refusal fix needs to eventually stop refusing.
+    The invariant this test actually cares about is narrower than the
+    original docstring/title suggest: the last known-good digest and
+    published_at must survive untouched across a refusal, not that the
+    state file is never written to at all."""
     root = tmp_path / 'state'
     _write_state_root(root)
     state_dir = tmp_path / 'techtree-state'
@@ -254,7 +286,10 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
 
     assert rc != 0
     assert called == []  # publish_to_pages must never be called
-    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest
+    assert state['published_at'] == 1000.0
+    assert state['refusing_since'] is not None  # streak start recorded
 
 
 def test_missing_tree_source_file_still_publishes(
@@ -293,15 +328,23 @@ def test_missing_tree_source_file_still_publishes(
 
 
 def test_present_but_truncated_hypotheses_file_still_refuses_to_publish(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The flip side of the missing-file case above (issue #27 review
     round 3, blocker BL1): a source file that IS present on disk but fails
     to parse must still refuse to publish, exactly like the existing torn
-    evolution_tree case, but exercised against a different source file to
-    confirm the presence check (not just the parse-failure check) is keyed
-    correctly per file rather than incidentally passing for only one of
-    the three sources."""
+    evolution_tree case, but exercised against a different source file.
+
+    A truncated hypotheses/lifecycle.json alone does not distinguish
+    per-file keying from a cruder "some source is None" check, since that
+    cruder check would also refuse here (issue #27 review round 4, item
+    E) -- a single-file case like this cannot support a "keyed correctly
+    per file" claim by itself. So this also makes portfolio.json ABSENT
+    (not truncated) in the same run and asserts on the printed reason
+    naming hypotheses specifically: that combination only passes when the
+    guard (a) does not refuse merely because portfolio.json is missing,
+    and (b) correctly attributes the refusal to hypotheses rather than to
+    whichever source happens to come first."""
     root = tmp_path / 'state'
     _write_state_root(root)
     state_dir = tmp_path / 'techtree-state'
@@ -312,6 +355,9 @@ def test_present_but_truncated_hypotheses_file_still_refuses_to_publish(
     # Present on disk, different raw bytes (digest changes), but not valid
     # JSON (parse fails) -- simulates a source caught mid-write.
     (root / 'hypotheses/lifecycle.json').write_text('{"entries": {"h1"', encoding='utf-8')
+    # Legitimately absent, paired in the same run -- must NOT itself cause
+    # a refusal, and must not be misattributed as the failing source.
+    (root / 'tech_tree/portfolio.json').unlink()
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called = []
@@ -322,7 +368,13 @@ def test_present_but_truncated_hypotheses_file_still_refuses_to_publish(
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest
+    assert state['published_at'] == 1000.0
+    stderr = capsys.readouterr().err
+    assert 'hypotheses' in stderr
+    assert 'lifecycle.json' in stderr
+    assert 'portfolio' not in stderr
 
 
 # --- note N4: a present source that parses to a non-dict must also refuse --
@@ -353,7 +405,134 @@ def test_present_source_parsing_to_non_dict_refuses_to_publish(
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': good_digest, 'published_at': 1000.0}
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest
+    assert state['published_at'] == 1000.0
+
+
+# --- item A (issue #27 review round 4): a persistent refusal must not -----
+# --- freeze the page forever -----------------------------------------------
+
+def test_refusal_then_recovery_clears_refusing_since(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Round-trips an actual refuse-then-recover cycle through run() twice.
+    First cycle: the source is torn, so run() must refuse and record when
+    the refusal streak started (without touching the last known-good
+    digest/published_at). Second cycle: the source has recovered (parses
+    again), so run() must publish normally and clear refusing_since --
+    the guard must not keep treating a since-recovered source as if it
+    were still broken."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+
+    (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')  # torn
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+
+    rc = ap.run(args)  # cycle 1: still torn -- must refuse
+    assert rc != 0
+    assert called == []
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest  # last known-good digest untouched
+    assert state['published_at'] == 1000.0
+    assert state['refusing_since'] is not None  # streak start recorded
+
+    (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nodes": {}}', encoding='utf-8')  # recovered
+
+    rc = ap.run(args)  # cycle 2: source parses again -- must publish
+    assert rc == 0
+    assert len(called) == 1
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == ap.compute_tree_digest(root)
+    assert state['published_at'] is not None
+    assert state['refusing_since'] is None  # streak cleared by the recovery
+
+
+def test_refusal_past_freeze_limit_publishes_fail_soft_page(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    """Once a refusal streak has persisted beyond REFUSAL_FREEZE_MULTIPLE x
+    the staleness floor, run() must give up on refusing -- even though the
+    source is STILL torn -- and publish the fail-soft "source unavailable"
+    page instead of freezing the public page forever. Uses a tiny staleness
+    floor and a refusing_since far in the past so the limit is already
+    exceeded without any real waiting."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    long_ago = time.time() - 999_999.0
+    ap.save_publish_state(
+        state_dir, digest=good_digest, published_at=1000.0, refusing_since=long_ago,
+    )
+
+    (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')  # still torn
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    published: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: published.append(html_out) or 0)
+
+    args = ap.parse_args([
+        '--state-root', str(root), '--state-dir', str(state_dir),
+        '--staleness-floor-hours', '0.0001',  # ~0.36s floor -> ~0.72s freeze limit
+    ])
+    rc = ap.run(args)
+
+    assert rc == 0  # gives up refusing and actually publishes
+    assert len(published) == 1
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == ap.compute_tree_digest(root)  # the still-broken current digest
+    assert state['published_at'] is not None
+    assert state['refusing_since'] is None  # streak cleared once it publishes
+    stderr = capsys.readouterr().err
+    assert 'unavailable' in stderr.lower() or 'fail-soft' in stderr.lower()
+
+
+def test_refusal_within_freeze_limit_still_refuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The counterpart to the above: a refusal streak that has NOT yet
+    exceeded REFUSAL_FREEZE_MULTIPLE x the staleness floor must still
+    refuse as before -- the freeze-on-persistent-refusal fallback is a
+    bounded grace period, not an immediate override."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    just_started = time.time()
+    ap.save_publish_state(
+        state_dir, digest=good_digest, published_at=1000.0, refusing_since=just_started,
+    )
+
+    (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')  # still torn
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args([
+        '--state-root', str(root), '--state-dir', str(state_dir),
+        '--staleness-floor-hours', '6',  # generous floor -> streak nowhere near the limit
+    ])
+    rc = ap.run(args)
+
+    assert rc != 0
+    assert called == []
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest
+    assert state['published_at'] == 1000.0
+    assert state['refusing_since'] == just_started  # streak start left unchanged
 
 
 # --- blocker B4: a state-write failure must be loud, not silent -----------

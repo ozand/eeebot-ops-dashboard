@@ -80,15 +80,26 @@ run systemctl daemon-reload
 #    that it is a system-scope unit our system-scope drop-in (step 4) can
 #    even attach to -- an absent or --user-only bridge unit would leave the
 #    drop-in permanently inert with no error anywhere.
-#    Skipped entirely under --dry-run (issue #27 review round 3, note N6):
-#    step 4 above (drop-in install + daemon-reload) is itself skipped on a
-#    dry run, so systemd could never see the trigger as live regardless of
-#    the host's real state -- running this check on a dry run would print
-#    an alarming "trigger not live" WARNING on every first-time --dry-run
-#    invocation, even on a host where a real (non-dry) run would succeed.
+#    This check has two independent halves (issue #27 review round 4, item
+#    H, correcting round 3's note N6): whether the bridge unit exists AT
+#    ALL as a system-scope unit (a plain, read-only `systemctl cat`) does
+#    NOT depend on step 4 above, and it is the single most valuable
+#    pre-flight fact here -- a --user-only or absent bridge is exactly the
+#    permanently-inert-drop-in failure mode blocker B8 exists to catch, and
+#    it is just as true (or false) before step 4 runs as after. Only the
+#    OnSuccess= verdict (does the bridge's OnSuccess= list this publisher)
+#    genuinely depends on step 4 (the drop-in install + daemon-reload that
+#    is itself skipped on a dry run), since that value can't reflect a
+#    drop-in that was never installed. So: run the existence probe
+#    unconditionally, and gate only the OnSuccess= check on DRY_RUN==0.
 BRIDGE_UNIT=eeepc-self-evolving-subagent-bridge.service
+BRIDGE_EXISTS=0
+if systemctl cat "$BRIDGE_UNIT" >/dev/null 2>&1; then
+  BRIDGE_EXISTS=1
+fi
+
 TRIGGER_LIVE=0
-if [[ "$DRY_RUN" == "0" ]] && systemctl cat "$BRIDGE_UNIT" >/dev/null 2>&1; then
+if [[ "$DRY_RUN" == "0" && "$BRIDGE_EXISTS" == "1" ]]; then
   ONSUCCESS_VALUE="$(systemctl show -p OnSuccess --value "$BRIDGE_UNIT" 2>/dev/null || true)"
   case " $ONSUCCESS_VALUE " in
     *" eeebot-techtree-publish.service "*) TRIGGER_LIVE=1 ;;
@@ -115,15 +126,32 @@ into a script or commit it anywhere):
 EOF
 
 if [[ "$DRY_RUN" == "1" ]]; then
-  cat <<EOF
+  if [[ "$BRIDGE_EXISTS" == "1" ]]; then
+    cat <<EOF
 
-[dry-run] Trigger-live check skipped: step 4 (drop-in install +
-daemon-reload) was not actually performed on a dry run, so this check
-cannot say anything meaningful about it. Re-run without --dry-run, then
-check with:
-  systemctl cat $BRIDGE_UNIT
+[dry-run] $BRIDGE_UNIT exists as a system-scope unit on this host, so
+this drop-in will be able to attach to it -- checked with a read-only
+\`systemctl cat $BRIDGE_UNIT\`, which does not depend on step 4 and is
+accurate even on a dry run. What this check canNOT say yet is whether
+$BRIDGE_UNIT's OnSuccess= actually lists eeebot-techtree-publish.service:
+step 4 (drop-in install + daemon-reload) was not actually performed on a
+dry run, so that verdict would not reflect a drop-in that was never
+installed. Re-run without --dry-run, then confirm with:
   systemctl show -p OnSuccess $BRIDGE_UNIT
 EOF
+  else
+    cat <<EOF
+
+[dry-run] WARNING: $BRIDGE_UNIT does NOT exist as a system-scope unit on
+this host -- checked with a read-only \`systemctl cat $BRIDGE_UNIT\`,
+which does not depend on step 4 and is accurate even on a dry run. It may
+exist only as a \`systemctl --user\` unit, which this system-scope drop-in
+cannot attach to at all (the original blocker B8). If that is not fixed
+before the real run, the drop-in installed in step 4 will be permanently
+inert with no error anywhere. Check by hand with:
+  systemctl cat $BRIDGE_UNIT
+EOF
+  fi
 elif [[ "$TRIGGER_LIVE" == "1" ]]; then
   cat <<EOF
 
