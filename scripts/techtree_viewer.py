@@ -1386,16 +1386,18 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
             input=input_text,
         )
     except subprocess.TimeoutExpired as exc:
-        # NOT str(exc): TimeoutExpired.__str__ is just "Command '%s' timed
-        # out after %s seconds" -- it never includes output/stderr, so that
-        # isn't the leak. The real leak is exc.cmd, which is the full argv
-        # list passed to subprocess.run(['gh'] + args, ...): for the
-        # contents-PUT call, args contains '-f content=<base64 page body>'
-        # as a single element (issue #27 review round 4, item D correcting
-        # round 3's note N9), so str(exc.cmd) -- or str(exc) if Python ever
-        # changes to include cmd -- would dump the whole base64 payload as
-        # journal noise. Build the message from a known-short piece of args
-        # instead of ever touching exc.cmd or str(exc).
+        # Touch neither str(exc) nor exc.cmd. TimeoutExpired.__str__ is
+        # "Command '%s' timed out after %s seconds" % (self.cmd, self.timeout)
+        # -- so it does not include output/stderr, but the FIRST %s is cmd,
+        # i.e. str(exc) already interpolates the whole argv list today. This
+        # comment said the opposite for one round (issue #27 review: round 3
+        # blamed captured output, round 4 corrected the mechanism to exc.cmd
+        # but then wrongly absolved str(exc); round 5 caught that). Both leak.
+        #
+        # What leaks: subprocess.run is called as ['gh'] + args, and for the
+        # contents-PUT call args carries '-f content=<base64 page body>' as a
+        # single element. So either path would dump the whole page into the
+        # journal. Build the message from a known-short slice of args instead.
         #
         # args[0] is always 'api' here (every caller in publish_to_pages
         # invokes _gh(['api', ...])), so reporting args[0] alone can never

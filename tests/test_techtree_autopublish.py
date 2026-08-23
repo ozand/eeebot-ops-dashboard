@@ -535,6 +535,50 @@ def test_refusal_within_freeze_limit_still_refuses(
     assert state['refusing_since'] == just_started  # streak start left unchanged
 
 
+def test_zero_staleness_floor_does_not_defeat_the_torn_source_guard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #27 review round 4, finding 2: freeze_limit is
+    REFUSAL_FREEZE_MULTIPLE x the staleness floor, so `--staleness-floor-hours
+    0` made it 0, and `refusal_age >= 0` was true on the FIRST refusing cycle
+    -- the escape fired immediately and published a degraded page over a good
+    one on the very first torn read, defeating the guard it exists to bound.
+    A non-positive limit must mean "no escape"."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    ap.save_publish_state(
+        state_dir, digest=ap.compute_tree_digest(root), published_at=1000.0,
+    )
+    (root / 'evolution/tree.json').write_text(
+        '{"current_sha": "b", "nod', encoding='utf-8',
+    )  # torn
+
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args([
+        '--state-root', str(root), '--state-dir', str(state_dir),
+        '--staleness-floor-hours', '0',
+    ])
+    assert ap.run(args) != 0
+    assert called == []
+
+
+def test_first_state_directory_falls_back_when_the_segment_is_empty() -> None:
+    """An unset variable or a leading colon yields '', which as a Path is
+    the working directory -- state written next to wherever the publisher
+    happened to be invoked from. systemd cannot produce that (a
+    StateDirectory= name cannot be empty) but a hand-run shell can."""
+    assert ap._first_state_directory('') == ap.DEFAULT_STATE_DIR
+    assert ap._first_state_directory(':/var/lib/b') == ap.DEFAULT_STATE_DIR
+    assert ap._first_state_directory('/var/lib/a:/var/lib/b') == '/var/lib/a'
+    assert ap._first_state_directory('/var/lib/a:') == '/var/lib/a'
+    assert ap._first_state_directory('/var/lib/only') == '/var/lib/only'
+
+
 # --- blocker B4: a state-write failure must be loud, not silent -----------
 
 def test_save_publish_state_failure_is_logged_loudly(

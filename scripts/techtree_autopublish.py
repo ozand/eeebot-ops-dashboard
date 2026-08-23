@@ -187,7 +187,7 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
 
 
 def save_publish_state(
-    state_dir: Path, digest: str, published_at: float,
+    state_dir: Path, digest: str | None, published_at: float | None,
     refusing_since: float | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
@@ -278,8 +278,14 @@ def _first_state_directory(value: str) -> str:
     rather than at either real directory. Take only the first
     colon-separated segment so that failure mode can't reoccur silently;
     a single-directory STATE_DIRECTORY (today's only case) is unaffected,
-    since split(':', 1)[0] on a string with no colon is the whole string."""
-    return value.split(':', 1)[0]
+    since split(':', 1)[0] on a string with no colon is the whole string.
+
+    Falls back to the caller's default when the first segment is empty (an
+    unset variable, or a leading colon): '' would become Path('.') and write
+    state into the working directory, which is worse than not honouring the
+    variable at all. systemd cannot produce that -- StateDirectory= names
+    cannot be empty -- but a hand-run shell can."""
+    return value.split(':', 1)[0] or DEFAULT_STATE_DIR
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -336,7 +342,15 @@ def _refusal_freeze_status(
         refusing_since = now
     refusal_age = now - refusing_since
     freeze_limit = REFUSAL_FREEZE_MULTIPLE * staleness_floor_seconds
-    return refusing_since, refusal_age, freeze_limit, refusal_age >= freeze_limit
+    # freeze_limit > 0 guard (issue #27 review round 4, finding 2): with
+    # --staleness-floor-hours 0 the limit is 0 and `refusal_age >= 0` is true
+    # on the FIRST refusing cycle, so the escape fires immediately and the
+    # torn-source guard it is meant to bound is defeated outright -- a
+    # degraded page published over a good one on the very first torn read.
+    # Nothing shipped passes that flag, but a manual force-publish run would.
+    # A non-positive limit means "no escape", which is the safe reading.
+    past_limit = freeze_limit > 0 and refusal_age >= freeze_limit
+    return refusing_since, refusal_age, freeze_limit, past_limit
 
 
 def run(args: argparse.Namespace) -> int:
