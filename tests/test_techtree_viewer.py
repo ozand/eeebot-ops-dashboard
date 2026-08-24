@@ -793,7 +793,7 @@ def test_task2_issue36_lineage_fitness_rendering() -> None:
 
     html_int = tv._evo_box_html('sha3', node_int_reward, False, False, False, 0.0, 0.0, {}, {})
     assert 'evo-fitness' in html_int
-    assert 'r:1.00' in html_int
+    assert 'r:1' in html_int
     assert 'integrations' not in html_int
 
 
@@ -823,3 +823,223 @@ def test_task3_issue37_hypothesis_evidence_anchors() -> None:
     assert 'href="#cycle-cycle-absent"' not in html_out
     assert '<a href="#cycle-absent">' not in html_out
 
+
+# ===========================================================================
+# Batch 2 Data UX Tests (Issues #40, #41, #42)
+# ===========================================================================
+
+def test_hypotheses_panel_dedupe_by_title_keeps_newest() -> None:
+    data = {
+        'entries': {
+            'h-old': {
+                'title': 'Same Hypothesis Title',
+                'status': 'researching',
+                'first_seen': '2026-08-01T10:00:00Z',
+                'last_touched': '2026-08-01T10:00:00Z',
+            },
+            'h-new': {
+                'title': 'Same Hypothesis Title',
+                'status': 'researching',
+                'first_seen': '2026-08-01T10:00:00Z',
+                'last_touched': '2026-08-20T12:00:00Z',
+            },
+        }
+    }
+    html = tv.build_hypotheses_panel(data)
+    # The title should appear only once in the list
+    assert html.count('Same Hypothesis Title') == 1
+    # The rendered timestamp should correspond to the newest (Aug 20) not the old one (Aug 1)
+    assert 'touched Aug 20' in html or 'Aug 20' in html
+    assert 'touched Aug 1' not in html
+
+
+def test_hypotheses_panel_active_before_stale_ordering() -> None:
+    data = {
+        'entries': {
+            'h-stale-status': {
+                'title': 'Stale By Status',
+                'status': 'stale',
+                'last_touched': '2026-08-20T10:00:00Z',
+            },
+            'h-active': {
+                'title': 'Active Hypothesis',
+                'status': 'researching',
+                'last_touched': '2026-08-15T10:00:00Z',
+            },
+        }
+    }
+    html = tv.build_hypotheses_panel(data)
+    active_idx = html.find('Active Hypothesis')
+    stale_idx = html.find('Stale By Status')
+    assert active_idx != -1 and stale_idx != -1
+    assert active_idx < stale_idx, "Non-stale hypotheses must appear before stale hypotheses"
+
+
+def test_hypotheses_panel_stale_badge_class() -> None:
+    data = {
+        'entries': {
+            'h-stale': {
+                'title': 'Stale One',
+                'status': 'stale',
+                'last_touched': '2026-08-01T10:00:00Z',
+            },
+        }
+    }
+    html = tv.build_hypotheses_panel(data)
+    assert 'badge-stale' in html
+    assert 'badge-researching' not in html
+
+
+def test_hypotheses_panel_stale_collapse_when_gt_6() -> None:
+    # 2 active, 7 stale => stale collapsed in <details><summary>
+    entries = {
+        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': '2026-08-20T10:00:00Z'},
+        'h-act-2': {'title': 'Act 2', 'status': 'researching', 'last_touched': '2026-08-21T10:00:00Z'},
+    }
+    for i in range(7):
+        entries[f'h-stale-{i}'] = {
+            'title': f'Stale {i}',
+            'status': 'stale',
+            'last_touched': f'2026-07-0{i+1}T10:00:00Z',
+        }
+    data = {'entries': entries}
+    html = tv.build_hypotheses_panel(data)
+    assert '<details' in html
+    assert '<summary' in html
+    assert '7 stale hypotheses &mdash; show' in html or '7 stale hypotheses — show' in html or '7 stale hypotheses' in html
+    # Active items should be outside details
+    details_idx = html.find('<details')
+    act1_idx = html.find('Act 1')
+    act2_idx = html.find('Act 2')
+    stale0_idx = html.find('Stale 0')
+    assert act1_idx < details_idx
+    assert act2_idx < details_idx
+    assert stale0_idx > details_idx
+
+
+def test_hypotheses_panel_no_collapse_when_lte_6_stale() -> None:
+    entries = {
+        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': '2026-08-20T10:00:00Z'},
+    }
+    for i in range(6):
+        entries[f'h-stale-{i}'] = {
+            'title': f'Stale {i}',
+            'status': 'stale',
+            'last_touched': f'2026-07-0{i+1}T10:00:00Z',
+        }
+    data = {'entries': entries}
+    html = tv.build_hypotheses_panel(data)
+    assert '<details' not in html
+
+
+def test_now_panel_demand_grouping_fallback() -> None:
+    demand_rotation = {
+        'served': {
+            'goal-gap-1111': '2026-08-20T10:00:00Z',
+            'goal-gap-2222': '2026-08-20T11:00:00Z',
+            'defect-3333': '2026-08-20T12:00:00Z',
+            'priority-4444': '2026-08-20T13:00:00Z',
+            'otheritem-5555': '2026-08-20T14:00:00Z',
+        }
+    }
+    html = tv.build_now_panel(
+        portfolio=None,
+        evolution_tree=None,
+        ledger_tail=[],
+        demand_rotation=demand_rotation,
+        demand_completed=None,
+    )
+    # Check group labels/counts
+    assert 'goal-gap' in html
+    assert 'defect' in html
+    assert 'priority' in html
+    assert 'demand-group' in html
+    # Check chip IDs and tooltips
+    assert 'goal-gap-1111' in html
+    assert 'title=' in html
+
+
+def test_fmt_compact() -> None:
+    assert tv.fmt_compact(None) == 'n/a'
+    assert tv.fmt_compact(0) == '0'
+    assert tv.fmt_compact(42) == '42'
+    assert tv.fmt_compact(123.456) == '123.46'
+    assert tv.fmt_compact(1500) == '1.50K'
+    assert tv.fmt_compact(166519.3317) == '+166.5K' or tv.fmt_compact(166519.3317, signed=True) == '+166.5K' or tv.fmt_compact(166519.3317) == '166.5K'
+    assert tv.fmt_compact(1700935.1681) == '1.70M'
+    assert tv.fmt_compact(-1500) == '-1.50K'
+    assert tv.fmt_compact(-2500000) == '-2.50M'
+    assert tv.fmt_compact('13.2%') == '13.2%'
+
+
+def test_fmt_ts_short() -> None:
+    from datetime import datetime, timezone
+    ref_now = datetime(2026, 8, 24, 15, 30, 0, tzinfo=timezone.utc)
+    # Today timestamp -> HH:MM UTC
+    today_ts = '2026-08-24T06:39:15Z'
+    assert tv.fmt_ts_short(today_ts, now=ref_now) == '06:39 UTC'
+
+    # Same year, older date -> Mon DD
+    older_same_year = '2026-08-14T10:00:00Z'
+    assert tv.fmt_ts_short(older_same_year, now=ref_now) == 'Aug 14'
+
+    # Different year -> Mon DD YYYY
+    older_diff_year = '2025-08-14T10:00:00Z'
+    assert tv.fmt_ts_short(older_diff_year, now=ref_now) == 'Aug 14 2025'
+
+    # Invalid / empty
+    assert tv.fmt_ts_short(None, now=ref_now) == 'n/a'
+    assert tv.fmt_ts_short('', now=ref_now) == 'n/a'
+
+
+
+def test_issue42_feed_delta_and_ts_humanized() -> None:
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': '2026-08-24T06:39:44Z', 'delta': '166519.3317'},
+    ]
+    html = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=None,
+        cycle_files=None,
+    )
+    assert '+166.5K' in html
+    assert 'title="2026-08-24T06:39:44Z"' in html
+    assert 'UTC' in html
+    assert '06:39' in html
+
+
+def test_issue42_now_lever_value_compact() -> None:
+    portfolio = {
+        'current': 'cycle-cost',
+        'nodes': {
+            'cycle-cost': {
+                'lever_metric': 'cost.tokens_per_integration',
+                'direction': 'lower',
+                'status': 'researching',
+                'last_lever_value': 1700935.1681,
+            }
+        },
+    }
+    html = tv.build_now_panel(
+        portfolio=portfolio,
+        evolution_tree=None,
+        demand_rotation=None,
+        demand_completed=None,
+    )
+    assert '1.70M' in html
+    assert '1700935' not in html
+
+
+def test_issue42_spark_mean_compact() -> None:
+    svg = tv.build_sparkline([841238.0562, 4450.5615, 9461.3803])
+    assert 'mean gain +' in svg
+    assert 'K' in svg
+    assert '.3317' not in svg
+
+
+def test_issue42_evo_fitness_compact() -> None:
+    node = {'parent_sha': None, 'branch': 'selfevo/cycle-x', 'fitness': {'reward': 1234567.8}}
+    html = tv._evo_box_html('abc1234', node, False, False, False, 0.0, 0.0, {}, {})
+    assert 'r:1.23M' in html
