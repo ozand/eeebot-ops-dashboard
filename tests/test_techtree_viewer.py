@@ -409,9 +409,10 @@ def test_evo_box_html_labels_and_none_handling() -> None:
         'fitness': {'reward': None, 'integrations': None},
     }
     html_none = tv._evo_box_html('sha1', node_none, is_current=False, is_abandoned=False, switch_marked=False, x=10.0, y=20.0, portfolio={}, task_titles={})
+    assert 'evo-fitness' not in html_none
     assert 'r:None' not in html_none
-    assert 'r:—' in html_none
-    assert 'integrations:' not in html_none
+    assert 'r:—' not in html_none
+    assert 'integrations' not in html_none
     assert 'int:' not in html_none
 
     node_values = {
@@ -420,8 +421,9 @@ def test_evo_box_html_labels_and_none_handling() -> None:
         'fitness': {'reward': 0.85, 'integrations': 3},
     }
     html_values = tv._evo_box_html('sha2', node_values, is_current=False, is_abandoned=False, switch_marked=False, x=10.0, y=20.0, portfolio={}, task_titles={})
+    assert 'evo-fitness' in html_values
     assert 'r:0.85' in html_values
-    assert 'integrations:3' in html_values
+    assert 'integrations' not in html_values
     assert 'int:3' not in html_values
 
 
@@ -715,3 +717,109 @@ def test_publish_to_pages_returns_one_when_gh_raises(monkeypatch: pytest.MonkeyP
     rc = tv.publish_to_pages('<html></html>')  # must not raise
 
     assert rc == 1
+
+
+# --- Tests for Batch 1 fixes (issues #35, #36, #37) -------------------------
+
+def test_task1_issue35_cycle_feed_partial_and_reasons() -> None:
+    # Cycles without titles (non-integrated / partial / gate-blocked / proposer_reject / idle)
+    ledger_tail = [
+        {'phase': 'started', 'cycle_id': 'cycle-idle-1', 'ts': '2026-08-16T00:00:00Z'},
+        {'phase': 'idle', 'cycle_id': 'cycle-idle-1', 'reason': 'no demand', 'ts': '2026-08-16T00:00:10Z'},
+
+        {'phase': 'started', 'cycle_id': 'cycle-reject-1', 'ts': '2026-08-16T01:00:00Z'},
+        {'phase': 'proposer_reject', 'cycle_id': 'cycle-reject-1', 'reason': 'self_dedup', 'ts': '2026-08-16T01:00:20Z'},
+
+        {'phase': 'started', 'cycle_id': 'cycle-gate-1', 'ts': '2026-08-16T02:00:00Z'},
+        {'phase': 'gate', 'cycle_id': 'cycle-gate-1', 'gate': 'smoke_test', 'status': 'fail', 'reason': 'blocked_by_smoke', 'ts': '2026-08-16T02:00:30Z'},
+
+        {'phase': 'started', 'cycle_id': 'cycle-partial-1', 'ts': '2026-08-16T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-partial-1', 'status': 'partial', 'reason': 'step limit reached', 'ts': '2026-08-16T03:00:40Z'},
+
+        {'phase': 'started', 'cycle_id': 'cycle-running-1', 'ts': '2026-08-16T04:00:00Z'},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles={},  # No titles
+        evolution_tree=None,
+        cycle_files=None,
+    )
+
+    # Human-readable reasons derived and rendered in place of missing task title
+    assert 'idle: no demand' in html_out
+    assert 'rejected: self_dedup' in html_out
+    assert 'gate blocked: blocked_by_smoke' in html_out
+    assert 'partial: step limit reached' in html_out
+    assert 'in progress' in html_out
+
+    # Badge CSS class for PARTIAL must be badge-partial (not badge-researching)
+    assert 'badge-partial' in html_out
+    assert 'PARTIAL' in html_out
+
+    # Make sure PARTIAL does not use badge-researching
+    assert 'badge badge-researching">PARTIAL' not in html_out
+
+
+def test_task2_issue36_lineage_fitness_rendering() -> None:
+    node_no_fitness = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-none',
+    }
+    node_none_reward = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-none',
+        'fitness': {'reward': None, 'integrations': 104},
+    }
+    node_float_reward = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-values',
+        'fitness': {'reward': 0.8125, 'integrations': 50},
+    }
+    node_int_reward = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-int',
+        'fitness': {'reward': 1, 'integrations': 10},
+    }
+
+    assert 'evo-fitness' not in tv._evo_box_html('sha0', node_no_fitness, False, False, False, 0.0, 0.0, {}, {})
+    assert 'evo-fitness' not in tv._evo_box_html('sha1', node_none_reward, False, False, False, 0.0, 0.0, {}, {})
+    assert 'integrations' not in tv._evo_box_html('sha1', node_none_reward, False, False, False, 0.0, 0.0, {}, {})
+
+    html_float = tv._evo_box_html('sha2', node_float_reward, False, False, False, 0.0, 0.0, {}, {})
+    assert 'evo-fitness' in html_float
+    assert 'r:0.81' in html_float
+    assert 'integrations' not in html_float
+
+    html_int = tv._evo_box_html('sha3', node_int_reward, False, False, False, 0.0, 0.0, {}, {})
+    assert 'evo-fitness' in html_int
+    assert 'r:1.00' in html_int
+    assert 'integrations' not in html_int
+
+
+def test_task3_issue37_hypothesis_evidence_anchors() -> None:
+    hypotheses_lifecycle = {
+        'entries': {
+            'hyp-1': {
+                'title': 'Hypothesis with cycle in feed',
+                'status': 'answered',
+                'answered_evidence': 'cycle-present',
+            },
+            'hyp-2': {
+                'title': 'Hypothesis with cycle NOT in feed',
+                'status': 'answered',
+                'answered_evidence': 'cycle-absent',
+            },
+        },
+    }
+    feed_cycles = {'cycle-present'}
+
+    html_out = tv.build_hypotheses_panel(hypotheses_lifecycle, feed_cycles=feed_cycles)
+
+    # Present cycle gets a real link
+    assert '<a href="#cycle-cycle-present">cycle-present</a>' in html_out
+    # Absent cycle renders plain text, no <a> link
+    assert 'cycle-absent' in html_out
+    assert 'href="#cycle-cycle-absent"' not in html_out
+    assert '<a href="#cycle-absent">' not in html_out
+

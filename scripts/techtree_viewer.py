@@ -793,19 +793,9 @@ def _evo_box_html(
     fitness = node.get('fitness')
     fitness_line = ''
     if isinstance(fitness, dict):
-        parts = []
-        if 'reward' in fitness:
-            r = fitness.get('reward')
-            if isinstance(r, (int, float)):
-                parts.append(f'r:{r:.2f}')
-            else:
-                parts.append('r:—')
-        if 'integrations' in fitness:
-            ints = fitness.get('integrations')
-            if ints is not None:
-                parts.append(f'integrations:{ints}')
-        if parts:
-            fitness_line = f'<div class="evo-fitness">{" ".join(parts)}</div>'
+        r = fitness.get('reward')
+        if isinstance(r, (int, float)) and not isinstance(r, bool):
+            fitness_line = f'<div class="evo-fitness">r:{r:.2f}</div>'
 
     dir_badge = ''
     dir_name = node.get('direction') or node.get('research_direction')
@@ -1195,7 +1185,7 @@ def build_cycle_feed(
     # Take latest 50
     for cid, phases in reversed(cycle_items[-50:]):
         # Determine task title
-        title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', '')) or cid
+        title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', ''))
         
         # Outcome derivation from phases
         outcome_kind = 'in_progress'
@@ -1205,6 +1195,7 @@ def build_cycle_feed(
         files_changed = []
         metric_delta = ''
         ts_val = ''
+        derived_title = ''
 
         # Check demand and cycle_files for files_changed
         all_files: list[str] = []
@@ -1226,38 +1217,56 @@ def build_cycle_feed(
 
         files_changed = all_files
 
-        # Scan phases
+        # Scan phases for most decisive outcome and reason
+        # Precedence: outcome > gate fail > proposer_reject > dedup > idle > started
+        gate_fail_reason = ''
+        reject_reason = ''
+        dedup_reason = ''
+        idle_reason = ''
+        started_seen = False
+        outcome_status = None
+        outcome_reason = ''
+
         for p in phases:
             if not ts_val and p.get('ts'):
                 ts_val = str(p.get('ts'))
             phase_name = p.get('phase')
             if phase_name == 'started':
-                pass
+                started_seen = True
             elif phase_name == 'gate':
                 gate_passed = p.get('passed') or p.get('status') == 'passed' or p.get('smoke_passed')
-                if not gate_passed and p.get('reason'):
+                if not gate_passed:
                     outcome_kind = 'gate_blocked'
-                    reason = str(p.get('reason'))
+                    gate_fail_reason = str(p.get('reason') or 'blocked')
+                    reason = gate_fail_reason
             elif phase_name == 'proposer_reject':
                 outcome_kind = 'rejected'
-                reason = str(p.get('reason') or 'proposer reject')
+                reject_reason = str(p.get('reason') or 'proposer reject')
+                reason = reject_reason
             elif phase_name == 'dedup':
                 if p.get('duplicate') or p.get('status') == 'duplicate':
                     outcome_kind = 'rejected'
-                    reason = str(p.get('reason') or 'duplicate')
+                    dedup_reason = str(p.get('reason') or 'duplicate')
+                    reason = dedup_reason
             elif phase_name == 'idle':
                 outcome_kind = 'idle'
-                reason = str(p.get('reason') or 'no demand')
+                idle_reason = str(p.get('reason') or 'no demand')
+                reason = idle_reason
             elif phase_name == 'outcome':
-                status = p.get('status') or (p.get('outcome') if isinstance(p.get('outcome'), str) else None)
-                if status in ('success', 'integrated'):
+                st = p.get('status') or (p.get('outcome') if isinstance(p.get('outcome'), str) else None)
+                outcome_status = st
+                if st in ('success', 'integrated'):
                     outcome_kind = 'integrated'
-                elif status in ('fail', 'failed'):
+                elif st in ('fail', 'failed'):
                     outcome_kind = 'failed'
                     if p.get('reason'):
-                        reason = str(p.get('reason'))
-                elif status == 'partial':
+                        outcome_reason = str(p.get('reason'))
+                        reason = outcome_reason
+                elif st == 'partial':
                     outcome_kind = 'partial'
+                    if p.get('reason'):
+                        outcome_reason = str(p.get('reason'))
+                        reason = outcome_reason
                 if p.get('delta') is not None:
                     metric_delta = str(p.get('delta'))
                 elif p.get('metric_delta') is not None:
@@ -1287,8 +1296,26 @@ def build_cycle_feed(
             badge_class = 'badge-available'
             outcome_label = f'IDLE{(": " + reason) if reason else ""}'
         elif outcome_kind == 'partial':
-            badge_class = 'badge-researching'
+            badge_class = 'badge-partial'
             outcome_label = 'PARTIAL'
+
+        # If title is missing from cycle_titles/merge commits, derive human-readable reason
+        if not title:
+            if outcome_status:
+                derived_title = f"{outcome_status}: {outcome_reason}" if outcome_reason else outcome_status
+            elif gate_fail_reason:
+                derived_title = f"gate blocked: {gate_fail_reason}"
+            elif reject_reason:
+                derived_title = f"rejected: {reject_reason}"
+            elif dedup_reason:
+                derived_title = f"rejected: {dedup_reason}"
+            elif idle_reason:
+                derived_title = f"idle: {idle_reason}"
+            elif started_seen:
+                derived_title = "in progress"
+            else:
+                derived_title = cid
+            title = derived_title
 
         files_html = ''
         if files_changed:
@@ -1321,7 +1348,11 @@ def build_cycle_feed(
     '''
 
 
-def build_hypotheses_panel(hypotheses_lifecycle: dict[str, Any] | None, hypotheses: dict[str, Any] | None = None) -> str:
+def build_hypotheses_panel(
+    hypotheses_lifecycle: dict[str, Any] | None,
+    hypotheses: dict[str, Any] | None = None,
+    feed_cycles: set[str] | None = None,
+) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
     if isinstance(hypotheses_lifecycle, dict) and isinstance(hypotheses_lifecycle.get('entries'), dict):
@@ -1332,12 +1363,14 @@ def build_hypotheses_panel(hypotheses_lifecycle: dict[str, Any] | None, hypothes
         return unavailable_panel('Hypotheses Lifecycle', 'hypotheses unavailable')
 
     if not entries_dict:
-        return f'''
+        return '''
         <section class="panel panel-hypotheses">
           <h2 class="panel-title">Hypotheses Lifecycle</h2>
           <p class="unavailable-note">no hypotheses recorded</p>
         </section>
         '''
+
+    valid_feed_cycles = set(feed_cycles) if feed_cycles else set()
 
     active_items = []
     answered_items = []
@@ -1355,7 +1388,13 @@ def build_hypotheses_panel(hypotheses_lifecycle: dict[str, Any] | None, hypothes
 
         ev_html = ''
         if answered_ev:
-            ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(answered_ev)}">{esc(answered_ev)}</a></span>'
+            ev_str = str(answered_ev)
+            target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
+            clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
+            if target_cid in valid_feed_cycles or clean_cid in valid_feed_cycles or ev_str in valid_feed_cycles:
+                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(ev_str)}">{esc(ev_str)}</a></span>'
+            else:
+                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)}</span>'
 
         if 'answered' in status or status in ('supported', 'refuted', 'inconclusive') or verdict:
             v_label = str(verdict or status).upper()
@@ -1989,6 +2028,7 @@ CSS = '''
       padding: 2px 7px;
       border-radius: 4px;
     }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
     .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
@@ -2123,6 +2163,15 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         task_titles=cycle_titles,
     )
+    # Determine which cycle IDs are rendered in the feed (for evidence linking)
+    feed_cycles = set()
+    if isinstance(ledger_tail, list):
+        feed_cycles = {
+            str(r.get('cycle_id') or '')
+            for r in ledger_tail
+            if isinstance(r, dict) and r.get('cycle_id')
+        }
+
     cycle_feed = build_cycle_feed(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -2130,7 +2179,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
     )
-    hypotheses_panel = build_hypotheses_panel(hypotheses)
+    hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
     agent_panel = build_agent_panel(
         agents_md=agents_md,
         goal_text=goal_text,
