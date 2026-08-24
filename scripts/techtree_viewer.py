@@ -992,6 +992,28 @@ def _lane_b_layout(
         trunc_note = f'showing last {EVO_MAX_DISPLAY} of {total} nodes'
     kept = dict(items)
 
+    # Effective lineage parent (issue #53 follow-up): prefer the recorded
+    # parent_sha when it maps to a kept node. On live data it usually does
+    # NOT -- cycles branch from lesson commits recorded between merges, so
+    # parent_sha is a bare git commit, never a node key. Fall back to
+    # chronological chaining ("built on the previous integrated cycle"),
+    # which reconstructs the DGM-style lineage for the sequential cycle
+    # history this system actually runs.
+    ts_order = sorted(kept.items(), key=lambda kv: str(kv[1].get('ts') or ''))
+    chrono_prev: dict[str, str] = {}
+    _last: str | None = None
+    for _sha, _n in ts_order:
+        if _last is not None:
+            chrono_prev[_sha] = _last
+        _last = _sha
+
+    def _eff_parent(sha: str) -> str | None:
+        node = kept.get(sha) or {}
+        parent = node.get('parent_sha')
+        if parent and parent in kept:
+            return str(parent)
+        return chrono_prev.get(sha)
+
     depth: dict[str, int] = {}
 
     def _depth(sha: str, guard: frozenset[str] = frozenset()) -> int:
@@ -1000,9 +1022,8 @@ def _lane_b_layout(
         if sha in guard:  # defensive cycle guard -- a real git DAG never cycles
             depth[sha] = 0
             return 0
-        node = kept.get(sha) or {}
-        parent = node.get('parent_sha')
-        if not parent or parent not in kept:
+        parent = _eff_parent(sha)
+        if not parent:
             depth[sha] = 0
         else:
             depth[sha] = _depth(parent, guard | {sha}) + 1
@@ -1012,8 +1033,8 @@ def _lane_b_layout(
         _depth(sha)
 
     children_count: dict[str, int] = {}
-    for sha, node in kept.items():
-        parent = node.get('parent_sha')
+    for sha in kept:
+        parent = _eff_parent(sha)
         if parent in kept:
             children_count[parent] = children_count.get(parent, 0) + 1
 
@@ -1046,7 +1067,7 @@ def _lane_b_layout(
         while cur and cur in kept and cur not in guard:
             guard.add(cur)
             best_path.add(cur)
-            cur = kept[cur].get('parent_sha')
+            cur = _eff_parent(cur)
 
     # Real per-node rewards (numeric only) for score tinting + legend.
     rewards: dict[str, float] = {}
@@ -1059,8 +1080,8 @@ def _lane_b_layout(
     reward_max = max(rewards.values()) if rewards else None
 
     elbows = []
-    for sha, node in kept.items():
-        parent = node.get('parent_sha')
+    for sha in kept:
+        parent = _eff_parent(sha)
         if parent in pos:
             x1, y1 = pos[parent]
             x2, y2 = pos[sha]

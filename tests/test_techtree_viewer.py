@@ -1440,3 +1440,25 @@ def test_issue53_no_rewards_muted_note_neutral_boxes() -> None:
     assert 'border-color:hsl(' not in html_out
     # best-path highlight is independent of rewards
     assert 'evo-elbow-best' in html_out
+
+
+def test_issue53_chronological_fallback_edges_when_parents_unmatched() -> None:
+    # Live-data shape: parent_sha values are bare git commits (lesson commits
+    # between merges), never node keys. Lineage must still chain chronologically.
+    data = _fixture()
+    tree = data['evolution_tree']
+    tree['nodes']['orphan1sha000000000000000000000000000'] = {
+        'parent_sha': 'barelessoncommit000000000000000000000000',
+        'branch': 'selfevo/cycle-orphan1', 'cycle_id': 'cycle-orphan1',
+        'ts': '2026-08-18T00:00:00Z', 'fitness': {'reward': 0.5},
+    }
+    tree['nodes']['orphan2sha000000000000000000000000000'] = {
+        'parent_sha': 'barelessoncommit111111111111111111111111',
+        'branch': 'selfevo/cycle-orphan2', 'cycle_id': 'cycle-orphan2',
+        'ts': '2026-08-18T06:00:00Z', 'fitness': {'reward': 0.7},
+    }
+    tree['current_sha'] = 'orphan2sha000000000000000000000000000'
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    # chronological chain orphan1 -> orphan2 exists and is the best path
+    assert html_out.count('class="evo-elbow evo-elbow-best"') >= 1
+    assert 'evo-elbow' in html_out
