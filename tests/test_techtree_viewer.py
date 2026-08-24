@@ -169,7 +169,7 @@ def test_render_page_includes_node_cards_and_panels() -> None:
     assert 'Cycle Feed' in html_out
     assert 'Hypotheses Lifecycle' in html_out
     assert 'Agent Configuration &amp; Fitness' in html_out or 'Agent Configuration & Fitness' in html_out
-    assert 'EEEBOT EMPIRE' in html_out
+    assert '# eeebot / tech-tree' in html_out
     assert 'http://' not in html_out
     assert 'https://' not in html_out
 
@@ -183,7 +183,7 @@ def test_canvas_is_one_wide_svg_with_lane_labels() -> None:
 
     # The canvas must be a genuinely wide panorama, not a vertical list.
     import re
-    match = re.search(r'<svg class="tech-canvas" width="(\d+)"', html_out)
+    match = re.search(r'<svg class="tech-canvas" role="img" [^>]*width="(\d+)"', html_out)
     assert match is not None
     assert int(match.group(1)) >= 1200
 
@@ -1334,3 +1334,70 @@ def test_batch3_issue48_header_footer_same_timestamp() -> None:
     # footer carries the full timestamp; header badge shows its HH:MM part
     assert 'generated 2026-08-18 12:00:00 UTC' in html_out
     assert 'generated 12:00 UTC' in html_out
+
+# ---------------------------------------------------------------------------
+# Batch 4: issues #38 #39 #46 (retro terminal theme, host identity, a11y)
+# ---------------------------------------------------------------------------
+
+
+def test_batch4_issue38_no_empire_branding_or_gold() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'EEEBOT EMPIRE' not in html_out
+    assert '# eeebot / tech-tree' in html_out
+    assert 'c9a227' not in html_out  # gold accent gone
+    assert 'Georgia' not in html_out  # serif headings gone
+
+
+def test_batch4_issue38_terminal_palette_and_monospace() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '#56d364' in html_out  # terminal green accent
+    assert "'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace" in html_out
+    assert 'Segoe UI' not in html_out
+
+
+def test_batch4_issue38_feed_lines_have_terminal_prefix() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert ".feed-title::before" in html_out
+    assert "content: '>> '" in html_out
+
+
+def test_batch4_issue39_host_identity_from_agents_md() -> None:
+    data = _fixture()
+    data['agents_md'] = (
+        '# Instance Agent Instructions\n\nYou are the self-evolving agent instance on the `eeepc` host: '
+        'i386 Debian 12, 2 GB RAM, Python 3.11.'
+    )
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'class="host-identity"' in html_out
+    assert 'i386' in html_out
+    assert 'Debian 12' in html_out
+    assert '2 GB RAM' in html_out
+    assert 'Python 3.11' in html_out
+
+
+def test_batch4_issue39_host_identity_absent_without_data() -> None:
+    data = _fixture()
+    data['agents_md'] = None
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'class="host-identity"' not in html_out
+
+
+def test_batch4_issue46_single_h1_and_svg_aria() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert html_out.count('<h1') == 1
+    assert 'role="img"' in html_out
+    assert 'aria-label="Cycle lineage graph' in html_out
+
+
+def test_batch4_issue46_contrast_colors_replaced() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    # old failing-contrast muted colors must be gone
+    for old in ('#4f5a76', '#718096', '#6a7590', '#5c6370'):
+        assert old not in html_out
+
+
+def test_batch4_issue46_translate_no_on_ids() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'feed-cid copyable" translate="no"' in html_out
+    assert 'evo-sha copyable" translate="no"' in html_out
+    assert 'demand-chip' in html_out and 'translate="no"' in html_out
