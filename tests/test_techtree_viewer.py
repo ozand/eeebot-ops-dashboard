@@ -70,12 +70,16 @@ def _fixture() -> dict[str, object]:
                 'rootsha00000000000000000000000000000000': {
                     'parent_sha': None,
                     'branch': 'selfevo/cycle-root',
+                    'cycle_id': 'cycle-root',
                     'ts': '2026-08-15T00:00:00Z',
+                    'fitness': {'reward': 0.85, 'integrations': 10},
                 },
                 'child1sha0000000000000000000000000000000': {
                     'parent_sha': 'rootsha00000000000000000000000000000000',
                     'branch': 'selfevo/cycle-a',
+                    'cycle_id': 'cycle-a',
                     'ts': '2026-08-16T00:00:00Z',
+                    'fitness': {'reward': 0.92, 'integrations': 12},
                 },
                 'child2sha0000000000000000000000000000000': {
                     'parent_sha': 'rootsha00000000000000000000000000000000',
@@ -83,7 +87,9 @@ def _fixture() -> dict[str, object]:
                     # tail extraction (rsplit on "/") must not eat it, so
                     # this exercises html.escape on the actual tag text.
                     'branch': 'selfevo/cycle-b<script>bad',
+                    'cycle_id': 'cycle-b<script>bad',
                     'ts': '2026-08-17T00:00:00Z',
+                    'fitness': {'reward': 0.40, 'integrations': 3},
                 },
             },
             'switches': [
@@ -95,8 +101,57 @@ def _fixture() -> dict[str, object]:
                 },
             ],
         },
-        'hypotheses': {'entries': {}},
-        'ledger_tail': [],
+        'hypotheses': {
+            'entries': {
+                'hyp-1': {
+                    'title': 'Lower temperature increases smoke pass rate',
+                    'status': 'answered',
+                    'answered_evidence': 'cycle-a',
+                    'answered_at': '2026-08-16T12:00:00Z',
+                },
+                'hyp-2': {
+                    'title': 'Dynamic prompt injection improves dedup',
+                    'status': 'active',
+                    'first_seen': '2026-08-17T00:00:00Z',
+                },
+            },
+        },
+        'ledger_tail': [
+            {'phase': 'started', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:00Z'},
+            {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'child1sha0000000000000000000000000000000', 'parent_sha': 'rootsha00000000000000000000000000000000', 'ts': '2026-08-16T00:01:00Z'},
+            {'phase': 'outcome', 'cycle_id': 'cycle-a', 'status': 'success', 'ts': '2026-08-16T00:02:00Z'},
+            {'phase': 'started', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:00Z'},
+            {'phase': 'gate', 'cycle_id': 'cycle-failed-1', 'gate': 'smoke_test', 'status': 'fail', 'reason': 'syntax error in tests', 'ts': '2026-08-16T01:01:00Z'},
+            {'phase': 'outcome', 'cycle_id': 'cycle-failed-1', 'status': 'fail', 'reason': 'smoke_failed', 'ts': '2026-08-16T01:02:00Z'},
+        ],
+        'demand_rotation': {
+            'served': {'gap-1': '2026-08-16T00:00:00Z', 'gap-2': '2026-08-16T01:00:00Z'},
+        },
+        'demand_completed': {
+            'entries': {
+                'gap-1': {
+                    'cycle_id': 'cycle-a',
+                    'ts': '2026-08-16T00:02:00Z',
+                    'files_changed': ['src/engine.py', 'tests/test_engine.py'],
+                },
+            },
+        },
+        'skill_reads': {
+            'reads': [
+                {'skill': 'test-driven-development', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:30Z'},
+                {'skill': 'test-driven-development', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:30Z'},
+                {'skill': 'systematic-debugging', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:40Z'},
+            ],
+        },
+        'goal_text': {
+            'charter': 'Autonomously improve code quality, reduce tokens per integration, and eliminate repeat failures.',
+            'version': '1.0',
+        },
+        'agents_md': '# Agent Operating System\n\nFollow test-driven development strictly.',
+        'cycle_titles': {
+            'cycle-a': 'Optimize prompt caching for proposer',
+            'cycle-failed-1': 'Add speculative syntax checking',
+        },
     }
 
 
@@ -110,7 +165,10 @@ def test_render_page_includes_node_cards_and_panels() -> None:
     assert 'PLATEAUED' in html_out
     assert 'AVAILABLE' in html_out
     assert 'MINTED' in html_out
-    assert 'Great Library' in html_out
+    assert 'Now / Active Focus' in html_out
+    assert 'Cycle Feed' in html_out
+    assert 'Hypotheses Lifecycle' in html_out
+    assert 'Agent Configuration &amp; Fitness' in html_out or 'Agent Configuration & Fitness' in html_out
     assert 'EEEBOT EMPIRE' in html_out
     assert 'http://' not in html_out
     assert 'https://' not in html_out
@@ -120,8 +178,8 @@ def test_canvas_is_one_wide_svg_with_lane_labels() -> None:
     html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
 
     assert 'class="tech-canvas"' in html_out
-    assert 'RESEARCH</text>' in html_out
-    assert 'WORLD HISTORY</text>' in html_out
+    assert 'RESEARCH DIRECTIONS</text>' in html_out
+    assert 'EVOLUTION LINEAGE (DGM)</text>' in html_out
 
     # The canvas must be a genuinely wide panorama, not a vertical list.
     import re
@@ -147,7 +205,7 @@ def test_visited_directions_form_spine_in_switch_order_with_elbows() -> None:
     # rendered dim (available, not part of the switch chronicle).
     assert 'dir-box-dim' in html_out
 
-    # Hypothesis-minted direction gets a dashed gold Great Library edge.
+    # Hypothesis-minted direction gets a dashed gold edge.
     assert 'class="mint-elbow"' in html_out
     assert '&#127979;' in html_out
 
@@ -159,7 +217,8 @@ def test_world_history_renders_branching_boxes_with_elbows() -> None:
     assert 'class="evo-box' in html_out
     assert 'class="evo-elbow"' in html_out
     # Both fork children (from the same parent) must have visible labels.
-    assert 'cycle-a-child1s' in html_out
+    assert 'Optimize prompt caching for proposer' in html_out
+    assert 'child1s' in html_out
     # The second child's branch name is untrusted (LLM-authored) and
     # deliberately carries a script-injection attempt -- must be escaped,
     # never executed, and the sha7+tail label must still render.
@@ -170,6 +229,112 @@ def test_world_history_renders_branching_boxes_with_elbows() -> None:
     assert 'evo-box-current' in html_out
     assert '&#9672;' in html_out
     assert '&#8634;' in html_out
+
+
+# --- new block tests for Issue #30 ------------------------------------------
+
+def test_now_panel_renders_active_focus_cycle_and_demand() -> None:
+    fixture = _fixture()
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # Active research direction
+    assert 'proposer-quality' in html_out
+    assert 'loop.repeat_failure_rate' in html_out
+
+    # Latest cycle title
+    assert 'Optimize prompt caching for proposer' in html_out
+
+    # Demand queue snapshot
+    assert 'gap-1' in html_out
+    assert 'gap-2' in html_out
+    assert 'demand-chip served' in html_out
+    assert 'demand-chip completed' in html_out
+
+
+def test_cycle_feed_renders_outcomes_files_and_failed_cycles() -> None:
+    fixture = _fixture()
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # Integrated cycle
+    assert 'INTEGRATED' in html_out
+    assert 'src/engine.py' in html_out
+
+    # Failed cycle (with gate block reason) must be visible
+    assert 'Add speculative syntax checking' in html_out
+    assert 'cycle-failed-1' in html_out
+    assert 'syntax error in tests' in html_out or 'smoke_failed' in html_out
+    assert 'feed-outcome-failed' in html_out or 'feed-outcome-gate_blocked' in html_out
+
+
+def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
+    fixture = _fixture()
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # Active group
+    assert 'Active (1)' in html_out
+    assert 'Dynamic prompt injection improves dedup' in html_out
+
+    # Answered group with evidence anchor
+    assert 'Answered (1)' in html_out
+    assert 'Lower temperature increases smoke pass rate' in html_out
+    assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out or 'href="#cycle-cycle-a"' in html_out or 'href="#cycle-a"' in html_out
+
+
+def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
+    fixture = _fixture()
+    # Add script injection to AGENTS.md to verify escaping
+    fixture['agents_md'] = '# Agent Guide\n<script>alert("xss")</script>'
+    html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+    # AGENTS.md escaped
+    assert '<script>alert' not in html_out
+    assert '&lt;script&gt;alert' in html_out
+
+    # Goals charter
+    assert 'Autonomously improve code quality' in html_out
+
+    # Skill reads table
+    assert 'test-driven-development' in html_out
+    assert '<td class="skill-reads">2</td>' in html_out
+    assert 'systematic-debugging' in html_out
+    assert '<td class="skill-reads">1</td>' in html_out
+    assert 'not tracked' in html_out
+
+
+def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
+    # Initialize a dummy git repo with a merge commit
+    repo = tmp_path / 'test_repo'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+
+    # Base commit on master
+    (repo / 'file.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'file.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'chore: initial'], check=True)
+
+    # Feature branch
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-123'], check=True)
+    (repo / 'file.txt').write_text('feature', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'file.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Add fuzzy matching to proposer'], check=True)
+
+    # Merge into master
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-123', '-m', 'merge: integrate selfevo/cycle-cycle-123'], check=True)
+
+    titles = tv.extract_git_titles_local(repo)
+    assert 'cycle-123' in titles or 'cycle-cycle-123' in titles
+    assert titles.get('cycle-123') == 'Add fuzzy matching to proposer' or titles.get('cycle-cycle-123') == 'Add fuzzy matching to proposer'
+
+
+def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
+    not_repo = tmp_path / 'not_a_repo'
+    not_repo.mkdir()
+    titles = tv.extract_git_titles_local(not_repo)
+    assert titles == {}
+
 
 
 def test_render_page_fails_soft_on_missing_sources() -> None:

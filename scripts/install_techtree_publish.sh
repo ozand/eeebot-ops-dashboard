@@ -123,6 +123,15 @@ Example (run as root, fill in the real token yourself -- never paste it
 into a script or commit it anywhere):
   install -o root -g root -m 0600 /dev/null $ENV_FILE
   \$EDITOR $ENV_FILE   # add: GH_TOKEN=...
+
+Permissions note for /var/lib/eeepc-agent:
+  The service runs as user $PUBLISH_USER. If state files or subdirectories
+  under /var/lib/eeepc-agent are restricted to group eeepc-agent, configure
+  systemd drop-in permissions for eeebot-techtree-publish.service:
+    /etc/systemd/system/eeebot-techtree-publish.service.d/10-permissions.conf
+      [Service]
+      SupplementaryGroups=eeepc-agent
+      ReadOnlyPaths=/var/lib/eeepc-agent
 EOF
 
 if [[ "$DRY_RUN" == "1" ]]; then
