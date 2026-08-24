@@ -16,20 +16,20 @@
     }
     body {
       margin: 0;
-      background: radial-gradient(ellipse at top, #101c30 0%, #0b1220 60%, #070c16 100%);
-      color: #d8dce6;
-      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
       padding: 0 0 32px 0;
     }
     h1, h2, h3, .panel-title, .empire-title {
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
     }
-    a { color: #c9a227; }
+    a { color: #56d364; }
 
     /* --- top strip: slim, one line --- */
     .empire-strip {
-      background: linear-gradient(180deg, #14213a 0%, #0d1626 100%);
-      border-bottom: 2px solid #c9a227;
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
       flex-wrap: nowrap;
@@ -38,11 +38,13 @@
       gap: 18px;
     }
     .empire-title {
-      color: #c9a227;
+      color: #56d364;
       font-size: 1.05em;
       letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
       white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
     }
     .empire-stats {
       display: flex;
@@ -57,23 +59,23 @@
       font-size: 0.78em;
       padding: 2px 8px;
       border-radius: 4px;
-      border: 1px solid #4a5878;
+      border: 1px solid #3d6b52;
       font-variant-numeric: tabular-nums;
     }
     .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
     .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
     .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
-    .freshness-unknown { color: #8b96ad; }
+    .freshness-unknown { color: #9db4a6; }
 
     .stat-label {
       text-transform: uppercase;
       font-size: 0.64em;
       letter-spacing: 1px;
-      color: #8b96ad;
+      color: #9db4a6;
     }
     .stat-value {
       font-size: 1.02em;
-      color: #eae3c8;
+      color: #e2f0e6;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
@@ -94,9 +96,9 @@
       overflow-x: auto;
       overflow-y: hidden;
       overscroll-behavior: contain;
-      border: 1px solid #24314f;
+      border: 1px solid #1e3a2d;
       border-radius: 10px;
-      background: linear-gradient(180deg, rgba(20, 33, 58, 0.55) 0%, rgba(11, 18, 32, 0.7) 100%);
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
       padding-bottom: 4px;
     }
     .tech-canvas { display: block; }
@@ -109,35 +111,35 @@
       text-decoration: underline;
     }
     .lane-label {
-      fill: #c9a227;
-      font-family: Georgia, 'Times New Roman', serif;
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
       font-size: 13px;
       letter-spacing: 2px;
     }
-    .lane-note { fill: #6a7590; font-style: italic; font-size: 11px; }
-    .lane-unavailable { fill: #6a7590; font-style: italic; font-size: 12px; }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
 
     .panel {
-      background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
-      border: 1px solid #24314f;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
       border-radius: 10px;
       padding: 14px 18px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
       margin: 0 0 12px 0;
-      color: #c9a227;
+      color: #56d364;
       font-size: 1.05em;
       letter-spacing: 1px;
-      border-bottom: 1px solid #2c3a5c;
+      border-bottom: 1px solid #28503c;
       padding-bottom: 6px;
     }
     .panel-unavailable {
       text-align: center;
-      color: #6a7590;
+      color: #7fa08d;
     }
     .unavailable-note {
-      color: #6a7590;
+      color: #7fa08d;
       font-style: italic;
     }
 
@@ -156,19 +158,19 @@
     }
     .now-label {
       font-weight: 700;
-      color: #8b96ad;
+      color: #9db4a6;
       min-width: 140px;
       text-transform: uppercase;
       font-size: 0.78em;
       letter-spacing: 0.5px;
     }
     .now-detail {
-      color: #a0aec0;
+      color: #b8d0c2;
       font-size: 0.85em;
       margin-left: 6px;
     }
     .now-sub {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.85em;
     }
     .now-demand-grid {
@@ -183,7 +185,7 @@
       gap: 6px;
     }
     .demand-sublabel {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.8em;
       min-width: 75px;
     }
@@ -192,16 +194,16 @@
       padding: 2px 8px;
       border-radius: 4px;
       font-family: 'Consolas', monospace;
-      border: 1px solid #2c3a5c;
-      background: rgba(15, 24, 42, 0.8);
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
     }
     .demand-chip.served {
       color: #2fd3c4;
       border-color: rgba(47, 211, 196, 0.4);
     }
     .demand-chip.completed {
-      color: #c9a227;
-      border-color: rgba(201, 162, 39, 0.4);
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
     }
 
     /* --- Cycle Feed --- */
@@ -214,8 +216,8 @@
       gap: 8px;
     }
     .feed-row {
-      background: rgba(15, 24, 42, 0.7);
-      border: 1px solid #24314f;
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 8px 12px;
       display: flex;
@@ -223,15 +225,15 @@
       gap: 4px;
     }
     .feed-row:hover {
-      border-color: #3a4a6e;
-      background: rgba(20, 33, 58, 0.8);
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
     }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
     .feed-outcome-rejected { border-left: 4px solid #d19a66; }
-    .feed-outcome-idle { border-left: 4px solid #5c6370; }
-    .feed-outcome-partial { border-left: 4px solid #c9a227; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
 
     .feed-header {
@@ -242,11 +244,16 @@
       font-size: 0.88em;
     }
     .feed-title {
-      color: #eae3c8;
+      color: #e2f0e6;
       font-size: 0.95em;
     }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
     .feed-cid {
-      color: #718096;
+      color: #8aa695;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
     }
@@ -258,7 +265,7 @@
       font-variant-numeric: tabular-nums;
     }
     .feed-ts {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.78em;
       white-space: nowrap;
     }
@@ -270,7 +277,7 @@
     }
     .feed-files {
       font-size: 0.78em;
-      color: #8b96ad;
+      color: #9db4a6;
       font-family: 'Consolas', monospace;
       padding-left: 4px;
     }
@@ -290,7 +297,7 @@
       padding: 6px 20px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
     }
     .panel-nav a { color: #2fd3c4; text-decoration: none; }
     .panel-nav a:hover { text-decoration: underline; }
@@ -308,22 +315,22 @@
     }
     .hypo-group h3 {
       font-size: 0.9em;
-      color: #8b96ad;
+      color: #9db4a6;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin: 0 0 8px 0;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
       padding-bottom: 4px;
     }
     .hypo-details { margin-top: 8px; }
     .hypo-summary {
       font-size: 0.82em;
-      color: #8b96ad;
+      color: #9db4a6;
       cursor: pointer;
       padding: 4px 0;
       user-select: none;
     }
-    .hypo-summary:hover { color: #c9a227; }
+    .hypo-summary:hover { color: #56d364; }
     .hypo-details ul.hypo-list { margin-top: 6px; }
     .hypo-list {
       list-style: none;
@@ -334,14 +341,14 @@
       gap: 8px;
     }
     .hypo-row {
-      background: rgba(15, 24, 42, 0.7);
-      border: 1px solid #24314f;
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 8px 10px;
       font-size: 0.85em;
     }
     .hypo-title {
-      color: #eae3c8;
+      color: #e2f0e6;
       margin-left: 6px;
     }
     .hypo-meta {
@@ -349,7 +356,7 @@
       align-items: center;
       gap: 10px;
       font-size: 0.8em;
-      color: #718096;
+      color: #8aa695;
       margin-top: 4px;
     }
     .hypo-ev a {
@@ -369,38 +376,48 @@
     }
     .agent-subcol h3 {
       font-size: 0.9em;
-      color: #8b96ad;
+      color: #9db4a6;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin: 0 0 8px 0;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
       padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
     }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
-      background: rgba(11, 18, 32, 0.9);
-      border: 1px solid #24314f;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 10px;
       font-family: 'Consolas', monospace;
       font-size: 0.78em;
-      color: #c7cfe0;
+      color: #cfe3d7;
       white-space: pre-wrap;
       word-break: break-word;
     }
     .charter-details > summary {
       font-size: 0.82em;
-      color: #8b96ad;
+      color: #9db4a6;
       cursor: pointer;
       padding: 4px 0;
       user-select: none;
     }
-    .charter-details > summary:hover { color: #c9a227; }
+    .charter-details > summary:hover { color: #56d364; }
     .skills-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.8em;
-      background: rgba(11, 18, 32, 0.6);
+      background: rgba(8, 15, 11, 0.6);
       border-radius: 6px;
       overflow: hidden;
       font-variant-numeric: tabular-nums;
@@ -408,27 +425,27 @@
     .skills-table th {
       text-align: left;
       padding: 6px 8px;
-      background: #14213a;
-      color: #8b96ad;
+      background: #0f2018;
+      color: #9db4a6;
       font-size: 0.75em;
       text-transform: uppercase;
-      border-bottom: 1px solid #24314f;
+      border-bottom: 1px solid #1e3a2d;
     }
     .skills-table td {
       padding: 6px 8px;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
     }
     .skill-high-ratio {
-      background: rgba(201, 162, 39, 0.08);
+      background: rgba(86, 211, 100, 0.08);
     }
     .skill-reads {
       font-weight: 700;
-      color: #c9a227;
+      color: #56d364;
       font-family: 'Consolas', monospace;
       text-align: center;
     }
     .skill-untracked {
-      color: #5c6370;
+      color: #7d9c8a;
       font-style: italic;
     }
 
@@ -436,27 +453,27 @@
     .dir-box {
       width: 100%;
       height: 100%;
-      background: rgba(15, 24, 42, 0.94);
-      border: 1px solid #2c3a5c;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
       border-radius: 8px;
       padding: 10px;
       position: relative;
-      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-      color: #d8dce6;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
     }
     .dir-box-current {
-      border-color: #c9a227;
-      box-shadow: 0 0 16px rgba(201, 162, 39, 0.65);
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
     }
     .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
     .dir-box-dim { opacity: 0.55; }
     .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-    .dir-glyph { font-size: 1.1em; color: #c9a227; }
-    .dir-name { font-weight: 600; color: #eae3c8; font-size: 0.92em; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
     .dir-lever {
       font-variant: small-caps;
       letter-spacing: 0.5px;
-      color: #8b96ad;
+      color: #9db4a6;
       font-size: 0.76em;
       margin-bottom: 6px;
     }
@@ -464,8 +481,8 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      background: #c9a227;
-      color: #1a1406;
+      background: #56d364;
+      color: #04240f;
       font-size: 0.6em;
       font-weight: 700;
       padding: 2px 7px;
@@ -473,11 +490,11 @@
       transform: rotate(4deg);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
-    .cooldown { font-size: 0.68em; color: #8b96ad; margin-top: 4px; }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
 
     .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
-    .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
-    .mint-glyph { fill: #c9a227; font-size: 15px; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
 
     /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
     .evo-box {
@@ -487,17 +504,17 @@
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      background: rgba(15, 24, 42, 0.9);
-      border: 1.5px solid #4a5878;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
       border-radius: 7px;
       padding: 4px 8px;
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
-      color: #c7cfe0;
+      color: #cfe3d7;
     }
     .evo-box-current {
-      border-color: #c9a227;
-      box-shadow: 0 0 12px rgba(201, 162, 39, 0.75);
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
       background: rgba(47, 211, 196, 0.12);
     }
     .evo-box-abandoned { opacity: 0.45; }
@@ -507,8 +524,8 @@
       gap: 4px;
       overflow: hidden;
     }
-    .evo-diamond { color: #c9a227; font-weight: 700; }
-    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #eae3c8; }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
     .evo-meta {
       display: flex;
       align-items: center;
@@ -524,10 +541,10 @@
       border-radius: 3px;
       border: 1px solid rgba(47, 211, 196, 0.3);
     }
-    .evo-sha { color: #718096; }
-    .evo-fitness { font-size: 9px; color: #a0aec0; }
-    .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
-    .evo-fallback { color: #d8dce6; }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    .evo-fallback { color: #dcebe1; }
 
     .badge {
       display: inline-block;
@@ -537,18 +554,18 @@
       padding: 2px 7px;
       border-radius: 4px;
     }
-    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
-    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
-    .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
-    .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
     .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
     .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
     .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
     .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
-    .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
-    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
 
     .spark { margin-bottom: 2px; }
     .spark-top, .spark-bottom {
@@ -558,19 +575,19 @@
       height: 14px;
     }
     .spark-bottom { align-items: flex-start; }
-    .spark-baseline { border-top: 1px dashed #3a4a6e; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
     .bar { width: 5px; border-radius: 1px; display: block; }
-    .bar-pos { background: #c9a227; }
+    .bar-pos { background: #56d364; }
     .bar-neg { background: #b23a3a; }
     .bar-placeholder { height: 0; background: transparent; }
-    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
     .spark-mean { font-size: 0.7em; margin-top: 2px; }
-    .mean-pos { color: #c9a227; }
+    .mean-pos { color: #56d364; }
     .mean-neg { color: #d97b7b; }
 
     footer.page-footer {
       text-align: center;
-      color: #4f5a76;
+      color: #6f9480;
       font-size: 0.78em;
       margin-top: 20px;
       padding-top: 14px;
@@ -583,9 +600,9 @@
 <body>
 
     <header class="empire-strip">
-      <div class="empire-title">EEEBOT EMPIRE</div>
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">104</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">13.1%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate</span><span class="stat-value">59.4%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.8M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="90">data: 1m old &middot; generated 20:46 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="110">data: 1m old &middot; generated 21:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav" aria-label="Sections"><a href="#panel-now">now</a> &middot; <a href="#panel-lineage">lineage</a> &middot; <a href="#panel-feed">feed</a> &middot; <a href="#panel-hypotheses">hypotheses</a> &middot; <a href="#panel-agent">agent</a></nav>
@@ -598,12 +615,12 @@
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_</strong> <span class="now-sub">(cycle-568081338c2d [2d6de895])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
-          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" title="goal-gap-5d4d5a9dc822 (served 2026-08-24T20:17:39.463127+00:00)">goal-gap &times;1</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <span class="demand-chip completed demand-group" title="goal-gap-3a4a608f7802 (cycle cycle-bb81704eec1a); goal-gap-33575399b72e (cycle cycle-027ad4b92659); goal-gap-5d4d5a9dc822 (cycle cycle-aacee6934d06); goal-gap-2d9ab3aa9d09 (cycle cycle-1ed3f6c43da6); goal-gap-acb65b1911ab (cycle cycle-a1d19f1416f5); goal-gap-efb0628c98a8 (cycle cycle-8678dddc9863)">goal-gap &times;6</span> <span class="demand-chip completed demand-group" title="defect-06ba80f7dc1b (cycle cycle-f9ac9c53b888); defect-d4411da2e1e9 (cycle cycle-f5f6a7aa4212); defect-a246cad2f330 (cycle cycle-8a444f229370); defect-7ecb4503a2c3 (cycle cycle-ed350f2c57cf); defect-8904a6404282 (cycle cycle-5d01e9619df4); defect-1e0ff2aa0a0f (cycle cycle-218bacc8ea8a); defect-2f9173fff192 (cycle cycle-cbf4756e78d9); defect-7d48f76fd708 (cycle cycle-9176dad8856a); +20 more">defect &times;28</span> <span class="demand-chip completed demand-group" title="priority-338ed4f63940 (cycle cycle-59a2658869cc); priority-ea5f13883840 (cycle cycle-df36afca2874); priority-5879baac2753 (cycle cycle-8768af08080c); priority-0ebd20f95b96 (cycle cycle-c768506a44fa); priority-242c339e33db (cycle cycle-e5771ddeecbb); priority-a6f2d3addbad (cycle cycle-1f62b67fa0de); priority-901c7e4eb857 (cycle cycle-ba3201ffee0a); priority-8c24ce57d032 (cycle cycle-1999a6b65bfb); +4 more">priority &times;12</span> <span class="demand-chip completed demand-group" title="decay-43cc1ccb362a (cycle cycle-54e60b31c68a); decay-eab13b0acc39 (cycle cycle-efb2ed11d35a); decay-1a5cb9c2dfae (cycle cycle-5c7d6613cfcc); decay-30f8f22618c4 (cycle cycle-10c48d63ae61); decay-8e63e7179117 (cycle cycle-33cac59b780b); decay-ecd7753524d1 (cycle cycle-3bb23d77e248); decay-49961b90f49f (cycle cycle-4899994a6f6a); decay-2d89acb918f4 (cycle cycle-edbe07ba5e8c); +65 more">other &times;73</span></div></div>
+          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-5d4d5a9dc822 (served 2026-08-24T20:17:39.463127+00:00)">goal-gap &times;1</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <span class="demand-chip completed demand-group" translate="no" title="goal-gap-3a4a608f7802 (cycle cycle-bb81704eec1a); goal-gap-33575399b72e (cycle cycle-027ad4b92659); goal-gap-5d4d5a9dc822 (cycle cycle-aacee6934d06); goal-gap-2d9ab3aa9d09 (cycle cycle-1ed3f6c43da6); goal-gap-acb65b1911ab (cycle cycle-a1d19f1416f5); goal-gap-efb0628c98a8 (cycle cycle-8678dddc9863)">goal-gap &times;6</span> <span class="demand-chip completed demand-group" translate="no" title="defect-06ba80f7dc1b (cycle cycle-f9ac9c53b888); defect-d4411da2e1e9 (cycle cycle-f5f6a7aa4212); defect-a246cad2f330 (cycle cycle-8a444f229370); defect-7ecb4503a2c3 (cycle cycle-ed350f2c57cf); defect-8904a6404282 (cycle cycle-5d01e9619df4); defect-1e0ff2aa0a0f (cycle cycle-218bacc8ea8a); defect-2f9173fff192 (cycle cycle-cbf4756e78d9); defect-7d48f76fd708 (cycle cycle-9176dad8856a); +20 more">defect &times;28</span> <span class="demand-chip completed demand-group" translate="no" title="priority-338ed4f63940 (cycle cycle-59a2658869cc); priority-ea5f13883840 (cycle cycle-df36afca2874); priority-5879baac2753 (cycle cycle-8768af08080c); priority-0ebd20f95b96 (cycle cycle-c768506a44fa); priority-242c339e33db (cycle cycle-e5771ddeecbb); priority-a6f2d3addbad (cycle cycle-1f62b67fa0de); priority-901c7e4eb857 (cycle cycle-ba3201ffee0a); priority-8c24ce57d032 (cycle cycle-1999a6b65bfb); +4 more">priority &times;12</span> <span class="demand-chip completed demand-group" translate="no" title="decay-43cc1ccb362a (cycle cycle-54e60b31c68a); decay-eab13b0acc39 (cycle cycle-efb2ed11d35a); decay-1a5cb9c2dfae (cycle cycle-5c7d6613cfcc); decay-30f8f22618c4 (cycle cycle-10c48d63ae61); decay-8e63e7179117 (cycle cycle-33cac59b780b); decay-ecd7753524d1 (cycle cycle-3bb23d77e248); decay-49961b90f49f (cycle cycle-4899994a6f6a); decay-2d89acb918f4 (cycle cycle-edbe07ba5e8c); +65 more">other &times;73</span></div></div>
         </div>
       </div>
     </section>
     
-<div class="canvas-outer" id="panel-lineage"><a class="canvas-jump" href="#node-2d6de89">&gt;&gt; jump to current cycle</a><svg class="tech-canvas" width="1540" height="2808" viewBox="0 0 1540 2808"><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH DIRECTIONS</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-researching">RESEARCHING</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="841238.0562"></span><span class="bar bar-pos" style="height:2px;" title="4450.5615"></span><span class="bar bar-pos" style="height:2px;" title="9461.3803"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-17049.3766"></span><span class="bar bar-neg" style="height:2px;" title="-5503.9627"></span></div></div><div class="spark-mean mean-pos">mean gain +166.5K</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain 0</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain 0</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.026"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0014"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0014"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span></div></div><div class="spark-mean mean-pos">mean gain +0</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.4095"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="0.005"></span><span class="bar bar-pos" style="height:2px;" title="0.015"></span><span class="bar bar-pos" style="height:2px;" title="0.01"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0019"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.09</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /><rect x="260" y="0" width="1" height="100%" class="mint-col-border" fill="#1c2740" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">EVOLUTION LINEAGE (DGM)</text><text x="10" y="32" class="lane-note">showing last 30 of 100 nodes</text><text x="10" y="46" class="lane-note">time range: Aug 17 - Aug 24</text><foreignObject x="60" y="940" width="180" height="64"><div class="evo-box evo-box-current" title="2d6de89 | selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_ | selfevo/cycle-cycle-568081338c2d" id="node-2d6de89"><div class="evo-header"><a href="#cycle-cycle-568081338c2d" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2d6de89</span></div></div></foreignObject><foreignObject x="60" y="1340" width="180" height="64"><div class="evo-box evo-box-abandoned" title="3ce5630 | docs(lessons): document root cause and remediation for out_of_band_main_detected | selfevo/cycle-cycle-a5e848c5b963" id="node-3ce5630"><div class="evo-header"><a href="#cycle-cycle-a5e848c5b963" class="evo-node-link"><span class="evo-box-label">docs(lessons): document root cause and remediation for out_of_band_main_detected</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">3ce5630</span></div></div></foreignObject><foreignObject x="60" y="1100" width="180" height="64"><div class="evo-box evo-box-abandoned" title="ea30066 | feat: add integration confirmation weighting to backlog_seeder.py | selfevo/cycle-cycle-59821cee55b2" id="node-ea30066"><div class="evo-header"><a href="#cycle-cycle-59821cee55b2" class="evo-node-link"><span class="evo-box-label">feat: add integration confirmation weighting to backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ea30066</span></div></div></foreignObject><foreignObject x="60" y="780" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bb2e8bd | feat: add touched script smoke testing and execution verification to verify_and_proof.py | selfevo/cycle-cycle-a830b59b5481" id="node-bb2e8bd"><div class="evo-header"><a href="#cycle-cycle-a830b59b5481" class="evo-node-link"><span class="evo-box-label">feat: add touched script smoke testing and execution verification to verify_and_proof.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bb2e8bd</span></div></div></foreignObject><foreignObject x="60" y="1260" width="180" height="64"><div class="evo-box evo-box-abandoned" title="9787ea1 | feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record | selfevo/cycle-cycle-31e0fa04a056" id="node-9787ea1"><div class="evo-header"><a href="#cycle-cycle-31e0fa04a056" class="evo-node-link"><span class="evo-box-label">feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">9787ea1</span></div></div></foreignObject><foreignObject x="60" y="60" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8d1d54c | feat: add recent integration status reporting to control_plane_summary.py | selfevo/cycle-cycle-a6c3c1c46e80" id="node-8d1d54c"><div class="evo-header"><a href="#cycle-cycle-a6c3c1c46e80" class="evo-node-link"><span class="evo-box-label">feat: add recent integration status reporting to control_plane_summary.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8d1d54c</span></div></div></foreignObject><foreignObject x="60" y="2380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bc50601 | feat: add rolling window filtering and frequency ranking to summarize_failure_outcomes.py | selfevo/cycle-cycle-381b8f2782a3" id="node-bc50601"><div class="evo-header"><a href="#cycle-cycle-381b8f2782a3" class="evo-node-link"><span class="evo-box-label">feat: add rolling window filtering and frequency ranking to summarize_failure_outcomes.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bc50601</span></div></div></foreignObject><foreignObject x="60" y="460" width="180" height="64"><div class="evo-box evo-box-abandoned" title="5fec2d8 | fix: exclude guarded bootstrap sys.path.insert from validator findings | selfevo/cycle-cycle-1c25796d3dcc" id="node-5fec2d8"><div class="evo-header"><a href="#cycle-cycle-1c25796d3dcc" class="evo-node-link"><span class="evo-box-label">fix: exclude guarded bootstrap sys.path.insert from validator findings</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5fec2d8</span></div></div></foreignObject><foreignObject x="60" y="540" width="180" height="64"><div class="evo-box evo-box-abandoned" title="218de1e | selfevo: auto-commit uncommitted subagent work — Add target path and error type comparison to scripts/check_last_cycle_repeat.py | selfevo/cycle-cycle-e8bf53c107d0" id="node-218de1e"><div class="evo-header"><a href="#cycle-cycle-e8bf53c107d0" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add target path and error type comparison to scripts/check_last_cycle_repeat.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">218de1e</span></div></div></foreignObject><foreignObject x="60" y="1740" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e399982 | selfevo: auto-commit uncommitted subagent work — Add 7-day rolling window calculation and threshold alert to scripts/audit_repeat | selfevo/cycle-cycle-57a5e2a21d55" id="node-e399982"><div class="evo-header"><a href="#cycle-cycle-57a5e2a21d55" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add 7-day rolling window calculation and threshold alert to scripts/audit_repeat</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e399982</span></div></div></foreignObject><foreignObject x="60" y="1660" width="180" height="64"><div class="evo-box evo-box-abandoned" title="139ac15 | test: add pytest coverage for run_all_tests.py timing and failure summaries | selfevo/cycle-cycle-0ec6ca8acdac" id="node-139ac15"><div class="evo-header"><a href="#cycle-cycle-0ec6ca8acdac" class="evo-node-link"><span class="evo-box-label">test: add pytest coverage for run_all_tests.py timing and failure summaries</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">139ac15</span></div></div></foreignObject><foreignObject x="60" y="620" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e717a30 | feat: add artifact execution check and return code validation to verify_and_proof.py | selfevo/cycle-cycle-60fc851d7f9a" id="node-e717a30"><div class="evo-header"><a href="#cycle-cycle-60fc851d7f9a" class="evo-node-link"><span class="evo-box-label">feat: add artifact execution check and return code validation to verify_and_proof.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e717a30</span></div></div></foreignObject><foreignObject x="60" y="1820" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8d2f6a7 | feat: add failure category aggregation and recurrence threshold filtering to analyze_repeat_failures.py | selfevo/cycle-cycle-fe7f15edfa0d" id="node-8d2f6a7"><div class="evo-header"><a href="#cycle-cycle-fe7f15edfa0d" class="evo-node-link"><span class="evo-box-label">feat: add failure category aggregation and recurrence threshold filtering to analyze_repeat_failures.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8d2f6a7</span></div></div></foreignObject><foreignObject x="60" y="380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="583e036 | feat: add touched file integrity and proof note checks to validate_cycle_handoff.py | selfevo/cycle-cycle-645ebf920398" id="node-583e036"><div class="evo-header"><a href="#cycle-cycle-645ebf920398" class="evo-node-link"><span class="evo-box-label">feat: add touched file integrity and proof note checks to validate_cycle_handoff.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">583e036</span></div></div></foreignObject><foreignObject x="60" y="2140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="df0bf9d | feat: add churn metrics to control plane summary | selfevo/cycle-cycle-86174011ad96" id="node-df0bf9d"><div class="evo-header"><a href="#cycle-cycle-86174011ad96" class="evo-node-link"><span class="evo-box-label">feat: add churn metrics to control plane summary</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">df0bf9d</span></div></div></foreignObject><foreignObject x="60" y="1900" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4bc51f3 | selfevo: auto-commit uncommitted subagent work — Add sliding window rate evaluation and failure reason breakdown to scripts/audit | selfevo/cycle-cycle-99fb9219d2d0" id="node-4bc51f3"><div class="evo-header"><a href="#cycle-cycle-99fb9219d2d0" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add sliding window rate evaluation and failure reason breakdown to scripts/audit</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4bc51f3</span></div></div></foreignObject><foreignObject x="60" y="1980" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4c59f09 | feat: add per-suite failure summary reporting to run_all_tests.py | selfevo/cycle-cycle-a135c95ff382" id="node-4c59f09"><div class="evo-header"><a href="#cycle-cycle-a135c95ff382" class="evo-node-link"><span class="evo-box-label">feat: add per-suite failure summary reporting to run_all_tests.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4c59f09</span></div></div></foreignObject><foreignObject x="60" y="1580" width="180" height="64"><div class="evo-box evo-box-abandoned" title="dc868bd | feat: add repeat failure suppression filtering to scripts/backlog_seeder.py | selfevo/cycle-cycle-e9a361954bb7" id="node-dc868bd"><div class="evo-header"><a href="#cycle-cycle-e9a361954bb7" class="evo-node-link"><span class="evo-box-label">feat: add repeat failure suppression filtering to scripts/backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">dc868bd</span></div></div></foreignObject><foreignObject x="60" y="700" width="180" height="64"><div class="evo-box evo-box-abandoned" title="fbba467 | selfevo: auto-commit uncommitted subagent work — Add Path read_text and write_text encoding check to scripts/validate_open_encodi | selfevo/cycle-cycle-e301a8a7eeb5" id="node-fbba467"><div class="evo-header"><a href="#cycle-cycle-e301a8a7eeb5" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add Path read_text and write_text encoding check to scripts/validate_open_encodi</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">fbba467</span></div></div></foreignObject><foreignObject x="60" y="1180" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8a224e2 | fix: repair truncated test_detect_recurring_error_thresholds in test_analyze_repeat_failures.py | selfevo/cycle-cycle-5c2f9e9519a5" id="node-8a224e2"><div class="evo-header"><a href="#cycle-cycle-5c2f9e9519a5" class="evo-node-link"><span class="evo-box-label">fix: repair truncated test_detect_recurring_error_thresholds in test_analyze_repeat_failures.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8a224e2</span></div></div></foreignObject><foreignObject x="60" y="860" width="180" height="64"><div class="evo-box evo-box-abandoned" title="15f6b83 | feat: threshold evaluation and compact JSON summary in check_confirmation_ratio.py | selfevo/cycle-cycle-71a9cd753407" id="node-15f6b83"><div class="evo-header"><a href="#cycle-cycle-71a9cd753407" class="evo-node-link"><span class="evo-box-label">feat: threshold evaluation and compact JSON summary in check_confirmation_ratio.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">15f6b83</span></div></div></foreignObject><foreignObject x="60" y="2220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="5bd7cb6 | feat: precise first-line deprecation marker parsing and JSON summary in validate_deprecation_status.py | selfevo/cycle-cycle-bdc701abfefd" id="node-5bd7cb6"><div class="evo-header"><a href="#cycle-cycle-bdc701abfefd" class="evo-node-link"><span class="evo-box-label">feat: precise first-line deprecation marker parsing and JSON summary in validate_deprecation_status.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5bd7cb6</span></div></div></foreignObject><foreignObject x="60" y="1420" width="180" height="64"><div class="evo-box evo-box-abandoned" title="2af2d69 | selfevo: auto-commit uncommitted subagent work — Add broad Exception clause detection and JSON reporting to scripts/validate_exce | selfevo/cycle-cycle-c9e29b9f5116" id="node-2af2d69"><div class="evo-header"><a href="#cycle-cycle-c9e29b9f5116" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add broad Exception clause detection and JSON reporting to scripts/validate_exce</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2af2d69</span></div></div></foreignObject><foreignObject x="60" y="2300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="ea8f7f6 | selfevo: auto-commit uncommitted subagent work — Add local package resolution and syntax error resilience to scripts/verify_impor | selfevo/cycle-cycle-f6cf166ccb29" id="node-ea8f7f6"><div class="evo-header"><a href="#cycle-cycle-f6cf166ccb29" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add local package resolution and syntax error resilience to scripts/verify_impor</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ea8f7f6</span></div></div></foreignObject><foreignObject x="60" y="220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="b24f42e | selfevo: auto-commit uncommitted subagent work — Add JSON output format and outcome status filtering to scripts/backlog_seeder.py | selfevo/cycle-cycle-cabd4170fa72" id="node-b24f42e"><div class="evo-header"><a href="#cycle-cycle-cabd4170fa72" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add JSON output format and outcome status filtering to scripts/backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">b24f42e</span></div></div></foreignObject><foreignObject x="60" y="1020" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4eaf1ce | selfevo: auto-commit uncommitted subagent work — Update AST entrypoint rules to recognize standard script termination idioms in s | selfevo/cycle-cycle-c40c135fac30" id="node-4eaf1ce"><div class="evo-header"><a href="#cycle-cycle-c40c135fac30" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Update AST entrypoint rules to recognize standard script termination idioms in s</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4eaf1ce</span></div></div></foreignObject><foreignObject x="60" y="140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bbce02d | cycle-9325b9a4ce99 | selfevo/cycle-cycle-9325b9a4ce99" id="node-bbce02d"><div class="evo-header"><a href="#cycle-cycle-9325b9a4ce99" class="evo-node-link"><span class="evo-box-label">cycle-9325b9a4ce99</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bbce02d</span></div></div></foreignObject><foreignObject x="60" y="2060" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bf94ef2 | cycle-72ecc20db7cf | selfevo/cycle-cycle-72ecc20db7cf" id="node-bf94ef2"><div class="evo-header"><a href="#cycle-cycle-72ecc20db7cf" class="evo-node-link"><span class="evo-box-label">cycle-72ecc20db7cf</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bf94ef2</span></div></div></foreignObject><foreignObject x="60" y="300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="d8f4a4a | cycle-05268ac2b14e | selfevo/cycle-cycle-05268ac2b14e" id="node-d8f4a4a"><div class="evo-header"><a href="#cycle-cycle-05268ac2b14e" class="evo-node-link"><span class="evo-box-label">cycle-05268ac2b14e</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">d8f4a4a</span></div></div></foreignObject><foreignObject x="60" y="1500" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4d32e3a | cycle-316b251e8548 | selfevo/cycle-cycle-316b251e8548" id="node-4d32e3a"><div class="evo-header"><a href="#cycle-cycle-316b251e8548" class="evo-node-link"><span class="evo-box-label">cycle-316b251e8548</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4d32e3a</span></div></div></foreignObject></g></svg></div>
+<div class="canvas-outer" id="panel-lineage"><a class="canvas-jump" href="#node-2d6de89">&gt;&gt; jump to current cycle</a><svg class="tech-canvas" role="img" aria-label="Cycle lineage graph: research directions and evolution lineage, 100 nodes" width="1540" height="2808" viewBox="0 0 1540 2808"><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH DIRECTIONS</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-researching">RESEARCHING</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="841238.0562"></span><span class="bar bar-pos" style="height:2px;" title="4450.5615"></span><span class="bar bar-pos" style="height:2px;" title="9461.3803"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-17049.3766"></span><span class="bar bar-neg" style="height:2px;" title="-5503.9627"></span></div></div><div class="spark-mean mean-pos">mean gain +166.5K</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain 0</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain 0</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.026"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0014"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0014"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span></div></div><div class="spark-mean mean-pos">mean gain +0</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.4095"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="0.005"></span><span class="bar bar-pos" style="height:2px;" title="0.015"></span><span class="bar bar-pos" style="height:2px;" title="0.01"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0019"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.09</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /><rect x="260" y="0" width="1" height="100%" class="mint-col-border" fill="#182a20" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">EVOLUTION LINEAGE (DGM)</text><text x="10" y="32" class="lane-note">showing last 30 of 100 nodes</text><text x="10" y="46" class="lane-note">time range: Aug 17 - Aug 24</text><foreignObject x="60" y="940" width="180" height="64"><div class="evo-box evo-box-current" title="2d6de89 | selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_ | selfevo/cycle-cycle-568081338c2d" id="node-2d6de89"><div class="evo-header"><a href="#cycle-cycle-568081338c2d" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2d6de89</span></div></div></foreignObject><foreignObject x="60" y="1340" width="180" height="64"><div class="evo-box evo-box-abandoned" title="3ce5630 | docs(lessons): document root cause and remediation for out_of_band_main_detected | selfevo/cycle-cycle-a5e848c5b963" id="node-3ce5630"><div class="evo-header"><a href="#cycle-cycle-a5e848c5b963" class="evo-node-link"><span class="evo-box-label">docs(lessons): document root cause and remediation for out_of_band_main_detected</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">3ce5630</span></div></div></foreignObject><foreignObject x="60" y="1100" width="180" height="64"><div class="evo-box evo-box-abandoned" title="ea30066 | feat: add integration confirmation weighting to backlog_seeder.py | selfevo/cycle-cycle-59821cee55b2" id="node-ea30066"><div class="evo-header"><a href="#cycle-cycle-59821cee55b2" class="evo-node-link"><span class="evo-box-label">feat: add integration confirmation weighting to backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ea30066</span></div></div></foreignObject><foreignObject x="60" y="780" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bb2e8bd | feat: add touched script smoke testing and execution verification to verify_and_proof.py | selfevo/cycle-cycle-a830b59b5481" id="node-bb2e8bd"><div class="evo-header"><a href="#cycle-cycle-a830b59b5481" class="evo-node-link"><span class="evo-box-label">feat: add touched script smoke testing and execution verification to verify_and_proof.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bb2e8bd</span></div></div></foreignObject><foreignObject x="60" y="1260" width="180" height="64"><div class="evo-box evo-box-abandoned" title="9787ea1 | feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record | selfevo/cycle-cycle-31e0fa04a056" id="node-9787ea1"><div class="evo-header"><a href="#cycle-cycle-31e0fa04a056" class="evo-node-link"><span class="evo-box-label">feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">9787ea1</span></div></div></foreignObject><foreignObject x="60" y="60" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8d1d54c | feat: add recent integration status reporting to control_plane_summary.py | selfevo/cycle-cycle-a6c3c1c46e80" id="node-8d1d54c"><div class="evo-header"><a href="#cycle-cycle-a6c3c1c46e80" class="evo-node-link"><span class="evo-box-label">feat: add recent integration status reporting to control_plane_summary.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8d1d54c</span></div></div></foreignObject><foreignObject x="60" y="2380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bc50601 | feat: add rolling window filtering and frequency ranking to summarize_failure_outcomes.py | selfevo/cycle-cycle-381b8f2782a3" id="node-bc50601"><div class="evo-header"><a href="#cycle-cycle-381b8f2782a3" class="evo-node-link"><span class="evo-box-label">feat: add rolling window filtering and frequency ranking to summarize_failure_outcomes.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bc50601</span></div></div></foreignObject><foreignObject x="60" y="460" width="180" height="64"><div class="evo-box evo-box-abandoned" title="5fec2d8 | fix: exclude guarded bootstrap sys.path.insert from validator findings | selfevo/cycle-cycle-1c25796d3dcc" id="node-5fec2d8"><div class="evo-header"><a href="#cycle-cycle-1c25796d3dcc" class="evo-node-link"><span class="evo-box-label">fix: exclude guarded bootstrap sys.path.insert from validator findings</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5fec2d8</span></div></div></foreignObject><foreignObject x="60" y="540" width="180" height="64"><div class="evo-box evo-box-abandoned" title="218de1e | selfevo: auto-commit uncommitted subagent work — Add target path and error type comparison to scripts/check_last_cycle_repeat.py | selfevo/cycle-cycle-e8bf53c107d0" id="node-218de1e"><div class="evo-header"><a href="#cycle-cycle-e8bf53c107d0" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add target path and error type comparison to scripts/check_last_cycle_repeat.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">218de1e</span></div></div></foreignObject><foreignObject x="60" y="1740" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e399982 | selfevo: auto-commit uncommitted subagent work — Add 7-day rolling window calculation and threshold alert to scripts/audit_repeat | selfevo/cycle-cycle-57a5e2a21d55" id="node-e399982"><div class="evo-header"><a href="#cycle-cycle-57a5e2a21d55" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add 7-day rolling window calculation and threshold alert to scripts/audit_repeat</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e399982</span></div></div></foreignObject><foreignObject x="60" y="1660" width="180" height="64"><div class="evo-box evo-box-abandoned" title="139ac15 | test: add pytest coverage for run_all_tests.py timing and failure summaries | selfevo/cycle-cycle-0ec6ca8acdac" id="node-139ac15"><div class="evo-header"><a href="#cycle-cycle-0ec6ca8acdac" class="evo-node-link"><span class="evo-box-label">test: add pytest coverage for run_all_tests.py timing and failure summaries</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">139ac15</span></div></div></foreignObject><foreignObject x="60" y="620" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e717a30 | feat: add artifact execution check and return code validation to verify_and_proof.py | selfevo/cycle-cycle-60fc851d7f9a" id="node-e717a30"><div class="evo-header"><a href="#cycle-cycle-60fc851d7f9a" class="evo-node-link"><span class="evo-box-label">feat: add artifact execution check and return code validation to verify_and_proof.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e717a30</span></div></div></foreignObject><foreignObject x="60" y="1820" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8d2f6a7 | feat: add failure category aggregation and recurrence threshold filtering to analyze_repeat_failures.py | selfevo/cycle-cycle-fe7f15edfa0d" id="node-8d2f6a7"><div class="evo-header"><a href="#cycle-cycle-fe7f15edfa0d" class="evo-node-link"><span class="evo-box-label">feat: add failure category aggregation and recurrence threshold filtering to analyze_repeat_failures.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8d2f6a7</span></div></div></foreignObject><foreignObject x="60" y="380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="583e036 | feat: add touched file integrity and proof note checks to validate_cycle_handoff.py | selfevo/cycle-cycle-645ebf920398" id="node-583e036"><div class="evo-header"><a href="#cycle-cycle-645ebf920398" class="evo-node-link"><span class="evo-box-label">feat: add touched file integrity and proof note checks to validate_cycle_handoff.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">583e036</span></div></div></foreignObject><foreignObject x="60" y="2140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="df0bf9d | feat: add churn metrics to control plane summary | selfevo/cycle-cycle-86174011ad96" id="node-df0bf9d"><div class="evo-header"><a href="#cycle-cycle-86174011ad96" class="evo-node-link"><span class="evo-box-label">feat: add churn metrics to control plane summary</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">df0bf9d</span></div></div></foreignObject><foreignObject x="60" y="1900" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4bc51f3 | selfevo: auto-commit uncommitted subagent work — Add sliding window rate evaluation and failure reason breakdown to scripts/audit | selfevo/cycle-cycle-99fb9219d2d0" id="node-4bc51f3"><div class="evo-header"><a href="#cycle-cycle-99fb9219d2d0" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add sliding window rate evaluation and failure reason breakdown to scripts/audit</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4bc51f3</span></div></div></foreignObject><foreignObject x="60" y="1980" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4c59f09 | feat: add per-suite failure summary reporting to run_all_tests.py | selfevo/cycle-cycle-a135c95ff382" id="node-4c59f09"><div class="evo-header"><a href="#cycle-cycle-a135c95ff382" class="evo-node-link"><span class="evo-box-label">feat: add per-suite failure summary reporting to run_all_tests.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4c59f09</span></div></div></foreignObject><foreignObject x="60" y="1580" width="180" height="64"><div class="evo-box evo-box-abandoned" title="dc868bd | feat: add repeat failure suppression filtering to scripts/backlog_seeder.py | selfevo/cycle-cycle-e9a361954bb7" id="node-dc868bd"><div class="evo-header"><a href="#cycle-cycle-e9a361954bb7" class="evo-node-link"><span class="evo-box-label">feat: add repeat failure suppression filtering to scripts/backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">dc868bd</span></div></div></foreignObject><foreignObject x="60" y="700" width="180" height="64"><div class="evo-box evo-box-abandoned" title="fbba467 | selfevo: auto-commit uncommitted subagent work — Add Path read_text and write_text encoding check to scripts/validate_open_encodi | selfevo/cycle-cycle-e301a8a7eeb5" id="node-fbba467"><div class="evo-header"><a href="#cycle-cycle-e301a8a7eeb5" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add Path read_text and write_text encoding check to scripts/validate_open_encodi</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">fbba467</span></div></div></foreignObject><foreignObject x="60" y="1180" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8a224e2 | fix: repair truncated test_detect_recurring_error_thresholds in test_analyze_repeat_failures.py | selfevo/cycle-cycle-5c2f9e9519a5" id="node-8a224e2"><div class="evo-header"><a href="#cycle-cycle-5c2f9e9519a5" class="evo-node-link"><span class="evo-box-label">fix: repair truncated test_detect_recurring_error_thresholds in test_analyze_repeat_failures.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8a224e2</span></div></div></foreignObject><foreignObject x="60" y="860" width="180" height="64"><div class="evo-box evo-box-abandoned" title="15f6b83 | feat: threshold evaluation and compact JSON summary in check_confirmation_ratio.py | selfevo/cycle-cycle-71a9cd753407" id="node-15f6b83"><div class="evo-header"><a href="#cycle-cycle-71a9cd753407" class="evo-node-link"><span class="evo-box-label">feat: threshold evaluation and compact JSON summary in check_confirmation_ratio.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">15f6b83</span></div></div></foreignObject><foreignObject x="60" y="2220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="5bd7cb6 | feat: precise first-line deprecation marker parsing and JSON summary in validate_deprecation_status.py | selfevo/cycle-cycle-bdc701abfefd" id="node-5bd7cb6"><div class="evo-header"><a href="#cycle-cycle-bdc701abfefd" class="evo-node-link"><span class="evo-box-label">feat: precise first-line deprecation marker parsing and JSON summary in validate_deprecation_status.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5bd7cb6</span></div></div></foreignObject><foreignObject x="60" y="1420" width="180" height="64"><div class="evo-box evo-box-abandoned" title="2af2d69 | selfevo: auto-commit uncommitted subagent work — Add broad Exception clause detection and JSON reporting to scripts/validate_exce | selfevo/cycle-cycle-c9e29b9f5116" id="node-2af2d69"><div class="evo-header"><a href="#cycle-cycle-c9e29b9f5116" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add broad Exception clause detection and JSON reporting to scripts/validate_exce</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2af2d69</span></div></div></foreignObject><foreignObject x="60" y="2300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="ea8f7f6 | selfevo: auto-commit uncommitted subagent work — Add local package resolution and syntax error resilience to scripts/verify_impor | selfevo/cycle-cycle-f6cf166ccb29" id="node-ea8f7f6"><div class="evo-header"><a href="#cycle-cycle-f6cf166ccb29" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add local package resolution and syntax error resilience to scripts/verify_impor</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ea8f7f6</span></div></div></foreignObject><foreignObject x="60" y="220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="b24f42e | selfevo: auto-commit uncommitted subagent work — Add JSON output format and outcome status filtering to scripts/backlog_seeder.py | selfevo/cycle-cycle-cabd4170fa72" id="node-b24f42e"><div class="evo-header"><a href="#cycle-cycle-cabd4170fa72" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add JSON output format and outcome status filtering to scripts/backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">b24f42e</span></div></div></foreignObject><foreignObject x="60" y="1020" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4eaf1ce | selfevo: auto-commit uncommitted subagent work — Update AST entrypoint rules to recognize standard script termination idioms in s | selfevo/cycle-cycle-c40c135fac30" id="node-4eaf1ce"><div class="evo-header"><a href="#cycle-cycle-c40c135fac30" class="evo-node-link"><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Update AST entrypoint rules to recognize standard script termination idioms in s</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4eaf1ce</span></div></div></foreignObject><foreignObject x="60" y="140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bbce02d | cycle-9325b9a4ce99 | selfevo/cycle-cycle-9325b9a4ce99" id="node-bbce02d"><div class="evo-header"><a href="#cycle-cycle-9325b9a4ce99" class="evo-node-link"><span class="evo-box-label">cycle-9325b9a4ce99</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bbce02d</span></div></div></foreignObject><foreignObject x="60" y="2060" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bf94ef2 | cycle-72ecc20db7cf | selfevo/cycle-cycle-72ecc20db7cf" id="node-bf94ef2"><div class="evo-header"><a href="#cycle-cycle-72ecc20db7cf" class="evo-node-link"><span class="evo-box-label">cycle-72ecc20db7cf</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bf94ef2</span></div></div></foreignObject><foreignObject x="60" y="300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="d8f4a4a | cycle-05268ac2b14e | selfevo/cycle-cycle-05268ac2b14e" id="node-d8f4a4a"><div class="evo-header"><a href="#cycle-cycle-05268ac2b14e" class="evo-node-link"><span class="evo-box-label">cycle-05268ac2b14e</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">d8f4a4a</span></div></div></foreignObject><foreignObject x="60" y="1500" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4d32e3a | cycle-316b251e8548 | selfevo/cycle-cycle-316b251e8548" id="node-4d32e3a"><div class="evo-header"><a href="#cycle-cycle-316b251e8548" class="evo-node-link"><span class="evo-box-label">cycle-316b251e8548</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">4d32e3a</span></div></div></foreignObject></g></svg></div>
 
     <section class="panel panel-feed" id="panel-feed">
       <h2 class="panel-title">Cycle Feed (Recent 10)</h2>
@@ -844,6 +861,7 @@
 
     <section class="panel panel-agent" id="panel-agent">
       <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
@@ -917,7 +935,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-24 20:46:18 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-08-24 20:25:45.233149 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-24 21:16:18 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-08-24 20:56:01.724067 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
