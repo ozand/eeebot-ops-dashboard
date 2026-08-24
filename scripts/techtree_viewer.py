@@ -476,6 +476,84 @@ def fmt_ts(ts: Any) -> str:
     return esc(str(ts).replace('T', ' ').replace('Z', ' UTC'))
 
 
+def fmt_compact(value: Any, signed: bool = False) -> str:
+    """Format large/small numbers with compact K/M suffixes or passthrough strings."""
+    if value is None or value == '':
+        return 'n/a'
+    if isinstance(value, str):
+        val_clean = value.strip()
+        if not val_clean:
+            return 'n/a'
+        try:
+            num = float(val_clean)
+        except ValueError:
+            return esc(val_clean)
+    elif isinstance(value, (int, float)):
+        num = float(value)
+    else:
+        return esc(str(value))
+
+    sign_str = '+' if (signed and num > 0) else ('-' if num < 0 else '')
+    abs_num = abs(num)
+
+    if abs_num >= 1_000_000:
+        return f'{sign_str}{abs_num / 1_000_000:.2f}M'
+    elif abs_num >= 100_000:
+        return f'{sign_str}{abs_num / 1_000:.1f}K'
+    elif abs_num >= 1_000:
+        return f'{sign_str}{abs_num / 1_000:.2f}K'
+    elif abs_num == 0:
+        return '0'
+    elif isinstance(value, int) or abs_num.is_integer():
+        return f'{sign_str}{int(abs_num)}'
+    else:
+        formatted = f'{abs_num:.2f}'.rstrip('0').rstrip('.')
+        return f'{sign_str}{formatted}'
+
+
+def _parse_iso_ts(ts_str: Any) -> datetime | None:
+    """Parse ISO timestamp string to UTC datetime or None."""
+    if not ts_str:
+        return None
+    s = str(ts_str).strip()
+    if not s:
+        return None
+    try:
+        clean_s = s.replace('Z', '+00:00')
+        dt = datetime.fromisoformat(clean_s)
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def fmt_ts_short(ts_str: Any, now: datetime | None = None) -> str:
+    """Format ISO timestamp into short glanceable string (HH:MM UTC if today UTC, else Mon DD or Mon DD YYYY)."""
+    if not ts_str:
+        return 'n/a'
+    s = str(ts_str).strip()
+    if not s:
+        return 'n/a'
+    dt = _parse_iso_ts(s)
+    if dt is None:
+        return esc(s)
+
+    if now is None:
+        now = datetime.now(timezone.utc)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    else:
+        now = now.astimezone(timezone.utc)
+
+    if dt.date() == now.date():
+        return f'{dt.strftime("%H:%M")} UTC'
+    elif dt.year == now.year:
+        return dt.strftime('%b %d').replace(' 0', ' ')
+    else:
+        return dt.strftime('%b %d %Y').replace(' 0', ' ')
+
+
 def title_case_name(name: Any) -> str:
     if not name:
         return 'unnamed'
@@ -553,7 +631,7 @@ def build_sparkline(gain_history: list[Any] | None) -> str:
         '<div class="spark-baseline"></div>'
         f'<div class="spark-bottom">{"".join(bottom_cells)}</div>'
         '</div>'
-        f'<div class="spark-mean {mean_class}">mean gain {mean_gain:+.4f}</div>'
+        f'<div class="spark-mean {mean_class}">mean gain {fmt_compact(mean_gain, signed=True)}</div>'
     )
 
 
@@ -795,7 +873,7 @@ def _evo_box_html(
     if isinstance(fitness, dict):
         r = fitness.get('reward')
         if isinstance(r, (int, float)) and not isinstance(r, bool):
-            fitness_line = f'<div class="evo-fitness">r:{r:.2f}</div>'
+            fitness_line = f'<div class="evo-fitness">r:{fmt_compact(r)}</div>'
 
     dir_badge = ''
     dir_name = node.get('direction') or node.get('research_direction')
@@ -1051,7 +1129,7 @@ def build_now_panel(
             lever_metric = node.get('lever_metric') or 'n/a'
             direction_type = node.get('direction') or 'n/a'
             last_val = node.get('last_lever_value')
-            val_str = f' (last: {esc(last_val)})' if last_val is not None else ''
+            val_str = f' (last: {fmt_compact(last_val)})' if last_val is not None else ''
             dir_html = (
                 f'<div class="now-item"><span class="now-label">Direction:</span> '
                 f'<span class="badge badge-researching">{esc(current_dir)}</span> '
@@ -1091,26 +1169,52 @@ def build_now_panel(
             f'<span class="now-sub">({esc(latest_cycle_id)}{sha_str})</span></div>'
         )
 
-    # 3. Demand snapshot
+    # 3. Demand snapshot -- chips grouped by id prefix (goal-gap / defect /
+    # priority / other) with counts; individual ids kept in tooltips. No
+    # human-readable labels exist in collected demand data, so grouping is
+    # the readable fallback (issue #41).
+    def _demand_group(gid: str) -> str:
+        for prefix in ('goal-gap', 'defect', 'priority'):
+            if gid.startswith(prefix):
+                return prefix
+        return 'other'
+
+    def _render_demand_groups(groups: dict[str, list[tuple[str, str]]], chip_cls: str, verb: str) -> str:
+        order = [p for p in ('goal-gap', 'defect', 'priority', 'other') if groups.get(p)]
+        parts = []
+        for prefix in order:
+            items = groups[prefix]
+            count = len(items)
+            shown = items[:8]
+            tip = '; '.join(f'{gid} ({verb} {detail})' for gid, detail in shown)
+            if count > len(shown):
+                tip += f'; +{count - len(shown)} more'
+            label = prefix if prefix != 'other' else 'other'
+            parts.append(
+                f'<span class="demand-chip {chip_cls} demand-group" title="{esc(tip)}">'
+                f'{esc(label)} &times;{count}</span>'
+            )
+        return ' '.join(parts) if parts else '<em>none</em>'
+
     demand_html = '<p class="unavailable-note">demand snapshot unavailable</p>'
-    served_items = []
+    served_groups: dict[str, list[tuple[str, str]]] = {}
     if isinstance(demand_rotation, dict):
         served = demand_rotation.get('served')
         if isinstance(served, dict):
-            for gid, ts in list(served.items())[-5:]:
-                served_items.append(f'<span class="demand-chip served" title="served: {esc(ts)}">{esc(gid)}</span>')
+            for gid, ts in served.items():
+                served_groups.setdefault(_demand_group(str(gid)), []).append((str(gid), str(ts)))
 
-    completed_items = []
+    completed_groups: dict[str, list[tuple[str, str]]] = {}
     if isinstance(demand_completed, dict):
         entries = demand_completed.get('entries')
         if isinstance(entries, dict):
-            for gid, cinfo in list(entries.items())[-5:]:
+            for gid, cinfo in entries.items():
                 cid = cinfo.get('cycle_id', '') if isinstance(cinfo, dict) else ''
-                completed_items.append(f'<span class="demand-chip completed" title="cycle: {esc(cid)}">{esc(gid)}</span>')
+                completed_groups.setdefault(_demand_group(str(gid)), []).append((str(gid), str(cid)))
 
-    if served_items or completed_items:
-        s_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Served:</span> {" ".join(served_items) if served_items else "<em>none</em>"}</div>'
-        c_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> {" ".join(completed_items) if completed_items else "<em>none</em>"}</div>'
+    if served_groups or completed_groups:
+        s_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Served:</span> {_render_demand_groups(served_groups, "served", "served")}</div>'
+        c_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> {_render_demand_groups(completed_groups, "completed", "cycle")}</div>'
         demand_html = f'<div class="now-demand-grid">{s_part}{c_part}</div>'
 
     return f'''
@@ -1322,8 +1426,13 @@ def build_cycle_feed(
             files_str = ', '.join(files_changed[:3]) + (f' +{len(files_changed)-3} more' if len(files_changed) > 3 else '')
             files_html = f'<div class="feed-files" title="{esc(", ".join(files_changed))}">📁 {esc(files_str)}</div>'
 
-        delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>' if metric_delta else ''
-        ts_html = f'<span class="feed-ts">{fmt_ts(ts_val)}</span>' if ts_val else ''
+        delta_html = ''
+        if metric_delta:
+            try:
+                delta_html = f'<span class="feed-delta">{fmt_compact(float(metric_delta), signed=True)}</span>'
+            except (TypeError, ValueError):
+                delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>'
+        ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val)}</span>' if ts_val else ''
 
         rows.append(f'''
         <li class="feed-row feed-outcome-{outcome_kind}" id="cycle-{esc(cid)}">
@@ -1352,6 +1461,7 @@ def build_hypotheses_panel(
     hypotheses_lifecycle: dict[str, Any] | None,
     hypotheses: dict[str, Any] | None = None,
     feed_cycles: set[str] | None = None,
+    now: datetime | None = None,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -1372,16 +1482,95 @@ def build_hypotheses_panel(
 
     valid_feed_cycles = set(feed_cycles) if feed_cycles else set()
 
-    active_items = []
-    answered_items = []
+    # Partition raw entries into active candidates and answered candidates
+    raw_active: list[dict[str, Any]] = []
+    raw_answered: list[dict[str, Any]] = []
 
     for hid, info in entries_dict.items():
         if not isinstance(info, dict):
             continue
         status = str(info.get('status') or 'open').lower()
+        verdict = info.get('verdict')
+        item = dict(info)
+        item['id'] = hid
+
+        if 'answered' in status or status in ('supported', 'refuted', 'inconclusive') or verdict:
+            raw_answered.append(item)
+        else:
+            raw_active.append(item)
+
+    # Deduplicate within each group by exact title, keeping the most recently touched
+    def dedupe_by_title(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for it in items:
+            t = str(it.get('title') or it.get('id') or '')
+            groups.setdefault(t, []).append(it)
+        result: list[dict[str, Any]] = []
+        for t, g in groups.items():
+            best = max(g, key=lambda x: str(x.get('last_touched') or x.get('first_seen') or ''))
+            result.append(best)
+        return result
+
+    deduped_active = dedupe_by_title(raw_active)
+    deduped_answered = dedupe_by_title(raw_answered)
+
+    # Reference time for stale detection (>14 days)
+    ref_now = now or datetime.now(timezone.utc)
+    if ref_now.tzinfo is None:
+        ref_now = ref_now.replace(tzinfo=timezone.utc)
+
+    # Classify active entries into active vs stale
+    def is_stale(item: dict[str, Any]) -> bool:
+        st = str(item.get('status') or '').lower()
+        if st == 'stale':
+            return True
+        lt = str(item.get('last_touched') or item.get('first_seen') or '').strip()
+        if lt:
+            dt = _parse_iso_ts(lt)
+            if dt:
+                if (ref_now - dt).total_seconds() > 14 * 86400:
+                    return True
+        return False
+
+    fresh_active: list[dict[str, Any]] = []
+    stale_active: list[dict[str, Any]] = []
+    for it in deduped_active:
+        if is_stale(it):
+            stale_active.append(it)
+        else:
+            fresh_active.append(it)
+
+    # Sort each subgroup by most recently touched first
+    def sort_key(it: dict[str, Any]) -> str:
+        return str(it.get('last_touched') or it.get('first_seen') or '')
+
+    fresh_active.sort(key=sort_key, reverse=True)
+    stale_active.sort(key=sort_key, reverse=True)
+    deduped_answered.sort(key=lambda it: str(it.get('answered_at') or it.get('last_touched') or ''), reverse=True)
+
+    def render_active_item(info: dict[str, Any], is_stale_flag: bool) -> str:
+        hid = info.get('id') or ''
+        status = str(info.get('status') or 'open').lower()
         title = info.get('title') or hid
         first_seen = info.get('first_seen') or ''
         last_touched = info.get('last_touched') or ''
+        badge_cls = 'badge-stale' if is_stale_flag else 'badge-researching'
+        badge_lbl = 'STALE' if (is_stale_flag and status != 'stale') else status.upper()
+        return f'''
+            <li class="hypo-row active">
+              <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
+              <strong class="hypo-title">{esc(title)}</strong>
+              <div class="hypo-meta">
+                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else ""}
+                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else ""}
+              </div>
+            </li>
+        '''
+
+    def render_answered_item(info: dict[str, Any]) -> str:
+        hid = info.get('id') or ''
+        status = str(info.get('status') or 'open').lower()
+        title = info.get('title') or hid
         answered_ev = info.get('answered_evidence') or ''
         answered_at = info.get('answered_at') or ''
         verdict = info.get('verdict')
@@ -1396,41 +1585,49 @@ def build_hypotheses_panel(
             else:
                 ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)}</span>'
 
-        if 'answered' in status or status in ('supported', 'refuted', 'inconclusive') or verdict:
-            v_label = str(verdict or status).upper()
-            badge_class = {
-                'SUPPORTED': 'verdict-supported',
-                'REFUTED': 'verdict-refuted',
-                'INCONCLUSIVE': 'verdict-inconclusive',
-                'ANSWERED': 'badge-integrated',
-            }.get(v_label, 'badge-integrated')
-            answered_items.append(f'''
+        v_label = str(verdict or status).upper()
+        badge_class = {
+            'SUPPORTED': 'verdict-supported',
+            'REFUTED': 'verdict-refuted',
+            'INCONCLUSIVE': 'verdict-inconclusive',
+            'ANSWERED': 'badge-integrated',
+        }.get(v_label, 'badge-integrated')
+        return f'''
             <li class="hypo-row answered">
               <span class="badge {badge_class}">{esc(v_label)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
                 {ev_html}
-                {f'<span class="hypo-ts">answered {fmt_ts(answered_at)}</span>' if answered_at else ""}
+                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else ""}
               </div>
             </li>
-            ''')
-        else:
-            active_items.append(f'''
-            <li class="hypo-row active">
-              <span class="badge badge-researching">{esc(status.upper())}</span>
-              <strong class="hypo-title">{esc(title)}</strong>
-              <div class="hypo-meta">
-                {f'<span class="hypo-ts">seen {fmt_ts(first_seen)}</span>' if first_seen else ""}
-                {f'<span class="hypo-ts">touched {fmt_ts(last_touched)}</span>' if last_touched else ""}
-              </div>
-            </li>
-            ''')
+        '''
 
-    # NOTE: no backslashes inside f-string expressions -- host runs Python 3.11 (pre-PEP 701)
-    active_body = "".join(active_items) if active_items else '<li class="unavailable-note">none active</li>'
-    answered_body = "".join(answered_items) if answered_items else '<li class="unavailable-note">none answered</li>'
-    active_html = f'<div class="hypo-group"><h3>Active ({len(active_items)})</h3><ul class="hypo-list">{active_body}</ul></div>'
-    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_items)})</h3><ul class="hypo-list">{answered_body}</ul></div>'
+    fresh_rendered = [render_active_item(x, False) for x in fresh_active]
+    stale_rendered = [render_active_item(x, True) for x in stale_active]
+    answered_rendered = [render_answered_item(x) for x in deduped_answered]
+
+    total_active_count = len(fresh_active) + len(stale_active)
+
+    if not fresh_rendered and not stale_rendered:
+        active_body = '<li class="unavailable-note">none active</li>'
+    elif len(stale_rendered) > 6:
+        stale_count = len(stale_rendered)
+        fresh_part = "".join(fresh_rendered)
+        stale_list_html = f'<ul class="hypo-list">{"".join(stale_rendered)}</ul>'
+        collapse_part = f'''
+        <details class="hypo-details">
+          <summary class="hypo-summary">{stale_count} stale hypotheses &mdash; show</summary>
+          {stale_list_html}
+        </details>
+        '''
+        active_body = f'{fresh_part}{collapse_part}'
+    else:
+        active_body = "".join(fresh_rendered + stale_rendered)
+
+    answered_body = "".join(answered_rendered) if answered_rendered else '<li class="unavailable-note">none answered</li>'
+    active_html = f'<div class="hypo-group"><h3>Active ({total_active_count})</h3><ul class="hypo-list">{active_body}</ul></div>'
+    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_rendered)})</h3><ul class="hypo-list">{answered_body}</ul></div>'
 
     return f'''
     <section class="panel panel-hypotheses">
@@ -1617,6 +1814,7 @@ CSS = '''
       font-size: 1.02em;
       color: #eae3c8;
       font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
 
     /* --- overall layout: column flex with nice gap --- */
@@ -1790,6 +1988,7 @@ CSS = '''
       font-family: 'Consolas', monospace;
       font-size: 0.8em;
       margin-left: auto;
+      font-variant-numeric: tabular-nums;
     }
     .feed-ts {
       color: #718096;
@@ -1821,6 +2020,16 @@ CSS = '''
       border-bottom: 1px solid #1c2740;
       padding-bottom: 4px;
     }
+    .hypo-details { margin-top: 8px; }
+    .hypo-summary {
+      font-size: 0.82em;
+      color: #8b96ad;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .hypo-summary:hover { color: #c9a227; }
+    .hypo-details ul.hypo-list { margin-top: 6px; }
     .hypo-list {
       list-style: none;
       margin: 0;
@@ -1895,6 +2104,7 @@ CSS = '''
       background: rgba(11, 18, 32, 0.6);
       border-radius: 6px;
       overflow: hidden;
+      font-variant-numeric: tabular-nums;
     }
     .skills-table th {
       text-align: left;
@@ -2029,6 +2239,7 @@ CSS = '''
       border-radius: 4px;
     }
     .badge-partial { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
     .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
