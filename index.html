@@ -63,24 +63,18 @@
       font-weight: 600;
     }
 
-    /* --- overall layout: fixed-width left rail + dominant canvas --- */
-    .layout {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px;
-      max-width: 100vw;
-    }
-
-    .rail {
-      flex: 0 0 220px;
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
     .canvas-outer {
-      flex: 1 1 auto;
+      width: 100%;
       min-width: 0;
       overflow-x: auto;
       overflow-y: hidden;
@@ -104,11 +98,11 @@
       background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
       border: 1px solid #24314f;
       border-radius: 10px;
-      padding: 14px 14px 16px 14px;
+      padding: 14px 18px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       color: #c9a227;
       font-size: 1.05em;
       letter-spacing: 1px;
@@ -124,32 +118,253 @@
       font-style: italic;
     }
 
-    /* --- eras rail: vertical medallions --- */
-    .era-rail { display: flex; flex-direction: column; gap: 8px; }
-    .era-medallion {
-      padding: 8px 6px;
-      border-radius: 10px;
-      text-align: center;
-      border: 2px solid #2c3a5c;
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .era-lit {
-      border-color: #2fd3c4;
-      box-shadow: 0 0 12px rgba(47, 211, 196, 0.5);
-      background: rgba(47, 211, 196, 0.08);
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
     }
-    .era-locked {
-      opacity: 0.55;
-      background: rgba(90, 90, 90, 0.08);
+    .now-label {
+      font-weight: 700;
+      color: #8b96ad;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
     }
-    .era-glyph { font-size: 1.2em; }
-    .era-name { font-size: 0.7em; margin-top: 4px; color: #c7cfe0; }
-    .era-caption {
-      text-align: center;
-      margin-top: 8px;
-      color: #c9a227;
-      letter-spacing: 1px;
-      font-family: Georgia, serif;
+    .now-detail {
+      color: #a0aec0;
       font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #718096;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #718096;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #2c3a5c;
+      background: rgba(15, 24, 42, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #c9a227;
+      border-color: rgba(201, 162, 39, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .feed-row {
+      background: rgba(15, 24, 42, 0.7);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #3a4a6e;
+      background: rgba(20, 33, 58, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #5c6370; }
+    .feed-outcome-partial { border-left: 4px solid #c9a227; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #eae3c8;
+      font-size: 0.95em;
+    }
+    .feed-cid {
+      color: #718096;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+    }
+    .feed-ts {
+      color: #718096;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #8b96ad;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #8b96ad;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #1c2740;
+      padding-bottom: 4px;
+    }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .hypo-row {
+      background: rgba(15, 24, 42, 0.7);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #eae3c8;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #718096;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #8b96ad;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #1c2740;
+      padding-bottom: 4px;
+    }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(11, 18, 32, 0.9);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #c7cfe0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(11, 18, 32, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #14213a;
+      color: #8b96ad;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #24314f;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #1c2740;
+    }
+    .skill-high-ratio {
+      background: rgba(201, 162, 39, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #c9a227;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #5c6370;
+      font-style: italic;
     }
 
     /* --- direction boxes (Lane A / RESEARCH) --- */
@@ -199,17 +414,18 @@
     .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
     .mint-glyph { fill: #c9a227; font-size: 15px; }
 
-    /* --- evolution boxes (Lane B / WORLD HISTORY) --- */
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
     .evo-box {
       width: 100%;
       height: 100%;
       display: flex;
-      align-items: center;
-      gap: 4px;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
       background: rgba(15, 24, 42, 0.9);
       border: 1.5px solid #4a5878;
       border-radius: 7px;
-      padding: 0 8px;
+      padding: 4px 8px;
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       color: #c7cfe0;
@@ -220,8 +436,31 @@
       background: rgba(47, 211, 196, 0.12);
     }
     .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
     .evo-diamond { color: #c9a227; font-weight: 700; }
-    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #eae3c8; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #718096; }
+    .evo-fitness { font-size: 9px; color: #a0aec0; }
     .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
     .evo-fallback { color: #d8dce6; }
 
@@ -232,11 +471,14 @@
       letter-spacing: 0.5px;
       padding: 2px 7px;
       border-radius: 4px;
-      margin-bottom: 6px;
     }
     .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
     .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
     .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
@@ -259,43 +501,6 @@
     .mean-pos { color: #c9a227; }
     .mean-neg { color: #d97b7b; }
 
-    ul.verdict-list, ul.timeline-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    ul.verdict-list li, ul.timeline-list li {
-      padding: 5px 0;
-      border-bottom: 1px solid #1c2740;
-      font-size: 0.78em;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-    .verdict-list-compact .verdict-title { color: #eae3c8; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
-    .timeline-sha { font-family: 'Consolas', 'Courier New', monospace; color: #2fd3c4; }
-    .timeline-branch { color: #b7c0d4; font-size: 0.9em; }
-    .timeline-ts { color: #6a7590; font-size: 0.85em; }
-
-    .count-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .count-chip {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 56px;
-      padding: 6px 6px;
-      border-radius: 6px;
-      border: 1px solid #2c3a5c;
-      background: rgba(15, 24, 42, 0.7);
-    }
-    .count-value { font-size: 1.05em; font-weight: 700; color: #eae3c8; }
-    .count-label { font-size: 0.6em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
-    .count-supported .count-value { color: #c9a227; }
-    .count-refuted .count-value { color: #d97b7b; }
-
     footer.page-footer {
       text-align: center;
       color: #4f5a76;
@@ -309,41 +514,305 @@
 
     <header class="empire-strip">
       <div class="empire-title">EEEBOT EMPIRE</div>
-      <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">101</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.5%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate</span><span class="stat-value">47.3%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.4M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-computed">computed 2026-08-24 02:03:15.306238 UTC</div>
+      <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">101</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.7%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate</span><span class="stat-value">50.9%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.4M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-computed">computed 2026-08-24 03:06:23.517170 UTC</div>
     </header>
     
-<div class="layout">
-<aside class="rail">
-    <section class="panel panel-eras">
-      <h2 class="panel-title">Eras</h2>
-      <div class="era-rail">
-        <div class="era-medallion era-locked">
-          <div class="era-glyph">&#128274;</div>
-          <div class="era-name">Existence Index</div>
+<main class="dashboard-main">
+
+    <section class="panel panel-now">
+      <h2 class="panel-title">Now / Active Focus</h2>
+      <div class="now-content">
+        <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">cycle-cost</span> <span class="badge badge-available">active</span> <span class="now-detail">lever: <strong>cost.tokens_per_integration</strong> &middot; aim: <em>lower</em> (last: 1700935.1681)</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>cycle-0ec6ca8acdac</strong> <span class="now-sub">(cycle-0ec6ca8acdac [139ac15b])</span></div>
+        <div class="now-item">
+          <span class="now-label">Demand Queue:</span>
+          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served" title="served: 2026-08-24T02:39:32.497195+00:00">goal-gap-acb65b1911ab</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <span class="demand-chip completed" title="cycle: cycle-f4612702401b">defect-4053ae911408</span> <span class="demand-chip completed" title="cycle: cycle-3c26748d3c8c">defect-e3b548b14df3</span> <span class="demand-chip completed" title="cycle: cycle-c40c135fac30">defect-c4095c7ab803</span> <span class="demand-chip completed" title="cycle: cycle-cabd4170fa72">defect-f0cce91661fc</span> <span class="demand-chip completed" title="cycle: cycle-bdc701abfefd">defect-6309e320a8b1</span></div></div>
         </div>
-        
-        <div class="era-medallion era-locked">
-          <div class="era-glyph">&#128274;</div>
-          <div class="era-name">Demand</div>
-        </div>
-        
-        <div class="era-medallion era-locked">
-          <div class="era-glyph">&#128274;</div>
-          <div class="era-name">Llm Proposer</div>
-        </div>
-        </div>
-      <div class="era-caption">Trust Level 0</div>
+      </div>
     </section>
     
-    <section class="panel panel-library">
-      <h2 class="panel-title">Great Library</h2>
-      <div class="count-row"><div class="count-chip count-active"><span class="count-value">1</span><span class="count-label">active</span></div><div class="count-chip count-answered"><span class="count-value">2</span><span class="count-label">answered</span></div><div class="count-chip count-supported"><span class="count-value">0</span><span class="count-label">supported</span></div><div class="count-chip count-refuted"><span class="count-value">0</span><span class="count-label">refuted</span></div><div class="count-chip count-inconclusive"><span class="count-value">0</span><span class="count-label">inconclusive</span></div></div>
-      <p class="unavailable-note">no verdicts recorded yet</p>
+<div class="canvas-outer"><svg class="tech-canvas" width="1540" height="2808" viewBox="0 0 1540 2808"><line x1="40" y1="0" x2="40" y2="2808" class="era-grid-line" /><line x1="270" y1="0" x2="270" y2="2808" class="era-grid-line" /><line x1="290" y1="0" x2="290" y2="2808" class="era-grid-line" /><line x1="520" y1="0" x2="520" y2="2808" class="era-grid-line" /><line x1="770" y1="0" x2="770" y2="2808" class="era-grid-line" /><line x1="1020" y1="0" x2="1020" y2="2808" class="era-grid-line" /><line x1="1270" y1="0" x2="1270" y2="2808" class="era-grid-line" /><line x1="1520" y1="0" x2="1520" y2="2808" class="era-grid-line" /><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH DIRECTIONS</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-researching">RESEARCHING</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="841238.0562"></span><span class="bar bar-pos" style="height:2px;" title="4450.5615"></span><span class="bar bar-pos" style="height:2px;" title="9461.3803"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-17049.3766"></span><span class="bar bar-neg" style="height:2px;" title="-5503.9627"></span></div></div><div class="spark-mean mean-pos">mean gain +166519.3317</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0000</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0000</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.026"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0014"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0014"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0049</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.4095"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="0.005"></span><span class="bar bar-pos" style="height:2px;" title="0.015"></span><span class="bar bar-pos" style="height:2px;" title="0.01"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0019"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0875</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">EVOLUTION LINEAGE (DGM)</text><text x="10" y="32" class="lane-note">showing last 30 of 98 nodes</text><foreignObject x="60" y="1260" width="180" height="64"><div class="evo-box evo-box-current" title="139ac15 | cycle-0ec6ca8acdac | selfevo/cycle-cycle-0ec6ca8acdac" id="node-139ac15"><div class="evo-header"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-0ec6ca8acdac</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">139ac15</span></div><div class="evo-fitness">r:None int:101</div></div></foreignObject><foreignObject x="60" y="460" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e717a30 | cycle-60fc851d7f9a | selfevo/cycle-cycle-60fc851d7f9a" id="node-e717a30"><div class="evo-header"><span class="evo-box-label">cycle-60fc851d7f9a</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">e717a30</span></div><div class="evo-fitness">r:None int:102</div></div></foreignObject><foreignObject x="60" y="1340" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8d2f6a7 | cycle-fe7f15edfa0d | selfevo/cycle-cycle-fe7f15edfa0d" id="node-8d2f6a7"><div class="evo-header"><span class="evo-box-label">cycle-fe7f15edfa0d</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">8d2f6a7</span></div><div class="evo-fitness">r:None int:100</div></div></foreignObject><foreignObject x="60" y="380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="583e036 | cycle-645ebf920398 | selfevo/cycle-cycle-645ebf920398" id="node-583e036"><div class="evo-header"><span class="evo-box-label">cycle-645ebf920398</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">583e036</span></div><div class="evo-fitness">r:None int:100</div></div></foreignObject><foreignObject x="60" y="2140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="df0bf9d | cycle-86174011ad96 | selfevo/cycle-cycle-86174011ad96" id="node-df0bf9d"><div class="evo-header"><span class="evo-box-label">cycle-86174011ad96</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">df0bf9d</span></div><div class="evo-fitness">r:None int:99</div></div></foreignObject><foreignObject x="60" y="1420" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4bc51f3 | cycle-99fb9219d2d0 | selfevo/cycle-cycle-99fb9219d2d0" id="node-4bc51f3"><div class="evo-header"><span class="evo-box-label">cycle-99fb9219d2d0</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">4bc51f3</span></div><div class="evo-fitness">r:None int:98</div></div></foreignObject><foreignObject x="60" y="1900" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4c59f09 | cycle-a135c95ff382 | selfevo/cycle-cycle-a135c95ff382" id="node-4c59f09"><div class="evo-header"><span class="evo-box-label">cycle-a135c95ff382</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">4c59f09</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="1180" width="180" height="64"><div class="evo-box evo-box-abandoned" title="dc868bd | cycle-e9a361954bb7 | selfevo/cycle-cycle-e9a361954bb7" id="node-dc868bd"><div class="evo-header"><span class="evo-box-label">cycle-e9a361954bb7</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">dc868bd</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="540" width="180" height="64"><div class="evo-box evo-box-abandoned" title="fbba467 | cycle-e301a8a7eeb5 | selfevo/cycle-cycle-e301a8a7eeb5" id="node-fbba467"><div class="evo-header"><span class="evo-box-label">cycle-e301a8a7eeb5</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">fbba467</span></div><div class="evo-fitness">r:None int:94</div></div></foreignObject><foreignObject x="60" y="780" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8a224e2 | cycle-5c2f9e9519a5 | selfevo/cycle-cycle-5c2f9e9519a5" id="node-8a224e2"><div class="evo-header"><span class="evo-box-label">cycle-5c2f9e9519a5</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">8a224e2</span></div><div class="evo-fitness">r:None int:94</div></div></foreignObject><foreignObject x="60" y="620" width="180" height="64"><div class="evo-box evo-box-abandoned" title="15f6b83 | cycle-71a9cd753407 | selfevo/cycle-cycle-71a9cd753407" id="node-15f6b83"><div class="evo-header"><span class="evo-box-label">cycle-71a9cd753407</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">15f6b83</span></div><div class="evo-fitness">r:None int:93</div></div></foreignObject><foreignObject x="60" y="2220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="5bd7cb6 | cycle-bdc701abfefd | selfevo/cycle-cycle-bdc701abfefd" id="node-5bd7cb6"><div class="evo-header"><span class="evo-box-label">cycle-bdc701abfefd</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">5bd7cb6</span></div><div class="evo-fitness">r:None int:92</div></div></foreignObject><foreignObject x="60" y="1020" width="180" height="64"><div class="evo-box evo-box-abandoned" title="2af2d69 | cycle-c9e29b9f5116 | selfevo/cycle-cycle-c9e29b9f5116" id="node-2af2d69"><div class="evo-header"><span class="evo-box-label">cycle-c9e29b9f5116</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">2af2d69</span></div><div class="evo-fitness">r:None int:100</div></div></foreignObject><foreignObject x="60" y="2300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="ea8f7f6 | cycle-f6cf166ccb29 | selfevo/cycle-cycle-f6cf166ccb29" id="node-ea8f7f6"><div class="evo-header"><span class="evo-box-label">cycle-f6cf166ccb29</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">ea8f7f6</span></div><div class="evo-fitness">r:None int:100</div></div></foreignObject><foreignObject x="60" y="220" width="180" height="64"><div class="evo-box evo-box-abandoned" title="b24f42e | cycle-cabd4170fa72 | selfevo/cycle-cycle-cabd4170fa72" id="node-b24f42e"><div class="evo-header"><span class="evo-box-label">cycle-cabd4170fa72</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">b24f42e</span></div><div class="evo-fitness">r:None int:98</div></div></foreignObject><foreignObject x="60" y="700" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4eaf1ce | cycle-c40c135fac30 | selfevo/cycle-cycle-c40c135fac30" id="node-4eaf1ce"><div class="evo-header"><span class="evo-box-label">cycle-c40c135fac30</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">4eaf1ce</span></div><div class="evo-fitness">r:None int:98</div></div></foreignObject><foreignObject x="60" y="940" width="180" height="64"><div class="evo-box evo-box-abandoned" title="6127ba1 | cycle-e2fb9f3cad69 | selfevo/cycle-cycle-e2fb9f3cad69" id="node-6127ba1"><div class="evo-header"><span class="evo-box-label">cycle-e2fb9f3cad69</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">6127ba1</span></div><div class="evo-fitness">r:None int:98</div></div></foreignObject><foreignObject x="60" y="1580" width="180" height="64"><div class="evo-box evo-box-abandoned" title="eb0b296 | cycle-fd43a612da78 | selfevo/cycle-cycle-fd43a612da78" id="node-eb0b296"><div class="evo-header"><span class="evo-box-label">cycle-fd43a612da78</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">eb0b296</span></div><div class="evo-fitness">r:None int:97</div></div></foreignObject><foreignObject x="60" y="860" width="180" height="64"><div class="evo-box evo-box-abandoned" title="3df27e8 | cycle-3c26748d3c8c | selfevo/cycle-cycle-3c26748d3c8c" id="node-3df27e8"><div class="evo-header"><span class="evo-box-label">cycle-3c26748d3c8c</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">3df27e8</span></div><div class="evo-fitness">r:None int:97</div></div></foreignObject><foreignObject x="60" y="1820" width="180" height="64"><div class="evo-box evo-box-abandoned" title="6017d3c | cycle-f4612702401b | selfevo/cycle-cycle-f4612702401b" id="node-6017d3c"><div class="evo-header"><span class="evo-box-label">cycle-f4612702401b</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">6017d3c</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="1660" width="180" height="64"><div class="evo-box evo-box-abandoned" title="00e32bd | cycle-76c2802f8b62 | selfevo/cycle-cycle-76c2802f8b62" id="node-00e32bd"><div class="evo-header"><span class="evo-box-label">cycle-76c2802f8b62</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">00e32bd</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="2060" width="180" height="64"><div class="evo-box evo-box-abandoned" title="1bd7e80 | cycle-ef380e88d3f0 | selfevo/cycle-cycle-ef380e88d3f0" id="node-1bd7e80"><div class="evo-header"><span class="evo-box-label">cycle-ef380e88d3f0</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">1bd7e80</span></div><div class="evo-fitness">r:None int:97</div></div></foreignObject><foreignObject x="60" y="140" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bbce02d | cycle-9325b9a4ce99 | selfevo/cycle-cycle-9325b9a4ce99" id="node-bbce02d"><div class="evo-header"><span class="evo-box-label">cycle-9325b9a4ce99</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">bbce02d</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="1980" width="180" height="64"><div class="evo-box evo-box-abandoned" title="bf94ef2 | cycle-72ecc20db7cf | selfevo/cycle-cycle-72ecc20db7cf" id="node-bf94ef2"><div class="evo-header"><span class="evo-box-label">cycle-72ecc20db7cf</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">bf94ef2</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="300" width="180" height="64"><div class="evo-box evo-box-abandoned" title="d8f4a4a | cycle-05268ac2b14e | selfevo/cycle-cycle-05268ac2b14e" id="node-d8f4a4a"><div class="evo-header"><span class="evo-box-label">cycle-05268ac2b14e</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">d8f4a4a</span></div><div class="evo-fitness">r:None int:96</div></div></foreignObject><foreignObject x="60" y="1100" width="180" height="64"><div class="evo-box evo-box-abandoned" title="4d32e3a | cycle-316b251e8548 | selfevo/cycle-cycle-316b251e8548" id="node-4d32e3a"><div class="evo-header"><span class="evo-box-label">cycle-316b251e8548</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">4d32e3a</span></div><div class="evo-fitness">r:None int:99</div></div></foreignObject><foreignObject x="60" y="2380" width="180" height="64"><div class="evo-box evo-box-abandoned" title="8ba95aa | cycle-b618fe9a12e5 | selfevo/cycle-cycle-b618fe9a12e5" id="node-8ba95aa"><div class="evo-header"><span class="evo-box-label">cycle-b618fe9a12e5</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">8ba95aa</span></div><div class="evo-fitness">r:None int:99</div></div></foreignObject><foreignObject x="60" y="1500" width="180" height="64"><div class="evo-box evo-box-abandoned" title="f9526d5 | cycle-31ee45a266ef | selfevo/cycle-cycle-31ee45a266ef" id="node-f9526d5"><div class="evo-header"><span class="evo-box-label">cycle-31ee45a266ef</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">f9526d5</span></div><div class="evo-fitness">r:None int:99</div></div></foreignObject><foreignObject x="60" y="1740" width="180" height="64"><div class="evo-box evo-box-abandoned" title="e46eda4 | cycle-4b5fc615bd44 | selfevo/cycle-cycle-4b5fc615bd44" id="node-e46eda4"><div class="evo-header"><span class="evo-box-label">cycle-4b5fc615bd44</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">e46eda4</span></div><div class="evo-fitness">r:None int:97</div></div></foreignObject><foreignObject x="60" y="60" width="180" height="64"><div class="evo-box evo-box-abandoned" title="d2501f2 | cycle-20deedade6da | selfevo/cycle-cycle-20deedade6da" id="node-d2501f2"><div class="evo-header"><span class="evo-box-label">cycle-20deedade6da</span></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha">d2501f2</span></div><div class="evo-fitness">r:None int:97</div></div></foreignObject></g></svg></div>
+
+    <section class="panel panel-feed">
+      <h2 class="panel-title">Cycle Feed (Recent 7)</h2>
+      <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-0ec6ca8acdac">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">cycle-0ec6ca8acdac</strong>
+            <span class="feed-cid">(cycle-0ec6ca8acdac)</span>
+            
+            <span class="feed-ts">2026-08-24 02:16:21.310454 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-60fc851d7f9a">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">cycle-60fc851d7f9a</strong>
+            <span class="feed-cid">(cycle-60fc851d7f9a)</span>
+            
+            <span class="feed-ts">2026-08-24 01:35:52.535018 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-fe7f15edfa0d">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">cycle-fe7f15edfa0d</strong>
+            <span class="feed-cid">(cycle-fe7f15edfa0d)</span>
+            
+            <span class="feed-ts">2026-08-24 01:19:48.212777 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-645ebf920398">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">cycle-645ebf920398</strong>
+            <span class="feed-cid">(cycle-645ebf920398)</span>
+            
+            <span class="feed-ts">2026-08-24 01:05:34.638038 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-86174011ad96">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">cycle-86174011ad96</strong>
+            <span class="feed-cid">(cycle-86174011ad96)</span>
+            
+            <span class="feed-ts">2026-08-24 00:41:38.135437 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-partial" id="cycle-cycle-baea3943b2dc">
+          <div class="feed-header">
+            <span class="badge badge-researching">PARTIAL</span>
+            <strong class="feed-title">cycle-baea3943b2dc</strong>
+            <span class="feed-cid">(cycle-baea3943b2dc)</span>
+            
+            <span class="feed-ts">2026-08-24 00:27:44.119883 UTC</span>
+          </div>
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-partial" id="cycle-cycle-62ff2854fba8">
+          <div class="feed-header">
+            <span class="badge badge-researching">PARTIAL</span>
+            <strong class="feed-title">cycle-62ff2854fba8</strong>
+            <span class="feed-cid">(cycle-62ff2854fba8)</span>
+            
+            <span class="feed-ts">2026-08-24 00:02:56.757175 UTC</span>
+          </div>
+          
+        </li>
+        
+      </ul>
     </section>
-    </aside>
-<div class="canvas-outer"><svg class="tech-canvas" width="1540" height="2268" viewBox="0 0 1540 2268"><line x1="40" y1="0" x2="40" y2="2268" class="era-grid-line" /><line x1="270" y1="0" x2="270" y2="2268" class="era-grid-line" /><line x1="290" y1="0" x2="290" y2="2268" class="era-grid-line" /><line x1="520" y1="0" x2="520" y2="2268" class="era-grid-line" /><line x1="770" y1="0" x2="770" y2="2268" class="era-grid-line" /><line x1="1020" y1="0" x2="1020" y2="2268" class="era-grid-line" /><line x1="1270" y1="0" x2="1270" y2="2268" class="era-grid-line" /><line x1="1520" y1="0" x2="1520" y2="2268" class="era-grid-line" /><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-researching">RESEARCHING</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="841238.0562"></span><span class="bar bar-pos" style="height:2px;" title="4450.5615"></span><span class="bar bar-pos" style="height:2px;" title="9461.3803"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-17049.3766"></span><span class="bar bar-neg" style="height:2px;" title="-5503.9627"></span></div></div><div class="spark-mean mean-pos">mean gain +166519.3317</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0000</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0000</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.026"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0014"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0014"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0049</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:14px;" title="0.4095"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="0.005"></span><span class="bar bar-pos" style="height:2px;" title="0.015"></span><span class="bar bar-pos" style="height:2px;" title="0.01"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0019"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0.0875</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">WORLD HISTORY</text><text x="10" y="32" class="lane-note">showing last 30 of 98 nodes</text><foreignObject x="60" y="990" width="150" height="46"><div class="evo-box evo-box-current"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-cycle-0ec6ca8acdac-139ac15</span></div></foreignObject><foreignObject x="60" y="370" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-60fc851d7f9a-e717a30</span></div></foreignObject><foreignObject x="60" y="1052" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-fe7f15edfa0d-8d2f6a7</span></div></foreignObject><foreignObject x="60" y="308" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-645ebf920398-583e036</span></div></foreignObject><foreignObject x="60" y="1672" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-86174011ad96-df0bf9d</span></div></foreignObject><foreignObject x="60" y="1114" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-99fb9219d2d0-4bc51f3</span></div></foreignObject><foreignObject x="60" y="1486" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-a135c95ff382-4c59f09</span></div></foreignObject><foreignObject x="60" y="928" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-e9a361954bb7-dc868bd</span></div></foreignObject><foreignObject x="60" y="432" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-e301a8a7eeb5-fbba467</span></div></foreignObject><foreignObject x="60" y="618" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-5c2f9e9519a5-8a224e2</span></div></foreignObject><foreignObject x="60" y="494" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-71a9cd753407-15f6b83</span></div></foreignObject><foreignObject x="60" y="1734" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-bdc701abfefd-5bd7cb6</span></div></foreignObject><foreignObject x="60" y="804" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-c9e29b9f5116-2af2d69</span></div></foreignObject><foreignObject x="60" y="1796" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-f6cf166ccb29-ea8f7f6</span></div></foreignObject><foreignObject x="60" y="184" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-cabd4170fa72-b24f42e</span></div></foreignObject><foreignObject x="60" y="556" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-c40c135fac30-4eaf1ce</span></div></foreignObject><foreignObject x="60" y="742" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-e2fb9f3cad69-6127ba1</span></div></foreignObject><foreignObject x="60" y="1238" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-fd43a612da78-eb0b296</span></div></foreignObject><foreignObject x="60" y="680" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-3c26748d3c8c-3df27e8</span></div></foreignObject><foreignObject x="60" y="1424" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-f4612702401b-6017d3c</span></div></foreignObject><foreignObject x="60" y="1300" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-76c2802f8b62-00e32bd</span></div></foreignObject><foreignObject x="60" y="1610" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-ef380e88d3f0-1bd7e80</span></div></foreignObject><foreignObject x="60" y="122" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-9325b9a4ce99-bbce02d</span></div></foreignObject><foreignObject x="60" y="1548" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-72ecc20db7cf-bf94ef2</span></div></foreignObject><foreignObject x="60" y="246" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-05268ac2b14e-d8f4a4a</span></div></foreignObject><foreignObject x="60" y="866" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-316b251e8548-4d32e3a</span></div></foreignObject><foreignObject x="60" y="1858" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-b618fe9a12e5-8ba95aa</span></div></foreignObject><foreignObject x="60" y="1176" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-31ee45a266ef-f9526d5</span></div></foreignObject><foreignObject x="60" y="1362" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-4b5fc615bd44-e46eda4</span></div></foreignObject><foreignObject x="60" y="60" width="150" height="46"><div class="evo-box evo-box-abandoned"><span class="evo-box-label">cycle-cycle-20deedade6da-d2501f2</span></div></foreignObject></g></svg></div>
-</div>
-<footer class="page-footer">generated 2026-08-24 02:22:13 UTC &middot; host eeepc &middot; newest source 18s old</footer>
+    
+
+    <section class="panel panel-hypotheses">
+      <h2 class="panel-title">Hypotheses Lifecycle</h2>
+      <div class="hypo-split">
+        <div class="hypo-group"><h3>Active (10)</h3><ul class="hypo-list">
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Record cycle reward</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                <span class="hypo-ts">touched 2026-07-15 23:57:04.350670 UTC</span>
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Materialize one bounded improvement from the synthesized candidate</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Synthesize one new bounded improvement candidate from retired lanes</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Use one bounded subagent-assisted review to verify the materialized improvement artifact</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Inspect repeated PASS streak for a new bounded improvement</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Exploit and expand the verified improvements in scripts/eeebot_dashboard.py</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Materialize one concrete bounded improvement from the repeated PASS insight</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Use one bounded subagent-assisted review to verify the materialized improvement artifact</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">STALE</span>
+              <strong class="hypo-title">Synthesize one new bounded improvement candidate from retired lanes</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-07-14 14:21:12.842306 UTC</span>
+                
+              </div>
+            </li>
+            
+            <li class="hypo-row active">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Implement and commit: Add unit tests for 7-day confirmation ratio calculations and threshold boundaries</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts">seen 2026-08-22 06:29:28.128453 UTC</span>
+                
+              </div>
+            </li>
+            </ul></div>
+        <div class="hypo-group"><h3>Answered (2)</h3><ul class="hypo-list">
+            <li class="hypo-row answered">
+              <span class="badge badge-integrated">ANSWERED</span>
+              <strong class="hypo-title">Refresh approval gate</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ev">evidence: <a href="#cycle-cycle-66fcbebc1d33">cycle-66fcbebc1d33</a></span>
+                <span class="hypo-ts">answered 2026-07-15 01:45:26.538130 UTC</span>
+              </div>
+            </li>
+            
+            <li class="hypo-row answered">
+              <span class="badge badge-integrated">ANSWERED</span>
+              <strong class="hypo-title">Run bounded turn</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ev">evidence: <a href="#cycle-cycle-eff9d98f52a7">cycle-eff9d98f52a7</a></span>
+                <span class="hypo-ts">answered 2026-07-14 19:12:52.917941 UTC</span>
+              </div>
+            </li>
+            </ul></div>
+      </div>
+    </section>
+    
+
+    <section class="panel panel-agent">
+      <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      <div class="agent-grid">
+        <div class="agent-subcol">
+          <h3>AGENTS.md Charter</h3>
+          <div class="agents-md-box"><pre><code># Instance Agent Instructions
+
+## Identity
+
+You are the self-evolving agent instance on the `eeepc` host: i386 Debian 12,
+2 GB RAM, Python 3.11. This workspace is the instance repository, not the eeebot
+product repository. A bounded executor proposes one scoped change per cycle.
+Cycle scripts must remain Python-stdlib-only and fit the host&#x27;s constraints.
+
+## Charter
+
+Read `goals.md` before working. It is the immutable, operator-owned definition
+of goals and vectors. Never edit it. Do not copy or redefine its content here.
+
+## Cycle contract
+
+Work only on the cycle branch created by the harness. Make a scoped change,
+validate it, and commit it on that branch. Never checkout `main` and never push
+to `main`; the harness owns integration. Its gate compiles changed scripts and
+runs affected tests. A cycle that is not integrated is a normal outcome, not an
+error to bypass.
+
+## Working knowledge
+
+- `memory/MEMORY.md` holds durable state; `memory/HISTORY.md` records changes.
+- `lessons/` records failures, causes, and reusable learning.
+- `skills/` holds reusable procedures. Creating, improving, and using skills is
+  valuable work, including meta-skills that improve other skills and wrappers
+  for repeated actions that reduce tool calls.
+
+Improve this file through ordinary gated cycles when your working practice
+changes. Keep it short: procedures belong in skills, not in standing context.
+
+## Script contract
+
+Scripts must follow the harness invocation contract documented in the product
+repository&#x27;s `docs/INITIAL_VALIDATOR_ROADMAP.md`: no arguments, no
+interactivity, bounded output, and meaningful exit codes.
+
+Never commit secrets, credentials, authentication state, or live runtime state.</code></pre></div>
+        </div>
+        <div class="agent-subcol">
+          <h3>Goals Charter</h3>
+          <div class="goal-text-box"><pre><code>eeebot is a resource-aware, self-evolving autonomous agent on an old, slow eeepc host. Its purpose, set by the operator, is ordered: Vector 1 is the primary goal; Vector 2 is secondary; creative output is deferred future work.
+
+Vector 1 (PRIMARY) — Self-Improvement of the Agent System: make the agent system itself more effective and higher-quality at running its own improvement cycles. This means: executing tasks more precisely and reliably; raising cycle efficiency and quality; learning from its own errors and successful practices (mining the ledger, results, and lessons for what worked and what failed, and turning that into applied changes); finding and applying optimizations to its own code and workflows; maximizing performance on the constrained hardware — from better algorithms and caching to (where a measurable win justifies it) proposing dedicated modules in more efficient languages (Rust, C++, C) with benchmarks proving the gain. Every optimization claim must come with a before/after measurement.
+
+Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the operator convenient, transparent insight into what the bot is doing, and interfaces to interact with it and track work status. Given the host&#x27;s low resolution and limited power, terminal-based rendering is often the most efficient medium (including pixel-art style output such as images/eeebot.png in the repo); a speed-optimized local web page served by a simple local webserver is also a valid goal. </code></pre></div>
+        </div>
+        <div class="agent-subcol">
+          <h3>Skill Fitness (Reads & Usage)</h3>
+          
+                <table class="skills-table">
+                  <thead>
+                    <tr><th>Skill</th><th>Reads</th><th>Confirmed Usage</th></tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr class="">
+                      <td class="skill-name">eeebot-agent-work-review</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                    </tr>
+                    
+                  </tbody>
+                </table>
+                
+        </div>
+      </div>
+    </section>
+    
+</main>
+<footer class="page-footer">generated 2026-08-24 03:10:39 UTC &middot; host eeepc &middot; newest source 32s old</footer>
 </body>
 </html>
