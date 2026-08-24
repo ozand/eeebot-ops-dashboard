@@ -791,6 +791,9 @@ def _lane_a_layout(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | No
     elbows: list[str] = []
     mint: list[str] = []
 
+    # Visual separator separating the reserve / mint column on the left from the visited spine
+    mint.append(f'<rect x="{reserve_x + RESERVE_COL_W + 10:.0f}" y="0" width="1" height="100%" class="mint-col-border" fill="#1c2740" />')
+
     for idx, name in enumerate(visited):
         x = spine_x0 + idx * COL_PITCH
         pos[name] = (x, spine_y)
@@ -893,10 +896,20 @@ def _evo_box_html(
     diamond = '<span class="evo-diamond">&#9672;</span>' if is_current else ''
     tooltip = esc(f'{short_sha(sha)} | {title or display_title} | {branch}')
 
+    # Node anchor and href
+    node_id = f'node-{short_sha(sha)}'
+    target_cid = cycle_id if cycle_id else (tail if tail.startswith('cycle-') else '')
+    cycle_href = f'#cycle-{esc(target_cid)}' if target_cid else ''
+
+    if cycle_href:
+        header_content = f'<a href="{cycle_href}" class="evo-node-link">{diamond}<span class="evo-box-label">{label}{marker}</span></a>'
+    else:
+        header_content = f'{diamond}<span class="evo-box-label">{label}{marker}</span>'
+
     body = (
-        f'<div class="{box_class}" title="{tooltip}" id="node-{esc(short_sha(sha))}">'
-        f'<div class="evo-header">{diamond}<span class="evo-box-label">{label}{marker}</span></div>'
-        f'<div class="evo-meta">{dir_badge}<span class="evo-sha">{esc(short_sha(sha))}</span></div>'
+        f'<div class="{box_class}" title="{tooltip}" id="{esc(node_id)}">'
+        f'<div class="evo-header">{header_content}</div>'
+        f'<div class="evo-meta">{dir_badge}<span class="evo-sha copyable" translate="no">{esc(short_sha(sha))}</span></div>'
         f'{fitness_line}'
         '</div>'
     )
@@ -1027,6 +1040,45 @@ def _lane_b_layout(
     }
 
 
+def _ts_range_label(evolution_tree: dict[str, Any] | None) -> str:
+    """One-glance date-range label for the lineage lane (issue #43): the
+    min/max node timestamps formatted short. Not a tick system -- a single
+    orientation hint. Empty string when fewer than two parseable ts."""
+    if not isinstance(evolution_tree, dict):
+        return ''
+    nodes = evolution_tree.get('nodes')
+    if not isinstance(nodes, dict):
+        return ''
+    dts: list[datetime] = []
+    for node in nodes.values():
+        if not isinstance(node, dict):
+            continue
+        ts = node.get('ts')
+        if ts is None:
+            continue
+        if isinstance(ts, (int, float)) and not isinstance(ts, bool):
+            try:
+                dts.append(datetime.fromtimestamp(float(ts), tz=timezone.utc))
+            except (OverflowError, OSError, ValueError):
+                continue
+        else:
+            dt = _parse_iso_ts(ts)
+            if dt is not None:
+                dts.append(dt)
+    if len(dts) < 2:
+        return ''
+
+    def _short(dt: datetime) -> str:
+        return dt.strftime('%b %d').replace(' 0', ' ')
+
+    lo, hi = min(dts), max(dts)
+    if lo.year == hi.year:
+        label = f'{_short(lo)} - {_short(hi)}'
+    else:
+        label = f'{_short(lo)} {lo.year} - {_short(hi)} {hi.year}'
+    return f'<text x="10" y="46" class="lane-note">time range: {esc(label)}</text>'
+
+
 def build_tech_canvas(
     portfolio: dict[str, Any] | None,
     ledger_tail: list[Any] | None,
@@ -1044,7 +1096,6 @@ def build_tech_canvas(
     if lane_b.get('available') and 'width' in lane_b:
         canvas_width = max(canvas_width, lane_b['width'])
 
-    grid_xs: set[float] = set()
     groups: list[str] = []
     y_cursor = CANVAS_MARGIN_Y
 
@@ -1054,8 +1105,6 @@ def build_tech_canvas(
         note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_a["note"])}</text>' if lane_a.get('note') else ''
         body = ''.join(lane_a['boxes']) + ''.join(lane_a['elbows']) + ''.join(lane_a['mint'])
         groups.append(f'<g class="lane lane-a" transform="translate(0,{y_cursor})">{label_a}{note_html}{body}</g>')
-        for i in range(lane_a.get('grid_cols', 0) + 1):
-            grid_xs.add(lane_a['grid_x0'] + i * lane_a['grid_pitch'] - 20)
         lane_a_height = lane_a['height']
     else:
         unavailable_html = f'<text x="10" y="36" class="lane-unavailable">&#8968; {esc(lane_a["reason"])} &#8969;</text>'
@@ -1079,9 +1128,8 @@ def build_tech_canvas(
         else:
             note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_b["note"])}</text>' if lane_b.get('note') else ''
             body = ''.join(lane_b['boxes']) + ''.join(lane_b['elbows'])
-            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{body}</g>')
-            for i in range(lane_b.get('grid_cols', 0) + 1):
-                grid_xs.add(lane_b['grid_x0'] + i * lane_b['grid_pitch'] - 20)
+            date_label = _ts_range_label(evolution_tree)
+            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{date_label}{body}</g>')
             lane_b_height = lane_b['height']
     else:
         unavailable_html = f'<text x="10" y="36" class="lane-unavailable">&#8968; {esc(lane_b["reason"])} &#8969;</text>'
@@ -1092,18 +1140,21 @@ def build_tech_canvas(
     canvas_height = y_cursor
     canvas_width = max(canvas_width, MIN_CANVAS_W)
 
-    grid_svg = ''.join(
-        f'<line x1="{x:.0f}" y1="0" x2="{x:.0f}" y2="{canvas_height}" class="era-grid-line" />'
-        for x in sorted(grid_xs) if x > 0
-    )
-
     svg = (
         f'<svg class="tech-canvas" width="{canvas_width}" height="{canvas_height}" '
         f'viewBox="0 0 {canvas_width} {canvas_height}">'
-        f'{grid_svg}{"".join(groups)}'
+        f'{"".join(groups)}'
         '</svg>'
     )
-    return f'<div class="canvas-outer">{svg}</div>'
+    jump_html = ''
+    if isinstance(evolution_tree, dict):
+        current = evolution_tree.get('current_sha')
+        if current:
+            jump_html = (
+                f'<a class="canvas-jump" href="#node-{esc(short_sha(current))}">'
+                '&gt;&gt; jump to current cycle</a>'
+            )
+    return f'<div class="canvas-outer" id="panel-lineage">{jump_html}{svg}</div>'
 
 
 # ---------------------------------------------------------------------------
@@ -1218,7 +1269,7 @@ def build_now_panel(
         demand_html = f'<div class="now-demand-grid">{s_part}{c_part}</div>'
 
     return f'''
-    <section class="panel panel-now">
+    <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         {dir_html}
@@ -1257,7 +1308,7 @@ def build_cycle_feed(
 
     if not cycles_dict:
         return f'''
-        <section class="panel panel-feed">
+    <section class="panel panel-feed" id="panel-feed">
           <h2 class="panel-title">Cycle Feed</h2>
           <p class="unavailable-note">no cycle entries in ledger</p>
         </section>
@@ -1272,14 +1323,18 @@ def build_cycle_feed(
                 if isinstance(cinfo, dict) and cinfo.get('cycle_id'):
                     demand_by_cycle[str(cinfo.get('cycle_id'))] = cinfo
 
-    # Map evolution tree nodes by cycle_id
+    # Map evolution tree nodes by cycle_id and sha
     tree_by_cycle: dict[str, dict[str, Any]] = {}
+    tree_by_sha: dict[str, dict[str, Any]] = {}
     if isinstance(evolution_tree, dict):
         nodes = evolution_tree.get('nodes')
         if isinstance(nodes, dict):
             for sha, node in nodes.items():
-                if isinstance(node, dict) and node.get('cycle_id'):
-                    tree_by_cycle[str(node.get('cycle_id'))] = node
+                if isinstance(node, dict):
+                    if node.get('cycle_id'):
+                        tree_by_cycle[str(node.get('cycle_id'))] = node
+                    tree_by_sha[str(sha)] = node
+                    tree_by_sha[short_sha(str(sha))] = node
 
     titles_map = task_titles if isinstance(task_titles, dict) else {}
 
@@ -1376,13 +1431,22 @@ def build_cycle_feed(
                 elif p.get('metric_delta') is not None:
                     metric_delta = str(p.get('metric_delta'))
 
-        # Check if integrated in evolution tree
-        if cid in tree_by_cycle:
+        # In Lane B, nodes can be referenced by cycle_id or sha
+        tree_node_match = tree_by_cycle.get(cid) or tree_by_sha.get(cid)
+        node_link_html = ''
+        if tree_node_match:
             outcome_kind = 'integrated'
-            tree_node = tree_by_cycle[cid]
+            tree_node = tree_node_match
             fitness = tree_node.get('fitness') if isinstance(tree_node.get('fitness'), dict) else {}
             if fitness.get('reward') is not None:
                 metric_delta = f"reward: {fitness.get('reward')}"
+            sha_val = ''
+            for s, n in tree_by_sha.items():
+                if n is tree_node and len(s) > 8:
+                    sha_val = s
+                    break
+            if sha_val:
+                node_link_html = f'<a href="#node-{esc(short_sha(sha_val))}" class="feed-tree-link">tree &#8599;</a>'
 
         if outcome_kind == 'integrated':
             badge_class = 'badge-integrated'
@@ -1423,8 +1487,17 @@ def build_cycle_feed(
 
         files_html = ''
         if files_changed:
-            files_str = ', '.join(files_changed[:3]) + (f' +{len(files_changed)-3} more' if len(files_changed) > 3 else '')
-            files_html = f'<div class="feed-files" title="{esc(", ".join(files_changed))}">📁 {esc(files_str)}</div>'
+            if len(files_changed) > 3:
+                # Issue #45: full list must be reachable without hover --
+                # expandable <details>, summary keeps the first-3 + '+N more'.
+                files_str = ', '.join(files_changed[:3]) + f' +{len(files_changed)-3} more'
+                items = ''.join(f'<li>{esc(p)}</li>' for p in files_changed)
+                files_html = (
+                    f'<details class="feed-files"><summary>&#128193; {esc(files_str)}</summary>'
+                    f'<ul class="feed-files-list">{items}</ul></details>'
+                )
+            else:
+                files_html = f'<div class="feed-files">&#128193; {esc(", ".join(files_changed))}</div>'
 
         delta_html = ''
         if metric_delta:
@@ -1439,8 +1512,9 @@ def build_cycle_feed(
           <div class="feed-header">
             <span class="badge {badge_class}">{esc(outcome_label)}</span>
             <strong class="feed-title">{esc(title)}</strong>
-            <span class="feed-cid">({esc(cid)})</span>
+            <span class="feed-cid copyable" translate="no">({esc(cid)})</span>
             {delta_html}
+            {node_link_html}
             {ts_html}
           </div>
           {files_html}
@@ -1448,7 +1522,7 @@ def build_cycle_feed(
         ''')
 
     return f'''
-    <section class="panel panel-feed">
+    <section class="panel panel-feed" id="panel-feed">
       <h2 class="panel-title">Cycle Feed (Recent {len(rows)})</h2>
       <ul class="feed-list">
         {''.join(rows)}
@@ -1474,7 +1548,7 @@ def build_hypotheses_panel(
 
     if not entries_dict:
         return '''
-        <section class="panel panel-hypotheses">
+        <section class="panel panel-hypotheses" id="panel-hypotheses">
           <h2 class="panel-title">Hypotheses Lifecycle</h2>
           <p class="unavailable-note">no hypotheses recorded</p>
         </section>
@@ -1491,10 +1565,16 @@ def build_hypotheses_panel(
             continue
         status = str(info.get('status') or 'open').lower()
         verdict = info.get('verdict')
+        answered_at = info.get('answered_at')
         item = dict(info)
         item['id'] = hid
 
-        if 'answered' in status or status in ('supported', 'refuted', 'inconclusive') or verdict:
+        if (
+            'answered' in status
+            or status in ('supported', 'refuted', 'inconclusive', 'accepted', 'rejected', 'abandoned')
+            or verdict
+            or answered_at
+        ):
             raw_answered.append(item)
         else:
             raw_active.append(item)
@@ -1625,12 +1705,22 @@ def build_hypotheses_panel(
     else:
         active_body = "".join(fresh_rendered + stale_rendered)
 
-    answered_body = "".join(answered_rendered) if answered_rendered else '<li class="unavailable-note">none answered</li>'
     active_html = f'<div class="hypo-group"><h3>Active ({total_active_count})</h3><ul class="hypo-list">{active_body}</ul></div>'
-    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_rendered)})</h3><ul class="hypo-list">{answered_body}</ul></div>'
+
+    if answered_rendered:
+        ans_count = len(answered_rendered)
+        answered_list_html = f'<ul class="hypo-list">{"".join(answered_rendered)}</ul>'
+        answered_html = f'''<div class="hypo-group">
+          <details class="hypo-details">
+            <summary class="hypo-summary"><h3>Answered ({ans_count}) &mdash; show</h3></summary>
+            {answered_list_html}
+          </details>
+        </div>'''
+    else:
+        answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
     return f'''
-    <section class="panel panel-hypotheses">
+    <section class="panel panel-hypotheses" id="panel-hypotheses">
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
       <div class="hypo-split">
         {active_html}
@@ -1650,7 +1740,14 @@ def build_agent_panel(
     # 1. AGENTS.md
     if agents_md is not None:
         md_text = agents_md.strip()
-        agents_html = f'<div class="agents-md-box"><pre><code>{esc(md_text[:2000])}{"..." if len(md_text) > 2000 else ""}</code></pre></div>'
+        md_body = esc(md_text[:2000]) + ('...' if len(md_text) > 2000 else '')
+        # Issue #44: capped scroll boxes are scroll-traps; native <details>
+        # keeps the page one scrolling document, closed by default.
+        agents_html = (
+            f'<details class="charter-details agents-md-box">'
+            f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
+            f'<pre><code>{md_body}</code></pre></details>'
+        )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
 
@@ -1658,7 +1755,12 @@ def build_agent_panel(
     goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
     if isinstance(goal_text, dict):
         g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-        goals_html = f'<div class="goal-text-box"><pre><code>{esc(str(g_text)[:1500])}</code></pre></div>'
+        g_body = esc(str(g_text)[:1500])
+        goals_html = (
+            f'<details class="charter-details goal-text-box">'
+            f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
+            f'<pre><code>{g_body}</code></pre></details>'
+        )
 
     # 3. Skills fitness table
     skills_html = '<p class="unavailable-note">skill reads unavailable</p>'
@@ -1702,7 +1804,7 @@ def build_agent_panel(
                 skills_html = '<p class="unavailable-note">no skill reads recorded</p>'
 
     return f'''
-    <section class="panel panel-agent">
+    <section class="panel panel-agent" id="panel-agent">
       <h2 class="panel-title">Agent Configuration & Fitness</h2>
       <div class="agent-grid">
         <div class="agent-subcol">
@@ -1722,14 +1824,17 @@ def build_agent_panel(
     '''
 
 
-def build_empire_stats_strip(scorecard: dict[str, Any] | None) -> str:
+def build_empire_stats_strip(
+    scorecard: dict[str, Any] | None,
+    age_seconds: float | None = None,
+    generated_at: str | None = None,
+) -> str:
     if not isinstance(scorecard, dict):
         return unavailable_panel('Empire Stats', 'scorecard unavailable')
 
     loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
     cost = scorecard.get('cost') if isinstance(scorecard.get('cost'), dict) else {}
     heldout = scorecard.get('heldout') if isinstance(scorecard.get('heldout'), dict) else {}
-    computed_at = scorecard.get('computed_at_utc')
 
     stats = [
         ('integrations', esc(loop.get('integrations', 'n/a'))),
@@ -1744,11 +1849,30 @@ def build_empire_stats_strip(scorecard: dict[str, Any] | None) -> str:
         for label, value in stats
     )
 
+    # Issue #48: visible freshness badge in the header. Age is real
+    # (collected mtime) or explicitly unknown -- never fabricated.
+    if isinstance(age_seconds, (int, float)) and not isinstance(age_seconds, bool):
+        if age_seconds < 3600:
+            level = 'fresh'
+        elif age_seconds < 21600:
+            level = 'stale'
+        else:
+            level = 'very-stale'
+        gen_hhmm = generated_at[11:16] if generated_at and len(generated_at) >= 16 else ''
+        freshness_html = (
+            f'<span class="freshness freshness-{level}" data-age-seconds="{float(age_seconds):.0f}">'
+            f'data: {esc(humanize_age(float(age_seconds)))} old'
+            + (f' &middot; generated {esc(gen_hhmm)} UTC' if gen_hhmm else '')
+            + '</span>'
+        )
+    else:
+        freshness_html = '<span class="freshness freshness-unknown">data: age unknown</span>'
+
     return f'''
     <header class="empire-strip">
       <div class="empire-title">EEEBOT EMPIRE</div>
       <div class="empire-stats">{stat_html}</div>
-      <div class="empire-computed">computed {fmt_ts(computed_at)}</div>
+      <div class="empire-fresh">{freshness_html}</div>
     </header>
     '''
 
@@ -1802,7 +1926,20 @@ CSS = '''
       gap: 18px;
     }
     .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
-    .empire-computed { color: #7d8aa3; font-size: 0.78em; white-space: nowrap; margin-left: auto; }
+
+    /* --- freshness badge (issue #48) --- */
+    .empire-fresh { margin-left: auto; white-space: nowrap; }
+    .freshness {
+      font-size: 0.78em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #4a5878;
+      font-variant-numeric: tabular-nums;
+    }
+    .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
+    .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
+    .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
+    .freshness-unknown { color: #8b96ad; }
 
     .stat-label {
       text-transform: uppercase;
@@ -1832,13 +1969,21 @@ CSS = '''
       min-width: 0;
       overflow-x: auto;
       overflow-y: hidden;
+      overscroll-behavior: contain;
       border: 1px solid #24314f;
       border-radius: 10px;
       background: linear-gradient(180deg, rgba(20, 33, 58, 0.55) 0%, rgba(11, 18, 32, 0.7) 100%);
       padding-bottom: 4px;
     }
     .tech-canvas { display: block; }
-    .era-grid-line { stroke: #1c2740; stroke-width: 1; }
+    .canvas-jump {
+      display: inline-block;
+      margin: 8px 12px 0;
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      text-decoration: underline;
+    }
     .lane-label {
       fill: #c9a227;
       font-family: Georgia, 'Times New Roman', serif;
@@ -1943,8 +2088,6 @@ CSS = '''
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 420px;
-      overflow-y: auto;
     }
     .feed-row {
       background: rgba(15, 24, 42, 0.7);
@@ -1995,12 +2138,40 @@ CSS = '''
       font-size: 0.78em;
       white-space: nowrap;
     }
+    .feed-tree-link {
+      color: #2fd3c4;
+      font-size: 0.78em;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
     .feed-files {
       font-size: 0.78em;
       color: #8b96ad;
       font-family: 'Consolas', monospace;
       padding-left: 4px;
     }
+    .feed-files > summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .feed-files-list {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files-list li { padding: 1px 0; word-break: break-all; }
+
+    /* --- panel nav + copyable ids (issue #47) --- */
+    .panel-nav {
+      padding: 6px 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      border-bottom: 1px solid #1c2740;
+    }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a:hover { text-decoration: underline; }
+    .copyable { cursor: pointer; }
+    .copyable.copied { color: #2fd3c4; }
 
     /* --- Hypotheses Panel --- */
     .hypo-split {
@@ -2037,8 +2208,6 @@ CSS = '''
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 320px;
-      overflow-y: auto;
     }
     .hypo-row {
       background: rgba(15, 24, 42, 0.7);
@@ -2094,9 +2263,15 @@ CSS = '''
       color: #c7cfe0;
       white-space: pre-wrap;
       word-break: break-word;
-      max-height: 250px;
-      overflow-y: auto;
     }
+    .charter-details > summary {
+      font-size: 0.82em;
+      color: #8b96ad;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .charter-details > summary:hover { color: #c9a227; }
     .skills-table {
       width: 100%;
       border-collapse: collapse;
@@ -2276,6 +2451,9 @@ CSS = '''
       margin-top: 20px;
       padding-top: 14px;
     }
+    .footer-computed {
+      color: #7d8aa3;
+    }
 '''
 
 PAGE_TEMPLATE = '''<!doctype html>
@@ -2283,11 +2461,13 @@ PAGE_TEMPLATE = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
 <title>eeebot Tech Tree</title>
 <style>{css}</style>
 </head>
 <body>
 {empire_strip}
+{panel_nav}
 <main class="dashboard-main">
 {now_panel}
 {canvas}
@@ -2295,7 +2475,30 @@ PAGE_TEMPLATE = '''<!doctype html>
 {hypotheses_panel}
 {agent_panel}
 </main>
-<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{error_note}{titles_note}</footer>
+<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {{
+  el.addEventListener('click', function () {{
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {{
+      el.classList.add('copied');
+      setTimeout(function () {{ el.classList.remove('copied'); }}, 800);
+    }});
+  }});
+}});
+</script>
+<script>
+(function () {{
+  var el = document.querySelector('.freshness[data-age-seconds]');
+  if (!el) return;
+  var t0 = Date.now();
+  var a0 = parseFloat(el.getAttribute('data-age-seconds'));
+  setInterval(function () {{
+    var a = a0 + (Date.now() - t0) / 1000;
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+  }}, 30000);
+}})();
+</script>
 </body>
 </html>
 '''
@@ -2349,6 +2552,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     if data.get('cycle_titles_error'):
         titles_note = f' &middot; &#9888; task titles unavailable ({esc(str(data.get("cycle_titles_error")))})'
 
+    computed_note = ''
+    if isinstance(scorecard, dict) and scorecard.get('computed_at_utc'):
+        computed_note = f' &middot; <span class="footer-computed">scorecard computed {fmt_ts(scorecard.get("computed_at_utc"))}</span>'
+
     # Age of the newest source file this page was built from (issue #27) --
     # the second half of the freshness marker. Never fabricated: if no
     # reader (local or remote) could establish a real mtime, say so plainly
@@ -2359,7 +2566,21 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     else:
         source_age = 'age unknown'
 
-    empire_strip = build_empire_stats_strip(scorecard)
+    empire_strip = build_empire_stats_strip(
+        scorecard,
+        age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
+        generated_at=generated_at,
+    )
+    # Issue #47: compact in-page section navigation.
+    panel_nav = (
+        '<nav class="panel-nav" aria-label="Sections">'
+        '<a href="#panel-now">now</a> &middot; '
+        '<a href="#panel-lineage">lineage</a> &middot; '
+        '<a href="#panel-feed">feed</a> &middot; '
+        '<a href="#panel-hypotheses">hypotheses</a> &middot; '
+        '<a href="#panel-agent">agent</a>'
+        '</nav>'
+    )
     now_panel = build_now_panel(
         portfolio=portfolio,
         evolution_tree=evolution_tree,
@@ -2402,6 +2623,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     return PAGE_TEMPLATE.format(
         css=CSS,
         empire_strip=empire_strip,
+        panel_nav=panel_nav,
         now_panel=now_panel,
         canvas=canvas_html,
         cycle_feed=cycle_feed,
@@ -2410,6 +2632,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         generated_at=esc(generated_at),
         host=esc(host),
         source_age=esc(source_age),
+        computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
     )

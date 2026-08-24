@@ -1043,3 +1043,294 @@ def test_issue42_evo_fitness_compact() -> None:
     node = {'parent_sha': None, 'branch': 'selfevo/cycle-x', 'fitness': {'reward': 1234567.8}}
     html = tv._evo_box_html('abc1234', node, False, False, False, 0.0, 0.0, {}, {})
     assert 'r:1.23M' in html
+
+
+# =========================================================================
+# Issue 43: Strip horizontal computed timestamp (moved to footer)
+# =========================================================================
+
+def test_issue43_empire_stats_strip_has_no_computed_timestamp() -> None:
+    scorecard = {
+        'loop': {'integrations': 42},
+        'computed_at_utc': '2026-08-24T12:00:00Z',
+    }
+    html = tv.build_empire_stats_strip(scorecard)
+    assert 'empire-computed' not in html
+    assert 'computed 2026' not in html.lower()
+
+
+def test_issue43_footer_has_computed_timestamp() -> None:
+    scorecard = {
+        'loop': {'integrations': 42},
+        'computed_at_utc': '2026-08-24T12:00:00Z',
+    }
+    html = tv.render_page({'scorecard': scorecard, '_newest_source_age_seconds': 100}, host='testhost', generated_at='2026-08-24 12:30:00')
+    assert '<footer class="page-footer">' in html
+    assert 'footer-computed' in html
+    assert 'scorecard computed 2026-08-24 12:00:00' in html
+
+
+def test_issue43_render_page_omits_scorecard_computed_when_missing() -> None:
+    scorecard = {'loop': {'integrations': 42}}
+    html = tv.render_page({'scorecard': scorecard, '_newest_source_age_seconds': 100}, host='testhost', generated_at='2026-08-24 12:30:00')
+    assert '<footer class="page-footer">' in html
+    assert '<span class="footer-computed">' not in html
+    assert 'scorecard computed' not in html
+
+
+# =========================================================================
+# Issue 44: Research mint column right border + no era-grid-line
+# =========================================================================
+
+def test_issue44_mint_column_has_right_border_rect() -> None:
+    portfolio = {
+        'current': 'root',
+        'nodes': {
+            'root': {'title': 'Root', 'status': 'completed', 'next': []},
+        },
+    }
+    html = tv.build_tech_canvas(portfolio=portfolio, evolution_tree=None, ledger_tail=None)
+    assert 'mint-col-border' in html
+
+
+def test_issue44_canvas_has_no_era_grid_lines() -> None:
+    portfolio = {
+        'current': 'root',
+        'nodes': {
+            'root': {'title': 'Root', 'status': 'completed', 'next': []},
+        },
+    }
+    html = tv.build_tech_canvas(portfolio=portfolio, evolution_tree=None, ledger_tail=None)
+    assert 'era-grid-line' not in html
+
+
+# =========================================================================
+# Issue 45: Hypotheses lifecycle collapsible section
+# =========================================================================
+
+def test_issue45_answered_hypotheses_in_details_element() -> None:
+    hl = {
+        'entries': {
+            'H1': {
+                'title': 'Active Hypo',
+                'status': 'exploring',
+                'created_at': '2026-08-20T00:00:00Z',
+            },
+            'H2': {
+                'title': 'Accepted Hypo',
+                'status': 'accepted',
+                'answered_at': '2026-08-22T00:00:00Z',
+                'evidence_cycle': 'cycle-100',
+            },
+        }
+    }
+    html = tv.build_hypotheses_panel(hypotheses_lifecycle=hl, feed_cycles={'cycle-100'})
+    assert '<details' in html
+    assert '<summary' in html
+    assert 'Answered (1)' in html
+    assert 'Active Hypo' in html
+    assert 'Accepted Hypo' in html
+
+
+def test_issue45_no_answered_hypotheses_no_details() -> None:
+    hl = {
+        'entries': {
+            'H1': {
+                'title': 'Active Hypo',
+                'status': 'exploring',
+                'created_at': '2026-08-20T00:00:00Z',
+            },
+        }
+    }
+    html = tv.build_hypotheses_panel(hypotheses_lifecycle=hl)
+    assert '<details' not in html
+    assert 'Active Hypo' in html
+
+
+# =========================================================================
+# Issue 47: Feed integrated cycles have tree links
+# =========================================================================
+
+def test_issue47_feed_integrated_cycle_has_tree_link() -> None:
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-evo1', 'status': 'success'},
+    ]
+    evolution_tree = {
+        'nodes': {
+            'sha1234567890abcdef': {
+                'cycle_id': 'cycle-evo1',
+                'branch': 'selfevo/cycle-evo1',
+                'parent_sha': None,
+            }
+        }
+    }
+    html = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=evolution_tree,
+        cycle_files=None,
+    )
+    assert 'feed-tree-link' in html
+    assert 'href="#node-sha1234"' in html
+
+
+def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-fail1', 'status': 'failed', 'reason': 'syntax error'},
+    ]
+    evolution_tree = {
+        'nodes': {}
+    }
+    html = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=evolution_tree,
+        cycle_files=None,
+    )
+    assert 'feed-tree-link' not in html
+
+
+# =========================================================================
+# Issue 48: Multi-column agent panel with Skills table
+# =========================================================================
+
+def test_issue48_agent_panel_multi_column_with_skills_table() -> None:
+    agents_md = '# AGENTS.md content\nInstruction details here.'
+    goal_text = {'charter': 'Improve test coverage and reduce cycle time'}
+    skill_reads = {
+        'reads': [
+            {'skill': 'test-runner'},
+            {'skill': 'test-runner'},
+            {'skill': 'git-tools'},
+        ]
+    }
+    html = tv.build_agent_panel(
+        agents_md=agents_md,
+        goal_text=goal_text,
+        skill_reads=skill_reads,
+    )
+    assert 'agent-grid' in html
+    assert 'agent-subcol' in html
+    assert 'skills-table' in html
+    assert 'test-runner' in html
+    assert 'git-tools' in html
+    assert 'agents-md-box' in html
+    assert 'goal-text-box' in html
+
+
+# ---------------------------------------------------------------------------
+# Batch 3: issues #43 #44 #45 #47 #48 (UX pass)
+# ---------------------------------------------------------------------------
+
+
+def _batch3_page() -> str:
+    return tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+
+def test_batch3_issue43_no_era_grid_lines_or_dead_grid_code() -> None:
+    html_out = _batch3_page()
+    assert 'era-grid-line' not in html_out
+
+
+def test_batch3_issue43_canvas_jump_link_present_and_targets_current_node() -> None:
+    html_out = _batch3_page()
+    assert 'canvas-jump' in html_out
+    assert 'href="#node-child1s"' in html_out  # short_sha of current_sha
+
+
+def test_batch3_issue43_canvas_jump_omitted_without_current_node() -> None:
+    data = _fixture()
+    data['evolution_tree'] = {'nodes': {}}
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'class="canvas-jump"' not in html_out
+
+
+def test_batch3_issue43_date_range_label_present() -> None:
+    html_out = _batch3_page()
+    assert 'time range:' in html_out
+    assert 'Aug 15 - Aug 17' in html_out
+
+
+def test_batch3_issue44_no_nested_scroll_on_feed_and_hypo_lists() -> None:
+    html_out = _batch3_page()
+    assert 'max-height: 420px' not in html_out
+    assert 'max-height: 320px' not in html_out
+    assert 'max-height: 250px' not in html_out
+    assert 'overscroll-behavior: contain' in html_out
+
+
+def test_batch3_issue44_charter_boxes_are_details_with_line_counts() -> None:
+    html_out = _batch3_page()
+    assert '<details class="charter-details agents-md-box">' in html_out
+    assert '<details class="charter-details goal-text-box">' in html_out
+    assert 'AGENTS.md charter (3 lines)' in html_out
+    assert 'Goals charter (1 lines)' in html_out
+
+
+def test_batch3_issue45_many_files_expandable_few_files_plain() -> None:
+    data = _fixture()
+    data['cycle_files'] = {
+        'cycle-a': ['a.py', 'b.py', 'c.py', 'd.py', 'e.py'],
+        'cycle-failed-1': ['one.py'],
+    }
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '<details class="feed-files">' in html_out
+    assert '+4 more' in html_out
+    assert '<ul class="feed-files-list">' in html_out
+    assert '<li>e.py</li>' in html_out
+    # single-file row stays a plain div, no title-attr-only access
+    assert '<div class="feed-files">' in html_out
+    assert 'feed-files" title=' not in html_out
+
+
+def test_batch3_issue47_panel_nav_links_to_all_sections() -> None:
+    html_out = _batch3_page()
+    for pid in ('panel-now', 'panel-lineage', 'panel-feed', 'panel-hypotheses', 'panel-agent'):
+        assert f'id="{pid}"' in html_out
+        assert f'href="#{pid}"' in html_out
+    assert '<nav class="panel-nav" aria-label="Sections">' in html_out
+
+
+def test_batch3_issue47_copyable_ids_and_inline_script_no_external_urls() -> None:
+    html_out = _batch3_page()
+    assert 'feed-cid copyable' in html_out
+    assert 'evo-sha copyable' in html_out
+    assert 'navigator.clipboard' in html_out
+    assert 'https://' not in html_out.replace('http-equiv', '')
+
+
+def test_batch3_issue48_meta_refresh_and_freshness_badge() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 120.0
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '<meta http-equiv="refresh" content="600">' in html_out
+    assert 'freshness-fresh' in html_out
+    assert 'data-age-seconds="120"' in html_out
+    assert 'data: 2m old' in html_out
+    assert 'generated 12:00 UTC' in html_out
+
+
+def test_batch3_issue48_freshness_unknown_level() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = None
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'freshness-unknown' in html_out
+    assert 'data: age unknown' in html_out
+
+
+def test_batch3_issue48_very_stale_level() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 30000.0
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'freshness-very-stale' in html_out
+
+
+def test_batch3_issue48_header_footer_same_timestamp() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 120.0
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    # footer carries the full timestamp; header badge shows its HH:MM part
+    assert 'generated 2026-08-18 12:00:00 UTC' in html_out
+    assert 'generated 12:00 UTC' in html_out
