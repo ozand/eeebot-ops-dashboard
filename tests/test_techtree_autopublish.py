@@ -647,3 +647,72 @@ def test_run_publishes_on_backward_clock_jump_even_with_unchanged_digest(
 
     assert rc == 0
     assert len(published) == 1
+
+
+# --- issue #29: unreadable tree source file raising PermissionError/OSError -
+
+def test_unreadable_tree_source_permission_denied_returns_problem(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When a parent directory lacks execute/read permissions (issue #29),
+    Path.exists() raises PermissionError. _unreadable_tree_source must catch
+    PermissionError/OSError and report the source as unreadable instead of
+    crashing."""
+    root = tmp_path / 'state'
+    data = {'evolution_tree': None, 'portfolio': {}, 'hypotheses': {}}
+
+    def _mock_exists(self: Path) -> bool:
+        if 'evolution' in str(self):
+            raise PermissionError(13, 'Permission denied', str(self))
+        return False
+
+    monkeypatch.setattr(Path, 'exists', _mock_exists)
+    problem = ap._unreadable_tree_source(data, root)
+    assert problem is not None
+    assert 'evolution_tree' in problem
+    assert 'unreadable' in problem or 'could not be parsed' in problem
+
+
+def test_permission_denied_tree_source_refuses_to_publish_and_does_not_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Full run() flow when a tree source file raises PermissionError on read/exists
+    probes: run() must refuse to publish (exit 1), not call publish_to_pages,
+    and log the unreadable source problem to stderr without an uncaught exception."""
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+
+    good_digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+
+    real_open = Path.open
+    real_exists = Path.exists
+
+    def _mock_open(self: Path, *args: object, **kwargs: object) -> object:
+        if 'evolution' in str(self):
+            raise PermissionError(13, 'Permission denied', str(self))
+        return real_open(self, *args, **kwargs)
+
+    def _mock_exists(self: Path) -> bool:
+        if 'evolution' in str(self):
+            raise PermissionError(13, 'Permission denied', str(self))
+        return real_exists(self)
+
+    monkeypatch.setattr(Path, 'open', _mock_open)
+    monkeypatch.setattr(Path, 'exists', _mock_exists)
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    called: list[str] = []
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    rc = ap.run(args)
+
+    assert rc != 0
+    assert called == []
+    state = ap.load_publish_state(state_dir)
+    assert state['digest'] == good_digest
+    assert state['published_at'] == 1000.0
+    stderr = capsys.readouterr().err
+    assert 'evolution_tree' in stderr
+

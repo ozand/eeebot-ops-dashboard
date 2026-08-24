@@ -134,7 +134,14 @@ def _unreadable_tree_source(data: dict[str, Any], state_root: Path) -> str | Non
     for key, relpath in _TREE_SOURCE_FILES.items():
         if isinstance(data.get(key), dict):
             continue
-        if not (state_root / relpath).exists():
+        try:
+            exists = (state_root / relpath).exists()
+        except OSError:
+            # issue #29: PermissionError/OSError when probing paths where a parent
+            # directory denies search (+x) or read (+r) to the unprivileged service user.
+            # Treat as present but unreadable to report problem and refuse degraded publish.
+            return f'{key} could not be parsed (present but unreadable or wrong-shape: {relpath})'
+        if not exists:
             continue  # legitimately absent -- not this guard's concern
         return f'{key} could not be parsed (present but unreadable or wrong-shape: {relpath})'
     return None

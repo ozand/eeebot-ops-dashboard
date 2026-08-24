@@ -34,12 +34,15 @@ SSH_TIMEOUT_SECONDS = 45
 # read_local_state (issue #27) takes it as a real default argument so the
 # viewer can run *on* eeepc without SSHing to itself.
 STATE_ROOT = '/var/lib/eeepc-agent/self-evolving-agent/state'
+INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 
 # Ledger-tail filter, mirrored inside REMOTE_READER_SCRIPT's own copy of
-# these same three constants (issue #27) -- see the duplication note on
-# read_local_state for why that copy is not imported from here instead.
-LEDGER_PHASES = {'tech_tree', 'hypothesis', 'evolution_tree'}
-LEDGER_TAIL_LIMIT = 40
+# these constants.
+LEDGER_PHASES = {
+    'started', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
+    'evolution_tree', 'tech_tree', 'hypothesis',
+}
+LEDGER_TAIL_LIMIT = 200
 LEDGER_SCAN_WINDOW = 5000
 
 # Read every source fail-soft, from a single remote python3 process fed over
@@ -48,16 +51,17 @@ LEDGER_SCAN_WINDOW = 5000
 REMOTE_READER_SCRIPT = r'''
 import json
 import os
+import subprocess
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
-LEDGER_PHASES = {"tech_tree", "hypothesis", "evolution_tree"}
-LEDGER_TAIL_LIMIT = 40
+INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
+LEDGER_PHASES = {
+    "started", "outcome", "gate", "proposer_reject", "dedup", "idle",
+    "evolution_tree", "tech_tree", "hypothesis",
+}
+LEDGER_TAIL_LIMIT = 200
 LEDGER_SCAN_WINDOW = 5000
 
-# mtimes of every source file this process actually managed to read, so the
-# caller (running on a different machine/clock, over SSH) can still report
-# a "newest source age" freshness marker on the page (issue #27) instead of
-# only a generation timestamp that a stale snapshot cannot be told apart by.
 _mtimes = []
 
 
@@ -97,24 +101,75 @@ def read_ledger_tail(relpath):
     return matched
 
 
+def read_file_text(relpath):
+    path = os.path.join(INSTANCE_REPO, relpath)
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            content = fh.read()
+        _mtimes.append(os.path.getmtime(path))
+        return content
+    except Exception:
+        return None
+
+
+def extract_git_titles():
+    titles = {}
+    if not os.path.isdir(INSTANCE_REPO):
+        return titles
+    try:
+        cmd = ["git", "-C", INSTANCE_REPO, "log", "--first-parent", "-n", "60", "--format=%H %s"]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        if res.returncode != 0:
+            return titles
+        for line in res.stdout.strip().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(" ", 1)
+            if len(parts) != 2:
+                continue
+            commit_sha, subject = parts
+            if "merge: integrate selfevo/cycle-" in subject:
+                cycle_part = subject.split("merge: integrate selfevo/", 1)[-1].strip()
+                if cycle_part.startswith("cycle-cycle-"):
+                    norm_cycle_id = "cycle-" + cycle_part[len("cycle-cycle-"):]
+                else:
+                    norm_cycle_id = cycle_part
+                
+                cmd_title = ["git", "-C", INSTANCE_REPO, "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
+                res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
+                if res_title.returncode == 0:
+                    for t_line in res_title.stdout.strip().splitlines():
+                        t_line = t_line.strip()
+                        if not t_line:
+                            continue
+                        if t_line.startswith("chore:") or t_line.startswith("merge:"):
+                            continue
+                        titles[cycle_part] = t_line
+                        if norm_cycle_id != cycle_part:
+                            titles[norm_cycle_id] = t_line
+                        break
+    except Exception:
+        pass
+    return titles
+
+
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
     "scorecard": read_json("scorecard/latest.json"),
     "evolution_tree": read_json("evolution/tree.json"),
     "hypotheses": read_json("hypotheses/lifecycle.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
+    "demand_rotation": read_json("demand/rotation.json"),
+    "demand_completed": read_json("demand/completed.json"),
+    "skill_reads": read_json("skill_fitness/reads.json"),
+    "goal_text": read_json("goals/goal_text.json"),
+    "agents_md": read_file_text("AGENTS.md"),
+    "cycle_titles": extract_git_titles(),
     "_source_mtimes": _mtimes,
 }
 print(json.dumps(result))
 '''.lstrip('\n')
-# NOTE (issue #27): REMOTE_READER_SCRIPT duplicates STATE_ROOT/LEDGER_* and
-# the read_json/read_ledger_tail bodies that also exist as real module code
-# above and in read_local_state below. That is deliberate, not an oversight:
-# this string is piped as-is into a bare `python3 -` on the remote host and
-# cannot `import` anything from this file, so it has to stand entirely on
-# its own. Do not "fix" this duplication by making REMOTE_READER_SCRIPT
-# import techtree_viewer -- that would break the one thing this string
-# exists to do. Keep the two copies in sync by hand if the filter changes.
 
 
 def fetch_remote_state(host: str) -> dict[str, Any]:
@@ -130,6 +185,12 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'evolution_tree': None,
         'hypotheses': None,
         'ledger_tail': None,
+        'demand_rotation': None,
+        'demand_completed': None,
+        'skill_reads': None,
+        'goal_text': None,
+        'agents_md': None,
+        'cycle_titles': None,
         '_newest_source_age_seconds': None,
     }
     command = [
@@ -163,39 +224,68 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
     for key in empty:
         data.setdefault(key, None)
 
-    # The remote script reports raw mtimes (its own host clock); age is
-    # computed here, against *this* machine's clock, since that is the
-    # clock the "generated at" timestamp on the page will also use. Over a
-    # healthy LAN/Tailscale link the skew is negligible; this path is
-    # workstation tooling, not the autopublisher, so exactness isn't
-    # required -- only "not fabricated when we don't actually know" is.
     mtimes = data.pop('_source_mtimes', None)
     if isinstance(mtimes, list) and mtimes:
         data['_newest_source_age_seconds'] = max(0.0, time.time() - max(mtimes))
     return data
 
 
-def read_local_state(state_root: str) -> dict[str, Any]:
-    """Read all five state sources directly from `state_root` -- no SSH (issue
-    #27: for running the viewer *on* eeepc itself, e.g. from the
-    autopublisher). Returns the exact same dict shape as fetch_remote_state,
-    including the `_error` convention on a missing/unreadable state root, so
-    render_page needs no change to its input contract regardless of which
-    reader produced `data`.
+def extract_git_titles_local(repo_root: Path) -> dict[str, str]:
+    titles: dict[str, str] = {}
+    if not repo_root.is_dir():
+        return titles
+    try:
+        cmd = ['git', '-C', str(repo_root), 'log', '--first-parent', '-n', '60', '--format=%H %s']
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        if res.returncode != 0:
+            return titles
+        for line in res.stdout.strip().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(' ', 1)
+            if len(parts) != 2:
+                continue
+            commit_sha, subject = parts
+            if 'merge: integrate selfevo/cycle-' in subject:
+                cycle_part = subject.split('merge: integrate selfevo/', 1)[-1].strip()
+                if cycle_part.startswith('cycle-cycle-'):
+                    norm_cycle_id = 'cycle-' + cycle_part[len('cycle-cycle-'):]
+                else:
+                    norm_cycle_id = cycle_part
 
-    This intentionally duplicates the read_json / read_ledger_tail bodies
-    that also live inside REMOTE_READER_SCRIPT above, in miniature.
-    REMOTE_READER_SCRIPT is piped as a bare string to a remote `python3 -`
-    and cannot import this function, so the two copies cannot be unified
-    without breaking the remote path -- this is the accepted trade, not
-    something a later cleanup should "fix".
-    """
+                cmd_title = ['git', '-C', str(repo_root), 'log', f'{commit_sha}^2', '-n', '5', '--format=%s']
+                res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
+                if res_title.returncode == 0:
+                    for t_line in res_title.stdout.strip().splitlines():
+                        t_line = t_line.strip()
+                        if not t_line:
+                            continue
+                        if t_line.startswith('chore:') or t_line.startswith('merge:'):
+                            continue
+                        titles[cycle_part] = t_line
+                        if norm_cycle_id != cycle_part:
+                            titles[norm_cycle_id] = t_line
+                        break
+    except Exception:
+        pass
+    return titles
+
+
+def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[str, Any]:
+    """Read all state sources directly from `state_root` -- no SSH."""
     empty: dict[str, Any] = {
         'portfolio': None,
         'scorecard': None,
         'evolution_tree': None,
         'hypotheses': None,
         'ledger_tail': None,
+        'demand_rotation': None,
+        'demand_completed': None,
+        'skill_reads': None,
+        'goal_text': None,
+        'agents_md': None,
+        'cycle_titles': None,
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -217,7 +307,7 @@ def read_local_state(state_root: str) -> dict[str, Any]:
                 data = json.load(fh)
             mtimes.append(path.stat().st_mtime)
             return data
-        except Exception:  # noqa: BLE001 - fail-soft per source, matches REMOTE_READER_SCRIPT
+        except Exception:  # noqa: BLE001 - fail-soft per source
             return None
 
     def read_ledger_tail(relpath: str) -> list[Any]:
@@ -244,12 +334,31 @@ def read_local_state(state_root: str) -> dict[str, Any]:
         matched.reverse()
         return matched
 
+    repo_path = Path(instance_repo) if instance_repo else root.parent / 'eeebot-self-evolving'
+    agents_text = None
+    if repo_path.is_dir():
+        agents_file = repo_path / 'AGENTS.md'
+        try:
+            with agents_file.open('r', encoding='utf-8', errors='replace') as fh:
+                agents_text = fh.read()
+            mtimes.append(agents_file.stat().st_mtime)
+        except Exception:
+            pass
+
+    titles = extract_git_titles_local(repo_path)
+
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
         'evolution_tree': read_json('evolution/tree.json'),
         'hypotheses': read_json('hypotheses/lifecycle.json'),
         'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
+        'demand_rotation': read_json('demand/rotation.json'),
+        'demand_completed': read_json('demand/completed.json'),
+        'skill_reads': read_json('skill_fitness/reads.json'),
+        'goal_text': read_json('goals/goal_text.json'),
+        'agents_md': agents_text,
+        'cycle_titles': titles,
         '_newest_source_age_seconds': None,
     }
     if mtimes:
@@ -416,9 +525,9 @@ CANVAS_MARGIN_Y = 20
 LANE_GAP = 50
 MIN_CANVAS_W = 1200
 
-EVO_BOX_W = 150
-EVO_BOX_H = 46
-EVO_ROW_H = 62
+EVO_BOX_W = 180
+EVO_BOX_H = 64
+EVO_ROW_H = 80
 EVO_MARGIN_X = 60
 EVO_MAX_DISPLAY = 30
 
@@ -594,12 +703,56 @@ def _lane_a_layout(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | No
     }
 
 
-def _evo_box_html(sha: str, node: dict[str, Any], is_current: bool, is_abandoned: bool, switch_marked: bool, x: float, y: float) -> str:
+def _evo_box_html(
+    sha: str,
+    node: dict[str, Any],
+    is_current: bool,
+    is_abandoned: bool,
+    switch_marked: bool,
+    x: float,
+    y: float,
+    task_titles: dict[str, str] | None = None,
+    portfolio: dict[str, Any] | None = None,
+) -> str:
     branch = str(node.get('branch') or '')
     tail = branch.rsplit('/', 1)[-1] if branch else ''
-    raw_label = f'{tail}-{sha[:7]}' if tail else sha[:7]
-    label = esc(raw_label)
+    cycle_id = str(node.get('cycle_id') or '')
+    if not cycle_id and 'cycle-' in tail:
+        cycle_id = tail
+
+    # Resolve task title
+    title = ''
+    if task_titles:
+        if cycle_id and cycle_id in task_titles:
+            title = task_titles[cycle_id]
+        elif sha in task_titles:
+            title = task_titles[sha]
+        elif short_sha(sha) in task_titles:
+            title = task_titles[short_sha(sha)]
+
+    display_title = title if title else (cycle_id if cycle_id else (tail if tail else short_sha(sha)))
+    label = esc(display_title)
     marker = ' &#8634;' if switch_marked else ''
+
+    fitness = node.get('fitness')
+    fitness_line = ''
+    if isinstance(fitness, dict):
+        parts = []
+        if 'reward' in fitness:
+            parts.append(f'r:{fitness.get("reward"):.2f}' if isinstance(fitness.get("reward"), (int, float)) else f'r:{fitness.get("reward")}')
+        if 'integrations' in fitness:
+            parts.append(f'int:{fitness.get("integrations")}')
+        if parts:
+            fitness_line = f'<div class="evo-fitness">{" ".join(parts)}</div>'
+
+    dir_badge = ''
+    dir_name = node.get('direction') or node.get('research_direction')
+    if not dir_name and isinstance(portfolio, dict):
+        current_dir = portfolio.get('current')
+        if current_dir:
+            dir_name = current_dir
+    if dir_name:
+        dir_badge = f'<span class="evo-dir-badge">{esc(dir_name)}</span>'
 
     box_class = 'evo-box'
     if is_current:
@@ -608,15 +761,23 @@ def _evo_box_html(sha: str, node: dict[str, Any], is_current: bool, is_abandoned
         box_class += ' evo-box-abandoned'
 
     diamond = '<span class="evo-diamond">&#9672;</span>' if is_current else ''
+    tooltip = esc(f'{short_sha(sha)} | {title or display_title} | {branch}')
+
     body = (
-        f'<div class="{box_class}">'
-        f'{diamond}<span class="evo-box-label">{label}{marker}</span>'
+        f'<div class="{box_class}" title="{tooltip}" id="node-{esc(short_sha(sha))}">'
+        f'<div class="evo-header">{diamond}<span class="evo-box-label">{label}{marker}</span></div>'
+        f'<div class="evo-meta">{dir_badge}<span class="evo-sha">{esc(short_sha(sha))}</span></div>'
+        f'{fitness_line}'
         '</div>'
     )
     return f'<foreignObject x="{x:.0f}" y="{y:.0f}" width="{EVO_BOX_W}" height="{EVO_BOX_H}">{body}</foreignObject>'
 
 
-def _lane_b_layout(evolution_tree: dict[str, Any] | None) -> dict[str, Any]:
+def _lane_b_layout(
+    evolution_tree: dict[str, Any] | None,
+    task_titles: dict[str, str] | None = None,
+    portfolio: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Lane B geometry: EVOLUTION (git-native DAG). Mirrors Lane A's
     contract: an 'unavailable' dict, a 'fallback_html' dict (<2 nodes,
     simple list), or the full SVG-fragment layout."""
@@ -717,7 +878,7 @@ def _lane_b_layout(evolution_tree: dict[str, Any] | None) -> dict[str, Any]:
         x, y = pos[sha]
         is_current = sha == current_sha
         is_abandoned = (not is_current) and children_count.get(sha, 0) == 0
-        boxes.append(_evo_box_html(sha, node, is_current, is_abandoned, sha in switch_shas, x, y))
+        boxes.append(_evo_box_html(sha, node, is_current, is_abandoned, sha in switch_shas, x, y, task_titles, portfolio))
 
     width = EVO_MARGIN_X * 2 + (max_depth + 1) * COL_PITCH
     height = LANE_TOP_PAD + max_slot * EVO_ROW_H + 24
@@ -736,11 +897,16 @@ def _lane_b_layout(evolution_tree: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def build_tech_canvas(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | None, evolution_tree: dict[str, Any] | None) -> str:
+def build_tech_canvas(
+    portfolio: dict[str, Any] | None,
+    ledger_tail: list[Any] | None,
+    evolution_tree: dict[str, Any] | None,
+    task_titles: dict[str, str] | None = None,
+) -> str:
     """The main area: ONE wide horizontally-scrollable SVG canvas holding
     both lanes on a shared left-to-right time axis. Fail-soft per lane."""
     lane_a = _lane_a_layout(portfolio, ledger_tail)
-    lane_b = _lane_b_layout(evolution_tree)
+    lane_b = _lane_b_layout(evolution_tree, task_titles=task_titles, portfolio=portfolio)
 
     canvas_width = MIN_CANVAS_W
     if lane_a.get('available') and 'width' in lane_a:
@@ -753,7 +919,7 @@ def build_tech_canvas(portfolio: dict[str, Any] | None, ledger_tail: list[Any] |
     y_cursor = CANVAS_MARGIN_Y
 
     # --- Lane A: RESEARCH -----------------------------------------------
-    label_a = '<text x="10" y="14" class="lane-label">RESEARCH</text>'
+    label_a = '<text x="10" y="14" class="lane-label">RESEARCH DIRECTIONS</text>'
     if lane_a.get('available'):
         note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_a["note"])}</text>' if lane_a.get('note') else ''
         body = ''.join(lane_a['boxes']) + ''.join(lane_a['elbows']) + ''.join(lane_a['mint'])
@@ -767,8 +933,8 @@ def build_tech_canvas(portfolio: dict[str, Any] | None, ledger_tail: list[Any] |
         lane_a_height = 60
     y_cursor += lane_a_height + LANE_GAP
 
-    # --- Lane B: WORLD HISTORY -------------------------------------------
-    label_b = '<text x="10" y="14" class="lane-label">WORLD HISTORY</text>'
+    # --- Lane B: EVOLUTION LINEAGE ---------------------------------------
+    label_b = '<text x="10" y="14" class="lane-label">EVOLUTION LINEAGE (DGM)</text>'
     if lane_b.get('available'):
         if 'fallback_html' in lane_b:
             fo_width = max(canvas_width - 40, 400)
@@ -814,99 +980,430 @@ def build_tech_canvas(portfolio: dict[str, Any] | None, ledger_tail: list[Any] |
 # Left rail -- ERAS (trust-ladder medallions) + GREAT LIBRARY summary.
 # ---------------------------------------------------------------------------
 
-def build_eras_rail(scorecard: dict[str, Any] | None) -> str:
-    control_plane = scorecard.get('control_plane') if isinstance(scorecard, dict) else None
-    ladder_info = control_plane.get('runtime_trust_ladder') if isinstance(control_plane, dict) else None
-    if not isinstance(ladder_info, dict):
-        return unavailable_panel('Eras', 'trust ladder unavailable')
+def build_now_panel(
+    portfolio: dict[str, Any] | None,
+    evolution_tree: dict[str, Any] | None,
+    demand_rotation: dict[str, Any] | None,
+    demand_completed: dict[str, Any] | None,
+    task_titles: dict[str, str] | None = None,
+    ledger_tail: list[dict[str, Any]] | None = None,
+) -> str:
+    # 1. Active research direction
+    dir_html = '<p class="unavailable-note">research direction unavailable</p>'
+    if isinstance(portfolio, dict):
+        current_dir = portfolio.get('current') or 'none'
+        nodes = portfolio.get('nodes') if isinstance(portfolio.get('nodes'), dict) else {}
+        node = nodes.get(current_dir) if isinstance(nodes, dict) else {}
+        if isinstance(node, dict):
+            status = node.get('status') or 'unknown'
+            lever_metric = node.get('lever_metric') or 'n/a'
+            direction_type = node.get('direction') or 'n/a'
+            last_val = node.get('last_lever_value')
+            val_str = f' (last: {esc(last_val)})' if last_val is not None else ''
+            dir_html = (
+                f'<div class="now-item"><span class="now-label">Direction:</span> '
+                f'<span class="badge badge-researching">{esc(current_dir)}</span> '
+                f'<span class="badge badge-available">{esc(status)}</span> '
+                f'<span class="now-detail">lever: <strong>{esc(lever_metric)}</strong> &middot; '
+                f'aim: <em>{esc(direction_type)}</em>{val_str}</span></div>'
+            )
+        else:
+            dir_html = (
+                f'<div class="now-item"><span class="now-label">Direction:</span> '
+                f'<span class="badge badge-researching">{esc(current_dir)}</span></div>'
+            )
 
-    level = ladder_info.get('level')
-    unlocked = ladder_info.get('unlocked')
-    unlocked_set = set(unlocked) if isinstance(unlocked, list) else set()
-    ladder = ladder_info.get('ladder')
-    if not isinstance(ladder, list) or not ladder:
-        return unavailable_panel('Eras', 'trust ladder unavailable')
+    # 2. Current / Last Cycle
+    cycle_html = '<p class="unavailable-note">cycle info unavailable</p>'
+    current_sha = evolution_tree.get('current_sha') if isinstance(evolution_tree, dict) else None
+    nodes_tree = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else {}
+    last_node = nodes_tree.get(current_sha) if isinstance(nodes_tree, dict) and current_sha else None
+    
+    # Try finding latest cycle from tree or ledger
+    latest_cycle_id = None
+    if isinstance(last_node, dict) and last_node.get('cycle_id'):
+        latest_cycle_id = str(last_node.get('cycle_id'))
+    elif isinstance(ledger_tail, list) and ledger_tail:
+        for entry in reversed(ledger_tail):
+            if isinstance(entry, dict) and entry.get('cycle_id'):
+                latest_cycle_id = str(entry.get('cycle_id'))
+                break
 
-    medallions = []
-    for idx, rung in enumerate(ladder):
-        rung_name = str(rung).rsplit('/', 1)[-1]
-        if rung_name.endswith('.py'):
-            rung_name = rung_name[:-3]
-        is_lit = rung in unlocked_set or (isinstance(level, int) and idx < level)
-        css_class = 'era-lit' if is_lit else 'era-locked'
-        glyph = '&#9733;' if is_lit else '&#128274;'
-        medallions.append(f'''
-        <div class="era-medallion {css_class}">
-          <div class="era-glyph">{glyph}</div>
-          <div class="era-name">{title_case_name(rung_name)}</div>
-        </div>
-        ''')
+    if latest_cycle_id:
+        titles_map = task_titles if isinstance(task_titles, dict) else {}
+        title = titles_map.get(latest_cycle_id) or titles_map.get(latest_cycle_id.replace('cycle-', '')) or latest_cycle_id
+        sha_str = f' [{esc(current_sha[:8])}]' if current_sha else ''
+        cycle_html = (
+            f'<div class="now-item"><span class="now-label">Latest Cycle:</span> '
+            f'<strong>{esc(title)}</strong> '
+            f'<span class="now-sub">({esc(latest_cycle_id)}{sha_str})</span></div>'
+        )
 
-    level_text = esc(level) if level is not None else 'unknown'
+    # 3. Demand snapshot
+    demand_html = '<p class="unavailable-note">demand snapshot unavailable</p>'
+    served_items = []
+    if isinstance(demand_rotation, dict):
+        served = demand_rotation.get('served')
+        if isinstance(served, dict):
+            for gid, ts in list(served.items())[-5:]:
+                served_items.append(f'<span class="demand-chip served" title="served: {esc(ts)}">{esc(gid)}</span>')
+
+    completed_items = []
+    if isinstance(demand_completed, dict):
+        entries = demand_completed.get('entries')
+        if isinstance(entries, dict):
+            for gid, cinfo in list(entries.items())[-5:]:
+                cid = cinfo.get('cycle_id', '') if isinstance(cinfo, dict) else ''
+                completed_items.append(f'<span class="demand-chip completed" title="cycle: {esc(cid)}">{esc(gid)}</span>')
+
+    if served_items or completed_items:
+        s_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Served:</span> {" ".join(served_items) if served_items else "<em>none</em>"}</div>'
+        c_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> {" ".join(completed_items) if completed_items else "<em>none</em>"}</div>'
+        demand_html = f'<div class="now-demand-grid">{s_part}{c_part}</div>'
+
     return f'''
-    <section class="panel panel-eras">
-      <h2 class="panel-title">Eras</h2>
-      <div class="era-rail">{''.join(medallions)}</div>
-      <div class="era-caption">Trust Level {level_text}</div>
+    <section class="panel panel-now">
+      <h2 class="panel-title">Now / Active Focus</h2>
+      <div class="now-content">
+        {dir_html}
+        {cycle_html}
+        <div class="now-item">
+          <span class="now-label">Demand Queue:</span>
+          {demand_html}
+        </div>
+      </div>
     </section>
     '''
 
 
-def build_library_rail(scorecard: dict[str, Any] | None, hypotheses: dict[str, Any] | None) -> str:
-    control_plane = scorecard.get('control_plane') if isinstance(scorecard, dict) else None
-    counts = control_plane.get('hypothesis_loop') if isinstance(control_plane, dict) else None
+def build_cycle_feed(
+    ledger_tail: list[dict[str, Any]] | None,
+    demand_completed: dict[str, Any] | None = None,
+    task_titles: dict[str, str] | None = None,
+    evolution_tree: dict[str, Any] | None = None,
+) -> str:
+    if not isinstance(ledger_tail, list):
+        return unavailable_panel('Cycle Feed', 'ledger unavailable')
 
-    counts_html = '<p class="unavailable-note">hypothesis counts unavailable</p>'
-    if isinstance(counts, dict):
-        order = ['active', 'answered', 'supported', 'refuted', 'inconclusive']
-        chips = []
-        for key in order:
-            chips.append(
-                f'<div class="count-chip count-{esc(key)}">'
-                f'<span class="count-value">{esc(counts.get(key, 0))}</span>'
-                f'<span class="count-label">{esc(key)}</span></div>'
-            )
-        counts_html = f'<div class="count-row">{"".join(chips)}</div>'
+    # Group ledger phases by cycle_id
+    cycles_dict: dict[str, list[dict[str, Any]]] = {}
+    for entry in ledger_tail:
+        if not isinstance(entry, dict):
+            continue
+        cid = entry.get('cycle_id')
+        if not cid:
+            continue
+        cid = str(cid)
+        if cid not in cycles_dict:
+            cycles_dict[cid] = []
+        cycles_dict[cid].append(entry)
 
-    entries = hypotheses.get('entries') if isinstance(hypotheses, dict) else None
-    verdict_rows = []
-    if isinstance(entries, dict):
-        verdicted = [
-            (key, entry) for key, entry in entries.items()
-            if isinstance(entry, dict) and entry.get('verdict')
-        ]
-        verdicted.sort(key=lambda kv: kv[1].get('verdict_at') or '', reverse=True)
-        for key, entry in verdicted[:12]:
-            verdict = str(entry.get('verdict') or '').upper()
+    if not cycles_dict:
+        return f'''
+        <section class="panel panel-feed">
+          <h2 class="panel-title">Cycle Feed</h2>
+          <p class="unavailable-note">no cycle entries in ledger</p>
+        </section>
+        '''
+
+    # Map completed demand by cycle_id
+    demand_by_cycle: dict[str, dict[str, Any]] = {}
+    if isinstance(demand_completed, dict):
+        entries = demand_completed.get('entries')
+        if isinstance(entries, dict):
+            for gid, cinfo in entries.items():
+                if isinstance(cinfo, dict) and cinfo.get('cycle_id'):
+                    demand_by_cycle[str(cinfo.get('cycle_id'))] = cinfo
+
+    # Map evolution tree nodes by cycle_id
+    tree_by_cycle: dict[str, dict[str, Any]] = {}
+    if isinstance(evolution_tree, dict):
+        nodes = evolution_tree.get('nodes')
+        if isinstance(nodes, dict):
+            for sha, node in nodes.items():
+                if isinstance(node, dict) and node.get('cycle_id'):
+                    tree_by_cycle[str(node.get('cycle_id'))] = node
+
+    titles_map = task_titles if isinstance(task_titles, dict) else {}
+
+    # Build rows (up to 50 latest cycles)
+    rows = []
+    cycle_items = list(cycles_dict.items())
+    # Take latest 50
+    for cid, phases in reversed(cycle_items[-50:]):
+        # Determine task title
+        title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', '')) or cid
+        
+        # Outcome derivation from phases
+        outcome_kind = 'in_progress'
+        outcome_label = 'running'
+        badge_class = 'badge-available'
+        reason = ''
+        files_changed = []
+        metric_delta = ''
+        ts_val = ''
+
+        # Check demand for files_changed
+        if cid in demand_by_cycle:
+            fc = demand_by_cycle[cid].get('files_changed')
+            if isinstance(fc, list):
+                files_changed = [str(f) for f in fc]
+
+        # Scan phases
+        for p in phases:
+            if not ts_val and p.get('ts'):
+                ts_val = str(p.get('ts'))
+            phase_name = p.get('phase')
+            if phase_name == 'started':
+                pass
+            elif phase_name == 'gate':
+                gate_passed = p.get('passed') or p.get('status') == 'passed' or p.get('smoke_passed')
+                if not gate_passed and p.get('reason'):
+                    outcome_kind = 'gate_blocked'
+                    reason = str(p.get('reason'))
+            elif phase_name == 'proposer_reject':
+                outcome_kind = 'rejected'
+                reason = str(p.get('reason') or 'proposer reject')
+            elif phase_name == 'dedup':
+                if p.get('duplicate') or p.get('status') == 'duplicate':
+                    outcome_kind = 'rejected'
+                    reason = str(p.get('reason') or 'duplicate')
+            elif phase_name == 'idle':
+                outcome_kind = 'idle'
+                reason = str(p.get('reason') or 'no demand')
+            elif phase_name == 'outcome':
+                status = p.get('status') or (p.get('outcome') if isinstance(p.get('outcome'), str) else None)
+                if status in ('success', 'integrated'):
+                    outcome_kind = 'integrated'
+                elif status in ('fail', 'failed'):
+                    outcome_kind = 'failed'
+                    if p.get('reason'):
+                        reason = str(p.get('reason'))
+                elif status == 'partial':
+                    outcome_kind = 'partial'
+                if p.get('delta') is not None:
+                    metric_delta = str(p.get('delta'))
+                elif p.get('metric_delta') is not None:
+                    metric_delta = str(p.get('metric_delta'))
+
+        # Check if integrated in evolution tree
+        if cid in tree_by_cycle:
+            outcome_kind = 'integrated'
+            tree_node = tree_by_cycle[cid]
+            fitness = tree_node.get('fitness') if isinstance(tree_node.get('fitness'), dict) else {}
+            if fitness.get('reward') is not None:
+                metric_delta = f"reward: {fitness.get('reward')}"
+
+        if outcome_kind == 'integrated':
+            badge_class = 'badge-integrated'
+            outcome_label = 'INTEGRATED'
+        elif outcome_kind == 'failed':
+            badge_class = 'badge-failed'
+            outcome_label = f'FAILED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'gate_blocked':
+            badge_class = 'badge-blocked'
+            outcome_label = f'GATE BLOCKED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'rejected':
+            badge_class = 'badge-rejected'
+            outcome_label = f'REJECTED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'idle':
+            badge_class = 'badge-available'
+            outcome_label = f'IDLE{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'partial':
+            badge_class = 'badge-researching'
+            outcome_label = 'PARTIAL'
+
+        files_html = ''
+        if files_changed:
+            files_str = ', '.join(files_changed[:3]) + (f' +{len(files_changed)-3} more' if len(files_changed) > 3 else '')
+            files_html = f'<div class="feed-files" title="{esc(", ".join(files_changed))}">📁 {esc(files_str)}</div>'
+
+        delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>' if metric_delta else ''
+        ts_html = f'<span class="feed-ts">{fmt_ts(ts_val)}</span>' if ts_val else ''
+
+        rows.append(f'''
+        <li class="feed-row feed-outcome-{outcome_kind}" id="cycle-{esc(cid)}">
+          <div class="feed-header">
+            <span class="badge {badge_class}">{esc(outcome_label)}</span>
+            <strong class="feed-title">{esc(title)}</strong>
+            <span class="feed-cid">({esc(cid)})</span>
+            {delta_html}
+            {ts_html}
+          </div>
+          {files_html}
+        </li>
+        ''')
+
+    return f'''
+    <section class="panel panel-feed">
+      <h2 class="panel-title">Cycle Feed (Recent {len(rows)})</h2>
+      <ul class="feed-list">
+        {''.join(rows)}
+      </ul>
+    </section>
+    '''
+
+
+def build_hypotheses_panel(hypotheses_lifecycle: dict[str, Any] | None, hypotheses: dict[str, Any] | None = None) -> str:
+    # Accept either hypotheses_lifecycle or legacy hypotheses dict
+    entries_dict = {}
+    if isinstance(hypotheses_lifecycle, dict) and isinstance(hypotheses_lifecycle.get('entries'), dict):
+        entries_dict = hypotheses_lifecycle.get('entries')
+    elif isinstance(hypotheses, dict) and isinstance(hypotheses.get('entries'), dict):
+        entries_dict = hypotheses.get('entries')
+    elif hypotheses_lifecycle is None and hypotheses is None:
+        return unavailable_panel('Hypotheses Lifecycle', 'hypotheses unavailable')
+
+    if not entries_dict:
+        return f'''
+        <section class="panel panel-hypotheses">
+          <h2 class="panel-title">Hypotheses Lifecycle</h2>
+          <p class="unavailable-note">no hypotheses recorded</p>
+        </section>
+        '''
+
+    active_items = []
+    answered_items = []
+
+    for hid, info in entries_dict.items():
+        if not isinstance(info, dict):
+            continue
+        status = str(info.get('status') or 'open').lower()
+        title = info.get('title') or hid
+        first_seen = info.get('first_seen') or ''
+        last_touched = info.get('last_touched') or ''
+        answered_ev = info.get('answered_evidence') or ''
+        answered_at = info.get('answered_at') or ''
+        verdict = info.get('verdict')
+
+        ev_html = ''
+        if answered_ev:
+            ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(answered_ev)}">{esc(answered_ev)}</a></span>'
+
+        if 'answered' in status or status in ('supported', 'refuted', 'inconclusive') or verdict:
+            v_label = str(verdict or status).upper()
             badge_class = {
                 'SUPPORTED': 'verdict-supported',
                 'REFUTED': 'verdict-refuted',
                 'INCONCLUSIVE': 'verdict-inconclusive',
-            }.get(verdict, 'verdict-inconclusive')
-            title = entry.get('title') or key
-            verdict_rows.append(f'''
-            <li>
-              <span class="verdict-title">{esc(title)}</span>
-              <span class="badge {badge_class}">{esc(verdict) or 'UNKNOWN'}</span>
+                'ANSWERED': 'badge-integrated',
+            }.get(v_label, 'badge-integrated')
+            answered_items.append(f'''
+            <li class="hypo-row answered">
+              <span class="badge {badge_class}">{esc(v_label)}</span>
+              <strong class="hypo-title">{esc(title)}</strong>
+              <div class="hypo-meta">
+                {ev_html}
+                {f'<span class="hypo-ts">answered {fmt_ts(answered_at)}</span>' if answered_at else ""}
+              </div>
+            </li>
+            ''')
+        else:
+            active_items.append(f'''
+            <li class="hypo-row active">
+              <span class="badge badge-researching">{esc(status.upper())}</span>
+              <strong class="hypo-title">{esc(title)}</strong>
+              <div class="hypo-meta">
+                {f'<span class="hypo-ts">seen {fmt_ts(first_seen)}</span>' if first_seen else ""}
+                {f'<span class="hypo-ts">touched {fmt_ts(last_touched)}</span>' if last_touched else ""}
+              </div>
             </li>
             ''')
 
-    verdicts_html = (
-        '<ul class="verdict-list verdict-list-compact">' + ''.join(verdict_rows) + '</ul>'
-        if verdict_rows else '<p class="unavailable-note">no verdicts recorded yet</p>'
-    )
+    active_html = f'<div class="hypo-group"><h3>Active ({len(active_items)})</h3><ul class="hypo-list">{"".join(active_items) if active_items else "<li class=\"unavailable-note\">none active</li>"}</ul></div>'
+    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_items)})</h3><ul class="hypo-list">{"".join(answered_items) if answered_items else "<li class=\"unavailable-note\">none answered</li>"}</ul></div>'
 
     return f'''
-    <section class="panel panel-library">
-      <h2 class="panel-title">Great Library</h2>
-      {counts_html}
-      {verdicts_html}
+    <section class="panel panel-hypotheses">
+      <h2 class="panel-title">Hypotheses Lifecycle</h2>
+      <div class="hypo-split">
+        {active_html}
+        {answered_html}
+      </div>
     </section>
     '''
 
 
-def build_left_rail(scorecard: dict[str, Any] | None, hypotheses: dict[str, Any] | None) -> str:
-    return f'<aside class="rail">{build_eras_rail(scorecard)}{build_library_rail(scorecard, hypotheses)}</aside>'
+def build_agent_panel(
+    agents_md: str | None,
+    goal_text: dict[str, Any] | None,
+    skill_reads: dict[str, Any] | None,
+    portfolio: dict[str, Any] | None = None,
+    ledger_tail: list[dict[str, Any]] | None = None,
+) -> str:
+    # 1. AGENTS.md
+    if agents_md is not None:
+        md_text = agents_md.strip()
+        agents_html = f'<div class="agents-md-box"><pre><code>{esc(md_text[:2000])}{"..." if len(md_text) > 2000 else ""}</code></pre></div>'
+    else:
+        agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
+
+    # 2. Goals charter
+    goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
+    if isinstance(goal_text, dict):
+        g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
+        goals_html = f'<div class="goal-text-box"><pre><code>{esc(str(g_text)[:1500])}</code></pre></div>'
+
+    # 3. Skills fitness table
+    skills_html = '<p class="unavailable-note">skill reads unavailable</p>'
+    if isinstance(skill_reads, dict):
+        reads_list = skill_reads.get('reads')
+        if isinstance(reads_list, list):
+            # Aggregate per-skill reads count
+            read_counts: dict[str, int] = {}
+            for r in reads_list:
+                if isinstance(r, dict) and r.get('skill'):
+                    sname = str(r.get('skill'))
+                    read_counts[sname] = read_counts.get(sname, 0) + 1
+
+            if read_counts:
+                # Sort by read count descending
+                sorted_skills = sorted(read_counts.items(), key=lambda kv: kv[1], reverse=True)
+                rows = []
+                for sname, count in sorted_skills:
+                    # Note on confirmed usage: honestly note omission / not tracked
+                    usage_note = '<span class="skill-untracked">not tracked</span>'
+                    ratio_flag = 'skill-high-ratio' if count >= 5 else ''
+                    rows.append(f'''
+                    <tr class="{ratio_flag}">
+                      <td class="skill-name">{esc(sname)}</td>
+                      <td class="skill-reads">{count}</td>
+                      <td class="skill-usage">{usage_note}</td>
+                    </tr>
+                    ''')
+
+                skills_html = f'''
+                <table class="skills-table">
+                  <thead>
+                    <tr><th>Skill</th><th>Reads</th><th>Confirmed Usage</th></tr>
+                  </thead>
+                  <tbody>
+                    {''.join(rows)}
+                  </tbody>
+                </table>
+                '''
+            else:
+                skills_html = '<p class="unavailable-note">no skill reads recorded</p>'
+
+    return f'''
+    <section class="panel panel-agent">
+      <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      <div class="agent-grid">
+        <div class="agent-subcol">
+          <h3>AGENTS.md Charter</h3>
+          {agents_html}
+        </div>
+        <div class="agent-subcol">
+          <h3>Goals Charter</h3>
+          {goals_html}
+        </div>
+        <div class="agent-subcol">
+          <h3>Skill Fitness (Reads & Usage)</h3>
+          {skills_html}
+        </div>
+      </div>
+    </section>
+    '''
 
 
 def build_empire_stats_strip(scorecard: dict[str, Any] | None) -> str:
@@ -1003,24 +1500,18 @@ CSS = '''
       font-weight: 600;
     }
 
-    /* --- overall layout: fixed-width left rail + dominant canvas --- */
-    .layout {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px;
-      max-width: 100vw;
-    }
-
-    .rail {
-      flex: 0 0 220px;
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
     .canvas-outer {
-      flex: 1 1 auto;
+      width: 100%;
       min-width: 0;
       overflow-x: auto;
       overflow-y: hidden;
@@ -1044,11 +1535,11 @@ CSS = '''
       background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
       border: 1px solid #24314f;
       border-radius: 10px;
-      padding: 14px 14px 16px 14px;
+      padding: 14px 18px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       color: #c9a227;
       font-size: 1.05em;
       letter-spacing: 1px;
@@ -1064,32 +1555,253 @@ CSS = '''
       font-style: italic;
     }
 
-    /* --- eras rail: vertical medallions --- */
-    .era-rail { display: flex; flex-direction: column; gap: 8px; }
-    .era-medallion {
-      padding: 8px 6px;
-      border-radius: 10px;
-      text-align: center;
-      border: 2px solid #2c3a5c;
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .era-lit {
-      border-color: #2fd3c4;
-      box-shadow: 0 0 12px rgba(47, 211, 196, 0.5);
-      background: rgba(47, 211, 196, 0.08);
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
     }
-    .era-locked {
-      opacity: 0.55;
-      background: rgba(90, 90, 90, 0.08);
+    .now-label {
+      font-weight: 700;
+      color: #8b96ad;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
     }
-    .era-glyph { font-size: 1.2em; }
-    .era-name { font-size: 0.7em; margin-top: 4px; color: #c7cfe0; }
-    .era-caption {
-      text-align: center;
-      margin-top: 8px;
-      color: #c9a227;
-      letter-spacing: 1px;
-      font-family: Georgia, serif;
+    .now-detail {
+      color: #a0aec0;
       font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #718096;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #718096;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #2c3a5c;
+      background: rgba(15, 24, 42, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #c9a227;
+      border-color: rgba(201, 162, 39, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .feed-row {
+      background: rgba(15, 24, 42, 0.7);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #3a4a6e;
+      background: rgba(20, 33, 58, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #5c6370; }
+    .feed-outcome-partial { border-left: 4px solid #c9a227; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #eae3c8;
+      font-size: 0.95em;
+    }
+    .feed-cid {
+      color: #718096;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+    }
+    .feed-ts {
+      color: #718096;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #8b96ad;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #8b96ad;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #1c2740;
+      padding-bottom: 4px;
+    }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .hypo-row {
+      background: rgba(15, 24, 42, 0.7);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #eae3c8;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #718096;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #8b96ad;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #1c2740;
+      padding-bottom: 4px;
+    }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(11, 18, 32, 0.9);
+      border: 1px solid #24314f;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #c7cfe0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(11, 18, 32, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #14213a;
+      color: #8b96ad;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #24314f;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #1c2740;
+    }
+    .skill-high-ratio {
+      background: rgba(201, 162, 39, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #c9a227;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #5c6370;
+      font-style: italic;
     }
 
     /* --- direction boxes (Lane A / RESEARCH) --- */
@@ -1139,17 +1851,18 @@ CSS = '''
     .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
     .mint-glyph { fill: #c9a227; font-size: 15px; }
 
-    /* --- evolution boxes (Lane B / WORLD HISTORY) --- */
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
     .evo-box {
       width: 100%;
       height: 100%;
       display: flex;
-      align-items: center;
-      gap: 4px;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
       background: rgba(15, 24, 42, 0.9);
       border: 1.5px solid #4a5878;
       border-radius: 7px;
-      padding: 0 8px;
+      padding: 4px 8px;
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       color: #c7cfe0;
@@ -1160,8 +1873,31 @@ CSS = '''
       background: rgba(47, 211, 196, 0.12);
     }
     .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
     .evo-diamond { color: #c9a227; font-weight: 700; }
-    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #eae3c8; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #718096; }
+    .evo-fitness { font-size: 9px; color: #a0aec0; }
     .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
     .evo-fallback { color: #d8dce6; }
 
@@ -1172,11 +1908,14 @@ CSS = '''
       letter-spacing: 0.5px;
       padding: 2px 7px;
       border-radius: 4px;
-      margin-bottom: 6px;
     }
     .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
     .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
     .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
@@ -1199,43 +1938,6 @@ CSS = '''
     .mean-pos { color: #c9a227; }
     .mean-neg { color: #d97b7b; }
 
-    ul.verdict-list, ul.timeline-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    ul.verdict-list li, ul.timeline-list li {
-      padding: 5px 0;
-      border-bottom: 1px solid #1c2740;
-      font-size: 0.78em;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-    .verdict-list-compact .verdict-title { color: #eae3c8; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
-    .timeline-sha { font-family: 'Consolas', 'Courier New', monospace; color: #2fd3c4; }
-    .timeline-branch { color: #b7c0d4; font-size: 0.9em; }
-    .timeline-ts { color: #6a7590; font-size: 0.85em; }
-
-    .count-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .count-chip {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 56px;
-      padding: 6px 6px;
-      border-radius: 6px;
-      border: 1px solid #2c3a5c;
-      background: rgba(15, 24, 42, 0.7);
-    }
-    .count-value { font-size: 1.05em; font-weight: 700; color: #eae3c8; }
-    .count-label { font-size: 0.6em; text-transform: uppercase; color: #8b96ad; letter-spacing: 0.5px; }
-    .count-supported .count-value { color: #c9a227; }
-    .count-refuted .count-value { color: #d97b7b; }
-
     footer.page-footer {
       text-align: center;
       color: #4f5a76;
@@ -1255,10 +1957,13 @@ PAGE_TEMPLATE = '''<!doctype html>
 </head>
 <body>
 {empire_strip}
-<div class="layout">
-{rail}
+<main class="dashboard-main">
+{now_panel}
 {canvas}
-</div>
+{cycle_feed}
+{hypotheses_panel}
+{agent_panel}
+</main>
 <footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{error_note}</footer>
 </body>
 </html>
@@ -1270,8 +1975,9 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
 
     `data` is expected to have the same shape as the JSON produced by
     REMOTE_READER_SCRIPT: keys portfolio / scorecard / evolution_tree /
-    hypotheses / ledger_tail, any of which may be None. Never raises on
-    missing/malformed data -- every panel fails soft to an "unavailable"
+    hypotheses / ledger_tail / demand_rotation / demand_completed / skill_reads /
+    goal_text / agents_md / cycle_titles, any of which may be None. Never raises
+    on missing/malformed data -- every panel fails soft to an "unavailable"
     strip instead.
     """
     if generated_at is None:
@@ -1284,6 +1990,12 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     evolution_tree = data.get('evolution_tree')
     hypotheses = data.get('hypotheses')
     ledger_tail = data.get('ledger_tail')
+    demand_rotation = data.get('demand_rotation')
+    demand_completed = data.get('demand_completed')
+    skill_reads = data.get('skill_reads')
+    goal_text = data.get('goal_text')
+    agents_md = data.get('agents_md')
+    cycle_titles = data.get('cycle_titles')
 
     error_note = ''
     if data.get('_error'):
@@ -1313,14 +2025,43 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         source_age = 'age unknown'
 
     empire_strip = build_empire_stats_strip(scorecard)
-    rail_html = build_left_rail(scorecard, hypotheses)
-    canvas_html = build_tech_canvas(portfolio, ledger_tail, evolution_tree)
+    now_panel = build_now_panel(
+        portfolio=portfolio,
+        evolution_tree=evolution_tree,
+        demand_rotation=demand_rotation,
+        demand_completed=demand_completed,
+        task_titles=cycle_titles,
+        ledger_tail=ledger_tail,
+    )
+    canvas_html = build_tech_canvas(
+        portfolio=portfolio,
+        ledger_tail=ledger_tail,
+        evolution_tree=evolution_tree,
+        task_titles=cycle_titles,
+    )
+    cycle_feed = build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=demand_completed,
+        task_titles=cycle_titles,
+        evolution_tree=evolution_tree,
+    )
+    hypotheses_panel = build_hypotheses_panel(hypotheses)
+    agent_panel = build_agent_panel(
+        agents_md=agents_md,
+        goal_text=goal_text,
+        skill_reads=skill_reads,
+        portfolio=portfolio,
+        ledger_tail=ledger_tail,
+    )
 
     return PAGE_TEMPLATE.format(
         css=CSS,
         empire_strip=empire_strip,
-        rail=rail_html,
+        now_panel=now_panel,
         canvas=canvas_html,
+        cycle_feed=cycle_feed,
+        hypotheses_panel=hypotheses_panel,
+        agent_panel=agent_panel,
         generated_at=esc(generated_at),
         host=esc(host),
         source_age=esc(source_age),
