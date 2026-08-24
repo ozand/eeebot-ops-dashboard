@@ -841,6 +841,15 @@ def _lane_a_layout(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | No
     }
 
 
+def _score_color(norm: float, alpha: float | None = None) -> str:
+    """Issue #53: green->yellow score scale (viridis tail) for node tinting."""
+    norm = max(0.0, min(1.0, norm))
+    hue = 140 - 80 * norm
+    if alpha is None:
+        return f'hsl({hue:.0f},70%,{35 + 25 * norm:.0f}%)'
+    return f'hsla({hue:.0f},70%,{35 + 25 * norm:.0f}%,{alpha:.2f})'
+
+
 def _evo_box_html(
     sha: str,
     node: dict[str, Any],
@@ -851,6 +860,8 @@ def _evo_box_html(
     y: float,
     task_titles: dict[str, str] | None = None,
     portfolio: dict[str, Any] | None = None,
+    reward_min: float | None = None,
+    reward_max: float | None = None,
 ) -> str:
     branch = str(node.get('branch') or '')
     tail = branch.rsplit('/', 1)[-1] if branch else ''
@@ -894,7 +905,24 @@ def _evo_box_html(
     elif is_abandoned:
         box_class += ' evo-box-abandoned'
 
-    diamond = '<span class="evo-diamond">&#9672;</span>' if is_current else ''
+    # Issue #53: tint scored nodes along the green->yellow scale, normalized
+    # to the min/max rewards actually present in the tree. Unscored nodes
+    # stay neutral -- never fabricate a score.
+    score_style = ''
+    if isinstance(fitness, dict):
+        r = fitness.get('reward')
+        if (
+            isinstance(r, (int, float)) and not isinstance(r, bool)
+            and reward_min is not None and reward_max is not None
+            and reward_max > reward_min
+        ):
+            norm = (float(r) - reward_min) / (reward_max - reward_min)
+            score_style = (
+                f' style="border-color:{_score_color(norm)};'
+                f'background:{_score_color(norm, 0.12)}"'
+            )
+
+    diamond = f'<span class="evo-diamond">{"&#9733;" if is_current else "&#9672;"}</span>'
     tooltip = esc(f'{short_sha(sha)} | {title or display_title} | {branch}')
 
     # Node anchor and href
@@ -908,7 +936,7 @@ def _evo_box_html(
         header_content = f'{diamond}<span class="evo-box-label">{label}{marker}</span>'
 
     body = (
-        f'<div class="{box_class}" title="{tooltip}" id="{esc(node_id)}">'
+        f'<div class="{box_class}"{score_style} title="{tooltip}" id="{esc(node_id)}">'
         f'<div class="evo-header">{header_content}</div>'
         f'<div class="evo-meta">{dir_badge}<span class="evo-sha copyable" translate="no">{esc(short_sha(sha))}</span></div>'
         f'{fitness_line}'
@@ -1009,20 +1037,44 @@ def _lane_b_layout(
                 if sha_ref:
                     switch_shas.add(sha_ref)
 
+    # Issue #53: ancestry chain of the current node = the "best path" that
+    # DGM archive trees highlight with a thick edge.
+    best_path: set[str] = set()
+    if current_sha in kept:
+        cur: str | None = current_sha
+        guard: set[str] = set()
+        while cur and cur in kept and cur not in guard:
+            guard.add(cur)
+            best_path.add(cur)
+            cur = kept[cur].get('parent_sha')
+
+    # Real per-node rewards (numeric only) for score tinting + legend.
+    rewards: dict[str, float] = {}
+    for sha, node in kept.items():
+        fit = node.get('fitness')
+        r = fit.get('reward') if isinstance(fit, dict) else None
+        if isinstance(r, (int, float)) and not isinstance(r, bool):
+            rewards[sha] = float(r)
+    reward_min = min(rewards.values()) if rewards else None
+    reward_max = max(rewards.values()) if rewards else None
+
     elbows = []
     for sha, node in kept.items():
         parent = node.get('parent_sha')
         if parent in pos:
             x1, y1 = pos[parent]
             x2, y2 = pos[sha]
-            elbows.append(_elbow_path(x1 + EVO_BOX_W, y1 + EVO_BOX_H / 2, x2, y2 + EVO_BOX_H / 2, 'evo-elbow'))
+            cls = 'evo-elbow'
+            if sha in best_path and parent in best_path:
+                cls = 'evo-elbow evo-elbow-best'
+            elbows.append(_elbow_path(x1 + EVO_BOX_W, y1 + EVO_BOX_H / 2, x2, y2 + EVO_BOX_H / 2, cls))
 
     boxes = []
     for sha, node in kept.items():
         x, y = pos[sha]
         is_current = sha == current_sha
         is_abandoned = (not is_current) and children_count.get(sha, 0) == 0
-        boxes.append(_evo_box_html(sha, node, is_current, is_abandoned, sha in switch_shas, x, y, task_titles, portfolio))
+        boxes.append(_evo_box_html(sha, node, is_current, is_abandoned, sha in switch_shas, x, y, task_titles, portfolio, reward_min, reward_max))
 
     width = EVO_MARGIN_X * 2 + (max_depth + 1) * COL_PITCH
     height = LANE_TOP_PAD + max_slot * EVO_ROW_H + 24
@@ -1038,6 +1090,9 @@ def _lane_b_layout(
         'grid_cols': max_depth + 1,
         'grid_x0': EVO_MARGIN_X,
         'grid_pitch': COL_PITCH,
+        'best_path': best_path,
+        'reward_min': reward_min,
+        'reward_max': reward_max,
     }
 
 
@@ -1130,7 +1185,28 @@ def build_tech_canvas(
             note_html = f'<text x="10" y="32" class="lane-note">{esc(lane_b["note"])}</text>' if lane_b.get('note') else ''
             body = ''.join(lane_b['boxes']) + ''.join(lane_b['elbows'])
             date_label = _ts_range_label(evolution_tree)
-            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{date_label}{body}</g>')
+            # Issue #53: score legend (gradient + min/max) when real rewards
+            # exist; an honest muted note otherwise.
+            legend_html = ''
+            if lane_b.get('reward_min') is not None and lane_b.get('reward_max') is not None:
+                lx = max(canvas_width - 180, 200)
+                legend_html = (
+                    '<g class="evo-legend" transform="translate(' + str(lx) + ',8)">'
+                    '<defs><linearGradient id="scoregrad" x1="0" y1="0" x2="1" y2="0">'
+                    f'<stop offset="0" stop-color="{_score_color(0)}"/>'
+                    f'<stop offset="1" stop-color="{_score_color(1)}"/>'
+                    '</linearGradient></defs>'
+                    '<rect width="120" height="10" rx="3" fill="url(#scoregrad)"/>'
+                    f'<text x="0" y="22" class="evo-legend-label">score {fmt_compact(lane_b["reward_min"])}</text>'
+                    f'<text x="120" y="22" class="evo-legend-label" text-anchor="end">score {fmt_compact(lane_b["reward_max"])}</text>'
+                    '</g>'
+                )
+            else:
+                legend_html = (
+                    f'<text x="{max(canvas_width - 200, 200)}" y="14" class="lane-note" text-anchor="end">'
+                    'no node scores recorded yet</text>'
+                )
+            groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{date_label}{legend_html}{body}</g>')
             lane_b_height = lane_b['height']
     else:
         unavailable_html = f'<text x="10" y="36" class="lane-unavailable">&#8968; {esc(lane_b["reason"])} &#8969;</text>'
@@ -2452,6 +2528,9 @@ CSS = '''
     .evo-sha { color: #8aa695; }
     .evo-fitness { font-size: 9px; color: #b8d0c2; }
     .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    /* Issue #53: thick bright edge along the current node's ancestry. */
+    .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
+    .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
     .evo-fallback { color: #dcebe1; }
 
     .badge {
