@@ -1401,3 +1401,42 @@ def test_batch4_issue46_translate_no_on_ids() -> None:
     assert 'feed-cid copyable" translate="no"' in html_out
     assert 'evo-sha copyable" translate="no"' in html_out
     assert 'demand-chip' in html_out and 'translate="no"' in html_out
+
+# ---------------------------------------------------------------------------
+# Issue #53: DGM archive-tree presentation (best path, score tint, legend)
+# ---------------------------------------------------------------------------
+
+
+def test_issue53_best_path_edges_highlighted() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    # fixture: current = child1, ancestry root -> child1; root -> child2 is off-path
+    assert 'evo-elbow-best' in html_out
+    # exactly one highlighted edge (the second occurrence is the CSS rule)
+    assert html_out.count('class="evo-elbow evo-elbow-best"') == 1
+
+
+def test_issue53_star_marker_on_current_node_only() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '&#9733;' in html_out
+    assert html_out.count('&#9733;') == 1
+
+
+def test_issue53_score_tint_and_legend_present_with_rewards() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'scoregrad' in html_out
+    assert 'score 0.4' in html_out
+    assert 'score 0.92' in html_out
+    assert 'border-color:hsl(' in html_out  # scored node inline tint
+    assert 'no node scores recorded yet' not in html_out
+
+
+def test_issue53_no_rewards_muted_note_neutral_boxes() -> None:
+    data = _fixture()
+    for node in data['evolution_tree']['nodes'].values():
+        node.pop('fitness', None)
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'no node scores recorded yet' in html_out
+    assert 'scoregrad' not in html_out
+    assert 'border-color:hsl(' not in html_out
+    # best-path highlight is independent of rewards
+    assert 'evo-elbow-best' in html_out
