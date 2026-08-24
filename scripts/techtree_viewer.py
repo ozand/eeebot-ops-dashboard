@@ -114,13 +114,19 @@ def read_file_text(relpath):
 
 def extract_git_titles():
     titles = {}
+    cycle_files = {}
+    error = None
     if not os.path.isdir(INSTANCE_REPO):
-        return titles
+        return titles, cycle_files, error
     try:
-        cmd = ["git", "-C", INSTANCE_REPO, "log", "--first-parent", "-n", "60", "--format=%H %s"]
+        cmd = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", "--first-parent", "-n", "60", "--format=%H %s"]
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if res.returncode != 0:
-            return titles
+            err_msg = (res.stderr or res.stdout or "").strip()
+            short_reason = f"git log failed (exit {res.returncode}): {err_msg}"
+            if len(short_reason) > 200:
+                short_reason = short_reason[:197] + "..."
+            return titles, cycle_files, short_reason
         for line in res.stdout.strip().splitlines():
             line = line.strip()
             if not line:
@@ -136,23 +142,42 @@ def extract_git_titles():
                 else:
                     norm_cycle_id = cycle_part
                 
-                cmd_title = ["git", "-C", INSTANCE_REPO, "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
-                res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
-                if res_title.returncode == 0:
-                    for t_line in res_title.stdout.strip().splitlines():
-                        t_line = t_line.strip()
-                        if not t_line:
-                            continue
-                        if t_line.startswith("chore:") or t_line.startswith("merge:"):
-                            continue
-                        titles[cycle_part] = t_line
-                        if norm_cycle_id != cycle_part:
-                            titles[norm_cycle_id] = t_line
-                        break
-    except Exception:
-        pass
-    return titles
+                try:
+                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
+                    res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
+                    if res_title.returncode == 0:
+                        for t_line in res_title.stdout.strip().splitlines():
+                            t_line = t_line.strip()
+                            if not t_line:
+                                continue
+                            if t_line.startswith("chore:") or t_line.startswith("merge:"):
+                                continue
+                            titles[cycle_part] = t_line
+                            if norm_cycle_id != cycle_part:
+                                titles[norm_cycle_id] = t_line
+                            break
+                except Exception:
+                    pass
 
+                try:
+                    cmd_diff = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "diff", "--name-only", f"{commit_sha}^1", commit_sha]
+                    res_diff = subprocess.run(cmd_diff, capture_output=True, text=True, timeout=5)
+                    if res_diff.returncode == 0:
+                        diff_files = [f.strip() for f in res_diff.stdout.strip().splitlines() if f.strip()][:10]
+                        cycle_files[cycle_part] = diff_files
+                        if norm_cycle_id != cycle_part:
+                            cycle_files[norm_cycle_id] = diff_files
+                except Exception:
+                    pass
+    except Exception as exc:
+        short_reason = f"git log exception: {exc.__class__.__name__}: {exc}"
+        if len(short_reason) > 200:
+            short_reason = short_reason[:197] + "..."
+        return titles, cycle_files, short_reason
+    return titles, cycle_files, None
+
+
+_cycle_titles, _cycle_files, _cycle_titles_error = extract_git_titles()
 
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
@@ -165,7 +190,9 @@ result = {
     "skill_reads": read_json("skill_fitness/reads.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
-    "cycle_titles": extract_git_titles(),
+    "cycle_titles": _cycle_titles,
+    "cycle_files": _cycle_files,
+    "cycle_titles_error": _cycle_titles_error,
     "_source_mtimes": _mtimes,
 }
 print(json.dumps(result))
@@ -191,6 +218,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
+        'cycle_files': {},
+        'cycle_titles_error': None,
         '_newest_source_age_seconds': None,
     }
     command = [
@@ -230,15 +259,21 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
     return data
 
 
-def extract_git_titles_local(repo_root: Path) -> dict[str, str]:
+def extract_git_titles_local(repo_root: Path) -> tuple[dict[str, str], dict[str, list[str]], str | None]:
     titles: dict[str, str] = {}
+    cycle_files: dict[str, list[str]] = {}
     if not repo_root.is_dir():
-        return titles
+        return titles, cycle_files, None
     try:
-        cmd = ['git', '-C', str(repo_root), 'log', '--first-parent', '-n', '60', '--format=%H %s']
+        repo_str = str(repo_root)
+        cmd = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', '--first-parent', '-n', '60', '--format=%H %s']
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if res.returncode != 0:
-            return titles
+            err_msg = (res.stderr or res.stdout or '').strip()
+            short_reason = f'git log failed (exit {res.returncode}): {err_msg}'
+            if len(short_reason) > 200:
+                short_reason = short_reason[:197] + '...'
+            return titles, cycle_files, short_reason
         for line in res.stdout.strip().splitlines():
             line = line.strip()
             if not line:
@@ -254,22 +289,39 @@ def extract_git_titles_local(repo_root: Path) -> dict[str, str]:
                 else:
                     norm_cycle_id = cycle_part
 
-                cmd_title = ['git', '-C', str(repo_root), 'log', f'{commit_sha}^2', '-n', '5', '--format=%s']
-                res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
-                if res_title.returncode == 0:
-                    for t_line in res_title.stdout.strip().splitlines():
-                        t_line = t_line.strip()
-                        if not t_line:
-                            continue
-                        if t_line.startswith('chore:') or t_line.startswith('merge:'):
-                            continue
-                        titles[cycle_part] = t_line
+                try:
+                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^2', '-n', '5', '--format=%s']
+                    res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
+                    if res_title.returncode == 0:
+                        for t_line in res_title.stdout.strip().splitlines():
+                            t_line = t_line.strip()
+                            if not t_line:
+                                continue
+                            if t_line.startswith('chore:') or t_line.startswith('merge:'):
+                                continue
+                            titles[cycle_part] = t_line
+                            if norm_cycle_id != cycle_part:
+                                titles[norm_cycle_id] = t_line
+                            break
+                except Exception:
+                    pass
+
+                try:
+                    cmd_diff = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'diff', '--name-only', f'{commit_sha}^1', commit_sha]
+                    res_diff = subprocess.run(cmd_diff, capture_output=True, text=True, timeout=5)
+                    if res_diff.returncode == 0:
+                        diff_files = [f.strip() for f in res_diff.stdout.strip().splitlines() if f.strip()][:10]
+                        cycle_files[cycle_part] = diff_files
                         if norm_cycle_id != cycle_part:
-                            titles[norm_cycle_id] = t_line
-                        break
-    except Exception:
-        pass
-    return titles
+                            cycle_files[norm_cycle_id] = diff_files
+                except Exception:
+                    pass
+    except Exception as exc:
+        short_reason = f'git log exception: {exc.__class__.__name__}: {exc}'
+        if len(short_reason) > 200:
+            short_reason = short_reason[:197] + '...'
+        return titles, cycle_files, short_reason
+    return titles, cycle_files, None
 
 
 def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[str, Any]:
@@ -286,6 +338,8 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
+        'cycle_files': {},
+        'cycle_titles_error': None,
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -345,7 +399,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         except Exception:
             pass
 
-    titles = extract_git_titles_local(repo_path)
+    titles, cycle_files, titles_error = extract_git_titles_local(repo_path)
 
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
@@ -359,6 +413,8 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
+        'cycle_files': cycle_files,
+        'cycle_titles_error': titles_error,
         '_newest_source_age_seconds': None,
     }
     if mtimes:
@@ -739,9 +795,15 @@ def _evo_box_html(
     if isinstance(fitness, dict):
         parts = []
         if 'reward' in fitness:
-            parts.append(f'r:{fitness.get("reward"):.2f}' if isinstance(fitness.get("reward"), (int, float)) else f'r:{fitness.get("reward")}')
+            r = fitness.get('reward')
+            if isinstance(r, (int, float)):
+                parts.append(f'r:{r:.2f}')
+            else:
+                parts.append('r:—')
         if 'integrations' in fitness:
-            parts.append(f'int:{fitness.get("integrations")}')
+            ints = fitness.get('integrations')
+            if ints is not None:
+                parts.append(f'integrations:{ints}')
         if parts:
             fitness_line = f'<div class="evo-fitness">{" ".join(parts)}</div>'
 
@@ -1081,6 +1143,7 @@ def build_cycle_feed(
     demand_completed: dict[str, Any] | None = None,
     task_titles: dict[str, str] | None = None,
     evolution_tree: dict[str, Any] | None = None,
+    cycle_files: dict[str, list[str]] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -1143,11 +1206,25 @@ def build_cycle_feed(
         metric_delta = ''
         ts_val = ''
 
-        # Check demand for files_changed
+        # Check demand and cycle_files for files_changed
+        all_files: list[str] = []
         if cid in demand_by_cycle:
             fc = demand_by_cycle[cid].get('files_changed')
             if isinstance(fc, list):
-                files_changed = [str(f) for f in fc]
+                for f in fc:
+                    f_str = str(f)
+                    if f_str not in all_files:
+                        all_files.append(f_str)
+
+        if isinstance(cycle_files, dict):
+            cf = cycle_files.get(cid) or cycle_files.get(cid.replace('cycle-', ''))
+            if isinstance(cf, list):
+                for f in cf:
+                    f_str = str(f)
+                    if f_str not in all_files:
+                        all_files.append(f_str)
+
+        files_changed = all_files
 
         # Scan phases
         for p in phases:
@@ -1967,7 +2044,7 @@ PAGE_TEMPLATE = '''<!doctype html>
 {hypotheses_panel}
 {agent_panel}
 </main>
-<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{error_note}</footer>
+<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{error_note}{titles_note}</footer>
 </body>
 </html>
 '''
@@ -2017,6 +2094,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         # machine) readers.
         error_note = ' &middot; fetch note: state read failed (details in the publisher\'s logs)'
 
+    titles_note = ''
+    if data.get('cycle_titles_error'):
+        titles_note = f' &middot; &#9888; task titles unavailable ({esc(str(data.get("cycle_titles_error")))})'
+
     # Age of the newest source file this page was built from (issue #27) --
     # the second half of the freshness marker. Never fabricated: if no
     # reader (local or remote) could establish a real mtime, say so plainly
@@ -2047,6 +2128,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         evolution_tree=evolution_tree,
+        cycle_files=data.get('cycle_files'),
     )
     hypotheses_panel = build_hypotheses_panel(hypotheses)
     agent_panel = build_agent_panel(
@@ -2069,6 +2151,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         host=esc(host),
         source_age=esc(source_age),
         error_note=error_note,
+        titles_note=titles_note,
     )
 
 

@@ -316,24 +316,152 @@ def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
 
     # Feature branch
     subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-123'], check=True)
-    (repo / 'file.txt').write_text('feature', encoding='utf-8')
-    subprocess.run(['git', '-C', str(repo), 'add', 'file.txt'], check=True)
+    (repo / 'feature_file.txt').write_text('feature', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'feature_file.txt'], check=True)
     subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Add fuzzy matching to proposer'], check=True)
 
     # Merge into master
     subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True)
     subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-123', '-m', 'merge: integrate selfevo/cycle-cycle-123'], check=True)
 
-    titles = tv.extract_git_titles_local(repo)
+    titles, cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
     assert 'cycle-123' in titles or 'cycle-cycle-123' in titles
     assert titles.get('cycle-123') == 'Add fuzzy matching to proposer' or titles.get('cycle-cycle-123') == 'Add fuzzy matching to proposer'
+    assert 'feature_file.txt' in cycle_files.get('cycle-cycle-123', []) or 'feature_file.txt' in cycle_files.get('cycle-123', [])
 
 
 def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
     not_repo = tmp_path / 'not_a_repo'
     not_repo.mkdir()
-    titles = tv.extract_git_titles_local(not_repo)
+    titles, cycle_files, err = tv.extract_git_titles_local(not_repo)
     assert titles == {}
+    assert cycle_files == {}
+    # Non-repo fails git log command with exit 128 / fatal message
+    assert err is not None
+    assert 'not a git repository' in err
+
+
+def test_extract_git_titles_local_dubious_ownership_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo = tmp_path / 'repo'
+    repo.mkdir()
+    mock_res = subprocess.CompletedProcess(
+        args=['git'],
+        returncode=128,
+        stdout='',
+        stderr='fatal: detected dubious ownership in repository at \'/var/lib/eeepc-agent/...\'',
+    )
+    monkeypatch.setattr(subprocess, 'run', lambda *args, **kwargs: mock_res)
+    titles, cycle_files, err = tv.extract_git_titles_local(repo)
+    assert titles == {}
+    assert cycle_files == {}
+    assert err is not None
+    assert 'detected dubious ownership' in err
+    assert 'exit 128' in err
+
+
+def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo = tmp_path / 'repo'
+    repo.mkdir()
+    
+    def fake_run(cmd, *args, **kwargs):
+        if 'log' in cmd and '--first-parent' in cmd:
+            return subprocess.CompletedProcess(
+                args=cmd,
+                returncode=0,
+                stdout='msha123 merge: integrate selfevo/cycle-456\n',
+                stderr='',
+            )
+        elif 'log' in cmd and 'msha123^2' in cmd:
+            return subprocess.CompletedProcess(
+                args=cmd,
+                returncode=0,
+                stdout='Add awesome feature\n',
+                stderr='',
+            )
+        elif 'diff' in cmd and 'msha123^1' in cmd:
+            return subprocess.CompletedProcess(
+                args=cmd,
+                returncode=0,
+                stdout='src/awesome.py\ntests/test_awesome.py\n',
+                stderr='',
+            )
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout='', stderr='')
+
+    monkeypatch.setattr(subprocess, 'run', fake_run)
+    titles, cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
+    assert titles.get('cycle-456') == 'Add awesome feature'
+    assert cycle_files.get('cycle-456') == ['src/awesome.py', 'tests/test_awesome.py']
+
+
+def test_render_page_footer_shows_cycle_titles_error() -> None:
+    data = _fixture()
+    data['cycle_titles_error'] = 'git log failed (exit 128): fatal: detected dubious ownership & <foo>'
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '&#9888; task titles unavailable (git log failed (exit 128): fatal: detected dubious ownership &amp; &lt;foo&gt;)' in html_out
+
+
+def test_evo_box_html_labels_and_none_handling() -> None:
+    node_none = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-1',
+        'fitness': {'reward': None, 'integrations': None},
+    }
+    html_none = tv._evo_box_html('sha1', node_none, is_current=False, is_abandoned=False, switch_marked=False, x=10.0, y=20.0, portfolio={}, task_titles={})
+    assert 'r:None' not in html_none
+    assert 'r:—' in html_none
+    assert 'integrations:' not in html_none
+    assert 'int:' not in html_none
+
+    node_values = {
+        'parent_sha': None,
+        'branch': 'selfevo/cycle-2',
+        'fitness': {'reward': 0.85, 'integrations': 3},
+    }
+    html_values = tv._evo_box_html('sha2', node_values, is_current=False, is_abandoned=False, switch_marked=False, x=10.0, y=20.0, portfolio={}, task_titles={})
+    assert 'r:0.85' in html_values
+    assert 'integrations:3' in html_values
+    assert 'int:3' not in html_values
+
+
+def test_build_cycle_feed_merges_demand_files_and_cycle_files() -> None:
+    ledger_tail = [
+        {'phase': 'started', 'cycle_id': 'cycle-merged', 'ts': '2026-08-16T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-merged', 'status': 'success', 'ts': '2026-08-16T00:02:00Z'},
+    ]
+    demand_completed = {
+        'entries': {
+            'gap-1': {
+                'cycle_id': 'cycle-merged',
+                'files_changed': ['file1.py', 'file2.py'],
+            },
+        },
+    }
+    cycle_files = {
+        'cycle-merged': ['file2.py', 'file3.py', 'file4.py', 'file5.py'],
+    }
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=demand_completed,
+        task_titles={'cycle-merged': 'Merged Task'},
+        evolution_tree=None,
+        cycle_files=cycle_files,
+    )
+    # Merged files: file1.py, file2.py, file3.py, file4.py, file5.py -> 5 files
+    # First 3: file1.py, file2.py, file3.py +2 more
+    assert 'file1.py' in html_out
+    assert 'file2.py' in html_out
+    assert 'file3.py' in html_out
+    assert '+2 more' in html_out
+    assert 'file4.py' in html_out  # in the title attribute
+    assert 'file5.py' in html_out
+
+
+def test_remote_reader_script_compiles() -> None:
+    code = tv.REMOTE_READER_SCRIPT
+    compiled = compile(code, '<remote_reader_script>', 'exec')
+    assert compiled is not None
 
 
 
