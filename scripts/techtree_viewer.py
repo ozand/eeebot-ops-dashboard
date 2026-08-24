@@ -1310,8 +1310,11 @@ def build_hypotheses_panel(hypotheses_lifecycle: dict[str, Any] | None, hypothes
             </li>
             ''')
 
-    active_html = f'<div class="hypo-group"><h3>Active ({len(active_items)})</h3><ul class="hypo-list">{"".join(active_items) if active_items else "<li class=\"unavailable-note\">none active</li>"}</ul></div>'
-    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_items)})</h3><ul class="hypo-list">{"".join(answered_items) if answered_items else "<li class=\"unavailable-note\">none answered</li>"}</ul></div>'
+    # NOTE: no backslashes inside f-string expressions -- host runs Python 3.11 (pre-PEP 701)
+    active_body = "".join(active_items) if active_items else '<li class="unavailable-note">none active</li>'
+    answered_body = "".join(answered_items) if answered_items else '<li class="unavailable-note">none answered</li>'
+    active_html = f'<div class="hypo-group"><h3>Active ({len(active_items)})</h3><ul class="hypo-list">{active_body}</ul></div>'
+    answered_html = f'<div class="hypo-group"><h3>Answered ({len(answered_items)})</h3><ul class="hypo-list">{answered_body}</ul></div>'
 
     return f'''
     <section class="panel panel-hypotheses">
