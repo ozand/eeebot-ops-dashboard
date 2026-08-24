@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import html
 import json
+import re
 import subprocess
 import sys
 import time
@@ -792,7 +793,7 @@ def _lane_a_layout(portfolio: dict[str, Any] | None, ledger_tail: list[Any] | No
     mint: list[str] = []
 
     # Visual separator separating the reserve / mint column on the left from the visited spine
-    mint.append(f'<rect x="{reserve_x + RESERVE_COL_W + 10:.0f}" y="0" width="1" height="100%" class="mint-col-border" fill="#1c2740" />')
+    mint.append(f'<rect x="{reserve_x + RESERVE_COL_W + 10:.0f}" y="0" width="1" height="100%" class="mint-col-border" fill="#182a20" />')
 
     for idx, name in enumerate(visited):
         x = spine_x0 + idx * COL_PITCH
@@ -1140,8 +1141,18 @@ def build_tech_canvas(
     canvas_height = y_cursor
     canvas_width = max(canvas_width, MIN_CANVAS_W)
 
+    # Issue #46: the big SVG is opaque to screen readers without role/label.
+    node_count = 0
+    if lane_b.get('available') and isinstance(lane_b.get('summary'), dict):
+        try:
+            node_count = int(lane_b['summary'].get('total_nodes') or 0)
+        except (TypeError, ValueError):
+            node_count = 0
     svg = (
-        f'<svg class="tech-canvas" width="{canvas_width}" height="{canvas_height}" '
+        f'<svg class="tech-canvas" role="img" '
+        f'aria-label="Cycle lineage graph: research directions and evolution lineage, '
+        f'{node_count} nodes" '
+        f'width="{canvas_width}" height="{canvas_height}" '
         f'viewBox="0 0 {canvas_width} {canvas_height}">'
         f'{"".join(groups)}'
         '</svg>'
@@ -1242,7 +1253,7 @@ def build_now_panel(
                 tip += f'; +{count - len(shown)} more'
             label = prefix if prefix != 'other' else 'other'
             parts.append(
-                f'<span class="demand-chip {chip_cls} demand-group" title="{esc(tip)}">'
+                f'<span class="demand-chip {chip_cls} demand-group" translate="no" title="{esc(tip)}">'
                 f'{esc(label)} &times;{count}</span>'
             )
         return ' '.join(parts) if parts else '<em>none</em>'
@@ -1730,12 +1741,32 @@ def build_hypotheses_panel(
     '''
 
 
+def _host_identity(host: str | None, agents_md: str | None) -> str:
+    """Issue #39: hardware identity line derived ONLY from already-collected
+    data (host name + patterns found in the instance AGENTS.md text).
+    Renders nothing when there is less than one hardware fact -- never
+    fabricates specs, never performs new host reads."""
+    parts: list[str] = []
+    if host:
+        parts.append(str(host))
+    if agents_md:
+        text = str(agents_md)[:4000]
+        for pattern in (r'\b(?:i386|x86_64|amd64|armv?\d+)\b', r'Debian \d+', r'\b\d+ ?GB RAM\b', r'Python 3\.\d+'):
+            m = re.search(pattern, text)
+            if m:
+                parts.append(m.group(0))
+    if len(parts) <= 1:
+        return ''
+    return f'<div class="host-identity" translate="no">{esc(" &middot; ".join(parts))}</div>'
+
+
 def build_agent_panel(
     agents_md: str | None,
     goal_text: dict[str, Any] | None,
     skill_reads: dict[str, Any] | None,
     portfolio: dict[str, Any] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
+    host: str | None = None,
 ) -> str:
     # 1. AGENTS.md
     if agents_md is not None:
@@ -1806,6 +1837,7 @@ def build_agent_panel(
     return f'''
     <section class="panel panel-agent" id="panel-agent">
       <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      {_host_identity(host, agents_md)}
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
@@ -1870,7 +1902,7 @@ def build_empire_stats_strip(
 
     return f'''
     <header class="empire-strip">
-      <div class="empire-title">EEEBOT EMPIRE</div>
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats">{stat_html}</div>
       <div class="empire-fresh">{freshness_html}</div>
     </header>
@@ -1892,20 +1924,20 @@ CSS = '''
     }
     body {
       margin: 0;
-      background: radial-gradient(ellipse at top, #101c30 0%, #0b1220 60%, #070c16 100%);
-      color: #d8dce6;
-      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
       padding: 0 0 32px 0;
     }
     h1, h2, h3, .panel-title, .empire-title {
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
     }
-    a { color: #c9a227; }
+    a { color: #56d364; }
 
     /* --- top strip: slim, one line --- */
     .empire-strip {
-      background: linear-gradient(180deg, #14213a 0%, #0d1626 100%);
-      border-bottom: 2px solid #c9a227;
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
       flex-wrap: nowrap;
@@ -1914,11 +1946,13 @@ CSS = '''
       gap: 18px;
     }
     .empire-title {
-      color: #c9a227;
+      color: #56d364;
       font-size: 1.05em;
       letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
       white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
     }
     .empire-stats {
       display: flex;
@@ -1933,23 +1967,23 @@ CSS = '''
       font-size: 0.78em;
       padding: 2px 8px;
       border-radius: 4px;
-      border: 1px solid #4a5878;
+      border: 1px solid #3d6b52;
       font-variant-numeric: tabular-nums;
     }
     .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
     .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
     .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
-    .freshness-unknown { color: #8b96ad; }
+    .freshness-unknown { color: #9db4a6; }
 
     .stat-label {
       text-transform: uppercase;
       font-size: 0.64em;
       letter-spacing: 1px;
-      color: #8b96ad;
+      color: #9db4a6;
     }
     .stat-value {
       font-size: 1.02em;
-      color: #eae3c8;
+      color: #e2f0e6;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
@@ -1970,9 +2004,9 @@ CSS = '''
       overflow-x: auto;
       overflow-y: hidden;
       overscroll-behavior: contain;
-      border: 1px solid #24314f;
+      border: 1px solid #1e3a2d;
       border-radius: 10px;
-      background: linear-gradient(180deg, rgba(20, 33, 58, 0.55) 0%, rgba(11, 18, 32, 0.7) 100%);
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
       padding-bottom: 4px;
     }
     .tech-canvas { display: block; }
@@ -1985,35 +2019,35 @@ CSS = '''
       text-decoration: underline;
     }
     .lane-label {
-      fill: #c9a227;
-      font-family: Georgia, 'Times New Roman', serif;
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
       font-size: 13px;
       letter-spacing: 2px;
     }
-    .lane-note { fill: #6a7590; font-style: italic; font-size: 11px; }
-    .lane-unavailable { fill: #6a7590; font-style: italic; font-size: 12px; }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
 
     .panel {
-      background: linear-gradient(180deg, rgba(20, 33, 58, 0.85) 0%, rgba(11, 18, 32, 0.9) 100%);
-      border: 1px solid #24314f;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
       border-radius: 10px;
       padding: 14px 18px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
     }
     .panel-title {
       margin: 0 0 12px 0;
-      color: #c9a227;
+      color: #56d364;
       font-size: 1.05em;
       letter-spacing: 1px;
-      border-bottom: 1px solid #2c3a5c;
+      border-bottom: 1px solid #28503c;
       padding-bottom: 6px;
     }
     .panel-unavailable {
       text-align: center;
-      color: #6a7590;
+      color: #7fa08d;
     }
     .unavailable-note {
-      color: #6a7590;
+      color: #7fa08d;
       font-style: italic;
     }
 
@@ -2032,19 +2066,19 @@ CSS = '''
     }
     .now-label {
       font-weight: 700;
-      color: #8b96ad;
+      color: #9db4a6;
       min-width: 140px;
       text-transform: uppercase;
       font-size: 0.78em;
       letter-spacing: 0.5px;
     }
     .now-detail {
-      color: #a0aec0;
+      color: #b8d0c2;
       font-size: 0.85em;
       margin-left: 6px;
     }
     .now-sub {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.85em;
     }
     .now-demand-grid {
@@ -2059,7 +2093,7 @@ CSS = '''
       gap: 6px;
     }
     .demand-sublabel {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.8em;
       min-width: 75px;
     }
@@ -2068,16 +2102,16 @@ CSS = '''
       padding: 2px 8px;
       border-radius: 4px;
       font-family: 'Consolas', monospace;
-      border: 1px solid #2c3a5c;
-      background: rgba(15, 24, 42, 0.8);
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
     }
     .demand-chip.served {
       color: #2fd3c4;
       border-color: rgba(47, 211, 196, 0.4);
     }
     .demand-chip.completed {
-      color: #c9a227;
-      border-color: rgba(201, 162, 39, 0.4);
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
     }
 
     /* --- Cycle Feed --- */
@@ -2090,8 +2124,8 @@ CSS = '''
       gap: 8px;
     }
     .feed-row {
-      background: rgba(15, 24, 42, 0.7);
-      border: 1px solid #24314f;
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 8px 12px;
       display: flex;
@@ -2099,15 +2133,15 @@ CSS = '''
       gap: 4px;
     }
     .feed-row:hover {
-      border-color: #3a4a6e;
-      background: rgba(20, 33, 58, 0.8);
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
     }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
     .feed-outcome-rejected { border-left: 4px solid #d19a66; }
-    .feed-outcome-idle { border-left: 4px solid #5c6370; }
-    .feed-outcome-partial { border-left: 4px solid #c9a227; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
 
     .feed-header {
@@ -2118,11 +2152,16 @@ CSS = '''
       font-size: 0.88em;
     }
     .feed-title {
-      color: #eae3c8;
+      color: #e2f0e6;
       font-size: 0.95em;
     }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
     .feed-cid {
-      color: #718096;
+      color: #8aa695;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
     }
@@ -2134,7 +2173,7 @@ CSS = '''
       font-variant-numeric: tabular-nums;
     }
     .feed-ts {
-      color: #718096;
+      color: #8aa695;
       font-size: 0.78em;
       white-space: nowrap;
     }
@@ -2146,7 +2185,7 @@ CSS = '''
     }
     .feed-files {
       font-size: 0.78em;
-      color: #8b96ad;
+      color: #9db4a6;
       font-family: 'Consolas', monospace;
       padding-left: 4px;
     }
@@ -2166,7 +2205,7 @@ CSS = '''
       padding: 6px 20px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
     }
     .panel-nav a { color: #2fd3c4; text-decoration: none; }
     .panel-nav a:hover { text-decoration: underline; }
@@ -2184,22 +2223,22 @@ CSS = '''
     }
     .hypo-group h3 {
       font-size: 0.9em;
-      color: #8b96ad;
+      color: #9db4a6;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin: 0 0 8px 0;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
       padding-bottom: 4px;
     }
     .hypo-details { margin-top: 8px; }
     .hypo-summary {
       font-size: 0.82em;
-      color: #8b96ad;
+      color: #9db4a6;
       cursor: pointer;
       padding: 4px 0;
       user-select: none;
     }
-    .hypo-summary:hover { color: #c9a227; }
+    .hypo-summary:hover { color: #56d364; }
     .hypo-details ul.hypo-list { margin-top: 6px; }
     .hypo-list {
       list-style: none;
@@ -2210,14 +2249,14 @@ CSS = '''
       gap: 8px;
     }
     .hypo-row {
-      background: rgba(15, 24, 42, 0.7);
-      border: 1px solid #24314f;
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 8px 10px;
       font-size: 0.85em;
     }
     .hypo-title {
-      color: #eae3c8;
+      color: #e2f0e6;
       margin-left: 6px;
     }
     .hypo-meta {
@@ -2225,7 +2264,7 @@ CSS = '''
       align-items: center;
       gap: 10px;
       font-size: 0.8em;
-      color: #718096;
+      color: #8aa695;
       margin-top: 4px;
     }
     .hypo-ev a {
@@ -2245,38 +2284,48 @@ CSS = '''
     }
     .agent-subcol h3 {
       font-size: 0.9em;
-      color: #8b96ad;
+      color: #9db4a6;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin: 0 0 8px 0;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
       padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
     }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
-      background: rgba(11, 18, 32, 0.9);
-      border: 1px solid #24314f;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
       border-radius: 6px;
       padding: 10px;
       font-family: 'Consolas', monospace;
       font-size: 0.78em;
-      color: #c7cfe0;
+      color: #cfe3d7;
       white-space: pre-wrap;
       word-break: break-word;
     }
     .charter-details > summary {
       font-size: 0.82em;
-      color: #8b96ad;
+      color: #9db4a6;
       cursor: pointer;
       padding: 4px 0;
       user-select: none;
     }
-    .charter-details > summary:hover { color: #c9a227; }
+    .charter-details > summary:hover { color: #56d364; }
     .skills-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.8em;
-      background: rgba(11, 18, 32, 0.6);
+      background: rgba(8, 15, 11, 0.6);
       border-radius: 6px;
       overflow: hidden;
       font-variant-numeric: tabular-nums;
@@ -2284,27 +2333,27 @@ CSS = '''
     .skills-table th {
       text-align: left;
       padding: 6px 8px;
-      background: #14213a;
-      color: #8b96ad;
+      background: #0f2018;
+      color: #9db4a6;
       font-size: 0.75em;
       text-transform: uppercase;
-      border-bottom: 1px solid #24314f;
+      border-bottom: 1px solid #1e3a2d;
     }
     .skills-table td {
       padding: 6px 8px;
-      border-bottom: 1px solid #1c2740;
+      border-bottom: 1px solid #182a20;
     }
     .skill-high-ratio {
-      background: rgba(201, 162, 39, 0.08);
+      background: rgba(86, 211, 100, 0.08);
     }
     .skill-reads {
       font-weight: 700;
-      color: #c9a227;
+      color: #56d364;
       font-family: 'Consolas', monospace;
       text-align: center;
     }
     .skill-untracked {
-      color: #5c6370;
+      color: #7d9c8a;
       font-style: italic;
     }
 
@@ -2312,27 +2361,27 @@ CSS = '''
     .dir-box {
       width: 100%;
       height: 100%;
-      background: rgba(15, 24, 42, 0.94);
-      border: 1px solid #2c3a5c;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
       border-radius: 8px;
       padding: 10px;
       position: relative;
-      font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-      color: #d8dce6;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
     }
     .dir-box-current {
-      border-color: #c9a227;
-      box-shadow: 0 0 16px rgba(201, 162, 39, 0.65);
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
     }
     .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
     .dir-box-dim { opacity: 0.55; }
     .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-    .dir-glyph { font-size: 1.1em; color: #c9a227; }
-    .dir-name { font-weight: 600; color: #eae3c8; font-size: 0.92em; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
     .dir-lever {
       font-variant: small-caps;
       letter-spacing: 0.5px;
-      color: #8b96ad;
+      color: #9db4a6;
       font-size: 0.76em;
       margin-bottom: 6px;
     }
@@ -2340,8 +2389,8 @@ CSS = '''
       position: absolute;
       top: -8px;
       right: -8px;
-      background: #c9a227;
-      color: #1a1406;
+      background: #56d364;
+      color: #04240f;
       font-size: 0.6em;
       font-weight: 700;
       padding: 2px 7px;
@@ -2349,11 +2398,11 @@ CSS = '''
       transform: rotate(4deg);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
-    .cooldown { font-size: 0.68em; color: #8b96ad; margin-top: 4px; }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
 
     .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
-    .mint-elbow { fill: none; stroke: #c9a227; stroke-width: 2; opacity: 0.85; }
-    .mint-glyph { fill: #c9a227; font-size: 15px; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
 
     /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
     .evo-box {
@@ -2363,17 +2412,17 @@ CSS = '''
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      background: rgba(15, 24, 42, 0.9);
-      border: 1.5px solid #4a5878;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
       border-radius: 7px;
       padding: 4px 8px;
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
-      color: #c7cfe0;
+      color: #cfe3d7;
     }
     .evo-box-current {
-      border-color: #c9a227;
-      box-shadow: 0 0 12px rgba(201, 162, 39, 0.75);
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
       background: rgba(47, 211, 196, 0.12);
     }
     .evo-box-abandoned { opacity: 0.45; }
@@ -2383,8 +2432,8 @@ CSS = '''
       gap: 4px;
       overflow: hidden;
     }
-    .evo-diamond { color: #c9a227; font-weight: 700; }
-    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #eae3c8; }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
     .evo-meta {
       display: flex;
       align-items: center;
@@ -2400,10 +2449,10 @@ CSS = '''
       border-radius: 3px;
       border: 1px solid rgba(47, 211, 196, 0.3);
     }
-    .evo-sha { color: #718096; }
-    .evo-fitness { font-size: 9px; color: #a0aec0; }
-    .evo-elbow { fill: none; stroke: #3a4a6e; stroke-width: 1.6; }
-    .evo-fallback { color: #d8dce6; }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    .evo-fallback { color: #dcebe1; }
 
     .badge {
       display: inline-block;
@@ -2413,18 +2462,18 @@ CSS = '''
       padding: 2px 7px;
       border-radius: 4px;
     }
-    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
-    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #8b96ad; border: 1px solid #4a5878; }
-    .badge-researching { background: rgba(201, 162, 39, 0.22); color: #c9a227; border: 1px solid #c9a227; }
-    .badge-available { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
     .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
     .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
     .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
     .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
     .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
-    .verdict-supported { background: rgba(201, 162, 39, 0.18); color: #c9a227; border: 1px solid #c9a227; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
     .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
-    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #b7c0d4; border: 1px solid #4a5878; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
 
     .spark { margin-bottom: 2px; }
     .spark-top, .spark-bottom {
@@ -2434,19 +2483,19 @@ CSS = '''
       height: 14px;
     }
     .spark-bottom { align-items: flex-start; }
-    .spark-baseline { border-top: 1px dashed #3a4a6e; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
     .bar { width: 5px; border-radius: 1px; display: block; }
-    .bar-pos { background: #c9a227; }
+    .bar-pos { background: #56d364; }
     .bar-neg { background: #b23a3a; }
     .bar-placeholder { height: 0; background: transparent; }
-    .spark-empty { color: #6a7590; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
     .spark-mean { font-size: 0.7em; margin-top: 2px; }
-    .mean-pos { color: #c9a227; }
+    .mean-pos { color: #56d364; }
     .mean-neg { color: #d97b7b; }
 
     footer.page-footer {
       text-align: center;
-      color: #4f5a76;
+      color: #6f9480;
       font-size: 0.78em;
       margin-top: 20px;
       padding-top: 14px;
@@ -2618,6 +2667,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         skill_reads=skill_reads,
         portfolio=portfolio,
         ledger_tail=ledger_tail,
+        host=host,
     )
 
     return PAGE_TEMPLATE.format(
