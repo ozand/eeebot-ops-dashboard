@@ -1060,7 +1060,9 @@ def test_issue43_empire_stats_strip_has_no_computed_timestamp() -> None:
     }
     html = tv.build_empire_stats_strip(scorecard)
     assert 'empire-computed' not in html
-    assert 'computed 2026' not in html.lower()
+    # Issue #58: the computed timestamp may appear inside the KPI source
+    # tooltip attribute, but never as visible strip text.
+    assert '>computed 2026' not in html
 
 
 def test_issue43_footer_has_computed_timestamp() -> None:
@@ -1466,3 +1468,22 @@ def test_issue53_chronological_fallback_edges_when_parents_unmatched() -> None:
     # chronological chain orphan1 -> orphan2 exists and is the best path
     assert html_out.count('class="evo-elbow evo-elbow-best"') >= 1
     assert 'evo-elbow' in html_out
+
+# ---------------------------------------------------------------------------
+# Issue #58: header repeat-failure KPI vs Now-panel lever — source annotation
+# ---------------------------------------------------------------------------
+
+
+def test_issue58_header_kpi_source_annotation() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'repeat failure rate · scorecard' in html_out
+    assert 'title="source: scorecard snapshot' in html_out
+    assert 'last cycle measurement and may differ' in html_out
+
+
+def test_issue58_now_lever_last_cycle_annotation() -> None:
+    data = _fixture()
+    data['portfolio']['nodes']['proposer-quality']['last_lever_value'] = 0.34
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '(last: 0.34, last cycle)' in html_out
+    assert 'title="source: tech-tree portfolio, last cycle measurement"' in html_out
