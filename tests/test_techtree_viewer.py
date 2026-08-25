@@ -1678,3 +1678,118 @@ def test_issue63_last_skip_decision_from_ledger() -> None:
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'last decision:' in html_out
     assert 'skipped (no_valuable_task)' in html_out
+
+# ---------------------------------------------------------------------------
+# Issue #70: multi-page site (index/lineage/cycles/lessons/agent/hypotheses)
+# ---------------------------------------------------------------------------
+
+SITE_PAGE_NAMES = ['index.html', 'lineage.html', 'cycles.html', 'lessons.html', 'agent.html', 'hypotheses.html', 'techtree.html']
+
+
+def _site() -> dict:
+    return tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+
+
+def test_issue70_render_pages_returns_all_files() -> None:
+    pages = _site()
+    for name in SITE_PAGE_NAMES:
+        assert name in pages
+    assert pages['techtree.html'] != pages['index.html']
+
+
+def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
+    pages = _site()
+    for name in SITE_PAGE_NAMES[:6]:
+        html = pages[name]
+        assert 'empire-strip' in html
+        assert 'freshness' in html
+        assert 'site-nav' in html
+        for _, label in tv.SITE_PAGES:
+            assert f'>{label}</a>' in html
+    assert 'href="index.html" class="nav-current"' in pages['index.html']
+    assert 'href="lineage.html" class="nav-current"' in pages['lineage.html']
+    assert 'href="cycles.html" class="nav-current"' in pages['cycles.html']
+    assert 'href="lessons.html" class="nav-current"' in pages['lessons.html']
+    assert 'href="agent.html" class="nav-current"' in pages['agent.html']
+    assert 'href="hypotheses.html" class="nav-current"' in pages['hypotheses.html']
+
+
+def test_issue70_no_nav_link_404s() -> None:
+    pages = _site()
+    for name in SITE_PAGE_NAMES[:6]:
+        for fname, _label in tv.SITE_PAGES:
+            assert f'href="{fname}"' in pages[name]
+            assert fname in pages  # every nav target exists as a produced file
+
+
+def test_issue70_index_teasers_link_to_pages() -> None:
+    idx = _site()['index.html']
+    assert 'panel-teasers' in idx
+    assert 'href="cycles.html">cycles</a>' in idx
+    assert 'href="lineage.html">lineage</a>' in idx
+    assert 'href="hypotheses.html">hypotheses</a>' in idx
+    assert 'href="lessons.html">lessons</a>' in idx
+
+
+def test_issue70_techtree_redirects_to_index() -> None:
+    redir = _site()['techtree.html']
+    assert 'http-equiv="refresh" content="0; url=index.html"' in redir
+    assert 'href="index.html"' in redir
+
+
+def test_issue70_content_preserved_per_page() -> None:
+    pages = _site()
+    assert '<svg class="tech-canvas"' in pages['lineage.html']
+    assert 'feed-row' in pages['cycles.html']
+    assert 'proposer-block' in pages['agent.html']
+    assert 'host-identity' in pages['agent.html']
+    assert 'hypo-row' in pages['hypotheses.html']
+    assert 'panel-now' in pages['index.html']
+
+
+def test_issue70_ledger_change_changes_cycles_page() -> None:
+    p1 = _site()['cycles.html']
+    data = _fixture()
+    data['ledger_tail'] = list(data['ledger_tail']) + [
+        {'phase': 'started', 'cycle_id': 'cycle-new1', 'ts': '2026-08-18T13:00:00Z'},
+    ]
+    p2 = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')['cycles.html']
+    assert p1 != p2
+
+
+def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
+    calls = []
+    seq = {'blob': 0, 'tree': 0, 'commit': 0, 'ref': 0}
+
+    def fake_gh(args, input_text=None):
+        calls.append(args)
+        joined = ' '.join(args)
+        def cp(out):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=0, stdout=out, stderr='')
+        if 'git/blobs' in joined:
+            seq['blob'] += 1
+            return cp(f'blosha{seq["blob"]}')
+        if 'git/trees' in joined:
+            seq['tree'] += 1
+            return cp('tresha1')
+        if 'git/commits' in joined:
+            seq['commit'] += 1
+            return cp('comsha1')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            seq['ref'] += 1
+            return cp('')
+        if 'branches/gh-pages' in joined:
+            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
+        if 'git/ref/heads/gh-pages' in joined:
+            return cp('oldparent')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+    rc = tv.publish_to_pages({'index.html': '<html>a</html>', 'cycles.html': '<html>b</html>'})
+    assert rc == 0
+    assert seq['blob'] == 2
+    assert seq['tree'] == 1
+    assert seq['commit'] == 1
+    assert seq['ref'] == 1  # exactly one atomic ref switch

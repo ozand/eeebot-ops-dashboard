@@ -397,7 +397,7 @@ def run(args: argparse.Namespace) -> int:
     source_problem = _unreadable_tree_source(data, state_root)
 
     if args.dry_run:
-        html_out = tv.render_page(data, args.host_label)
+        pages = tv.render_pages(data, args.host_label)
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
                 state, staleness_floor_seconds, now,
@@ -419,7 +419,7 @@ def run(args: argparse.Namespace) -> int:
             verdict = 'WOULD PUBLISH' if publish else 'would NOT publish'
             shown_reason = reason
         print(f'[dry-run] {verdict}: {shown_reason}')
-        print(f'[dry-run] digest={digest} rendered_bytes={len(html_out)}')
+        print(f'[dry-run] digest={digest} rendered_bytes={sum(len(v) for v in pages.values())} across {len(pages)} pages')
         if data.get('_error'):
             # Detailed message (may include a host filesystem path) goes to
             # stderr only, never stdout/the page (issue #27 review, blocker
@@ -485,7 +485,7 @@ def run(args: argparse.Namespace) -> int:
         # Fall through: publish below using the same (still-broken) data;
         # render_page fails soft per source already.
 
-    html_out = tv.render_page(data, args.host_label)
+    pages = tv.render_pages(data, args.host_label)
 
     if not os.environ.get('GH_TOKEN'):
         print(
@@ -500,7 +500,7 @@ def run(args: argparse.Namespace) -> int:
     # failure and never writes anything on that path -- so a failed publish
     # here simply skips save_publish_state below and leaves gh-pages as it
     # was, ready to retry next cycle.
-    rc = tv.publish_to_pages(html_out)
+    rc = tv.publish_to_pages(pages)
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
