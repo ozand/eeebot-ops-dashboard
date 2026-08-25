@@ -1288,12 +1288,15 @@ def build_now_panel(
             lever_metric = node.get('lever_metric') or 'n/a'
             direction_type = node.get('direction') or 'n/a'
             last_val = node.get('last_lever_value')
-            val_str = f' (last: {fmt_compact(last_val)})' if last_val is not None else ''
+            # Issue #58: annotate the lever value's window/source so it is
+            # not confused with the header scorecard KPI.
+            val_str = f' (last: {fmt_compact(last_val)}, last cycle)' if last_val is not None else ''
             dir_html = (
                 f'<div class="now-item"><span class="now-label">Direction:</span> '
                 f'<span class="badge badge-researching">{esc(current_dir)}</span> '
                 f'<span class="badge badge-available">{esc(status)}</span> '
-                f'<span class="now-detail">lever: <strong>{esc(lever_metric)}</strong> &middot; '
+                f'<span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">'
+                f'lever: <strong>{esc(lever_metric)}</strong> &middot; '
                 f'aim: <em>{esc(direction_type)}</em>{val_str}</span></div>'
             )
         else:
@@ -1968,15 +1971,35 @@ def build_empire_stats_strip(
     stats = [
         ('integrations', esc(loop.get('integrations', 'n/a'))),
         ('confirmed ratio', humanize_ratio(loop.get('confirmed_integration_ratio'))),
-        ('repeat failure rate', humanize_ratio(loop.get('repeat_failure_rate'))),
+        # Issue #58: the header KPI and the Now-panel lever are DIFFERENT
+        # computations of failure rate (scorecard snapshot vs last cycle
+        # measurement). Annotate the source visibly + via tooltip instead of
+        # recomputing anything dashboard-side.
+        ('repeat failure rate · scorecard', humanize_ratio(loop.get('repeat_failure_rate'))),
         ('tokens / integration', humanize_number(cost.get('tokens_per_integration'))),
         ('held-out', f"{esc(heldout.get('passed', 'n/a'))}/{esc(heldout.get('checked', 'n/a'))}"),
     ]
-    stat_html = ''.join(
-        f'<div class="empire-stat"><span class="stat-label">{esc(label)}</span>'
-        f'<span class="stat-value">{value}</span></div>'
-        for label, value in stats
-    )
+
+    computed_ts = ''
+    if scorecard.get('computed_at_utc'):
+        computed_ts = fmt_ts(scorecard.get('computed_at_utc'))
+    kpi_tooltips = {
+        'repeat failure rate · scorecard': (
+            'source: scorecard snapshot'
+            + (f' (computed {computed_ts})' if computed_ts else '')
+            + ' over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ'
+        ),
+    }
+
+    stat_html = ''
+    for label, value in stats:
+        tip = kpi_tooltips.get(label)
+        tip_attr = f' title="{esc(tip)}"' if tip else ''
+        stat_html += (
+            f'<div class="empire-stat"{tip_attr}>'
+            f'<span class="stat-label">{esc(label)}</span>'
+            f'<span class="stat-value">{value}</span></div>'
+        )
 
     # Issue #48: visible freshness badge in the header. Age is real
     # (collected mtime) or explicitly unknown -- never fabricated.
