@@ -1915,3 +1915,59 @@ def test_issue77_live_outcome_vocabulary_parsed() -> None:
         {'phase': 'outcome', 'cycle_id': 'c3', 'outcome': 'partial'},
     ])
     assert kind == 'partial'
+
+# ---------------------------------------------------------------------------
+# Issue #72: cycles.html full history (.gz archives, day grouping, filter)
+# ---------------------------------------------------------------------------
+
+
+def test_issue72_gz_archives_render(tmp_path) -> None:
+    import gzip as gz
+    ledger = tmp_path / 'ledger'
+    ledger.mkdir(parents=True)
+    (ledger / 'cycles.jsonl').write_text(
+        '{"phase":"started","cycle_id":"cycle-live1","ts":"2026-08-25T00:00:00Z"}\n', encoding='utf-8')
+    gz_row = '{"phase":"outcome","outcome":"failed","reason":"gate_failed","cycle_id":"cycle-gz1","ts":"2026-08-20T00:00:00Z"}\n'
+    with gz.open(ledger / 'cycles-2026-08-20.jsonl.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(gz_row)
+    state = tv.read_local_state(str(tmp_path))
+    hist = state.get('ledger_history') or []
+    assert any(r.get('cycle_id') == 'cycle-gz1' for r in hist)
+
+
+def test_issue72_stable_anchors() -> None:
+    pages = tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    cyc = pages['cycles.html']
+    assert 'id="cycle-cycle-a"' in cyc
+    assert 'id="cycle-cycle-failed-1"' in cyc
+
+
+def test_issue72_outcome_filter() -> None:
+    pages = tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    cyc = pages['cycles.html']
+    assert 'filter-bar' in cyc
+    assert 'data-filter="integrated"' in cyc
+    assert 'location.hash' in cyc
+    assert 'data-outcome=' in cyc
+
+
+def test_issue72_day_grouping_preserved() -> None:
+    pages = tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    cyc = pages['cycles.html']
+    assert 'feed-day-header' in cyc
+    assert '2026-08-16' in cyc
+    assert 'INTEGRATED' in cyc
+    assert 'Optimize prompt caching for proposer' in cyc
+
+
+def test_issue72_history_mode_full_no_cap() -> None:
+    data = _fixture()
+    extra = []
+    for i in range(60):
+        cid = f'cycle-hist{i:02d}'
+        extra.append({'phase': 'outcome', 'outcome': 'failed', 'reason': 'x', 'cycle_id': cid, 'ts': f'2026-08-17T00:{i:02d}:00Z'})
+    data['ledger_tail'] = list(data['ledger_tail']) + extra
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    cyc = pages['cycles.html']
+    for i in range(60):
+        assert f'id="cycle-cycle-hist{i:02d}"' in cyc

@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import html
 import json
@@ -22,7 +23,7 @@ import subprocess
 import sys
 import time
 import webbrowser
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -50,9 +51,11 @@ LEDGER_SCAN_WINDOW = 20000
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
 REMOTE_READER_SCRIPT = r'''
+import gzip
 import json
 import os
 import subprocess
+import time
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
@@ -62,6 +65,7 @@ LEDGER_PHASES = {
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
+LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 
@@ -209,6 +213,50 @@ def read_proposer_stats():
     return out if found else None
 
 
+def read_ledger_history():
+    """Issue #72: FULL cycle history for cycles.html -- live ledger plus
+    daily .gz archives, capped at LEDGER_HISTORY_DAYS (documented on the
+    page when the cap binds). Fail-soft per file/line (#29 pattern)."""
+    ldir = os.path.join(STATE_ROOT, "ledger")
+    cutoff = time.time() - LEDGER_HISTORY_DAYS * 86400
+    files = []
+    try:
+        for name in os.listdir(ldir):
+            if name == "cycles.jsonl":
+                files.append((None, os.path.join(ldir, name)))
+            elif name.startswith("cycles-") and name.endswith(".jsonl.gz"):
+                day = name[len("cycles-"):-len(".jsonl.gz")]
+                try:
+                    ts = time.mktime(time.strptime(day, "%Y-%m-%d"))
+                except ValueError:
+                    continue
+                if ts >= cutoff:
+                    files.append((day, os.path.join(ldir, name)))
+    except Exception:
+        return []
+    files.sort(key=lambda item: item[0] or "9999", reverse=True)
+    matched = []
+    for _day, path in files:
+        try:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict) and obj.get("phase") in LEDGER_PHASES:
+                matched.append(obj)
+    return matched
+
+
 def read_file_text(relpath):
     path = os.path.join(INSTANCE_REPO, relpath)
     try:
@@ -298,6 +346,7 @@ result = {
     "skill_reads": read_json("skill_fitness/reads.json"),
     "llm_stats": read_llm_stats(),
     "proposer_stats": read_proposer_stats(),
+    "ledger_history": read_ledger_history(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "cycle_titles": _cycle_titles,
@@ -322,6 +371,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'evolution_tree': None,
         'hypotheses': None,
         'ledger_tail': None,
+        'ledger_history': [],
         'demand_rotation': None,
         'demand_completed': None,
         'skill_reads': None,
@@ -502,6 +552,59 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         matched.reverse()
         return matched
 
+    def read_ledger_history_local() -> list[Any]:
+        """Issue #72: full cycle history from ledger/cycles.jsonl plus daily
+        cycles-YYYY-MM-DD.jsonl.gz archives (last LEDGER_HISTORY_DAYS days).
+        Local mirror of the REMOTE_READER_SCRIPT read_ledger_history() --
+        keep in sync. Fail-soft per file/line (issue #29 pattern)."""
+        ledger_dir = root / 'ledger'
+        try:
+            names = sorted(p.name for p in ledger_dir.iterdir())
+        except OSError:
+            return []
+        cutoff = 0.0
+        try:
+            cutoff = time.mktime(time.strptime(
+                (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime('%Y-%m-%d'),
+                '%Y-%m-%d'))
+        except Exception:  # noqa: BLE001
+            cutoff = 0.0
+        matched: list[Any] = []
+        for name in reversed(names):
+            rows: list[str] = []
+            path = ledger_dir / name
+            try:
+                if name == 'cycles.jsonl':
+                    with path.open('r', encoding='utf-8', errors='replace') as fh:
+                        rows = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                elif name.startswith('cycles-') and name.endswith('.jsonl.gz'):
+                    day = name[len('cycles-'):-len('.jsonl.gz')]
+                    try:
+                        file_ts = time.mktime(time.strptime(day, '%Y-%m-%d'))
+                    except Exception:  # noqa: BLE001
+                        continue
+                    if file_ts < cutoff:
+                        continue
+                    with gzip.open(path, 'rt', encoding='utf-8', errors='replace') as fh:
+                        rows = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                else:
+                    continue
+            except Exception:  # noqa: BLE001
+                continue
+            for line in rows:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                if isinstance(obj, dict) and obj.get('phase') in LEDGER_PHASES:
+                    matched.append(obj)
+        return matched
+
     def read_llm_stats_local() -> dict[str, Any]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
         Local mirror of the REMOTE_READER_SCRIPT read_llm_stats() -- keep in
@@ -625,6 +728,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'evolution_tree': read_json('evolution/tree.json'),
         'hypotheses': read_json('hypotheses/lifecycle.json'),
         'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
+        'ledger_history': read_ledger_history_local(),
         'demand_rotation': read_json('demand/rotation.json'),
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
@@ -1897,6 +2001,7 @@ def build_cycle_feed(
     evolution_tree: dict[str, Any] | None = None,
     cycle_files: dict[str, list[str]] | None = None,
     llm_stats: dict[str, Any] | None = None,
+    history_mode: bool = False,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -1946,11 +2051,13 @@ def build_cycle_feed(
 
     titles_map = task_titles if isinstance(task_titles, dict) else {}
 
-    # Build rows (up to 50 latest cycles)
+    # Build rows (up to 50 latest cycles; full history in history_mode)
     rows = []
     cycle_items = list(cycles_dict.items())
-    # Take latest 50
-    for cid, phases in reversed(cycle_items[-50:]):
+    # Take latest 50 (history_mode renders everything -- issue #72)
+    window = cycle_items if history_mode else cycle_items[-50:]
+    last_day = None
+    for cid, phases in reversed(window):
         # Determine task title
         title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', ''))
         
@@ -2164,8 +2271,16 @@ def build_cycle_feed(
                 )
             cost_html += '</div>'
 
+        # Issue #72: day grouping (newest-first) + outcome filter attribute.
+        day_html = ''
+        if history_mode and ts_val:
+            day = str(ts_val)[:10]
+            if day != last_day:
+                last_day = day
+                day_html = f'<li class="feed-day-header">{esc(day)}</li>\n        '
+
         rows.append(f'''
-        <li class="feed-row feed-outcome-{outcome_kind}" id="cycle-{esc(cid)}">
+        {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" id="cycle-{esc(cid)}">
           <div class="feed-header">
             <span class="badge {badge_class}">{esc(outcome_label)}</span>
             <strong class="feed-title">{esc(title)}</strong>
@@ -2179,9 +2294,44 @@ def build_cycle_feed(
         </li>
         ''')
 
+    if history_mode:
+        # Issue #72: client-side outcome filter, state in URL hash (#f-<kind>).
+        filter_buttons = ''.join(
+            f'<button class="filter-btn" data-filter="{k}">{k}</button>'
+            for k in ('all', 'integrated', 'failed', 'partial', 'skipped', 'running')
+        )
+        filter_html = (
+            f'<div class="filter-bar">{filter_buttons}</div>'
+            '<script>'
+            '(function(){'
+            'var bar=document.querySelector(".filter-bar");if(!bar)return;'
+            'var rows=document.querySelectorAll("#panel-feed li[data-outcome]");'
+            'function apply(k){'
+            'rows.forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});'
+            'bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}'
+            'var init=(location.hash||"").replace("#f-","");'
+            'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
+            'bar.addEventListener("click",function(e){'
+            'var b=e.target.closest(".filter-btn");if(!b)return;'
+            'var k=b.getAttribute("data-filter");'
+            'if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}'
+            'else{location.hash="f-"+k;}'
+            'apply(k);});'
+            'window.addEventListener("hashchange",function(){'
+            'var k=(location.hash||"").replace("#f-","");'
+            'if(bar.querySelector("[data-filter=\'"+k+"\']"))apply(k);});'
+            '})();'
+            '</script>'
+        )
+        title_line = f'Cycle History ({len(rows)} cycles)'
+    else:
+        filter_html = ''
+        title_line = f'Cycle Feed (Recent {len(rows)})'
+
     return f'''
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle Feed (Recent {len(rows)})</h2>
+      <h2 class="panel-title">{title_line}</h2>
+      {filter_html}
       <ul class="feed-list">
         {''.join(rows)}
       </ul>
@@ -2971,6 +3121,37 @@ CSS = '''
       color: #d19a66;
       font-weight: 700;
     }
+    /* Issue #72: full-history page — day grouping + outcome filter. */
+    .feed-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+      list-style: none;
+    }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px 0;
+    }
+    .filter-btn {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75em;
+      color: #9db4a6;
+      background: rgba(8, 15, 11, 0.8);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      color: #56d364;
+      border-color: #56d364;
+    }
+    .feed-row.filtered-out { display: none; }
     .feed-files > summary {
       cursor: pointer;
       user-select: none;
@@ -3743,13 +3924,21 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
             for r in ledger_tail
             if isinstance(r, dict) and r.get('cycle_id')
         }
+    # Issue #72: cycles.html renders FULL history (live ledger + .gz
+    # archives) with day grouping and the outcome filter; index teaser
+    # keeps the recent-tail feed.
+    history_rows = data.get('ledger_history')
+    history_source = ledger_tail
+    if isinstance(history_rows, list) and history_rows:
+        history_source = history_rows
     cycle_feed = build_cycle_feed(
-        ledger_tail=ledger_tail,
+        ledger_tail=history_source,
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        history_mode=True,
     )
     hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
     agent_panel = build_agent_panel(
