@@ -744,15 +744,15 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">131</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">11.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 16:01:45.252836 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">50.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="6">data: 6s old &middot; generated 16:02 UTC</span></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">132</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">11.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 16:36:17.646279 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">50.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="6">data: 6s old &middot; generated 16:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1185 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1186 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;var rows=document.querySelectorAll("#panel-feed li[data-outcome]");function apply(k){rows.forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var init=(location.hash||"").replace("#f-","");apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var k=(location.hash||"").replace("#f-","");if(bar.querySelector("[data-filter='"+k+"']"))apply(k);});})();</script>
       <ul class="feed-list">
         
@@ -14189,7 +14189,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8caa436c7b90)</span>
             
-            <a href="#node-ef7fdd0" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-22T21:20:02.437401Z">Aug 22</span>
           </div>
           <div class="feed-files">&#128193; memory/prevent_repeats.json, memory/repeat_failures.json</div>
@@ -15215,7 +15215,7 @@
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b957628fe3e5">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Update script exclusion filters and exit status handling in scripts/validate_tes</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b957628fe3e5)</span>
             
             <a href="#node-ac64992" class="feed-tree-link">tree &#8599;</a>
@@ -15616,6 +15616,19 @@
         </li>
         
         <li class="feed-day-header">2026-08-25</li>
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-28dd6607d158">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add JSON output format and specific field extraction flag to scripts/extract_las</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-28dd6607d158)</span>
+            
+            <a href="#node-8c5b730" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-25T16:05:58.147246Z">16:05 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/extract_last_failure.py, tests/test_extract_last_failure.py</div>
+          <div class="feed-cost">&#9889; 24 calls &middot; 491.2K tok &middot; dur 3m47s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1a60434df6a5">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
@@ -16205,7 +16218,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 16:02:38 UTC &middot; host eeepc &middot; newest source 6s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 16:01:45.252836 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 16:37:38 UTC &middot; host eeepc &middot; newest source 6s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 16:36:17.646279 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
