@@ -1514,9 +1514,18 @@ def build_cycle_feed(
                 reject_reason = str(p.get('reason') or 'proposer reject')
                 reason = reject_reason
             elif phase_name == 'dedup':
-                if p.get('duplicate') or p.get('status') == 'duplicate':
-                    outcome_kind = 'rejected'
-                    dedup_reason = str(p.get('reason') or 'duplicate')
+                # Issue #59: a dedup skip is a TERMINAL outcome, not
+                # in-progress. Detect it from any of the field shapes the
+                # ledger uses (duplicate flag, status, decision string).
+                decision = str(p.get('decision') or '')
+                if (
+                    p.get('duplicate')
+                    or p.get('status') == 'duplicate'
+                    or 'skip' in decision
+                    or 'duplicate' in decision
+                ):
+                    outcome_kind = 'skipped'
+                    dedup_reason = str(p.get('reason') or decision or 'duplicate')
                     reason = dedup_reason
             elif phase_name == 'idle':
                 outcome_kind = 'idle'
@@ -1534,6 +1543,11 @@ def build_cycle_feed(
                         reason = outcome_reason
                 elif st == 'partial':
                     outcome_kind = 'partial'
+                    if p.get('reason'):
+                        outcome_reason = str(p.get('reason'))
+                        reason = outcome_reason
+                elif st == 'skipped':
+                    outcome_kind = 'skipped'
                     if p.get('reason'):
                         outcome_reason = str(p.get('reason'))
                         reason = outcome_reason
@@ -1576,18 +1590,29 @@ def build_cycle_feed(
             outcome_label = f'IDLE{(": " + reason) if reason else ""}'
         elif outcome_kind == 'partial':
             badge_class = 'badge-partial'
-            outcome_label = 'PARTIAL'
+            # Issue #59: surface the reason when the ledger carries one.
+            outcome_label = f'PARTIAL{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'skipped':
+            # Issue #59: terminal outcome, never rendered as running.
+            badge_class = 'badge-skipped'
+            outcome_label = f'SKIPPED{(": " + reason) if reason else ""}'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:
             if outcome_status:
-                derived_title = f"{outcome_status}: {outcome_reason}" if outcome_reason else outcome_status
+                if outcome_reason:
+                    derived_title = f"{outcome_status}: {outcome_reason}"
+                elif outcome_status == 'partial':
+                    # Issue #59: never a bare word -- say what is missing.
+                    derived_title = 'partial: no artifact recorded'
+                else:
+                    derived_title = outcome_status
             elif gate_fail_reason:
                 derived_title = f"gate blocked: {gate_fail_reason}"
             elif reject_reason:
                 derived_title = f"rejected: {reject_reason}"
             elif dedup_reason:
-                derived_title = f"rejected: {dedup_reason}"
+                derived_title = f"skipped: {dedup_reason}"
             elif idle_reason:
                 derived_title = f"idle: {idle_reason}"
             elif started_seen:
@@ -2262,6 +2287,7 @@ CSS = '''
     .feed-outcome-rejected { border-left: 4px solid #d19a66; }
     .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
     .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
 
     .feed-header {
@@ -2586,6 +2612,7 @@ CSS = '''
       border-radius: 4px;
     }
     .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
