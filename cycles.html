@@ -670,28 +670,41 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">126</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 13:35:40.208792 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">52.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="6">data: 5s old &middot; generated 13:48 UTC</span></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">127</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 14:06:13.012465 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">52.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="6">data: 5s old &middot; generated 14:14 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle Feed (Recent 39)</h2>
+      <h2 class="panel-title">Cycle Feed (Recent 40)</h2>
       <ul class="feed-list">
         
-        <li class="feed-row feed-outcome-in_progress" id="cycle-cycle-700e8c54442a">
+        <li class="feed-row feed-outcome-partial" id="cycle-cycle-5364c88e4247">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-700e8c54442a)</span>
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-5364c88e4247)</span>
             
             
-            <span class="feed-ts" title="2026-08-25T13:40:15.901407Z">13:40 UTC</span>
+            <span class="feed-ts" title="2026-08-25T14:11:16.215984Z">14:11 UTC</span>
           </div>
           
-          <div class="feed-cost">&#9889; 40 calls &middot; 2.54M tok &middot; dur 6m48s</div>
+          <div class="feed-cost">&#9889; 8 calls &middot; 302.3K tok &middot; dur 1m46s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" id="cycle-cycle-700e8c54442a">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">fix: repair failing tests for custom window days and threshold verification</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-700e8c54442a)</span>
+            
+            <a href="#node-95c4130" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-25T13:40:15.901407Z">13:40 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py</div>
+          <div class="feed-cost">&#9889; 95 calls &middot; 6.77M tok &middot; dur 17m9s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" id="cycle-cycle-ab342a5e99e1">
@@ -1192,7 +1205,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 13:48:52 UTC &middot; host eeepc &middot; newest source 5s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 13:35:40.208792 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 14:14:26 UTC &middot; host eeepc &middot; newest source 5s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 14:06:13.012465 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
