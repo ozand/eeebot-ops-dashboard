@@ -2743,6 +2743,23 @@ CSS = '''
     }
     .panel-nav a { color: #2fd3c4; text-decoration: none; }
     .panel-nav a:hover { text-decoration: underline; }
+    /* Issue #70: multi-page site nav -- current page highlighted. */
+    .site-nav a.nav-current {
+      color: #56d364;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    /* Issue #70: index teasers. */
+    .teaser-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88em;
+    }
+    .teaser-list a { color: #2fd3c4; font-family: 'Consolas', monospace; }
     .copyable { cursor: pointer; }
     .copyable.copied { color: #2fd3c4; }
 
@@ -3252,6 +3269,272 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
 
 
 # ---------------------------------------------------------------------------
+# Multi-page site (issue #70): index / lineage / cycles / lessons / agent /
+# hypotheses + techtree.html redirect. Same chrome, one shared data pass.
+# ---------------------------------------------------------------------------
+
+SITE_PAGES = [
+    ('index.html', 'now'),
+    ('lineage.html', 'lineage'),
+    ('cycles.html', 'cycles'),
+    ('lessons.html', 'lessons'),
+    ('agent.html', 'agent'),
+    ('hypotheses.html', 'hypotheses'),
+]
+
+SITE_TEMPLATE = '''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
+<title>{title}</title>
+<style>{css}</style>
+</head>
+<body>
+{empire_strip}
+{site_nav}
+<main class="dashboard-main">
+{page_main}
+</main>
+<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {{
+  el.addEventListener('click', function () {{
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {{
+      el.classList.add('copied');
+      setTimeout(function () {{ el.classList.remove('copied'); }}, 800);
+    }});
+  }});
+}});
+</script>
+<script>
+(function () {{
+  var el = document.querySelector('.freshness[data-age-seconds]');
+  if (!el) return;
+  var t0 = Date.now();
+  var a0 = parseFloat(el.getAttribute('data-age-seconds'));
+  setInterval(function () {{
+    var a = a0 + (Date.now() - t0) / 1000;
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+  }}, 30000);
+}})();
+</script>
+</body>
+</html>
+'''
+
+TECHTREE_REDIRECT = '''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=index.html">
+<title>eeebot tech tree moved</title>
+</head>
+<body>
+<p>The tech tree moved to <a href="index.html">index.html</a>.</p>
+</body>
+</html>
+'''
+
+
+def _site_nav(current: str) -> str:
+    parts = []
+    for fname, label in SITE_PAGES:
+        cls = ' class="nav-current"' if fname == current else ''
+        parts.append(f'<a href="{fname}"{cls}>{label}</a>')
+    return '<nav class="panel-nav site-nav" aria-label="Sections">' + ' &middot; '.join(parts) + '</nav>'
+
+
+def _site_page(title: str, current: str, empire_strip: str, page_main: str,
+               generated_at: str, host: str, source_age: str,
+               computed_note: str, error_note: str, titles_note: str) -> str:
+    return SITE_TEMPLATE.format(
+        css=CSS,
+        title=esc(title),
+        empire_strip=empire_strip,
+        site_nav=_site_nav(current),
+        page_main=page_main,
+        generated_at=esc(generated_at),
+        host=esc(host),
+        source_age=esc(source_age),
+        computed_note=computed_note,
+        error_note=error_note,
+        titles_note=titles_note,
+    )
+
+
+def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
+                   evolution_tree: dict[str, Any] | None,
+                   hypotheses: dict[str, Any] | None) -> str:
+    """Compact per-section teasers linking to the dedicated pages."""
+    cycle_ids = {
+        str(r.get('cycle_id')) for r in (ledger_tail or [])
+        if isinstance(r, dict) and r.get('cycle_id')
+    }
+    node_count = 0
+    if isinstance(evolution_tree, dict) and isinstance(evolution_tree.get('nodes'), dict):
+        node_count = len(evolution_tree['nodes'])
+    active = answered = 0
+    if isinstance(hypotheses, dict) and isinstance(hypotheses.get('entries'), dict):
+        for e in hypotheses['entries'].values():
+            if not isinstance(e, dict):
+                continue
+            if e.get('status') == 'answered':
+                answered += 1
+            else:
+                active += 1
+    return f'''
+    <section class="panel panel-teasers">
+      <h2 class="panel-title">Explore</h2>
+      <ul class="teaser-list">
+        <li><a href="cycles.html">cycles</a> &mdash; {len(cycle_ids)} cycles tracked in the recent ledger window</li>
+        <li><a href="lineage.html">lineage</a> &mdash; {node_count} evolution nodes</li>
+        <li><a href="hypotheses.html">hypotheses</a> &mdash; {active} active / {answered} answered</li>
+        <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
+        <li><a href="lessons.html">lessons</a> &mdash; lessons history (lands in issue #73)</li>
+      </ul>
+    </section>
+    '''
+
+
+def _last_cycles_subset(ledger_tail: list[Any] | None, want: int = 3) -> list[Any]:
+    """Rows covering the last `want` distinct cycle ids (phase rows kept
+    together so build_cycle_feed still groups them correctly)."""
+    if not isinstance(ledger_tail, list):
+        return []
+    seen: set[str] = set()
+    keep: set[str] = set()
+    for row in reversed(ledger_tail):
+        if not isinstance(row, dict):
+            continue
+        cid = str(row.get('cycle_id') or '')
+        if not cid:
+            continue
+        if cid not in seen and len(seen) >= want:
+            continue
+        seen.add(cid)
+        keep.add(cid)
+    return [r for r in ledger_tail if isinstance(r, dict) and str(r.get('cycle_id') or '') in keep]
+
+
+def render_pages(data: dict[str, Any], host: str, generated_at: str | None = None) -> dict[str, str]:
+    """Issue #70: render the multi-page site. Returns {filename: html} with
+    keys index/lineage/cycles/lessons/agent/hypotheses/techtree .html. All
+    pages share the header KPI strip, freshness badge, site nav and theme;
+    every page derives from the same data pass, so the existing publish
+    digest (computed over all sources) still triggers on any input change."""
+    if generated_at is None:
+        generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
+    portfolio = data.get('portfolio')
+    scorecard = data.get('scorecard')
+    evolution_tree = data.get('evolution_tree')
+    hypotheses = data.get('hypotheses')
+    ledger_tail = data.get('ledger_tail')
+    demand_rotation = data.get('demand_rotation')
+    demand_completed = data.get('demand_completed')
+    skill_reads = data.get('skill_reads')
+    goal_text = data.get('goal_text')
+    agents_md = data.get('agents_md')
+    cycle_titles = data.get('cycle_titles')
+
+    error_note = ''
+    if data.get('_error'):
+        error_note = ' &middot; fetch note: state read failed (details in the publisher\'s logs)'
+    titles_note = ''
+    if data.get('cycle_titles_error'):
+        titles_note = f' &middot; &#9888; task titles unavailable ({esc(str(data.get("cycle_titles_error")))})'
+    computed_note = ''
+    if isinstance(scorecard, dict) and scorecard.get('computed_at_utc'):
+        computed_note = f' &middot; <span class="footer-computed">scorecard computed {fmt_ts(scorecard.get("computed_at_utc"))}</span>'
+
+    age_seconds = data.get('_newest_source_age_seconds')
+    if isinstance(age_seconds, (int, float)):
+        source_age = f'{humanize_age(age_seconds)} old'
+    else:
+        source_age = 'age unknown'
+
+    empire_strip = build_empire_stats_strip(
+        scorecard,
+        age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
+        generated_at=generated_at,
+    )
+    now_panel = build_now_panel(
+        portfolio=portfolio,
+        evolution_tree=evolution_tree,
+        demand_rotation=demand_rotation,
+        demand_completed=demand_completed,
+        task_titles=cycle_titles,
+        ledger_tail=ledger_tail,
+    )
+    canvas_html = build_tech_canvas(
+        portfolio=portfolio,
+        ledger_tail=ledger_tail,
+        evolution_tree=evolution_tree,
+        task_titles=cycle_titles,
+    )
+    feed_cycles = set()
+    if isinstance(ledger_tail, list):
+        feed_cycles = {
+            str(r.get('cycle_id') or '')
+            for r in ledger_tail
+            if isinstance(r, dict) and r.get('cycle_id')
+        }
+    cycle_feed = build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=demand_completed,
+        task_titles=cycle_titles,
+        evolution_tree=evolution_tree,
+        cycle_files=data.get('cycle_files'),
+        llm_stats=data.get('llm_stats'),
+    )
+    hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
+    agent_panel = build_agent_panel(
+        agents_md=agents_md,
+        goal_text=goal_text,
+        skill_reads=skill_reads,
+        portfolio=portfolio,
+        ledger_tail=ledger_tail,
+        host=host,
+        proposer_stats=data.get('proposer_stats'),
+    )
+    lessons_panel = (
+        '<section class="panel panel-lessons" id="panel-lessons">'
+        '<h2 class="panel-title">Lessons History</h2>'
+        '<p class="unavailable-note">lessons history lands in issue #73</p>'
+        '</section>'
+    )
+
+    def _page(title: str, current: str, page_main: str) -> str:
+        return _site_page(title, current, empire_strip, page_main,
+                          generated_at, host, source_age,
+                          computed_note, error_note, titles_note)
+
+    teaser_html = _index_teasers(data, ledger_tail, evolution_tree, hypotheses)
+    teaser_feed = build_cycle_feed(
+        ledger_tail=_last_cycles_subset(ledger_tail, 3),
+        demand_completed=demand_completed,
+        task_titles=cycle_titles,
+        evolution_tree=evolution_tree,
+        cycle_files=data.get('cycle_files'),
+        llm_stats=data.get('llm_stats'),
+    )
+
+    pages: dict[str, str] = {
+        'index.html': _page('eeebot / now', 'index.html', now_panel + teaser_html + teaser_feed),
+        'lineage.html': _page('eeebot / lineage', 'lineage.html', canvas_html),
+        'cycles.html': _page('eeebot / cycles', 'cycles.html', cycle_feed),
+        'lessons.html': _page('eeebot / lessons', 'lessons.html', lessons_panel),
+        'agent.html': _page('eeebot / agent', 'agent.html', agent_panel),
+        'hypotheses.html': _page('eeebot / hypotheses', 'hypotheses.html', hypotheses_panel),
+        'techtree.html': TECHTREE_REDIRECT,
+    }
+    return pages
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -3344,17 +3627,20 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
         )
 
 
-def publish_to_pages(html_out: str) -> int:
-    """Upsert the rendered page as ``index.html`` on the ``gh-pages`` branch
-    and make sure GitHub Pages is enabled for that branch. Returns 0 on
-    success, 1 on any failure (with a message on stderr). Uses only the
-    ``gh`` CLI (already authenticated on the operator machine)."""
+def publish_to_pages(pages: 'dict[str, str] | str') -> int:
+    """Issue #70: publish the multi-page site ATOMICALLY -- one gh-pages
+    commit carries every page (git Data API: blobs -> tree -> commit -> ref
+    update; any failure leaves the ref untouched). Accepts a dict
+    {filename: html}; a legacy single-page string is treated as
+    index.html. Returns 0 on success, 1 on any failure."""
     import base64
+    if isinstance(pages, str):
+        pages = {'index.html': pages}
+    if not pages:
+        print('publish: nothing to publish', file=sys.stderr)
+        return 1
 
-    content_b64 = base64.b64encode(html_out.encode('utf-8')).decode('ascii')
-
-    # Branch may not exist yet: the contents API creates it only if the repo
-    # has it; bootstrap it from the default branch's HEAD when absent.
+    # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
         head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
@@ -3371,24 +3657,64 @@ def publish_to_pages(html_out: str) -> int:
                   file=sys.stderr)
             return 1
 
-    # Upsert index.html (need the existing blob sha for an update).
-    sha_probe = _gh(['api',
-                     f'repos/{PUBLISH_REPO}/contents/{PUBLISH_FILE}?ref={PUBLISH_BRANCH}',
-                     '--jq', '.sha'])
-    put_args = ['api', '-X', 'PUT', f'repos/{PUBLISH_REPO}/contents/{PUBLISH_FILE}',
-                '-f', 'message=techtree snapshot (techtree_viewer --publish)',
-                '-f', f'branch={PUBLISH_BRANCH}',
-                '-f', f'content={content_b64}']
-    if sha_probe.returncode == 0 and sha_probe.stdout.strip():
-        put_args += ['-f', f'sha={sha_probe.stdout.strip()}']
-    put = _gh(put_args)
-    if put.returncode != 0:
-        print(f'publish: contents PUT failed: {put.stderr.strip()[:300]}', file=sys.stderr)
+    head_tree = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}',
+                     '--jq', '.commit.commit.tree.sha'])
+    base_tree = head_tree.stdout.strip() if head_tree.returncode == 0 else None
+
+    # 1. Create a blob per page.
+    tree_entries = []
+    for fname, html in sorted(pages.items()):
+        blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
+        blob = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/blobs',
+                    '-f', f'content={blob_b64}', '-f', 'encoding=base64',
+                    '--jq', '.sha'])
+        if blob.returncode != 0:
+            print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1
+        entry = {'path': fname, 'mode': '100644', 'type': 'blob',
+                 'sha': blob.stdout.strip()}
+        tree_entries.append(entry)
+
+    # 2. One tree carrying every page.
+    import json as _json
+    tree_payload = {'tree': tree_entries}
+    if base_tree:
+        tree_payload['base_tree'] = base_tree
+    tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
+                '--input', '-'], input_text=_json.dumps(tree_payload))
+    if tree.returncode != 0:
+        print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
+              file=sys.stderr)
+        return 1
+
+    # 3. One commit.
+    parent = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/{PUBLISH_BRANCH}',
+                  '--jq', '.object.sha'])
+    commit_payload = {
+        'message': 'techtree multi-page snapshot (techtree_viewer --publish)',
+        'tree': tree.stdout.strip(),
+    }
+    if parent.returncode == 0 and parent.stdout.strip():
+        commit_payload['parents'] = [parent.stdout.strip()]
+    commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits',
+                  '--input', '-'], input_text=_json.dumps(commit_payload))
+    if commit.returncode != 0:
+        print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
+              file=sys.stderr)
+        return 1
+
+    # 4. Single ref update -- the atomic switch.
+    ref = _gh(['api', '-X', 'PATCH', f'repos/{PUBLISH_REPO}/git/refs/heads/{PUBLISH_BRANCH}',
+               '-f', f'sha={commit.stdout.strip()}'])
+    if ref.returncode != 0:
+        print(f'publish: ref update failed: {ref.stderr.strip()[:300]}',
+              file=sys.stderr)
         return 1
 
     # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
-    pages = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
-    if pages.returncode != 0:
+    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
+    if pages_enabled.returncode != 0:
         enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
                       '--input', '-'],
                      input_text='{"source":{"branch":"gh-pages","path":"/"}}')
@@ -3406,20 +3732,27 @@ def main(argv: list[str] | None = None) -> int:
         data = read_local_state(args.state_root)
     else:
         data = fetch_remote_state(args.host)
-    html_out = render_page(data, args.host)
+    pages = render_pages(data, args.host)
 
     out_path = Path(args.out)
-    out_path.write_text(html_out, encoding='utf-8')
-    print(f'wrote {out_path.resolve()}')
+    if out_path.suffix == '.html':
+        # legacy single-file invocation: write the landing page there
+        out_path.write_text(pages['index.html'], encoding='utf-8')
+        print(f'wrote {out_path.resolve()}')
+    else:
+        out_path.mkdir(parents=True, exist_ok=True)
+        for fname, html in pages.items():
+            (out_path / fname).write_text(html, encoding='utf-8')
+        print(f'wrote {len(pages)} pages to {out_path.resolve()}')
 
     if data.get('_error'):
         print(f'note: {data["_error"]}', file=sys.stderr)
 
     if args.open:
-        webbrowser.open(out_path.resolve().as_uri())
+        webbrowser.open((out_path / 'index.html').resolve().as_uri())
 
     if args.publish:
-        return publish_to_pages(html_out)
+        return publish_to_pages(pages)
 
     return 0
 
