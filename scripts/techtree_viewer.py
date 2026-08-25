@@ -4115,9 +4115,12 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     tree_entries = []
     for fname, html in sorted(pages.items()):
         blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
+        # Issue #72: full-history cycles.html exceeds the OS argv limit —
+        # pass the blob payload via stdin (JSON body) instead of -f args.
+        blob_body = json.dumps({'content': blob_b64, 'encoding': 'base64'})
         blob = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/blobs',
-                    '-f', f'content={blob_b64}', '-f', 'encoding=base64',
-                    '--jq', '.sha'])
+                    '--input', '-',
+                    '--jq', '.sha'], input_text=blob_body)
         if blob.returncode != 0:
             print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}',
                   file=sys.stderr)
