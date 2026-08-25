@@ -745,14 +745,14 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">134</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">11.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 18:09:31.886977 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">51.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 8s old &middot; generated 18:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 19:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1192 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1193 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;var rows=document.querySelectorAll("#panel-feed li[data-outcome]");function apply(k){rows.forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var init=(location.hash||"").replace("#f-","");apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var k=(location.hash||"").replace("#f-","");if(bar.querySelector("[data-filter='"+k+"']"))apply(k);});})();</script>
       <ul class="feed-list">
         
@@ -14202,7 +14202,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-be7943efd2d4)</span>
             
-            <a href="#node-e8a17fc" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-22T18:44:10.348182Z">Aug 22</span>
           </div>
           
@@ -15616,6 +15616,19 @@
         </li>
         
         <li class="feed-day-header">2026-08-25</li>
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7f531797e3b8">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add target path filtering and structured JSON reporting to scripts/validate_time</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-7f531797e3b8)</span>
+            
+            <a href="#node-e53442a" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-25T18:43:10.276806Z">18:43 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py</div>
+          <div class="feed-cost">&#9889; 19 calls &middot; 395.4K tok &middot; dur 2m35s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-c6443125b8ac">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
@@ -16230,7 +16243,7 @@
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fad595053459">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat: add duplicate object key detection to validate_json_syntax</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fad595053459)</span>
             
             <a href="#node-cc2eea9" class="feed-tree-link">tree &#8599;</a>
@@ -16296,7 +16309,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 18:35:15 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 18:09:31.886977 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 19:09:46 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 18:09:31.886977 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
