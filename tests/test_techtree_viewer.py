@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -1539,3 +1540,16 @@ def test_issue59_inflight_cycle_still_running() -> None:
     row = html_out.split('id="cycle-cycle-inflight-1"')[1].split('</li>')[0]
     assert 'running' in row
     assert 'SKIPPED' not in row
+
+
+def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
+    # AC: rendered line contains the real middle dot and NOT literal '&middot;'
+    data = _fixture()
+    data['agents_md'] = 'Instance on the eeepc host: i386 Debian 12, 2 GB RAM, Python 3.11.'
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '&amp;middot;' not in html_out
+    assert '&middot; i386' not in html_out
+    m = re.search(r'class="host-identity"[^>]*>([^<]+)<', html_out)
+    assert m is not None
+    assert '\u00b7' in m.group(1)
+    assert 'i386' in m.group(1) and 'Debian 12' in m.group(1)
