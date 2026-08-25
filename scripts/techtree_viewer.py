@@ -46,6 +46,8 @@ LEDGER_PHASES = {
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
+# Issue #72/#73: full-history window (days) for ledger + lessons archives.
+LEDGER_HISTORY_DAYS = 90
 
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
@@ -323,7 +325,16 @@ def read_lessons():
     try:
         archive_dir = os.path.join(lessons_dir, "archive")
         names = sorted(f for f in os.listdir(archive_dir) if f.endswith(".yaml.gz"))
-        for name in names[-30:]:
+        cutoff = time.mktime(time.strptime(
+            (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime("%Y-%m-%d"),
+            "%Y-%m-%d"))
+        for name in names:
+            day = name[len("lessons-"):-len(".yaml.gz")]
+            try:
+                if time.mktime(time.strptime(day, "%Y-%m-%d")) < cutoff:
+                    continue
+            except Exception:
+                pass
             try:
                 with gzip.open(os.path.join(archive_dir, name), "rt", encoding="utf-8", errors="replace") as fh:
                     texts.append(fh.read())
@@ -870,7 +881,16 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
             archives = sorted(p.name for p in (lessons_dir / 'archive').iterdir() if p.name.endswith('.yaml.gz'))
         except OSError:
             archives = []
-        for name in archives[-30:]:
+        cutoff = time.mktime(time.strptime(
+            (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime('%Y-%m-%d'),
+            '%Y-%m-%d'))
+        for name in archives:
+            day = name[len('lessons-'):-len('.yaml.gz')]
+            try:
+                if time.mktime(time.strptime(day, '%Y-%m-%d')) < cutoff:
+                    continue
+            except Exception:  # noqa: BLE001
+                pass
             try:
                 with gzip.open(lessons_dir / 'archive' / name, 'rt', encoding='utf-8', errors='replace') as fh:
                     texts.append((name, fh.read()))
@@ -878,6 +898,29 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
             except Exception:  # noqa: BLE001
                 continue
         entries: dict[str, dict[str, Any]] = {}
+
+        def _absorb(parsed: Any) -> None:
+            # Issue #73 fix: the flat fallback returns a LIST; rotation
+            # archives are truncated mid-entry so PyYAML raises and the
+            # fallback path is the one that actually runs for them.
+            if isinstance(parsed, dict) and isinstance(parsed.get('lessons'), list):
+                items = parsed['lessons']
+            elif isinstance(parsed, list):
+                items = parsed
+            else:
+                items = []
+            for item in items:
+                if isinstance(item, dict) and item.get('id'):
+                    entries[str(item['id'])] = {
+                        'id': str(item.get('id') or ''),
+                        'date': str(item.get('date') or ''),
+                        'cycle_id': str(item.get('cycle_id') or ''),
+                        'task_id': str(item.get('task_id') or ''),
+                        'hypothesis': str(item.get('hypothesis') or ''),
+                        'result': str(item.get('result') or ''),
+                        'insight': str(item.get('generalized_insight') or ''),
+                    }
+
         try:
             import yaml  # type: ignore
             for _src, text in texts:
@@ -885,22 +928,10 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                     parsed = yaml.safe_load(text)
                 except Exception:  # noqa: BLE001
                     parsed = _parse_lessons_flat(text)
-                if isinstance(parsed, dict) and isinstance(parsed.get('lessons'), list):
-                    for item in parsed['lessons']:
-                        if isinstance(item, dict) and item.get('id'):
-                            entries[str(item['id'])] = {
-                                'id': str(item.get('id') or ''),
-                                'date': str(item.get('date') or ''),
-                                'cycle_id': str(item.get('cycle_id') or ''),
-                                'task_id': str(item.get('task_id') or ''),
-                                'hypothesis': str(item.get('hypothesis') or ''),
-                                'result': str(item.get('result') or ''),
-                                'insight': str(item.get('generalized_insight') or ''),
-                            }
+                _absorb(parsed)
         except Exception:  # noqa: BLE001
             for _src, text in texts:
-                for item in _parse_lessons_flat(text):
-                    entries[item['id']] = item
+                _absorb(_parse_lessons_flat(text))
         return sorted(entries.values(), key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
     data: dict[str, Any] = {
