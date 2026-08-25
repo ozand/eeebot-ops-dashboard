@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -28,16 +29,20 @@ def _write_state_root(root: Path, **overrides: object) -> None:
 
 # --- digest scope (acceptance test 2) --------------------------------------
 
-def test_digest_ignores_scorecard_and_ledger(tmp_path: Path) -> None:
+def test_digest_ignores_scorecard_but_not_ledger(tmp_path: Path) -> None:
+    # Issue #56: scorecard stays outside the digest; the ledger tail is now
+    # INSIDE it (failed cycles must republish).
     root = tmp_path / 'state'
     _write_state_root(root)
     digest_before = ap.compute_tree_digest(root)
 
     (root / 'scorecard/latest.json').write_text('{"computed_at_utc": "2026-08-19T00:00:00Z"}', encoding='utf-8')
-    (root / 'ledger/cycles.jsonl').write_text('{"phase": "tech_tree"}\n', encoding='utf-8')
+    digest_scorecard = ap.compute_tree_digest(root)
+    assert digest_scorecard == digest_before
 
-    digest_after = ap.compute_tree_digest(root)
-    assert digest_after == digest_before
+    (root / 'ledger/cycles.jsonl').write_text('{"phase": "tech_tree"}\n', encoding='utf-8')
+    digest_ledger = ap.compute_tree_digest(root)
+    assert digest_ledger != digest_before
 
 
 def test_digest_changes_when_evolution_tree_changes(tmp_path: Path) -> None:
@@ -716,3 +721,54 @@ def test_permission_denied_tree_source_refuses_to_publish_and_does_not_crash(
     stderr = capsys.readouterr().err
     assert 'evolution_tree' in stderr
 
+
+# ---------------------------------------------------------------------------
+# Issue #56: ledger tail participates in the publish digest
+# ---------------------------------------------------------------------------
+
+
+def test_issue56_digest_changes_when_ledger_tail_grows(tmp_path: Path) -> None:
+    ledger = tmp_path / 'ledger' / 'cycles.jsonl'
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text('{"phase": "started", "cycle_id": "cycle-a"}\n', encoding='utf-8')
+    d1 = ap.compute_tree_digest(tmp_path)
+    with open(ledger, 'a', encoding='utf-8') as fh:
+        fh.write('{"phase": "outcome", "cycle_id": "cycle-a", "status": "fail"}\n')
+    d2 = ap.compute_tree_digest(tmp_path)
+    assert d1 != d2
+    # stable when nothing changes
+    assert ap.compute_tree_digest(tmp_path) == d2
+
+
+def test_issue56_digest_ledger_tail_is_bounded(tmp_path: Path) -> None:
+    ledger = tmp_path / 'ledger' / 'cycles.jsonl'
+    ledger.parent.mkdir(parents=True)
+    old_line = '{"phase": "started", "cycle_id": "cycle-old"}\n'
+    lines = [old_line] + [f'{{"phase": "idle", "cycle_id": "cycle-i{i}"}}\n' for i in range(60)]
+    ledger.write_text(''.join(lines), encoding='utf-8')
+    d1 = ap.compute_tree_digest(tmp_path)
+    # rotating an old line beyond the tail window must NOT change the digest
+    lines[0] = '{"phase": "started", "cycle_id": "cycle-rotated"}\n'
+    ledger.write_text(''.join(lines), encoding='utf-8')
+    d2 = ap.compute_tree_digest(tmp_path)
+    assert d1 == d2
+
+
+def test_issue56_missing_ledger_does_not_crash(tmp_path: Path) -> None:
+    d1 = ap.compute_tree_digest(tmp_path)  # no ledger at all
+    ledger = tmp_path / 'ledger' / 'cycles.jsonl'
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text('{"phase": "started"}\n', encoding='utf-8')
+    d2 = ap.compute_tree_digest(tmp_path)
+    assert d1 != d2  # ledger appearing counts as a change
+
+
+def test_issue56_unreadable_ledger_fail_soft(tmp_path: Path) -> None:
+    ledger = tmp_path / 'ledger' / 'cycles.jsonl'
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text('{"phase": "started"}\n', encoding='utf-8')
+    d1 = ap.compute_tree_digest(tmp_path)
+    # simulate PermissionError on read (issue #29 pattern: report-and-skip)
+    with mock.patch('builtins.open', side_effect=PermissionError(13, 'denied')):
+        d2 = ap.compute_tree_digest(tmp_path)  # must not raise
+    assert d1 != d2  # sentinel differs from readable hash
