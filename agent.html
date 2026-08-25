@@ -471,6 +471,49 @@
     .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
     .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
     .proposer-table { max-width: 480px; }
+    /* Issue #73: lessons history page. */
+    .lessons-filter {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      color: #dcebe1;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 0 10px 0;
+      width: min(420px, 100%);
+    }
+    .lessons-list { list-style: none; margin: 0; padding: 0; }
+    .lesson-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+    }
+    .lesson-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 0.85em;
+    }
+    .lesson-meta { font-size: 0.8em; color: #8aa695; }
+    .lesson-id { font-family: 'Consolas', monospace; color: #56d364; }
+    .lesson-cycle { font-family: 'Consolas', monospace; color: #2fd3c4; margin-left: 8px; }
+    .lesson-title { color: #e2f0e6; font-weight: 600; margin: 4px 0 2px; }
+    .lesson-hypothesis { color: #9db4a6; font-size: 0.92em; }
+    .lesson-result summary { cursor: pointer; color: #8aa695; font-size: 0.85em; }
+    .lesson-result pre {
+      margin: 4px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85em;
+      color: #cfe3d7;
+    }
+    .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -702,7 +745,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">129</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 15:31:30.747568 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">51.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">3.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 11s old &middot; generated 15:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="172">data: 2m old &middot; generated 16:00 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -799,7 +842,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 15:57:45 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 15:31:30.747568 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 16:00:26 UTC &middot; host eeepc &middot; newest source 2m old &middot; <span class="footer-computed">scorecard computed 2026-08-25 15:31:30.747568 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
