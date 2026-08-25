@@ -994,8 +994,12 @@ def test_fmt_ts_short() -> None:
 
 
 def test_issue42_feed_delta_and_ts_humanized() -> None:
+    # ts is "today" relative to the test run so fmt_ts_short renders the
+    # HH:MM UTC form deterministically (date-dependent assertion guard).
+    from datetime import datetime, timezone
+    today_ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT06:39:44Z')
     ledger_tail = [
-        {'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': '2026-08-24T06:39:44Z', 'delta': '166519.3317'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': today_ts, 'delta': '166519.3317'},
     ]
     html = tv.build_cycle_feed(
         ledger_tail=ledger_tail,
@@ -1005,7 +1009,7 @@ def test_issue42_feed_delta_and_ts_humanized() -> None:
         cycle_files=None,
     )
     assert '+166.5K' in html
-    assert 'title="2026-08-24T06:39:44Z"' in html
+    assert f'title="{today_ts}"' in html
     assert 'UTC' in html
     assert '06:39' in html
 

@@ -62,6 +62,14 @@ _TREE_SOURCE_FILES: dict[str, str] = {
 }
 TREE_DIGEST_SOURCES = tuple(_TREE_SOURCE_FILES.values())
 
+# Issue #56: the cycle ledger is not a tree source, but the Cycle Feed
+# renders from it -- a failed/gate-blocked/rejected cycle updates ONLY the
+# ledger, and without it in the digest those cycles stay unpublished until
+# the next successful integration. Hash the tail (the page renders at most
+# the last 50 cycles, so the tail is sufficient and bounded).
+LEDGER_DIGEST_PATH = 'ledger/cycles.jsonl'
+LEDGER_DIGEST_TAIL_LINES = 50
+
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
 
 # A floor on the floor (issue #27 review round 4, item A). The torn/
@@ -152,7 +160,14 @@ def compute_tree_digest(state_root: Path) -> str:
     order, each length-delimited by a NUL so an absent file cannot be
     confused with a present-but-empty one. A missing file hashes as a
     distinct sentinel rather than being skipped, so "the file appeared" and
-    "the file disappeared" both count as a change."""
+    "the file disappeared" both count as a change.
+
+    Issue #56: additionally hashes the ledger tail (last
+    LEDGER_DIGEST_TAIL_LINES lines) so any new cycle activity -- including
+    failed/gate-blocked/rejected cycles that never touch the tree files --
+    triggers a republish. The ledger component is fail-soft: an unreadable
+    ledger hashes as a distinct sentinel (same pattern as missing tree
+    sources) and never raises."""
     hasher = hashlib.sha256()
     for relpath in TREE_DIGEST_SOURCES:
         path = state_root / relpath
@@ -161,6 +176,14 @@ def compute_tree_digest(state_root: Path) -> str:
         except OSError:
             hasher.update(b'<missing>')
         hasher.update(b'\x00')
+    ledger_path = state_root / LEDGER_DIGEST_PATH
+    try:
+        with open(ledger_path, 'rb') as fh:
+            tail = fh.readlines()[-LEDGER_DIGEST_TAIL_LINES:]
+        hasher.update(b''.join(tail))
+    except OSError:
+        hasher.update(b'<ledger-missing>')
+    hasher.update(b'\x00')
     return hasher.hexdigest()
 
 
