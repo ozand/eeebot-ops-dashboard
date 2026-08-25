@@ -102,6 +102,58 @@ def read_ledger_tail(relpath):
     return matched
 
 
+def read_llm_stats():
+    """Issue #60: aggregate per-cycle LLM call stats from llm_calls/<date>.jsonl.
+    Fail-soft per file and per line; recent files only (page shows recent cycles)."""
+    ldir = os.path.join(STATE_ROOT, "llm_calls")
+    stats = {}
+    try:
+        names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
+    except Exception:
+        return stats
+    for name in names[-7:]:
+        path = os.path.join(ldir, name)
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(row, dict):
+                continue
+            cid = row.get("cycle_id")
+            if not cid:
+                continue
+            cid = str(cid)
+            st = stats.setdefault(cid, {
+                "calls": 0, "total_tokens": 0, "duration_ms": 0.0,
+                "last_finish_reason": None, "any_length": False, "last_ts": "",
+            })
+            st["calls"] += 1
+            tok = row.get("total_tokens")
+            if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                st["total_tokens"] += tok
+            dur = row.get("duration_ms")
+            if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                st["duration_ms"] += dur
+            fr = row.get("finish_reason")
+            ts = str(row.get("ts") or "")
+            if ts >= st["last_ts"]:
+                st["last_ts"] = ts
+                st["last_finish_reason"] = fr
+            if fr == "length":
+                st["any_length"] = True
+    return stats
+
+
 def read_file_text(relpath):
     path = os.path.join(INSTANCE_REPO, relpath)
     try:
@@ -189,6 +241,7 @@ result = {
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
     "skill_reads": read_json("skill_fitness/reads.json"),
+    "llm_stats": read_llm_stats(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "cycle_titles": _cycle_titles,
@@ -216,6 +269,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'demand_rotation': None,
         'demand_completed': None,
         'skill_reads': None,
+        'llm_stats': {},
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -341,6 +395,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'cycle_titles': None,
         'cycle_files': {},
         'cycle_titles_error': None,
+        'llm_stats': {},
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -389,6 +444,58 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         matched.reverse()
         return matched
 
+    def read_llm_stats_local() -> dict[str, Any]:
+        """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
+        Local mirror of the REMOTE_READER_SCRIPT read_llm_stats() -- keep in
+        sync. Fail-soft per file/line (issue #29 pattern)."""
+        stats: dict[str, Any] = {}
+        llm_dir = root / 'llm_calls'
+        try:
+            names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
+        except OSError:
+            return stats
+        for name in names[-7:]:
+            path = llm_dir / name
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    lines = fh.readlines()
+                mtimes.append(path.stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                cid = str(row.get('cycle_id') or '')
+                if not cid:
+                    continue
+                st = stats.setdefault(cid, {
+                    'calls': 0, 'total_tokens': 0, 'duration_ms': 0,
+                    'last_finish_reason': None, 'any_length': False, 'last_ts': '',
+                })
+                st['calls'] += 1
+                tok = row.get('total_tokens')
+                if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                    st['total_tokens'] += tok
+                dur = row.get('duration_ms')
+                if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                    st['duration_ms'] += dur
+                ts = str(row.get('ts') or '')
+                if ts >= str(st.get('last_ts') or ''):
+                    st['last_ts'] = ts
+                    fr = row.get('finish_reason')
+                    if fr:
+                        st['last_finish_reason'] = str(fr)
+                if row.get('finish_reason') == 'length':
+                    st['any_length'] = True
+        return stats
+
     repo_path = Path(instance_repo) if instance_repo else root.parent / 'eeebot-self-evolving'
     agents_text = None
     if repo_path.is_dir():
@@ -411,6 +518,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'demand_rotation': read_json('demand/rotation.json'),
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
+        'llm_stats': read_llm_stats_local(),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -510,6 +618,27 @@ def fmt_compact(value: Any, signed: bool = False) -> str:
     else:
         formatted = f'{abs_num:.2f}'.rstrip('0').rstrip('.')
         return f'{sign_str}{formatted}'
+
+
+def _fmt_duration_ms(ms: Any) -> str:
+    """Issue #60: humanize a millisecond duration ('35m10s'). Empty string
+    for missing/non-numeric/non-positive values."""
+    if not isinstance(ms, (int, float)) or isinstance(ms, bool) or ms <= 0:
+        return ''
+    total_s = int(ms // 1000)
+    if total_s < 90:
+        return f'{total_s}s'
+    m, s = divmod(total_s, 60)
+    if m < 90:
+        if s:
+            return f'{m}m{s}s'
+        return f'{m}m'
+    h, m = divmod(m, 60)
+    if s:
+        return f'{h}h{m}m{s}s'
+    if m:
+        return f'{h}h{m}m'
+    return f'{h}h'
 
 
 def _parse_iso_ts(ts_str: Any) -> datetime | None:
@@ -1400,6 +1529,7 @@ def build_cycle_feed(
     task_titles: dict[str, str] | None = None,
     evolution_tree: dict[str, Any] | None = None,
     cycle_files: dict[str, list[str]] | None = None,
+    llm_stats: dict[str, Any] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -1643,6 +1773,30 @@ def build_cycle_feed(
                 delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>'
         ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val)}</span>' if ts_val else ''
 
+        # Issue #60: per-cycle LLM cost line (calls / tokens / duration),
+        # plus a budget-pressure marker when a call hit finish_reason=length.
+        cost_html = ''
+        st = None
+        if isinstance(llm_stats, dict):
+            st = llm_stats.get(cid)
+            if st is None:
+                st = llm_stats.get(cid.replace('cycle-', '', 1))
+        if isinstance(st, dict) and st.get('calls'):
+            parts_cost = [f'&#9889; {st["calls"]} calls']
+            tok = st.get('total_tokens')
+            if isinstance(tok, (int, float)) and not isinstance(tok, bool) and tok > 0:
+                parts_cost.append(f'{fmt_compact(tok)} tok')
+            dur = _fmt_duration_ms(st.get('duration_ms'))
+            if dur:
+                parts_cost.append(f'dur {dur}')
+            cost_html = '<div class="feed-cost">' + ' &middot; '.join(parts_cost)
+            if st.get('any_length'):
+                cost_html += (
+                    ' <span class="cost-pressure" title="a call in this cycle ended with '
+                    'finish_reason=length (context/budget limit hit)">&#9888; context overflow</span>'
+                )
+            cost_html += '</div>'
+
         rows.append(f'''
         <li class="feed-row feed-outcome-{outcome_kind}" id="cycle-{esc(cid)}">
           <div class="feed-header">
@@ -1654,6 +1808,7 @@ def build_cycle_feed(
             {ts_html}
           </div>
           {files_html}
+          {cost_html}
         </li>
         ''')
 
@@ -2339,6 +2494,18 @@ CSS = '''
       font-family: 'Consolas', monospace;
       padding-left: 4px;
     }
+    /* Issue #60: per-cycle LLM cost line + budget-pressure marker. */
+    .feed-cost {
+      font-size: 0.75em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-pressure {
+      color: #d19a66;
+      font-weight: 700;
+    }
     .feed-files > summary {
       cursor: pointer;
       user-select: none;
@@ -2813,6 +2980,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         task_titles=cycle_titles,
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
+        llm_stats=data.get('llm_stats'),
     )
     hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
     agent_panel = build_agent_panel(
