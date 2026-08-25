@@ -234,6 +234,7 @@
     .feed-outcome-rejected { border-left: 4px solid #d19a66; }
     .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
     .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
 
     .feed-header {
@@ -558,6 +559,7 @@
       border-radius: 4px;
     }
     .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
@@ -605,7 +607,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat"><span class="stat-label">integrations</span><span class="stat-value">109</span></div><div class="empire-stat"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.4%</span></div><div class="empire-stat" title="source: scorecard snapshot (computed 2026-08-25 02:47:48.865313 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">56.2%</span></div><div class="empire-stat"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="5">data: 4s old &middot; generated 03:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="134">data: 2m old &middot; generated 03:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav" aria-label="Sections"><a href="#panel-now">now</a> &middot; <a href="#panel-lineage">lineage</a> &middot; <a href="#panel-feed">feed</a> &middot; <a href="#panel-hypotheses">hypotheses</a> &middot; <a href="#panel-agent">agent</a></nav>
@@ -632,7 +634,7 @@
         <li class="feed-row feed-outcome-partial" id="cycle-cycle-37ac584e1c4b">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial</strong>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-37ac584e1c4b)</span>
             
             
@@ -665,9 +667,9 @@
           <div class="feed-files">&#128193; memory/confirmation_status.json</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" id="cycle-cycle-027fabcbc967">
+        <li class="feed-row feed-outcome-skipped" id="cycle-cycle-027fabcbc967">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
             <strong class="feed-title">skipped-duplicate</strong>
             <span class="feed-cid copyable" translate="no">(cycle-027fabcbc967)</span>
             
@@ -728,7 +730,7 @@
         <li class="feed-row feed-outcome-partial" id="cycle-cycle-afe97e2376a0">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial</strong>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-afe97e2376a0)</span>
             
             
@@ -740,7 +742,7 @@
         <li class="feed-row feed-outcome-partial" id="cycle-cycle-c8731288867b">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial</strong>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c8731288867b)</span>
             
             
@@ -970,7 +972,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 03:35:19 UTC &middot; host eeepc &middot; newest source 4s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 02:47:48.865313 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 03:37:28 UTC &middot; host eeepc &middot; newest source 2m old &middot; <span class="footer-computed">scorecard computed 2026-08-25 02:47:48.865313 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
