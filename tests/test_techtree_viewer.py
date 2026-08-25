@@ -2087,3 +2087,28 @@ def test_issue73_entries_render_with_cycle_links() -> None:
     assert 'LESS-20260825-aaaa' in les
     assert 'Wire validator into suite' in les
     assert 'validators pay off' in les
+
+
+def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
+    # Live rotation artifact: archive starts mid-entry (truncated tail of the
+    # previous file) and entries sit at top level -> PyYAML raises, the flat
+    # fallback must still yield all entries (issue #73 follow-up).
+    import gzip as gz
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    (lessons_dir / 'lessons.yaml').write_text(_LESSON_YAML, encoding='utf-8')
+    arch = lessons_dir / 'archive'
+    arch.mkdir()
+    arch_text = ('lessons:\n  - scripts/validate_markdown_format.py\n'
+                 '- id: LESS-20260823-b618\n  date: "2026-08-23"\n  cycle_id: cycle-b618\n'
+                 '  task_id: Old lesson A\n  hypothesis: h\n  result: r\n'
+                 '- id: LESS-20260822-cccc\n  date: "2026-08-22"\n  cycle_id: cycle-cccc\n'
+                 '  task_id: Old lesson B\n  hypothesis: h\n  result: r\n')
+    with gz.open(arch / 'lessons-2026-08-23.yaml.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(arch_text)
+    state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    lessons = state.get('lessons') or []
+    ids = [l.get('id') for l in lessons]
+    assert 'LESS-20260823-b618' in ids and 'LESS-20260822-cccc' in ids
+    assert len(lessons) >= 4  # 2 live + 2 archived
