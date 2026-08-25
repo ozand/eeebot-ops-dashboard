@@ -184,6 +184,18 @@ def compute_tree_digest(state_root: Path) -> str:
     except OSError:
         hasher.update(b'<ledger-missing>')
     hasher.update(b'\x00')
+    # Issue #73: lessons.yaml tail (last 4KB) so a new lesson triggers a
+    # republish. Lives under the INSTANCE repo, not the state root.
+    lessons_path = state_root.parent / 'eeebot-self-evolving' / 'lessons' / 'lessons.yaml'
+    try:
+        with open(lessons_path, 'rb') as fh:
+            fh.seek(0, 2)
+            size = fh.tell()
+            fh.seek(max(0, size - 4096))
+            hasher.update(fh.read())
+    except OSError:
+        hasher.update(b'<lessons-missing>')
+    hasher.update(b'\x00')
     return hasher.hexdigest()
 
 

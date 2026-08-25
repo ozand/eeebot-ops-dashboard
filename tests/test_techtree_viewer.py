@@ -2016,3 +2016,74 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         assert '-f' not in args
         assert all(len(a) < 10_000 for a in args), 'argv carries payload'
         assert big_page[:100] in input_text or len(input_text) > 300_000
+
+# ---------------------------------------------------------------------------
+# Issue #73: lessons.html from lessons/lessons.yaml
+# ---------------------------------------------------------------------------
+
+_LESSON_YAML = '''lessons:
+  - id: "LESS-20260825-aaaa"
+    date: "2026-08-25"
+    cycle_id: "cycle-a"
+    task_id: "Wire validator into suite"
+    hypothesis: "validator catches regressions"
+    result: "confirmed: validator caught 2 regressions"
+    generalized_insight: "validators pay off"
+  - id: "LESS-20260820-bbbb"
+    date: "2026-08-20"
+    cycle_id: "cycle-failed-1"
+    task_id: "Add speculative syntax checking"
+    hypothesis: "syntax pre-check helps"
+    result: "refuted: no effect"
+    generalized_insight: "skip pre-checks"
+'''
+
+
+def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
+    import gzip as gz
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    (lessons_dir / 'lessons.yaml').write_text(_LESSON_YAML, encoding='utf-8')
+    arch = lessons_dir / 'archive'
+    arch.mkdir()
+    with gz.open(arch / 'lessons-2026-08-19.yaml.gz', 'wt', encoding='utf-8') as fh:
+        fh.write('lessons:\n  - id: "LESS-20260819-cccc"\n    date: "2026-08-19"\n    cycle_id: "cycle-gz1"\n    task_id: "Old archived lesson"\n    hypothesis: "h"\n    result: "r"\n')
+    state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    lessons = state.get('lessons') or []
+    ids = [l.get('id') for l in lessons]
+    assert 'LESS-20260825-aaaa' in ids and 'LESS-20260819-cccc' in ids
+    assert ids.index('LESS-20260825-aaaa') < ids.index('LESS-20260819-cccc')  # newest first
+
+
+def test_issue73_missing_file_graceful_note() -> None:
+    data = _fixture()
+    data['lessons'] = []
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'no lessons data recorded' in pages['lessons.html']
+
+
+def test_issue73_filter_and_hash_markers() -> None:
+    data = _fixture()
+    data['lessons'] = [{'id': 'LESS-20260825-aaaa', 'date': '2026-08-25', 'cycle_id': 'cycle-a',
+                        'task_id': 't', 'hypothesis': 'h', 'result': 'r', 'insight': 'i'}]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+    assert 'lessons-filter' in les
+    assert 'location.hash' in les
+    assert '#q-' in les
+
+
+def test_issue73_entries_render_with_cycle_links() -> None:
+    data = _fixture()
+    data['lessons'] = [
+        {'id': 'LESS-20260825-aaaa', 'date': '2026-08-25', 'cycle_id': 'cycle-a',
+         'task_id': 'Wire validator into suite', 'hypothesis': 'validator catches regressions',
+         'result': 'confirmed', 'insight': 'validators pay off'},
+    ]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+    assert 'cycles.html#cycle-cycle-a' in les
+    assert 'LESS-20260825-aaaa' in les
+    assert 'Wire validator into suite' in les
+    assert 'validators pay off' in les
