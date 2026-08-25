@@ -1553,3 +1553,46 @@ def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
     assert m is not None
     assert '\u00b7' in m.group(1)
     assert 'i386' in m.group(1) and 'Debian 12' in m.group(1)
+
+# ---------------------------------------------------------------------------
+# Issue #60: per-cycle LLM cost line in Cycle Feed
+# ---------------------------------------------------------------------------
+
+
+def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
+    data = _fixture()
+    data['llm_stats'] = {
+        'cycle-a': {'calls': 12, 'total_tokens': 1234567, 'duration_ms': 2110000,
+                    'last_finish_reason': 'stop', 'any_length': False, 'last_ts': 'x'},
+    }
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'feed-cost' in html_out
+    assert '12 calls' in html_out
+    assert '1.23M tok' in html_out
+    assert 'dur 35m10s' in html_out
+
+
+def test_issue60_budget_pressure_marker_on_length() -> None:
+    data = _fixture()
+    data['llm_stats'] = {
+        'cycle-a': {'calls': 3, 'total_tokens': 5000, 'duration_ms': 42000,
+                    'last_finish_reason': 'length', 'any_length': True, 'last_ts': 'x'},
+    }
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'cost-pressure' in html_out
+    assert 'context overflow' in html_out
+    assert 'finish_reason=length' in html_out
+
+
+def test_issue60_no_llm_data_rows_unchanged() -> None:
+    data = _fixture()
+    data['llm_stats'] = {}
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'class="feed-cost"' not in html_out
+    assert 'class="cost-pressure"' not in html_out
+
+
+def test_issue60_no_hardcoded_cap() -> None:
+    src = Path('scripts/techtree_viewer.py').read_text(encoding='utf-8')
+    assert 'SELFEVO' not in src
+    assert 'MAX_TOOL' not in src
