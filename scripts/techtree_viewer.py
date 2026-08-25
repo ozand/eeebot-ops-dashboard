@@ -43,8 +43,8 @@ LEDGER_PHASES = {
     'started', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
     'evolution_tree', 'tech_tree', 'hypothesis',
 }
-LEDGER_TAIL_LIMIT = 200
-LEDGER_SCAN_WINDOW = 5000
+LEDGER_TAIL_LIMIT = 5000
+LEDGER_SCAN_WINDOW = 20000
 
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
@@ -60,8 +60,8 @@ LEDGER_PHASES = {
     "started", "outcome", "gate", "proposer_reject", "dedup", "idle",
     "evolution_tree", "tech_tree", "hypothesis",
 }
-LEDGER_TAIL_LIMIT = 200
-LEDGER_SCAN_WINDOW = 5000
+LEDGER_TAIL_LIMIT = 5000
+LEDGER_SCAN_WINDOW = 20000
 
 _mtimes = []
 
@@ -1390,11 +1390,17 @@ def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
         elif phase == 'gate' and row.get('status') == 'fail':
             kind, reason = 'failed', str(row.get('reason') or 'gate failed')
         elif phase == 'outcome':
-            status = str(row.get('status') or '')
-            if status == 'fail':
+            # Issue #77: the live ledger carries the decisive value in the
+            # `outcome` field ('success'/'failed'/'partial'/
+            # 'skipped-duplicate'); `status` is None there. Keep the legacy
+            # `status` vocabulary as fallback for older shapes.
+            status = str(row.get('outcome') or row.get('status') or '')
+            if status in ('fail', 'failed'):
                 return 'failed', str(row.get('reason') or 'failed')
             if status == 'partial':
                 return 'partial', str(row.get('reason') or 'partial')
+            if status in ('skipped', 'skipped-duplicate'):
+                return 'skipped', str(row.get('reason') or status)
             if status == 'success':
                 return 'integrated', ''
     return kind, reason
@@ -1581,7 +1587,9 @@ def build_archive_tree(
             f'<text x="{lx}" y="190" class="arch-legend-label">(neutral fill until it flows)</text>'
         )
     ring_legend_y = 220
-    ring_kinds = [(k, c) for k, c in _ARCHIVE_RING.items() if k != 'running']
+    # Issue #77: running can legitimately appear (in-flight cycle), so the
+    # legend must cover every ring class that can render.
+    ring_kinds = list(_ARCHIVE_RING.items())
     ring_items = ''.join(
         f'<circle cx="{lx + 6}" cy="{ring_legend_y + i * 20}" r="6" fill="none" stroke="{color}" stroke-width="3"/>'
         f'<text x="{lx + 20}" y="{ring_legend_y + i * 20 + 4}" class="arch-legend-label">{kind}</text>'
