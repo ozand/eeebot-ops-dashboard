@@ -154,6 +154,61 @@ def read_llm_stats():
     return stats
 
 
+def read_proposer_stats():
+    """Issue #63: proposer visibility -- aggregate llm_calls rows with
+    component == 'proposer' (per-day calls/tokens/mean latency + last model).
+    Fail-soft per file and per line; mirrors read_llm_stats_local's proposer
+    pass in techtree_viewer.py -- keep in sync."""
+    ldir = os.path.join(STATE_ROOT, "llm_calls")
+    out = {"calls": 0, "total_tokens": 0, "duration_ms": 0.0,
+           "last_model": None, "last_ts": "", "days": {}}
+    try:
+        names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
+    except Exception:
+        return None
+    found = False
+    for name in names[-7:]:
+        day = name[:-6]
+        path = os.path.join(ldir, name)
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(row, dict) or row.get("component") != "proposer":
+                continue
+            found = True
+            out["calls"] += 1
+            tok = row.get("total_tokens")
+            if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                out["total_tokens"] += tok
+            dur = row.get("duration_ms")
+            if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                out["duration_ms"] += dur
+            model = row.get("model")
+            ts = str(row.get("ts") or "")
+            if ts >= out["last_ts"]:
+                out["last_ts"] = ts
+                if model:
+                    out["last_model"] = str(model)
+            d = out["days"].setdefault(day, {"calls": 0, "total_tokens": 0, "duration_ms": 0.0})
+            d["calls"] += 1
+            if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                d["total_tokens"] += tok
+            if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                d["duration_ms"] += dur
+    return out if found else None
+
+
 def read_file_text(relpath):
     path = os.path.join(INSTANCE_REPO, relpath)
     try:
@@ -242,6 +297,7 @@ result = {
     "demand_completed": read_json("demand/completed.json"),
     "skill_reads": read_json("skill_fitness/reads.json"),
     "llm_stats": read_llm_stats(),
+    "proposer_stats": read_proposer_stats(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "cycle_titles": _cycle_titles,
@@ -270,6 +326,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'demand_completed': None,
         'skill_reads': None,
         'llm_stats': {},
+        'proposer_stats': None,
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -396,6 +453,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'cycle_files': {},
         'cycle_titles_error': None,
         'llm_stats': {},
+        'proposer_stats': None,
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -496,6 +554,58 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                     st['any_length'] = True
         return stats
 
+    def read_proposer_stats_local() -> dict[str, Any] | None:
+        """Issue #63: proposer visibility -- local mirror of the
+        REMOTE_READER_SCRIPT read_proposer_stats(); keep in sync."""
+        out: dict[str, Any] = {'calls': 0, 'total_tokens': 0, 'duration_ms': 0.0,
+                               'last_model': None, 'last_ts': '', 'days': {}}
+        llm_dir = root / 'llm_calls'
+        try:
+            names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
+        except OSError:
+            return None
+        found = False
+        for name in names[-7:]:
+            day = name[:-6]
+            path = llm_dir / name
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    lines = fh.readlines()
+                mtimes.append(path.stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                if not isinstance(row, dict) or row.get('component') != 'proposer':
+                    continue
+                found = True
+                out['calls'] += 1
+                tok = row.get('total_tokens')
+                if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                    out['total_tokens'] += tok
+                dur = row.get('duration_ms')
+                if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                    out['duration_ms'] += dur
+                model = row.get('model')
+                ts = str(row.get('ts') or '')
+                if ts >= str(out.get('last_ts') or ''):
+                    out['last_ts'] = ts
+                    if model:
+                        out['last_model'] = str(model)
+                d = out['days'].setdefault(day, {'calls': 0, 'total_tokens': 0, 'duration_ms': 0.0})
+                d['calls'] += 1
+                if isinstance(tok, (int, float)) and not isinstance(tok, bool):
+                    d['total_tokens'] += tok
+                if isinstance(dur, (int, float)) and not isinstance(dur, bool):
+                    d['duration_ms'] += dur
+        return out if found else None
+
     repo_path = Path(instance_repo) if instance_repo else root.parent / 'eeebot-self-evolving'
     agents_text = None
     if repo_path.is_dir():
@@ -519,6 +629,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
         'llm_stats': read_llm_stats_local(),
+        'proposer_stats': read_proposer_stats_local(),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -2052,6 +2163,72 @@ def _host_identity(host: str | None, agents_md: str | None) -> str:
     return f'<div class="host-identity" translate="no">{esc(sep.join(parts))}</div>'
 
 
+def _build_proposer_block(
+    proposer_stats: dict[str, Any] | None,
+    ledger_tail: list[dict[str, Any]] | None,
+) -> str:
+    """Issue #63: proposer visibility -- last proposal decision (title or
+    skip reason) from the ledger + per-day cost aggregates from llm_calls
+    rows with component == 'proposer'. Read-only pass-through."""
+    decision_html = ''
+    if isinstance(ledger_tail, list):
+        for row in reversed(ledger_tail):
+            if not isinstance(row, dict):
+                continue
+            phase = row.get('phase')
+            if phase == 'proposed' and row.get('task_title'):
+                decision_html = (
+                    f'<p class="proposer-decision">last proposal: '
+                    f'<strong>{esc(str(row["task_title"]))}</strong></p>'
+                )
+                break
+            if phase == 'proposer_reject':
+                reason = row.get('reason') or row.get('decision') or 'no_valuable_task'
+                decision_html = (
+                    f'<p class="proposer-decision">last decision: '
+                    f'<strong>skipped ({esc(str(reason))})</strong></p>'
+                )
+                break
+            if phase == 'proposed' and row.get('decision'):
+                decision_html = (
+                    f'<p class="proposer-decision">last decision: '
+                    f'<strong>{esc(str(row["decision"]))}</strong></p>'
+                )
+                break
+
+    stats_html = ''
+    if isinstance(proposer_stats, dict) and proposer_stats.get('calls'):
+        model_html = (
+            f'<span class="proposer-model">model: {esc(str(proposer_stats.get("last_model") or "n/a"))}</span>'
+        )
+        day_rows = ''
+        days = proposer_stats.get('days')
+        if isinstance(days, dict):
+            for day in sorted(days, reverse=True)[:7]:
+                d = days[day]
+                calls = d.get('calls', 0)
+                mean_ms = (d.get('duration_ms', 0.0) / calls) if calls else 0.0
+                day_rows += (
+                    f'<tr><td>{esc(day)}</td>'
+                    f'<td class="skill-reads">{calls}</td>'
+                    f'<td>{fmt_compact(d.get("total_tokens", 0))}</td>'
+                    f'<td>{_fmt_duration_ms(mean_ms) or "n/a"}</td></tr>'
+                )
+        if day_rows:
+            stats_html = (
+                f'<p class="proposer-model-line">{model_html} &middot; '
+                f'{proposer_stats.get("calls", 0)} calls in the last 7 days</p>'
+                '<table class="skills-table proposer-table">'
+                '<thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead>'
+                f'<tbody>{day_rows}</tbody></table>'
+            )
+    if not decision_html and not stats_html:
+        return '<p class="unavailable-note">no proposer data recorded</p>'
+    missing = '' if stats_html else '<p class="unavailable-note">no proposer llm calls recorded yet</p>'
+    missing_d = '' if decision_html else '<p class="unavailable-note">no proposal decisions in the recent ledger</p>'
+    return f'{decision_html}{missing_d}{stats_html}{missing}'
+
+
 def build_agent_panel(
     agents_md: str | None,
     goal_text: dict[str, Any] | None,
@@ -2059,6 +2236,7 @@ def build_agent_panel(
     portfolio: dict[str, Any] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
     host: str | None = None,
+    proposer_stats: dict[str, Any] | None = None,
 ) -> str:
     # 1. AGENTS.md
     if agents_md is not None:
@@ -2143,6 +2321,10 @@ def build_agent_panel(
           <h3>Skill Fitness (Reads & Usage)</h3>
           {skills_html}
         </div>
+      </div>
+      <div class="proposer-block">
+        <h3>Proposer</h3>
+        {_build_proposer_block(proposer_stats, ledger_tail)}
       </div>
     </section>
     '''
@@ -2653,6 +2835,23 @@ CSS = '''
       border-radius: 4px;
       display: inline-block;
     }
+    /* Issue #63: proposer visibility block. */
+    .proposer-block {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #182a20;
+    }
+    .proposer-block h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .proposer-decision { font-size: 0.85em; margin: 0 0 8px 0; color: #dcebe1; }
+    .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
+    .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
+    .proposer-table { max-width: 480px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -3031,6 +3230,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         portfolio=portfolio,
         ledger_tail=ledger_tail,
         host=host,
+        proposer_stats=data.get('proposer_stats'),
     )
 
     return PAGE_TEMPLATE.format(

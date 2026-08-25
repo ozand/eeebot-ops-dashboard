@@ -1631,3 +1631,50 @@ def test_issue61_aim_lower_positive_delta_not_bare_gain() -> None:
 def test_issue61_aim_unknown_keeps_gain_wording() -> None:
     html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'mean gain' in html_out
+
+# ---------------------------------------------------------------------------
+# Issue #63: proposer visibility block
+# ---------------------------------------------------------------------------
+
+
+def test_issue63_proposer_model_and_daily_aggregates_render() -> None:
+    data = _fixture()
+    data['proposer_stats'] = {
+        'calls': 14, 'total_tokens': 234567, 'duration_ms': 900000.0,
+        'last_model': 'an/gemini-3.7-flash-low', 'last_ts': '2026-08-25T02:00:00Z',
+        'days': {'2026-08-25': {'calls': 14, 'total_tokens': 234567, 'duration_ms': 900000.0}},
+    }
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'proposer-block' in html_out
+    assert 'an/gemini-3.7-flash-low' in html_out
+    assert '2026-08-25' in html_out
+    assert '234.6K' in html_out
+    assert 'Mean latency' in html_out
+
+
+def test_issue63_proposer_absent_graceful() -> None:
+    data = _fixture()
+    data['proposer_stats'] = None
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'proposer-block' in html_out
+    assert 'no proposer data recorded' in html_out
+
+
+def test_issue63_last_proposal_decision_from_ledger() -> None:
+    data = _fixture()
+    data['ledger_tail'] = list(data['ledger_tail']) + [
+        {'phase': 'proposed', 'cycle_id': 'cycle-prop1', 'task_title': 'Wire validator into run_all_tests suite', 'ts': '2026-08-18T09:00:00Z'},
+    ]
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'last proposal:' in html_out
+    assert 'Wire validator into run_all_tests suite' in html_out
+
+
+def test_issue63_last_skip_decision_from_ledger() -> None:
+    data = _fixture()
+    data['ledger_tail'] = list(data['ledger_tail']) + [
+        {'phase': 'proposer_reject', 'cycle_id': 'cycle-rej1', 'reason': 'no_valuable_task', 'ts': '2026-08-18T09:00:00Z'},
+    ]
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'last decision:' in html_out
+    assert 'skipped (no_valuable_task)' in html_out
