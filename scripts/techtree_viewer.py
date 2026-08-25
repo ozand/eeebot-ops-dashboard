@@ -724,7 +724,7 @@ def unavailable_panel(title: str, reason: str = 'source unavailable') -> str:
     '''
 
 
-def build_sparkline(gain_history: list[Any] | None) -> str:
+def build_sparkline(gain_history: list[Any] | None, aim: str | None = None) -> str:
     if not gain_history:
         return '<div class="spark-empty">no observations yet</div>'
 
@@ -754,14 +754,22 @@ def build_sparkline(gain_history: list[Any] | None) -> str:
             bottom_cells.append(f'<span class="bar bar-neg" style="height:{height}px;" title="{title}"></span>')
 
     mean_gain = sum(values) / len(values)
-    mean_class = 'mean-pos' if mean_gain >= 0 else 'mean-neg'
+    # Issue #61: an increase on an aim-lower metric is a REGRESSION, not a
+    # gain -- render the delta aim-aware instead of bare "mean gain +N".
+    if aim == 'lower':
+        good = mean_gain < 0
+        mean_class = 'mean-pos' if good else 'mean-neg'
+        mean_label = f'mean Δ {fmt_compact(mean_gain, signed=True)} (aim: lower)'
+    else:
+        mean_class = 'mean-pos' if mean_gain >= 0 else 'mean-neg'
+        mean_label = f'mean gain {fmt_compact(mean_gain, signed=True)}'
     return (
         '<div class="spark">'
         f'<div class="spark-top">{"".join(top_cells)}</div>'
         '<div class="spark-baseline"></div>'
         f'<div class="spark-bottom">{"".join(bottom_cells)}</div>'
         '</div>'
-        f'<div class="spark-mean {mean_class}">mean gain {fmt_compact(mean_gain, signed=True)}</div>'
+        f'<div class="spark-mean {mean_class}">{mean_label}</div>'
     )
 
 
@@ -867,7 +875,7 @@ def _direction_box_html(name: str, node: dict[str, Any], is_current: bool, x: fl
         '</div>'
         f'<div class="dir-lever">{small_caps_metric(node.get("lever_metric"))}</div>'
         f'<span class="badge {badge_class}">{badge_text}</span>'
-        f'{build_sparkline(node.get("gain_history"))}'
+        f'{build_sparkline(node.get("gain_history"), node.get("direction"))}'
         f'{cooldown_note}'
         '</div>'
     )
@@ -2167,13 +2175,39 @@ def build_empire_stats_strip(
     computed_ts = ''
     if scorecard.get('computed_at_utc'):
         computed_ts = fmt_ts(scorecard.get('computed_at_utc'))
+    # Issue #61: every headline number carries a one-line definition so a
+    # first-time viewer can tell health from sickness.
     kpi_tooltips = {
+        'integrations': 'total cycles whose changes were merged into the evolution lineage',
+        'confirmed ratio': 'share of integrations whose effects were later confirmed working in live operation',
         'repeat failure rate · scorecard': (
-            'source: scorecard snapshot'
+            'share of cycles repeating a previously seen failure; source: scorecard snapshot'
             + (f' (computed {computed_ts})' if computed_ts else '')
             + ' over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ'
         ),
+        'tokens / integration': 'average LLM tokens spent per integrated cycle',
+        'held-out': (
+            'held-out validation: pass rate on tasks excluded from the agent\'s own '
+            'selection and training; X/Y = passed/checked'
+        ),
     }
+
+    # Issue #61: render scorecard-defined targets when present (scorecard
+    # carries none today; the page lights up automatically if one appears).
+    targets = scorecard.get('targets') if isinstance(scorecard.get('targets'), dict) else {}
+    target_key = {
+        'integrations': 'integrations',
+        'confirmed ratio': 'confirmed_integration_ratio',
+        'repeat failure rate · scorecard': 'repeat_failure_rate',
+        'tokens / integration': 'tokens_per_integration',
+        'held-out': 'heldout',
+    }
+
+    def _target_html(label: str) -> str:
+        t = targets.get(target_key.get(label, ''))
+        if not isinstance(t, (int, float)) or isinstance(t, bool):
+            return ''
+        return f'<span class="kpi-target">target &le;{esc(fmt_compact(t))}</span>'
 
     stat_html = ''
     for label, value in stats:
@@ -2182,7 +2216,8 @@ def build_empire_stats_strip(
         stat_html += (
             f'<div class="empire-stat"{tip_attr}>'
             f'<span class="stat-label">{esc(label)}</span>'
-            f'<span class="stat-value">{value}</span></div>'
+            f'<span class="stat-value">{value}</span>'
+            f'{_target_html(label)}</div>'
         )
 
     # Issue #48: visible freshness badge in the header. Age is real
@@ -2811,7 +2846,13 @@ CSS = '''
     .bar-placeholder { height: 0; background: transparent; }
     .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
     .spark-mean { font-size: 0.7em; margin-top: 2px; }
-    .mean-pos { color: #56d364; }
+    /* Issue #61: scorecard-defined KPI target badge. */
+    .kpi-target {
+      font-size: 0.62em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }    .mean-pos { color: #56d364; }
     .mean-neg { color: #d97b7b; }
 
     footer.page-footer {
