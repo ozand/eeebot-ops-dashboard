@@ -268,6 +268,95 @@ def read_file_text(relpath):
         return None
 
 
+def _parse_lessons_text(text):
+    """Issue #73: minimal line-based parser for the machine-written flat
+    lessons.yaml shape ('- id:' blocks with 2-space-indented fields and
+    deeper-indented continuations). Used when PyYAML is unavailable; also
+    the test path so the fallback is always exercised."""
+    lessons = []
+    cur = None
+    last_key = None
+    for raw in text.splitlines():
+        if not raw.strip() or raw.strip() == 'lessons:':
+            continue
+        if raw.lstrip().startswith('- id:'):
+            if cur:
+                lessons.append(cur)
+            cur = {"id": raw.split(':', 1)[1].strip(), "date": "", "cycle_id": "",
+                   "task_id": "", "hypothesis": "", "result": "", "insight": ""}
+            last_key = "id"
+            continue
+        if cur is None:
+            continue
+        stripped = raw.strip()
+        if raw.startswith('    ') and not stripped.startswith('- ') and last_key:
+            # continuation of the previous field (folded multi-line string)
+            cur[last_key] = (str(cur[last_key]) + ' ' + stripped).strip()
+            continue
+        if stripped.startswith('- '):
+            continue  # files_changed list items -- not rendered
+        if ':' in stripped and raw.startswith('  '):
+            key, _, val = stripped.partition(':')
+            key = key.strip()
+            mapped = {'generalized_insight': 'insight'}.get(key, key)
+            if mapped in cur:
+                cur[mapped] = val.strip().strip("'").strip()
+                last_key = mapped
+    if cur:
+        lessons.append(cur)
+    return lessons
+
+
+def read_lessons():
+    """Issue #73: collect lessons from lessons/lessons.yaml plus
+    lessons/archive/*.yaml.gz (rotation archives), dedupe by id, newest
+    first. Fail-soft everywhere (#29): an unreadable lessons file must
+    never break the publish."""
+    lessons_dir = os.path.join(INSTANCE_REPO, "lessons")
+    texts = []
+    try:
+        with open(os.path.join(lessons_dir, "lessons.yaml"), "r", encoding="utf-8", errors="replace") as fh:
+            texts.append(fh.read())
+        _mtimes.append(os.path.getmtime(os.path.join(lessons_dir, "lessons.yaml")))
+    except Exception:
+        pass
+    try:
+        archive_dir = os.path.join(lessons_dir, "archive")
+        names = sorted(f for f in os.listdir(archive_dir) if f.endswith(".yaml.gz"))
+        for name in names[-30:]:
+            try:
+                with gzip.open(os.path.join(archive_dir, name), "rt", encoding="utf-8", errors="replace") as fh:
+                    texts.append(fh.read())
+                _mtimes.append(os.path.getmtime(os.path.join(archive_dir, name)))
+            except Exception:
+                continue
+    except Exception:
+        pass
+    by_id = {}
+    for text in texts:
+        try:
+            import yaml  # noqa: PLS290 - optional on the host
+            data = yaml.safe_load(text)
+            rows = data.get('lessons', []) if isinstance(data, dict) else []
+            rows = [r for r in rows if isinstance(r, dict)]
+        except Exception:
+            rows = _parse_lessons_text(text)
+        for row in rows:
+            lid = str(row.get('id') or '')
+            if not lid:
+                continue
+            by_id[lid] = {
+                "id": lid,
+                "date": str(row.get('date') or ''),
+                "cycle_id": str(row.get('cycle_id') or ''),
+                "task_id": str(row.get('task_id') or ''),
+                "hypothesis": str(row.get('hypothesis') or ''),
+                "result": str(row.get('result') or ''),
+                "insight": str(row.get('generalized_insight') or ''),
+            }
+    return sorted(by_id.values(), key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
+
+
 def extract_git_titles():
     titles = {}
     cycle_files = {}
@@ -346,6 +435,7 @@ result = {
     "skill_reads": read_json("skill_fitness/reads.json"),
     "llm_stats": read_llm_stats(),
     "proposer_stats": read_proposer_stats(),
+    "lessons": read_lessons(),
     "ledger_history": read_ledger_history(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
@@ -377,6 +467,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_reads': None,
         'llm_stats': {},
         'proposer_stats': None,
+        'lessons': [],
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -486,6 +577,45 @@ def extract_git_titles_local(repo_root: Path) -> tuple[dict[str, str], dict[str,
     return titles, cycle_files, None
 
 
+def _parse_lessons_flat(text: str) -> list[dict[str, str]]:
+    """Issue #73: minimal line-based parser for the machine-written flat
+    lessons.yaml shape (used when PyYAML is unavailable). Tolerates folded
+    multi-line continuations and truncated archive heads."""
+    fields = ('date', 'cycle_id', 'task_id', 'hypothesis', 'result', 'generalized_insight')
+    entries: list[dict[str, str]] = []
+    cur: dict[str, str] | None = None
+    last_key: str | None = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('- id:'):
+            if cur and cur.get('id'):
+                entries.append(cur)
+            cur = {'id': stripped[len('- id:'):].strip().strip('"\''), 'date': '', 'cycle_id': '',
+                   'task_id': '', 'hypothesis': '', 'result': '', 'insight': ''}
+            last_key = None
+            continue
+        if cur is None:
+            continue
+        if line.startswith('  - ') or stripped == 'lessons:':
+            continue
+        if line.startswith('    ') and last_key:
+            cur[last_key] = (cur[last_key] + ' ' + stripped).strip()
+            continue
+        matched = False
+        for key in fields:
+            prefix = key + ':'
+            if stripped.startswith(prefix):
+                cur['insight' if key == 'generalized_insight' else key] = stripped[len(prefix):].strip().strip('"\'')
+                last_key = 'insight' if key == 'generalized_insight' else key
+                matched = True
+                break
+        if not matched:
+            last_key = None
+    if cur and cur.get('id'):
+        entries.append(cur)
+    return entries
+
+
 def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[str, Any]:
     """Read all state sources directly from `state_root` -- no SSH."""
     empty: dict[str, Any] = {
@@ -504,6 +634,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'cycle_titles_error': None,
         'llm_stats': {},
         'proposer_stats': None,
+        'lessons': [],
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -722,6 +853,56 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
 
     titles, cycle_files, titles_error = extract_git_titles_local(repo_path)
 
+    def read_lessons_local() -> list[dict[str, Any]]:
+        """Issue #73: lessons from the instance repo (lessons.yaml + daily
+        .yaml.gz archives). Local mirror of the REMOTE_READER_SCRIPT
+        read_lessons() -- keep in sync. PyYAML when available, minimal
+        flat-shape parser otherwise; fail-soft everywhere (#29)."""
+        lessons_dir = repo_path / 'lessons'
+        texts: list[tuple[str, str]] = []
+        try:
+            live = lessons_dir / 'lessons.yaml'
+            texts.append(('live', live.read_text(encoding='utf-8', errors='replace')))
+            mtimes.append(live.stat().st_mtime)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            archives = sorted(p.name for p in (lessons_dir / 'archive').iterdir() if p.name.endswith('.yaml.gz'))
+        except OSError:
+            archives = []
+        for name in archives[-30:]:
+            try:
+                with gzip.open(lessons_dir / 'archive' / name, 'rt', encoding='utf-8', errors='replace') as fh:
+                    texts.append((name, fh.read()))
+                mtimes.append((lessons_dir / 'archive' / name).stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                continue
+        entries: dict[str, dict[str, Any]] = {}
+        try:
+            import yaml  # type: ignore
+            for _src, text in texts:
+                try:
+                    parsed = yaml.safe_load(text)
+                except Exception:  # noqa: BLE001
+                    parsed = _parse_lessons_flat(text)
+                if isinstance(parsed, dict) and isinstance(parsed.get('lessons'), list):
+                    for item in parsed['lessons']:
+                        if isinstance(item, dict) and item.get('id'):
+                            entries[str(item['id'])] = {
+                                'id': str(item.get('id') or ''),
+                                'date': str(item.get('date') or ''),
+                                'cycle_id': str(item.get('cycle_id') or ''),
+                                'task_id': str(item.get('task_id') or ''),
+                                'hypothesis': str(item.get('hypothesis') or ''),
+                                'result': str(item.get('result') or ''),
+                                'insight': str(item.get('generalized_insight') or ''),
+                            }
+        except Exception:  # noqa: BLE001
+            for _src, text in texts:
+                for item in _parse_lessons_flat(text):
+                    entries[item['id']] = item
+        return sorted(entries.values(), key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
+
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
@@ -734,6 +915,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'skill_reads': read_json('skill_fitness/reads.json'),
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
+        'lessons': read_lessons_local(),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -2627,6 +2809,86 @@ def _build_proposer_block(
     return f'{decision_html}{missing_d}{stats_html}{missing}'
 
 
+def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
+    """Issue #73: lessons history page — newest-first, date-grouped, with
+    cycle deep-links and a client-side text filter (state in URL hash)."""
+    entries = [l for l in (lessons or []) if isinstance(l, dict)]
+    if not entries:
+        return (
+            '<section class="panel panel-lessons" id="panel-lessons">'
+            '<h2 class="panel-title">Lessons History</h2>'
+            '<p class="unavailable-note">no lessons data recorded</p>'
+            '</section>'
+        )
+    today = datetime.now(timezone.utc).date()
+    recent = 0
+    for l in entries:
+        d = _parse_iso_ts(l.get('date'))
+        if d is not None and (today - d.date()).days <= 7:
+            recent += 1
+    rows = []
+    last_date = None
+    for l in entries:
+        date = str(l.get('date') or 'unknown')
+        if date != last_date:
+            last_date = date
+            rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
+        cid = str(l.get('cycle_id') or '')
+        cycle_link = (
+            f'<a href="cycles.html#cycle-{esc(cid)}" class="lesson-cycle">{esc(cid)}</a>'
+            if cid else '<span class="lesson-cycle">n/a</span>'
+        )
+        result = str(l.get('result') or '')
+        result_body = esc(result[:400]) + ('...' if len(result) > 400 else '')
+        result_html = (
+            f'<details class="lesson-result"><summary>result</summary>'
+            f'<pre>{result_body}</pre></details>' if result else ''
+        )
+        insight = str(l.get('insight') or '')
+        insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
+        rows.append(
+            f'<li class="lesson-row" data-text="{esc((l.get("id") or "") + " " + str(l.get("task_id") or "") + " " + str(l.get("hypothesis") or "") + " " + result + " " + insight + " " + cid).lower()}">'
+            f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
+            f' {cycle_link}</div>'
+            f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
+            f'<div class="lesson-hypothesis">{esc(str(l.get("hypothesis") or ""))}</div>'
+            f'{result_html}{insight_html}</li>'
+        )
+    return f'''
+    <section class="panel panel-lessons" id="panel-lessons">
+      <h2 class="panel-title">Lessons History ({len(entries)} total &middot; {recent} in last 7 days)</h2>
+      <input class="lessons-filter" type="text" placeholder="filter lessons...">
+      <ul class="lessons-list">
+        {''.join(rows)}
+      </ul>
+      <script>
+      (function(){{
+        var input = document.querySelector('.lessons-filter');
+        if (!input) return;
+        var rowsL = document.querySelectorAll('#panel-lessons .lesson-row');
+        function apply(q) {{
+          var t = (q || '').toLowerCase();
+          rowsL.forEach(function (r) {{
+            r.style.display = (!t || r.getAttribute('data-text').indexOf(t) !== -1) ? '' : 'none';
+          }});
+          input.value = t;
+        }}
+        var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
+        apply(init);
+        input.addEventListener('input', function () {{
+          var q = input.value.trim();
+          if (q) {{ location.hash = 'q-' + encodeURIComponent(q); }} else {{ history.replaceState(null, '', location.pathname + location.search); }}
+          apply(q);
+        }});
+        window.addEventListener('hashchange', function () {{
+          apply(decodeURIComponent((location.hash || '').replace('#q-', '')));
+        }});
+      }})();
+      </script>
+    </section>
+    '''
+
+
 def build_agent_panel(
     agents_md: str | None,
     goal_text: dict[str, Any] | None,
@@ -3298,6 +3560,49 @@ CSS = '''
     .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
     .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
     .proposer-table { max-width: 480px; }
+    /* Issue #73: lessons history page. */
+    .lessons-filter {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      color: #dcebe1;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 0 10px 0;
+      width: min(420px, 100%);
+    }
+    .lessons-list { list-style: none; margin: 0; padding: 0; }
+    .lesson-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+    }
+    .lesson-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 0.85em;
+    }
+    .lesson-meta { font-size: 0.8em; color: #8aa695; }
+    .lesson-id { font-family: 'Consolas', monospace; color: #56d364; }
+    .lesson-cycle { font-family: 'Consolas', monospace; color: #2fd3c4; margin-left: 8px; }
+    .lesson-title { color: #e2f0e6; font-weight: 600; margin: 4px 0 2px; }
+    .lesson-hypothesis { color: #9db4a6; font-size: 0.92em; }
+    .lesson-result summary { cursor: pointer; color: #8aa695; font-size: 0.85em; }
+    .lesson-result pre {
+      margin: 4px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85em;
+      color: #cfe3d7;
+    }
+    .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -3950,12 +4255,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         host=host,
         proposer_stats=data.get('proposer_stats'),
     )
-    lessons_panel = (
-        '<section class="panel panel-lessons" id="panel-lessons">'
-        '<h2 class="panel-title">Lessons History</h2>'
-        '<p class="unavailable-note">lessons history lands in issue #73</p>'
-        '</section>'
-    )
+    lessons_panel = build_lessons_panel(data.get('lessons'))
 
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,

@@ -772,3 +772,21 @@ def test_issue56_unreadable_ledger_fail_soft(tmp_path: Path) -> None:
     with mock.patch('builtins.open', side_effect=PermissionError(13, 'denied')):
         d2 = ap.compute_tree_digest(tmp_path)  # must not raise
     assert d1 != d2  # sentinel differs from readable hash
+
+# ---------------------------------------------------------------------------
+# Issue #73: lessons.yaml tail participates in the publish digest
+# ---------------------------------------------------------------------------
+
+
+def test_issue73_lessons_change_alters_digest(tmp_path, monkeypatch) -> None:
+    state_root = tmp_path / 'state'
+    state_root.mkdir()
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    base = 'lessons:\n  - id: "LESS-20260825-aaaa"\n    date: "2026-08-25"\n    result: "r1"\n'
+    (lessons_dir / 'lessons.yaml').write_text(base, encoding='utf-8')
+    d1 = ap.compute_tree_digest(state_root)
+    (lessons_dir / 'lessons.yaml').write_text(base + '  - id: "LESS-20260825-bbbb"\n    date: "2026-08-25"\n    result: "r2"\n', encoding='utf-8')
+    d2 = ap.compute_tree_digest(state_root)
+    assert d1 != d2
