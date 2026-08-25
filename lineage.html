@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
+<title>eeebot / lineage</title>
+<style>
+    :root {
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      padding: 0 0 32px 0;
+    }
+    h1, h2, h3, .panel-title, .empire-title {
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+    }
+    a { color: #56d364; }
+
+    /* --- top strip: slim, one line --- */
+    .empire-strip {
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
+      padding: 8px 20px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      align-items: center;
+      gap: 18px;
+    }
+    .empire-title {
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
+      white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
+    }
+    .empire-stats {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 18px;
+    }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+
+    /* --- freshness badge (issue #48) --- */
+    .empire-fresh { margin-left: auto; white-space: nowrap; }
+    .freshness {
+      font-size: 0.78em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #3d6b52;
+      font-variant-numeric: tabular-nums;
+    }
+    .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
+    .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
+    .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
+    .freshness-unknown { color: #9db4a6; }
+
+    .stat-label {
+      text-transform: uppercase;
+      font-size: 0.64em;
+      letter-spacing: 1px;
+      color: #9db4a6;
+    }
+    .stat-value {
+      font-size: 1.02em;
+      color: #e2f0e6;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .canvas-outer {
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior: contain;
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .canvas-jump {
+      display: inline-block;
+      margin: 8px 12px 0;
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      text-decoration: underline;
+    }
+    .lane-label {
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+    .panel-title {
+      margin: 0 0 12px 0;
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #28503c;
+      padding-bottom: 6px;
+    }
+    .panel-unavailable {
+      text-align: center;
+      color: #7fa08d;
+    }
+    .unavailable-note {
+      color: #7fa08d;
+      font-style: italic;
+    }
+
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
+    }
+    .now-label {
+      font-weight: 700;
+      color: #9db4a6;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
+    }
+    .now-detail {
+      color: #b8d0c2;
+      font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #8aa695;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #8aa695;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .feed-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #e2f0e6;
+      font-size: 0.95em;
+    }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
+    .feed-cid {
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .feed-ts {
+      color: #8aa695;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-tree-link {
+      color: #2fd3c4;
+      font-size: 0.78em;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+    /* Issue #60: per-cycle LLM cost line + budget-pressure marker. */
+    .feed-cost {
+      font-size: 0.75em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-pressure {
+      color: #d19a66;
+      font-weight: 700;
+    }
+    .feed-files > summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .feed-files-list {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files-list li { padding: 1px 0; word-break: break-all; }
+
+    /* --- panel nav + copyable ids (issue #47) --- */
+    .panel-nav {
+      padding: 6px 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      border-bottom: 1px solid #182a20;
+    }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a:hover { text-decoration: underline; }
+    /* Issue #70: multi-page site nav -- current page highlighted. */
+    .site-nav a.nav-current {
+      color: #56d364;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    /* Issue #70: index teasers. */
+    .teaser-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88em;
+    }
+    .teaser-list a { color: #2fd3c4; font-family: 'Consolas', monospace; }
+    .copyable { cursor: pointer; }
+    .copyable.copied { color: #2fd3c4; }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    .hypo-details { margin-top: 8px; }
+    .hypo-summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .hypo-summary:hover { color: #56d364; }
+    .hypo-details ul.hypo-list { margin-top: 6px; }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hypo-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #e2f0e6;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #8aa695;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    /* Issue #63: proposer visibility block. */
+    .proposer-block {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #182a20;
+    }
+    .proposer-block h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .proposer-decision { font-size: 0.85em; margin: 0 0 8px 0; color: #dcebe1; }
+    .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
+    .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
+    .proposer-table { max-width: 480px; }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #cfe3d7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .charter-details > summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .charter-details > summary:hover { color: #56d364; }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(8, 15, 11, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #0f2018;
+      color: #9db4a6;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1e3a2d;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #182a20;
+    }
+    .skill-high-ratio {
+      background: rgba(86, 211, 100, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #56d364;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #7d9c8a;
+      font-style: italic;
+    }
+
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
+      width: 100%;
+      height: 100%;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
+      border-radius: 8px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
+    }
+    .dir-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
+    }
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
+    .dir-lever {
+      font-variant: small-caps;
+      letter-spacing: 0.5px;
+      color: #9db4a6;
+      font-size: 0.76em;
+      margin-bottom: 6px;
+    }
+    .ribbon {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #56d364;
+      color: #04240f;
+      font-size: 0.6em;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transform: rotate(4deg);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #cfe3d7;
+    }
+    .evo-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    /* Issue #53: thick bright edge along the current node's ancestry. */
+    .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
+    .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
+    .evo-fallback { color: #dcebe1; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.64em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+    .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
+    .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+
+    .spark { margin-bottom: 2px; }
+    .spark-top, .spark-bottom {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+    .spark-bottom { align-items: flex-start; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
+    .bar-pos { background: #56d364; }
+    .bar-neg { background: #b23a3a; }
+    .bar-placeholder { height: 0; background: transparent; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
+    /* Issue #61: scorecard-defined KPI target badge. */
+    .kpi-target {
+      font-size: 0.62em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }    .mean-pos { color: #56d364; }
+    .mean-neg { color: #d97b7b; }
+
+    footer.page-footer {
+      text-align: center;
+      color: #6f9480;
+      font-size: 0.78em;
+      margin-top: 20px;
+      padding-top: 14px;
+    }
+    .footer-computed {
+      color: #7d8aa3;
+    }
+</style>
+</head>
+<body>
+
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">121</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 10:57:01.216424 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">54.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">3.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="262">data: 4m old &middot; generated 11:49 UTC</span></div>
+    </header>
+    
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html" class="nav-current">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
+<main class="dashboard-main">
+<div class="canvas-outer" id="panel-lineage"><a class="canvas-jump" href="#node-88f7e3b">&gt;&gt; jump to current cycle</a><svg class="tech-canvas" role="img" aria-label="Cycle lineage graph: research directions and evolution lineage, 100 nodes" width="7620" height="488" viewBox="0 0 7620 488"><g class="lane lane-a" transform="translate(0,20)"><text x="10" y="14" class="lane-label">RESEARCH DIRECTIONS</text><foreignObject x="290" y="60" width="210" height="150"><div class="dir-box dir-box-current"><div class="dir-box-head"><span class="dir-glyph">&#9751;</span><span class="dir-name">Cycle Cost</span></div><div class="dir-lever">cost.tokens_per_integration</div><span class="badge badge-researching">RESEARCHING</span><div class="spark"><div class="spark-top"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="46900.2571"></span><span class="bar bar-pos" style="height:2px;" title="1995.262"></span><span class="bar bar-pos" style="height:2px;" title="28497.4436"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-neg" style="height:2px;" title="-17049.3766"></span><span class="bar bar-neg" style="height:2px;" title="-5503.9627"></span><span class="bar bar-neg" style="height:14px;" title="-1239553.7442"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-13294.4254"></span><span class="bar bar-neg" style="height:2px;" title="-46824.0052"></span></div></div><div class="spark-mean mean-pos">mean Δ -155.6K (aim: lower)</div></div></foreignObject><foreignObject x="540" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Compile Health</span></div><div class="dir-lever">quality.compile_clean_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain 0</div></div></foreignObject><foreignObject x="790" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9874;</span><span class="dir-name">Heldout Robustness</span></div><div class="dir-lever">heldout.heldout_gap</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span><span class="bar bar-pos" style="height:2px;" title="0.0"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-neg">mean Δ 0 (aim: lower)</div></div></foreignObject><foreignObject x="1040" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#10070;</span><span class="dir-name">Tool Reuse</span></div><div class="dir-lever">loop.confirmed_integration_ratio</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:14px;" title="0.0219"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:5px;" title="0.0075"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-neg" style="height:2px;" title="-0.0014"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:2px;" title="-0.0027"></span><span class="bar bar-neg" style="height:2px;" title="-0.0013"></span><span class="bar bar-neg" style="height:2px;" title="-0.0026"></span><span class="bar bar-neg" style="height:2px;" title="-0.0012"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean gain +0</div></div></foreignObject><foreignObject x="1290" y="60" width="210" height="150"><div class="dir-box"><div class="dir-box-head"><span class="dir-glyph">&#9750;</span><span class="dir-name">Proposer Quality</span></div><div class="dir-lever">loop.repeat_failure_rate</div><span class="badge badge-available">AVAILABLE</span><div class="spark"><div class="spark-top"><span class="bar bar-pos" style="height:2px;" title="0.015"></span><span class="bar bar-pos" style="height:2px;" title="0.01"></span><span class="bar bar-placeholder"></span><span class="bar bar-pos" style="height:2px;" title="0.0007"></span><span class="bar bar-pos" style="height:2px;" title="0.006"></span><span class="bar bar-pos" style="height:2px;" title="0.0006"></span><span class="bar bar-pos" style="height:2px;" title="0.0006"></span><span class="bar bar-pos" style="height:2px;" title="0.0058"></span></div><div class="spark-baseline"></div><div class="spark-bottom"><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-neg" style="height:14px;" title="-0.2202"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span><span class="bar bar-placeholder"></span></div></div><div class="spark-mean mean-pos">mean Δ -0.02 (aim: lower)</div></div></foreignObject><path d="M500,135 L520,135 L520,135 L540,135" class="dir-elbow" /><path d="M750,135 L770,135 L770,135 L790,135" class="dir-elbow" /><path d="M1000,135 L1020,135 L1020,135 L1040,135" class="dir-elbow" /><path d="M1250,135 L1270,135 L1270,135 L1290,135" class="dir-elbow" /><rect x="260" y="0" width="1" height="100%" class="mint-col-border" fill="#182a20" /></g><g class="lane lane-b" transform="translate(0,304)"><text x="10" y="14" class="lane-label">EVOLUTION LINEAGE (DGM)</text><text x="10" y="32" class="lane-note">showing last 30 of 100 nodes</text><text x="10" y="46" class="lane-note">time range: Aug 20 - Aug 25</text><text x="7420" y="14" class="lane-note" text-anchor="end">no node scores recorded yet</text><foreignObject x="7310" y="60" width="180" height="64"><div class="evo-box evo-box-current" title="88f7e3b | feat: add structured JSON report envelope to validate_type_comparison.py | selfevo/cycle-cycle-20bbb77c4a10" id="node-88f7e3b"><div class="evo-header"><a href="#cycle-cycle-20bbb77c4a10" class="evo-node-link"><span class="evo-diamond">&#9733;</span><span class="evo-box-label">feat: add structured JSON report envelope to validate_type_comparison.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">88f7e3b</span></div></div></foreignObject><foreignObject x="7060" y="60" width="180" height="64"><div class="evo-box" title="19624b9 | feat: add --fail-fast flag to run_all_tests.py for early halt on first failure | selfevo/cycle-cycle-62ffebdbf659" id="node-19624b9"><div class="evo-header"><a href="#cycle-cycle-62ffebdbf659" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add --fail-fast flag to run_all_tests.py for early halt on first failure</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">19624b9</span></div></div></foreignObject><foreignObject x="6810" y="60" width="180" height="64"><div class="evo-box" title="6b07b31 | feat: add all-time confirmed integration metrics and cycle health stats to control_plane_summary | selfevo/cycle-cycle-c09e37992835" id="node-6b07b31"><div class="evo-header"><a href="#cycle-cycle-c09e37992835" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add all-time confirmed integration metrics and cycle health stats to control_plane_summary</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">6b07b31</span></div></div></foreignObject><foreignObject x="6560" y="60" width="180" height="64"><div class="evo-box" title="3ed3423 | feat: add target path verification and proof metadata validation to validate_cycle_handoff | selfevo/cycle-cycle-af523f3b8d3d" id="node-3ed3423"><div class="evo-header"><a href="#cycle-cycle-af523f3b8d3d" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add target path verification and proof metadata validation to validate_cycle_handoff</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">3ed3423</span></div></div></foreignObject><foreignObject x="6310" y="60" width="180" height="64"><div class="evo-box" title="db7ab65 | feat: add min-ratio threshold validation and non-zero exit gate to check_confirmation_ratio | selfevo/cycle-cycle-ea545ca8fb42" id="node-db7ab65"><div class="evo-header"><a href="#cycle-cycle-ea545ca8fb42" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add min-ratio threshold validation and non-zero exit gate to check_confirmation_ratio</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">db7ab65</span></div></div></foreignObject><foreignObject x="6060" y="60" width="180" height="64"><div class="evo-box" title="e33f00f | feat: add failure reason normalization and hash stripping to check_last_cycle_repeat | selfevo/cycle-cycle-aa2788602fe4" id="node-e33f00f"><div class="evo-header"><a href="#cycle-cycle-aa2788602fe4" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add failure reason normalization and hash stripping to check_last_cycle_repeat</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e33f00f</span></div></div></foreignObject><foreignObject x="5810" y="60" width="180" height="64"><div class="evo-box" title="2808d91 | feat: add os.system and os.popen AST checks to validate_no_shell_true | selfevo/cycle-cycle-50a1def86f9a" id="node-2808d91"><div class="evo-header"><a href="#cycle-cycle-50a1def86f9a" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add os.system and os.popen AST checks to validate_no_shell_true</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2808d91</span></div></div></foreignObject><foreignObject x="5560" y="60" width="180" height="64"><div class="evo-box" title="1a1e45f | feat: add structured JSON report and directory scanning to validate_no_eval_exec | selfevo/cycle-cycle-531cd89ce0f7" id="node-1a1e45f"><div class="evo-header"><a href="#cycle-cycle-531cd89ce0f7" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add structured JSON report and directory scanning to validate_no_eval_exec</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">1a1e45f</span></div></div></foreignObject><foreignObject x="5310" y="60" width="180" height="64"><div class="evo-box" title="abfb179 | selfevo: auto-commit uncommitted subagent work — Fix import resolution and exit code handling in scripts/validate_unused_imports. | selfevo/cycle-cycle-d2df789e95e0" id="node-abfb179"><div class="evo-header"><a href="#cycle-cycle-d2df789e95e0" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Fix import resolution and exit code handling in scripts/validate_unused_imports.</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">abfb179</span></div></div></foreignObject><foreignObject x="5060" y="60" width="180" height="64"><div class="evo-box" title="1216947 | fix: repair failing tests | selfevo/cycle-cycle-34de2183e259" id="node-1216947"><div class="evo-header"><a href="#cycle-cycle-34de2183e259" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">fix: repair failing tests</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">1216947</span></div></div></foreignObject><foreignObject x="4810" y="60" width="180" height="64"><div class="evo-box" title="60386ca | feat: add count_recent_failures to tally non-success cycle outcomes in a trailing window | selfevo/cycle-cycle-bdf0b42ba267" id="node-60386ca"><div class="evo-header"><a href="#cycle-cycle-bdf0b42ba267" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add count_recent_failures to tally non-success cycle outcomes in a trailing window</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">60386ca</span></div></div></foreignObject><foreignObject x="4560" y="60" width="180" height="64"><div class="evo-box" title="e942658 | feat: add clean-branch check with CLI entrypoint and exit codes | selfevo/cycle-cycle-a821e5fe1a27" id="node-e942658"><div class="evo-header"><a href="#cycle-cycle-a821e5fe1a27" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add clean-branch check with CLI entrypoint and exit codes</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">e942658</span></div></div></foreignObject><foreignObject x="4310" y="60" width="180" height="64"><div class="evo-box" title="61b56d0 | feat: add structured JSON output and ipdb/pudb detection to validate_no_debug_statements | selfevo/cycle-cycle-3314b69bdaf2" id="node-61b56d0"><div class="evo-header"><a href="#cycle-cycle-3314b69bdaf2" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add structured JSON output and ipdb/pudb detection to validate_no_debug_statements</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">61b56d0</span></div></div></foreignObject><foreignObject x="4060" y="60" width="180" height="64"><div class="evo-box" title="5fc3e5b | selfevo: auto-commit uncommitted subagent work — Wire scripts/validate_mutable_defaults.py into scripts/run_all_tests.py suite | selfevo/cycle-cycle-b2b66d48a3b8" id="node-5fc3e5b"><div class="evo-header"><a href="#cycle-cycle-b2b66d48a3b8" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Wire scripts/validate_mutable_defaults.py into scripts/run_all_tests.py suite</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5fc3e5b</span></div></div></foreignObject><foreignObject x="3810" y="60" width="180" height="64"><div class="evo-box" title="cc2eea9 | feat: add duplicate object key detection to validate_json_syntax | selfevo/cycle-cycle-fad595053459" id="node-cc2eea9"><div class="evo-header"><a href="#cycle-cycle-fad595053459" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add duplicate object key detection to validate_json_syntax</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">cc2eea9</span></div></div></foreignObject><foreignObject x="3560" y="60" width="180" height="64"><div class="evo-box" title="6e8161c | feat: add structured JSON reporting and chronological order validation to validate_history_format | selfevo/cycle-cycle-c9b735fb7254" id="node-6e8161c"><div class="evo-header"><a href="#cycle-cycle-c9b735fb7254" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add structured JSON reporting and chronological order validation to validate_history_format</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">6e8161c</span></div></div></foreignObject><foreignObject x="3310" y="60" width="180" height="64"><div class="evo-box" title="1905b8f | feat: add Windows reserved name checks and JSON report summary to validate_filename_compatibility | selfevo/cycle-cycle-37d6a551f0d9" id="node-1905b8f"><div class="evo-header"><a href="#cycle-cycle-37d6a551f0d9" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add Windows reserved name checks and JSON report summary to validate_filename_compatibility</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">1905b8f</span></div></div></foreignObject><foreignObject x="3060" y="60" width="180" height="64"><div class="evo-box" title="fff730d | feat: add structured JSON reporting and line offset tracking to validate_documentation_code_blocks | selfevo/cycle-cycle-8871470d4ad5" id="node-fff730d"><div class="evo-header"><a href="#cycle-cycle-8871470d4ad5" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add structured JSON reporting and line offset tracking to validate_documentation_code_blocks</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">fff730d</span></div></div></foreignObject><foreignObject x="2810" y="60" width="180" height="64"><div class="evo-box" title="ac64992 | selfevo: auto-commit uncommitted subagent work — Update script exclusion filters and exit status handling in scripts/validate_tes | selfevo/cycle-cycle-b957628fe3e5" id="node-ac64992"><div class="evo-header"><a href="#cycle-cycle-b957628fe3e5" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Update script exclusion filters and exit status handling in scripts/validate_tes</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ac64992</span></div></div></foreignObject><foreignObject x="2560" y="60" width="180" height="64"><div class="evo-box" title="56e1953 | selfevo: auto-commit uncommitted subagent work — Add silent pass handler detection to scripts/validate_exception_handling.py | selfevo/cycle-cycle-319c1d1fe80b" id="node-56e1953"><div class="evo-header"><a href="#cycle-cycle-319c1d1fe80b" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add silent pass handler detection to scripts/validate_exception_handling.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">56e1953</span></div></div></foreignObject><foreignObject x="2310" y="60" width="180" height="64"><div class="evo-box" title="514ae16 | feat: surface unconfirmed script artifacts and alerts in control_plane_summary | selfevo/cycle-cycle-2bfc985ae9e6" id="node-514ae16"><div class="evo-header"><a href="#cycle-cycle-2bfc985ae9e6" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: surface unconfirmed script artifacts and alerts in control_plane_summary</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">514ae16</span></div></div></foreignObject><foreignObject x="2060" y="60" width="180" height="64"><div class="evo-box" title="2d6de89 | selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_ | selfevo/cycle-cycle-568081338c2d" id="node-2d6de89"><div class="evo-header"><a href="#cycle-cycle-568081338c2d" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">selfevo: auto-commit uncommitted subagent work — Add artifact path validation and proof note presence checks to scripts/validate_</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">2d6de89</span></div></div></foreignObject><foreignObject x="1810" y="60" width="180" height="64"><div class="evo-box" title="3ce5630 | docs(lessons): document root cause and remediation for out_of_band_main_detected | selfevo/cycle-cycle-a5e848c5b963" id="node-3ce5630"><div class="evo-header"><a href="#cycle-cycle-a5e848c5b963" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">docs(lessons): document root cause and remediation for out_of_band_main_detected</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">3ce5630</span></div></div></foreignObject><foreignObject x="1560" y="60" width="180" height="64"><div class="evo-box" title="ea30066 | feat: add integration confirmation weighting to backlog_seeder.py | selfevo/cycle-cycle-59821cee55b2" id="node-ea30066"><div class="evo-header"><a href="#cycle-cycle-59821cee55b2" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add integration confirmation weighting to backlog_seeder.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">ea30066</span></div></div></foreignObject><foreignObject x="1310" y="60" width="180" height="64"><div class="evo-box" title="bb2e8bd | feat: add touched script smoke testing and execution verification to verify_and_proof.py | selfevo/cycle-cycle-a830b59b5481" id="node-bb2e8bd"><div class="evo-header"><a href="#cycle-cycle-a830b59b5481" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add touched script smoke testing and execution verification to verify_and_proof.py</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bb2e8bd</span></div></div></foreignObject><foreignObject x="1060" y="60" width="180" height="64"><div class="evo-box" title="9787ea1 | feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record | selfevo/cycle-cycle-31e0fa04a056" id="node-9787ea1"><div class="evo-header"><a href="#cycle-cycle-31e0fa04a056" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">feat: add scripts/extract_last_failure.py to read cycles ledger backwards for latest failure record</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">9787ea1</span></div></div></foreignObject><foreignObject x="810" y="60" width="180" height="64"><div class="evo-box" title="8d1d54c | cycle-a6c3c1c46e80 | selfevo/cycle-cycle-a6c3c1c46e80" id="node-8d1d54c"><div class="evo-header"><a href="#cycle-cycle-a6c3c1c46e80" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-a6c3c1c46e80</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">8d1d54c</span></div></div></foreignObject><foreignObject x="560" y="60" width="180" height="64"><div class="evo-box" title="bc50601 | cycle-381b8f2782a3 | selfevo/cycle-cycle-381b8f2782a3" id="node-bc50601"><div class="evo-header"><a href="#cycle-cycle-381b8f2782a3" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-381b8f2782a3</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">bc50601</span></div></div></foreignObject><foreignObject x="310" y="60" width="180" height="64"><div class="evo-box" title="5fec2d8 | cycle-1c25796d3dcc | selfevo/cycle-cycle-1c25796d3dcc" id="node-5fec2d8"><div class="evo-header"><a href="#cycle-cycle-1c25796d3dcc" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-1c25796d3dcc</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">5fec2d8</span></div></div></foreignObject><foreignObject x="60" y="60" width="180" height="64"><div class="evo-box" title="218de1e | cycle-e8bf53c107d0 | selfevo/cycle-cycle-e8bf53c107d0" id="node-218de1e"><div class="evo-header"><a href="#cycle-cycle-e8bf53c107d0" class="evo-node-link"><span class="evo-diamond">&#9672;</span><span class="evo-box-label">cycle-e8bf53c107d0</span></a></div><div class="evo-meta"><span class="evo-dir-badge">cycle-cost</span><span class="evo-sha copyable" translate="no">218de1e</span></div></div></foreignObject><path d="M7240,92 L7275,92 L7275,92 L7310,92" class="evo-elbow evo-elbow-best" /><path d="M6990,92 L7025,92 L7025,92 L7060,92" class="evo-elbow evo-elbow-best" /><path d="M6740,92 L6775,92 L6775,92 L6810,92" class="evo-elbow evo-elbow-best" /><path d="M6490,92 L6525,92 L6525,92 L6560,92" class="evo-elbow evo-elbow-best" /><path d="M6240,92 L6275,92 L6275,92 L6310,92" class="evo-elbow evo-elbow-best" /><path d="M5990,92 L6025,92 L6025,92 L6060,92" class="evo-elbow evo-elbow-best" /><path d="M5740,92 L5775,92 L5775,92 L5810,92" class="evo-elbow evo-elbow-best" /><path d="M5490,92 L5525,92 L5525,92 L5560,92" class="evo-elbow evo-elbow-best" /><path d="M5240,92 L5275,92 L5275,92 L5310,92" class="evo-elbow evo-elbow-best" /><path d="M4990,92 L5025,92 L5025,92 L5060,92" class="evo-elbow evo-elbow-best" /><path d="M4740,92 L4775,92 L4775,92 L4810,92" class="evo-elbow evo-elbow-best" /><path d="M4490,92 L4525,92 L4525,92 L4560,92" class="evo-elbow evo-elbow-best" /><path d="M4240,92 L4275,92 L4275,92 L4310,92" class="evo-elbow evo-elbow-best" /><path d="M3990,92 L4025,92 L4025,92 L4060,92" class="evo-elbow evo-elbow-best" /><path d="M3740,92 L3775,92 L3775,92 L3810,92" class="evo-elbow evo-elbow-best" /><path d="M3490,92 L3525,92 L3525,92 L3560,92" class="evo-elbow evo-elbow-best" /><path d="M3240,92 L3275,92 L3275,92 L3310,92" class="evo-elbow evo-elbow-best" /><path d="M2990,92 L3025,92 L3025,92 L3060,92" class="evo-elbow evo-elbow-best" /><path d="M2740,92 L2775,92 L2775,92 L2810,92" class="evo-elbow evo-elbow-best" /><path d="M2490,92 L2525,92 L2525,92 L2560,92" class="evo-elbow evo-elbow-best" /><path d="M2240,92 L2275,92 L2275,92 L2310,92" class="evo-elbow evo-elbow-best" /><path d="M1990,92 L2025,92 L2025,92 L2060,92" class="evo-elbow evo-elbow-best" /><path d="M1740,92 L1775,92 L1775,92 L1810,92" class="evo-elbow evo-elbow-best" /><path d="M1490,92 L1525,92 L1525,92 L1560,92" class="evo-elbow evo-elbow-best" /><path d="M1240,92 L1275,92 L1275,92 L1310,92" class="evo-elbow evo-elbow-best" /><path d="M990,92 L1025,92 L1025,92 L1060,92" class="evo-elbow evo-elbow-best" /><path d="M740,92 L775,92 L775,92 L810,92" class="evo-elbow evo-elbow-best" /><path d="M490,92 L525,92 L525,92 L560,92" class="evo-elbow evo-elbow-best" /><path d="M240,92 L275,92 L275,92 L310,92" class="evo-elbow evo-elbow-best" /></g></svg></div>
+</main>
+<footer class="page-footer">generated 2026-08-25 11:49:09 UTC &middot; host eeepc &middot; newest source 4m old &middot; <span class="footer-computed">scorecard computed 2026-08-25 10:57:01.216424 UTC</span></footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {
+  el.addEventListener('click', function () {
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      el.classList.add('copied');
+      setTimeout(function () { el.classList.remove('copied'); }, 800);
+    });
+  });
+});
+</script>
+<script>
+(function () {
+  var el = document.querySelector('.freshness[data-age-seconds]');
+  if (!el) return;
+  var t0 = Date.now();
+  var a0 = parseFloat(el.getAttribute('data-age-seconds'));
+  setInterval(function () {
+    var a = a0 + (Date.now() - t0) / 1000;
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+  }, 30000);
+})();
+</script>
+</body>
+</html>
