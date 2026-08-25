@@ -1365,6 +1365,246 @@ def _lane_b_layout(
     }
 
 
+_ARCHIVE_RING = {
+    'integrated': '#2fd3c4',
+    'failed': '#b23a3a',
+    'partial': '#d19a66',
+    'skipped': '#7d9c8a',
+    'running': '#61afef',
+}
+
+
+def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
+    """Issue #71: outcome class + reason for a ledger-only cycle (no tree
+    node). Scans the cycle's ledger rows chronologically; most decisive
+    phase wins."""
+    kind, reason = 'running', ''
+    for row in rows:
+        phase = row.get('phase')
+        if phase == 'dedup':
+            decision = str(row.get('decision') or '')
+            if row.get('duplicate') or 'skip' in decision.lower() or 'duplicate' in decision.lower():
+                return 'skipped', decision or 'duplicate'
+        elif phase == 'proposer_reject':
+            kind, reason = 'skipped', str(row.get('reason') or 'rejected')
+        elif phase == 'gate' and row.get('status') == 'fail':
+            kind, reason = 'failed', str(row.get('reason') or 'gate failed')
+        elif phase == 'outcome':
+            status = str(row.get('status') or '')
+            if status == 'fail':
+                return 'failed', str(row.get('reason') or 'failed')
+            if status == 'partial':
+                return 'partial', str(row.get('reason') or 'partial')
+            if status == 'success':
+                return 'integrated', ''
+    return kind, reason
+
+
+def build_archive_tree(
+    evolution_tree: dict[str, Any] | None,
+    ledger_tail: list[Any] | None,
+    task_titles: dict[str, str] | None = None,
+) -> str:
+    """Issue #71: DGM archive tree -- FULL history, layered top-down.
+    Trunk = evolution/tree.json nodes (integrated chain); every ledger-only
+    cycle (failed/partial/skipped) attaches as a dead-end leaf under its
+    chronological base trunk node. No last-N cap."""
+    if not isinstance(evolution_tree, dict) or not isinstance(evolution_tree.get('nodes'), dict):
+        return unavailable_panel('Evolution Lineage', 'evolution tree unavailable')
+    nodes: dict[str, dict[str, Any]] = {
+        sha: n for sha, n in evolution_tree['nodes'].items() if isinstance(n, dict)
+    }
+    if not nodes:
+        return unavailable_panel('Evolution Lineage', 'no evolution nodes recorded yet')
+    current_sha = evolution_tree.get('current_sha')
+
+    # Chronological order + effective parents (recorded parent when it maps
+    # to a node, else previous-by-time -- same fallback as issue #53).
+    order = sorted(nodes.items(), key=lambda kv: str(kv[1].get('ts') or ''))
+    chrono_prev: dict[str, str] = {}
+    _last: str | None = None
+    for sha, _n in order:
+        if _last is not None:
+            chrono_prev[sha] = _last
+        _last = sha
+
+    def _eff_parent(sha: str) -> str | None:
+        parent = (nodes[sha].get('parent_sha') or '')
+        return str(parent) if parent in nodes else chrono_prev.get(sha)
+
+    # Unified node records: trunk + ledger-only leaves.
+    recs: dict[str, dict[str, Any]] = {}
+    for sha, n in order:
+        cid = str(n.get('cycle_id') or '')
+        recs[sha] = {
+            'kind': 'node', 'cid': cid, 'ts': str(n.get('ts') or ''),
+            'parent': _eff_parent(sha), 'sha': sha,
+        }
+    trunk_cids = {r['cid'] for r in recs.values() if r['cid']}
+    trunk_ts = [(r['ts'], key) for key, r in recs.items()]
+    if isinstance(ledger_tail, list):
+        by_cycle: dict[str, list[dict[str, Any]]] = {}
+        for row in ledger_tail:
+            if isinstance(row, dict) and row.get('cycle_id'):
+                by_cycle.setdefault(str(row['cycle_id']), []).append(row)
+        for cid, rows in by_cycle.items():
+            if cid in trunk_cids:
+                continue
+            kind, reason = _ledger_outcome_kind(rows)
+            ts = str(rows[-1].get('ts') or '')
+            base = None
+            for t, key in trunk_ts:
+                if t <= ts:
+                    base = key
+            if base is None and trunk_ts:
+                base = trunk_ts[0][1]
+            title = ''
+            if task_titles:
+                title = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or ''
+            recs['ledger:' + cid] = {
+                'kind': 'leaf', 'cid': cid, 'ts': ts, 'parent': base,
+                'outcome': kind, 'reason': reason, 'title': title,
+            }
+
+    # Layered top-down layout: depth = longest path from a root.
+    depth: dict[str, int] = {}
+
+    def _depth(key: str, guard: frozenset[str] = frozenset()) -> int:
+        if key in depth:
+            return depth[key]
+        if key in guard:
+            depth[key] = 0
+            return 0
+        parent = recs[key].get('parent')
+        depth[key] = _depth(parent, guard | {key}) + 1 if parent in recs else 0
+        return depth[key]
+
+    for key in recs:
+        _depth(key)
+    layers: dict[int, list[str]] = {}
+    for key in sorted(recs, key=lambda k: (str(recs[k].get('ts') or ''))):
+        layers.setdefault(depth[key], []).append(key)
+    max_d = max(layers, default=0)
+    max_slot = max((len(v) for v in layers.values()), default=1)
+
+    ROW_H, COL_W, R = 64, 44, 9
+    pos: dict[str, tuple[float, float]] = {}
+    for d, keys in layers.items():
+        for i, key in enumerate(keys):
+            pos[key] = (60 + i * COL_W, 40 + d * ROW_H)
+
+    # Best path = ancestry of current_sha (trunk nodes only).
+    best: set[str] = set()
+    if current_sha in recs:
+        cur: str | None = current_sha
+        guard: set[str] = set()
+        while cur and cur in recs and cur not in guard:
+            guard.add(cur)
+            best.add(cur)
+            cur = recs[cur].get('parent')
+
+    # Score fills: fitness.reward when recorded, neutral otherwise.
+    rewards = [
+        float(n['fitness']['reward']) for n in nodes.values()
+        if isinstance(n.get('fitness'), dict)
+        and isinstance(n['fitness'].get('reward'), (int, float))
+        and not isinstance(n['fitness'].get('reward'), bool)
+    ]
+    rmin = min(rewards) if rewards else None
+    rmax = max(rewards) if rewards else None
+
+    def _fill(key: str) -> str:
+        r = recs[key]
+        if r['kind'] != 'node':
+            return '#1f3a2d'
+        fit = nodes[key].get('fitness')
+        val = fit.get('reward') if isinstance(fit, dict) else None
+        if isinstance(val, (int, float)) and not isinstance(val, bool) and rmin is not None and rmax and rmax > rmin:
+            return _score_color((float(val) - rmin) / (rmax - rmin))
+        return '#1f3a2d'
+
+    edges = []
+    for key, r in recs.items():
+        parent = r.get('parent')
+        if parent in pos:
+            x1, y1 = pos[parent]
+            x2, y2 = pos[key]
+            cls = 'arch-edge'
+            if key in best and parent in best:
+                cls = 'arch-edge arch-edge-best'
+            edges.append(
+                f'<line x1="{x1:.0f}" y1="{y1 + R:.0f}" x2="{x2:.0f}" y2="{y2 - R:.0f}" class="{cls}"/>'
+            )
+
+    circles = []
+    for key, r in recs.items():
+        x, y = pos[key]
+        if r['kind'] == 'node':
+            kind = 'integrated'
+            reason = ''
+        else:
+            kind = r.get('outcome') or 'running'
+            reason = r.get('reason') or ''
+        ring = _ARCHIVE_RING.get(kind, '#7d9c8a')
+        cid = r['cid'] or key
+        title_txt = ''
+        if task_titles:
+            title_txt = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or ''
+        tip = esc(f'{cid} | {title_txt or "no title"} | {kind}' + (f': {reason}' if reason else '') + f' | {r["ts"]}')
+        star = f'<text x="{x:.0f}" y="{y - R - 5:.0f}" text-anchor="middle" class="arch-star">&#9733;</text>' if key == current_sha else ''
+        circles.append(
+            f'<a href="cycles.html#cycle-{esc(cid)}">'
+            f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{R}" fill="{_fill(key)}" '
+            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}">'
+            f'<title>{tip}</title></circle>{star}</a>'
+        )
+
+    # Legends (right side): score colorbar + outcome rings.
+    lx = max(120 + max_slot * COL_W, 240)
+    if rmin is not None and rmax and rmax > rmin:
+        metric_label = 'score: fitness.reward'
+        legend = (
+            f'<defs><linearGradient id="archgrad" x1="0" y1="1" x2="0" y2="0">'
+            f'<stop offset="0" stop-color="{_score_color(0)}"/>'
+            f'<stop offset="1" stop-color="{_score_color(1)}"/>'
+            '</linearGradient></defs>'
+            f'<rect x="{lx}" y="40" width="14" height="120" rx="3" fill="url(#archgrad)"/>'
+            f'<text x="{lx + 20}" y="52" class="arch-legend-label">score {fmt_compact(rmax)}</text>'
+            f'<text x="{lx + 20}" y="158" class="arch-legend-label">score {fmt_compact(rmin)}</text>'
+            f'<text x="{lx}" y="176" class="arch-legend-label">{metric_label}</text>'
+        )
+    else:
+        legend = (
+            f'<rect x="{lx}" y="40" width="14" height="120" rx="3" fill="#1f3a2d" stroke="#3d6b52"/>'
+            f'<text x="{lx + 20}" y="52" class="arch-legend-label">score</text>'
+            f'<text x="{lx}" y="176" class="arch-legend-label">score: reward not recorded</text>'
+            f'<text x="{lx}" y="190" class="arch-legend-label">(neutral fill until it flows)</text>'
+        )
+    ring_legend_y = 220
+    ring_kinds = [(k, c) for k, c in _ARCHIVE_RING.items() if k != 'running']
+    ring_items = ''.join(
+        f'<circle cx="{lx + 6}" cy="{ring_legend_y + i * 20}" r="6" fill="none" stroke="{color}" stroke-width="3"/>'
+        f'<text x="{lx + 20}" y="{ring_legend_y + i * 20 + 4}" class="arch-legend-label">{kind}</text>'
+        for i, (kind, color) in enumerate(ring_kinds)
+    )
+    legend += f'<g>{ring_items}</g>'
+
+    width = max(420, lx + 170)
+    height = 60 + (max_d + 1) * ROW_H + 40
+    svg = (
+        f'<svg class="tech-canvas arch-tree" role="img" '
+        f'aria-label="DGM archive tree: full evolution history, {len(recs)} nodes" '
+        f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        f'{"".join(edges)}{"".join(circles)}{legend}</svg>'
+    )
+    total = len(recs)
+    return (
+        f'<div class="canvas-outer" id="panel-lineage">'
+        f'<div class="arch-note">archive tree: {total} nodes (full history, no cap) '
+        f'&#183; bold = best path &#183; click a node for its cycle</div>{svg}</div>'
+    )
+
+
 def _ts_range_label(evolution_tree: dict[str, Any] | None) -> str:
     """One-glance date-range label for the lineage lane (issue #43): the
     min/max node timestamps formatted short. Not a tick system -- a single
@@ -3023,6 +3263,18 @@ CSS = '''
     /* Issue #53: thick bright edge along the current node's ancestry. */
     .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
     .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #71: DGM archive tree. */
+    .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
+    .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
+    .arch-node { cursor: pointer; }
+    .arch-star { fill: #56d364; font-size: 14px; }
+    .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
+    .arch-note {
+      font-size: 0.78em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding: 8px 12px 0;
+    }
     .evo-fallback { color: #dcebe1; }
 
     .badge {
@@ -3469,10 +3721,11 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         task_titles=cycle_titles,
         ledger_tail=ledger_tail,
     )
-    canvas_html = build_tech_canvas(
-        portfolio=portfolio,
-        ledger_tail=ledger_tail,
-        evolution_tree=evolution_tree,
+    # Issue #71: lineage.html renders the DGM archive tree (full history);
+    # the legacy single-page render keeps build_tech_canvas.
+    canvas_html = build_archive_tree(
+        evolution_tree,
+        ledger_tail,
         task_titles=cycle_titles,
     )
     feed_cycles = set()

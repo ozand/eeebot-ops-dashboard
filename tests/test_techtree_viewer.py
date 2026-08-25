@@ -1739,7 +1739,8 @@ def test_issue70_techtree_redirects_to_index() -> None:
 
 def test_issue70_content_preserved_per_page() -> None:
     pages = _site()
-    assert '<svg class="tech-canvas"' in pages['lineage.html']
+    # issue #71: lineage.html now renders the DGM archive tree svg
+    assert '<svg class="tech-canvas arch-tree"' in pages['lineage.html']
     assert 'feed-row' in pages['cycles.html']
     assert 'proposer-block' in pages['agent.html']
     assert 'host-identity' in pages['agent.html']
@@ -1793,3 +1794,77 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
     assert seq['tree'] == 1
     assert seq['commit'] == 1
     assert seq['ref'] == 1  # exactly one atomic ref switch
+
+# ---------------------------------------------------------------------------
+# Issue #71: DGM archive tree on lineage.html (full history)
+# ---------------------------------------------------------------------------
+
+
+def _issue71_page(data=None) -> str:
+    d = data if data is not None else _fixture()
+    return tv.render_pages(d, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+
+
+def test_issue71_merge_trunk_and_failed_leaf() -> None:
+    html_out = _issue71_page()
+    # trunk nodes + ledger-only failed leaf all render as circles
+    assert html_out.count('class="arch-node arch-') >= 3
+    assert 'arch-failed' in html_out  # red-ring dead leaf
+
+
+def test_issue71_best_path_bold_and_star() -> None:
+    html_out = _issue71_page()
+    assert 'class="arch-edge arch-edge-best"' in html_out
+    assert html_out.count('&#9733;') == 1
+
+
+def test_issue71_colorbar_fallback_and_reward() -> None:
+    html_out = _issue71_page()
+    assert 'score: fitness.reward' in html_out
+    assert 'fill="hsl(' in html_out
+    data = _fixture()
+    for node in data['evolution_tree']['nodes'].values():
+        node.pop('fitness', None)
+    html_out = _issue71_page(data)
+    assert 'reward not recorded' in html_out
+    assert 'fill="hsl(' not in html_out
+
+
+def test_issue71_all_history_no_cap() -> None:
+    data = _fixture()
+    nodes = {}
+    prev = None
+    for i in range(40):
+        sha = f'{i:040d}'
+        nodes[sha] = {
+            'parent_sha': prev, 'branch': f'selfevo/cycle-chain{i}',
+            'cycle_id': f'cycle-chain{i}', 'ts': f'2026-08-{(i % 28) + 1:02d}T00:00:00Z',
+            'fitness': {},
+        }
+        prev = sha
+    data['evolution_tree'] = {'current_sha': prev, 'nodes': nodes, 'switches': []}
+    html_out = _issue71_page(data)
+    # 40 trunk nodes + 2 ledger-only leaves from the fixture ledger
+    assert html_out.count('class="arch-node arch-') == 42
+    assert 'showing last' not in html_out
+
+
+def test_issue71_node_details_and_deeplink() -> None:
+    html_out = _issue71_page()
+    assert 'cycles.html#cycle-' in html_out
+    assert 'cycle-failed-1' in html_out
+    assert 'failed' in html_out
+
+
+def test_issue71_chain_only_layout() -> None:
+    data = _fixture()
+    data['ledger_tail'] = []
+    html_out = _issue71_page(data)
+    assert html_out.count('class="arch-node arch-') >= 3
+
+
+def test_issue71_lineage_page_uses_archive_tree() -> None:
+    pages = tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    lin = pages['lineage.html']
+    assert 'arch-tree' in lin
+    assert 'EVOLUTION LINEAGE (DGM)</text>' not in lin
