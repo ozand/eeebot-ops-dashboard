@@ -3682,7 +3682,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     if base_tree:
         tree_payload['base_tree'] = base_tree
     tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
-                '--input', '-'], input_text=_json.dumps(tree_payload))
+                '--jq', '.sha', '--input', '-'], input_text=_json.dumps(tree_payload))
     if tree.returncode != 0:
         print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
               file=sys.stderr)
@@ -3698,7 +3698,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     if parent.returncode == 0 and parent.stdout.strip():
         commit_payload['parents'] = [parent.stdout.strip()]
     commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits',
-                  '--input', '-'], input_text=_json.dumps(commit_payload))
+                  '--jq', '.sha', '--input', '-'], input_text=_json.dumps(commit_payload))
     if commit.returncode != 0:
         print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
               file=sys.stderr)
