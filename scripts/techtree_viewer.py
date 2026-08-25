@@ -1882,7 +1882,11 @@ def _host_identity(host: str | None, agents_md: str | None) -> str:
                 parts.append(m.group(0))
     if len(parts) <= 1:
         return ''
-    return f'<div class="host-identity" translate="no">{esc(" &middot; ".join(parts))}</div>'
+    # Issue #62: join with a literal middle dot BEFORE esc() -- joining with
+    # the entity '&middot;' got double-escaped to '&amp;middot;' and rendered
+    # as literal text. One escape at render, from plain characters only.
+    sep = ' \u00b7 '
+    return f'<div class="host-identity" translate="no">{esc(sep.join(parts))}</div>'
 
 
 def build_agent_panel(
