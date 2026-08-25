@@ -1487,3 +1487,55 @@ def test_issue58_now_lever_last_cycle_annotation() -> None:
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert '(last: 0.34, last cycle)' in html_out
     assert 'title="source: tech-tree portfolio, last cycle measurement"' in html_out
+
+# ---------------------------------------------------------------------------
+# Issue #59: partial reasons + terminal SKIPPED badge
+# ---------------------------------------------------------------------------
+
+
+def _issue59_page(ledger_extra: list[dict]) -> str:
+    data = _fixture()
+    data['ledger_tail'] = data['ledger_tail'] + ledger_extra
+    return tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+
+
+def test_issue59_partial_row_renders_reason() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-part-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-part-1', 'status': 'partial',
+         'reason': 'gate smoke failed after artifact', 'ts': '2026-08-18T03:05:00Z'},
+    ])
+    assert 'PARTIAL: gate smoke failed after artifact' in html_out
+
+
+def test_issue59_partial_no_reason_explicit_fallback() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-part-2', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-part-2', 'status': 'partial',
+         'ts': '2026-08-18T03:05:00Z'},
+    ])
+    assert 'partial: no artifact recorded' in html_out
+    assert 'PARTIAL' in html_out
+
+
+def test_issue59_skipped_duplicate_terminal_badge_not_running() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-skip-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'dedup', 'cycle_id': 'cycle-skip-1', 'decision': 'skipped-duplicate',
+         'ts': '2026-08-18T03:01:00Z'},
+    ])
+    assert 'SKIPPED' in html_out
+    assert 'badge-skipped' in html_out
+    assert 'skipped: skipped-duplicate' in html_out
+    # the skipped row must not be rendered as running
+    skip_row = html_out.split('id="cycle-cycle-skip-1"')[1].split('</li>')[0]
+    assert 'running' not in skip_row
+
+
+def test_issue59_inflight_cycle_still_running() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-inflight-1', 'ts': '2026-08-18T03:00:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-inflight-1"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'SKIPPED' not in row
