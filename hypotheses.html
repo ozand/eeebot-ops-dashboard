@@ -294,6 +294,37 @@
       color: #d19a66;
       font-weight: 700;
     }
+    /* Issue #72: full-history page — day grouping + outcome filter. */
+    .feed-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+      list-style: none;
+    }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px 0;
+    }
+    .filter-btn {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75em;
+      color: #9db4a6;
+      background: rgba(8, 15, 11, 0.8);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      color: #56d364;
+      border-color: #56d364;
+    }
+    .feed-row.filtered-out { display: none; }
     .feed-files > summary {
       cursor: pointer;
       user-select: none;
@@ -670,8 +701,8 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">127</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 14:06:13.012465 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">52.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="5">data: 5s old &middot; generated 14:24 UTC</span></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">127</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-25 14:44:25.411675 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">51.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">3.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 14:49 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -795,7 +826,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-25 14:24:03 UTC &middot; host eeepc &middot; newest source 5s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 14:06:13.012465 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-25 14:49:38 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-08-25 14:44:25.411675 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
