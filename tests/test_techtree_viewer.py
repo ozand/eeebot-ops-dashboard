@@ -1478,7 +1478,8 @@ def test_issue53_chronological_fallback_edges_when_parents_unmatched() -> None:
 def test_issue58_header_kpi_source_annotation() -> None:
     html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'repeat failure rate · scorecard' in html_out
-    assert 'title="source: scorecard snapshot' in html_out
+    # tooltip merges the #61 definition with the #58 source annotation
+    assert 'source: scorecard snapshot' in html_out
     assert 'last cycle measurement and may differ' in html_out
 
 
@@ -1596,3 +1597,37 @@ def test_issue60_no_hardcoded_cap() -> None:
     src = Path('scripts/techtree_viewer.py').read_text(encoding='utf-8')
     assert 'SELFEVO' not in src
     assert 'MAX_TOOL' not in src
+
+# ---------------------------------------------------------------------------
+# Issue #61: self-describing header KPIs + aim-aware direction gains
+# ---------------------------------------------------------------------------
+
+
+def test_issue61_kpi_definition_tooltips_and_heldout() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'title="total cycles whose changes were merged into the evolution lineage"' in html_out
+    assert 'held-out validation: pass rate on tasks excluded' in html_out
+    assert 'average LLM tokens spent per integrated cycle' in html_out
+
+
+def test_issue61_kpi_target_renders_when_scorecard_defines_one() -> None:
+    data = _fixture()
+    data['scorecard']['targets'] = {'repeat_failure_rate': 0.3}
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'kpi-target' in html_out
+    assert 'target' in html_out and '0.3' in html_out
+
+
+def test_issue61_aim_lower_positive_delta_not_bare_gain() -> None:
+    data = _fixture()
+    data['portfolio']['nodes']['proposer-quality']['direction'] = 'lower'
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'aim: lower)' in html_out
+    assert 'mean Δ' in html_out
+    # the aim-lower card must not render the bare gain framing
+    assert 'mean gain +' not in html_out.split('dir-box')[1]
+
+
+def test_issue61_aim_unknown_keeps_gain_wording() -> None:
+    html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'mean gain' in html_out
