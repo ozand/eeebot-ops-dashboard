@@ -1868,3 +1868,50 @@ def test_issue71_lineage_page_uses_archive_tree() -> None:
     lin = pages['lineage.html']
     assert 'arch-tree' in lin
     assert 'EVOLUTION LINEAGE (DGM)</text>' not in lin
+
+# ---------------------------------------------------------------------------
+# Issue #77: ring-class outcome join fix (outcome field vocabulary)
+# ---------------------------------------------------------------------------
+
+
+def _issue77_page(ledger_extra):
+    data = _fixture()
+    data['ledger_tail'] = list(data['ledger_tail']) + ledger_extra
+    return tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+
+
+def test_issue77_each_outcome_gets_own_ring_only_inflight_running() -> None:
+    page = _issue77_page([
+        {'phase': 'outcome', 'cycle_id': 'cycle-f77a', 'outcome': 'failed', 'reason': 'out_of_band_main_detected', 'ts': '2026-08-18T09:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-p77a', 'outcome': 'partial', 'reason': 'half applied', 'ts': '2026-08-18T09:05:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-s77a', 'outcome': 'skipped-duplicate', 'reason': 'recent_duplicate_failure', 'ts': '2026-08-18T09:10:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-r77a', 'ts': '2026-08-18T09:15:00Z'},
+    ])
+    assert 'arch-failed' in page
+    assert 'arch-partial' in page
+    assert 'arch-skipped' in page
+    assert 'arch-running' in page
+    # exactly one running node: the genuinely in-flight cycle
+    assert page.count('arch-node arch-running') == 1
+
+
+def test_issue77_legend_covers_every_ring_class() -> None:
+    page = _issue77_page([])
+    for kind in ('integrated', 'failed', 'partial', 'skipped', 'running'):
+        assert f'class="arch-legend-label">{kind}</text>' in page
+
+
+def test_issue77_live_outcome_vocabulary_parsed() -> None:
+    # live shape: status is None, outcome carries the value
+    kind, reason = tv._ledger_outcome_kind([
+        {'phase': 'outcome', 'cycle_id': 'c1', 'status': None, 'outcome': 'failed', 'reason': 'gate_failed'},
+    ])
+    assert kind == 'failed' and reason == 'gate_failed'
+    kind, _ = tv._ledger_outcome_kind([
+        {'phase': 'outcome', 'cycle_id': 'c2', 'outcome': 'skipped-duplicate', 'reason': 'recent_duplicate_failure'},
+    ])
+    assert kind == 'skipped'
+    kind, _ = tv._ledger_outcome_kind([
+        {'phase': 'outcome', 'cycle_id': 'c3', 'outcome': 'partial'},
+    ])
+    assert kind == 'partial'
