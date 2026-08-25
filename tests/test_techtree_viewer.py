@@ -1971,3 +1971,48 @@ def test_issue72_history_mode_full_no_cap() -> None:
     cyc = pages['cycles.html']
     for i in range(60):
         assert f'id="cycle-cycle-hist{i:02d}"' in cyc
+
+# ---------------------------------------------------------------------------
+# Issue #81: blob payloads go via stdin (--input -), never via argv
+# ---------------------------------------------------------------------------
+
+
+def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
+    """Regression (#81): a >300KB page must not travel through the gh argv
+    (OSError: Argument list too long). Content rides in input_text/stdin."""
+    big_page = '<html>' + ('x' * 400_000) + '</html>'
+    captured = []
+
+    def fake_gh(args, input_text=None):
+        captured.append((list(args), input_text or ''))
+        joined = ' '.join(args)
+
+        def cp(out):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=0, stdout=out, stderr='')
+        if 'git/blobs' in joined:
+            return cp('blosha81')
+        if 'git/trees' in joined:
+            return cp('tresha81')
+        if 'git/commits' in joined:
+            return cp('comsha81')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            return cp('')
+        if 'branches/gh-pages' in joined:
+            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
+        if 'git/ref/heads/gh-pages' in joined:
+            return cp('oldparent')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+    rc = tv.publish_to_pages({'cycles.html': big_page})
+    assert rc == 0
+    blob_calls = [(a, t) for a, t in captured if 'git/blobs' in ' '.join(a)]
+    assert blob_calls, 'blob call missing'
+    for args, input_text in blob_calls:
+        # content rides via stdin, never via argv
+        assert '--input' in args and '-' in args
+        assert '-f' not in args
+        assert all(len(a) < 10_000 for a in args), 'argv carries payload'
+        assert big_page[:100] in input_text or len(input_text) > 300_000
