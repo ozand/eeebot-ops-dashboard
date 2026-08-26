@@ -672,6 +672,16 @@
     .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
+    .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
+    .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .cycle-details-panel[hidden] { display: none; }
+    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
+    .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
+    .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
+    .cycle-details-body p { margin: 4px 0; }
+    .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
+    .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
     .arch-star { fill: #56d364; font-size: 14px; }
     .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
     .arch-note {
@@ -745,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">150</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">12.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-26 18:09:31.223789 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">50.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="789">data: 13m old &middot; generated 18:23 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="276">data: 4m old &middot; generated 18:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -822,7 +832,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-26 18:23:33 UTC &middot; host eeepc &middot; newest source 13m old &middot; <span class="footer-computed">scorecard computed 2026-08-26 18:09:31.223789 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-26 18:30:00 UTC &middot; host eeepc &middot; newest source 4m old &middot; <span class="footer-computed">scorecard computed 2026-08-26 18:09:31.223789 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
