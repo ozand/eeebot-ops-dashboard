@@ -270,6 +270,26 @@ def read_file_text(relpath):
         return None
 
 
+def read_jsonl(relpath):
+    path = os.path.join(STATE_ROOT, relpath)
+    rows = []
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:
+                    continue
+                if isinstance(row, dict):
+                    rows.append(row)
+        _mtimes.append(os.path.getmtime(path))
+    except Exception:
+        pass
+    return rows
+
+
 def _parse_lessons_text(text):
     """Issue #73: minimal line-based parser for the machine-written flat
     lessons.yaml shape ('- id:' blocks with 2-space-indented fields and
@@ -447,6 +467,7 @@ result = {
     "llm_stats": read_llm_stats(),
     "proposer_stats": read_proposer_stats(),
     "lessons": read_lessons(),
+    "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
@@ -646,6 +667,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'llm_stats': {},
         'proposer_stats': None,
         'lessons': [],
+        'reflections': [],
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -693,6 +715,23 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                     break
         matched.reverse()
         return matched
+
+    def read_jsonl(relpath: str) -> list[dict[str, Any]]:
+        path = root / relpath
+        try:
+            with path.open('r', encoding='utf-8', errors='replace') as fh:
+                rows = []
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    try:
+                        rows.append(json.loads(line))
+                    except Exception:  # noqa: BLE001
+                        continue
+            mtimes.append(path.stat().st_mtime)
+        except Exception:  # noqa: BLE001
+            return []
+        return [row for row in rows if isinstance(row, dict)]
 
     def read_ledger_history_local() -> list[Any]:
         """Issue #72: full cycle history from ledger/cycles.jsonl plus daily
@@ -947,6 +986,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
         'lessons': read_lessons_local(),
+        'reflections': read_jsonl('reflector/reflections.jsonl'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -1723,10 +1763,132 @@ def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
     return kind, reason
 
 
+def build_cycle_details(
+    ledger_rows: list[Any] | None,
+    evolution_tree: dict[str, Any] | None,
+    lessons: list[Any] | None,
+    reflections: list[Any] | None,
+    cycle_titles: dict[str, str] | None = None,
+    cycle_files: dict[str, list[str]] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Build bounded, JSON-safe records for the lineage details panel."""
+    records: dict[str, dict[str, Any]] = {}
+
+    def record(cid: str) -> dict[str, Any]:
+        return records.setdefault(cid, {'cycle_id': cid, 'files_changed': [], 'gate_violations': []})
+
+    def text(value: Any, limit: int = 500) -> str:
+        return str(value or '')[:limit]
+
+    rows_by_cycle: dict[str, list[dict[str, Any]]] = {}
+    for row in ledger_rows or []:
+        if isinstance(row, dict) and row.get('cycle_id'):
+            rows_by_cycle.setdefault(str(row['cycle_id']), []).append(row)
+    for cid, rows in rows_by_cycle.items():
+        out = record(cid)
+        for row in rows:
+            for key in ('task_title', 'target_path', 'serves', 'demand_id', 'outcome', 'reason', 'ts', 'sha', 'parent_sha', 'branch'):
+                if row.get(key) not in (None, ''):
+                    out[key] = text(row[key])
+            files = row.get('files_changed')
+            if isinstance(files, list):
+                out['files_changed'] = [text(item, 300) for item in files[:20]]
+            violations = row.get('violations')
+            if isinstance(violations, list):
+                out['gate_violations'] = [text(item, 500) for item in violations[:20]]
+
+    if isinstance(evolution_tree, dict) and isinstance(evolution_tree.get('nodes'), dict):
+        for sha, node in evolution_tree['nodes'].items():
+            if not isinstance(node, dict) or not node.get('cycle_id'):
+                continue
+            cid = str(node['cycle_id'])
+            out = record(cid)
+            out.setdefault('sha', text(sha, 80))
+            for key in ('parent_sha', 'branch', 'ts'):
+                if node.get(key) not in (None, ''):
+                    out.setdefault(key, text(node[key], 120))
+
+    for lesson in lessons or []:
+        if not isinstance(lesson, dict) or not lesson.get('cycle_id'):
+            continue
+        out = record(str(lesson['cycle_id']))
+        insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
+        if insight:
+            out['lesson_insight'] = text(insight)
+
+    for reflection in reflections or []:
+        if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
+            continue
+        out = record(str(reflection['cycle_id']))
+        payload = {'summary': text(reflection.get('summary'))}
+        for key in ('findings', 'recommendations'):
+            value = reflection.get(key)
+            if isinstance(value, list):
+                payload[key] = [text(item) for item in value[:20]]
+            elif value:
+                payload[key] = [text(value)]
+        if any(payload.values()):
+            out['reflection'] = payload
+
+    for cid, files in (cycle_files or {}).items():
+        if cid in records and not records[cid].get('files_changed'):
+            records[cid]['files_changed'] = [text(item, 300) for item in files[:20]]
+
+    for cid, out in records.items():
+        title = out.get('task_title') or (cycle_titles or {}).get(cid) or (cycle_titles or {}).get(cid.replace('cycle-', '', 1))
+        if not title and out.get('files_changed'):
+            title = out['files_changed'][0]
+        out['title'] = text(title or '(untitled cycle)')
+        if out.get('outcome') in ('failed', 'partial') and not out.get('gate_violations'):
+            out.pop('gate_violations', None)
+        else:
+            out.pop('gate_violations', None)
+    return records
+
+
+def _cycle_details_panel(details: dict[str, dict[str, Any]]) -> str:
+    payload = json.dumps(details, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
+    lesson_href = 'lessons.html#q-' + next(iter(details), 'cycle')
+    return f'''<section class="cycle-details-panel" id="cycle-details-panel" aria-live="polite" hidden>
+  <button type="button" class="cycle-details-close" aria-label="Close cycle details">close</button>
+  <h2 class="cycle-details-title">Cycle details</h2>
+  <div class="cycle-details-body"></div>
+</section>
+<script type="application/json" id="cycle-details-data">{payload}</script>
+<script>
+(function () {{
+  var data = JSON.parse(document.getElementById('cycle-details-data').textContent);
+  var panel = document.getElementById('cycle-details-panel');
+  var body = panel.querySelector('.cycle-details-body');
+  var selected = null;
+  function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
+  function line(label, value) {{ return value ? '<p><b>' + esc(label) + ':</b> ' + esc(value) + '</p>' : ''; }}
+  function list(label, values) {{ return values && values.length ? '<h3>' + esc(label) + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+  function close() {{ panel.hidden = true; if (selected) selected.classList.remove('cycle-node-selected'); selected = null; }}
+  function open(node) {{
+    var cid = node.getAttribute('data-cycle-id'), item = data[cid] || {{cycle_id: cid, title: '(untitled cycle)'}};
+    if (selected) selected.classList.remove('cycle-node-selected'); selected = node; node.classList.add('cycle-node-selected');
+    panel.querySelector('.cycle-details-title').textContent = item.title || '(untitled cycle)';
+    var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations);
+    if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + esc(item.lesson_insight) + '</p>';
+    if (item.reflection) html += '<h3>Reflector</h3>' + line('Summary', item.reflection.summary) + list('Findings', item.reflection.findings) + list('Recommendations', item.reflection.recommendations);
+    html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
+    body.innerHTML = html; panel.hidden = false; history.replaceState(null, '', '#node-' + encodeURIComponent(cid)); panel.scrollIntoView({{block: 'nearest'}});
+  }}
+  document.querySelectorAll('.arch-node[data-cycle-id]').forEach(function (node) {{ node.addEventListener('click', function (event) {{ event.preventDefault(); open(node); }}); }});
+  panel.querySelector('.cycle-details-close').addEventListener('click', close);
+  document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape') close(); }});
+  function selectHash() {{ var match = decodeURIComponent(location.hash).match(/^#node-(.+)$/); if (!match) return; var node = document.querySelector('[data-cycle-id="' + CSS.escape(match[1]) + '"]'); if (node) {{ open(node); node.scrollIntoView({{block: 'center'}}); }} }}
+  window.addEventListener('hashchange', selectHash); selectHash();
+}})();
+</script><template id="cycle-details-link-template" data-lesson-href="{lesson_href}"></template>'''
+
+
 def build_archive_tree(
     evolution_tree: dict[str, Any] | None,
     ledger_tail: list[Any] | None,
     task_titles: dict[str, str] | None = None,
+    cycle_details: dict[str, dict[str, Any]] | None = None,
 ) -> str:
     """Issue #71: DGM archive tree -- FULL history, layered top-down.
     Trunk = evolution/tree.json nodes (integrated chain); every ledger-only
@@ -1873,12 +2035,15 @@ def build_archive_tree(
         title_txt = ''
         if task_titles:
             title_txt = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or ''
+        if not title_txt and cycle_details and isinstance(cycle_details.get(cid), dict):
+            title_txt = str(cycle_details[cid].get('title') or '')
         tip = esc(f'{cid} | {title_txt or "no title"} | {kind}' + (f': {reason}' if reason else '') + f' | {r["ts"]}')
         star = f'<text x="{x:.0f}" y="{y - R - 5:.0f}" text-anchor="middle" class="arch-star">&#9733;</text>' if key == current_sha else ''
+        detail_attr = f' data-cycle-id="{esc(cid)}"' if cycle_details and cid in cycle_details else ''
         circles.append(
             f'<a href="cycles.html#cycle-{esc(cid)}">'
             f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{R}" fill="{_fill(key)}" '
-            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}">'
+            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}"{detail_attr}>'
             f'<title>{tip}</title></circle>{star}</a>'
         )
 
@@ -1923,10 +2088,11 @@ def build_archive_tree(
         f'{"".join(edges)}{"".join(circles)}{legend}</svg>'
     )
     total = len(recs)
+    panel = _cycle_details_panel(cycle_details or {}) if cycle_details else ''
     return (
         f'<div class="canvas-outer" id="panel-lineage">'
         f'<div class="arch-note">archive tree: {total} nodes (full history, no cap) '
-        f'&#183; bold = best path &#183; click a node for its cycle</div>{svg}</div>'
+        f'&#183; bold = best path &#183; click a node for its cycle</div>{svg}{panel}</div>'
     )
 
 
@@ -3792,6 +3958,16 @@ CSS = '''
     .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
+    .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
+    .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .cycle-details-panel[hidden] { display: none; }
+    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
+    .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
+    .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
+    .cycle-details-body p { margin: 4px 0; }
+    .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
+    .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
     .arch-star { fill: #56d364; font-size: 14px; }
     .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
     .arch-note {
@@ -3934,6 +4110,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
+    cycle_details = build_cycle_details(
+        ledger_tail, evolution_tree, data.get('lessons'), data.get('reflections'),
+        cycle_titles, data.get('cycle_files'),
+    )
 
     error_note = ''
     if data.get('_error'):
@@ -4216,6 +4396,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
+    cycle_details = build_cycle_details(
+        ledger_tail, evolution_tree, data.get('lessons'), data.get('reflections'),
+        cycle_titles, data.get('cycle_files'),
+    )
 
     error_note = ''
     if data.get('_error'):
@@ -4252,6 +4436,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree,
         ledger_tail,
         task_titles=cycle_titles,
+        cycle_details=cycle_details,
     )
     feed_cycles = set()
     if isinstance(ledger_tail, list):
