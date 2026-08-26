@@ -454,6 +454,29 @@ def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch
     assert cycle_files.get('cycle-456') == ['src/awesome.py', 'tests/test_awesome.py']
 
 
+def test_extract_git_titles_local_joins_requested_node_shas(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo = tmp_path / 'repo'
+    repo.mkdir()
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, *args, **kwargs):
+        calls.append(cmd)
+        if 'log' in cmd and '--first-parent' in cmd:
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout='', stderr='')
+        if 'log' in cmd and '--format=%H %s' in cmd:
+            return subprocess.CompletedProcess(
+                args=cmd, returncode=0,
+                stdout='sha-node-1 auto-commit subject from node\n', stderr='')
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout='', stderr='')
+
+    monkeypatch.setattr(subprocess, 'run', fake_run)
+    titles, _, err = tv.extract_git_titles_local(repo, node_shas=['sha-node-1'])
+
+    assert err is None
+    assert titles['sha-node-1'] == 'auto-commit subject from node'
+    assert any('--format=%H %s' in cmd and 'sha-node-1' in cmd for cmd in calls)
+
+
 def test_render_page_footer_shows_cycle_titles_error() -> None:
     data = _fixture()
     data['cycle_titles_error'] = 'git log failed (exit 128): fatal: detected dubious ownership & <foo>'

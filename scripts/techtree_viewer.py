@@ -388,7 +388,7 @@ def read_lessons():
     return sorted(by_id.values(), key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
-def extract_git_titles():
+def extract_git_titles(node_shas=None):
     titles = {}
     cycle_files = {}
     error = None
@@ -450,15 +450,30 @@ def extract_git_titles():
         if len(short_reason) > 200:
             short_reason = short_reason[:197] + "..."
         return titles, cycle_files, short_reason
+    if node_shas:
+        try:
+            joined = subprocess.run(
+                ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", "--no-walk", "--format=%H %s", *node_shas],
+                capture_output=True, text=True, timeout=10,
+            )
+            if joined.returncode == 0:
+                for line in joined.stdout.strip().splitlines():
+                    parts = line.split(" ", 1)
+                    if len(parts) == 2 and parts[1].strip():
+                        titles[parts[0]] = parts[1].strip()
+        except Exception:
+            pass
     return titles, cycle_files, None
 
 
-_cycle_titles, _cycle_files, _cycle_titles_error = extract_git_titles()
+_tree_for_titles = read_json("evolution/tree.json")
+_node_shas_for_titles = list((_tree_for_titles or {}).get("nodes", {}).keys()) if isinstance(_tree_for_titles, dict) else []
+_cycle_titles, _cycle_files, _cycle_titles_error = extract_git_titles(_node_shas_for_titles)
 
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
     "scorecard": read_json("scorecard/latest.json"),
-    "evolution_tree": read_json("evolution/tree.json"),
+    "evolution_tree": _tree_for_titles,
     "hypotheses": read_json("hypotheses/lifecycle.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
     "demand_rotation": read_json("demand/rotation.json"),
@@ -544,7 +559,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
     return data
 
 
-def extract_git_titles_local(repo_root: Path) -> tuple[dict[str, str], dict[str, list[str]], str | None]:
+def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None) -> tuple[dict[str, str], dict[str, list[str]], str | None]:
     titles: dict[str, str] = {}
     cycle_files: dict[str, list[str]] = {}
     if not repo_root.is_dir():
@@ -606,6 +621,16 @@ def extract_git_titles_local(repo_root: Path) -> tuple[dict[str, str], dict[str,
         if len(short_reason) > 200:
             short_reason = short_reason[:197] + '...'
         return titles, cycle_files, short_reason
+    if node_shas:
+        joined = subprocess.run(
+            ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', '--no-walk', '--format=%H %s', *node_shas],
+            capture_output=True, text=True, timeout=10,
+        )
+        if joined.returncode == 0:
+            for line in joined.stdout.strip().splitlines():
+                parts = line.split(' ', 1)
+                if len(parts) == 2 and parts[1].strip():
+                    titles[parts[0]] = parts[1].strip()
     return titles, cycle_files, None
 
 
@@ -901,7 +926,9 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         except Exception:
             pass
 
-    titles, cycle_files, titles_error = extract_git_titles_local(repo_path)
+    tree_for_titles = read_json('evolution/tree.json')
+    node_shas = list(tree_for_titles.get('nodes', {}).keys()) if isinstance(tree_for_titles, dict) else []
+    titles, cycle_files, titles_error = extract_git_titles_local(repo_path, node_shas=node_shas)
 
     def read_lessons_local() -> list[dict[str, Any]]:
         """Issue #73: lessons from the instance repo (lessons.yaml + daily
@@ -976,7 +1003,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
-        'evolution_tree': read_json('evolution/tree.json'),
+        'evolution_tree': tree_for_titles,
         'hypotheses': read_json('hypotheses/lifecycle.json'),
         'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
         'ledger_history': read_ledger_history_local(),
