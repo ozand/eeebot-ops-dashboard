@@ -175,6 +175,64 @@ def test_render_page_includes_node_cards_and_panels() -> None:
     assert 'https://' not in html_out
 
 
+def test_read_local_state_collects_reflections_fail_soft(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    state.mkdir()
+    reflector = state / 'reflector'
+    reflector.mkdir()
+    (reflector / 'reflections.jsonl').write_text(
+        '{"cycle_id":"cycle-a","summary":"found it","findings":["f1"],"recommendations":["r1"]}\n'
+        'not-json\n', encoding='utf-8')
+
+    data = tv.read_local_state(str(state), instance_repo=str(tmp_path / 'repo'))
+
+    assert data['reflections'] == [
+        {'cycle_id': 'cycle-a', 'summary': 'found it', 'findings': ['f1'], 'recommendations': ['r1']}
+    ]
+
+
+def test_cycle_details_join_and_bound_fields() -> None:
+    details = tv.build_cycle_details(
+        ledger_rows=[{
+            'cycle_id': 'cycle-a', 'task_title': 'Ship panel', 'outcome': 'failed',
+            'reason': 'gate', 'ts': '2026-08-18T00:00:00Z', 'target_path': 'src/x.py',
+            'serves': 'demand-1', 'sha': 'abcdef1234567890',
+            'parent_sha': 'parent1234567890', 'files_changed': [f'f{i}' for i in range(30)],
+            'violations': ['bad gate'],
+        }],
+        evolution_tree={'nodes': {'sha-a': {'cycle_id': 'cycle-a', 'branch': 'b'}}},
+        lessons=[{'cycle_id': 'cycle-a', 'insight': 'lesson insight'}],
+        reflections=[{'cycle_id': 'cycle-a', 'summary': 'reflection summary', 'findings': ['finding'], 'recommendations': ['recommendation']}],
+        cycle_titles={'cycle-a': 'Ship panel'},
+        cycle_files={'cycle-a': [f'git{i}' for i in range(30)]},
+    )
+
+    record = details['cycle-a']
+    assert record['title'] == 'Ship panel'
+    assert record['files_changed'] == [f'f{i}' for i in range(20)]
+    assert record['lesson_insight'] == 'lesson insight'
+    assert record['reflection']['summary'] == 'reflection summary'
+    assert len(record['reflection']['findings']) == 1
+    assert len(record['reflection']['recommendations']) == 1
+    assert len(json.dumps(details)) < 20_000
+
+
+def test_lineage_panel_embeds_details_and_controls() -> None:
+    html_out = tv.render_pages({**_fixture(), 'reflections': [
+        {'cycle_id': 'cycle-a', 'summary': 'reflector summary', 'findings': ['f'], 'recommendations': ['r']}
+    ]}, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+
+    assert 'cycle-details-panel' in html_out
+    assert 'cycle-details-data' in html_out
+    assert 'data-cycle-id="cycle-a"' in html_out
+    assert 'cycle-feed-link' in html_out
+    assert 'lessons.html#q-cycle-a' in html_out
+    assert 'hashchange' in html_out
+    assert 'keydown' in html_out
+    assert 'selected' in html_out
+    assert len(html_out) < 1_000_000
+
+
 def test_canvas_is_one_wide_svg_with_lane_labels() -> None:
     html_out = tv.render_page(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
 
