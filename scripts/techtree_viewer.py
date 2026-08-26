@@ -622,15 +622,18 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
             short_reason = short_reason[:197] + '...'
         return titles, cycle_files, short_reason
     if node_shas:
-        joined = subprocess.run(
-            ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', '--no-walk', '--format=%H %s', *node_shas],
-            capture_output=True, text=True, timeout=10,
-        )
-        if joined.returncode == 0:
-            for line in joined.stdout.strip().splitlines():
-                parts = line.split(' ', 1)
-                if len(parts) == 2 and parts[1].strip():
-                    titles[parts[0]] = parts[1].strip()
+        try:
+            joined = subprocess.run(
+                ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', '--no-walk', '--format=%H %s', *node_shas],
+                capture_output=True, text=True, timeout=10,
+            )
+            if joined.returncode == 0:
+                for line in joined.stdout.strip().splitlines():
+                    parts = line.split(' ', 1)
+                    if len(parts) == 2 and parts[1].strip():
+                        titles[parts[0]] = parts[1].strip()
+        except Exception:
+            pass
     return titles, cycle_files, None
 
 
@@ -2061,7 +2064,7 @@ def build_archive_tree(
         cid = r['cid'] or key
         title_txt = ''
         if task_titles:
-            title_txt = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or ''
+            title_txt = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or task_titles.get(key) or ''
         if not title_txt and cycle_details and isinstance(cycle_details.get(cid), dict):
             title_txt = str(cycle_details[cid].get('title') or '')
         tip = esc(f'{cid} | {title_txt or "no title"} | {kind}' + (f': {reason}' if reason else '') + f' | {r["ts"]}')
