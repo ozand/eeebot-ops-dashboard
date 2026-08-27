@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">162</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">21.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-27 18:15:10.012630 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">25.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 6s old &middot; generated 18:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 18:41 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -767,7 +767,7 @@
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
-          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (52 lines)</summary><pre><code># Instance Agent Instructions
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (63 lines)</summary><pre><code># Instance Agent Instructions
 
 ## Identity
 
@@ -789,6 +789,17 @@ to `main`; the harness owns integration. Its gate compiles changed scripts and
 runs affected tests. A cycle that is not integrated is a normal outcome, not an
 error to bypass.
 
+## Staging protocol (target paths only)
+
+Stage only the files the task designates as targets. Never use `git add -A`
+or `git add .`; always pass explicit paths (`git add &lt;file&gt;`). Before
+committing, run `git status --porcelain` and confirm every staged path is a
+designated target inside an allowed surface (`surfaces/`, `scripts/`,
+`memory/`, `lessons/`, `docs/`, `tests/`, `skills/`, `AGENTS.md`). Live
+runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
+they show as modified or untracked. If a non-target path appears staged,
+unstage it (`git restore --staged &lt;path&gt;`) before committing.
+
 ## Execution protocol (no diagnosis-only cycles)
 
 Once you have reproduced or diagnosed a defect, immediately proceed to the
@@ -800,13 +811,7 @@ starts from a concrete artifact, not a re-diagnosis.
 
 ## Working knowledge
 
-- Memory is `memory/index.md` (catalog) + `memory/facts/` (read a specific fact with `read_file`); `memory/HISTORY.md` is append-only—read the last N lines with `offset`/`limit`; create a new fact file and add its line to the index.
-- `lessons/` records failures, causes, and reusable learning.
-- `skills/` holds reusable procedures. Creating, improving, and using skills is
-  valuable work, including meta-skills that improve other skills and wrappers
-  for repeated actions that reduce tool calls.
-- `docs/` is the reference library: read `docs/index.md` before mutating this
-  file or creating/improving a skill (`doc...</code></pre></details>
+- ...</code></pre></details>
         </div>
         <div class="agent-subcol">
           <h3>Goals Charter</h3>
@@ -861,7 +866,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-27 18:24:29 UTC &middot; host eeepc &middot; newest source 6s old &middot; <span class="footer-computed">scorecard computed 2026-08-27 18:15:10.012630 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-27 18:41:41 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-08-27 18:15:10.012630 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
