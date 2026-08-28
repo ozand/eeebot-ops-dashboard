@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">194</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">31.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-28 21:27:16.742044 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">1/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 6s old &middot; generated 21:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 22:15 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -765,7 +765,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">compile-health</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>quality.compile_clean_ratio</strong> &middot; aim: <em>higher</em> (last: 1, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>test: extend workspace_validation_helpers suite with syntax, conflict, and untested-script edge cases</strong> <span class="now-sub">(cycle-4b88e0a8c82b [70456d28])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Add check_sensitive_tokens to workspace_validation_helpers with documentation fa</strong> <span class="now-sub">(cycle-40e7b01941c0 [ad5a65cb])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-28T18:33:04.092491+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-d4054dcbbcf2 (served 2026-08-28T19:42:14.781692+00:00); defect-6d65c4f0200b (served 2026-08-28T20:06:16.808195+00:00)">defect &times;2</span> <span class="demand-chip served demand-group" translate="no" title="priority-7afd968baeaf (served 2026-08-28T19:37:11.511278+00:00)">priority &times;1</span> <span class="demand-chip served demand-group" translate="no" title="reflection-c9b01d706b3f (served 2026-08-28T18:48:35.731460+00:00); reflection-c6c3136eb847 (served 2026-08-28T18:16:29.468403+00:00); reflection-b24a74cd5eeb (served 2026-08-28T19:32:30.584877+00:00); reflection-2775aa0d3b88 (served 2026-08-28T21:54:23.882951+00:00)">other &times;4</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -776,7 +776,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 74 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 75 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 28 active / 2 answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -788,6 +788,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-40e7b01941c0">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add check_sensitive_tokens to workspace_validation_helpers with documentation fa</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-40e7b01941c0)</span>
+            
+            <a href="#node-ad5a65c" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-28T21:58:38.153115Z">21:58 UTC</span>
+          </div>
+          <details class="feed-files"><summary>&#128193; memory/confirmation_status.json, memory/repeat_failures.json, scripts/workspace_validation_helpers.py +1 more</summary><ul class="feed-files-list"><li>memory/confirmation_status.json</li><li>memory/repeat_failures.json</li><li>scripts/workspace_validation_helpers.py</li><li>tests/test_workspace_validation_helpers.py</li></ul></details>
+          <div class="feed-cost">&#9889; 26 calls &middot; 747.6K tok &middot; dur 6m5s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-4b88e0a8c82b">
           <div class="feed-header">
@@ -815,24 +828,11 @@
           <div class="feed-cost">&#9889; 9 calls &middot; 84.08K tok &middot; dur 70s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-93da961f9ea8">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">fix: repair lessons integrity test failures</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-93da961f9ea8)</span>
-            
-            <a href="#node-21e684a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-28T20:59:20.602660Z">20:59 UTC</span>
-          </div>
-          <details class="feed-files"><summary>&#128193; lessons/adjacent_test_suite_verification.md, lessons/already_implemented_skip_emission.md, lessons/concise_late_turn_tool_outputs.md +7 more</summary><ul class="feed-files-list"><li>lessons/adjacent_test_suite_verification.md</li><li>lessons/already_implemented_skip_emission.md</li><li>lessons/concise_late_turn_tool_outputs.md</li><li>lessons/dual_ledger_testing_pattern.md</li><li>lessons/early_edit_turn_discipline.md</li><li>lessons/errors.yaml</li><li>lessons/out_of_band_main_detected.md</li><li>lessons/pre_creation_tool_chain_limits.md</li><li>lessons/secret_scan_verification_patterns.md</li><li>lessons/shared_parsing_helpers.md</li></ul></details>
-          <div class="feed-cost">&#9889; 120 calls &middot; 3.74M tok &middot; dur 12m57s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-28 21:55:11 UTC &middot; host eeepc &middot; newest source 6s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 21:27:16.742044 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-28 22:15:06 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 21:27:16.742044 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
