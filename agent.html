@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">166</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">21.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-27 23:42:13.212640 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">25.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.8M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 6s old &middot; generated 23:51 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 00:14 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -767,7 +767,7 @@
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
-          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (78 lines)</summary><pre><code># Instance Agent Instructions
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (87 lines)</summary><pre><code># Instance Agent Instructions
 
 ## Identity
 
@@ -789,6 +789,15 @@ to `main`; the harness owns integration. Its gate compiles changed scripts and
 runs affected tests. A cycle that is not integrated is a normal outcome, not an
 error to bypass.
 
+## Immediate skip protocol
+
+Before any edit, confirm the target work is not already complete: check the
+&quot;Recent activity&quot; list and the codebase (a targeted `grep`/`git log` for the
+target path or task title). If inspection confirms the task is already done or
+not applicable, stop immediately and report `outcome: skipped` — do not
+re-implement, do not make a bookkeeping commit, and do not spend further tool
+calls. A skip is a valid, complete outcome, not a failure to work around.
+
 ## Staging protocol (target paths only)
 
 Stage only the files the task designates as targets. Never use `git add -A`
@@ -800,16 +809,7 @@ runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
 they show as modified or untracked. If a non-target path appears staged,
 unstage it (`git restore --staged &lt;path&gt;`) before committing.
 
-## Execution protocol (no diagnosis-only cycles)
-
-Once you have reproduced or diagnosed a defect, immediately proceed to the
-file edit that fixes it, then verify and commit in the same session. Do not
-end a cycle after diagnosis without an edit, a test, or a commit. If the fix
-is not feasible within the remaining tool budget, commit the smallest
-verifiable step (a failing test or a scoped partial fix) so the next cycle
-starts from a concrete artifact, not a re-diagnosis.
-
-## Bounded reading &amp; sea...</code></pre></details>
+## Execution pro...</code></pre></details>
         </div>
         <div class="agent-subcol">
           <h3>Goals Charter</h3>
@@ -864,7 +864,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-27 23:51:55 UTC &middot; host eeepc &middot; newest source 6s old &middot; <span class="footer-computed">scorecard computed 2026-08-27 23:42:13.212640 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-28 00:14:28 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-08-27 23:42:13.212640 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
