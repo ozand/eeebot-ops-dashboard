@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">192</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">29.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-28 18:44:04.585460 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">22.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 19:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="11">data: 11s old &middot; generated 19:17 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -765,7 +765,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">cycle-cost</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>cost.tokens_per_integration</strong> &middot; aim: <em>lower</em> (last: 2.39M, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>test: add lesson markdown integrity suite (title, Description, Root Cause, Prevention) and remediate nonconforming lesson files</strong> <span class="now-sub">(cycle-96b183afd282 [07a3102d])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Hermetically isolate scripts/check_confirmation_ratio.py self-test using tempora</strong> <span class="now-sub">(cycle-88fea72d8b99 [e133ff6a])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-28T18:33:04.092491+00:00); goal-gap-c09521b7459a (served 2026-08-28T18:44:17.601688+00:00)">goal-gap &times;2</span> <span class="demand-chip served demand-group" translate="no" title="defect-d4054dcbbcf2 (served 2026-08-28T17:29:53.630883+00:00); defect-6d65c4f0200b (served 2026-08-28T17:48:38.550620+00:00)">defect &times;2</span> <span class="demand-chip served demand-group" translate="no" title="priority-7afd968baeaf (served 2026-08-28T17:25:35.793835+00:00)">priority &times;1</span> <span class="demand-chip served demand-group" translate="no" title="reflection-c9b01d706b3f (served 2026-08-28T18:48:35.731460+00:00); reflection-ccba6b894d9f (served 2026-08-28T18:12:20.710279+00:00); reflection-c6c3136eb847 (served 2026-08-28T18:16:29.468403+00:00); reflection-74d2c1bfb4ec (served 2026-08-28T18:08:03.995359+00:00); reflection-2b429f08341c (served 2026-08-28T19:05:15.970775+00:00)">other &times;5</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -776,7 +776,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 63 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 64 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 26 active / 2 answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -788,6 +788,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-88fea72d8b99">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Hermetically isolate scripts/check_confirmation_ratio.py self-test using tempora</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-88fea72d8b99)</span>
+            
+            <a href="#node-e133ff6" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-28T19:09:26.878203Z">19:09 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; memory/confirmation_status.json</div>
+          <div class="feed-cost">&#9889; 45 calls &middot; 3.58M tok &middot; dur 6m5s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-96b183afd282">
           <div class="feed-header">
@@ -815,24 +828,11 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9ccbb8a74bd7">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">test: cover verify_imports.py --file targeted single-file inspection CLI option</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-9ccbb8a74bd7)</span>
-            
-            <a href="#node-a9dc741" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-28T18:37:15.811200Z">18:37 UTC</span>
-          </div>
-          <div class="feed-files">&#128193; tests/test_verify_imports.py</div>
-          <div class="feed-cost">&#9889; 9 calls &middot; 265.5K tok &middot; dur 1m40s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-28 19:06:09 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 18:44:04.585460 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-28 19:17:15 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 18:44:04.585460 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
