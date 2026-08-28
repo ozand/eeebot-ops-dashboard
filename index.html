@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">169</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">20.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-28 04:57:53.592677 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">24.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 05:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="15">data: 15s old &middot; generated 05:46 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -776,7 +776,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 11 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 12 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 22 active / 2 answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -788,6 +788,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-775a1380ddae">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: mutation_surface_violation</span>
+            <strong class="feed-title">failed: mutation_surface_violation</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-775a1380ddae)</span>
+            
+            
+            <span class="feed-ts" title="2026-08-28T05:04:59.030305Z">05:04 UTC</span>
+          </div>
+          
+          <div class="feed-cost">&#9889; 80 calls &middot; 5.27M tok &middot; dur 17m53s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-197704f73015">
           <div class="feed-header">
@@ -815,24 +828,11 @@
           <div class="feed-cost">&#9889; 3 calls &middot; 26.23K tok &middot; dur 2m20s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a760d82405ba">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">memory: add auxiliary tool-call discipline rule to suppress secondary calls after redundancy proof</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-a760d82405ba)</span>
-            
-            <a href="#node-92f0e9c" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-28T03:51:19.317022Z">03:51 UTC</span>
-          </div>
-          <div class="feed-files">&#128193; memory/auxiliary_tool_call_discipline.md, memory/index.md</div>
-          <div class="feed-cost">&#9889; 12 calls &middot; 158.0K tok &middot; dur 5m38s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-28 05:01:50 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 04:57:53.592677 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-28 05:46:11 UTC &middot; host eeepc &middot; newest source 15s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 04:57:53.592677 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
