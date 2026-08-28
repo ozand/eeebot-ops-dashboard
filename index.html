@@ -755,7 +755,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">191</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">28.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-28 15:42:50.306324 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 15:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="11">data: 11s old &middot; generated 15:55 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -765,7 +765,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">cycle-cost</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>cost.tokens_per_integration</strong> &middot; aim: <em>lower</em> (last: 2.33M, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: integrate lesson_lookup into preflight_failure_check for prevention guidance</strong> <span class="now-sub">(cycle-a6fde41d35db [c18bad62])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>lessons: document dual-sink output pattern for sampler migrations</strong> <span class="now-sub">(cycle-863d20a3e61e [f09df0d7])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-28T11:55:30.425017+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-d4054dcbbcf2 (served 2026-08-28T15:07:52.200851+00:00); defect-6d65c4f0200b (served 2026-08-28T15:43:03.127383+00:00)">defect &times;2</span> <span class="demand-chip served demand-group" translate="no" title="priority-7afd968baeaf (served 2026-08-28T15:02:53.815200+00:00)">priority &times;1</span> <span class="demand-chip served demand-group" translate="no" title="reflection-c9b01d706b3f (served 2026-08-28T12:09:22.551143+00:00); reflection-fdcd976310fc (served 2026-08-28T15:47:44.697666+00:00); reflection-ccba6b894d9f (served 2026-08-28T09:56:12.717904+00:00); reflection-c6c3136eb847 (served 2026-08-28T11:03:31.344334+00:00); reflection-047713e836d9 (served 2026-08-28T14:43:08.128690+00:00)">other &times;5</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -776,7 +776,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 51 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 52 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 23 active / 2 answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -788,6 +788,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-863d20a3e61e">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">lessons: document dual-sink output pattern for sampler migrations</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-863d20a3e61e)</span>
+            
+            <a href="#node-f09df0d" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-28T15:51:45.257301Z">15:51 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; lessons/dual_sink_sampler_pattern.md</div>
+          <div class="feed-cost">&#9889; 14 calls &middot; 263.9K tok &middot; dur 2m20s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a6fde41d35db">
           <div class="feed-header">
@@ -815,24 +828,11 @@
           <div class="feed-cost">&#9889; 80 calls &middot; 5.31M tok &middot; dur 9m18s</div>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-088866be5996">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-088866be5996)</span>
-            
-            
-            <span class="feed-ts" title="2026-08-28T14:47:00.353193Z">14:47 UTC</span>
-          </div>
-          
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.98M tok &middot; dur 10m44s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-28 15:48:29 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 15:42:50.306324 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-28 15:55:34 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-08-28 15:42:50.306324 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
