@@ -2137,7 +2137,8 @@ def build_archive_tree(
             f'<title>{tip}</title></circle>{star}</a>'
         )
 
-    # Legends (right side): score colorbar + outcome rings.
+    # Legends (right side): outcome rings. Reward is not recorded for archive
+    # nodes, so do not render a permanently empty score gauge (issue #94).
     lx = max(120 + max_slot * COL_W, 240)
     if rmin is not None and rmax and rmax > rmin:
         metric_label = 'score: fitness.reward'
@@ -2153,10 +2154,7 @@ def build_archive_tree(
         )
     else:
         legend = (
-            f'<rect x="{lx}" y="40" width="14" height="120" rx="3" fill="#1f3a2d" stroke="#3d6b52"/>'
-            f'<text x="{lx + 20}" y="52" class="arch-legend-label">score</text>'
-            f'<text x="{lx}" y="176" class="arch-legend-label">score: reward not recorded</text>'
-            f'<text x="{lx}" y="190" class="arch-legend-label">(neutral fill until it flows)</text>'
+            f'<text x="{lx}" y="176" class="arch-legend-label">score gauge hidden: reward data gap</text>'
         )
     ring_legend_y = 220
     # Issue #77: running can legitimately appear (in-flight cycle), so the
