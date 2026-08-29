@@ -305,7 +305,8 @@ def _parse_lessons_text(text):
             if cur:
                 lessons.append(cur)
             cur = {"id": raw.split(':', 1)[1].strip(), "date": "", "cycle_id": "",
-                   "task_id": "", "hypothesis": "", "result": "", "insight": ""}
+                   "task_id": "", "hypothesis": "", "result": "", "insight": "",
+                   "problem": "", "solution": ""}
             last_key = "id"
             continue
         if cur is None:
@@ -384,6 +385,8 @@ def read_lessons():
                 "hypothesis": str(row.get('hypothesis') or ''),
                 "result": str(row.get('result') or ''),
                 "insight": str(row.get('generalized_insight') or ''),
+                "problem": str(row.get('problem') or ''),
+                "solution": str(row.get('solution') or ''),
             }
     return sorted(by_id.values(), key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
@@ -417,7 +420,7 @@ def extract_git_titles(node_shas=None):
                     norm_cycle_id = "cycle-" + cycle_part[len("cycle-cycle-"):]
                 else:
                     norm_cycle_id = cycle_part
-                
+
                 try:
                     cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
@@ -641,7 +644,7 @@ def _parse_lessons_flat(text: str) -> list[dict[str, str]]:
     """Issue #73: minimal line-based parser for the machine-written flat
     lessons.yaml shape (used when PyYAML is unavailable). Tolerates folded
     multi-line continuations and truncated archive heads."""
-    fields = ('date', 'cycle_id', 'task_id', 'hypothesis', 'result', 'generalized_insight')
+    fields = ('date', 'cycle_id', 'task_id', 'hypothesis', 'result', 'generalized_insight', 'problem', 'solution')
     entries: list[dict[str, str]] = []
     cur: dict[str, str] | None = None
     last_key: str | None = None
@@ -651,7 +654,8 @@ def _parse_lessons_flat(text: str) -> list[dict[str, str]]:
             if cur and cur.get('id'):
                 entries.append(cur)
             cur = {'id': stripped[len('- id:'):].strip().strip('"\''), 'date': '', 'cycle_id': '',
-                   'task_id': '', 'hypothesis': '', 'result': '', 'insight': ''}
+                   'task_id': '', 'hypothesis': '', 'result': '', 'insight': '',
+                   'problem': '', 'solution': ''}
             last_key = None
             continue
         if cur is None:
@@ -988,6 +992,8 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                         'hypothesis': str(item.get('hypothesis') or ''),
                         'result': str(item.get('result') or ''),
                         'insight': str(item.get('generalized_insight') or ''),
+                        'problem': str(item.get('problem') or ''),
+                        'solution': str(item.get('solution') or ''),
                     }
 
         try:
@@ -1845,6 +1851,11 @@ def build_cycle_details(
         insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
         if insight:
             out['lesson_insight'] = text(insight)
+        # Issue #92: v2 schema fields supersede legacy insight when present.
+        if lesson.get('problem'):
+            out['lesson_problem'] = text(lesson['problem'])
+        if lesson.get('solution'):
+            out['lesson_solution'] = text(lesson['solution'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
@@ -1897,18 +1908,20 @@ def _cycle_details_panel(details: dict[str, dict[str, Any]]) -> str:
   function close() {{ panel.hidden = true; if (selected) selected.classList.remove('cycle-node-selected'); selected = null; }}
   function open(node) {{
     var cid = node.getAttribute('data-cycle-id'), item = data[cid] || {{cycle_id: cid, title: '(untitled cycle)'}};
+    var nodeId = node.getAttribute('data-node-id') || cid;
     if (selected) selected.classList.remove('cycle-node-selected'); selected = node; node.classList.add('cycle-node-selected');
     panel.querySelector('.cycle-details-title').textContent = item.title || '(untitled cycle)';
     var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations);
-    if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + esc(item.lesson_insight) + '</p>';
+    if (item.lesson_problem || item.lesson_solution) {{ html += '<h3>Lesson</h3>' + (item.lesson_problem ? '<p><b>Problem:</b> ' + esc(item.lesson_problem) + '</p>' : '') + (item.lesson_solution ? '<p><b>Solution:</b> ' + esc(item.lesson_solution) + '</p>' : ''); }}
+    else if (item.lesson_insight) {{ var _li = item.lesson_insight, _ll = _li.toLowerCase(); var _skip = _ll.indexOf('task completed with') !== -1 || _ll.indexOf('short utility scripts implementable') !== -1 || _ll.indexOf('improves operator value') !== -1; if (!_skip) html += '<h3>Lesson insight</h3><p>' + esc(_li) + '</p>'; }}
     if (item.reflection) html += '<h3>Reflector</h3>' + line('Summary', item.reflection.summary) + list('Findings', item.reflection.findings) + list('Recommendations', item.reflection.recommendations);
     html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
-    body.innerHTML = html; panel.hidden = false; history.replaceState(null, '', '#node-' + encodeURIComponent(cid)); panel.scrollIntoView({{block: 'nearest'}});
+    body.innerHTML = html; panel.hidden = false; history.replaceState(null, '', '#node-' + encodeURIComponent(nodeId)); panel.scrollIntoView({{block: 'nearest'}});
   }}
   document.querySelectorAll('.arch-node[data-cycle-id]').forEach(function (node) {{ node.addEventListener('click', function (event) {{ event.preventDefault(); open(node); }}); }});
   panel.querySelector('.cycle-details-close').addEventListener('click', close);
   document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape') close(); }});
-  function selectHash() {{ var match = decodeURIComponent(location.hash).match(/^#node-(.+)$/); if (!match) return; var node = document.querySelector('[data-cycle-id="' + CSS.escape(match[1]) + '"]'); if (node) {{ open(node); node.scrollIntoView({{block: 'center'}}); }} }}
+  function selectHash() {{ var match = decodeURIComponent(location.hash).match(/^#node-(.+)$/); if (!match) return; var val = match[1]; var node = document.querySelector('[data-node-id="' + CSS.escape(val) + '"]') || document.querySelector('[data-cycle-id="' + CSS.escape(val) + '"]'); if (node) {{ open(node); node.scrollIntoView({{block: 'center'}}); }} }}
   window.addEventListener('hashchange', selectHash); selectHash();
 }})();
 </script><template id="cycle-details-link-template" data-lesson-href="{lesson_href}"></template>'''
@@ -2070,10 +2083,11 @@ def build_archive_tree(
         tip = esc(f'{cid} | {title_txt or "no title"} | {kind}' + (f': {reason}' if reason else '') + f' | {r["ts"]}')
         star = f'<text x="{x:.0f}" y="{y - R - 5:.0f}" text-anchor="middle" class="arch-star">&#9733;</text>' if key == current_sha else ''
         detail_attr = f' data-cycle-id="{esc(cid)}"' if cycle_details and cid in cycle_details else ''
+        node_sha_attr = f' data-node-id="{esc(short_sha(key))}"' if r['kind'] == 'node' and len(key) >= 7 else ''
         circles.append(
             f'<a href="cycles.html#cycle-{esc(cid)}">'
             f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{R}" fill="{_fill(key)}" '
-            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}"{detail_attr}>'
+            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}"{detail_attr}{node_sha_attr}>'
             f'<title>{tip}</title></circle>{star}</a>'
         )
 
@@ -2319,7 +2333,7 @@ def build_now_panel(
     current_sha = evolution_tree.get('current_sha') if isinstance(evolution_tree, dict) else None
     nodes_tree = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else {}
     last_node = nodes_tree.get(current_sha) if isinstance(nodes_tree, dict) and current_sha else None
-    
+
     # Try finding latest cycle from tree or ledger
     latest_cycle_id = None
     if isinstance(last_node, dict) and last_node.get('cycle_id'):
@@ -2460,16 +2474,19 @@ def build_cycle_feed(
 
     titles_map = task_titles if isinstance(task_titles, dict) else {}
 
-    # Build rows (up to 50 latest cycles; full history in history_mode)
+    # Build rows (up to 50 newest cycles shown by default; full history in history_mode).
+    # Issue #90: sort newest-first by maximum ts in phases regardless of ledger insertion order.
     rows = []
-    cycle_items = list(cycles_dict.items())
-    # Take latest 50 (history_mode renders everything -- issue #72)
-    window = cycle_items if history_mode else cycle_items[-50:]
+    def _max_ts(phases: list[dict[str, Any]]) -> str:
+        return max((str(p.get('ts') or '') for p in phases if isinstance(p, dict)), default='')
+    cycle_items = sorted(cycles_dict.items(), key=lambda kv: _max_ts(kv[1]), reverse=True)
+    # Take newest 50 (history_mode renders everything -- issue #72)
+    window = cycle_items if history_mode else cycle_items[:50]
     last_day = None
-    for cid, phases in reversed(window):
+    for cid, phases in window:
         # Determine task title
         title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', ''))
-        
+
         # Outcome derivation from phases
         outcome_kind = 'in_progress'
         outcome_label = 'running'
@@ -2704,21 +2721,36 @@ def build_cycle_feed(
         ''')
 
     if history_mode:
-        # Issue #72: client-side outcome filter, state in URL hash (#f-<kind>).
+        # Issue #90: bounded visible window; show-all control reveals overflow rows.
+        _visible_window = 50
+        if len(rows) > _visible_window:
+            overflow = rows[_visible_window:]
+            rows = rows[:_visible_window] + [
+                r.replace('<li class="feed-row ', '<li class="feed-row feed-overflow-row ', 1)
+                for r in overflow
+            ]
+        # Issue #89/#72: client-side outcome filter, state in URL hash (#f-<kind>).
         filter_buttons = ''.join(
             f'<button class="filter-btn" data-filter="{k}">{k}</button>'
             for k in ('all', 'integrated', 'failed', 'partial', 'skipped', 'running')
         )
+        show_all_btn = (
+            '<button class="feed-show-all" type="button" onclick="(function(){'
+            'document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});'
+            'this.remove();}).call(this)">show all history</button>'
+            if any('feed-overflow-row' in r for r in rows) else ''
+        )
         filter_html = (
             f'<div class="filter-bar">{filter_buttons}</div>'
+            f'{show_all_btn}'
             '<script>'
             '(function(){'
             'var bar=document.querySelector(".filter-bar");if(!bar)return;'
-            'var rows=document.querySelectorAll("#panel-feed li[data-outcome]");'
+            'function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}'
             'function apply(k){'
-            'rows.forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});'
+            'getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});'
             'bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}'
-            'var init=(location.hash||"").replace("#f-","");'
+            'var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";'
             'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
             'bar.addEventListener("click",function(e){'
             'var b=e.target.closest(".filter-btn");if(!b)return;'
@@ -2727,8 +2759,8 @@ def build_cycle_feed(
             'else{location.hash="f-"+k;}'
             'apply(k);});'
             'window.addEventListener("hashchange",function(){'
-            'var k=(location.hash||"").replace("#f-","");'
-            'if(bar.querySelector("[data-filter=\'"+k+"\']"))apply(k);});'
+            'var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";'
+            'if(bar.querySelector("[data-filter=\'"+k+"\']")){apply(k);}});'
             '})();'
             '</script>'
         )
