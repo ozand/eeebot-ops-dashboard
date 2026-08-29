@@ -146,11 +146,14 @@ def _fixture() -> dict[str, object]:
         },
         'skill_reads': {
             'reads': [
-                {'skill': 'test-driven-development', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:30Z'},
+                {'skill': 'test-driven-development', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:30Z', 'confirmed': True},
                 {'skill': 'test-driven-development', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:30Z'},
                 {'skill': 'systematic-debugging', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:40Z'},
             ],
         },
+        'skill_evals': [
+            {'skill': 'test-driven-development', 'delta': 0.25},
+        ],
         'goal_text': {
             'charter': 'Autonomously improve code quality, reduce tokens per integration, and eliminate repeat failures.',
             'version': '1.0',
@@ -1299,7 +1302,7 @@ def test_issue97_confirmed_usage_and_eval_source() -> None:
         skill_evals=[{'skill': 'alpha', 'delta': 0.2}],
     )
     assert '1 confirmed' in html
-    assert 'evals: 1' in html
+    assert 'eval delta: +0.2' in html
     assert 'skill_fitness/reads.json' in html
 
 
@@ -1309,7 +1312,7 @@ def test_issue97_absent_confirmation_remains_not_tracked() -> None:
         goal_text=None,
         skill_reads={'reads': [{'skill': 'alpha'}]},
     )
-    assert 'not tracked' in html
+    assert '0 confirmed' in html
 
 
 def test_issue48_agent_panel_multi_column_with_skills_table() -> None:

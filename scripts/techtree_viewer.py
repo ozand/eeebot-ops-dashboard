@@ -478,7 +478,7 @@ result = {
     "scorecard": read_json("scorecard/latest.json"),
     "evolution_tree": _tree_for_titles,
     "hypotheses": read_json("hypotheses/lifecycle.json"),
-    "hypotheses_durable": read_json("hypotheses/backlog.json"),
+    "hypotheses_durable": read_json("hypotheses/durable.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
@@ -1020,7 +1020,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'scorecard': read_json('scorecard/latest.json'),
         'evolution_tree': tree_for_titles,
         'hypotheses': read_json('hypotheses/lifecycle.json'),
-        'hypotheses_durable': read_json('hypotheses/backlog.json'),
+        'hypotheses_durable': read_json('hypotheses/durable.json'),
         'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
         'ledger_history': read_ledger_history_local(),
         'demand_rotation': read_json('demand/rotation.json'),
@@ -3048,18 +3048,28 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
         elif isinstance(wsjf, (int, float)):
             wsjf_html = f'<span class="hypo-meta-item">WSJF&nbsp;{esc(wsjf)}</span>'
 
-        # Render HADI action if present
-        hadi = entry.get('hadi')
-        hadi_action_html = ''
-        if isinstance(hadi, dict) and hadi.get('action'):
-            hadi_action_html = f'<div class="hypo-hadi-action">{esc(hadi["action"])}</div>'
+        # Render HADI statement, action, success criterion, and creation time.
+        hadi = entry.get('hadi') if isinstance(entry.get('hadi'), dict) else {}
+        statement = entry.get('hypothesis') or hadi.get('hypothesis') or ''
+        action = entry.get('action') or hadi.get('action') or ''
+        criterion = entry.get('insight_criterion') or entry.get('success_criterion') or ''
+        created = entry.get('created_at') or entry.get('created_ts') or ''
+        hadi_html = ''.join(
+            f'<div class="hypo-durable-detail"><span class="hypo-label">{label}:</span> {esc(value)}</div>'
+            for label, value in (
+                ('Statement', str(statement)),
+                ('Action', str(action)),
+                ('Success criterion', str(criterion)),
+                ('Created', str(created)),
+            ) if value
+        )
 
         rows.append(f'''
             <li class="hypo-row hypo-durable{" hypo-selected" if is_selected else ""}">
               <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">{wsjf_html}</div>
-              {hadi_action_html}
+              {hadi_html}
             </li>
         ''')
 
@@ -3377,12 +3387,12 @@ def build_agent_panel(
 
     # 3. Skills fitness table
     skills_html = '<p class="unavailable-note">skill reads unavailable</p>'
-    eval_by_skill: dict[str, int] = {}
+    eval_by_skill: dict[str, list[Any]] = {}
     if isinstance(skill_evals, list):
         for row in skill_evals:
             if isinstance(row, dict) and row.get('skill'):
                 skill_name = str(row['skill'])
-                eval_by_skill[skill_name] = eval_by_skill.get(skill_name, 0) + 1
+                eval_by_skill.setdefault(skill_name, []).append(row)
     if isinstance(skill_reads, dict):
         reads_list = skill_reads.get('reads')
         if isinstance(reads_list, list):
@@ -3402,10 +3412,13 @@ def build_agent_panel(
                         1 for row in reads_list
                         if isinstance(row, dict) and row.get('skill') == sname and row.get('confirmed') is True
                     )
-                    usage_note = f'<span class="skill-usage-confirmed">{confirmed} confirmed</span>' if confirmed else '<span class="skill-untracked">not tracked</span>'
-                    eval_count = eval_by_skill.get(sname, 0)
-                    if eval_count:
-                        usage_note += f' <span class="skill-eval-delta">evals: {eval_count}</span>'
+                    usage_note = f'<span class="skill-usage-confirmed">{confirmed} confirmed</span>'
+                    eval_rows = eval_by_skill.get(sname, [])
+                    if eval_rows:
+                        deltas = [row.get('delta') for row in eval_rows]
+                        numeric = [float(delta) for delta in deltas if isinstance(delta, (int, float)) and not isinstance(delta, bool)]
+                        eval_text = f'eval delta: {sum(numeric):+.3g}' if numeric else f'eval rows: {len(eval_rows)}'
+                        usage_note += f' <span class="skill-eval-delta">{eval_text}</span>'
                     ratio_flag = 'skill-high-ratio' if count >= 5 else ''
                     rows.append(f'''
                     <tr class="{ratio_flag}">
