@@ -756,7 +756,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">196</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">36.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 00:14:35.449112 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="1">data: 1s old &middot; generated 00:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 00:33 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -766,7 +766,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">tool-reuse</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em> (last: 0.32, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: update host_metrics feed heartbeat timestamp on every sample</strong> <span class="now-sub">(cycle-e575593dfecc [65f7e648])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: add dedup throttling filter to prune_failed_backlog.py for repeat failed demand targets</strong> <span class="now-sub">(cycle-aa8769db2bdc [d3fc4fbe])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-28T23:30:28.106632+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-d4054dcbbcf2 (served 2026-08-28T19:42:14.781692+00:00); defect-6d65c4f0200b (served 2026-08-28T20:06:16.808195+00:00)">defect &times;2</span> <span class="demand-chip served demand-group" translate="no" title="priority-7afd968baeaf (served 2026-08-28T23:58:25.253898+00:00)">priority &times;1</span> <span class="demand-chip served demand-group" translate="no" title="reflection-c9b01d706b3f (served 2026-08-28T23:35:04.086680+00:00); reflection-fa62087bf5f4 (served 2026-08-28T22:42:00.136265+00:00); reflection-0e3be891320d (served 2026-08-28T23:13:26.253913+00:00); reflection-cb21325614e2 (served 2026-08-28T23:53:41.516134+00:00); hypothesis-1759ec059f5a (served 2026-08-29T00:25:39.944630+00:00)">other &times;5</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -790,17 +790,17 @@
       
       <ul class="feed-list">
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-aa8769db2bdc">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-aa8769db2bdc">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat: add dedup throttling filter to prune_failed_backlog.py for repeat failed demand targets</strong>
             <span class="feed-cid copyable" translate="no">(cycle-aa8769db2bdc)</span>
             
-            
+            <a href="#node-d3fc4fb" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-08-29T00:29:26.223117Z">00:29 UTC</span>
           </div>
-          
-          <div class="feed-cost">&#9889; 3 calls &middot; 38.02K tok &middot; dur 51s</div>
+          <div class="feed-files">&#128193; scripts/prune_failed_backlog.py, tests/test_prune_failed_backlog.py</div>
+          <div class="feed-cost">&#9889; 16 calls &middot; 343.1K tok &middot; dur 3m9s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e575593dfecc">
@@ -833,7 +833,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-29 00:30:46 UTC &middot; host eeepc &middot; newest source 1s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 00:14:35.449112 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-29 00:33:41 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 00:14:35.449112 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
