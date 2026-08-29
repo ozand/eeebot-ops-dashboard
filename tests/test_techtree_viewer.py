@@ -102,6 +102,13 @@ def _fixture() -> dict[str, object]:
                 },
             ],
         },
+        'hypotheses_durable': {
+            'schema_version': 'hypothesis-durable-v1',
+            'model': 'HADI',
+            'entries': [
+                {'hypothesis_id': 'durable-1', 'title': 'Durable hypothesis', 'hadi': {'hypothesis': 'It works', 'action': 'Try it'}, 'selection_status': 'candidate'},
+            ],
+        },
         'hypotheses': {
             'entries': {
                 'hyp-1': {
@@ -139,11 +146,14 @@ def _fixture() -> dict[str, object]:
         },
         'skill_reads': {
             'reads': [
-                {'skill': 'test-driven-development', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:30Z'},
+                {'skill': 'test-driven-development', 'cycle_id': 'cycle-a', 'ts': '2026-08-16T00:00:30Z', 'confirmed': True},
                 {'skill': 'test-driven-development', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:30Z'},
                 {'skill': 'systematic-debugging', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:40Z'},
             ],
         },
+        'skill_evals': [
+            {'skill': 'test-driven-development', 'delta': 0.25},
+        ],
         'goal_text': {
             'charter': 'Autonomously improve code quality, reduce tokens per integration, and eliminate repeat failures.',
             'version': '1.0',
@@ -357,7 +367,7 @@ def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
     assert '<td class="skill-reads">2</td>' in html_out
     assert 'systematic-debugging' in html_out
     assert '<td class="skill-reads">1</td>' in html_out
-    assert 'not tracked' in html_out
+    assert 'confirmed' in html_out
 
 
 def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
@@ -1284,6 +1294,27 @@ def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
 # Issue 48: Multi-column agent panel with Skills table
 # =========================================================================
 
+def test_issue97_confirmed_usage_and_eval_source() -> None:
+    html = tv.build_agent_panel(
+        agents_md=None,
+        goal_text=None,
+        skill_reads={'reads': [{'skill': 'alpha', 'confirmed': True}, {'skill': 'alpha', 'confirmed': False}]},
+        skill_evals=[{'skill': 'alpha', 'delta': 0.2}],
+    )
+    assert '1 confirmed' in html
+    assert 'eval delta: +0.2' in html
+    assert 'skill_fitness/reads.json' in html
+
+
+def test_issue97_absent_confirmation_remains_not_tracked() -> None:
+    html = tv.build_agent_panel(
+        agents_md=None,
+        goal_text=None,
+        skill_reads={'reads': [{'skill': 'alpha'}]},
+    )
+    assert '0 confirmed' in html
+
+
 def test_issue48_agent_panel_multi_column_with_skills_table() -> None:
     agents_md = '# AGENTS.md content\nInstruction details here.'
     goal_text = {'charter': 'Improve test coverage and reduce cycle time'}
@@ -2193,3 +2224,153 @@ def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
     ids = [l.get('id') for l in lessons]
     assert 'LESS-20260823-b618' in ids and 'LESS-20260822-cccc' in ids
     assert len(lessons) >= 4  # 2 live + 2 archived
+
+# ---------------------------------------------------------------------------
+# Issue #96: v2 lessons rendering — problem→solution cards, legacy fold,
+# stale #73 index wording removed
+# ---------------------------------------------------------------------------
+
+_V2_LESSON = {
+    'id': 'LESS-20260901-v2aa',
+    'date': '2026-09-01',
+    'cycle_id': 'cycle-v2-1',
+    'problem': 'Proposer skips well-scoped tasks due to dedup false positives',
+    'solution': 'Tighten dedup fingerprint to exclude non-functional whitespace',
+    'tags': ['dedup', 'proposer'],
+    'severity': 'high',
+    'seen_count': 3,
+}
+
+_LEGACY_LESSON = {
+    'id': 'LESS-20260825-legc',
+    'date': '2026-08-25',
+    'cycle_id': 'cycle-leg-1',
+    'task_id': 'Add speculative syntax checking',
+    'hypothesis': 'syntax pre-check reduces gate failures',
+    'result': 'refuted: no measurable effect',
+    'insight': 'skip pre-checks for syntax',
+}
+
+
+def test_issue96_v2_lesson_renders_as_card() -> None:
+    data = _fixture()
+    data['lessons'] = [_V2_LESSON]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    # v2 card class present
+    assert 'lesson-row-v2' in les
+    # problem and solution rendered
+    assert 'Proposer skips well-scoped tasks' in les
+    assert 'Tighten dedup fingerprint' in les
+    # tags rendered
+    assert 'lesson-tag' in les
+    assert 'dedup' in les
+    assert 'proposer' in les
+    # severity rendered
+    assert 'lesson-severity' in les
+    assert 'high' in les
+    # seen_count rendered
+    assert 'lesson-seen' in les
+    assert '×3' in les or '\u00d73' in les
+
+
+def test_issue96_legacy_lesson_folded_under_exact_label() -> None:
+    data = _fixture()
+    data['lessons'] = [_LEGACY_LESSON]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    # exact fold label required by spec
+    assert 'legacy (pre-v2, frozen)' in les
+    # legacy entries are inside a <details> element
+    assert 'lesson-legacy-details' in les
+    assert '<details class="lesson-legacy-details">' in les
+    # legacy content is still accessible
+    assert 'LESS-20260825-legc' in les
+
+
+def test_issue96_mixed_v2_and_legacy_split_correctly() -> None:
+    data = _fixture()
+    data['lessons'] = [_V2_LESSON, _LEGACY_LESSON]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    # v2 section present
+    assert 'lesson-row-v2' in les
+    assert 'Proposer skips well-scoped tasks' in les
+    # legacy folded
+    assert 'legacy (pre-v2, frozen)' in les
+    # counts in heading
+    assert '1 v2' in les
+    assert '1 legacy' in les
+
+
+def test_issue96_no_v2_entries_truthful_note() -> None:
+    data = _fixture()
+    data['lessons'] = [_LEGACY_LESSON]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    assert 'no v2 entries' in les or 'no v2 lessons recorded yet' in les
+    # must not claim v2 entries exist — check the rendered HTML, not CSS definitions
+    assert 'class="lesson-row lesson-row-v2"' not in les
+
+
+def test_issue96_all_v2_no_legacy_fold() -> None:
+    data = _fixture()
+    data['lessons'] = [_V2_LESSON]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    assert 'lesson-row-v2' in les
+    assert 'legacy (pre-v2, frozen)' not in les
+
+
+def test_issue96_index_teaser_no_stale_73_wording() -> None:
+    pages = tv.render_pages(_fixture(), host='eeepc', generated_at='2026-08-18 12:00:00')
+    idx = pages['index.html']
+
+    # stale wording must be gone
+    assert 'lands in issue #73' not in idx
+    assert '#73' not in idx.split('lessons.html')[1].split('</li>')[0]
+    # the lessons link itself still works
+    assert 'href="lessons.html"' in idx
+
+
+def test_issue96_v2_severity_critical_has_css_class() -> None:
+    data = _fixture()
+    data['lessons'] = [{**_V2_LESSON, 'severity': 'critical'}]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    assert 'lesson-severity-critical' in les
+    assert 'critical' in les
+
+
+def test_issue96_v2_no_severity_or_seen_or_tags_graceful() -> None:
+    data = _fixture()
+    data['lessons'] = [{
+        'id': 'LESS-20260902-bare',
+        'date': '2026-09-02',
+        'cycle_id': 'cycle-bare',
+        'problem': 'Missing dependency causes import error',
+        'solution': 'Add dep to pyproject.toml',
+    }]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    assert 'lesson-row-v2' in les
+    assert 'Missing dependency' in les
+    assert 'Add dep to pyproject.toml' in les
+    # no severity/seen chip elements injected when fields absent
+    assert 'class="lesson-severity' not in les
+    assert 'class="lesson-seen"' not in les
+
+
+def test_issue96_is_v2_lesson_helper() -> None:
+    assert tv._is_v2_lesson({'problem': 'something'}) is True
+    assert tv._is_v2_lesson({'problem': ''}) is False
+    assert tv._is_v2_lesson({'problem': None}) is False
+    assert tv._is_v2_lesson({'task_id': 'old', 'result': 'r'}) is False
+    assert tv._is_v2_lesson({}) is False
