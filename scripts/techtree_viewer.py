@@ -3673,6 +3673,7 @@ CSS = '''
       border-color: #56d364;
     }
     .feed-row.filtered-out { display: none; }
+    .feed-overflow-row { display: none; }
     .feed-files > summary {
       cursor: pointer;
       user-select: none;
