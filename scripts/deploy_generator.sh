@@ -5,12 +5,13 @@
 # manual snapshot that does NOT update automatically when repo master changes.
 # This script closes that gap (issue #101):
 #
-#   1. Captures the short git sha of the copy being deployed (printed so it can
-#      be compared to the footer on the published site — footer sha injection
-#      requires techtree_viewer.py changes, tracked as a UI-worker dependency).
+#   1. Captures the short git sha of the copy being deployed.
 #   2. Backs up the prior /opt copy with a UTC timestamp.
 #   3. Copies scripts/techtree_viewer.py and scripts/techtree_autopublish.py to
 #      /opt/eeebot-techtree/ via scp (or direct install when running on the host).
+#   3b. Patches the _BAKED_GENERATOR_SHA sentinel in the deployed viewer so the
+#      published page footer shows the real git SHA instead of 'unknown' (issue
+#      #101).  The patch uses `sed -i` on the target file before py_compile.
 #   4. Runs python3 -m py_compile on both target files.
 #   5. Triggers one autopublish run (systemctl start, non-blocking) so the new
 #      generator is exercised immediately after deploy.
@@ -60,11 +61,9 @@ done
 
 # --- git sha ----------------------------------------------------------------
 # Capture the short sha of HEAD in this repo.  This is the version being
-# deployed.  Note: adding the sha to the published page footer requires a
-# change to techtree_viewer.py (render_pages/render_page accept no generator
-# sha parameter today).  That change is tracked as a dependency on the UI
-# worker.  For now the sha is printed here so the operator can compare it
-# manually to the site footer's "generated" timestamp.
+# deployed.  The sha is baked into the deployed techtree_viewer.py via
+# `sed -i` (step 3b below) so the published page footer shows the real SHA
+# instead of 'unknown' (issue #101).
 GIT_SHA="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "deploy_generator.sh: deploying generator sha=$GIT_SHA"
@@ -138,6 +137,28 @@ for f in "$VIEWER" "$AUTOPUBLISH"; do
   fi
 done
 
+# --- step 2b: bake generator sha into the deployed viewer (issue #101) ------
+# techtree_viewer.py contains a sentinel line:
+#   _BAKED_GENERATOR_SHA: str = ''
+# We replace the empty string literal with the real short SHA so that
+# _generator_sha() returns the actual deployed commit instead of falling back
+# to `git rev-parse` (which returns 'unknown' in /opt because there is no git
+# repo there).  The sed pattern is anchored to the sentinel variable name so
+# it can never clobber unrelated string literals.
+if [[ "$GIT_SHA" != "unknown" ]]; then
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo "[dry-run] sed -i bake _BAKED_GENERATOR_SHA='$GIT_SHA' in $OPT_DIR/$VIEWER"
+  else
+    if ! remote "sed -i \"s/^_BAKED_GENERATOR_SHA: str = ''$/_BAKED_GENERATOR_SHA: str = '$GIT_SHA'/\" $OPT_DIR/$VIEWER"; then
+      echo "WARNING: could not bake generator sha into $OPT_DIR/$VIEWER (non-fatal; footer will show 'unknown')" >&2
+    else
+      echo "deploy_generator.sh: baked generator sha=$GIT_SHA into $OPT_DIR/$VIEWER"
+    fi
+  fi
+else
+  echo "WARNING: could not determine git sha; footer will show 'unknown'" >&2
+fi
+
 # --- step 3: py_compile -----------------------------------------------------
 # Syntax-check both files on the target Python before pronouncing success.
 # A failed py_compile leaves the backup in place as the last known-good copy.
@@ -174,7 +195,7 @@ fi
 echo
 echo "deploy_generator.sh: done"
 echo "  generator sha: $GIT_SHA"
-echo "  verify the published footer's generator sha against this deployed commit."
+echo "  the published footer will show generator sha=$GIT_SHA after the next publish run."
 if [[ "$DRY_RUN" == "1" ]]; then
   echo
   echo "[dry-run] no changes were made."
