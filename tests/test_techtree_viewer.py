@@ -1938,7 +1938,7 @@ def test_issue71_colorbar_fallback_and_reward() -> None:
     for node in data['evolution_tree']['nodes'].values():
         node.pop('fitness', None)
     html_out = _issue71_page(data)
-    assert 'reward not recorded' in html_out
+    assert 'score gauge hidden: reward data gap' in html_out
     assert 'fill="hsl(' not in html_out
 
 
