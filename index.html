@@ -819,7 +819,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">207</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">41.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 12:48:07.113643 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 12:49 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 13:07 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -829,7 +829,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">tool-reuse</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em> (last: 0.39, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: add targeted line range and pattern slice utility in scripts/targeted_file_slice.py</strong> <span class="now-sub">(cycle-56412e6c898e [c978e481])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>fix: repair truncate_conversation pruning logic and default budget</strong> <span class="now-sub">(cycle-84857788c332 [4cf64881])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-29T09:57:01.025898+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-d4054dcbbcf2 (served 2026-08-29T09:10:37.557409+00:00); defect-2da50639c3c6 (served 2026-08-29T10:55:55.150672+00:00)">defect &times;2</span> <span class="demand-chip served demand-group" translate="no" title="priority-7afd968baeaf (served 2026-08-29T04:52:09.779185+00:00)">priority &times;1</span> <span class="demand-chip served demand-group" translate="no" title="reflection-c9b01d706b3f (served 2026-08-29T12:13:11.947945+00:00); reflection-8084b44d3206 (served 2026-08-29T09:38:21.516038+00:00); reflection-a45baabb733e (served 2026-08-29T08:12:36.195687+00:00); reflection-33ed91ca634a (served 2026-08-29T12:48:20.454913+00:00)">other &times;4</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -840,7 +840,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 43 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 44 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 40 active / 2 answered + 12 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -852,6 +852,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-84857788c332">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">fix: repair truncate_conversation pruning logic and default budget</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-84857788c332)</span>
+            
+            <a href="#node-4cf6488" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-29T12:52:48.722305Z">12:52 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; scripts/truncate_conversation.py, tests/test_truncate_conversation.py</div>
+          <div class="feed-cost">&#9889; 38 calls &middot; 650.7K tok &middot; dur 7m58s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-56412e6c898e">
           <div class="feed-header">
@@ -879,24 +892,11 @@
           <div class="feed-cost">&#9889; 8 calls &middot; 93.05K tok &middot; dur 2m33s</div>
         </li>
         
-        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-5cb5e13e9252">
-          <div class="feed-header">
-            <span class="badge badge-skipped">SKIPPED: skipped_duplicate</span>
-            <strong class="feed-title">skipped-duplicate</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-5cb5e13e9252)</span>
-            
-            
-            <span class="feed-ts" title="2026-08-29T12:17:16.979151Z">12:17 UTC</span>
-          </div>
-          
-          
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator f9bc721 · generated 2026-08-29 12:49:20 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 12:48:07.113643 UTC</span></footer>
+<footer class="page-footer">generator f9bc721 · generated 2026-08-29 13:07:00 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 12:48:07.113643 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
