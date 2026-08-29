@@ -3006,7 +3006,7 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
         return '<div class="hypo-durable-section"><p class="unavailable-note">strategist backlog (HADI): not available</p></div>'
 
     entries = hypotheses_durable.get('entries') or []
-    model = str(hypotheses_durable.get('model') or 'HADI')
+    model = str(hypotheses_durable.get('model') or hypotheses_durable.get('schema') or 'HADI')
     selected_id = str(hypotheses_durable.get('selected_hypothesis_id') or '')
 
     # backlog.json entries may be a list or a dict -- normalise to list
