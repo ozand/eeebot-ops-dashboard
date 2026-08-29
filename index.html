@@ -325,6 +325,7 @@
       border-color: #56d364;
     }
     .feed-row.filtered-out { display: none; }
+    .feed-overflow-row { display: none; }
     .feed-files > summary {
       cursor: pointer;
       user-select: none;
@@ -755,7 +756,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">196</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">36.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 00:14:35.449112 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 7s old &middot; generated 00:26 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="1">data: 1s old &middot; generated 00:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -776,7 +777,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 2 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 3 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 32 active / 2 answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -785,9 +786,22 @@
     </section>
     
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle Feed (Recent 2)</h2>
+      <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-aa8769db2bdc">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-aa8769db2bdc)</span>
+            
+            
+            <span class="feed-ts" title="2026-08-29T00:29:26.223117Z">00:29 UTC</span>
+          </div>
+          
+          <div class="feed-cost">&#9889; 3 calls &middot; 38.02K tok &middot; dur 51s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e575593dfecc">
           <div class="feed-header">
@@ -819,7 +833,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-29 00:26:14 UTC &middot; host eeepc &middot; newest source 7s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 00:14:35.449112 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-29 00:30:46 UTC &middot; host eeepc &middot; newest source 1s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 00:14:35.449112 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
