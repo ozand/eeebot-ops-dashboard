@@ -3006,7 +3006,7 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
         return '<div class="hypo-durable-section"><p class="unavailable-note">strategist backlog (HADI): not available</p></div>'
 
     entries = hypotheses_durable.get('entries') or []
-    model = str(hypotheses_durable.get('model') or 'HADI')
+    model = str(hypotheses_durable.get('model') or hypotheses_durable.get('schema') or 'HADI')
     selected_id = str(hypotheses_durable.get('selected_hypothesis_id') or '')
 
     # backlog.json entries may be a list or a dict -- normalise to list
@@ -3431,7 +3431,7 @@ def build_agent_panel(
                 skills_html = f'''
                 <table class="skills-table">
                   <thead>
-                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; eval rows when present)</th></tr>
+                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; skill_fitness/evals.jsonl when present)</th></tr>
                   </thead>
                   <tbody>
                     {''.join(rows)}
