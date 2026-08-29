@@ -478,6 +478,7 @@ result = {
     "scorecard": read_json("scorecard/latest.json"),
     "evolution_tree": _tree_for_titles,
     "hypotheses": read_json("hypotheses/lifecycle.json"),
+    "hypotheses_durable": read_json("hypotheses/backlog.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
@@ -510,6 +511,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'scorecard': None,
         'evolution_tree': None,
         'hypotheses': None,
+        'hypotheses_durable': None,
         'ledger_tail': None,
         'ledger_history': [],
         'demand_rotation': None,
@@ -687,6 +689,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'scorecard': None,
         'evolution_tree': None,
         'hypotheses': None,
+        'hypotheses_durable': None,
         'ledger_tail': None,
         'demand_rotation': None,
         'demand_completed': None,
@@ -1014,6 +1017,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'scorecard': read_json('scorecard/latest.json'),
         'evolution_tree': tree_for_titles,
         'hypotheses': read_json('hypotheses/lifecycle.json'),
+        'hypotheses_durable': read_json('hypotheses/backlog.json'),
         'ledger_tail': read_ledger_tail('ledger/cycles.jsonl'),
         'ledger_history': read_ledger_history_local(),
         'demand_rotation': read_json('demand/rotation.json'),
@@ -2785,6 +2789,7 @@ def build_hypotheses_panel(
     hypotheses: dict[str, Any] | None = None,
     feed_cycles: set[str] | None = None,
     now: datetime | None = None,
+    hypotheses_durable: dict[str, Any] | None = None,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -2968,6 +2973,10 @@ def build_hypotheses_panel(
     else:
         answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
+    # Issue #95: render strategist durable HADI hypotheses from backlog.json
+    # as a separate section -- clearly labelled and separated from live data.
+    durable_html = _build_durable_hadi_section(hypotheses_durable)
+
     return f'''
     <section class="panel panel-hypotheses" id="panel-hypotheses">
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
@@ -2975,11 +2984,94 @@ def build_hypotheses_panel(
         {active_html}
         {answered_html}
       </div>
+      {durable_html}
     </section>
     '''
 
 
-def _host_identity(host: str | None, agents_md: str | None) -> str:
+def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> str:
+    """Issue #95: render the strategist durable HADI backlog (hypotheses/backlog.json)
+    as a separate, clearly-labelled read-only section inside the hypotheses panel.
+
+    - If the source is unavailable, renders a compact unavailable note (not an error).
+    - Live lifecycle data and durable backlog are kept visually separated.
+    - Stale vs selected entries are distinguished by badge class.
+    - The selected hypothesis is surfaced prominently.
+    """
+    if not isinstance(hypotheses_durable, dict):
+        return '<div class="hypo-durable-section"><p class="unavailable-note">strategist backlog (HADI): not available</p></div>'
+
+    entries = hypotheses_durable.get('entries') or []
+    model = str(hypotheses_durable.get('model') or 'HADI')
+    selected_id = str(hypotheses_durable.get('selected_hypothesis_id') or '')
+
+    # backlog.json entries may be a list or a dict -- normalise to list
+    if isinstance(entries, dict):
+        entry_list: list[dict[str, Any]] = []
+        for hid, val in entries.items():
+            if isinstance(val, dict):
+                item = dict(val)
+                item.setdefault('hypothesis_id', hid)
+                entry_list.append(item)
+        entries = entry_list
+
+    if not isinstance(entries, list) or not entries:
+        return (
+            '<div class="hypo-durable-section">'
+            f'<h3 class="hypo-durable-title">Strategist ({model}) backlog</h3>'
+            '<ul class="hypo-list"><li class="unavailable-note">no backlog entries recorded</li></ul>'
+            '</div>'
+        )
+
+    rows: list[str] = []
+    # Total count used exactly once -- single formula for the header counter.
+    total = len(entries)
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        hid = str(entry.get('hypothesis_id') or entry.get('id') or '')
+        title = str(entry.get('title') or hid or '(untitled)')
+        sel_status = str(entry.get('selection_status') or 'candidate').lower()
+        is_selected = hid == selected_id or sel_status == 'selected'
+        badge_cls = 'badge-integrated' if is_selected else 'badge-researching'
+        badge_lbl = 'SELECTED' if is_selected else sel_status.upper()
+
+        # Render WSJF score if present
+        wsjf = entry.get('wsjf')
+        wsjf_html = ''
+        if isinstance(wsjf, dict) and wsjf.get('score') is not None:
+            wsjf_html = f'<span class="hypo-meta-item">WSJF&nbsp;{esc(wsjf["score"])}</span>'
+        elif isinstance(wsjf, (int, float)):
+            wsjf_html = f'<span class="hypo-meta-item">WSJF&nbsp;{esc(wsjf)}</span>'
+
+        # Render HADI action if present
+        hadi = entry.get('hadi')
+        hadi_action_html = ''
+        if isinstance(hadi, dict) and hadi.get('action'):
+            hadi_action_html = f'<div class="hypo-hadi-action">{esc(hadi["action"])}</div>'
+
+        rows.append(f'''
+            <li class="hypo-row hypo-durable{" hypo-selected" if is_selected else ""}">
+              <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
+              <strong class="hypo-title">{esc(title)}</strong>
+              <div class="hypo-meta">{wsjf_html}</div>
+              {hadi_action_html}
+            </li>
+        ''')
+
+    if not rows:
+        rows_html = '<li class="unavailable-note">no valid backlog entries</li>'
+    else:
+        rows_html = ''.join(rows)
+
+    return (
+        '<div class="hypo-durable-section">'
+        f'<h3 class="hypo-durable-title">Strategist ({esc(model)}) backlog ({total})</h3>'
+        f'<ul class="hypo-list">{rows_html}</ul>'
+        '</div>'
+    )
+
+
     """Issue #39: hardware identity line derived ONLY from already-collected
     data (host name + patterns found in the instance AGENTS.md text).
     Renders nothing when there is less than one hardware fact -- never
@@ -3068,9 +3160,16 @@ def _build_proposer_block(
     return f'{decision_html}{missing_d}{stats_html}{missing}'
 
 
+def _is_v2_lesson(lesson: dict[str, Any]) -> bool:
+    """Return True when the lesson record has a non-empty 'problem' field,
+    which is the sentinel for the v2 schema (ozand/eeebot#1071)."""
+    return bool(lesson.get('problem'))
+
+
 def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
-    """Issue #73: lessons history page — newest-first, date-grouped, with
-    cycle deep-links and a client-side text filter (state in URL hash)."""
+    """Issue #73/#96: lessons history page — v2 entries rendered as
+    problem→solution cards (with tags/severity/seen_count); legacy
+    protocol records folded under 'legacy (pre-v2, frozen)'."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
     if not entries:
         return (
@@ -3079,19 +3178,77 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             '<p class="unavailable-note">no lessons data recorded</p>'
             '</section>'
         )
+
+    v2_entries = [l for l in entries if _is_v2_lesson(l)]
+    legacy_entries = [l for l in entries if not _is_v2_lesson(l)]
+
     today = datetime.now(timezone.utc).date()
     recent = 0
-    for l in entries:
+    for l in v2_entries:
         d = _parse_iso_ts(l.get('date'))
         if d is not None and (today - d.date()).days <= 7:
             recent += 1
-    rows = []
-    last_date = None
-    for l in entries:
+
+    # --- v2 card rows ---
+    v2_rows: list[str] = []
+    last_date: str | None = None
+    for l in v2_entries:
         date = str(l.get('date') or 'unknown')
         if date != last_date:
             last_date = date
-            rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
+            v2_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
+        cid = str(l.get('cycle_id') or '')
+        cycle_link = (
+            f'<a href="cycles.html#cycle-{esc(cid)}" class="lesson-cycle">{esc(cid)}</a>'
+            if cid else '<span class="lesson-cycle">n/a</span>'
+        )
+        problem = str(l.get('problem') or '')
+        solution = str(l.get('solution') or '')
+        tags = l.get('tags') or []
+        tags_list = tags if isinstance(tags, list) else [str(tags)]
+        severity = str(l.get('severity') or '')
+        seen_count = l.get('seen_count')
+
+        severity_html = (
+            f'<span class="lesson-severity lesson-severity-{esc(severity.lower())}">{esc(severity)}</span>'
+            if severity else ''
+        )
+        tags_html = (
+            ''.join(f'<span class="lesson-tag">{esc(str(t))}</span>' for t in tags_list)
+            if tags_list else ''
+        )
+        seen_html = (
+            f'<span class="lesson-seen" title="times this pattern was observed">×{esc(str(seen_count))}</span>'
+            if seen_count is not None else ''
+        )
+        meta_chips = severity_html + tags_html + seen_html
+        meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
+
+        problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
+        solution_html = f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:400])}{"..." if len(solution) > 400 else ""}</div>' if solution else ''
+
+        search_text = esc((' '.join([
+            l.get('id') or '', str(l.get('task_id') or ''), problem, solution,
+            severity, ' '.join(str(t) for t in tags_list), cid,
+        ])).lower())
+        v2_rows.append(
+            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}">'
+            f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
+            f' {cycle_link}</div>'
+            f'{meta_chips_html}'
+            f'{problem_html}'
+            f'{solution_html}'
+            f'</li>'
+        )
+
+    # --- legacy rows (pre-v2, frozen) ---
+    legacy_rows: list[str] = []
+    last_date = None
+    for l in legacy_entries:
+        date = str(l.get('date') or 'unknown')
+        if date != last_date:
+            last_date = date
+            legacy_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
         cid = str(l.get('cycle_id') or '')
         cycle_link = (
             f'<a href="cycles.html#cycle-{esc(cid)}" class="lesson-cycle">{esc(cid)}</a>'
@@ -3105,20 +3262,50 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         )
         insight = str(l.get('insight') or '')
         insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
-        rows.append(
-            f'<li class="lesson-row" data-text="{esc((l.get("id") or "") + " " + str(l.get("task_id") or "") + " " + str(l.get("hypothesis") or "") + " " + result + " " + insight + " " + cid).lower()}">'
+        search_text = esc((' '.join([
+            l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
+            result, insight, cid,
+        ])).lower())
+        legacy_rows.append(
+            f'<li class="lesson-row" data-text="{search_text}">'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
             f' {cycle_link}</div>'
             f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
             f'<div class="lesson-hypothesis">{esc(str(l.get("hypothesis") or ""))}</div>'
             f'{result_html}{insight_html}</li>'
         )
+
+    # --- assemble page ---
+    v2_count = len(v2_entries)
+    legacy_count = len(legacy_entries)
+    total = len(entries)
+
+    title_parts = [f'{v2_count} v2' if v2_count else 'no v2 entries']
+    if legacy_count:
+        title_parts.append(f'{legacy_count} legacy')
+    if recent:
+        title_parts.append(f'{recent} recent')
+    heading_detail = ' &middot; '.join(title_parts)
+
+    v2_section = ''.join(v2_rows) if v2_rows else '<li class="lesson-row"><p class="unavailable-note">no v2 lessons recorded yet</p></li>'
+
+    legacy_section_html = ''
+    if legacy_rows:
+        legacy_section_html = (
+            f'<li class="lesson-legacy-fold">'
+            f'<details class="lesson-legacy-details">'
+            f'<summary class="lesson-legacy-summary">legacy (pre-v2, frozen) &mdash; {legacy_count} historical protocol records</summary>'
+            f'<ul class="lessons-list lessons-list-legacy">{"" .join(legacy_rows)}</ul>'
+            f'</details></li>'
+        )
+
     return f'''
     <section class="panel panel-lessons" id="panel-lessons">
-      <h2 class="panel-title">Lessons History ({len(entries)} total &middot; {recent} in last 7 days)</h2>
+      <h2 class="panel-title">Lessons History ({total} total &middot; {heading_detail})</h2>
       <input class="lessons-filter" type="text" placeholder="filter lessons...">
       <ul class="lessons-list">
-        {''.join(rows)}
+        {v2_section}
+        {legacy_section_html}
       </ul>
       <script>
       (function(){{
@@ -3863,6 +4050,64 @@ CSS = '''
       color: #cfe3d7;
     }
     .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -4413,7 +4658,7 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
         <li><a href="lineage.html">lineage</a> &mdash; {node_count} evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; {active} active / {answered} answered</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
-        <li><a href="lessons.html">lessons</a> &mdash; lessons history (lands in issue #73)</li>
+        <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
       </ul>
     </section>
     '''
