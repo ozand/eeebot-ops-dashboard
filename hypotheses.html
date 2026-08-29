@@ -818,8 +818,8 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">203</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">38.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 04:51:55.877043 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 05:20 UTC</span></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">204</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">38.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 05:24:05.324528 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 7s old &middot; generated 05:24 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -828,7 +828,34 @@
     <section class="panel panel-hypotheses" id="panel-hypotheses">
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
       <div class="hypo-split">
-        <div class="hypo-group"><h3>Active (34)</h3><ul class="hypo-list">
+        <div class="hypo-group"><h3>Active (37)</h3><ul class="hypo-list">
+            <li class="hypo-row active">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Harness Execution Coupling to Dissolve Unconfirmed Integration Deficit</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-08-29T05:24:36.579483Z">seen 05:24 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Pre-Proposal Demand Deduplication to Dissolve Repeat Failure Waste</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-08-29T05:24:36.579483Z">seen 05:24 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Scheduled Host Metrics Sampling to Eliminate Stale Feed Gap</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-08-29T05:24:36.579483Z">seen 05:24 UTC</span>
+                
+              </div>
+            </li>
+        
             <li class="hypo-row active">
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add semver version and required metadata key assertions to tests/test_skills_structure.py</strong>
@@ -1165,7 +1192,7 @@
           </details>
         </div>
       </div>
-      <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (9)</h3><ul class="hypo-list">
+      <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (12)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Direct coupling of scripts to harness test consumers</strong>
@@ -1228,11 +1255,32 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing a temporary backoff on demands with self_dedup count &gt; 10 (such as goal-gap-5d4d5a9dc822 and repetitive decay demands) will reduce wasted_attempt_rate from 0.604 to &lt; 0.45 without decreasing net confirmed integrations per day.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Configure proposer demand selection to penalize demands where self_dedup to integrated ratio exceeds 3:1 until other vector gaps are addressed.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if wasted_attempt_rate falls below 0.45 across 20 subsequent cycles while daily integrations remain &gt;= 10; refuted if wasted_attempt_rate stays above 0.55.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941802Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Harness Execution Coupling to Dissolve Unconfirmed Integration Deficit</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling script completions in scripts/*.py directly with dedicated test executions in tests/ will increase value.confirmed_ratio from 0.4286 to &gt;= 0.50 without requiring manual operator execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add targeted execution tests under tests/ for the highest-priority unconfirmed utility scripts so confirm_serves detects pycache execution evidence during standard verification passes.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if value.confirmed_ratio reaches &gt;= 0.50 within 15 cycles while tokens_per_integration does not increase by more than 15%; refuted if confirmed_ratio remains below 0.45.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T05:24:35.929739Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Pre-Proposal Demand Deduplication to Dissolve Repeat Failure Waste</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Filtering repeated demand IDs with high prior rejection/deduplication counts at the proposer stage will decrease loop.repeat_failure_rate from 0.2079 to &lt; 0.12 and lower wasted_attempt_rate below 0.40.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Enforce demand eligibility filtering that suppresses proposing against demands with &gt;5 self_dedups unless the target artifact or execution harness changes.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.repeat_failure_rate drops below 0.12 and wasted_attempt_rate drops below 0.40; refuted if repeat failure rate remains &gt;= 0.18.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T05:24:35.929850Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Scheduled Host Metrics Sampling to Eliminate Stale Feed Gap</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Triggering a lightweight host metrics telemetry touch during regular harness verification will resolve the V1 stale feed gap (stale_feeds=0) without causing spawn integrity incidents.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Introduce a lightweight telemetry probe script invoked during verification passes that writes fresh host metric telemetry to the host_metrics directory.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if feeds.stale reaches 0.0 and host_metrics.age_seconds stays &lt; 86400 with 0 new integrity incidents; refuted if host_metrics remains stale or integrity incidents increase.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T05:24:35.929915Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator f9bc721 · generated 2026-08-29 05:20:13 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 04:51:55.877043 UTC</span></footer>
+<footer class="page-footer">generator f9bc721 · generated 2026-08-29 05:24:58 UTC &middot; host eeepc &middot; newest source 7s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 05:24:05.324528 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
