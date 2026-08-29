@@ -814,7 +814,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">37.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 01:34:00.198399 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 7s old &middot; generated 02:03 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="76">data: 1m old &middot; generated 02:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -1124,11 +1124,74 @@
           </details>
         </div>
       </div>
-      <div class="hypo-durable-section"><p class="unavailable-note">strategist backlog (HADI): not available</p></div>
+      <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (9)</h3><ul class="hypo-list">
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Direct coupling of scripts to harness test consumers</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Proposing standalone diagnostic and summary scripts increases confirmable integrations without raising confirmed integrations (confirmed_integration_ratio stalled at 0.126 across 127 confirmable integrations); requiring every proposed script in scripts/ to have an active caller in tests/ or the harness pre-run loop will systematically convert unconfirmed integrations to confirmed without script volume expansion.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Configure the proposer to mandate an accompanying test or harness invocation target whenever modifying or introducing artifacts in scripts/, ensuring confirm_serves detects immediate downstream execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if confirmed_integration_ratio increases from 0.126 to &gt;= 0.35 within 15 integrated cycles; refuted if confirmable integrations continue climbing while confirmed_integration_ratio remains &lt;= 0.15.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-26T23:35:51.418649Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Circuit breaker for multi-hour dedup cycle loops</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Cycles cycling through repeated started/dedup iterations without state mutation (e.g., cycle-3651dedc8157 iterating 9 times and cycle-6de9a5855ed5 iterating 5 times) directly inflate repeat_failure_rate (0.5084) and token consumption (2.88M tokens/integration); enforcing an automated termination after 2 consecutive stalled dedup/start iterations will eliminate runaway loop churn and lower repeat failure rates.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a max-dedup retry threshold (cap = 2) in the cycle runner that flags stalled runs as terminal failures rather than allowing multi-hour re-starts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if repeat_failure_rate drops below 0.38 and tokens_per_integration decreases by &gt;= 20%; refuted if repeat_failure_rate remains &gt;= 0.50.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-26T23:35:51.418750Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Shift focus from failure reporting scripts to runtime slice trust ladder</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Proposing auxiliary scripts to summarize failures (e.g., scripts/summarize_failure_*.py) under goal-gap-5d4d5a9dc822 yields negligible metric gain (-0.0043 over 151 integrations) and diverts capacity from core runtime optimization; redirecting proposals to the runtime trust ladder slice (nanobot/runtime/existence_index.py) will progress the control plane out of level 0 without generating unconfirmed script churn.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Direct the LLM proposer demand vector to prioritize changes and unit tests for SELFEVO_RUNTIME_SLICE (nanobot/runtime/existence_index.py) over standalone diagnostic scripts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if runtime_trust_ladder advances to level 1 and proposer_rejects ratio decreases by &gt;= 15%; refuted if runtime_trust_ladder remains at level 0.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-26T23:35:51.418806Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Automate execution guardrails over prompt-bloating AGENTS.md rules</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Replacing natural-language execution discipline in AGENTS.md with deterministic preflight checks in the runtime harness will reduce zero-edit step exhaustion without increasing prompt token bloat.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a deterministic preflight turn check in runtime harness instead of adding operational rules to AGENTS.md.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if partial cycle runs decrease to 0 and wasted_attempt_rate decreases by at least 0.08 over 10 cycles; refuted if partial cycles continue to occur at &gt;= 1 per 5 cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671386Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Self-refreshing feed collection during cycle teardown</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Binding host metric and usage collection to cycle teardown events dissolves the stale feed gap without expending proposer cycles on standalone test scaffolding.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Trigger scripts/collect_host_metrics.py and usage sync as an automated post-cycle hook in coordinator execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if stale_feeds metric reaches 0.0 and age_seconds remains below max_age_seconds; refuted if host_metrics remains stale (&gt; 86400s) after 3 completed cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671484Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Pre-proposer demand deduplication filtering</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing intent fingerprinting at demand ingestion before invoking the proposer will eliminate self-dedup cycle churn without degrading confirmed integration ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Apply deduplication hashing against recent cycle targets in nanobot/runtime/demand.py prior to candidate selection.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if skipped-duplicate drops to 0 and wasted_attempt_rate drops below 0.50 without reducing confirmed_integrations; refuted if confirmed_integration_ratio declines below 0.20.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671542Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Harness Execution Coupling to Dissolve Confirmed Ratio Deficit</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling post-merge smoke validation to exercise entry points in newly completed scripts/*.py will increase completed_confirmed without generating additional script inventory, lifting confirmed_ratio above 0.50 while keeping tokens_per_integration below 2.7M.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Instrument harness validation to invoke --help or test fixtures for newly modified scripts under scripts/ during cycle gating.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if confirmed_ratio rises from 0.4095 to &gt;= 0.48 within 15 cycles with tokens_per_integration &lt;= 2.7M; refuted if confirmed_ratio remains &lt; 0.43.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941651Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Validator Parent Heartbeat Touch to Clear Stale Host Metrics</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Triggering a lightweight heartbeat stamp update for host_metrics during validator_harness_parent execution will clear the stale feed gap (stale_feeds=0) without spawning sidecar sub-processes that cause sidecar_write_during_spawn integrity incidents.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an in-process mtime refresh or passive host_metrics touch inside the validator harness parent execution routine.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if feeds.stale drops from 1 to 0 and host_metrics age remains &lt; 43200s over 5 consecutive cycles with 0 new integrity incidents; refuted if feed remains stale or sidecar integrity incidents increase.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941746Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Dedup-Throttled Demand Selection to Lower Wasted Attempt Rate</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing a temporary backoff on demands with self_dedup count &gt; 10 (such as goal-gap-5d4d5a9dc822 and repetitive decay demands) will reduce wasted_attempt_rate from 0.604 to &lt; 0.45 without decreasing net confirmed integrations per day.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Configure proposer demand selection to penalize demands where self_dedup to integrated ratio exceeds 3:1 until other vector gaps are addressed.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if wasted_attempt_rate falls below 0.45 across 20 subsequent cycles while daily integrations remain &gt;= 10; refuted if wasted_attempt_rate stays above 0.55.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941802Z</div>
+            </li>
+        </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-29 02:03:29 UTC &middot; host eeepc &middot; newest source 7s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-29 02:09:42 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
