@@ -483,6 +483,7 @@ result = {
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
     "skill_reads": read_json("skill_fitness/reads.json"),
+    "skill_evals": read_jsonl("skill_fitness/evals.jsonl"),
     "llm_stats": read_llm_stats(),
     "proposer_stats": read_proposer_stats(),
     "lessons": read_lessons(),
@@ -517,6 +518,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'demand_rotation': None,
         'demand_completed': None,
         'skill_reads': None,
+        'skill_evals': [],
         'llm_stats': {},
         'proposer_stats': None,
         'lessons': [],
@@ -694,6 +696,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'demand_rotation': None,
         'demand_completed': None,
         'skill_reads': None,
+        'skill_evals': [],
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -1023,6 +1026,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'demand_rotation': read_json('demand/rotation.json'),
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
+        'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
         'lessons': read_lessons_local(),
@@ -3072,6 +3076,7 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
     )
 
 
+def _host_identity(host: str | None, agents_md: str | None) -> str:
     """Issue #39: hardware identity line derived ONLY from already-collected
     data (host name + patterns found in the instance AGENTS.md text).
     Renders nothing when there is less than one hardware fact -- never
@@ -3339,6 +3344,7 @@ def build_agent_panel(
     agents_md: str | None,
     goal_text: dict[str, Any] | None,
     skill_reads: dict[str, Any] | None,
+    skill_evals: list[dict[str, Any]] | None = None,
     portfolio: dict[str, Any] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
     host: str | None = None,
@@ -3371,6 +3377,12 @@ def build_agent_panel(
 
     # 3. Skills fitness table
     skills_html = '<p class="unavailable-note">skill reads unavailable</p>'
+    eval_by_skill: dict[str, int] = {}
+    if isinstance(skill_evals, list):
+        for row in skill_evals:
+            if isinstance(row, dict) and row.get('skill'):
+                skill_name = str(row['skill'])
+                eval_by_skill[skill_name] = eval_by_skill.get(skill_name, 0) + 1
     if isinstance(skill_reads, dict):
         reads_list = skill_reads.get('reads')
         if isinstance(reads_list, list):
@@ -3386,8 +3398,14 @@ def build_agent_panel(
                 sorted_skills = sorted(read_counts.items(), key=lambda kv: kv[1], reverse=True)
                 rows = []
                 for sname, count in sorted_skills:
-                    # Note on confirmed usage: honestly note omission / not tracked
-                    usage_note = '<span class="skill-untracked">not tracked</span>'
+                    confirmed = sum(
+                        1 for row in reads_list
+                        if isinstance(row, dict) and row.get('skill') == sname and row.get('confirmed') is True
+                    )
+                    usage_note = f'<span class="skill-usage-confirmed">{confirmed} confirmed</span>' if confirmed else '<span class="skill-untracked">not tracked</span>'
+                    eval_count = eval_by_skill.get(sname, 0)
+                    if eval_count:
+                        usage_note += f' <span class="skill-eval-delta">evals: {eval_count}</span>'
                     ratio_flag = 'skill-high-ratio' if count >= 5 else ''
                     rows.append(f'''
                     <tr class="{ratio_flag}">
@@ -3400,7 +3418,7 @@ def build_agent_panel(
                 skills_html = f'''
                 <table class="skills-table">
                   <thead>
-                    <tr><th>Skill</th><th>Reads</th><th>Confirmed Usage</th></tr>
+                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; eval rows when present)</th></tr>
                   </thead>
                   <tbody>
                     {''.join(rows)}
@@ -4411,10 +4429,12 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     scorecard = data.get('scorecard')
     evolution_tree = data.get('evolution_tree')
     hypotheses = data.get('hypotheses')
+    hypotheses_durable = data.get('hypotheses_durable')
     ledger_tail = data.get('ledger_tail')
     demand_rotation = data.get('demand_rotation')
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
+    skill_evals = data.get('skill_evals')
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
@@ -4504,11 +4524,14 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
     )
-    hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
+    hypotheses_panel = build_hypotheses_panel(
+        hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
+    )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
         goal_text=goal_text,
         skill_reads=skill_reads,
+        skill_evals=skill_evals,
         portfolio=portfolio,
         ledger_tail=ledger_tail,
         host=host,
@@ -4650,13 +4673,16 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
                 answered += 1
             else:
                 active += 1
+    durable = data.get('hypotheses_durable')
+    durable_entries = durable.get('entries', []) if isinstance(durable, dict) else []
+    durable_count = len(durable_entries) if isinstance(durable_entries, (list, dict)) else 0
     return f'''
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
         <li><a href="cycles.html">cycles</a> &mdash; {len(cycle_ids)} cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; {node_count} evolution nodes</li>
-        <li><a href="hypotheses.html">hypotheses</a> &mdash; {active} active / {answered} answered</li>
+        <li><a href="hypotheses.html">hypotheses</a> &mdash; {active} active / {answered} answered + {durable_count} strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
       </ul>
@@ -4697,10 +4723,12 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     scorecard = data.get('scorecard')
     evolution_tree = data.get('evolution_tree')
     hypotheses = data.get('hypotheses')
+    hypotheses_durable = data.get('hypotheses_durable')
     ledger_tail = data.get('ledger_tail')
     demand_rotation = data.get('demand_rotation')
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
+    skill_evals = data.get('skill_evals')
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
@@ -4769,11 +4797,14 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         llm_stats=data.get('llm_stats'),
         history_mode=True,
     )
-    hypotheses_panel = build_hypotheses_panel(hypotheses, feed_cycles=feed_cycles)
+    hypotheses_panel = build_hypotheses_panel(
+        hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
+    )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
         goal_text=goal_text,
         skill_reads=skill_reads,
+        skill_evals=skill_evals,
         portfolio=portfolio,
         ledger_tail=ledger_tail,
         host=host,

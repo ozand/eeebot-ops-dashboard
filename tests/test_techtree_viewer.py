@@ -102,6 +102,13 @@ def _fixture() -> dict[str, object]:
                 },
             ],
         },
+        'hypotheses_durable': {
+            'schema_version': 'hypothesis-durable-v1',
+            'model': 'HADI',
+            'entries': [
+                {'hypothesis_id': 'durable-1', 'title': 'Durable hypothesis', 'hadi': {'hypothesis': 'It works', 'action': 'Try it'}, 'selection_status': 'candidate'},
+            ],
+        },
         'hypotheses': {
             'entries': {
                 'hyp-1': {
@@ -357,7 +364,7 @@ def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
     assert '<td class="skill-reads">2</td>' in html_out
     assert 'systematic-debugging' in html_out
     assert '<td class="skill-reads">1</td>' in html_out
-    assert 'not tracked' in html_out
+    assert 'confirmed' in html_out
 
 
 def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
@@ -1283,6 +1290,27 @@ def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
 # =========================================================================
 # Issue 48: Multi-column agent panel with Skills table
 # =========================================================================
+
+def test_issue97_confirmed_usage_and_eval_source() -> None:
+    html = tv.build_agent_panel(
+        agents_md=None,
+        goal_text=None,
+        skill_reads={'reads': [{'skill': 'alpha', 'confirmed': True}, {'skill': 'alpha', 'confirmed': False}]},
+        skill_evals=[{'skill': 'alpha', 'delta': 0.2}],
+    )
+    assert '1 confirmed' in html
+    assert 'evals: 1' in html
+    assert 'skill_fitness/reads.json' in html
+
+
+def test_issue97_absent_confirmation_remains_not_tracked() -> None:
+    html = tv.build_agent_panel(
+        agents_md=None,
+        goal_text=None,
+        skill_reads={'reads': [{'skill': 'alpha'}]},
+    )
+    assert 'not tracked' in html
+
 
 def test_issue48_agent_panel_multi_column_with_skills_table() -> None:
     agents_md = '# AGENTS.md content\nInstruction details here.'
