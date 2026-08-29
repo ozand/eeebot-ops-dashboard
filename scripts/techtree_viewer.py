@@ -495,6 +495,7 @@ result = {
     "cycle_files": _cycle_files,
     "cycle_titles_error": _cycle_titles_error,
     "_source_mtimes": _mtimes,
+    "generator_sha": "",
 }
 print(json.dumps(result))
 '''.lstrip('\n')
@@ -1036,6 +1037,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'cycle_titles': titles,
         'cycle_files': cycle_files,
         'cycle_titles_error': titles_error,
+        'generator_sha': '',
         '_newest_source_age_seconds': None,
     }
     if mtimes:
@@ -1588,6 +1590,7 @@ def _evo_box_html(
         f'<div class="{box_class}"{score_style} title="{tooltip}" id="{esc(node_id)}">'
         f'<div class="evo-header">{header_content}</div>'
         f'<div class="evo-meta">{dir_badge}<span class="evo-sha copyable" translate="no">{esc(short_sha(sha))}</span></div>'
+        f'<div class="evo-date">{esc(fmt_ts_short(node.get("ts")))}</div>'
         f'{fitness_line}'
         '</div>'
     )
@@ -2059,6 +2062,34 @@ def build_archive_tree(
             return _score_color((float(val) - rmin) / (rmax - rmin))
         return '#1f3a2d'
 
+    # Issue #93: day separators -- horizontal dashed lines between depth layers
+    # that cross a date boundary. Each depth layer is one time-step; when the
+    # first node in layer d is on a different UTC date than the first node in
+    # layer d-1, a separator line + date label go between the two rows.
+    lx = max(120 + max_slot * COL_W, 240)
+    day_separators: list[str] = []
+    _layer_dates: dict[int, str] = {}
+    for d, keys in layers.items():
+        ts_list = [recs[k].get('ts') or '' for k in keys if recs[k].get('ts')]
+        if ts_list:
+            first_ts = sorted(ts_list)[0]
+            _dt = _parse_iso_ts(first_ts)
+            if _dt is not None:
+                _layer_dates[d] = _dt.strftime('%Y-%m-%d')
+    for d in sorted(layers):
+        if d == 0:
+            continue
+        prev_date = _layer_dates.get(d - 1, '')
+        cur_date = _layer_dates.get(d, '')
+        if prev_date and cur_date and cur_date != prev_date:
+            sep_y = 40 + d * ROW_H - ROW_H // 2
+            sep_w = max(lx - 20, 100)
+            day_separators.append(
+                f'<line x1="0" y1="{sep_y}" x2="{sep_w}" y2="{sep_y}" '
+                f'class="arch-day-sep"/>'
+                f'<text x="4" y="{sep_y - 2}" class="arch-day-label">{esc(cur_date)}</text>'
+            )
+
     edges = []
     for key, r in recs.items():
         parent = r.get('parent')
@@ -2137,7 +2168,7 @@ def build_archive_tree(
         f'<svg class="tech-canvas arch-tree" role="img" '
         f'aria-label="DGM archive tree: full evolution history, {len(recs)} nodes" '
         f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
-        f'{"".join(edges)}{"".join(circles)}{legend}</svg>'
+        f'{"".join(day_separators)}{"" .join(edges)}{"" .join(circles)}{legend}</svg>'
     )
     total = len(recs)
     panel = _cycle_details_panel(cycle_details or {}) if cycle_details else ''
@@ -2254,9 +2285,11 @@ def build_tech_canvas(
                     '</g>'
                 )
             else:
+                # Issue #94: do not render a permanently empty reward gauge. The
+                # underlying product does not record per-node reward yet.
                 legend_html = (
                     f'<text x="{max(canvas_width - 200, 200)}" y="14" class="lane-note" text-anchor="end">'
-                    'no node scores recorded yet</text>'
+                    'score gauge hidden: reward data gap</text>'
                 )
             groups.append(f'<g class="lane lane-b" transform="translate(0,{y_cursor})">{label_b}{note_html}{date_label}{legend_html}{body}</g>')
             lane_b_height = lane_b['height']
@@ -3481,7 +3514,7 @@ def build_empire_stats_strip(
 
     stats = [
         ('integrations', esc(loop.get('integrations', 'n/a'))),
-        ('confirmed ratio', humanize_ratio(loop.get('confirmed_integration_ratio'))),
+        ('confirmed integration ratio', humanize_ratio(loop.get('confirmed_integration_ratio'))),
         # Issue #58: the header KPI and the Now-panel lever are DIFFERENT
         # computations of failure rate (scorecard snapshot vs last cycle
         # measurement). Annotate the source visibly + via tooltip instead of
@@ -3498,7 +3531,7 @@ def build_empire_stats_strip(
     # first-time viewer can tell health from sickness.
     kpi_tooltips = {
         'integrations': 'total cycles whose changes were merged into the evolution lineage',
-        'confirmed ratio': 'share of integrations whose effects were later confirmed working in live operation',
+        'confirmed integration ratio': 'scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working',
         'repeat failure rate · scorecard': (
             'share of cycles repeating a previously seen failure; source: scorecard snapshot'
             + (f' (computed {computed_ts})' if computed_ts else '')
@@ -3516,7 +3549,7 @@ def build_empire_stats_strip(
     targets = scorecard.get('targets') if isinstance(scorecard.get('targets'), dict) else {}
     target_key = {
         'integrations': 'integrations',
-        'confirmed ratio': 'confirmed_integration_ratio',
+        'confirmed integration ratio': 'confirmed_integration_ratio',
         'repeat failure rate · scorecard': 'repeat_failure_rate',
         'tokens / integration': 'tokens_per_integration',
         'held-out': 'heldout',
@@ -4309,6 +4342,11 @@ CSS = '''
     .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
     .arch-star { fill: #56d364; font-size: 14px; }
     .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
+    /* Issue #93: day separator lines and date labels in the archive tree. */
+    .arch-day-sep { stroke: #2f5c46; stroke-width: 1; stroke-dasharray: 4 3; }
+    .arch-day-label { fill: #5a7a68; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #93: date sub-label in evolution node meta. */
+    .evo-date { color: #5a7a68; font-size: 8px; margin-left: 4px; }
     .arch-note {
       font-size: 0.78em;
       color: #8aa695;
@@ -4394,7 +4432,7 @@ PAGE_TEMPLATE = '''<!doctype html>
 {hypotheses_panel}
 {agent_panel}
 </main>
-<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
+<footer class="page-footer">generator {generator_sha} · generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {{
   el.addEventListener('click', function () {{
@@ -4421,6 +4459,14 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 </body>
 </html>
 '''
+
+
+def _generator_sha() -> str:
+    try:
+        result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, timeout=5)
+        return result.stdout.strip() if result.returncode == 0 else 'unknown'
+    except Exception:
+        return 'unknown'
 
 
 def render_page(data: dict[str, Any], host: str, generated_at: str | None = None) -> str:
@@ -4478,6 +4524,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         titles_note = f' &middot; &#9888; task titles unavailable ({esc(str(data.get("cycle_titles_error")))})'
 
     computed_note = ''
+    generator_sha = str(data.get('generator_sha') or '').strip() or _generator_sha()
     if isinstance(scorecard, dict) and scorecard.get('computed_at_utc'):
         computed_note = f' &middot; <span class="footer-computed">scorecard computed {fmt_ts(scorecard.get("computed_at_utc"))}</span>'
 
@@ -4566,6 +4613,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
+        generator_sha=generator_sha or 'unknown',
     )
 
 
@@ -4598,7 +4646,7 @@ SITE_TEMPLATE = '''<!doctype html>
 <main class="dashboard-main">
 {page_main}
 </main>
-<footer class="page-footer">generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
+<footer class="page-footer">generator {generator_sha} · generated {generated_at} UTC &middot; host {host} &middot; newest source {source_age}{computed_note}{error_note}{titles_note}</footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {{
   el.addEventListener('click', function () {{
@@ -4650,7 +4698,7 @@ def _site_nav(current: str) -> str:
 
 def _site_page(title: str, current: str, empire_strip: str, page_main: str,
                generated_at: str, host: str, source_age: str,
-               computed_note: str, error_note: str, titles_note: str) -> str:
+               computed_note: str, error_note: str, titles_note: str, generator_sha: str = 'unknown') -> str:
     return SITE_TEMPLATE.format(
         css=CSS,
         title=esc(title),
@@ -4663,6 +4711,7 @@ def _site_page(title: str, current: str, empire_strip: str, page_main: str,
         computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
+        generator_sha=generator_sha,
     )
 
 
@@ -4757,6 +4806,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     if data.get('cycle_titles_error'):
         titles_note = f' &middot; &#9888; task titles unavailable ({esc(str(data.get("cycle_titles_error")))})'
     computed_note = ''
+    generator_sha = str(data.get('generator_sha') or '').strip() or _generator_sha()
     if isinstance(scorecard, dict) and scorecard.get('computed_at_utc'):
         computed_note = f' &middot; <span class="footer-computed">scorecard computed {fmt_ts(scorecard.get("computed_at_utc"))}</span>'
 
@@ -4828,7 +4878,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
-                          computed_note, error_note, titles_note)
+                          computed_note, error_note, titles_note, generator_sha or 'unknown')
 
     teaser_html = _index_teasers(data, ledger_tail, evolution_tree, hypotheses)
     teaser_feed = build_cycle_feed(
