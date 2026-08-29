@@ -515,6 +515,64 @@
       color: #cfe3d7;
     }
     .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -756,7 +814,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">37.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 01:34:00.198399 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 01:34 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 01:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -825,44 +883,44 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
           
                 <table class="skills-table">
                   <thead>
-                    <tr><th>Skill</th><th>Reads</th><th>Confirmed Usage</th></tr>
+                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; eval rows when present)</th></tr>
                   </thead>
                   <tbody>
                     
                     <tr class="skill-high-ratio">
                       <td class="skill-name">run-tests</td>
                       <td class="skill-reads">23</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">23 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
                       <td class="skill-name">fast_path_redundancy_skip</td>
                       <td class="skill-reads">4</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
                       <td class="skill-name">eeebot-agent-work-review</td>
                       <td class="skill-reads">3</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
                       <td class="skill-name">memory-lookup</td>
                       <td class="skill-reads">3</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
                       <td class="skill-name">batch_grep</td>
                       <td class="skill-reads">3</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
                       <td class="skill-name">multi-script-refactor</td>
                       <td class="skill-reads">2</td>
-                      <td class="skill-usage"><span class="skill-untracked">not tracked</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
                     </tr>
                     
                   </tbody>
@@ -877,7 +935,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-29 01:34:59 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-29 01:39:27 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

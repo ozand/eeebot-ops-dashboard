@@ -515,6 +515,64 @@
       color: #cfe3d7;
     }
     .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
     .agents-md-box pre, .goal-text-box pre {
       margin: 0;
       background: rgba(8, 15, 11, 0.9);
@@ -756,18 +814,31 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="share of integrations whose effects were later confirmed working in live operation"><span class="stat-label">confirmed ratio</span><span class="stat-value">37.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 01:34:00.198399 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 01:34 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 01:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1333 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1334 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         
         <li class="feed-day-header">2026-08-29</li>
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-ce697d95e26a">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-ce697d95e26a)</span>
+            
+            
+            <span class="feed-ts" title="2026-08-29T01:38:08.254505Z">01:38 UTC</span>
+          </div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 7.79K tok &middot; dur 42s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-38a28fea900d">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
@@ -1406,7 +1477,7 @@
           <div class="feed-cost">&#9889; 5 calls &middot; 50.20K tok &middot; dur 2m33s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-18c74ae0ed83">
+        <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-18c74ae0ed83">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">feat: add threshold-based exit codes and degradation reasons to loop_health_report</strong>
@@ -18144,7 +18215,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generated 2026-08-29 01:34:59 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
+<footer class="page-footer">generated 2026-08-29 01:39:27 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 01:34:00.198399 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
