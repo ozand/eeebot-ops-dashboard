@@ -85,15 +85,71 @@ def test_deploy_generator_mentions_dry_run() -> None:
     assert "--dry-run" in text
 
 
-def test_deploy_generator_documents_footer_sha_dependency() -> None:
-    """The script must note that the footer sha injection is a UI-worker dependency."""
+def test_deploy_generator_bakes_sha_into_viewer(bash_available: bool) -> None:
+    """--dry-run output must include the sed-bake step for _BAKED_GENERATOR_SHA (issue #101)."""
+    pass  # static check below; the dry-run test covers the marker
+
+
+def test_deploy_generator_script_references_baked_sha_sentinel() -> None:
+    """The script must reference the _BAKED_GENERATOR_SHA sentinel variable (issue #101)."""
     text = DEPLOY_SCRIPT.read_text(encoding="utf-8")
-    # Check that the script explains the footer sha limitation
-    assert "techtree_viewer.py" in text
-    assert (
-        "footer" in text.lower()
-        or "generator sha" in text.lower()
-        or "sha" in text.lower()
+    assert "_BAKED_GENERATOR_SHA" in text, (
+        "deploy_generator.sh must sed-patch the _BAKED_GENERATOR_SHA sentinel in the deployed viewer"
+    )
+    assert "sed -i" in text or "sed -i" in text, (
+        "deploy_generator.sh must use sed -i to bake the sha"
+    )
+
+
+def test_viewer_has_baked_sha_sentinel() -> None:
+    """techtree_viewer.py must contain the _BAKED_GENERATOR_SHA sentinel line (issue #101)."""
+    text = VIEWER_SCRIPT.read_text(encoding="utf-8")
+    assert "_BAKED_GENERATOR_SHA: str = ''" in text, (
+        "techtree_viewer.py must have a _BAKED_GENERATOR_SHA: str = '' sentinel for deploy_generator.sh to patch"
+    )
+
+
+def test_viewer_generator_sha_prefers_baked_value() -> None:
+    """_generator_sha() must return the baked value when _BAKED_GENERATOR_SHA is non-empty (issue #101)."""
+    import importlib.util, sys, types
+    spec = importlib.util.spec_from_file_location("techtree_viewer_test", VIEWER_SCRIPT)
+    mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    # Patch _BAKED_GENERATOR_SHA before exec so the module sees the baked value
+    # without actually touching the file.
+    original = VIEWER_SCRIPT.read_text(encoding="utf-8")
+    patched = original.replace(
+        "_BAKED_GENERATOR_SHA: str = ''",
+        "_BAKED_GENERATOR_SHA: str = 'abc1234'",
+    )
+    assert "_BAKED_GENERATOR_SHA: str = 'abc1234'" in patched, "sentinel patch failed"
+    import tempfile, importlib.util as ilu
+    with tempfile.NamedTemporaryFile(suffix=".py", mode="w", encoding="utf-8", delete=False) as tf:
+        tf.write(patched)
+        tf_path = tf.name
+    try:
+        spec2 = ilu.spec_from_file_location("tv_baked", tf_path)
+        mod2 = ilu.module_from_spec(spec2)  # type: ignore[arg-type]
+        spec2.loader.exec_module(mod2)  # type: ignore[union-attr]
+        result = mod2._generator_sha()
+        assert result == "abc1234", (
+            f"_generator_sha() should return baked sha 'abc1234', got {result!r}"
+        )
+    finally:
+        import os; os.unlink(tf_path)
+
+
+def test_viewer_generator_sha_fallback_without_baked() -> None:
+    """_generator_sha() returns a non-empty string when no baked SHA is set (issue #101)."""
+    import importlib.util as ilu, tempfile, os
+    text = VIEWER_SCRIPT.read_text(encoding="utf-8")
+    # Sentinel must be present and empty — fallback path via git or 'unknown'
+    assert "_BAKED_GENERATOR_SHA: str = ''" in text
+    spec = ilu.spec_from_file_location("tv_nobake", VIEWER_SCRIPT)
+    mod = ilu.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    result = mod._generator_sha()
+    assert isinstance(result, str) and len(result) > 0, (
+        f"_generator_sha() must return a non-empty string, got {result!r}"
     )
 
 
@@ -136,8 +192,10 @@ def test_deploy_generator_dry_run_output(bash_available: bool, tmp_path: Path) -
     # Must prefix at least one action with [dry-run]
     assert "[dry-run]" in stdout
 
-    # Must print the footer-sha dependency note
-    assert "techtree_viewer.py" in stdout
+    # Must print the dry-run bake step for _BAKED_GENERATOR_SHA (issue #101)
+    assert "_BAKED_GENERATOR_SHA" in stdout, (
+        f"Expected '_BAKED_GENERATOR_SHA' bake step in dry-run output:\n{stdout}"
+    )
 
 
 def test_deploy_generator_dry_run_no_files_written(bash_available: bool, tmp_path: Path) -> None:

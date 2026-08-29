@@ -49,6 +49,13 @@ LEDGER_SCAN_WINDOW = 20000
 # Issue #72/#73: full-history window (days) for ledger + lessons archives.
 LEDGER_HISTORY_DAYS = 90
 
+# Baked-in generator SHA (issue #101).
+# This sentinel is replaced with the real short git SHA by deploy_generator.sh
+# at deploy time (via `sed -i`).  When running directly from the repo the value
+# is empty and _generator_sha() falls back to `git rev-parse --short HEAD`.
+# Format: exactly 7 hex chars, no surrounding whitespace.  Never edit manually.
+_BAKED_GENERATOR_SHA: str = ''
+
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
@@ -4462,6 +4469,18 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 
 
 def _generator_sha() -> str:
+    """Return the generator's git short SHA.
+
+    Preference order (issue #101):
+    1. Module-level ``_BAKED_GENERATOR_SHA`` — set by deploy_generator.sh at
+       deploy time via ``sed -i``; non-empty when running from /opt, so no
+       git repo is required on the host.
+    2. ``git rev-parse --short HEAD`` — works when running directly from the
+       repo (operator workstation / CI).
+    3. ``'unknown'`` — neither source is available.
+    """
+    if _BAKED_GENERATOR_SHA:
+        return _BAKED_GENERATOR_SHA
     try:
         result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, timeout=5)
         return result.stdout.strip() if result.returncode == 0 else 'unknown'
