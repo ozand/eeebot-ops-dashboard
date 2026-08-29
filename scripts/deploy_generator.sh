@@ -174,11 +174,7 @@ fi
 echo
 echo "deploy_generator.sh: done"
 echo "  generator sha: $GIT_SHA"
-echo "  NOTE: the published site footer does not yet display the generator sha."
-echo "        This requires a change to techtree_viewer.py (render_pages/render_page"
-echo "        accept no generator_sha parameter today).  That change is a dependency"
-echo "        on the UI worker.  To verify the deployed version, compare this sha"
-echo "        against the source commit shown in 'git log' or the GitHub interface."
+echo "  verify the published footer's generator sha against this deployed commit."
 if [[ "$DRY_RUN" == "1" ]]; then
   echo
   echo "[dry-run] no changes were made."

@@ -123,11 +123,8 @@ The script:
 5. Triggers one `eeebot-techtree-publish.service` run so the new generator
    is exercised immediately.
 
-Note: the published page footer does not yet display the generator git sha.
-Adding it requires a change to `techtree_viewer.py` (`render_pages` /
-`render_page` accept no `generator_sha` parameter today). That change is
-tracked as a dependency on the UI worker (issue #101). Until it lands,
-compare the sha printed by `deploy_generator.sh` against `git log` on master.
+The published page footer displays the generator git sha. Verify deployment
+by comparing the footer sha with the source commit printed by this script.
 
 First-time setup (before running `deploy_generator.sh`):
 1. Run `scripts/install_techtree_publish.sh` (as root on the host) to create

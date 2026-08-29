@@ -1554,7 +1554,7 @@ def test_issue53_no_rewards_muted_note_neutral_boxes() -> None:
     for node in data['evolution_tree']['nodes'].values():
         node.pop('fitness', None)
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
-    assert 'no node scores recorded yet' in html_out
+    assert 'score gauge hidden: reward data gap' in html_out
     assert 'scoregrad' not in html_out
     assert 'border-color:hsl(' not in html_out
     # best-path highlight is independent of rewards
