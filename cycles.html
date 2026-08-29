@@ -819,18 +819,31 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">202</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">38.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-29 04:21:09.924102 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="7">data: 7s old &middot; generated 04:31 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 04:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1346 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1347 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         
         <li class="feed-day-header">2026-08-29</li>
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a398f51c2f12">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat: add git diff path inspection to check_mutation_surface.py</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-a398f51c2f12)</span>
+            
+            <a href="#node-2dfa141" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-29T04:35:13.902729Z">04:35 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; scripts/check_mutation_surface.py, tests/test_check_mutation_surface.py</div>
+          <div class="feed-cost">&#9889; 19 calls &middot; 355.4K tok &middot; dur 3m11s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fe680468345b">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
@@ -1469,7 +1482,7 @@
           <div class="feed-cost">&#9889; 47 calls &middot; 1.72M tok &middot; dur 6m26s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-f1febe75ab50">
+        <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-f1febe75ab50">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">docs: add out-of-scope verification defect handoff guidance to AGENTS.md</strong>
@@ -1927,13 +1940,13 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-095b01af70f2">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">fix: handle missing HISTORY.md gracefully in prune_failed_backlog.py</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-095b01af70f2)</span>
             
             <a href="#node-3475537" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-08-28T07:32:00.384080Z">Aug 28</span>
           </div>
-          <div class="feed-files">&#128193; scripts/prune_failed_backlog.py, tests/test_prune_failed_backlog.py</div>
+          
           <div class="feed-cost">&#9889; 9 calls &middot; 104.6K tok &middot; dur 76s</div>
         </li>
         
@@ -2895,7 +2908,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9e2ef2d14b19)</span>
             
-            <a href="#node-a9e430a" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-25T17:09:36.109530Z">Aug 25</span>
           </div>
           
@@ -18376,7 +18389,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator f9bc721 · generated 2026-08-29 04:31:59 UTC &middot; host eeepc &middot; newest source 7s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 04:21:09.924102 UTC</span></footer>
+<footer class="page-footer">generator f9bc721 · generated 2026-08-29 04:39:32 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-29 04:21:09.924102 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
