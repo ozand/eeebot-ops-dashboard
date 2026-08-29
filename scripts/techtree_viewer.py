@@ -3431,7 +3431,7 @@ def build_agent_panel(
                 skills_html = f'''
                 <table class="skills-table">
                   <thead>
-                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; eval rows when present)</th></tr>
+                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; skill_fitness/evals.jsonl when present)</th></tr>
                   </thead>
                   <tbody>
                     {''.join(rows)}
