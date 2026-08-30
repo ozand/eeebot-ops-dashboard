@@ -819,18 +819,31 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">51.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-30 18:11:13.198695 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 18:23 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 18:56 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1469 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1470 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         
         <li class="feed-day-header">2026-08-30</li>
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-e472e24c8cdc">
+          <div class="feed-header">
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-e472e24c8cdc)</span>
+            
+            
+            <span class="feed-ts" title="2026-08-30T18:26:39.179110Z">18:26 UTC</span>
+          </div>
+          
+          <div class="feed-cost">&#9889; 14 calls &middot; 754.2K tok &middot; dur 27m8s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-926121b42203">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
@@ -1468,7 +1481,7 @@
           <div class="feed-cost">&#9889; 11 calls &middot; 154.8K tok &middot; dur 2m13s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-838a127902d5">
+        <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-838a127902d5">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">docs: add differential scoping rules for compound tasks to memory</strong>
@@ -19976,7 +19989,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator f9bc721 · generated 2026-08-30 18:23:16 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-30 18:11:13.198695 UTC</span></footer>
+<footer class="page-footer">generator f9bc721 · generated 2026-08-30 18:56:46 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-30 18:11:13.198695 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
