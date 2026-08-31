@@ -1894,9 +1894,6 @@ def _build_day_bucketed_lineage(
                 depth[sha] = 0 if prior < 0 else depth[ordered_all[prior]['sha']] + 1
             return depth[sha]
         for node in all_nodes.values():
-            if node['sha'] not in depth:
-                depth[node['sha']] = 0
-        for node in all_nodes.values():
             get_depth(node['sha'])
         slots: dict[int, int] = {}
         for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
@@ -1922,7 +1919,7 @@ def _build_day_bucketed_lineage(
                     label = datetime.strptime(_lineage_day(parent_node['ts']), '%Y-%m-%d').strftime('%b %d')
                     parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="20">&#8617; from {esc(label)}</text>')
                 else:
-                    previous = next((item for item in ordered_all if item['ts'] < node['ts']), None)
+                    previous = next((item for item in reversed(ordered_all) if item['ts'] < node['ts']), None)
                     if previous:
                         x1, y1 = positions.get(previous['sha'], (positions[node['sha']][0] - 80, positions[node['sha']][1]))
                         x2, y2 = positions[node['sha']]
