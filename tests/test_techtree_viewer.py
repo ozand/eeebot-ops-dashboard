@@ -2052,6 +2052,18 @@ def test_issue109_unresolvable_parents_use_dashed_chronological_chain() -> None:
     assert html.count('class="lineage-edge lineage-edge-chronological"') == 2
     assert 'lineage-hidden-parent' not in html
 
+
+def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': f'missing-{i}', 'ts': f'2026-08-17T00:{i:02d}:00Z'}
+        for i in range(6)
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-17T01:00:00Z')
+    edges = re.findall(r'<line x1="(-?\d+)" y1="(-?\d+)" x2="(-?\d+)" y2="(-?\d+)" class="lineage-edge lineage-edge-chronological"', html)
+    assert len(edges) == 5
+    assert all(int(x1) >= 0 and int(x2) >= 0 for x1, _, x2, _ in edges)
+    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(30 + i * 80, 30 + (i + 1) * 80) for i in range(5)]
+
 # ---------------------------------------------------------------------------
 # Issue #77: ring-class outcome join fix (outcome field vocabulary)
 # ---------------------------------------------------------------------------
