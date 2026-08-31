@@ -1884,9 +1884,7 @@ def _build_vertical_day_lineage(
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         count = max(len(trunk), len(side), 1)
-        width = max(180, 160 + (min(len(side), LINEAGE_DAY_CAP) * 52))
         height = 40 + max(count, len(trunk)) * 32
-        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
         positions: dict[str, tuple[int, int]] = {node['sha']: (60, 24 + i * 32) for i, node in enumerate(trunk)}
         lane_last_y: list[int] = []
         for leaf_index, node in enumerate(side[:LINEAGE_DAY_CAP]):
@@ -1898,6 +1896,13 @@ def _build_vertical_day_lineage(
             else:
                 lane_last_y[lane] = y
             positions[node['sha']] = (160 + lane * 52, y)
+        # Width follows the lanes actually used, not the worst-case
+        # one-lane-per-leaf count: a fixed width/height pair that exceeds the
+        # drawn content letterboxes under max-width scaling and renders as
+        # large empty bands around the tree.
+        max_x = max((x for x, _ in positions.values()), default=60)
+        width = max(180, max_x + 40)
+        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
         for i, node in enumerate(trunk):
             parent = node['parent_sha']
             if parent in positions:
@@ -4616,7 +4621,7 @@ CSS = '''
     .lineage-day-group { padding: 4px 12px 10px; }
     .lineage-day-group[hidden] { display: none; }
     .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
-    .lineage-day-svg { display: block; max-width: 100%; overflow: visible; }
+    .lineage-day-svg { display: block; max-width: 100%; height: auto; overflow: visible; }
     .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
     .lineage-edge { stroke: #2f5c46; stroke-width: 2; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }

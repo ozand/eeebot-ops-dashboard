@@ -2079,6 +2079,29 @@ def test_issue115_leaf_is_attached_to_trunk_and_lanes_are_reused() -> None:
     assert section.count('class="lineage-edge arch-edge"') + section.count('class="lineage-edge lineage-edge-chronological"') >= 3
 
 
+def test_issue115_svg_width_follows_used_lanes_not_leaf_count() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
+    ]
+    rows += [
+        {'phase': 'outcome', 'cycle_id': f'failed-{i}', 'outcome': 'failed', 'ts': f'2026-08-31T{(i // 60):02d}:{(i % 60):02d}:30Z'}
+        for i in range(40)
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T03:00:00Z')
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S).group(1)
+    svg = re.search(r'<svg class="lineage-day-svg arch-tree" width="(\d+)" height="(\d+)" viewBox="0 0 (\d+) (\d+)"', section)
+    assert svg, 'day svg missing'
+    width, height = int(svg.group(1)), int(svg.group(2))
+    assert (width, height) == (int(svg.group(3)), int(svg.group(4)))
+    xs = [int(x) for x in re.findall(r'cx="(\d+)"', section)]
+    ys = [int(y) for y in re.findall(r'cy="(\d+)"', section)]
+    assert max(xs) + 9 <= width, 'node overflows svg width'
+    assert max(ys) + 9 <= height, 'node overflows svg height'
+    # 40 non-overlapping leaves share one lane; width must track the used
+    # lane, not one lane per leaf (the letterbox regression).
+    assert width <= max(xs) + 40
+
+
 def test_issue109_fork_children_use_distinct_rows_and_edges() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
