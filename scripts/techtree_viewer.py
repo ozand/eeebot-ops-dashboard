@@ -1885,7 +1885,8 @@ def _build_vertical_day_lineage(
             if parent in by_sha:
                 depth[sha] = node_depth(parent, guard | {sha}) + 1
             else:
-                depth[sha] = 0
+                previous = next((item for item in reversed(trunk) if item['ts'] < by_sha[sha]['ts']), None)
+                depth[sha] = node_depth(previous['sha'], guard | {sha}) + 1 if previous else 0
             return depth[sha]
 
         for node in trunk:
