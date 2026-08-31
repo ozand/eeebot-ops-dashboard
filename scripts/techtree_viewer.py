@@ -1874,11 +1874,11 @@ def _build_day_bucketed_lineage(
     for day in days:
         nodes = list(sorted(grouped[day].values(), key=lambda n: n['ts']))
         truncated = len(nodes) > LINEAGE_DAY_CAP
-        if truncated:
-            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         nodes = nodes[-LINEAGE_DAY_CAP:]
         parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}" data-node-count="{len(nodes)}">')
         parts.append(f'<h3>{esc(day)}</h3>')
+        if truncated:
+            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         depth: dict[str, int] = {}
         def get_depth(sha: str, guard: set[str] | None = None) -> int:
             if sha in depth:
@@ -1904,7 +1904,7 @@ def _build_day_bucketed_lineage(
         pitch = 40
         max_x = max((30 + (depth[node['sha']] - min_depth) * pitch for node in nodes), default=30)
         svg_width = max(60, max_x + 30)
-        parts[-1] = f'<svg class="lineage-day-svg" width="{svg_width}" height="{svg_height}" viewBox="0 0 {svg_width} {svg_height}">' 
+        parts.append(f'<svg class="lineage-day-svg" width="{svg_width}" height="{svg_height}" viewBox="0 0 {svg_width} {svg_height}">')
         positions: dict[str, tuple[int, int]] = {}
         depth_slots: dict[int, int] = {}
         for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
