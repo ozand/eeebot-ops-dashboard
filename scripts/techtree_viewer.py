@@ -1824,6 +1824,103 @@ def _lineage_day(ts: Any) -> str:
     return value[:10] if len(value) >= 10 else ''
 
 
+def _build_vertical_day_lineage(
+    ledger_rows: list[Any],
+    fallback_tree: dict[str, Any] | None,
+    task_titles: dict[str, str] | None,
+    now: str | None,
+) -> str:
+    grouped: dict[str, dict[str, dict[str, Any]]] = {}
+    leaves: dict[str, list[dict[str, Any]]] = {}
+    for row in ledger_rows:
+        if not isinstance(row, dict):
+            continue
+        day = _lineage_day(row.get('ts'))
+        if not day:
+            continue
+        if row.get('phase') == 'evolution_tree' and row.get('sha'):
+            sha = str(row['sha'])
+            grouped.setdefault(day, {})[sha] = {
+                'sha': sha, 'cycle_id': str(row.get('cycle_id') or ''),
+                'parent_sha': str(row.get('parent_sha') or ''), 'ts': str(row.get('ts') or ''),
+            }
+        elif row.get('cycle_id') and row.get('phase') in {'outcome', 'gate', 'proposer_reject', 'dedup'}:
+            leaves.setdefault(day, []).append(row)
+    if not grouped and isinstance(fallback_tree, dict) and isinstance(fallback_tree.get('nodes'), dict):
+        for sha, node in fallback_tree['nodes'].items():
+            if isinstance(node, dict) and _lineage_day(node.get('ts')):
+                day = _lineage_day(node.get('ts'))
+                grouped.setdefault(day, {})[str(sha)] = {
+                    'sha': str(sha), 'cycle_id': str(node.get('cycle_id') or ''),
+                    'parent_sha': str(node.get('parent_sha') or ''), 'ts': str(node.get('ts') or ''),
+                }
+    days = sorted(grouped)[-LINEAGE_DAYS:]
+    all_nodes = {sha: node for day in days for sha, node in grouped[day].items()}
+    max_day = max(days, default='')
+    current_day = min(_lineage_day(now) or max_day, max_day) if max_day else ''
+    prior = [day for day in days if day < current_day]
+    default_days = {day for day in (prior[-1:] + ([current_day] if current_day else []))}
+    parts = ['<div class="lineage-day-filter" data-default-filter="yesterday-today"><div class="lineage-day-controls">',
+             '<button type="button" data-lineage-filter="today">Today</button>',
+             '<button type="button" data-lineage-filter="24h">24h</button>',
+             '<button type="button" data-lineage-filter="yesterday-today" class="active">Yesterday+Today</button>',
+             '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>',
+             '<button type="button" data-lineage-filter="range">Apply</button></div>',
+             '<div class="lineage-day-groups" data-lineage-default="' + ','.join(sorted(default_days)) + '">']
+    all_ordered = sorted(all_nodes.values(), key=lambda node: node['ts'])
+    for day in days:
+        trunk = sorted(grouped[day].values(), key=lambda node: node['ts'])
+        seen = {node['cycle_id'] for node in trunk}
+        side = []
+        for row in sorted(leaves.get(day, []), key=lambda item: str(item.get('ts') or '')):
+            cid = str(row['cycle_id'])
+            if cid not in seen:
+                side.append({'sha': 'leaf:' + cid, 'cycle_id': cid, 'ts': str(row.get('ts') or ''),
+                             'outcome': 'failed' if row.get('outcome') in {'failed', 'fail'} or row.get('status') in {'failed', 'fail'} else 'partial' if row.get('outcome') == 'partial' else 'skipped'})
+                seen.add(cid)
+        truncated = len(trunk) > LINEAGE_DAY_CAP
+        trunk = trunk[-LINEAGE_DAY_CAP:]
+        parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}"><h3>{esc(day)}</h3>')
+        if truncated:
+            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
+        count = max(len(trunk), len(side), 1)
+        width = max(180, 160 + (min(len(side), LINEAGE_DAY_CAP) * 52))
+        height = 40 + max(count, len(trunk)) * 32
+        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+        positions: dict[str, tuple[int, int]] = {node['sha']: (60, 24 + i * 32) for i, node in enumerate(trunk)}
+        for i, node in enumerate(side[:LINEAGE_DAY_CAP]):
+            base = max((j for j, trunk_node in enumerate(trunk) if trunk_node['ts'] <= node['ts']), default=0)
+            positions[node['sha']] = (160 + i * 52, 24 + base * 32)
+        for i, node in enumerate(trunk):
+            parent = node['parent_sha']
+            if parent in positions:
+                x1, y1 = positions[parent]; x2, y2 = positions[node['sha']]
+                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge arch-edge"/>')
+            elif parent and parent in all_nodes:
+                label = datetime.strptime(_lineage_day(all_nodes[parent]['ts']), '%Y-%m-%d').strftime('%b %d')
+                parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="16">&#8617; from {esc(label)}</text>')
+            elif i:
+                x1, y1 = positions[trunk[i - 1]['sha']]; x2, y2 = positions[node['sha']]
+                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5"/>')
+        for node in trunk + side[:LINEAGE_DAY_CAP]:
+            x, y = positions[node['sha']]
+            cid = node['cycle_id'] or node['sha']
+            kind = node.get('outcome', 'integrated')
+            title = (task_titles or {}).get(cid) or '(untitled cycle)'
+            parts.append(f'<circle class="arch-node arch-{esc(kind)} lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="9"><title>{esc(title)}</title></circle>')
+        parts.append('</svg></section>')
+    parts.append('</div></div>')
+    parts.append('''<script>
+(function () {
+  var root = document.querySelector('.lineage-day-groups'); if (!root) return;
+  var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
+  function apply(mode) { var days = groups.map(function (g) { return g.getAttribute('data-day'); }), keep = days.slice(-2); if (mode === 'today') keep = days.slice(-1); if (mode === 'range') { var a = document.querySelector('[data-lineage-from]').value, b = document.querySelector('[data-lineage-to]').value; keep = days.filter(function (d) { return (!a || d >= a) && (!b || d <= b); }); } groups.forEach(function (g) { g.hidden = keep.indexOf(g.getAttribute('data-day')) === -1; }); }
+  document.querySelectorAll('[data-lineage-filter]').forEach(function (button) { button.addEventListener('click', function () { apply(button.getAttribute('data-lineage-filter')); }); }); apply('yesterday-today');
+})();
+</script>''')
+    return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
+
+
 def _build_day_bucketed_lineage(
     ledger_rows: list[Any],
     fallback_tree: dict[str, Any] | None,
@@ -1831,9 +1928,15 @@ def _build_day_bucketed_lineage(
     now: str | None,
 ) -> str:
     """Issue #107: render recent ledger evolution rows grouped by UTC day."""
+    return _build_vertical_day_lineage(ledger_rows, fallback_tree, task_titles, now)
     grouped: dict[str, dict[str, dict[str, Any]]] = {}
+    leaves: dict[str, list[dict[str, Any]]] = {}
     for row in ledger_rows:
         if not isinstance(row, dict) or row.get('phase') != 'evolution_tree' or not row.get('sha'):
+            if isinstance(row, dict) and row.get('cycle_id') and row.get('phase') in {'outcome', 'gate', 'proposer_reject', 'dedup'}:
+                day = _lineage_day(row.get('ts'))
+                if day:
+                    leaves.setdefault(day, []).append(row)
             continue
         day = _lineage_day(row.get('ts'))
         if not day:
@@ -1873,6 +1976,13 @@ def _build_day_bucketed_lineage(
     parts.append('<div class="lineage-day-groups" data-lineage-default="' + ','.join(sorted(default_days)) + '">')
     for day in days:
         nodes = list(sorted(grouped[day].values(), key=lambda n: n['ts']))
+        trunk_shas = {node['sha'] for node in nodes}
+        leaf_records = []
+        for row in leaves.get(day, []):
+            cid = str(row['cycle_id'])
+            if cid not in {node['cycle_id'] for node in nodes}:
+                leaf_records.append({'sha': 'leaf:' + cid, 'cycle_id': cid, 'parent_sha': '', 'ts': str(row.get('ts') or ''), 'outcome': 'failed' if row.get('outcome') in {'failed', 'fail'} or row.get('status') in {'failed', 'fail'} else 'partial' if row.get('outcome') == 'partial' else 'skipped'})
+        nodes.extend(leaf_records)
         truncated = len(nodes) > LINEAGE_DAY_CAP
         nodes = nodes[-LINEAGE_DAY_CAP:]
         parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}" data-node-count="{len(nodes)}">')
@@ -1895,6 +2005,8 @@ def _build_day_bucketed_lineage(
             return depth[sha]
         for node in all_nodes.values():
             get_depth(node['sha'])
+        for node in leaf_records:
+            depth[node['sha']] = depth.get(node['sha'], max(depth.values(), default=0) + 1)
         slots: dict[int, int] = {}
         for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
             slots[depth[node['sha']]] = slots.get(depth[node['sha']], 0) + 1
@@ -1936,7 +2048,8 @@ def _build_day_bucketed_lineage(
             x, y = positions[node['sha']]
             cid = node['cycle_id'] or node['sha']
             title = (task_titles or {}).get(cid) or (task_titles or {}).get(node['sha']) or '(untitled cycle)'
-            parts.append(f'<circle class="lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="8"><title>{esc(title)}</title></circle>')
+            kind = node.get('outcome', 'integrated')
+            parts.append(f'<circle class="arch-node arch-{esc(kind)} lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="9"><title>{esc(title)}</title></circle>')
         parts.append('</svg></section>')
     parts.append('</div></div>')
     parts.append('''<script>

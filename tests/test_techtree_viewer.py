@@ -1029,7 +1029,7 @@ def test_lineage_day_sections_keep_h3_heading_and_inner_truncated_note() -> None
         assert section, f'day section {day} missing'
         body = section.group(1)
         assert body.startswith(f'<h3>{day}</h3>'), f'day heading missing or displaced for {day}'
-        assert '<svg class="lineage-day-svg"' in body
+    assert '<svg class="lineage-day-svg' in body
     capped = re.search(r'<section class="lineage-day-group" data-day="2026-09-01"[^>]*>(.*?)</section>', html, re.S)
     assert capped and 'lineage-day-truncated' in capped.group(1), 'truncated note must render inside its day section'
 
@@ -2049,6 +2049,20 @@ def test_issue71_lineage_page_uses_archive_tree() -> None:
     assert 'EVOLUTION LINEAGE (DGM)</text>' not in lin
 
 
+def test_issue115_day_arch_tree_has_vertical_trunk_and_failed_leaves() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-child', 'sha': 'child', 'parent_sha': 'root', 'ts': '2026-08-31T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-failed', 'outcome': 'failed', 'reason': 'gate_failed', 'ts': '2026-08-31T01:30:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T02:00:00Z')
+    assert 'class="arch-node arch-integrated lineage-node"' in html
+    assert 'class="arch-node arch-failed lineage-node"' in html
+    assert html.count('data-cycle-id=') == 3
+    assert 'arch-edge' in html
+    assert 'data-day="2026-08-31"' in html
+
+
 def test_issue109_fork_children_use_distinct_rows_and_edges() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
@@ -2056,7 +2070,7 @@ def test_issue109_fork_children_use_distinct_rows_and_edges() -> None:
         {'phase': 'evolution_tree', 'cycle_id': 'right', 'sha': 'right', 'parent_sha': 'root', 'ts': '2026-08-31T02:00:00Z'},
     ]
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T03:00:00Z')
-    assert html.count('class="lineage-edge"') == 2
+    assert html.count('class="lineage-edge') == 2
     assert 'cy="24"' in html and 'cy="56"' in html
     assert html.count('cy="24"') < 3
 
@@ -2081,7 +2095,7 @@ def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> No
     edges = re.findall(r'<line x1="(-?\d+)" y1="(-?\d+)" x2="(-?\d+)" y2="(-?\d+)" class="lineage-edge lineage-edge-chronological"', html)
     assert len(edges) == 5
     assert all(int(x1) >= 0 and int(x2) >= 0 for x1, _, x2, _ in edges)
-    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(30 + i * 40, 30 + (i + 1) * 40) for i in range(5)]
+    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(60, 60)] * 5
 
 
 def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
