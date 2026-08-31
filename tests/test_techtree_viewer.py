@@ -2079,6 +2079,20 @@ def test_issue115_leaf_is_attached_to_trunk_and_lanes_are_reused() -> None:
     assert section.count('class="lineage-edge arch-edge"') + section.count('class="lineage-edge lineage-edge-chronological"') >= 3
 
 
+def test_issue119_resolving_children_form_a_visible_genealogical_fork() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'left', 'sha': 'left', 'parent_sha': 'root', 'ts': '2026-08-31T01:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'right', 'sha': 'right', 'parent_sha': 'root', 'ts': '2026-08-31T02:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T03:00:00Z')
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S).group(1)
+    coords = {cid: (int(x), int(y)) for cid, x, y in re.findall(r'data-cycle-id="(root|left|right)" cx="(\d+)" cy="(\d+)"', section)}
+    assert coords['left'][0] != coords['right'][0]
+    assert coords['left'][1] == coords['right'][1]
+    assert section.count('class="lineage-edge arch-edge"') >= 2
+
+
 def test_issue115_svg_width_follows_used_lanes_not_leaf_count() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
@@ -2134,7 +2148,7 @@ def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> No
     edges = re.findall(r'<line x1="(-?\d+)" y1="(-?\d+)" x2="(-?\d+)" y2="(-?\d+)" class="lineage-edge lineage-edge-chronological"', html)
     assert len(edges) == 5
     assert all(int(x1) >= 0 and int(x2) >= 0 for x1, _, x2, _ in edges)
-    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(60, 60)] * 5
+    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(60 + i * 70, 60 + (i + 1) * 70) for i in range(5)]
 
 
 def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
