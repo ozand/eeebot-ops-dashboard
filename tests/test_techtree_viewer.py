@@ -1015,6 +1015,25 @@ def test_lineage_day_cap_emits_explicit_note() -> None:
     assert '120' in html
 
 
+def test_lineage_day_sections_keep_h3_heading_and_inner_truncated_note() -> None:
+    rows = [
+            {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': None, 'ts': f'2026-09-01T{(i // 60):02d}:{(i % 60):02d}:00Z'}
+        for i in range(121)
+    ]
+    rows.append({'phase': 'evolution_tree', 'cycle_id': 'cycle-prev', 'sha': 'sha-prev', 'parent_sha': None, 'ts': '2026-08-31T01:00:00Z'})
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+
+    for day in ('2026-08-31', '2026-09-01'):
+        section = re.search(r'<section class="lineage-day-group" data-day="' + day + r'"[^>]*>(.*?)</section>', html, re.S)
+        assert section, f'day section {day} missing'
+        body = section.group(1)
+        assert body.startswith(f'<h3>{day}</h3>'), f'day heading missing or displaced for {day}'
+        assert '<svg class="lineage-day-svg"' in body
+    capped = re.search(r'<section class="lineage-day-group" data-day="2026-09-01"[^>]*>(.*?)</section>', html, re.S)
+    assert capped and 'lineage-day-truncated' in capped.group(1), 'truncated note must render inside its day section'
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {
