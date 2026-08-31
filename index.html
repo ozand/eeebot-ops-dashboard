@@ -831,7 +831,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">254</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">62.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-31 15:16:35.559610 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">11.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 8s old &middot; generated 15:40 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="11">data: 11s old &middot; generated 16:29 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -841,7 +841,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">tool-reuse</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em> (last: 0.62, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(validate_unused_imports): support TYPE_CHECKING blocks to prevent false-positive unused import reports</strong> <span class="now-sub">(cycle-bbaedf987aac [537349ef])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>perf(check_style): share a single AST parse across all per-file validators</strong> <span class="now-sub">(cycle-21ac520ec3f0 [d5ec0799])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-31T14:46:34.856645+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-752870387ede (served 2026-08-31T15:39:25.749783+00:00); defect-e3b548b14df3 (served 2026-08-31T14:23:50.912639+00:00); defect-c4095c7ab803 (served 2026-08-31T14:07:11.972226+00:00); defect-4a4d672f6ac6 (served 2026-08-31T14:57:48.631532+00:00)">defect &times;4</span> <span class="demand-chip served demand-group" translate="no" title="reflection-a1a2d50dffa4 (served 2026-08-31T14:11:53.856834+00:00); reflection-24787a51595c (served 2026-08-31T15:17:06.582318+00:00); reflection-d642893aa5b7 (served 2026-08-31T15:02:18.190608+00:00)">other &times;3</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -852,7 +852,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 66 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 67 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 65 active / 2 answered + 17 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -864,6 +864,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-21ac520ec3f0">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">perf(check_style): share a single AST parse across all per-file validators</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-21ac520ec3f0)</span>
+            
+            <a href="#node-d5ec079" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-31T15:43:36.422597Z">15:43 UTC</span>
+          </div>
+          <details class="feed-files"><summary>&#128193; scripts/check_style.py, scripts/validate_deprecation_status.py, scripts/validate_exception_handling.py +7 more</summary><ul class="feed-files-list"><li>scripts/check_style.py</li><li>scripts/validate_deprecation_status.py</li><li>scripts/validate_exception_handling.py</li><li>scripts/validate_mutable_defaults.py</li><li>scripts/validate_no_debug_statements.py</li><li>scripts/validate_no_eval_exec.py</li><li>scripts/validate_no_shell_true.py</li><li>scripts/validate_open_encoding.py</li><li>scripts/validate_sys_path_modification.py</li><li>scripts/validate_timezone_aware_datetime.py</li></ul></details>
+          <div class="feed-cost">&#9889; 66 calls &middot; 3.43M tok &middot; dur 10m35s</div>
+        </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-ead413e7a8d9">
           <div class="feed-header">
@@ -891,24 +904,11 @@
           <div class="feed-cost">&#9889; 80 calls &middot; 2.11M tok &middot; dur 4m39s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-bbaedf987aac">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(validate_unused_imports): support TYPE_CHECKING blocks to prevent false-positive unused import reports</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-bbaedf987aac)</span>
-            
-            <a href="#node-537349e" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T14:50:56.400606Z">14:50 UTC</span>
-          </div>
-          <div class="feed-files">&#128193; scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py</div>
-          <div class="feed-cost">&#9889; 14 calls &middot; 263.8K tok &middot; dur 1m41s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-08-31 15:40:12 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 15:16:35.559610 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-08-31 16:29:49 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 15:16:35.559610 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
