@@ -17,7 +17,8 @@ from .collector import collect_once, _build_ssh_command
 from .config import DashboardConfig
 from .storage import count_collections, count_events, fetch_events, fetch_latest_collections
 from nanobot.runtime.state import _subagent_rollup_snapshot
-from nanobot.runtime.subagent_materializer import BOUNDED_EXECUTION_GRACE_SECONDS
+# Upstream eeebot#923 removed subagent_materializer; retain the dashboard contract locally.
+BOUNDED_EXECUTION_GRACE_SECONDS = 1800
 
 
 MSK = timezone(timedelta(hours=3), name='MSK')
