@@ -937,7 +937,7 @@ def test_hypotheses_panel_dedupe_by_title_keeps_newest() -> None:
             },
         }
     }
-    html = tv.build_hypotheses_panel(data)
+    html = tv.build_hypotheses_panel(data, now=tv.datetime(2026, 8, 21, tzinfo=tv.timezone.utc))
     # The title should appear only once in the list
     assert html.count('Same Hypothesis Title') == 1
     # The rendered timestamp should correspond to the newest (Aug 20) not the old one (Aug 1)
@@ -960,11 +960,59 @@ def test_hypotheses_panel_active_before_stale_ordering() -> None:
             },
         }
     }
-    html = tv.build_hypotheses_panel(data)
+    html = tv.build_hypotheses_panel(data, now=tv.datetime(2026, 8, 21, tzinfo=tv.timezone.utc))
     active_idx = html.find('Active Hypothesis')
     stale_idx = html.find('Stale By Status')
     assert active_idx != -1 and stale_idx != -1
     assert active_idx < stale_idx, "Non-stale hypotheses must appear before stale hypotheses"
+
+
+def test_lineage_uses_ledger_history_day_buckets_and_default_window() -> None:
+    tree = {
+        'current_sha': 'sha-today',
+        'nodes': {
+            'sha-yesterday': {'cycle_id': 'cycle-yesterday', 'ts': '2026-08-31T23:00:00Z', 'parent_sha': None},
+            'sha-today': {'cycle_id': 'cycle-today', 'ts': '2026-09-01T01:00:00Z', 'parent_sha': 'sha-yesterday'},
+        },
+    }
+    ledger = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-yesterday', 'sha': 'sha-yesterday', 'parent_sha': None, 'ts': '2026-08-31T23:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-today', 'sha': 'sha-today', 'parent_sha': 'sha-yesterday', 'ts': '2026-09-01T01:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree(tree, ledger, ledger_history=ledger, now='2026-09-01T02:00:00Z')
+
+    assert 'lineage-day-filter' in html
+    assert 'Today' in html and 'Yesterday+Today' in html and '24h' in html
+    assert 'data-day="2026-08-31"' in html
+    assert 'data-day="2026-09-01"' in html
+    assert 'default-filter="yesterday-today"' in html
+
+
+def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
+    tree = {'current_sha': 'sha-child', 'nodes': {}}
+    ledger = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-old', 'sha': 'sha-old', 'parent_sha': None, 'ts': '2026-08-20T01:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-child', 'sha': 'sha-child', 'parent_sha': 'sha-old', 'ts': '2026-09-01T01:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree(tree, ledger, ledger_history=ledger, now='2026-09-01T02:00:00Z')
+
+    assert 'lineage-hidden-parent' in html
+    assert 'from Aug 20' in html
+    assert 'chronological fallback' not in html
+
+
+def test_lineage_day_cap_emits_explicit_note() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': None, 'ts': f'2026-09-01T00:{i:02d}:00Z'}
+        for i in range(121)
+    ]
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+
+    assert 'lineage-day-truncated' in html
+    assert '120' in html
 
 
 def test_hypotheses_panel_stale_badge_class() -> None:
