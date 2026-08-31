@@ -1900,14 +1900,18 @@ def _build_day_bucketed_lineage(
             slots[depth[node['sha']]] = slots.get(depth[node['sha']], 0) + 1
         max_slot = max(slots.values(), default=1)
         svg_height = 40 + max_slot * 32
-        parts[-1] = f'<svg class="lineage-day-svg" width="900" height="{svg_height}" viewBox="0 0 900 {svg_height}">'
+        min_depth = min((depth[node['sha']] for node in nodes), default=0)
+        pitch = 40
+        max_x = max((30 + (depth[node['sha']] - min_depth) * pitch for node in nodes), default=30)
+        svg_width = max(60, max_x + 30)
+        parts[-1] = f'<svg class="lineage-day-svg" width="{svg_width}" height="{svg_height}" viewBox="0 0 {svg_width} {svg_height}">' 
         positions: dict[str, tuple[int, int]] = {}
         depth_slots: dict[int, int] = {}
         for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
             d = depth[node['sha']]
             slot = depth_slots.get(d, 0)
             depth_slots[d] = slot + 1
-            positions[node['sha']] = (30 + d * 80, 24 + slot * 32)
+            positions[node['sha']] = (30 + (d - min_depth) * pitch, 24 + slot * 32)
         for node in nodes:
             parent = node['parent_sha']
             if parent in positions:

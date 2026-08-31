@@ -2062,7 +2062,30 @@ def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> No
     edges = re.findall(r'<line x1="(-?\d+)" y1="(-?\d+)" x2="(-?\d+)" y2="(-?\d+)" class="lineage-edge lineage-edge-chronological"', html)
     assert len(edges) == 5
     assert all(int(x1) >= 0 and int(x2) >= 0 for x1, _, x2, _ in edges)
-    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(30 + i * 80, 30 + (i + 1) * 80) for i in range(5)]
+    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(30 + i * 40, 30 + (i + 1) * 40) for i in range(5)]
+
+
+def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
+    rows = []
+    parent = ''
+    for day in range(14):
+        for index in range(3):
+            sha = f'sha-{day}-{index}'
+            rows.append({
+                'phase': 'evolution_tree', 'cycle_id': sha, 'sha': sha,
+                'parent_sha': parent if index == 0 else f'missing-{day}-{index}',
+                'ts': f'2026-08-{day + 1:02d}T00:00:00Z',
+            })
+            parent = sha
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-14T01:00:00Z')
+    for svg in re.findall(r'<svg class="lineage-day-svg"[^>]*>.*?</svg>', html, re.DOTALL):
+        width, height = map(int, re.search(r'width="(\d+)" height="(\d+)"', svg).groups())
+        view_width, view_height = map(int, re.search(r'viewBox="0 0 (\d+) (\d+)"', svg).groups())
+        assert (width, height) == (view_width, view_height)
+        numbers = [int(value) for value in re.findall(r'(?:cx|x1|x2)="(-?\d+)"', svg)]
+        y_numbers = [int(value) for value in re.findall(r'(?:cy|y1|y2)="(-?\d+)"', svg)]
+        assert all(0 <= value <= width for value in numbers)
+        assert all(0 <= value <= height for value in y_numbers)
 
 # ---------------------------------------------------------------------------
 # Issue #77: ring-class outcome join fix (outcome field vocabulary)
