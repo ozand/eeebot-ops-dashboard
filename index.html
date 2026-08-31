@@ -819,7 +819,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">59.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-31 05:14:44.446785 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 05:15 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 11s old &middot; generated 05:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -829,7 +829,7 @@
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">tool-reuse</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em> (last: 0.58, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(targeted_file_slice): add section heading extraction and context slicing</strong> <span class="now-sub">(cycle-b9f46569fa97 [687096af])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(run_all_tests): add --test-file flag for single test file scoping</strong> <span class="now-sub">(cycle-dbb00f968b2f [52f5320a])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-08-31T04:47:11.286750+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-752870387ede (served 2026-08-31T03:45:12.568675+00:00); defect-e3b548b14df3 (served 2026-08-31T04:24:03.339465+00:00); defect-c4095c7ab803 (served 2026-08-31T03:59:12.337214+00:00); defect-4a4d672f6ac6 (served 2026-08-31T04:56:10.599177+00:00); defect-a5025a5789c4 (served 2026-08-31T00:18:45.866892+00:00)">defect &times;5</span> <span class="demand-chip served demand-group" translate="no" title="reflection-a1a2d50dffa4 (served 2026-08-31T04:13:20.091362+00:00); reflection-e7e506c7abfb (served 2026-08-31T05:15:00.022828+00:00); reflection-24787a51595c (served 2026-08-31T02:08:40.746433+00:00)">other &times;3</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -840,7 +840,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 26 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 27 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 60 active / 2 answered + 17 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
@@ -852,6 +852,19 @@
       <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-dbb00f968b2f">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(run_all_tests): add --test-file flag for single test file scoping</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-dbb00f968b2f)</span>
+            
+            <a href="#node-52f5320" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-08-31T05:19:01.617247Z">05:19 UTC</span>
+          </div>
+          <div class="feed-files">&#128193; scripts/run_all_tests.py, tests/test_run_all_tests.py</div>
+          <div class="feed-cost">&#9889; 24 calls &middot; 1.37M tok &middot; dur 4m47s</div>
+        </li>
         
         <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-6554c7fc697d">
           <div class="feed-header">
@@ -879,24 +892,11 @@
           <div class="feed-cost">&#9889; 4 calls &middot; 61.67K tok &middot; dur 49s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b9f46569fa97">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(targeted_file_slice): add section heading extraction and context slicing</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-b9f46569fa97)</span>
-            
-            <a href="#node-687096a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T04:38:49.661489Z">04:38 UTC</span>
-          </div>
-          <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
-          <div class="feed-cost">&#9889; 17 calls &middot; 351.2K tok &middot; dur 2m34s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator f9bc721 · generated 2026-08-31 05:15:44 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 05:14:44.446785 UTC</span></footer>
+<footer class="page-footer">generator f9bc721 · generated 2026-08-31 05:26:32 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 05:14:44.446785 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
