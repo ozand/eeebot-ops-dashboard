@@ -1322,7 +1322,9 @@ EVO_BOX_W = 180
 EVO_BOX_H = 64
 EVO_ROW_H = 80
 EVO_MARGIN_X = 60
-EVO_MAX_DISPLAY = 30
+LINEAGE_DAYS = 14
+LINEAGE_DAY_CAP = 120
+EVO_MAX_DISPLAY = 30  # legacy canvas path; lineage.html uses day buckets
 
 # Fixed, deterministic glyph table for research directions -- plain numeric
 # character references (matches the rest of this file's convention of never
@@ -1817,6 +1819,102 @@ def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
     return kind, reason
 
 
+def _lineage_day(ts: Any) -> str:
+    value = str(ts or '')
+    return value[:10] if len(value) >= 10 else ''
+
+
+def _build_day_bucketed_lineage(
+    ledger_rows: list[Any],
+    fallback_tree: dict[str, Any] | None,
+    task_titles: dict[str, str] | None,
+    now: str | None,
+) -> str:
+    """Issue #107: render recent ledger evolution rows grouped by UTC day."""
+    grouped: dict[str, dict[str, dict[str, Any]]] = {}
+    for row in ledger_rows:
+        if not isinstance(row, dict) or row.get('phase') != 'evolution_tree' or not row.get('sha'):
+            continue
+        day = _lineage_day(row.get('ts'))
+        if not day:
+            continue
+        sha = str(row['sha'])
+        grouped.setdefault(day, {})[sha] = {
+            'sha': sha, 'cycle_id': str(row.get('cycle_id') or ''),
+            'parent_sha': str(row.get('parent_sha') or ''), 'ts': str(row.get('ts') or ''),
+        }
+    if not grouped and isinstance(fallback_tree, dict) and isinstance(fallback_tree.get('nodes'), dict):
+        for sha, node in fallback_tree['nodes'].items():
+            if isinstance(node, dict):
+                day = _lineage_day(node.get('ts'))
+                if day:
+                    grouped.setdefault(day, {})[str(sha)] = {
+                        'sha': str(sha), 'cycle_id': str(node.get('cycle_id') or ''),
+                        'parent_sha': str(node.get('parent_sha') or ''), 'ts': str(node.get('ts') or ''),
+                    }
+    days = sorted(grouped)[-LINEAGE_DAYS:]
+    all_nodes = {sha: node for day in days for sha, node in grouped[day].items()}
+    max_day = max(days, default='')
+    current_day = _lineage_day(now) or max_day
+    if current_day > max_day:
+        current_day = max_day
+    prior_days = sorted(day for day in days if day < current_day)
+    previous_day = prior_days[-1] if prior_days else ''
+    default_days = {day for day in (previous_day, current_day) if day}
+    parts: list[str] = ['<div class="lineage-day-filter" data-default-filter="yesterday-today"><div class="lineage-day-controls" data-default-filter="yesterday-today">',
+                        '<button type="button" data-lineage-filter="today">Today</button>',
+                        '<button type="button" data-lineage-filter="24h">24h</button>',
+                        '<button type="button" data-lineage-filter="yesterday-today" class="active">Yesterday+Today</button>',
+                        '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>',
+                        '<button type="button" data-lineage-filter="range">Apply</button></div>']
+    parts.append('<div class="lineage-day-groups" data-lineage-default="' + ','.join(sorted(default_days)) + '">')
+    for day in days:
+        nodes = list(sorted(grouped[day].values(), key=lambda n: n['ts']))
+        truncated = len(nodes) > LINEAGE_DAY_CAP
+        nodes = nodes[-LINEAGE_DAY_CAP:]
+        parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}" data-node-count="{len(nodes)}">')
+        parts.append(f'<h3>{esc(day)}</h3>')
+        if truncated:
+            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
+        parts.append('<svg class="lineage-day-svg" width="900" height="80" viewBox="0 0 900 80">')
+        positions = {node['sha']: (30 + i * 40, 40) for i, node in enumerate(nodes)}
+        for node in nodes:
+            parent = node['parent_sha']
+            if parent in positions:
+                x1, y1 = positions[parent]; x2, y2 = positions[node['sha']]
+                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge"/>')
+            elif parent:
+                parent_node = next((n for n in all_nodes.values() if n['sha'] == parent), None)
+                label_day = _lineage_day(parent_node.get('ts')) if parent_node else ''
+                label = datetime.strptime(label_day, '%Y-%m-%d').strftime('%b %d') if label_day else 'older history'
+                parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="20">&#8617; from {esc(label)}</text>')
+        for node in nodes:
+            x, y = positions[node['sha']]
+            cid = node['cycle_id'] or node['sha']
+            title = (task_titles or {}).get(cid) or (task_titles or {}).get(node['sha']) or '(untitled cycle)'
+            parts.append(f'<circle class="lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="8"><title>{esc(title)}</title></circle>')
+        parts.append('</svg></section>')
+    parts.append('</div></div>')
+    parts.append('''<script>
+(function () {
+  var root = document.querySelector('.lineage-day-groups'); if (!root) return;
+  var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
+  function apply(mode) {
+    var days = groups.map(function (g) { return g.getAttribute('data-day'); });
+    var keep = days.slice(-2);
+    if (mode === 'today') keep = days.slice(-1);
+    if (mode === '24h') keep = days.slice(-2);
+    if (mode === 'range') { var a = document.querySelector('[data-lineage-from]').value, b = document.querySelector('[data-lineage-to]').value; keep = days.filter(function (d) { return (!a || d >= a) && (!b || d <= b); }); }
+    groups.forEach(function (g) { g.hidden = keep.indexOf(g.getAttribute('data-day')) === -1; });
+    document.querySelectorAll('[data-lineage-filter]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lineage-filter') === mode); });
+  }
+  document.querySelectorAll('[data-lineage-filter]').forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-lineage-filter')); }); });
+  apply('yesterday-today');
+})();
+</script>''')
+    return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
+
+
 def build_cycle_details(
     ledger_rows: list[Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -1950,11 +2048,17 @@ def build_archive_tree(
     ledger_tail: list[Any] | None,
     task_titles: dict[str, str] | None = None,
     cycle_details: dict[str, dict[str, Any]] | None = None,
+    ledger_history: list[Any] | None = None,
+    now: str | None = None,
 ) -> str:
     """Issue #71: DGM archive tree -- FULL history, layered top-down.
     Trunk = evolution/tree.json nodes (integrated chain); every ledger-only
     cycle (failed/partial/skipped) attaches as a dead-end leaf under its
     chronological base trunk node. No last-N cap."""
+    if isinstance(ledger_history, list) and any(
+        isinstance(row, dict) and row.get('phase') == 'evolution_tree' for row in ledger_history
+    ):
+        return _build_day_bucketed_lineage(ledger_history, evolution_tree, task_titles, now or datetime.now(timezone.utc).isoformat())
     if not isinstance(evolution_tree, dict) or not isinstance(evolution_tree.get('nodes'), dict):
         return unavailable_panel('Evolution Lineage', 'evolution tree unavailable')
     nodes: dict[str, dict[str, Any]] = {
@@ -4335,6 +4439,18 @@ CSS = '''
     .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
+    .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
+    .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    .lineage-day-group { padding: 4px 12px 10px; }
+    .lineage-day-group[hidden] { display: none; }
+    .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
+    .lineage-day-svg { display: block; max-width: 100%; overflow: visible; }
+    .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
+    .lineage-edge { stroke: #2f5c46; stroke-width: 2; }
+    .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
@@ -4853,6 +4969,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_tail,
         task_titles=cycle_titles,
         cycle_details=cycle_details,
+        ledger_history=data.get('ledger_history'),
+        now=generated_at,
     )
     feed_cycles = set()
     if isinstance(ledger_tail, list):
