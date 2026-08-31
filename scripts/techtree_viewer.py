@@ -1888,9 +1888,16 @@ def _build_vertical_day_lineage(
         height = 40 + max(count, len(trunk)) * 32
         parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
         positions: dict[str, tuple[int, int]] = {node['sha']: (60, 24 + i * 32) for i, node in enumerate(trunk)}
-        for i, node in enumerate(side[:LINEAGE_DAY_CAP]):
+        lane_last_y: list[int] = []
+        for leaf_index, node in enumerate(side[:LINEAGE_DAY_CAP]):
             base = max((j for j, trunk_node in enumerate(trunk) if trunk_node['ts'] <= node['ts']), default=0)
-            positions[node['sha']] = (160 + i * 52, 24 + base * 32)
+            y = 24 + leaf_index * 32
+            lane = next((i for i, last_y in enumerate(lane_last_y) if last_y + 32 <= y), len(lane_last_y))
+            if lane == len(lane_last_y):
+                lane_last_y.append(y)
+            else:
+                lane_last_y[lane] = y
+            positions[node['sha']] = (160 + lane * 52, y)
         for i, node in enumerate(trunk):
             parent = node['parent_sha']
             if parent in positions:
@@ -1902,6 +1909,12 @@ def _build_vertical_day_lineage(
             elif i:
                 x1, y1 = positions[trunk[i - 1]['sha']]; x2, y2 = positions[node['sha']]
                 parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5"/>')
+        for node in side[:LINEAGE_DAY_CAP]:
+            base = max((trunk_node for trunk_node in trunk if trunk_node['ts'] <= node['ts']), key=lambda item: item['ts'], default=None)
+            if base is not None:
+                x1, y1 = positions[base['sha']]
+                x2, y2 = positions[node['sha']]
+                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge arch-edge"/>')
         for node in trunk + side[:LINEAGE_DAY_CAP]:
             x, y = positions[node['sha']]
             cid = node['cycle_id'] or node['sha']
