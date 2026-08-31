@@ -2063,6 +2063,22 @@ def test_issue115_day_arch_tree_has_vertical_trunk_and_failed_leaves() -> None:
     assert 'data-day="2026-08-31"' in html
 
 
+def test_issue115_leaf_is_attached_to_trunk_and_lanes_are_reused() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'child', 'sha': 'child', 'parent_sha': 'root', 'ts': '2026-08-31T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'failed-a', 'outcome': 'failed', 'ts': '2026-08-31T01:10:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'failed-b', 'outcome': 'failed', 'ts': '2026-08-31T02:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T03:00:00Z')
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S).group(1)
+    leaf_x = [int(x) for x in re.findall(r'class="arch-node arch-failed lineage-node"[^>]*cx="(\d+)"', section)]
+    assert len(leaf_x) == 2
+    assert len(set(leaf_x)) == 1
+    assert section.count('class="lineage-edge arch-edge"') >= 1
+    assert section.count('class="lineage-edge arch-edge"') + section.count('class="lineage-edge lineage-edge-chronological"') >= 3
+
+
 def test_issue109_fork_children_use_distinct_rows_and_edges() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
