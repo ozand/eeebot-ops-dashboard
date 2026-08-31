@@ -2093,6 +2093,28 @@ def test_issue119_resolving_children_form_a_visible_genealogical_fork() -> None:
     assert section.count('class="lineage-edge arch-edge"') >= 2
 
 
+def test_issue119_unresolvable_day_is_vertical_dashed_chain() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': f'c{i}', 'sha': f's{i}', 'parent_sha': f'missing{i}', 'ts': f'2026-08-22T00:0{i}:00Z'}
+        for i in range(3)
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-22T01:00:00Z')
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S).group(1)
+    coords = [(int(x), int(y)) for x, y in re.findall(r'class="arch-node arch-integrated lineage-node"[^>]*cx="(\d+)" cy="(\d+)"', section)]
+    assert [x for x, _ in coords] == [60, 60, 60]
+    assert [y for _, y in coords] == [24, 56, 88]
+    assert section.count('lineage-edge-chronological') == 2
+
+
+def test_issue119_detail_card_renders_labeled_fields_not_raw_json() -> None:
+    html = tv.render_pages({**_fixture(), 'cycle_details': {
+        'cycle-a': {'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok', 'ts': '2026-08-16T00:00:00Z', 'sha': 'sha', 'parent_sha': 'parent', 'files_changed': ['src/x.py'], 'lesson_insight': 'useful'}
+    }}, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+    assert 'Cycle' in html and 'Outcome' in html and 'Parent SHA' in html and 'Files changed' in html
+    assert 'open in Cycle Feed' in html and 'related lessons' in html
+    assert 'cycle-details-body' in html
+
+
 def test_issue115_svg_width_follows_used_lanes_not_leaf_count() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
@@ -2148,7 +2170,7 @@ def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> No
     edges = re.findall(r'<line x1="(-?\d+)" y1="(-?\d+)" x2="(-?\d+)" y2="(-?\d+)" class="lineage-edge lineage-edge-chronological"', html)
     assert len(edges) == 5
     assert all(int(x1) >= 0 and int(x2) >= 0 for x1, _, x2, _ in edges)
-    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(60 + i * 70, 60 + (i + 1) * 70) for i in range(5)]
+    assert [(int(x1), int(x2)) for x1, _, x2, _ in edges] == [(60, 60)] * 5
 
 
 def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
