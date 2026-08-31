@@ -1910,7 +1910,7 @@ def _build_vertical_day_lineage(
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         count = max(len(trunk), len(side), 1)
-        height = 40 + max(count, len(trunk)) * 32
+        height = 40 + (max(len(trunk), len(side), 1) * 32)
         positions: dict[str, tuple[int, int]] = {}
         slots: dict[int, int] = {}
         for node in trunk:
@@ -1970,7 +1970,8 @@ def _build_vertical_day_lineage(
     parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section><script type="application/json" id="cycle-details-data">{details_json}</script><script>
 (function () {{
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
-  function open(node) {{ var item = data[node.getAttribute('data-cycle-id')] || {{}}; panel.hidden = false; panel.querySelector('.cycle-details-body').textContent = JSON.stringify(item); }}
+  function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
+  function open(node) {{ var item = data[node.getAttribute('data-cycle-id')] || {{}}; var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha); if (item.files_changed && item.files_changed.length) html += '<h3>Files changed</h3><ul>' + item.files_changed.map(function (f) {{ return '<li>' + f + '</li>'; }}).join('') + '</ul>'; if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + item.lesson_insight + '</p>'; html += '<p><a href="cycles.html#cycle-' + encodeURIComponent(item.cycle_id || '') + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(item.cycle_id || '') + '">related lessons</a></p>'; panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = html; }}
   document.querySelectorAll('.lineage-node').forEach(function (node) {{ node.addEventListener('click', function (event) {{ event.preventDefault(); open(node); }}); }});
   var root = document.querySelector('.lineage-day-groups'); if (!root) return;
   var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
