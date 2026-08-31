@@ -1005,7 +1005,7 @@ def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
 
 def test_lineage_day_cap_emits_explicit_note() -> None:
     rows = [
-        {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': None, 'ts': f'2026-09-01T00:{i:02d}:00Z'}
+            {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': None, 'ts': f'2026-09-01T{(i // 60):02d}:{(i % 60):02d}:00Z'}
         for i in range(121)
     ]
 
@@ -2028,6 +2028,29 @@ def test_issue71_lineage_page_uses_archive_tree() -> None:
     lin = pages['lineage.html']
     assert 'arch-tree' in lin
     assert 'EVOLUTION LINEAGE (DGM)</text>' not in lin
+
+
+def test_issue109_fork_children_use_distinct_rows_and_edges() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'left', 'sha': 'left', 'parent_sha': 'root', 'ts': '2026-08-31T01:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'right', 'sha': 'right', 'parent_sha': 'root', 'ts': '2026-08-31T02:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T03:00:00Z')
+    assert html.count('class="lineage-edge"') == 2
+    assert 'cy="24"' in html and 'cy="56"' in html
+    assert html.count('cy="24"') < 3
+
+
+def test_issue109_unresolvable_parents_use_dashed_chronological_chain() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'one', 'sha': 'one', 'parent_sha': 'missing-a', 'ts': '2026-08-20T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'two', 'sha': 'two', 'parent_sha': 'missing-b', 'ts': '2026-08-20T01:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'three', 'sha': 'three', 'parent_sha': 'missing-c', 'ts': '2026-08-20T02:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-20T03:00:00Z')
+    assert html.count('class="lineage-edge lineage-edge-chronological"') == 2
+    assert 'lineage-hidden-parent' not in html
 
 # ---------------------------------------------------------------------------
 # Issue #77: ring-class outcome join fix (outcome field vocabulary)

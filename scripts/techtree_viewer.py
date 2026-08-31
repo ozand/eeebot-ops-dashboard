@@ -1854,6 +1854,9 @@ def _build_day_bucketed_lineage(
                     }
     days = sorted(grouped)[-LINEAGE_DAYS:]
     all_nodes = {sha: node for day in days for sha, node in grouped[day].items()}
+    ordered_all = sorted(all_nodes.values(), key=lambda node: node['ts'])
+    all_shas = set(all_nodes)
+    nodes_by_sha = all_nodes
     max_day = max(days, default='')
     current_day = _lineage_day(now) or max_day
     if current_day > max_day:
@@ -1871,23 +1874,59 @@ def _build_day_bucketed_lineage(
     for day in days:
         nodes = list(sorted(grouped[day].values(), key=lambda n: n['ts']))
         truncated = len(nodes) > LINEAGE_DAY_CAP
+        if truncated:
+            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         nodes = nodes[-LINEAGE_DAY_CAP:]
         parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}" data-node-count="{len(nodes)}">')
         parts.append(f'<h3>{esc(day)}</h3>')
-        if truncated:
-            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
-        parts.append('<svg class="lineage-day-svg" width="900" height="80" viewBox="0 0 900 80">')
-        positions = {node['sha']: (30 + i * 40, 40) for i, node in enumerate(nodes)}
+        depth: dict[str, int] = {}
+        def get_depth(sha: str, guard: set[str] | None = None) -> int:
+            if sha in depth:
+                return depth[sha]
+            guard = guard or set()
+            if sha in guard:
+                return 0
+            parent = nodes_by_sha[sha]['parent_sha']
+            if parent in all_shas:
+                depth[sha] = get_depth(parent, guard | {sha}) + 1
+            else:
+                prior = next((i - 1 for i, item in enumerate(ordered_all) if item['sha'] == sha), -1)
+                depth[sha] = 0 if prior < 0 else depth[ordered_all[prior]['sha']] + 1
+            return depth[sha]
+        for node in all_nodes.values():
+            if node['sha'] not in depth:
+                depth[node['sha']] = 0
+        for node in all_nodes.values():
+            get_depth(node['sha'])
+        slots: dict[int, int] = {}
+        for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
+            slots[depth[node['sha']]] = slots.get(depth[node['sha']], 0) + 1
+        max_slot = max(slots.values(), default=1)
+        svg_height = 40 + max_slot * 32
+        parts[-1] = f'<svg class="lineage-day-svg" width="900" height="{svg_height}" viewBox="0 0 900 {svg_height}">'
+        positions: dict[str, tuple[int, int]] = {}
+        depth_slots: dict[int, int] = {}
+        for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
+            d = depth[node['sha']]
+            slot = depth_slots.get(d, 0)
+            depth_slots[d] = slot + 1
+            positions[node['sha']] = (30 + d * 80, 24 + slot * 32)
         for node in nodes:
             parent = node['parent_sha']
             if parent in positions:
                 x1, y1 = positions[parent]; x2, y2 = positions[node['sha']]
                 parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge"/>')
             elif parent:
-                parent_node = next((n for n in all_nodes.values() if n['sha'] == parent), None)
-                label_day = _lineage_day(parent_node.get('ts')) if parent_node else ''
-                label = datetime.strptime(label_day, '%Y-%m-%d').strftime('%b %d') if label_day else 'older history'
-                parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="20">&#8617; from {esc(label)}</text>')
+                if parent in all_shas:
+                    parent_node = all_nodes[parent]
+                    label = datetime.strptime(_lineage_day(parent_node['ts']), '%Y-%m-%d').strftime('%b %d')
+                    parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="20">&#8617; from {esc(label)}</text>')
+                else:
+                    previous = next((item for item in ordered_all if item['ts'] < node['ts']), None)
+                    if previous:
+                        x1, y1 = positions.get(previous['sha'], (positions[node['sha']][0] - 80, positions[node['sha']][1]))
+                        x2, y2 = positions[node['sha']]
+                        parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5"/>')
         for node in nodes:
             x, y = positions[node['sha']]
             cid = node['cycle_id'] or node['sha']
