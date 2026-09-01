@@ -989,6 +989,37 @@ def test_lineage_uses_ledger_history_day_buckets_and_default_window() -> None:
     assert 'default-filter="yesterday-today"' in html
 
 
+def test_issue129_cycle_feed_emits_only_existing_entity_links() -> None:
+    ledger = [
+        {'phase': 'proposed', 'cycle_id': 'cycle-1', 'demand_id': 'hypothesis-1', 'lessons_context': ['LESS-1'], 'ts': '2026-09-01T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-1', 'outcome': 'failed', 'reason': 'no artifact recorded', 'ts': '2026-09-01T01:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-2', 'outcome': 'partial', 'reason': 'skipped_duplicate', 'ts': '2026-09-01T01:02:00Z'},
+    ]
+    html = tv.build_cycle_feed(ledger, task_titles={}, history_mode=True)
+
+    assert 'hypothesis-1' in html
+    assert 'hypotheses.html#q-hypothesis-1' in html
+    assert 'lessons.html#q-LESS-1' in html
+    assert 'no artifact recorded' in html
+    assert 'skipped_duplicate' in html
+
+
+def test_issue129_cycle_feed_does_not_fabricate_missing_links() -> None:
+    ledger = [{'phase': 'outcome', 'cycle_id': 'cycle-plain', 'outcome': 'success', 'ts': '2026-09-01T01:00:00Z'}]
+    html = tv.build_cycle_feed(ledger, task_titles={}, history_mode=True)
+
+    assert 'hypotheses.html#' not in html
+    assert 'lessons.html#' not in html
+
+
+def test_issue129_cycle_and_lesson_anchor_names_round_trip() -> None:
+    cycle_html = tv.build_cycle_feed([{'phase': 'outcome', 'cycle_id': 'cycle-roundtrip', 'outcome': 'success', 'ts': '2026-09-01T01:00:00Z'}], history_mode=True)
+    lesson_html = tv.build_lessons_panel([{'id': 'LESS-1', 'date': '2026-09-01', 'cycle_id': 'cycle-roundtrip', 'problem': 'p', 'solution': 's'}])
+
+    assert 'id="cycle-cycle-roundtrip"' in cycle_html
+    assert 'cycles.html#cycle-cycle-roundtrip' in lesson_html
+
+
 def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
     tree = {'current_sha': 'sha-child', 'nodes': {}}
     ledger = [

@@ -3011,6 +3011,17 @@ def build_cycle_feed(
         metric_delta = ''
         ts_val = ''
         derived_title = ''
+        entity_links: list[str] = []
+        for phase in phases:
+            demand_id = phase.get('demand_id')
+            if demand_id:
+                entity_links.append(f'<a class="entity-chip" href="hypotheses.html#q-{esc(str(demand_id))}">{esc(str(demand_id))}</a>')
+            context = phase.get('lessons_context')
+            if isinstance(context, list):
+                entity_links.extend(
+                    f'<a class="lesson-link" href="lessons.html#q-{esc(str(lesson_id))}">{esc(str(lesson_id))}</a>'
+                    for lesson_id in context if lesson_id
+                )
 
         # Check demand and cycle_files for files_changed
         all_files: list[str] = []
@@ -3230,6 +3241,7 @@ def build_cycle_feed(
             {node_link_html}
             {ts_html}
           </div>
+          {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
           {files_html}
           {cost_html}
         </li>
