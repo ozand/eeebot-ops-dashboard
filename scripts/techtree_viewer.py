@@ -104,7 +104,7 @@ INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 # Ledger-tail filter, mirrored inside REMOTE_READER_SCRIPT's own copy of
 # these constants.
 LEDGER_PHASES = {
-    'started', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
+    'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
     'evolution_tree', 'tech_tree', 'hypothesis',
 }
 LEDGER_TAIL_LIMIT = 5000
@@ -132,7 +132,7 @@ import time
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
 LEDGER_PHASES = {
-    "started", "outcome", "gate", "proposer_reject", "dedup", "idle",
+    "started", "proposed", "outcome", "gate", "proposer_reject", "dedup", "idle",
     "evolution_tree", "tech_tree", "hypothesis",
 }
 LEDGER_TAIL_LIMIT = 5000
