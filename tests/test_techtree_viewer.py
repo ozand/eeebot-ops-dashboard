@@ -2123,6 +2123,24 @@ def test_issue119_detail_card_contains_labeled_markup_not_json_dump() -> None:
     assert 'JSON.stringify(item)' not in card_script
 
 
+def test_issue119_detail_card_is_rendered_with_cycle_detail_fields() -> None:
+    fixture = _fixture()
+    fixture['cycle_details'] = {
+        'cycle-a': {
+            'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok',
+            'ts': '2026-08-16T00:00:00Z', 'sha': 'sha-a', 'parent_sha': 'sha-root',
+            'files_changed': ['src/a.py'], 'lesson_insight': 'Useful insight',
+        }
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+    assert "line('Cycle'" in html
+    assert "line('Parent SHA'" in html
+    assert "Files changed" in html
+    assert 'open in Cycle Feed' in html
+    assert 'related lessons' in html
+    assert 'textContent = JSON.stringify(item)' not in html
+
+
 def test_issue119_detail_card_renders_labeled_fields_not_raw_json() -> None:
     html = tv.render_pages({**_fixture(), 'cycle_details': {
         'cycle-a': {'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok', 'ts': '2026-08-16T00:00:00Z', 'sha': 'sha', 'parent_sha': 'parent', 'files_changed': ['src/x.py'], 'lesson_insight': 'useful'}
