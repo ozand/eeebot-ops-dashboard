@@ -1919,7 +1919,7 @@ def _build_vertical_day_lineage(
         truncated = len(trunk) > LINEAGE_DAY_CAP
         trunk = trunk[-LINEAGE_DAY_CAP:]
         parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}"><h3>{esc(day)}</h3>')
-        parts.append('<p class="lineage-js-note">Enable JavaScript for the enhanced client-side lineage layout.</p>')
+        parts.append('<noscript><p class="lineage-js-note">Enable JavaScript for the enhanced client-side lineage layout.</p></noscript>')
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         count = max(len(trunk), len(side), 1)
