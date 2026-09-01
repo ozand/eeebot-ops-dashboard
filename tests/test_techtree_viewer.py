@@ -1106,6 +1106,21 @@ def test_issue126_generated_json_is_script_data_not_visible_body_text() -> None:
     assert '{"day":"2026-09-01"' not in body_without_scripts
 
 
+def test_issue126_inline_vendor_scripts_preserve_source_newlines_and_marker() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'sha-a', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+    d3_source = (Path(tv.__file__).resolve().parent.parent / 'assets' / 'vendor' / 'd3.min.js').read_text(encoding='utf-8')
+    d3_block = re.search(r'<script>(.*?)</script>', html, re.S)
+
+    assert d3_block is not None
+    assert d3_block.group(1).count('\n') == d3_source.count('\n')
+    assert '\n!function' in d3_block.group(1)
+    assert 'window.__lineageRendererLoaded = true' in html
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {

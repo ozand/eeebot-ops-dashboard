@@ -92,4 +92,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+  window.__lineageRendererLoaded = true;
 }());
