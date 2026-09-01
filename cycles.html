@@ -831,16 +831,30 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">256</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">62.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-08-31 23:29:13.660674 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">9.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.8M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 23:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 9s old &middot; generated 00:06 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1591 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1592 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
+        
+        <li class="feed-day-header">2026-09-01</li>
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-2437e779a95a">
+          <div class="feed-header">
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-2437e779a95a)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-01T00:00:31.353395Z">00:00 UTC</span>
+          </div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; dur 4m28s</div>
+        </li>
         
         <li class="feed-day-header">2026-08-31</li>
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-6ee095cb1c91">
@@ -850,7 +864,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6ee095cb1c91)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T23:47:20.385556Z">23:47 UTC</span>
+            <span class="feed-ts" title="2026-08-31T23:47:20.385556Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m35s</div>
@@ -863,7 +877,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2fe4ad49f557)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T23:33:21.815667Z">23:33 UTC</span>
+            <span class="feed-ts" title="2026-08-31T23:33:21.815667Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m35s</div>
@@ -876,7 +890,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d4900e44279b)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T23:20:15.062466Z">23:20 UTC</span>
+            <span class="feed-ts" title="2026-08-31T23:20:15.062466Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m27s</div>
@@ -889,7 +903,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c15b43afec76)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T23:06:08.481950Z">23:06 UTC</span>
+            <span class="feed-ts" title="2026-08-31T23:06:08.481950Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m35s</div>
@@ -902,7 +916,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-fa3d383178c7)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T22:53:20.089529Z">22:53 UTC</span>
+            <span class="feed-ts" title="2026-08-31T22:53:20.089529Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m21s</div>
@@ -915,7 +929,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0032ada0627e)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T22:42:54.458625Z">22:42 UTC</span>
+            <span class="feed-ts" title="2026-08-31T22:42:54.458625Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 40s</div>
@@ -928,7 +942,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-83cc1554cbfc)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T22:33:30.332734Z">22:33 UTC</span>
+            <span class="feed-ts" title="2026-08-31T22:33:30.332734Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 20s</div>
@@ -941,7 +955,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9a95a161378e)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T22:13:53.560332Z">22:13 UTC</span>
+            <span class="feed-ts" title="2026-08-31T22:13:53.560332Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m40s</div>
@@ -954,7 +968,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f8d2a453853f)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T22:04:26.029911Z">22:04 UTC</span>
+            <span class="feed-ts" title="2026-08-31T22:04:26.029911Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 21s</div>
@@ -967,7 +981,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d2a4a807fd26)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T21:42:20.009239Z">21:42 UTC</span>
+            <span class="feed-ts" title="2026-08-31T21:42:20.009239Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m35s</div>
@@ -980,7 +994,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1a569a2cced0)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T21:28:47.039282Z">21:28 UTC</span>
+            <span class="feed-ts" title="2026-08-31T21:28:47.039282Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m28s</div>
@@ -993,7 +1007,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1634f7adafe3)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T21:23:32.654978Z">21:23 UTC</span>
+            <span class="feed-ts" title="2026-08-31T21:23:32.654978Z">Aug 31</span>
           </div>
           
           
@@ -1006,7 +1020,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-475ce516f532)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T21:09:40.441553Z">21:09 UTC</span>
+            <span class="feed-ts" title="2026-08-31T21:09:40.441553Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m24s</div>
@@ -1019,7 +1033,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8e58a860300b)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:59:32.528169Z">20:59 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:59:32.528169Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 27s</div>
@@ -1032,7 +1046,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a61c77687e98)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:46:11.667677Z">20:46 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:46:11.667677Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m34s</div>
@@ -1045,7 +1059,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2d11715787ba)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:32:15.511800Z">20:32 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:32:15.511800Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m50s</div>
@@ -1058,7 +1072,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2ea11606561c)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:22:40.277438Z">20:22 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:22:40.277438Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 22s</div>
@@ -1071,7 +1085,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f35b4d64c9e2)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:09:48.813311Z">20:09 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:09:48.813311Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 4m26s</div>
@@ -1084,7 +1098,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-240324e827e0)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T20:04:22.154344Z">20:04 UTC</span>
+            <span class="feed-ts" title="2026-08-31T20:04:22.154344Z">Aug 31</span>
           </div>
           
           
@@ -1097,7 +1111,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0e8018fb73b0)</span>
             
             <a href="#node-e107e4b" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T19:45:46.337231Z">19:45 UTC</span>
+            <span class="feed-ts" title="2026-08-31T19:45:46.337231Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_imports.py, tests/test_verify_imports.py</div>
           <div class="feed-cost">&#9889; 20 calls &middot; 919.5K tok &middot; dur 3m20s</div>
@@ -1110,7 +1124,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f11511e10501)</span>
             
             <a href="#node-65997cc" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T19:32:50.365278Z">19:32 UTC</span>
+            <span class="feed-ts" title="2026-08-31T19:32:50.365278Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_open_encoding.py, tests/test_validate_open_encoding.py</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 263.7K tok &middot; dur 2m15s</div>
@@ -1123,7 +1137,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5a19c79a7edb)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T19:23:18.099029Z">19:23 UTC</span>
+            <span class="feed-ts" title="2026-08-31T19:23:18.099029Z">Aug 31</span>
           </div>
           
           
@@ -1136,7 +1150,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-637a651bb1a3)</span>
             
             <a href="#node-22c70df" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T19:05:56.343167Z">19:05 UTC</span>
+            <span class="feed-ts" title="2026-08-31T19:05:56.343167Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/control_plane_summary.py, tests/test_control_plane_summary.py</div>
           <div class="feed-cost">&#9889; 21 calls &middot; 1.18M tok &middot; dur 4m57s</div>
@@ -1149,7 +1163,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5f4a44103a2e)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T18:56:18.237326Z">18:56 UTC</span>
+            <span class="feed-ts" title="2026-08-31T18:56:18.237326Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 21s</div>
@@ -1162,7 +1176,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f425191b91b1)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T18:40:59.262122Z">18:40 UTC</span>
+            <span class="feed-ts" title="2026-08-31T18:40:59.262122Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 17 calls &middot; 373.5K tok &middot; dur 1m50s</div>
@@ -1175,7 +1189,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5078dee30300)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T18:32:01.623653Z">18:32 UTC</span>
+            <span class="feed-ts" title="2026-08-31T18:32:01.623653Z">Aug 31</span>
           </div>
           
           
@@ -1188,7 +1202,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f42f9bb4c96e)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T18:26:52.938112Z">18:26 UTC</span>
+            <span class="feed-ts" title="2026-08-31T18:26:52.938112Z">Aug 31</span>
           </div>
           
           
@@ -1201,7 +1215,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6edd1094bc82)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T18:13:23.374085Z">18:13 UTC</span>
+            <span class="feed-ts" title="2026-08-31T18:13:23.374085Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 1 calls &middot; dur 22s</div>
@@ -1214,7 +1228,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3a45663931b4)</span>
             
             <a href="#node-fa516ec" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T17:51:49.788659Z">17:51 UTC</span>
+            <span class="feed-ts" title="2026-08-31T17:51:49.788659Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/summarize_failure_outcomes.py, tests/test_summarize_failure_outcomes.py</div>
           <div class="feed-cost">&#9889; 15 calls &middot; 537.0K tok &middot; dur 2m29s</div>
@@ -1227,7 +1241,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-be1a411262d2)</span>
             
             <a href="#node-372aa95" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T17:33:05.691183Z">17:33 UTC</span>
+            <span class="feed-ts" title="2026-08-31T17:33:05.691183Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py</div>
           <div class="feed-cost">&#9889; 36 calls &middot; 1.42M tok &middot; dur 7m25s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
@@ -1240,7 +1254,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1fcf81296e3a)</span>
             
             <a href="#node-9df6237" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T17:17:22.234389Z">17:17 UTC</span>
+            <span class="feed-ts" title="2026-08-31T17:17:22.234389Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/count_recent_failures.py, tests/test_count_recent_failures.py</div>
           <div class="feed-cost">&#9889; 31 calls &middot; 921.8K tok &middot; dur 4m13s</div>
@@ -1253,7 +1267,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7dba9ef8b625)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T16:57:47.485770Z">16:57 UTC</span>
+            <span class="feed-ts" title="2026-08-31T16:57:47.485770Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 31 calls &middot; 1.81M tok &middot; dur 4m9s</div>
@@ -1266,7 +1280,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-44f09dafe3db)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T16:38:15.300407Z">16:38 UTC</span>
+            <span class="feed-ts" title="2026-08-31T16:38:15.300407Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 3.61M tok &middot; dur 8m47s</div>
@@ -1279,7 +1293,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-21ac520ec3f0)</span>
             
             <a href="#node-d5ec079" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T15:43:36.422597Z">15:43 UTC</span>
+            <span class="feed-ts" title="2026-08-31T15:43:36.422597Z">Aug 31</span>
           </div>
           <details class="feed-files"><summary>&#128193; scripts/check_style.py, scripts/validate_deprecation_status.py, scripts/validate_exception_handling.py +7 more</summary><ul class="feed-files-list"><li>scripts/check_style.py</li><li>scripts/validate_deprecation_status.py</li><li>scripts/validate_exception_handling.py</li><li>scripts/validate_mutable_defaults.py</li><li>scripts/validate_no_debug_statements.py</li><li>scripts/validate_no_eval_exec.py</li><li>scripts/validate_no_shell_true.py</li><li>scripts/validate_open_encoding.py</li><li>scripts/validate_sys_path_modification.py</li><li>scripts/validate_timezone_aware_datetime.py</li></ul></details>
           <div class="feed-cost">&#9889; 66 calls &middot; 3.43M tok &middot; dur 10m35s</div>
@@ -1292,7 +1306,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-ead413e7a8d9)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T15:21:26.150728Z">15:21 UTC</span>
+            <span class="feed-ts" title="2026-08-31T15:21:26.150728Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 3.34M tok &middot; dur 7m56s</div>
@@ -1305,7 +1319,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1f37622a8c12)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T15:06:27.949171Z">15:06 UTC</span>
+            <span class="feed-ts" title="2026-08-31T15:06:27.949171Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 2.11M tok &middot; dur 4m39s</div>
@@ -1318,7 +1332,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-bbaedf987aac)</span>
             
             <a href="#node-537349e" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T14:50:56.400606Z">14:50 UTC</span>
+            <span class="feed-ts" title="2026-08-31T14:50:56.400606Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py</div>
           <div class="feed-cost">&#9889; 14 calls &middot; 263.8K tok &middot; dur 1m41s</div>
@@ -1331,7 +1345,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7fb126b34b55)</span>
             
             <a href="#node-0b9dabf" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T14:27:58.928339Z">14:27 UTC</span>
+            <span class="feed-ts" title="2026-08-31T14:27:58.928339Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/cleanup_execution_queue.py, scripts/eeebot_dashboard.py, scripts/verify_imports.py</div>
           <div class="feed-cost">&#9889; 28 calls &middot; 754.2K tok &middot; dur 10m43s</div>
@@ -1344,7 +1358,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-162aa0f1baf5)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T14:16:08.937450Z">14:16 UTC</span>
+            <span class="feed-ts" title="2026-08-31T14:16:08.937450Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 25 calls &middot; 646.2K tok &middot; dur 2m37s</div>
@@ -1357,7 +1371,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-83522386d13b)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T13:45:37.476947Z">13:45 UTC</span>
+            <span class="feed-ts" title="2026-08-31T13:45:37.476947Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 21 calls &middot; 765.8K tok &middot; dur 4m34s</div>
@@ -1370,7 +1384,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9d36347b5bec)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T13:33:44.131771Z">13:33 UTC</span>
+            <span class="feed-ts" title="2026-08-31T13:33:44.131771Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 24 calls &middot; 448.0K tok &middot; dur 1m54s</div>
@@ -1383,7 +1397,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f225497852c8)</span>
             
             <a href="#node-9c55175" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T13:15:12.044502Z">13:15 UTC</span>
+            <span class="feed-ts" title="2026-08-31T13:15:12.044502Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
           <div class="feed-cost">&#9889; 22 calls &middot; 838.0K tok &middot; dur 4m16s</div>
@@ -1396,7 +1410,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-54e686410459)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T13:10:46.548774Z">13:10 UTC</span>
+            <span class="feed-ts" title="2026-08-31T13:10:46.548774Z">Aug 31</span>
           </div>
           
           
@@ -1409,7 +1423,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6ba82adb1f92)</span>
             
             <a href="#node-4e42153" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T12:57:33.495242Z">12:57 UTC</span>
+            <span class="feed-ts" title="2026-08-31T12:57:33.495242Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; docs/SYSTEM_MAP.md, scripts/generate_system_map.py</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 262.6K tok &middot; dur 2m20s</div>
@@ -1422,7 +1436,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1a8b49836f6e)</span>
             
             <a href="#node-878f8e5" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T12:43:38.213798Z">12:43 UTC</span>
+            <span class="feed-ts" title="2026-08-31T12:43:38.213798Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py</div>
           <div class="feed-cost">&#9889; 11 calls &middot; 416.2K tok &middot; dur 3m23s</div>
@@ -1435,7 +1449,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-187355471192)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T12:38:49.314318Z">12:38 UTC</span>
+            <span class="feed-ts" title="2026-08-31T12:38:49.314318Z">Aug 31</span>
           </div>
           
           
@@ -1448,7 +1462,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-4d07ad08cc2d)</span>
             
             <a href="#node-46cb3c0" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T12:15:59.501421Z">12:15 UTC</span>
+            <span class="feed-ts" title="2026-08-31T12:15:59.501421Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py</div>
           <div class="feed-cost">&#9889; 31 calls &middot; 1.59M tok &middot; dur 10m59s</div>
@@ -1461,7 +1475,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d9e9a53d9bf6)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T12:06:41.907949Z">12:06 UTC</span>
+            <span class="feed-ts" title="2026-08-31T12:06:41.907949Z">Aug 31</span>
           </div>
           
           
@@ -1474,20 +1488,20 @@
             <span class="feed-cid copyable" translate="no">(cycle-8b6b3a3f54f8)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T11:50:38.556498Z">11:50 UTC</span>
+            <span class="feed-ts" title="2026-08-31T11:50:38.556498Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 13 calls &middot; 698.0K tok &middot; dur 2m53s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-3fb9900d3e88">
+        <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-3fb9900d3e88">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">feat(validate_open_encoding): exclude hidden, virtualenv, and cache directories</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3fb9900d3e88)</span>
             
             <a href="#node-cad1d7f" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T11:37:56.307626Z">11:37 UTC</span>
+            <span class="feed-ts" title="2026-08-31T11:37:56.307626Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_open_encoding.py, tests/test_validate_open_encoding.py</div>
           <div class="feed-cost">&#9889; 19 calls &middot; 396.9K tok &middot; dur 3m13s</div>
@@ -1500,7 +1514,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f8a79523410a)</span>
             
             <a href="#node-f04e50f" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T11:21:45.779868Z">11:21 UTC</span>
+            <span class="feed-ts" title="2026-08-31T11:21:45.779868Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_script_entrypoints.py</div>
           <div class="feed-cost">&#9889; 21 calls &middot; 423.9K tok &middot; dur 2m14s</div>
@@ -1513,7 +1527,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9b6038c0faaf)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T11:11:37.381068Z">11:11 UTC</span>
+            <span class="feed-ts" title="2026-08-31T11:11:37.381068Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 9 calls &middot; 134.3K tok &middot; dur 73s</div>
@@ -1526,7 +1540,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-46e5f4c07cd9)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T10:54:29.853074Z">10:54 UTC</span>
+            <span class="feed-ts" title="2026-08-31T10:54:29.853074Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 3.83M tok &middot; dur 7m1s</div>
@@ -1539,7 +1553,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a9874a8aa614)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T09:47:04.818638Z">09:47 UTC</span>
+            <span class="feed-ts" title="2026-08-31T09:47:04.818638Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 130 calls &middot; 5.55M tok &middot; dur 24m27s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
@@ -1552,7 +1566,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7e76f9fdc2f0)</span>
             
             <a href="#node-9a3bee3" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T09:32:05.740190Z">09:32 UTC</span>
+            <span class="feed-ts" title="2026-08-31T09:32:05.740190Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py</div>
           <div class="feed-cost">&#9889; 31 calls &middot; 1.76M tok &middot; dur 4m19s</div>
@@ -1565,7 +1579,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f9d5a5af508b)</span>
             
             <a href="#node-fc16c70" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T09:20:34.409489Z">09:20 UTC</span>
+            <span class="feed-ts" title="2026-08-31T09:20:34.409489Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/check_feed_freshness.py, tests/test_check_feed_freshness.py</div>
           <div class="feed-cost">&#9889; 9 calls &middot; 126.5K tok &middot; dur 1m56s</div>
@@ -1578,7 +1592,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-e082406c441a)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T09:11:13.821343Z">09:11 UTC</span>
+            <span class="feed-ts" title="2026-08-31T09:11:13.821343Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 5 calls &middot; 78.99K tok &middot; dur 60s</div>
@@ -1591,7 +1605,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-20a3172d07b0)</span>
             
             <a href="#node-116f0b4" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T08:56:46.494093Z">08:56 UTC</span>
+            <span class="feed-ts" title="2026-08-31T08:56:46.494093Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
           <div class="feed-cost">&#9889; 20 calls &middot; 633.7K tok &middot; dur 3m46s</div>
@@ -1604,7 +1618,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3753aef21295)</span>
             
             <a href="#node-352210e" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T08:40:00.196847Z">08:40 UTC</span>
+            <span class="feed-ts" title="2026-08-31T08:40:00.196847Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_inline_snippets.py</div>
           <div class="feed-cost">&#9889; 42 calls &middot; 2.46M tok &middot; dur 6m23s</div>
@@ -1617,7 +1631,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1ed6e64d855e)</span>
             
             <a href="#node-fefdbe1" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T08:25:12.599144Z">08:25 UTC</span>
+            <span class="feed-ts" title="2026-08-31T08:25:12.599144Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 234.0K tok &middot; dur 1m41s</div>
@@ -1630,7 +1644,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-137ea494d7ec)</span>
             
             <a href="#node-83922cd" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T08:12:43.307897Z">08:12 UTC</span>
+            <span class="feed-ts" title="2026-08-31T08:12:43.307897Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; tests/test_validate_open_encoding.py</div>
           <div class="feed-cost">&#9889; 20 calls &middot; 460.3K tok &middot; dur 2m48s</div>
@@ -1643,7 +1657,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-576759bde344)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T08:00:58.757539Z">08:00 UTC</span>
+            <span class="feed-ts" title="2026-08-31T08:00:58.757539Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 25 calls &middot; 703.1K tok &middot; dur 2m40s</div>
@@ -1656,7 +1670,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9a5aaff70b98)</span>
             
             <a href="#node-e80a551" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T07:45:18.161124Z">07:45 UTC</span>
+            <span class="feed-ts" title="2026-08-31T07:45:18.161124Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; tests/test_check_style.py</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 221.6K tok &middot; dur 1m42s</div>
@@ -1669,7 +1683,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2aa6a8a11ea6)</span>
             
             <a href="#node-13c6828" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T07:27:59.316186Z">07:27 UTC</span>
+            <span class="feed-ts" title="2026-08-31T07:27:59.316186Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py</div>
           <div class="feed-cost">&#9889; 27 calls &middot; 707.6K tok &middot; dur 3m18s</div>
@@ -1682,7 +1696,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-ff1f19b5ee52)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T07:19:25.314652Z">07:19 UTC</span>
+            <span class="feed-ts" title="2026-08-31T07:19:25.314652Z">Aug 31</span>
           </div>
           
           
@@ -1695,7 +1709,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-269c6af38331)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T07:07:25.071376Z">07:07 UTC</span>
+            <span class="feed-ts" title="2026-08-31T07:07:25.071376Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 36 calls &middot; 1.48M tok &middot; dur 3m21s</div>
@@ -1708,7 +1722,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-aa1c002528ee)</span>
             
             <a href="#node-edd3109" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T06:54:02.641992Z">06:54 UTC</span>
+            <span class="feed-ts" title="2026-08-31T06:54:02.641992Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
           <div class="feed-cost">&#9889; 17 calls &middot; 427.2K tok &middot; dur 2m54s</div>
@@ -1721,7 +1735,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-765797bf6bd0)</span>
             
             <a href="#node-a6ccdd6" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T06:37:26.238153Z">06:37 UTC</span>
+            <span class="feed-ts" title="2026-08-31T06:37:26.238153Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py</div>
           <div class="feed-cost">&#9889; 34 calls &middot; 1.62M tok &middot; dur 5m44s</div>
@@ -1734,7 +1748,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-4ed304a5d386)</span>
             
             <a href="#node-061030a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T06:25:22.825567Z">06:25 UTC</span>
+            <span class="feed-ts" title="2026-08-31T06:25:22.825567Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py</div>
           <div class="feed-cost">&#9889; 12 calls &middot; 440.3K tok &middot; dur 2m57s</div>
@@ -1747,7 +1761,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-41e263b66c06)</span>
             
             <a href="#node-6a65d29" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T06:11:40.703510Z">06:11 UTC</span>
+            <span class="feed-ts" title="2026-08-31T06:11:40.703510Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py</div>
           <div class="feed-cost">&#9889; 14 calls &middot; 1.07M tok &middot; dur 4m27s</div>
@@ -1760,7 +1774,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f464ffb49391)</span>
             
             <a href="#node-b445de8" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T06:00:02.541779Z">06:00 UTC</span>
+            <span class="feed-ts" title="2026-08-31T06:00:02.541779Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/generate_system_map.py, tests/test_generate_system_map.py</div>
           <div class="feed-cost">&#9889; 17 calls &middot; 314.9K tok &middot; dur 1m45s</div>
@@ -1773,7 +1787,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1094c6ba84b4)</span>
             
             <a href="#node-c349be3" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T05:46:43.307897Z">05:46 UTC</span>
+            <span class="feed-ts" title="2026-08-31T05:46:43.307897Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_markdown_format.py, tests/test_validate_markdown_format.py</div>
           <div class="feed-cost">&#9889; 29 calls &middot; 1.10M tok &middot; dur 3m32s</div>
@@ -1786,7 +1800,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-82a3a3a3e36a)</span>
             
             <a href="#node-9faf5a1" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T05:34:32.715234Z">05:34 UTC</span>
+            <span class="feed-ts" title="2026-08-31T05:34:32.715234Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_lessons.py</div>
           <div class="feed-cost">&#9889; 23 calls &middot; 592.7K tok &middot; dur 2m19s</div>
@@ -1799,7 +1813,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-dbb00f968b2f)</span>
             
             <a href="#node-52f5320" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T05:19:01.617247Z">05:19 UTC</span>
+            <span class="feed-ts" title="2026-08-31T05:19:01.617247Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py, tests/test_run_all_tests.py</div>
           <div class="feed-cost">&#9889; 24 calls &middot; 1.37M tok &middot; dur 4m47s</div>
@@ -1812,7 +1826,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6554c7fc697d)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T05:00:18.156538Z">05:00 UTC</span>
+            <span class="feed-ts" title="2026-08-31T05:00:18.156538Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 60 calls &middot; 2.14M tok &middot; dur 7m14s</div>
@@ -1825,7 +1839,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-32c776305bf5)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T04:51:07.943613Z">04:51 UTC</span>
+            <span class="feed-ts" title="2026-08-31T04:51:07.943613Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 4 calls &middot; 61.67K tok &middot; dur 49s</div>
@@ -1838,7 +1852,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b9f46569fa97)</span>
             
             <a href="#node-687096a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T04:38:49.661489Z">04:38 UTC</span>
+            <span class="feed-ts" title="2026-08-31T04:38:49.661489Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
           <div class="feed-cost">&#9889; 17 calls &middot; 351.2K tok &middot; dur 2m34s</div>
@@ -1851,7 +1865,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-cb35b2ef4a9b)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T04:28:30.587696Z">04:28 UTC</span>
+            <span class="feed-ts" title="2026-08-31T04:28:30.587696Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 11 calls &middot; 216.3K tok &middot; dur 1m43s</div>
@@ -1864,7 +1878,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-654674adc9ff)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T04:17:19.102870Z">04:17 UTC</span>
+            <span class="feed-ts" title="2026-08-31T04:17:19.102870Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 26 calls &middot; 676.5K tok &middot; dur 2m27s</div>
@@ -1877,7 +1891,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-53726d3e08e5)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T04:03:18.258069Z">04:03 UTC</span>
+            <span class="feed-ts" title="2026-08-31T04:03:18.258069Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 30 calls &middot; 880.6K tok &middot; dur 5m15s</div>
@@ -1890,7 +1904,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c29d492adc47)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T03:49:40.462921Z">03:49 UTC</span>
+            <span class="feed-ts" title="2026-08-31T03:49:40.462921Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 2.68M tok &middot; dur 4m51s</div>
@@ -1903,7 +1917,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-ff247ddf6f92)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T03:39:55.815728Z">03:39 UTC</span>
+            <span class="feed-ts" title="2026-08-31T03:39:55.815728Z">Aug 31</span>
           </div>
           
           
@@ -1916,7 +1930,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-53c368e490e3)</span>
             
             <a href="#node-c00176d" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T03:26:57.022866Z">03:26 UTC</span>
+            <span class="feed-ts" title="2026-08-31T03:26:57.022866Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_imports.py, tests/test_verify_imports.py</div>
           <div class="feed-cost">&#9889; 19 calls &middot; 731.6K tok &middot; dur 2m49s</div>
@@ -1929,7 +1943,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b103d8171a29)</span>
             
             <a href="#node-a03af42" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T03:11:00.310716Z">03:11 UTC</span>
+            <span class="feed-ts" title="2026-08-31T03:11:00.310716Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py</div>
           <div class="feed-cost">&#9889; 32 calls &middot; 1.59M tok &middot; dur 4m51s</div>
@@ -1942,7 +1956,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-85191e732fb8)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T03:02:01.681248Z">03:02 UTC</span>
+            <span class="feed-ts" title="2026-08-31T03:02:01.681248Z">Aug 31</span>
           </div>
           
           
@@ -1955,7 +1969,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6024b532148c)</span>
             
             <a href="#node-2df6d19" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T02:48:03.831886Z">02:48 UTC</span>
+            <span class="feed-ts" title="2026-08-31T02:48:03.831886Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py</div>
           <div class="feed-cost">&#9889; 26 calls &middot; 1.21M tok &middot; dur 4m1s</div>
@@ -1968,7 +1982,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-720bdb202944)</span>
             
             <a href="#node-29ccb21" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T02:37:53.447921Z">02:37 UTC</span>
+            <span class="feed-ts" title="2026-08-31T02:37:53.447921Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; memory/index.md, memory/turn_budget_pacing.md</div>
           <div class="feed-cost">&#9889; 7 calls &middot; 93.78K tok &middot; dur 82s</div>
@@ -1981,7 +1995,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-049146789e69)</span>
             
             <a href="#node-4a1f6a9" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T02:27:43.715149Z">02:27 UTC</span>
+            <span class="feed-ts" title="2026-08-31T02:27:43.715149Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; skills/targeted-test-discovery/SKILL.md</div>
           <div class="feed-cost">&#9889; 9 calls &middot; 126.9K tok &middot; dur 82s</div>
@@ -1994,7 +2008,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-bad823931d50)</span>
             
             <a href="#node-543d538" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T02:17:06.531030Z">02:17 UTC</span>
+            <span class="feed-ts" title="2026-08-31T02:17:06.531030Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; skills/early-turn-staging/SKILL.md</div>
           <div class="feed-cost">&#9889; 8 calls &middot; 105.4K tok &middot; dur 85s</div>
@@ -2007,7 +2021,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b55bab0ffcff)</span>
             
             <a href="#node-62c1552" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T02:02:33.386153Z">02:02 UTC</span>
+            <span class="feed-ts" title="2026-08-31T02:02:33.386153Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; skills/memory-lookup/SKILL.md</div>
           <div class="feed-cost">&#9889; 11 calls &middot; 176.0K tok &middot; dur 1m33s</div>
@@ -2020,7 +2034,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a24651e49131)</span>
             
             <a href="#node-6b4e311" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T01:53:03.021040Z">01:53 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:53:03.021040Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; AGENTS.md</div>
           <div class="feed-cost">&#9889; 8 calls &middot; 98.25K tok &middot; dur 59s</div>
@@ -2033,7 +2047,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1cbc2184a239)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T01:44:11.165296Z">01:44 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:44:11.165296Z">Aug 31</span>
           </div>
           
           
@@ -2046,7 +2060,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-314e15b12534)</span>
             
             <a href="#node-39909de" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T01:33:42.809408Z">01:33 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:33:42.809408Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; docs/index.md, docs/spec_driven_implementation_guidelines.md</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 169.3K tok &middot; dur 89s</div>
@@ -2059,7 +2073,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-17bceabfb4a4)</span>
             
             <a href="#node-018bd4a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T01:22:15.128655Z">01:22 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:22:15.128655Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/validate_skill_format.py, tests/test_validate_skill_format.py</div>
           <div class="feed-cost">&#9889; 10 calls &middot; 210.4K tok &middot; dur 2m50s</div>
@@ -2072,7 +2086,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a5428574411f)</span>
             
             <a href="#node-ef11528" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T01:11:36.967608Z">01:11 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:11:36.967608Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; lessons/preventing_turn_limit_exhaustion.md</div>
           <div class="feed-cost">&#9889; 7 calls &middot; 106.6K tok &middot; dur 1m40s</div>
@@ -2085,7 +2099,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b343c2f7c7ed)</span>
             
             <a href="#node-bee6152" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T01:01:13.434646Z">01:01 UTC</span>
+            <span class="feed-ts" title="2026-08-31T01:01:13.434646Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; AGENTS.md</div>
           <div class="feed-cost">&#9889; 8 calls &middot; 165.5K tok &middot; dur 1m41s</div>
@@ -2098,7 +2112,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2786aed4e1da)</span>
             
             <a href="#node-9176b04" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T00:51:18.020512Z">00:51 UTC</span>
+            <span class="feed-ts" title="2026-08-31T00:51:18.020512Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; tests/test_memory_index_links.py</div>
           <div class="feed-cost">&#9889; 6 calls &middot; 72.19K tok &middot; dur 64s</div>
@@ -2111,7 +2125,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-bbee4d1dfb14)</span>
             
             <a href="#node-4fa1efa" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T00:36:21.245793Z">00:36 UTC</span>
+            <span class="feed-ts" title="2026-08-31T00:36:21.245793Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py</div>
           <div class="feed-cost">&#9889; 22 calls &middot; 527.4K tok &middot; dur 3m53s</div>
@@ -2124,7 +2138,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-bc68db0238f0)</span>
             
             
-            <span class="feed-ts" title="2026-08-31T00:22:38.090102Z">00:22 UTC</span>
+            <span class="feed-ts" title="2026-08-31T00:22:38.090102Z">Aug 31</span>
           </div>
           
           <div class="feed-cost">&#9889; 80 calls &middot; 2.92M tok &middot; dur 5m25s</div>
@@ -2137,7 +2151,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8064d28a19ab)</span>
             
             <a href="#node-7847efa" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-08-31T00:05:22.455223Z">00:05 UTC</span>
+            <span class="feed-ts" title="2026-08-31T00:05:22.455223Z">Aug 31</span>
           </div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py</div>
           <div class="feed-cost">&#9889; 41 calls &middot; 1.43M tok &middot; dur 8m6s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
@@ -5877,7 +5891,7 @@
             <span class="feed-ts" title="2026-08-25T23:08:55.227455Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 1.32M tok &middot; dur 4m24s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-87a1594c07ab">
@@ -5890,7 +5904,7 @@
             <span class="feed-ts" title="2026-08-25T22:50:50.090799Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 41 calls &middot; 1.45M tok &middot; dur 6m38s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-5769ba2f9dd3">
@@ -5903,7 +5917,7 @@
             <span class="feed-ts" title="2026-08-25T22:25:11.173828Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 28 calls &middot; 932.7K tok &middot; dur 6m</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c994f23e05b0">
@@ -5916,7 +5930,7 @@
             <span class="feed-ts" title="2026-08-25T22:10:03.056831Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 7 calls &middot; 430.4K tok &middot; dur 4m9s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-177da27aaaa9">
@@ -5929,7 +5943,7 @@
             <span class="feed-ts" title="2026-08-25T21:48:08.522383Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 2.25M tok &middot; dur 7m</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-be745246e820">
@@ -5942,7 +5956,7 @@
             <span class="feed-ts" title="2026-08-25T21:34:44.831720Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 18 calls &middot; 680.3K tok &middot; dur 3m8s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-dd865bdec0a9">
@@ -5955,7 +5969,7 @@
             <span class="feed-ts" title="2026-08-25T21:16:15.899544Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 35 calls &middot; 829.6K tok &middot; dur 3m56s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-781564abbb0e">
@@ -5968,7 +5982,7 @@
             <span class="feed-ts" title="2026-08-25T20:46:00.455866Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 52 calls &middot; 3.01M tok &middot; dur 7m1s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-c9f93efa460c">
@@ -5981,7 +5995,7 @@
             <span class="feed-ts" title="2026-08-25T20:30:16.560691Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 4.73M tok &middot; dur 6m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-47cdd2010c92">
@@ -5994,7 +6008,7 @@
             <span class="feed-ts" title="2026-08-25T20:02:09.315648Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 73 calls &middot; 3.68M tok &middot; dur 9m4s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-406046962495">
@@ -6007,7 +6021,7 @@
             <span class="feed-ts" title="2026-08-25T19:47:15.146481Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 1.23M tok &middot; dur 4m57s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-649a0480f494">
@@ -6020,7 +6034,7 @@
             <span class="feed-ts" title="2026-08-25T19:18:08.883286Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 117 calls &middot; 3.59M tok &middot; dur 12m29s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7f531797e3b8">
@@ -6033,7 +6047,7 @@
             <span class="feed-ts" title="2026-08-25T18:43:10.276806Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 395.4K tok &middot; dur 2m35s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-c6443125b8ac">
@@ -6046,7 +6060,7 @@
             <span class="feed-ts" title="2026-08-25T18:27:26.948544Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 2.82M tok &middot; dur 6m56s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-adb93b555836">
@@ -6059,7 +6073,7 @@
             <span class="feed-ts" title="2026-08-25T18:14:19.273677Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 6 calls &middot; 441.3K tok &middot; dur 2m56s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-34d54fefb88d">
@@ -6072,7 +6086,7 @@
             <span class="feed-ts" title="2026-08-25T17:58:45.829030Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 47 calls &middot; 3.56M tok &middot; dur 6m18s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-e518b2f5ba6a">
@@ -6085,7 +6099,7 @@
             <span class="feed-ts" title="2026-08-25T17:29:09.121705Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 4.59M tok &middot; dur 14m40s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9e2ef2d14b19">
@@ -6098,7 +6112,7 @@
             <span class="feed-ts" title="2026-08-25T17:09:36.109530Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 26 calls &middot; 1.05M tok &middot; dur 5m10s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-bb4f2c8132c5">
@@ -6111,7 +6125,7 @@
             <span class="feed-ts" title="2026-08-25T16:46:04.892118Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 30 calls &middot; 921.7K tok &middot; dur 3m32s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-28dd6607d158">
@@ -6124,7 +6138,7 @@
             <span class="feed-ts" title="2026-08-25T16:05:58.147246Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 24 calls &middot; 491.2K tok &middot; dur 3m47s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1a60434df6a5">
@@ -6137,7 +6151,7 @@
             <span class="feed-ts" title="2026-08-25T15:51:56.184519Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 22 calls &middot; 746.1K tok &middot; dur 4m48s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-873885c8f7b9">
@@ -6150,7 +6164,7 @@
             <span class="feed-ts" title="2026-08-25T15:36:04.085945Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 21 calls &middot; 1.55M tok &middot; dur 6m1s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e1080a18966d">
@@ -6163,7 +6177,7 @@
             <span class="feed-ts" title="2026-08-25T15:08:07.147011Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.07M tok &middot; dur 12m15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-842d3c7f3f4d">
@@ -6176,7 +6190,7 @@
             <span class="feed-ts" title="2026-08-25T14:49:01.420548Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 23 calls &middot; 711.6K tok &middot; dur 8m10s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-3fe976b05260">
@@ -6189,7 +6203,7 @@
             <span class="feed-ts" title="2026-08-25T14:28:11.950223Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 4.76M tok &middot; dur 10m44s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-5364c88e4247">
@@ -6202,7 +6216,7 @@
             <span class="feed-ts" title="2026-08-25T14:11:16.215984Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 8 calls &middot; 302.3K tok &middot; dur 1m46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-700e8c54442a">
@@ -6215,7 +6229,7 @@
             <span class="feed-ts" title="2026-08-25T13:40:15.901407Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 95 calls &middot; 6.77M tok &middot; dur 17m9s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ab342a5e99e1">
@@ -6228,7 +6242,7 @@
             <span class="feed-ts" title="2026-08-25T13:28:33.374956Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 317.7K tok &middot; dur 2m8s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-604889b6af1e">
@@ -6241,7 +6255,7 @@
             <span class="feed-ts" title="2026-08-25T13:13:09.517506Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 8 calls &middot; 295.2K tok &middot; dur 1m55s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-7dbab0878c8a">
@@ -6254,7 +6268,7 @@
             <span class="feed-ts" title="2026-08-25T12:51:16.071518Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.26M tok &middot; dur 7m58s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-0bd2aea7c264">
@@ -6267,7 +6281,7 @@
             <span class="feed-ts" title="2026-08-25T12:38:05.497401Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 14 calls &middot; 359.0K tok &middot; dur 3m28s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ad42b06fd523">
@@ -6280,7 +6294,7 @@
             <span class="feed-ts" title="2026-08-25T12:26:27.246677Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 13 calls &middot; 200.4K tok &middot; dur 1m39s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-29209bf858cb">
@@ -6293,7 +6307,7 @@
             <span class="feed-ts" title="2026-08-25T11:59:51.653837Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 87 calls &middot; 3.78M tok &middot; dur 8m51s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-36d7315f534e">
@@ -6306,7 +6320,7 @@
             <span class="feed-ts" title="2026-08-25T11:01:38.335471Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 22 calls &middot; 505.6K tok &middot; dur 4m10s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-0b0d65d4e95f">
@@ -6319,7 +6333,7 @@
             <span class="feed-ts" title="2026-08-25T10:28:10.008292Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 71 calls &middot; 3.95M tok &middot; dur 24m5s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-20bbb77c4a10">
@@ -6332,7 +6346,7 @@
             <span class="feed-ts" title="2026-08-25T10:14:46.417325Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 335.4K tok &middot; dur 2m30s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-62ffebdbf659">
@@ -6345,7 +6359,7 @@
             <span class="feed-ts" title="2026-08-25T09:48:49.570882Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 26 calls &middot; 996.6K tok &middot; dur 3m16s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-5afff9f18669">
@@ -6358,7 +6372,7 @@
             <span class="feed-ts" title="2026-08-25T09:32:21.612852Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 2.95M tok &middot; dur 6m58s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-3f6ad9d4cf9f">
@@ -6371,7 +6385,7 @@
             <span class="feed-ts" title="2026-08-25T09:09:38.933024Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.52M tok &middot; dur 9m8s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-7423b9a547c5">
@@ -6384,7 +6398,7 @@
             <span class="feed-ts" title="2026-08-25T08:37:52.532946Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 26 calls &middot; 703.0K tok &middot; dur 4m29s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c09e37992835">
@@ -6397,7 +6411,7 @@
             <span class="feed-ts" title="2026-08-25T08:10:02.703503Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 26 calls &middot; 1.15M tok &middot; dur 5m27s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-af72883657c5">
@@ -6410,7 +6424,7 @@
             <span class="feed-ts" title="2026-08-25T07:48:32.228866Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.29M tok &middot; dur 6m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-af523f3b8d3d">
@@ -6423,7 +6437,7 @@
             <span class="feed-ts" title="2026-08-25T07:29:56.202974Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 31 calls &middot; 978.4K tok &middot; dur 5m15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ea545ca8fb42">
@@ -6436,7 +6450,7 @@
             <span class="feed-ts" title="2026-08-25T07:14:07.126915Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 25 calls &middot; 1.40M tok &middot; dur 4m56s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-aa2788602fe4">
@@ -6449,7 +6463,7 @@
             <span class="feed-ts" title="2026-08-25T06:51:39.023697Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 459.0K tok &middot; dur 2m38s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-2e70f675fba8">
@@ -6462,7 +6476,7 @@
             <span class="feed-ts" title="2026-08-25T06:34:36.511844Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 2.18M tok &middot; dur 6m9s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-50a1def86f9a">
@@ -6475,7 +6489,7 @@
             <span class="feed-ts" title="2026-08-25T06:17:44.628237Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 12 calls &middot; 195.7K tok &middot; dur 1m50s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-531cd89ce0f7">
@@ -6488,7 +6502,7 @@
             <span class="feed-ts" title="2026-08-25T06:04:54.397180Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 13 calls &middot; 226.8K tok &middot; dur 2m7s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d2df789e95e0">
@@ -6501,7 +6515,7 @@
             <span class="feed-ts" title="2026-08-25T05:35:16.350558Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 3.62M tok &middot; dur 11m51s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-4dae44dd0c6a">
@@ -6514,7 +6528,7 @@
             <span class="feed-ts" title="2026-08-25T05:19:25.135823Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 1.79M tok &middot; dur 5m32s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-34de2183e259">
@@ -6527,7 +6541,7 @@
             <span class="feed-ts" title="2026-08-25T05:02:18.176138Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 36 calls &middot; 951.0K tok &middot; dur 5m5s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-bdf0b42ba267">
@@ -6540,7 +6554,7 @@
             <span class="feed-ts" title="2026-08-25T04:37:14.388721Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 17 calls &middot; 442.5K tok &middot; dur 3m21s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a821e5fe1a27">
@@ -6553,7 +6567,7 @@
             <span class="feed-ts" title="2026-08-25T04:21:36.294987Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 41 calls &middot; 989.6K tok &middot; dur 5m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-35e3c645031b">
@@ -6566,7 +6580,7 @@
             <span class="feed-ts" title="2026-08-25T03:54:41.311446Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 4.20M tok &middot; dur 9m39s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-37ac584e1c4b">
@@ -6579,7 +6593,7 @@
             <span class="feed-ts" title="2026-08-25T03:21:39.515751Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 5.08M tok &middot; dur 12m29s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-3314b69bdaf2">
@@ -6592,7 +6606,7 @@
             <span class="feed-ts" title="2026-08-25T02:52:42.477758Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 33 calls &middot; 1.40M tok &middot; dur 5m13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b2b66d48a3b8">
@@ -6605,7 +6619,7 @@
             <span class="feed-ts" title="2026-08-25T02:08:58.735224Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 4.77M tok &middot; dur 23m7s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-027fabcbc967">
@@ -6631,7 +6645,7 @@
             <span class="feed-ts" title="2026-08-25T01:33:30.070256Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 54 calls &middot; 3.98M tok &middot; dur 10m34s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-5eafc8aa75c6">
@@ -6644,7 +6658,7 @@
             <span class="feed-ts" title="2026-08-25T01:18:11.145712Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 34 calls &middot; 1.18M tok &middot; dur 4m35s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fad595053459">
@@ -6657,7 +6671,7 @@
             <span class="feed-ts" title="2026-08-25T01:05:17.849912Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 25 calls &middot; 443.9K tok &middot; dur 3m3s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c9b735fb7254">
@@ -6670,7 +6684,7 @@
             <span class="feed-ts" title="2026-08-25T00:49:11.107107Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 384.9K tok &middot; dur 2m57s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-afe97e2376a0">
@@ -6683,7 +6697,7 @@
             <span class="feed-ts" title="2026-08-25T00:33:23.133477Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 6 calls &middot; 185.2K tok &middot; dur 83s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-c8731288867b">
@@ -6696,7 +6710,7 @@
             <span class="feed-ts" title="2026-08-25T00:22:07.166309Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 7 calls &middot; 192.7K tok &middot; dur 1m30s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-37d6a551f0d9">
@@ -6709,7 +6723,7 @@
             <span class="feed-ts" title="2026-08-25T00:08:10.191173Z">Aug 25</span>
           </div>
           
-          <div class="feed-cost">&#9889; 17 calls &middot; 214.7K tok &middot; dur 2m8s</div>
+          
         </li>
         
         <li class="feed-day-header">2026-08-24</li>
@@ -21575,7 +21589,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-08-31 23:57:13 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 23:29:13.660674 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-01 00:06:05 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-08-31 23:29:13.660674 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
