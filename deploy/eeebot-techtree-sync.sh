@@ -34,13 +34,15 @@ rollback() {
         fi
     fi
 }
-fail() {
+on_exit() {
     rc=$?
-    rollback
+    if [ "$rc" -ne 0 ]; then
+        rollback
+    fi
     cleanup
     exit "$rc"
 }
-trap cleanup 0
+trap on_exit 0
 trap 'exit 1' HUP INT TERM
 
 mkdir -p "$DEST"
