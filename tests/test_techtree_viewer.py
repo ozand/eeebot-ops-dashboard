@@ -1063,8 +1063,15 @@ def test_issue126_lineage_keeps_server_fallback_headings_and_note() -> None:
     section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S)
     assert section is not None
     assert '<h3>2026-09-01</h3>' in section.group(1)
-    assert 'lineage-js-note' in section.group(1)
+    assert '<noscript>' in section.group(1)
     assert 'Enable JavaScript' in section.group(1)
+
+
+def test_issue126_javascript_note_is_noscript_only() -> None:
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'sha-a', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'}]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+    assert re.search(r'<noscript>\s*<p class="lineage-js-note">Enable JavaScript.*?</p>\s*</noscript>', html, re.S)
+    assert not re.search(r'<p class="lineage-js-note">Enable JavaScript', re.sub(r'<noscript>.*?</noscript>', '', html, flags=re.S))
 
 
 def test_issue126_lineage_inlines_vendored_scripts_without_external_src() -> None:
