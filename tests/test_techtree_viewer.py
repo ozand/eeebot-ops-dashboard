@@ -2885,3 +2885,21 @@ def test_issue96_is_v2_lesson_helper() -> None:
     assert tv._is_v2_lesson({'problem': None}) is False
     assert tv._is_v2_lesson({'task_id': 'old', 'result': 'r'}) is False
     assert tv._is_v2_lesson({}) is False
+
+
+def test_issue130_duplicate_real_shape_lessons_render_all_with_warning():
+    lessons = [
+        {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'When introducing new default-enabled repository introspection features to CLI scripts, verify that existing mock test suites pass flags to disable live VCS scanning or isolate repository context.', 'problem': 'When introducing new default-enabled repository introspection features to CLI scripts, verify that existing mock test suites pass flags to disable live VCS scanning or isolate repository context.', 'solution': 'Apply the reflected approach hint.', 'tags': ['reflector'], 'severity': 'medium', 'seen_count': 1, 'first_seen': '2026-08-29', 'last_seen': '2026-08-29', 'evidence': ['cycle-c871bf9abe41'], 'date': '2026-08-29', 'cycle_id': 'cycle-c871bf9abe41'},
+        {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'When executing subprocess calls that change the working directory, always pass the absolute path to the target script.', 'problem': 'When executing subprocess calls that change the working directory, always pass the absolute path to the target script.', 'solution': 'Apply the reflected approach hint.', 'tags': ['reflector'], 'severity': 'medium', 'seen_count': 1, 'first_seen': '2026-08-29', 'last_seen': '2026-08-29', 'evidence': ['cycle-c871bf9abe41'], 'date': '2026-08-29', 'cycle_id': 'cycle-c871bf9abe41'},
+    ]
+    html = tv.build_lessons_panel(lessons)
+    assert 'Lessons History (2 total' in html
+    assert html.count('duplicate id on disk') == 2
+    assert html.count('When introducing new default-enabled') == 1
+    assert html.count('When executing subprocess calls') == 1
+
+
+def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
+    lesson = {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'One real lesson', 'problem': 'p', 'solution': 's', 'tags': ['reflector'], 'severity': 'medium', 'seen_count': 1, 'date': '2026-08-29'}
+    html = tv.build_lessons_panel([lesson])
+    assert 'duplicate id on disk' not in html
