@@ -1030,6 +1030,16 @@ def test_issue129_lesson_entries_expose_resolving_q_anchors() -> None:
     assert 'id="q-LESS-1"' in html
 
 
+def test_issue129_normalizes_lesson_context_prefix_for_round_trip() -> None:
+    html = tv.build_cycle_feed([{
+        'phase': 'proposed', 'cycle_id': 'cycle-roundtrip',
+        'lessons_context': ['lesson:LESS-1'], 'ts': '2026-09-01T01:00:00Z',
+    }], history_mode=True)
+
+    assert 'lessons.html#q-LESS-1' in html
+    assert 'lessons.html#q-lesson:LESS-1' not in html
+
+
 def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
     tree = {'current_sha': 'sha-child', 'nodes': {}}
     ledger = [
