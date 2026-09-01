@@ -20,6 +20,13 @@
       return;
     }
     var byDepth = {};
+    if (!Array.from(dag.links()).length && records.length > 1) {
+      records.forEach(function (record, index) {
+        if (!record.parentIds.length && index) record.parentIds = [records[index - 1].id];
+      });
+      dag = window.d3.graphStratify()(records);
+      window.d3.sugiyama().nodeSize([Math.max(1, height - 40), Math.max(1, width - 40)])(dag);
+    }
     var dagNodes = Array.from(dag.nodes());
     dagNodes.forEach(function (node) {
       var depth = Math.round(node.x);
