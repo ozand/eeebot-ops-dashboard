@@ -1094,6 +1094,18 @@ def test_issue126_missing_vendor_files_keeps_server_fallback(monkeypatch: pytest
     assert not re.search(r'<script[^>]+src=', html, re.I)
 
 
+def test_issue126_generated_json_is_script_data_not_visible_body_text() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'sha-a', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+
+    assert re.search(r'<script type="application/json" class="lineage-day-data"[^>]*>\s*\{"day":', html)
+    body_without_scripts = re.sub(r'<script\b[^>]*>.*?</script>', '', html, flags=re.I | re.S)
+    assert '{"day":"2026-09-01"' not in body_without_scripts
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {

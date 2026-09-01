@@ -23,8 +23,9 @@
       (byDepth[depth] || (byDepth[depth] = [])).push(node);
     });
     var depths = Object.keys(byDepth).map(Number).sort(function (a, b) { return a - b; });
-    var rowWidth = Math.min(6, Math.max.apply(null, depths.map(function (depth) { return byDepth[depth].length; }).concat([1]))) * 42;
-    var rows = Math.max.apply(null, depths.map(function (depth) { return Math.ceil(byDepth[depth].length / 6); }).concat([1]));
+    var maxPerRow = Math.min(7, Math.max.apply(null, depths.map(function (depth) { return byDepth[depth].length; }).concat([1])));
+    var rowWidth = maxPerRow * 42;
+    var rows = Math.max.apply(null, depths.map(function (depth) { return Math.ceil(byDepth[depth].length / maxPerRow); }).concat([1]));
     width = Math.max(180, rowWidth + 40);
     height = Math.max(72, depths.length * 50 + rows * 34 + 20);
     svg.setAttribute('width', width);
@@ -35,8 +36,8 @@
       byDepth[depth].sort(function (a, b) { return a.y - b.y; });
       byDepth[depth].forEach(function (node, indexInDepth) {
         depthIndex[node.data.id] = {
-          x: 20 + (indexInDepth % 6) * 42,
-          y: 24 + index * 50 + Math.floor(indexInDepth / 6) * 34
+        x: 20 + (indexInDepth % maxPerRow) * 42,
+        y: 24 + index * 50 + Math.floor(indexInDepth / maxPerRow) * 34
         };
       });
     });
@@ -44,6 +45,10 @@
       return depthIndex[node.data.id] || { x: 20, y: 24 };
     };
     svg.replaceChildren();
+    svg.setAttribute('data-lineage-rendered', 'd3-dag');
+    svg.setAttribute('data-max-per-row', maxPerRow);
+    var note = svg.closest('.lineage-day-group').querySelector('.lineage-js-note');
+    if (note) note.hidden = true;
     dag.links().forEach(function (link) {
       var source = project(link.source);
       var target = project(link.target);
