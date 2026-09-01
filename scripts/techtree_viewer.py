@@ -1970,6 +1970,7 @@ def _build_vertical_day_lineage(
                 x2, y2 = positions[node['sha']]
                 parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge arch-edge"/>')
         graph_nodes = trunk + side[:LINEAGE_DAY_CAP]
+        graph_shas = {node['sha'] for node in graph_nodes}
         day_payload = {
             'day': day,
             'current_sha': current_sha,
@@ -1977,7 +1978,7 @@ def _build_vertical_day_lineage(
                 {
                     'sha': node['sha'],
                     'cycle_id': node['cycle_id'],
-                    'parent': node.get('parent_sha') or next((base['sha'] for base in trunk if base['ts'] <= node['ts']), None),
+                    'parent': node.get('parent_sha') if node.get('parent_sha') in graph_shas else None,
                     'ts': node['ts'],
                     'outcome': node.get('outcome', 'integrated'),
                     'kind': 'trunk' if node in trunk else 'leaf',
@@ -1986,7 +1987,7 @@ def _build_vertical_day_lineage(
             ],
             'edges': [
                 {'source': node['parent_sha'], 'target': node['sha']}
-                for node in trunk if node['parent_sha'] in {item['sha'] for item in graph_nodes}
+                for node in trunk if node['parent_sha'] in graph_shas
             ] + [
                 {'source': base['sha'], 'target': node['sha']}
                 for node in side[:LINEAGE_DAY_CAP]
@@ -1995,7 +1996,7 @@ def _build_vertical_day_lineage(
             ],
         }
         day_json = json.dumps(day_payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
-        parts.append(f'<script type="application/json" class="lineage-day-data" data-day="{esc(day)}">{day_json}</script>')
+        parts.append(f'<script type="application/json" class="lineage-day-data" data-day="{esc(day)}" hidden aria-hidden="true">{day_json}</script>')
         if current_sha in positions:
             x, y = positions[current_sha]
             parts.append(f'<text x="{x}" y="{y - 14}" text-anchor="middle" class="arch-star">&#9733;</text>')
