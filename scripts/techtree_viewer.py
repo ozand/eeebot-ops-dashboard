@@ -2940,6 +2940,7 @@ def build_cycle_feed(
     cycle_files: dict[str, list[str]] | None = None,
     llm_stats: dict[str, Any] | None = None,
     history_mode: bool = False,
+    rendered_lesson_ids: set[str] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -3020,7 +3021,7 @@ def build_cycle_feed(
             if isinstance(context, list):
                 entity_links.extend(
                     f'<a class="lesson-link" href="lessons.html#q-{esc(str(lesson_id).split(":", 1)[-1])}">{esc(str(lesson_id))}</a>'
-                    for lesson_id in context if lesson_id
+                    for lesson_id in context if lesson_id and (rendered_lesson_ids is None or str(lesson_id).split(":", 1)[-1] in rendered_lesson_ids)
                 )
 
         # Check demand and cycle_files for files_changed
@@ -3707,6 +3708,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
     problem→solution cards (with tags/severity/seen_count); legacy
     protocol records folded under 'legacy (pre-v2, frozen)'."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
+    rendered_lesson_ids = {str(l.get('id')) for l in entries if l.get('id')}
     if not entries:
         return (
             '<section class="panel panel-lessons" id="panel-lessons">'
@@ -5138,6 +5140,11 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
             if isinstance(r, dict) and r.get('cycle_id')
         }
 
+    rendered_lesson_ids = {
+        str(lesson.get('id')) for lesson in (data.get('lessons') or [])
+        if isinstance(lesson, dict) and lesson.get('id')
+    }
+    lessons_panel = build_lessons_panel(data.get('lessons'))
     cycle_feed = build_cycle_feed(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -5420,6 +5427,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     history_source = ledger_tail
     if isinstance(history_rows, list) and history_rows:
         history_source = history_rows
+    rendered_lesson_ids = {
+        str(lesson.get('id')) for lesson in (data.get('lessons') or [])
+        if isinstance(lesson, dict) and lesson.get('id')
+    }
     cycle_feed = build_cycle_feed(
         ledger_tail=history_source,
         demand_completed=demand_completed,
@@ -5428,6 +5439,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
         history_mode=True,
+        rendered_lesson_ids=rendered_lesson_ids,
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
