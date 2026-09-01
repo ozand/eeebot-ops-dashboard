@@ -7,8 +7,10 @@
     var height = Number(svg.getAttribute('height')) || 72;
     var nodes = payload.nodes || [];
     if (!nodes.length) return;
+    var nodeIds = {};
+    nodes.forEach(function (node) { nodeIds[node.sha] = true; });
     var records = nodes.map(function (node) {
-      return { id: node.sha, parentIds: node.parent ? [node.parent] : [], value: node };
+      return { id: node.sha, parentIds: node.parent && nodeIds[node.parent] ? [node.parent] : [], value: node };
     });
     var dag;
     try {
