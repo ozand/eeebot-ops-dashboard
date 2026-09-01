@@ -3713,6 +3713,21 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         lesson_id = str(entry.get('id') or '')
         if lesson_id:
             id_counts[lesson_id] = id_counts.get(lesson_id, 0) + 1
+    # Issue #130: duplicates on disk are all rendered, so the anchor has to be
+    # unique per rendered row or the page carries duplicate DOM ids. The FIRST
+    # occurrence keeps the bare `q-<id>` anchor, because the cycle-page links
+    # built in #129 point at it; later occurrences get an ordinal suffix.
+    id_seen: dict[str, int] = {}
+
+    def _lesson_anchor(lesson: dict[str, Any]) -> str:
+        lesson_id = str(lesson.get('id') or '')
+        if not lesson_id:
+            return ''
+        nth = id_seen.get(lesson_id, 0) + 1
+        id_seen[lesson_id] = nth
+        suffix = '' if nth == 1 else f'-{nth}'
+        return f' id="q-{esc(lesson_id)}{suffix}"'
+
     rendered_lesson_ids = {str(l.get('id')) for l in entries if l.get('id')}
     if not entries:
         return (
@@ -3752,7 +3767,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         severity = str(l.get('severity') or '')
         seen_count = l.get('seen_count')
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
-        item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
+        item_anchor = _lesson_anchor(l)
 
         severity_html = (
             f'<span class="lesson-severity lesson-severity-{esc(severity.lower())}">{esc(severity)}</span>'
@@ -3807,7 +3822,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         )
         insight = str(l.get('insight') or '')
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
-        item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
+        item_anchor = _lesson_anchor(l)
         insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
