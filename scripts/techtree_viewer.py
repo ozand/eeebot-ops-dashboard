@@ -1824,6 +1824,16 @@ def _lineage_day(ts: Any) -> str:
     return value[:10] if len(value) >= 10 else ''
 
 
+def _load_lineage_vendor_scripts() -> dict[str, str] | None:
+    vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
+    names = ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js')
+    try:
+        scripts = {name: (vendor_root / name).read_text(encoding='utf-8') for name in names}
+    except (OSError, UnicodeError):
+        return None
+    return {name: source.replace('</script', '<\\/script') for name, source in scripts.items()}
+
+
 def _build_vertical_day_lineage(
     ledger_rows: list[Any],
     fallback_tree: dict[str, Any] | None,
@@ -1831,6 +1841,8 @@ def _build_vertical_day_lineage(
     now: str | None,
     cycle_details: dict[str, dict[str, Any]] | None = None,
 ) -> str:
+    vendor_scripts = _load_lineage_vendor_scripts()
+
     grouped: dict[str, dict[str, dict[str, Any]]] = {}
     leaves: dict[str, list[dict[str, Any]]] = {}
     for row in ledger_rows:
@@ -1997,7 +2009,10 @@ def _build_vertical_day_lineage(
     parts.append('</div></div>')
     details_json = json.dumps(cycle_details or {}, ensure_ascii=True).replace('<', '\\u003c')
     card_template = """<template id="cycle-detail-card-template"><div><p><b>Cycle</b></p><p><b>Outcome</b></p><p><b>Reason</b></p><p><b>Timestamp</b></p><p><b>SHA</b></p><p><b>Parent SHA</b></p><h3>Files changed</h3><ul></ul><h3>Lesson insight</h3><a>open in Cycle Feed</a> · <a>related lessons</a></div></template>"""
-    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script><script src="assets/vendor/d3.min.js"></script><script src="assets/vendor/d3-dag.iife.min.js"></script><script src="assets/vendor/lineage-renderer.js"></script><script>
+    inline_scripts = ''
+    if vendor_scripts is not None:
+        inline_scripts = ''.join(f'<script>{vendor_scripts[name]}</script>' for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'))
+    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script>{inline_scripts}<script>
 (function () {{
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
