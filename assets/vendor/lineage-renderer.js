@@ -2,6 +2,7 @@
   'use strict';
 
   function renderDay(svg, payload) {
+    window.__lineageRendererAttempts = (window.__lineageRendererAttempts || 0) + 1;
     if (!window.d3 || !window.d3.graphStratify || !window.d3.sugiyama) return;
     var width = Number(svg.getAttribute('width')) || 180;
     var height = Number(svg.getAttribute('height')) || 72;
@@ -58,6 +59,7 @@
     svg.replaceChildren();
     svg.setAttribute('data-lineage-rendered', 'd3-dag');
     svg.setAttribute('data-max-per-row', maxPerRow);
+    window.__lineageRendererSuccesses = (window.__lineageRendererSuccesses || 0) + 1;
     var note = svg.closest('.lineage-day-group').querySelector('.lineage-js-note');
     if (note) note.hidden = true;
     Array.from(dag.links()).forEach(function (link) {
