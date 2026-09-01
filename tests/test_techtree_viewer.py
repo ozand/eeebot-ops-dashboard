@@ -2106,6 +2106,23 @@ def test_issue119_unresolvable_day_is_vertical_dashed_chain() -> None:
     assert section.count('lineage-edge-chronological') == 2
 
 
+def test_issue119_detail_card_contains_labeled_markup_not_json_dump() -> None:
+    fixture = _fixture()
+    fixture['cycle_details'] = {
+        'cycle-a': {
+            'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok',
+            'ts': '2026-08-16T00:00:00Z', 'sha': 'sha-a', 'parent_sha': 'sha-root',
+            'files_changed': ['src/a.py'], 'lesson_insight': 'Useful insight',
+        }
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+    card_script = html[html.index('id="cycle-details-data"'):]
+    assert "line('Cycle'" in card_script
+    assert "line('Parent SHA'" in card_script
+    assert "Files changed" in card_script
+    assert 'JSON.stringify(item)' not in card_script
+
+
 def test_issue119_detail_card_renders_labeled_fields_not_raw_json() -> None:
     html = tv.render_pages({**_fixture(), 'cycle_details': {
         'cycle-a': {'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok', 'ts': '2026-08-16T00:00:00Z', 'sha': 'sha', 'parent_sha': 'parent', 'files_changed': ['src/x.py'], 'lesson_insight': 'useful'}
