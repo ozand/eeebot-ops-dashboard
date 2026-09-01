@@ -1212,6 +1212,23 @@ def test_now_panel_demand_grouping_fallback() -> None:
     assert 'title=' in html
 
 
+def test_health_verdict_healthy_branch() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z') == ('healthy', 'all health signals are within thresholds')
+
+
+def test_health_verdict_degraded_by_staleness_or_integration_recency() -> None:
+    assert tv.health_verdict(3601, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
+    assert tv.health_verdict(120, '2026-08-31T20:00:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
+
+
+def test_health_verdict_investigate_by_failure_streak() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['failed', 'partial', 'failed'], False, '2026-09-01T02:00:00Z')[0] == 'investigate'
+
+
+def test_health_verdict_investigate_by_proposer_unavailable() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
+
+
 def test_fmt_compact() -> None:
     assert tv.fmt_compact(None) == 'n/a'
     assert tv.fmt_compact(0) == '0'

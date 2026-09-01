@@ -31,6 +31,43 @@ SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
 SSH_TIMEOUT_SECONDS = 45
 
+# Now health verdict: data age > 1 hour is stale; a last integrated cycle older
+# than 6 hours is degraded; three consecutive failed/partial outcomes require
+# investigation. Precedence is llm_unavailable, failure streak, staleness or
+# integration recency, then healthy. Inputs come only from rendered page data.
+HEALTH_STALE_SECONDS = 3600
+HEALTH_INTEGRATION_RECENCY_SECONDS = 6 * 3600
+HEALTH_FAILURE_STREAK_LENGTH = 3
+
+
+def health_verdict(
+    age_seconds: float | None,
+    last_integrated_ts: str | None,
+    recent_outcomes: list[str],
+    proposer_llm_unavailable: bool,
+    now: str,
+) -> tuple[str, str]:
+    if proposer_llm_unavailable:
+        return 'investigate', 'proposer LLM is unavailable'
+    streak = 0
+    for outcome in reversed(recent_outcomes):
+        if outcome in {'failed', 'partial'}:
+            streak += 1
+        else:
+            break
+    if streak >= HEALTH_FAILURE_STREAK_LENGTH:
+        return 'investigate', f'{streak} consecutive failed or partial cycles'
+    if isinstance(age_seconds, (int, float)) and age_seconds > HEALTH_STALE_SECONDS:
+        return 'degraded', f'data is {humanize_age(age_seconds)} old'
+    if last_integrated_ts:
+        try:
+            age = (datetime.fromisoformat(now.replace('Z', '+00:00')) - datetime.fromisoformat(last_integrated_ts.replace('Z', '+00:00'))).total_seconds()
+            if age > HEALTH_INTEGRATION_RECENCY_SECONDS:
+                return 'degraded', f'last integrated cycle is {humanize_age(age)} old'
+        except ValueError:
+            pass
+    return 'healthy', 'all health signals are within thresholds'
+
 # Authority-host state root. Shared by both read paths: fetch_remote_state
 # (below) uses it only as the default embedded in REMOTE_READER_SCRIPT, and
 # read_local_state (issue #27) takes it as a real default argument so the
@@ -2715,6 +2752,7 @@ def build_now_panel(
     task_titles: dict[str, str] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
 ) -> str:
+    verdict, verdict_reason = health_verdict(0, None, [], False, datetime.now(timezone.utc).isoformat())
     # 1. Active research direction
     dir_html = '<p class="unavailable-note">research direction unavailable</p>'
     if isinstance(portfolio, dict):
