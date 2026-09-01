@@ -18,7 +18,8 @@
       return;
     }
     var byDepth = {};
-    dag.nodes().forEach(function (node) {
+    var dagNodes = Array.from(dag.nodes());
+    dagNodes.forEach(function (node) {
       var depth = Math.round(node.x);
       (byDepth[depth] || (byDepth[depth] = [])).push(node);
     });
@@ -65,7 +66,7 @@
       }).join(' '));
       svg.appendChild(path);
     });
-    dag.nodes().forEach(function (dagNode) {
+    dagNodes.forEach(function (dagNode) {
       var position = project(dagNode);
       var value = dagNode.data.value || {};
       var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
