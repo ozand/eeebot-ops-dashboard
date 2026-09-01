@@ -2905,6 +2905,19 @@ def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
     assert 'duplicate id on disk' not in html
 
 
+def test_issue134_filter_and_search_empty_states_have_both_directions() -> None:
+    cycles = tv.build_cycle_feed([
+        {'phase': 'outcome', 'cycle_id': 'cycle-pass', 'outcome': 'success', 'ts': '2026-09-01T01:00:00Z'},
+    ], history_mode=True)
+    lessons = tv.build_lessons_panel([{'id': 'LESS-1', 'date': '2026-09-01', 'problem': 'needle', 'solution': 'fix'}])
+
+    assert 'data-filter-empty' in cycles
+    assert '0 cycles with status' in cycles
+    assert '0 results for' in lessons
+    assert 'data-filter-empty' in lessons
+    assert 'needle' in lessons
+
+
 def test_issue130_duplicate_lessons_get_unique_anchors():
     """Rendering both duplicates must not emit the same DOM id twice.
 

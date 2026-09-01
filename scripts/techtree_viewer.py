@@ -3262,6 +3262,7 @@ def build_cycle_feed(
             f'<button class="filter-btn" data-filter="{k}">{k}</button>'
             for k in ('all', 'integrated', 'failed', 'partial', 'skipped', 'running')
         )
+        filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
         show_all_btn = (
             '<button class="feed-show-all" type="button" onclick="(function(){'
             'document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});'
@@ -3275,8 +3276,9 @@ def build_cycle_feed(
             '(function(){'
             'var bar=document.querySelector(".filter-bar");if(!bar)return;'
             'function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}'
-            'function apply(k){'
-            'getRows().forEach(function(r){r.classList.toggle("filtered-out",k!=="all"&&r.getAttribute("data-outcome")!==k);});'
+            'function apply(k){var rows=getRows(),shown=0;'
+            'rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});'
+            'var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}'
             'bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}'
             'var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";'
             'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
@@ -3302,6 +3304,7 @@ def build_cycle_feed(
       <h2 class="panel-title">{title_line}</h2>
       {filter_html}
       <ul class="feed-list">
+        {filter_empty if history_mode else ''}
         {''.join(rows)}
       </ul>
     </section>
@@ -3866,6 +3869,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
       <h2 class="panel-title">Lessons History ({total} total &middot; {heading_detail})</h2>
       <input class="lessons-filter" type="text" placeholder="filter lessons...">
       <ul class="lessons-list">
+        <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
         {v2_section}
         {legacy_section_html}
       </ul>
@@ -3876,9 +3880,14 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         var rowsL = document.querySelectorAll('#panel-lessons .lesson-row');
         function apply(q) {{
           var t = (q || '').toLowerCase();
-          rowsL.forEach(function (r) {{
-            r.style.display = (!t || r.getAttribute('data-text').indexOf(t) !== -1) ? '' : 'none';
-          }});
+           var shown = 0;
+           rowsL.forEach(function (r) {{
+             var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
+             r.style.display = visible ? '' : 'none';
+             if (visible) shown += 1;
+           }});
+           var empty = document.querySelector('#panel-lessons [data-filter-empty]');
+           if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t.replace(/"/g, '&quot;') + '"' : ''; }}
           input.value = t;
         }}
         var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
