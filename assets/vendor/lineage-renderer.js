@@ -13,7 +13,7 @@
     var dag;
     try {
       dag = window.d3.graphStratify()(records);
-      window.d3.sugiyama().size([Math.max(1, height - 40), Math.max(1, width - 40)])(dag);
+      window.d3.sugiyama().nodeSize([Math.max(1, height - 40), Math.max(1, width - 40)])(dag);
     } catch (_error) {
       return;
     }
