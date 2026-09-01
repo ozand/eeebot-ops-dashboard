@@ -1967,7 +1967,8 @@ def _build_vertical_day_lineage(
         parts.append('</svg></section>')
     parts.append('</div></div>')
     details_json = json.dumps(cycle_details or {}, ensure_ascii=True).replace('<', '\\u003c')
-    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section><script type="application/json" id="cycle-details-data">{details_json}</script><script>
+    card_template = """<template id="cycle-detail-card-template"><div><p><b>Cycle</b></p><p><b>Outcome</b></p><p><b>Reason</b></p><p><b>Timestamp</b></p><p><b>SHA</b></p><p><b>Parent SHA</b></p><h3>Files changed</h3><ul></ul><h3>Lesson insight</h3><a>open in Cycle Feed</a> · <a>related lessons</a></div></template>"""
+    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script><script>
 (function () {{
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
