@@ -2903,3 +2903,25 @@ def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
     lesson = {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'One real lesson', 'problem': 'p', 'solution': 's', 'tags': ['reflector'], 'severity': 'medium', 'seen_count': 1, 'date': '2026-08-29'}
     html = tv.build_lessons_panel([lesson])
     assert 'duplicate id on disk' not in html
+
+
+def test_issue130_duplicate_lessons_get_unique_anchors():
+    """Rendering both duplicates must not emit the same DOM id twice.
+
+    The #130 fix stopped dropping the second entry, which meant both rows
+    carried `id="q-<lesson id>"`. That is invalid HTML, and a browser resolving
+    a `#q-<id>` link silently picks whichever comes first.
+    """
+    lessons = [
+        {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'first', 'problem': 'p1', 'solution': 's', 'date': '2026-08-29'},
+        {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'second', 'problem': 'p2', 'solution': 's', 'date': '2026-08-29'},
+        {'id': 'LESS-20260828-c2f0da09', 'schema_version': 2, 'title': 'unique', 'problem': 'p3', 'solution': 's', 'date': '2026-08-28'},
+    ]
+    html = tv.build_lessons_panel(lessons)
+    anchors = re.findall(r'id="(q-[^"]+)"', html)
+    assert len(anchors) == len(set(anchors)), f'duplicate DOM ids rendered: {anchors}'
+    # The first occurrence keeps the bare anchor so the cycle-page links built
+    # in #129 still resolve; only the later one is suffixed.
+    assert 'q-LESS-REF-c871bf9abe41' in anchors
+    assert 'q-LESS-REF-c871bf9abe41-2' in anchors
+    assert 'q-LESS-20260828-c2f0da09' in anchors
