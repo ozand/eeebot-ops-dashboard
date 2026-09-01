@@ -3019,7 +3019,7 @@ def build_cycle_feed(
             context = phase.get('lessons_context')
             if isinstance(context, list):
                 entity_links.extend(
-                    f'<a class="lesson-link" href="lessons.html#q-{esc(str(lesson_id))}">{esc(str(lesson_id))}</a>'
+                    f'<a class="lesson-link" href="lessons.html#q-{esc(str(lesson_id).split(":", 1)[-1])}">{esc(str(lesson_id))}</a>'
                     for lesson_id in context if lesson_id
                 )
 
