@@ -50,7 +50,7 @@
     svg.setAttribute('data-max-per-row', maxPerRow);
     var note = svg.closest('.lineage-day-group').querySelector('.lineage-js-note');
     if (note) note.hidden = true;
-    dag.links().forEach(function (link) {
+    Array.from(dag.links()).forEach(function (link) {
       var source = project(link.source);
       var target = project(link.target);
       var points = [
