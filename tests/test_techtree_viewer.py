@@ -1040,6 +1040,18 @@ def test_issue129_normalizes_lesson_context_prefix_for_round_trip() -> None:
     assert 'lessons.html#q-lesson:LESS-1' not in html
 
 
+def test_issue129_filters_lesson_links_to_rendered_lesson_ids() -> None:
+    html = tv.build_cycle_feed([{
+        'phase': 'proposed', 'cycle_id': 'cycle-roundtrip',
+        'lessons_context': ['LESS-1', 'ERR-1', 'LESS-retired'],
+        'ts': '2026-09-01T01:00:00Z',
+    }], history_mode=True, rendered_lesson_ids={'LESS-1'})
+
+    assert 'lessons.html#q-LESS-1' in html
+    assert 'lessons.html#q-ERR-1' not in html
+    assert 'lessons.html#q-LESS-retired' not in html
+
+
 def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
     tree = {'current_sha': 'sha-child', 'nodes': {}}
     ledger = [
