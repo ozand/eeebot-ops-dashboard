@@ -831,7 +831,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">250</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">62.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-01 03:18:14.601912 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">8.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="9">data: 8s old &middot; generated 03:32 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 9s old &middot; generated 03:33 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -843,17 +843,17 @@
       <ul class="feed-list">
         
         <li class="feed-day-header">2026-09-01</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-0dec61ec844a">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-0dec61ec844a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(verify_and_proof): add staging status check slice and --staging flag</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0dec61ec844a)</span>
             
-            
+            <a href="#node-682676e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-01T03:23:59.212165Z">03:23 UTC</span>
           </div>
-          
-          <div class="feed-cost">&#9889; 25 calls &middot; 1.36M tok &middot; dur 7m9s</div>
+          <div class="feed-files">&#128193; scripts/verify_and_proof.py</div>
+          <div class="feed-cost">&#9889; 30 calls &middot; 1.70M tok &middot; dur 7m53s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a5a9b9949523">
@@ -2512,13 +2512,13 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-95da11007086">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat: add --timeout CLI arg and propagate test execution timeout to slices</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-95da11007086)</span>
             
             <a href="#node-3b490a9" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-08-30T20:02:12.637234Z">Aug 30</span>
           </div>
-          <div class="feed-files">&#128193; scripts/health_check_release.py</div>
+          
           <div class="feed-cost">&#9889; 13 calls &middot; 187.8K tok &middot; dur 1m48s</div>
         </li>
         
@@ -3699,7 +3699,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dab3c09a5801)</span>
             
-            <a href="#node-ae09870" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-29T18:56:02.090382Z">Aug 29</span>
           </div>
           
@@ -21732,7 +21732,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-01 03:32:14 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-09-01 03:18:14.601912 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-01 03:33:36 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-09-01 03:18:14.601912 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
