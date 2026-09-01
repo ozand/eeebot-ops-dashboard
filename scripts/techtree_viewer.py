@@ -3409,12 +3409,13 @@ def build_hypotheses_panel(
         hid = info.get('id') or ''
         status = str(info.get('status') or 'open').lower()
         title = info.get('title') or hid
+        item_anchor = f' id="q-{esc(str(hid))}"' if hid else ''
         first_seen = info.get('first_seen') or ''
         last_touched = info.get('last_touched') or ''
         badge_cls = 'badge-stale' if is_stale_flag else 'badge-researching'
         badge_lbl = 'STALE' if (is_stale_flag and status != 'stale') else status.upper()
         return f'''
-            <li class="hypo-row active">
+            <li class="hypo-row active"{item_anchor}>
               <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
@@ -3431,6 +3432,7 @@ def build_hypotheses_panel(
         answered_ev = info.get('answered_evidence') or ''
         answered_at = info.get('answered_at') or ''
         verdict = info.get('verdict')
+        item_anchor = f' id="q-{esc(str(hid))}"' if hid else ''
 
         ev_html = ''
         if answered_ev:
@@ -3450,7 +3452,7 @@ def build_hypotheses_panel(
             'ANSWERED': 'badge-integrated',
         }.get(v_label, 'badge-integrated')
         return f'''
-            <li class="hypo-row answered">
+            <li class="hypo-row answered"{item_anchor}>
               <span class="badge {badge_class}">{esc(v_label)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
