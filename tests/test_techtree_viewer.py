@@ -998,7 +998,8 @@ def test_issue129_cycle_feed_emits_only_existing_entity_links() -> None:
     html = tv.build_cycle_feed(ledger, task_titles={}, history_mode=True)
 
     assert 'hypothesis-1' in html
-    assert 'hypotheses.html#q-hypothesis-1' in html
+    assert '<span class="entity-chip">hypothesis-1</span>' in html
+    assert 'hypotheses.html#q-hypothesis-1' not in html
     assert 'lessons.html#q-LESS-1' in html
     assert 'no artifact recorded' in html
     assert 'skipped_duplicate' in html
@@ -1018,6 +1019,15 @@ def test_issue129_cycle_and_lesson_anchor_names_round_trip() -> None:
 
     assert 'id="cycle-cycle-roundtrip"' in cycle_html
     assert 'cycles.html#cycle-cycle-roundtrip' in lesson_html
+
+
+def test_issue129_lesson_entries_expose_resolving_q_anchors() -> None:
+    html = tv.build_lessons_panel([{
+        'id': 'LESS-1', 'date': '2026-09-01', 'cycle_id': 'cycle-roundtrip',
+        'problem': 'p', 'solution': 's',
+    }])
+
+    assert 'id="q-LESS-1"' in html
 
 
 def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:

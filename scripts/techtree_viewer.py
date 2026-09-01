@@ -3015,7 +3015,7 @@ def build_cycle_feed(
         for phase in phases:
             demand_id = phase.get('demand_id')
             if demand_id:
-                entity_links.append(f'<a class="entity-chip" href="hypotheses.html#q-{esc(str(demand_id))}">{esc(str(demand_id))}</a>')
+                entity_links.append(f'<span class="entity-chip">{esc(str(demand_id))}</span>')
             context = phase.get('lessons_context')
             if isinstance(context, list):
                 entity_links.extend(
@@ -3744,6 +3744,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         tags_list = tags if isinstance(tags, list) else [str(tags)]
         severity = str(l.get('severity') or '')
         seen_count = l.get('seen_count')
+        item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
 
         severity_html = (
             f'<span class="lesson-severity lesson-severity-{esc(severity.lower())}">{esc(severity)}</span>'
@@ -3768,7 +3769,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
-            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}">'
+            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
             f' {cycle_link}</div>'
             f'{meta_chips_html}'
@@ -3797,13 +3798,14 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             f'<pre>{result_body}</pre></details>' if result else ''
         )
         insight = str(l.get('insight') or '')
+        item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
         insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             result, insight, cid,
         ])).lower())
         legacy_rows.append(
-            f'<li class="lesson-row" data-text="{search_text}">'
+            f'<li class="lesson-row" data-text="{search_text}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
             f' {cycle_link}</div>'
             f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
