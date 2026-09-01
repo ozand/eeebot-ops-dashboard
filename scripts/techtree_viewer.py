@@ -1919,9 +1919,11 @@ def _build_vertical_day_lineage(
             slots[d] = slot + 1
             positions[node['sha']] = (60 + slot * 70, 24 + d * 32)
         lane_last_y: list[int] = []
-        for leaf_index, node in enumerate(side[:LINEAGE_DAY_CAP]):
+        lane_last_y: list[int] = []
+        for node in side[:LINEAGE_DAY_CAP]:
             base = max((j for j, trunk_node in enumerate(trunk) if trunk_node['ts'] <= node['ts']), default=0)
-            y = 24 + leaf_index * 32
+            base_y = 24 + base * 32
+            y = base_y
             lane = next((i for i, last_y in enumerate(lane_last_y) if last_y + 32 <= y), len(lane_last_y))
             if lane == len(lane_last_y):
                 lane_last_y.append(y)
