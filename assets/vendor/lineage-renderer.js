@@ -17,6 +17,7 @@
       dag = window.d3.graphStratify()(records);
       window.d3.sugiyama().nodeSize([Math.max(1, height - 40), Math.max(1, width - 40)])(dag);
     } catch (_error) {
+      window.__lineageRendererError = String(_error);
       return;
     }
     var byDepth = {};
@@ -96,7 +97,7 @@
       var section = script.closest('.lineage-day-group');
       var svg = section && section.querySelector('svg[data-lineage-renderer="d3-dag"]');
       if (!svg) return;
-      try { renderDay(svg, JSON.parse(script.textContent)); } catch (_error) { /* keep fallback */ }
+      try { renderDay(svg, JSON.parse(script.textContent)); } catch (_error) { window.__lineageRendererError = String(_error); }
     });
   }
 
