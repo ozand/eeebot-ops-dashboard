@@ -1978,7 +1978,7 @@ def _build_vertical_day_lineage(
                 {
                     'sha': node['sha'],
                     'cycle_id': node['cycle_id'],
-                    'parent': node.get('parent_sha') if node.get('parent_sha') in graph_shas else None,
+                    'parent': node.get('parent_sha') or next((base['sha'] for base in trunk if base['ts'] <= node['ts']), None),
                     'ts': node['ts'],
                     'outcome': node.get('outcome', 'integrated'),
                     'kind': 'trunk' if node in trunk else 'leaf',
