@@ -1034,6 +1034,39 @@ def test_lineage_day_sections_keep_h3_heading_and_inner_truncated_note() -> None
     assert capped and 'lineage-day-truncated' in capped.group(1), 'truncated note must render inside its day section'
 
 
+def test_issue126_lineage_embeds_escaped_day_graph_json_and_renderer_hook() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'root<cycle', 'sha': 'root<sha', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'child', 'sha': 'child', 'parent_sha': 'root<sha', 'ts': '2026-09-01T01:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+
+    assert 'data-lineage-renderer="d3-dag"' in html
+    payload_match = re.search(r'<script type="application/json" class="lineage-day-data"[^>]*>(.*?)</script>', html, re.S)
+    assert payload_match is not None
+    assert '<' not in payload_match.group(1)
+    payload = json.loads(payload_match.group(1))
+    assert payload['day'] == '2026-09-01'
+    assert payload['nodes'][0]['sha'] == 'root<sha'
+    assert payload['nodes'][1]['parent'] == 'root<sha'
+    assert payload['edges'] == [{'source': 'root<sha', 'target': 'child'}]
+
+
+def test_issue126_lineage_keeps_server_fallback_headings_and_note() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'sha-a', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+    ]
+
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S)
+    assert section is not None
+    assert '<h3>2026-09-01</h3>' in section.group(1)
+    assert 'lineage-js-note' in section.group(1)
+    assert 'Enable JavaScript' in section.group(1)
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {

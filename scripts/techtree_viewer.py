@@ -1907,6 +1907,7 @@ def _build_vertical_day_lineage(
         truncated = len(trunk) > LINEAGE_DAY_CAP
         trunk = trunk[-LINEAGE_DAY_CAP:]
         parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}"><h3>{esc(day)}</h3>')
+        parts.append('<p class="lineage-js-note">Enable JavaScript for the enhanced client-side lineage layout.</p>')
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
         count = max(len(trunk), len(side), 1)
@@ -1935,7 +1936,7 @@ def _build_vertical_day_lineage(
         # large empty bands around the tree.
         max_x = max((x for x, _ in positions.values()), default=60)
         width = max(180, max_x + 40)
-        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="d3-dag">')
         for i, node in enumerate(trunk):
             parent = node['parent_sha']
             if parent in positions:
@@ -1956,6 +1957,33 @@ def _build_vertical_day_lineage(
                 x1, y1 = positions[base['sha']]
                 x2, y2 = positions[node['sha']]
                 parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge arch-edge"/>')
+        graph_nodes = trunk + side[:LINEAGE_DAY_CAP]
+        day_payload = {
+            'day': day,
+            'current_sha': current_sha,
+            'nodes': [
+                {
+                    'sha': node['sha'],
+                    'cycle_id': node['cycle_id'],
+                    'parent': node.get('parent_sha') or next((base['sha'] for base in trunk if base['ts'] <= node['ts']), None),
+                    'ts': node['ts'],
+                    'outcome': node.get('outcome', 'integrated'),
+                    'kind': 'trunk' if node in trunk else 'leaf',
+                }
+                for node in graph_nodes
+            ],
+            'edges': [
+                {'source': node['parent_sha'], 'target': node['sha']}
+                for node in trunk if node['parent_sha'] in {item['sha'] for item in graph_nodes}
+            ] + [
+                {'source': base['sha'], 'target': node['sha']}
+                for node in side[:LINEAGE_DAY_CAP]
+                for base in [max((item for item in trunk if item['ts'] <= node['ts']), key=lambda item: item['ts'], default=None)]
+                if base is not None
+            ],
+        }
+        day_json = json.dumps(day_payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
+        parts.append(f'<script type="application/json" class="lineage-day-data" data-day="{esc(day)}">{day_json}</script>')
         if current_sha in positions:
             x, y = positions[current_sha]
             parts.append(f'<text x="{x}" y="{y - 14}" text-anchor="middle" class="arch-star">&#9733;</text>')
@@ -1969,7 +1997,7 @@ def _build_vertical_day_lineage(
     parts.append('</div></div>')
     details_json = json.dumps(cycle_details or {}, ensure_ascii=True).replace('<', '\\u003c')
     card_template = """<template id="cycle-detail-card-template"><div><p><b>Cycle</b></p><p><b>Outcome</b></p><p><b>Reason</b></p><p><b>Timestamp</b></p><p><b>SHA</b></p><p><b>Parent SHA</b></p><h3>Files changed</h3><ul></ul><h3>Lesson insight</h3><a>open in Cycle Feed</a> · <a>related lessons</a></div></template>"""
-    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script><script>
+    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script><script src="assets/vendor/d3.min.js"></script><script src="assets/vendor/d3-dag.iife.min.js"></script><script src="assets/vendor/lineage-renderer.js"></script><script>
 (function () {{
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
@@ -5364,6 +5392,14 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
         print('publish: nothing to publish', file=sys.stderr)
         return 1
 
+    pages = dict(pages)
+    if any('assets/vendor/lineage-renderer.js' in html for html in pages.values()):
+        vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
+        for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'):
+            path = vendor_root / name
+            if path.is_file():
+                pages[f'assets/vendor/{name}'] = path.read_text(encoding='utf-8')
+
     # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
@@ -5470,6 +5506,13 @@ def main(argv: list[str] | None = None) -> int:
         out_path.mkdir(parents=True, exist_ok=True)
         for fname, html in pages.items():
             (out_path / fname).write_text(html, encoding='utf-8')
+        vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
+        for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'):
+            source = vendor_root / name
+            if source.is_file():
+                destination = out_path / 'assets' / 'vendor' / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(source.read_bytes())
         print(f'wrote {len(pages)} pages to {out_path.resolve()}')
 
     if data.get('_error'):
