@@ -2079,6 +2079,24 @@ def test_issue115_leaf_is_attached_to_trunk_and_lanes_are_reused() -> None:
     assert section.count('class="lineage-edge arch-edge"') + section.count('class="lineage-edge lineage-edge-chronological"') >= 3
 
 
+def test_issue125_herringbone_leaves_stay_near_their_base_nodes() -> None:
+    rows = []
+    for i in range(5):
+        rows.append({'phase': 'evolution_tree', 'cycle_id': f'trunk-{i}', 'sha': f'trunk-sha-{i}', 'parent_sha': f'trunk-sha-{i - 1}' if i else '', 'ts': f'2026-08-31T0{i}:00:00Z'})
+    rows += [
+        {'phase': 'outcome', 'cycle_id': 'leaf-2a', 'outcome': 'failed', 'ts': '2026-08-31T02:10:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'leaf-2b', 'outcome': 'failed', 'ts': '2026-08-31T02:20:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'leaf-4', 'outcome': 'failed', 'ts': '2026-08-31T04:10:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-31T05:00:00Z')
+    section = re.search(r'<section class="lineage-day-group"[^>]*>(.*?)</section>', html, re.S).group(1)
+    coords = {cid: (int(x), int(y)) for cid, x, y in re.findall(r'data-cycle-id="([^"]+)" cx="(\d+)" cy="(\d+)"', section)}
+    assert abs(coords['leaf-2a'][1] - coords['trunk-2'][1]) <= 32
+    assert abs(coords['leaf-2b'][1] - coords['trunk-2'][1]) <= 32
+    assert abs(coords['leaf-4'][1] - coords['trunk-4'][1]) <= 32
+    assert section.count('class="lineage-edge arch-edge"') >= 7
+
+
 def test_issue119_resolving_children_form_a_visible_genealogical_fork() -> None:
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-08-31T00:00:00Z'},
