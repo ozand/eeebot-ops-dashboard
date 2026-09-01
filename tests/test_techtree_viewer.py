@@ -1212,6 +1212,93 @@ def test_now_panel_demand_grouping_fallback() -> None:
     assert 'title=' in html
 
 
+def test_health_verdict_healthy_branch() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z') == ('healthy', 'all health signals are within thresholds')
+
+
+def test_health_verdict_degraded_by_staleness_or_integration_recency() -> None:
+    assert tv.health_verdict(3601, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
+    assert tv.health_verdict(120, '2026-08-31T20:00:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
+
+
+def test_health_verdict_investigate_by_failure_streak() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['failed', 'partial', 'failed'], False, '2026-09-01T02:00:00Z')[0] == 'investigate'
+
+
+def test_health_verdict_investigate_by_proposer_unavailable() -> None:
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
+
+
+def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 120
+    data['health_last_integrated_ts'] = '2026-09-01T01:50:00Z'
+    data['health_recent_outcomes'] = ['integrated']
+    html = tv.render_pages(data, host='eeepc', generated_at='2026-09-01 02:00:00')['index.html']
+    strip = tv.build_empire_stats_strip(data['scorecard'], age_seconds=120, generated_at='2026-09-01 02:00:00')
+
+    assert '<section class="health-verdict health-' in html
+    assert '<strong>HEALTHY</strong>' in html
+    assert 'all health signals are within thresholds' in html
+    assert strip in html
+    # Anchor on the banner markup, not the bare class name: the class also
+    # appears earlier in the <head> stylesheet.
+    assert html.index('<section class="health-verdict') > html.index(strip)
+
+
+def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
+    """read_ledger_tail returns rows oldest-first over a 5000-row window, so the
+    integration-recency signal must read the LAST evolution_tree row. Reading the
+    first one reports an integration that is days old and pins the banner to
+    'degraded' forever."""
+    now = '2026-09-01T12:00:00Z'
+    ledger_tail = [
+        {'phase': 'evolution_tree', 'ts': '2026-08-25T09:00:00Z'},
+        {'phase': 'outcome', 'outcome': 'integrated'},
+        {'phase': 'evolution_tree', 'ts': '2026-09-01T11:50:00Z'},
+    ]
+    html = tv.build_now_panel(
+        portfolio=None,
+        evolution_tree=None,
+        ledger_tail=ledger_tail,
+        demand_rotation=None,
+        demand_completed=None,
+        age_seconds=120,
+        now=now,
+    )
+    assert '<strong>HEALTHY</strong>' in html
+    assert 'all health signals are within thresholds' in html
+
+
+def test_now_panel_prefers_current_evolution_tree_node_timestamp() -> None:
+    """The current tree node is the authoritative last-integration timestamp;
+    the ledger scan is only the fallback when the tree has no usable node."""
+    evolution_tree = {
+        'current_sha': 'abc123',
+        'nodes': {'abc123': {'ts': '2026-09-01T11:55:00Z'}},
+    }
+    html = tv.build_now_panel(
+        portfolio=None,
+        evolution_tree=evolution_tree,
+        ledger_tail=[{'phase': 'evolution_tree', 'ts': '2026-08-01T09:00:00Z'}],
+        demand_rotation=None,
+        demand_completed=None,
+        age_seconds=120,
+        now='2026-09-01T12:00:00Z',
+    )
+    assert '<strong>HEALTHY</strong>' in html
+
+
+def test_health_verdict_states_are_styled() -> None:
+    """A banner an operator has to read word-by-word is not a glance signal:
+    each verdict state must carry its own CSS rule."""
+    css = tv.build_page_css() if hasattr(tv, 'build_page_css') else tv.render_pages(
+        _fixture(), host='eeepc', generated_at='2026-09-01 02:00:00'
+    )['index.html']
+    for cls in ('.health-verdict', '.health-healthy', '.health-degraded', '.health-investigate'):
+        assert f'{cls} {{' in css or f'{cls}{{' in css, f'no CSS rule for {cls}'
+
+
 def test_fmt_compact() -> None:
     assert tv.fmt_compact(None) == 'n/a'
     assert tv.fmt_compact(0) == '0'

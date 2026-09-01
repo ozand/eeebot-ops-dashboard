@@ -10,6 +10,28 @@ CDNs -- the output opens fine as a plain `file://` document.
 
 Usage:
     python scripts/techtree_viewer.py [--host eeepc] [--out techtree.html] [--open]
+
+Now-panel health verdict (issue #128)
+-------------------------------------
+The Now panel opens with one deterministic verdict so the morning health check
+is a glance, not an interpretation exercise. ``health_verdict`` derives it from
+data the page already renders -- no new collection -- and the first matching
+rule wins:
+
+1. ``investigate`` -- the proposer reports ``llm_unavailable``.
+2. ``investigate`` -- the newest HEALTH_FAILURE_STREAK_LENGTH (3) consecutive
+   cycle outcomes are all ``failed`` or ``partial``.
+3. ``degraded``    -- the newest source file is older than HEALTH_STALE_SECONDS
+   (3600 s): the page itself is stale.
+4. ``degraded``    -- the last integrated cycle is at least
+   HEALTH_INTEGRATION_RECENCY_SECONDS (21600 s = 6 h) old: the loop is quiet.
+5. ``healthy``     -- none of the above.
+
+The last-integration timestamp comes from the current evolution-tree node when
+there is one, and otherwise from the NEWEST ``evolution_tree`` row in the ledger
+tail. That ordering matters: ``read_ledger_tail`` returns rows oldest-first over
+a 5000-row window, so reading the first row reports an integration that is days
+old and pins the verdict to ``degraded`` forever.
 """
 from __future__ import annotations
 
@@ -30,6 +52,47 @@ from typing import Any
 SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
 SSH_TIMEOUT_SECONDS = 45
+
+# Now-panel health verdict thresholds. The full rule, including precedence,
+# lives in the module docstring above.
+HEALTH_STALE_SECONDS = 3600
+HEALTH_INTEGRATION_RECENCY_SECONDS = 6 * 3600
+HEALTH_FAILURE_STREAK_LENGTH = 3
+
+
+def health_verdict(
+    age_seconds: float | None,
+    last_integrated_ts: str | None,
+    recent_outcomes: list[str],
+    proposer_llm_unavailable: bool,
+    now: str,
+) -> tuple[str, str]:
+    if proposer_llm_unavailable:
+        return 'investigate', 'proposer LLM is unavailable'
+    streak = 0
+    for outcome in reversed(recent_outcomes):
+        if outcome in {'failed', 'partial'}:
+            streak += 1
+        else:
+            break
+    if streak >= HEALTH_FAILURE_STREAK_LENGTH:
+        return 'investigate', f'{streak} consecutive failed or partial cycles'
+    if isinstance(age_seconds, (int, float)) and age_seconds > HEALTH_STALE_SECONDS:
+        return 'degraded', f'data is {humanize_age(age_seconds)} old'
+    if last_integrated_ts:
+        try:
+            now_dt = datetime.fromisoformat(now.replace('Z', '+00:00'))
+            integrated_dt = datetime.fromisoformat(last_integrated_ts.replace('Z', '+00:00'))
+            if now_dt.tzinfo is None:
+                now_dt = now_dt.replace(tzinfo=timezone.utc)
+            if integrated_dt.tzinfo is None:
+                integrated_dt = integrated_dt.replace(tzinfo=timezone.utc)
+            age = (now_dt - integrated_dt).total_seconds()
+            if age >= HEALTH_INTEGRATION_RECENCY_SECONDS:
+                return 'degraded', f'last integrated cycle is {humanize_age(age)} old'
+        except ValueError:
+            pass
+    return 'healthy', 'all health signals are within thresholds'
 
 # Authority-host state root. Shared by both read paths: fetch_remote_state
 # (below) uses it only as the default embedded in REMOTE_READER_SCRIPT, and
@@ -2714,7 +2777,43 @@ def build_now_panel(
     demand_completed: dict[str, Any] | None,
     task_titles: dict[str, str] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
+    age_seconds: float | None = None,
+    now: str | None = None,
+    proposer_llm_unavailable: bool = False,
+    health_last_integrated_ts: str | None = None,
+    health_recent_outcomes: list[str] | None = None,
 ) -> str:
+    now = now or datetime.now(timezone.utc).isoformat()
+    outcomes: list[str] = []
+    ledger_integrated_ts: str | None = None
+    if isinstance(ledger_tail, list):
+        # read_ledger_tail returns rows oldest-first over a 5000-row window, so
+        # the newest integration is the LAST evolution_tree row, not the first.
+        for entry in ledger_tail:
+            if not isinstance(entry, dict):
+                continue
+            outcome = str(entry.get('outcome') or entry.get('status') or '')
+            if entry.get('phase') == 'outcome' and outcome:
+                outcomes.append('failed' if outcome == 'fail' else outcome)
+            if entry.get('phase') == 'evolution_tree' and entry.get('ts'):
+                ledger_integrated_ts = str(entry['ts'])
+    # Precedence: caller override, then the current tree node (authoritative
+    # last integration), then the newest evolution_tree row in the ledger tail.
+    tree_nodes = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else None
+    tree_current = evolution_tree.get('current_sha') if isinstance(evolution_tree, dict) else None
+    tree_node = tree_nodes.get(tree_current) if isinstance(tree_nodes, dict) and tree_current else None
+    tree_integrated_ts = (
+        str(tree_node['ts']) if isinstance(tree_node, dict) and tree_node.get('ts') else None
+    )
+    last_integrated_ts = health_last_integrated_ts or tree_integrated_ts or ledger_integrated_ts
+    verdict, verdict_reason = health_verdict(
+        age_seconds, last_integrated_ts, health_recent_outcomes if health_recent_outcomes is not None else outcomes, proposer_llm_unavailable, now,
+    )
+    health_banner = (
+        f'<section class="health-verdict health-{verdict}" aria-label="Health verdict">'
+        f'<span class="now-label">Health:</span> <strong>{esc(verdict.upper())}</strong> '
+        f'<span class="health-verdict-reason">{esc(verdict_reason)}</span></section>'
+    )
     # 1. Active research direction
     dir_html = '<p class="unavailable-note">research direction unavailable</p>'
     if isinstance(portfolio, dict):
@@ -2821,6 +2920,7 @@ def build_now_panel(
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
+        {health_banner}
         {dir_html}
         {cycle_html}
         <div class="now-item">
@@ -4137,6 +4237,49 @@ CSS = '''
       font-size: 0.78em;
       letter-spacing: 0.5px;
     }
+    .health-verdict {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #7f8c8d;
+      border-radius: 3px;
+      background: rgba(127, 140, 141, 0.12);
+      font-size: 0.9em;
+    }
+    .health-verdict .now-label {
+      min-width: 0;
+    }
+    .health-verdict strong {
+      letter-spacing: 1px;
+    }
+    .health-verdict-reason {
+      color: #b8d0c2;
+      font-size: 0.85em;
+    }
+    .health-healthy {
+      border-left-color: #4caf7d;
+      background: rgba(76, 175, 125, 0.12);
+    }
+    .health-healthy strong {
+      color: #6fd39b;
+    }
+    .health-degraded {
+      border-left-color: #d9a441;
+      background: rgba(217, 164, 65, 0.12);
+    }
+    .health-degraded strong {
+      color: #e8bf6a;
+    }
+    .health-investigate {
+      border-left-color: #d1544f;
+      background: rgba(209, 84, 79, 0.14);
+    }
+    .health-investigate strong {
+      color: #ea7f7a;
+    }
     .now-detail {
       color: #b8d0c2;
       font-size: 0.85em;
@@ -4958,6 +5101,11 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         ledger_tail=ledger_tail,
+        age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
+        now=generated_at,
+        proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
+        health_last_integrated_ts=data.get('health_last_integrated_ts'),
+        health_recent_outcomes=data.get('health_recent_outcomes'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5226,6 +5374,11 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         ledger_tail=ledger_tail,
+        age_seconds=age_seconds,
+        now=generated_at,
+        proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
+        health_last_integrated_ts=data.get('health_last_integrated_ts'),
+        health_recent_outcomes=data.get('health_recent_outcomes'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
