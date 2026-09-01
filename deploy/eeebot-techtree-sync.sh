@@ -1,37 +1,31 @@
 #!/bin/sh
-# Sync the reviewed generator pair from repository master before publishing.
+# Sync the generator and vendored browser assets from repository master.
 # Install the drop-in's ExecStartPre with a leading '-' (and '+' for root) so
-# sync failure is logged but does not block publish. Both files are downloaded
-# and compiled before either existing /opt copy is replaced.
+# sync failure is logged but does not block publish. All downloads and checks
+# finish before any installed file is replaced.
 set -eu
 
 DEST=/opt/eeebot-techtree
-RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master/scripts
-RUN_SUFFIX=".sync.$$"
-VIEWER_TMP="$DEST/.techtree_viewer.py$RUN_SUFFIX"
-AUTOPUBLISH_TMP="$DEST/.techtree_autopublish.py$RUN_SUFFIX"
-VIEWER_BACKUP=
-AUTOPUBLISH_BACKUP=
-VIEWER_MOVED=0
-AUTOPUBLISH_MOVED=0
+RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master
+MANIFEST=${SYNC_MANIFEST:-$DEST/sync-manifest.txt}
+TMP_ROOT="$DEST/.sync-$$"
+FILES="$TMP_ROOT/files"
+MOVED_LIST="$TMP_ROOT/moved"
 
 cleanup() {
-    rm -f "$VIEWER_TMP" "$AUTOPUBLISH_TMP"
+    rm -rf "$TMP_ROOT"
 }
 rollback() {
-    if [ "$AUTOPUBLISH_MOVED" -eq 1 ]; then
-        if [ -n "$AUTOPUBLISH_BACKUP" ]; then
-            mv -f "$AUTOPUBLISH_BACKUP" "$DEST/techtree_autopublish.py"
-        else
-            rm -f "$DEST/techtree_autopublish.py"
-        fi
-    fi
-    if [ "$VIEWER_MOVED" -eq 1 ]; then
-        if [ -n "$VIEWER_BACKUP" ]; then
-            mv -f "$VIEWER_BACKUP" "$DEST/techtree_viewer.py"
-        else
-            rm -f "$DEST/techtree_viewer.py"
-        fi
+    if [ -f "$MOVED_LIST" ]; then
+        while IFS='|' read -r relative destination backup permanent_backup; do
+            [ -n "$destination" ] || continue
+            rm -f "$permanent_backup"
+            if [ -n "$backup" ] && [ -e "$backup" ]; then
+                mv -f "$backup" "$destination"
+            else
+                rm -f "$destination"
+            fi
+        done < "$MOVED_LIST"
     fi
 }
 on_exit() {
@@ -45,47 +39,59 @@ on_exit() {
 trap on_exit 0
 trap 'exit 1' HUP INT TERM
 
-mkdir -p "$DEST"
+mkdir -p "$DEST" "$TMP_ROOT"
+[ -r "$MANIFEST" ] || { echo "techtree sync: manifest missing: $MANIFEST" >&2; exit 1; }
 
-fetch_one() {
-    name=$1
-    tmp=$2
+index=0
+while IFS= read -r relative || [ -n "$relative" ]; do
+    case "$relative" in
+        ''|'#'*) continue ;;
+        /*|*..*) echo "techtree sync: unsafe manifest path: $relative" >&2; exit 1 ;;
+    esac
+    tmp="$TMP_ROOT/$index"
     if ! curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
-        "$RAW_BASE/$name" -o "$tmp"; then
-        echo "techtree sync: download failed: $name" >&2
-        return 1
+        "$RAW_BASE/$relative" -o "$tmp"; then
+        echo "techtree sync: download failed: $relative" >&2
+        exit 1
     fi
-    if ! python3 -m py_compile "$tmp"; then
-        echo "techtree sync: compile failed: $name" >&2
-        return 1
-    fi
-}
+    case "$relative" in
+        *.py)
+            if ! python3 -m py_compile "$tmp"; then
+                echo "techtree sync: compile failed: $relative" >&2
+                exit 1
+            fi
+            ;;
+        *.js)
+            [ -s "$tmp" ] || { echo "techtree sync: empty asset: $relative" >&2; exit 1; }
+            ;;
+        *) echo "techtree sync: unsupported manifest path: $relative" >&2; exit 1 ;;
+    esac
+    printf '%s|%s\n' "$relative" "$tmp" >> "$FILES"
+    index=$((index + 1))
+done < "$MANIFEST"
 
-# Preflight both downloads and compiles before touching either installed file.
-fetch_one techtree_viewer.py "$VIEWER_TMP"
-fetch_one techtree_autopublish.py "$AUTOPUBLISH_TMP"
-
+[ "$index" -gt 0 ] || { echo "techtree sync: empty manifest" >&2; exit 1; }
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
-if [ -e "$DEST/techtree_viewer.py" ]; then
-    VIEWER_BACKUP="$DEST/techtree_viewer.py.bak.$stamp"
-    cp -p "$DEST/techtree_viewer.py" "$VIEWER_BACKUP"
-fi
-if [ -e "$DEST/techtree_autopublish.py" ]; then
-    AUTOPUBLISH_BACKUP="$DEST/techtree_autopublish.py.bak.$stamp"
-    cp -p "$DEST/techtree_autopublish.py" "$AUTOPUBLISH_BACKUP"
-fi
+installed=0
+while IFS='|' read -r relative tmp; do
+    destination="$DEST/$relative"
+    backup=
+    permanent_backup=
+    mkdir -p "$(dirname "$destination")"
+    if [ -e "$destination" ]; then
+        backup="$TMP_ROOT/backup-$installed"
+        permanent_backup="$destination.bak.$stamp"
+        cp -p "$destination" "$backup"
+    fi
+    if ! mv -f "$tmp" "$destination"; then
+        echo "techtree sync: replace failed: $relative" >&2
+        exit 1
+    fi
+    printf '%s|%s|%s|%s\n' "$relative" "$destination" "$backup" "$permanent_backup" >> "$MOVED_LIST"
+    if [ -n "$backup" ]; then
+        cp -p "$backup" "$permanent_backup"
+    fi
+    installed=$((installed + 1))
+done < "$FILES"
 
-# Replace both atomically; if the second move fails, restore the first file.
-if ! mv -f "$VIEWER_TMP" "$DEST/techtree_viewer.py"; then
-    echo "techtree sync: replace failed: techtree_viewer.py" >&2
-    exit 1
-fi
-VIEWER_MOVED=1
-if ! mv -f "$AUTOPUBLISH_TMP" "$DEST/techtree_autopublish.py"; then
-    echo "techtree sync: replace failed: techtree_autopublish.py" >&2
-    exit 1
-fi
-AUTOPUBLISH_MOVED=1
-rm -f "$DEST/__pycache__/techtree_viewer.cpython-*.pyc" \
-      "$DEST/__pycache__/techtree_autopublish.cpython-*.pyc"
-echo "techtree sync: installed techtree_viewer.py and techtree_autopublish.py"
+echo "techtree sync: installed $installed manifest file(s)"
