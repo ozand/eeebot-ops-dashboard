@@ -1229,6 +1229,21 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
 
 
+def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 120
+    data['health_last_integrated_ts'] = '2026-09-01T01:50:00Z'
+    data['health_recent_outcomes'] = ['integrated']
+    html = tv.render_pages(data, host='eeepc', generated_at='2026-09-01 02:00:00')['index.html']
+    strip = tv.build_empire_stats_strip(data['scorecard'], age_seconds=120, generated_at='2026-09-01 02:00:00')
+
+    assert '<section class="health-verdict health-' in html
+    assert '<strong>HEALTHY</strong>' in html
+    assert 'all health signals are within thresholds' in html
+    assert strip in html
+    assert html.index('health-verdict') > html.index(strip)
+
+
 def test_fmt_compact() -> None:
     assert tv.fmt_compact(None) == 'n/a'
     assert tv.fmt_compact(0) == '0'

@@ -61,8 +61,14 @@ def health_verdict(
         return 'degraded', f'data is {humanize_age(age_seconds)} old'
     if last_integrated_ts:
         try:
-            age = (datetime.fromisoformat(now.replace('Z', '+00:00')) - datetime.fromisoformat(last_integrated_ts.replace('Z', '+00:00'))).total_seconds()
-            if age > HEALTH_INTEGRATION_RECENCY_SECONDS:
+            now_dt = datetime.fromisoformat(now.replace('Z', '+00:00'))
+            integrated_dt = datetime.fromisoformat(last_integrated_ts.replace('Z', '+00:00'))
+            if now_dt.tzinfo is None:
+                now_dt = now_dt.replace(tzinfo=timezone.utc)
+            if integrated_dt.tzinfo is None:
+                integrated_dt = integrated_dt.replace(tzinfo=timezone.utc)
+            age = (now_dt - integrated_dt).total_seconds()
+            if age >= HEALTH_INTEGRATION_RECENCY_SECONDS:
                 return 'degraded', f'last integrated cycle is {humanize_age(age)} old'
         except ValueError:
             pass
@@ -2751,8 +2757,32 @@ def build_now_panel(
     demand_completed: dict[str, Any] | None,
     task_titles: dict[str, str] | None = None,
     ledger_tail: list[dict[str, Any]] | None = None,
+    age_seconds: float | None = None,
+    now: str | None = None,
+    proposer_llm_unavailable: bool = False,
+    health_last_integrated_ts: str | None = None,
+    health_recent_outcomes: list[str] | None = None,
 ) -> str:
-    verdict, verdict_reason = health_verdict(0, None, [], False, datetime.now(timezone.utc).isoformat())
+    now = now or datetime.now(timezone.utc).isoformat()
+    outcomes: list[str] = []
+    last_integrated_ts = health_last_integrated_ts
+    if isinstance(ledger_tail, list):
+        for entry in ledger_tail:
+            if not isinstance(entry, dict):
+                continue
+            outcome = str(entry.get('outcome') or entry.get('status') or '')
+            if entry.get('phase') == 'outcome' and outcome:
+                outcomes.append('failed' if outcome == 'fail' else outcome)
+            if entry.get('phase') == 'evolution_tree' and entry.get('ts') and last_integrated_ts is None:
+                last_integrated_ts = str(entry['ts'])
+    verdict, verdict_reason = health_verdict(
+        age_seconds, last_integrated_ts, health_recent_outcomes if health_recent_outcomes is not None else outcomes, proposer_llm_unavailable, now,
+    )
+    health_banner = (
+        f'<section class="health-verdict health-{verdict}" aria-label="Health verdict">'
+        f'<span class="now-label">Health:</span> <strong>{esc(verdict.upper())}</strong> '
+        f'<span class="health-verdict-reason">{esc(verdict_reason)}</span></section>'
+    )
     # 1. Active research direction
     dir_html = '<p class="unavailable-note">research direction unavailable</p>'
     if isinstance(portfolio, dict):
@@ -2786,6 +2816,7 @@ def build_now_panel(
     current_sha = evolution_tree.get('current_sha') if isinstance(evolution_tree, dict) else None
     nodes_tree = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else {}
     last_node = nodes_tree.get(current_sha) if isinstance(nodes_tree, dict) and current_sha else None
+    rendered_last_integrated_ts = str(last_node.get('ts')) if isinstance(last_node, dict) and last_node.get('ts') else None
 
     # Try finding latest cycle from tree or ledger
     latest_cycle_id = None
@@ -2859,6 +2890,7 @@ def build_now_panel(
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
+        {health_banner}
         {dir_html}
         {cycle_html}
         <div class="now-item">
@@ -4996,6 +5028,11 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         ledger_tail=ledger_tail,
+        age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
+        now=generated_at,
+        proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
+        health_last_integrated_ts=data.get('health_last_integrated_ts'),
+        health_recent_outcomes=data.get('health_recent_outcomes'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5264,6 +5301,11 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         demand_completed=demand_completed,
         task_titles=cycle_titles,
         ledger_tail=ledger_tail,
+        age_seconds=age_seconds,
+        now=generated_at,
+        proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
+        health_last_integrated_ts=data.get('health_last_integrated_ts'),
+        health_recent_outcomes=data.get('health_recent_outcomes'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
