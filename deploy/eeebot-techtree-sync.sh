@@ -7,6 +7,10 @@ set -eu
 
 DEST=/opt/eeebot-techtree
 RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master
+# Permanent backups kept per installed file. The publish unit fires every few
+# minutes and each run replaced every manifest file, so an unbounded keep-all
+# policy reached 86 files / 11 MB in one directory (issue #155).
+BACKUP_KEEP=3
 MANIFEST=${SYNC_MANIFEST:-$DEST/sync-manifest.txt}
 TMP_ROOT="$DEST/.sync-$$"
 FILES="$TMP_ROOT/files"
@@ -27,6 +31,27 @@ rollback() {
             fi
         done < "$MOVED_LIST"
     fi
+}
+prune_backups() {
+    # Runs only after every install succeeded, so rollback has already had its
+    # chance to use this run's backups. Stamps are UTC and zero-padded, so a
+    # lexicographic sort is chronological.
+    while IFS='|' read -r _relative destination _backup _permanent_backup; do
+        [ -n "$destination" ] || continue
+        total=0
+        for candidate in "$destination".bak.*; do
+            [ -e "$candidate" ] || continue
+            total=$((total + 1))
+        done
+        [ "$total" -gt "$BACKUP_KEEP" ] || continue
+        drop=$((total - BACKUP_KEEP))
+        for candidate in $(printf '%s\n' "$destination".bak.* | sort); do
+            [ "$drop" -gt 0 ] || break
+            [ -e "$candidate" ] || continue
+            rm -f "$candidate"
+            drop=$((drop - 1))
+        done
+    done < "$MOVED_LIST"
 }
 on_exit() {
     rc=$?
@@ -93,5 +118,9 @@ while IFS='|' read -r relative tmp; do
     fi
     installed=$((installed + 1))
 done < "$FILES"
+
+if [ -f "$MOVED_LIST" ]; then
+    prune_backups
+fi
 
 echo "techtree sync: installed $installed manifest file(s)"
