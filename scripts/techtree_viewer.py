@@ -434,7 +434,7 @@ def read_lessons():
                 continue
     except Exception:
         pass
-    by_id = {}
+    rows_all = []
     for text in texts:
         try:
             import yaml  # noqa: PLS290 - optional on the host
@@ -447,7 +447,7 @@ def read_lessons():
             lid = str(row.get('id') or '')
             if not lid:
                 continue
-            by_id[lid] = {
+            rows_all.append({
                 "id": lid,
                 "date": str(row.get('date') or ''),
                 "cycle_id": str(row.get('cycle_id') or ''),
@@ -457,8 +457,8 @@ def read_lessons():
                 "insight": str(row.get('generalized_insight') or ''),
                 "problem": str(row.get('problem') or ''),
                 "solution": str(row.get('solution') or ''),
-            }
-    return sorted(by_id.values(), key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
+            })
+    return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
 def extract_git_titles(node_shas=None):
@@ -1047,7 +1047,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                 mtimes.append((lessons_dir / 'archive' / name).stat().st_mtime)
             except Exception:  # noqa: BLE001
                 continue
-        entries: dict[str, dict[str, Any]] = {}
+        entries: list[dict[str, Any]] = []
 
         def _absorb(parsed: Any) -> None:
             # Issue #73 fix: the flat fallback returns a LIST; rotation
@@ -1061,7 +1061,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                 items = []
             for item in items:
                 if isinstance(item, dict) and item.get('id'):
-                    entries[str(item['id'])] = {
+                    entries.append({
                         'id': str(item.get('id') or ''),
                         'date': str(item.get('date') or ''),
                         'cycle_id': str(item.get('cycle_id') or ''),
@@ -1071,7 +1071,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                         'insight': str(item.get('generalized_insight') or ''),
                         'problem': str(item.get('problem') or ''),
                         'solution': str(item.get('solution') or ''),
-                    }
+                    })
 
         try:
             import yaml  # type: ignore
@@ -1084,7 +1084,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         except Exception:  # noqa: BLE001
             for _src, text in texts:
                 _absorb(_parse_lessons_flat(text))
-        return sorted(entries.values(), key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
+        return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
@@ -3708,6 +3708,11 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
     problem→solution cards (with tags/severity/seen_count); legacy
     protocol records folded under 'legacy (pre-v2, frozen)'."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
+    id_counts: dict[str, int] = {}
+    for entry in entries:
+        lesson_id = str(entry.get('id') or '')
+        if lesson_id:
+            id_counts[lesson_id] = id_counts.get(lesson_id, 0) + 1
     rendered_lesson_ids = {str(l.get('id')) for l in entries if l.get('id')}
     if not entries:
         return (
@@ -3746,6 +3751,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         tags_list = tags if isinstance(tags, list) else [str(tags)]
         severity = str(l.get('severity') or '')
         seen_count = l.get('seen_count')
+        duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
 
         severity_html = (
@@ -3760,7 +3766,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             f'<span class="lesson-seen" title="times this pattern was observed">×{esc(str(seen_count))}</span>'
             if seen_count is not None else ''
         )
-        meta_chips = severity_html + tags_html + seen_html
+        meta_chips = severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
         problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
@@ -3800,6 +3806,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             f'<pre>{result_body}</pre></details>' if result else ''
         )
         insight = str(l.get('insight') or '')
+        duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = f' id="q-{esc(str(l.get("id") or ""))}"' if l.get('id') else ''
         insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
         search_text = esc((' '.join([
@@ -3808,7 +3815,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         ])).lower())
         legacy_rows.append(
             f'<li class="lesson-row" data-text="{search_text}"{item_anchor}>'
-            f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
+            f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>{duplicate_html}'
             f' {cycle_link}</div>'
             f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
             f'<div class="lesson-hypothesis">{esc(str(l.get("hypothesis") or ""))}</div>'
@@ -4696,6 +4703,7 @@ CSS = '''
       padding: 1px 5px;
       font-family: 'Consolas', monospace;
     }
+    .lesson-duplicate-warning { color: #e06c75; border: 1px solid #b23a3a; padding: 1px 5px; margin-left: 6px; font-size: .72em; text-transform: uppercase; }
     .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
     .lesson-legacy-details > summary.lesson-legacy-summary {
       cursor: pointer;
