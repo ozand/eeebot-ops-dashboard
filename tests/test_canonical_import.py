@@ -10,8 +10,16 @@ from scripts import consume_stale_execution_next_actions as stale_next_action_co
 from scripts import stale_execution_watchdog as stale_watchdog
 
 
+import pytest
+
 CANONICAL_REPO_ROOT = Path(__file__).resolve().parents[3]
 DASHBOARD_ROOT = CANONICAL_REPO_ROOT / "ops" / "dashboard"
+
+_monorepo_present = (CANONICAL_REPO_ROOT / ".git").exists() and (DASHBOARD_ROOT / "src").exists()
+pytestmark = pytest.mark.skipif(
+    not _monorepo_present,
+    reason="canonical import tests require parent monorepo layout (canonical repo root with ops/dashboard)",
+)
 
 
 def test_default_project_root_is_imported_canonical_dashboard_path(monkeypatch):

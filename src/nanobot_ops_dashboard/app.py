@@ -270,7 +270,7 @@ def _demote_resolved_source_commit_blocker(current_blocker: dict | None, control
 
 
 def _env(cfg: DashboardConfig) -> Environment:
-    templates = cfg.project_root / 'src' / 'nanobot_ops_dashboard' / 'templates'
+    templates = Path(__file__).resolve().parent / 'templates'
     return Environment(
         loader=FileSystemLoader(str(templates)),
         autoescape=select_autoescape(['html', 'xml']),

@@ -270,7 +270,7 @@ def _seed_hypothesis_backlog(repo_root: Path) -> None:
 def _cfg(tmp_path: Path, db: Path) -> DashboardConfig:
 
     return DashboardConfig(
-        project_root=Path('/home/ozand/herkoot/Projects/nanobot/ops/dashboard'),
+        project_root=Path(__file__).resolve().parents[1],
         db_path=db,
         nanobot_repo_root=tmp_path / 'nanobot',
         eeepc_ssh_host='eeepc',
