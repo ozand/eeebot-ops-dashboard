@@ -2250,6 +2250,35 @@ def test_issue70_content_preserved_per_page() -> None:
     assert 'panel-now' in pages['index.html']
 
 
+def test_issue175_teaser_panels_three_state_reporting() -> None:
+    data_unavailable = {
+        'ledger_tail': None,
+        'evolution_tree': None,
+        'hypotheses': None,
+        'lessons': None,
+        'reflections': None,
+    }
+    idx_un = tv.render_pages(data_unavailable, host='eeepc', generated_at='2026-08-18 12:00:00')['index.html']
+    assert 'cycles</a> &mdash; unavailable' in idx_un
+    assert 'lineage</a> &mdash; unavailable' in idx_un
+    assert 'hypotheses</a> &mdash; unavailable' in idx_un
+    assert '0 cycles tracked' not in idx_un
+    assert '0 evolution nodes' not in idx_un
+    assert '0 active / 0 answered' not in idx_un
+
+    data_empty = {
+        'ledger_tail': [],
+        'evolution_tree': {'nodes': {}},
+        'hypotheses': {'entries': {}},
+        'lessons': [],
+        'reflections': [],
+    }
+    idx_em = tv.render_pages(data_empty, host='eeepc', generated_at='2026-08-18 12:00:00')['index.html']
+    assert 'cycles</a> &mdash; 0 cycles tracked in the recent ledger window' in idx_em
+    assert 'lineage</a> &mdash; 0 evolution nodes' in idx_em
+    assert 'hypotheses</a> &mdash; 0 active / 0 answered + 0 strategist durable' in idx_em
+
+
 def test_issue70_ledger_change_changes_cycles_page() -> None:
     p1 = _site()['cycles.html']
     data = _fixture()

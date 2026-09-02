@@ -5342,32 +5342,47 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
                    evolution_tree: dict[str, Any] | None,
                    hypotheses: dict[str, Any] | None) -> str:
     """Compact per-section teasers linking to the dedicated pages."""
-    cycle_ids = {
-        str(r.get('cycle_id')) for r in (ledger_tail or [])
-        if isinstance(r, dict) and r.get('cycle_id')
-    }
-    node_count = 0
-    if isinstance(evolution_tree, dict) and isinstance(evolution_tree.get('nodes'), dict):
-        node_count = len(evolution_tree['nodes'])
-    active = answered = 0
-    if isinstance(hypotheses, dict) and isinstance(hypotheses.get('entries'), dict):
-        for e in hypotheses['entries'].values():
-            if not isinstance(e, dict):
-                continue
-            if e.get('status') == 'answered':
-                answered += 1
-            else:
-                active += 1
-    durable = data.get('hypotheses_durable')
-    durable_entries = durable.get('entries', []) if isinstance(durable, dict) else []
-    durable_count = len(durable_entries) if isinstance(durable_entries, (list, dict)) else 0
+    # Issue #175: 3-state reporting (value N, value 0, or unavailable).
+    if ledger_tail is None:
+        cycles_teaser = 'unavailable'
+    else:
+        cycle_ids = {
+            str(r.get('cycle_id')) for r in ledger_tail
+            if isinstance(r, dict) and r.get('cycle_id')
+        }
+        cycles_teaser = f'{len(cycle_ids)} cycles tracked in the recent ledger window'
+
+    if evolution_tree is None or not isinstance(evolution_tree, dict):
+        lineage_teaser = 'unavailable'
+    else:
+        nodes = evolution_tree.get('nodes')
+        node_count = len(nodes) if isinstance(nodes, dict) else 0
+        lineage_teaser = f'{node_count} evolution nodes'
+
+    if hypotheses is None or not isinstance(hypotheses, dict):
+        hypotheses_teaser = 'unavailable'
+    else:
+        active = answered = 0
+        if isinstance(hypotheses.get('entries'), dict):
+            for e in hypotheses['entries'].values():
+                if not isinstance(e, dict):
+                    continue
+                if e.get('status') == 'answered':
+                    answered += 1
+                else:
+                    active += 1
+        durable = data.get('hypotheses_durable')
+        durable_entries = durable.get('entries', []) if isinstance(durable, dict) else []
+        durable_count = len(durable_entries) if isinstance(durable_entries, (list, dict)) else 0
+        hypotheses_teaser = f'{active} active / {answered} answered + {durable_count} strategist durable'
+
     return f'''
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; {len(cycle_ids)} cycles tracked in the recent ledger window</li>
-        <li><a href="lineage.html">lineage</a> &mdash; {node_count} evolution nodes</li>
-        <li><a href="hypotheses.html">hypotheses</a> &mdash; {active} active / {answered} answered + {durable_count} strategist durable</li>
+        <li><a href="cycles.html">cycles</a> &mdash; {cycles_teaser}</li>
+        <li><a href="lineage.html">lineage</a> &mdash; {lineage_teaser}</li>
+        <li><a href="hypotheses.html">hypotheses</a> &mdash; {hypotheses_teaser}</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
       </ul>
