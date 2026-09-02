@@ -1355,7 +1355,7 @@ def test_now_panel_demand_grouping_fallback() -> None:
 
 
 def test_health_verdict_healthy_branch() -> None:
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z') == ('healthy', 'all health signals are within thresholds')
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z') == ('healthy', 'all signals within thresholds across monitored feeds')
 
 
 def test_health_verdict_degraded_by_staleness_or_integration_recency() -> None:
@@ -1381,7 +1381,7 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
 
     assert '<section class="health-verdict health-' in html
     assert '<strong>HEALTHY</strong>' in html
-    assert 'all health signals are within thresholds' in html
+    assert 'all signals within thresholds across monitored feeds' in html
     assert strip in html
     # Anchor on the banner markup, not the bare class name: the class also
     # appears earlier in the <head> stylesheet.
@@ -1390,10 +1390,10 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
 
 def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 1. absent/None -> does not trigger alarm
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=None) == ('healthy', 'all health signals are within thresholds')
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=None) == ('healthy', 'all signals within thresholds across monitored feeds')
 
     # 2. streak = 0 -> healthy
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}) == ('healthy', 'all health signals are within thresholds')
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}) == ('healthy', 'all signals within thresholds across monitored feeds')
 
     # 3. streak >= 1 -> investigate alarm with error details
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}) == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
@@ -1442,7 +1442,7 @@ def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
         now=now,
     )
     assert '<strong>HEALTHY</strong>' in html
-    assert 'all health signals are within thresholds' in html
+    assert 'all signals within thresholds across monitored feeds' in html
 
 
 def test_now_panel_prefers_current_evolution_tree_node_timestamp() -> None:
@@ -3309,3 +3309,49 @@ def test_issue190_now_panel_failed_bridge_exits_three_state() -> None:
     assert 'at bridge.py:1874' in p_failed
     assert '2026-09-02T12:10:00Z' in p_failed
 
+
+
+def test_issue196_health_verdict_scoped_to_monitored_feeds() -> None:
+    scorecard = {
+        'reader_status': {
+            'feeds': {
+                'usage': {'status': 'fresh'},
+                'heldout': {'status': 'fresh'},
+                'llm_calls': {'status': 'fresh'},
+                'host_metrics': {'status': 'fresh'},
+                'validator_harness_parent': {'status': 'fresh'},
+            }
+        }
+    }
+    verdict, reason = tv.health_verdict(
+        120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
+        scorecard=scorecard,
+    )
+    assert verdict == 'healthy'
+    assert reason == 'all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)'
+
+
+def test_issue196_health_verdict_dynamic_feed_scope_when_membership_changes() -> None:
+    scorecard = {
+        'reader_status': {
+            'feeds': {
+                'feed_a': {'status': 'fresh'},
+                'feed_b': {'status': 'fresh'},
+            }
+        }
+    }
+    verdict, reason = tv.health_verdict(
+        120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
+        scorecard=scorecard,
+    )
+    assert verdict == 'healthy'
+    assert reason == 'all signals within thresholds across 2 monitored feeds (feed_a, feed_b)'
+
+
+def test_issue196_health_verdict_fallback_when_scorecard_absent() -> None:
+    verdict, reason = tv.health_verdict(
+        120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
+        scorecard=None,
+    )
+    assert verdict == 'healthy'
+    assert reason == 'all signals within thresholds across monitored feeds'

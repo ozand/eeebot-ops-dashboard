@@ -67,6 +67,7 @@ def health_verdict(
     proposer_llm_unavailable: bool,
     now: str,
     bridge_exit_streak: dict[str, Any] | None = None,
+    scorecard: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     if not recent_outcomes and not last_integrated_ts:
         return 'investigate', 'no cycle history available'
@@ -104,7 +105,22 @@ def health_verdict(
                 return 'degraded', f'last integrated cycle is {humanize_age(age)} old'
         except ValueError:
             pass
-    return 'healthy', 'all health signals are within thresholds'
+
+    # Issue #196: make the verdict scope explicit rather than claiming the whole system is healthy.
+    scope_feeds: list[str] = []
+    if isinstance(scorecard, dict):
+        feeds_dict = scorecard.get('feeds')
+        if isinstance(feeds_dict, dict) and isinstance(feeds_dict.get('feeds'), dict):
+            scope_feeds = sorted(feeds_dict['feeds'].keys())
+        elif isinstance(scorecard.get('reader_status'), dict) and isinstance(scorecard['reader_status'].get('feeds'), dict):
+            scope_feeds = sorted(scorecard['reader_status']['feeds'].keys())
+
+    if scope_feeds:
+        feed_summary = f'{len(scope_feeds)} monitored feeds ({", ".join(scope_feeds)})'
+    else:
+        feed_summary = 'monitored feeds'
+
+    return 'healthy', f'all signals within thresholds across {feed_summary}'
 
 # Authority-host state root. Shared by both read paths: fetch_remote_state
 # (below) uses it only as the default embedded in REMOTE_READER_SCRIPT, and
@@ -2853,6 +2869,7 @@ def build_now_panel(
     health_recent_outcomes: list[str] | None = None,
     bridge_exit_streak: dict[str, Any] | None = None,
     bridge_exits: list[dict[str, Any]] | None = None,
+    scorecard: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -2880,6 +2897,7 @@ def build_now_panel(
     verdict, verdict_reason = health_verdict(
         age_seconds, last_integrated_ts, health_recent_outcomes if health_recent_outcomes is not None else outcomes, proposer_llm_unavailable, now,
         bridge_exit_streak=bridge_exit_streak,
+        scorecard=scorecard,
     )
     health_banner = (
         f'<section class="health-verdict health-{verdict}" aria-label="Health verdict">'
@@ -5418,6 +5436,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         health_recent_outcomes=data.get('health_recent_outcomes'),
         bridge_exit_streak=data.get('bridge_exit_streak'),
         bridge_exits=data.get('bridge_exits'),
+        scorecard=scorecard,
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5723,6 +5742,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         health_recent_outcomes=data.get('health_recent_outcomes'),
         bridge_exit_streak=data.get('bridge_exit_streak'),
         bridge_exits=data.get('bridge_exits'),
+        scorecard=scorecard,
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
