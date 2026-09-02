@@ -2266,6 +2266,46 @@ def test_issue70_index_teasers_link_to_pages() -> None:
     assert 'href="lessons.html">lessons</a>' in idx
 
 
+def test_issue185_hypotheses_futility_meter_three_state() -> None:
+    dummy_hypo = {'entries': {'h1': {'title': 'Hypo 1', 'status': 'researching'}}}
+
+    # 1. Unavailable/None state: renders unavailable note, never 0/10
+    html_unavail = tv.build_hypotheses_panel(dummy_hypo, demand_futility=None)
+    assert 'goal gap futility: unavailable' in html_unavail
+    assert '0/10' not in html_unavail
+
+    # 2. Safe / Low attempts:
+    futility_safe = {
+        'gaps': {
+            'goal-gap-safe': {
+                'attempt_count': 2,
+                'threshold': 10,
+                'attempt_unit': 'demand_id',
+            }
+        }
+    }
+    html_safe = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility_safe)
+    assert 'goal-gap-safe' in html_safe
+    assert '2/10 attempts [demand_id]' in html_safe
+    assert 'futility-alarm' not in html_safe
+
+    # 3. High attempts / Alarm (>= 7/10) with lever_surface and tokens:
+    futility_alarm = {
+        'gaps': {
+            'goal-gap-a820ca0c8bb3': {
+                'attempt_count': 9,
+                'threshold': 10,
+                'attempt_unit': 'lever_surface',
+                'surface': ['host_metrics', 'subagents'],
+            }
+        }
+    }
+    html_alarm = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility_alarm)
+    assert 'futility-alarm' in html_alarm
+    assert 'goal-gap-a820ca0c8bb3' in html_alarm
+    assert '9/10 attempts [lever_surface] (surface: host_metrics, subagents)' in html_alarm
+
+
 def test_issue70_techtree_redirects_to_index() -> None:
     redir = _site()['techtree.html']
     assert 'http-equiv="refresh" content="0; url=index.html"' in redir
