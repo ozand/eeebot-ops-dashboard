@@ -573,6 +573,7 @@ result = {
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
+    "demand_futility": read_json("demand/futility.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "cycle_titles": _cycle_titles,
@@ -608,6 +609,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'proposer_stats': None,
         'reflections': [],
         'bridge_exit_streak': None,
+        'demand_futility': None,
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -793,6 +795,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'lessons': [],
         'reflections': [],
         'bridge_exit_streak': None,
+        'demand_futility': None,
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -1119,6 +1122,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'lessons': read_lessons_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
+        'demand_futility': read_json('demand/futility.json'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -3381,6 +3385,7 @@ def build_hypotheses_panel(
     feed_cycles: set[str] | None = None,
     now: datetime | None = None,
     hypotheses_durable: dict[str, Any] | None = None,
+    demand_futility: dict[str, Any] | None = None,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -3569,10 +3574,12 @@ def build_hypotheses_panel(
     # Issue #95: render strategist durable HADI hypotheses from backlog.json
     # as a separate section -- clearly labelled and separated from live data.
     durable_html = _build_durable_hadi_section(hypotheses_durable)
+    futility_html = _build_demand_futility_section(demand_futility)
 
     return f'''
     <section class="panel panel-hypotheses" id="panel-hypotheses">
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
+      {futility_html}
       <div class="hypo-split">
         {active_html}
         {answered_html}
@@ -3672,6 +3679,60 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
         f'<h3 class="hypo-durable-title">Strategist ({esc(model)}) backlog ({total})</h3>'
         f'<ul class="hypo-list">{rows_html}</ul>'
         '</div>'
+    )
+
+
+def _build_demand_futility_section(demand_futility: dict[str, Any] | None) -> str:
+    """Issue #185: surface goal gap futility progress from state/demand/futility.json.
+    
+    3-state reporting:
+    - Missing/unavailable: rendered as unavailable note (not 0/10).
+    - Healthy / Low attempts: rendered as compact meter.
+    - High attempts (>= 7/10): prominent warning banner with attempt unit & surface tokens.
+    """
+    if demand_futility is None:
+        return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: unavailable</p></div>'
+    if not isinstance(demand_futility, dict):
+        return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: invalid format</p></div>'
+
+    gaps = demand_futility.get('gaps')
+    if not isinstance(gaps, dict) or not gaps:
+        return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: no active gap tracking</p></div>'
+
+    rows: list[str] = []
+    has_alarm = False
+
+    for gap_id, gap_data in sorted(gaps.items()):
+        if not isinstance(gap_data, dict):
+            continue
+        attempts = gap_data.get('attempt_count', 0)
+        threshold = gap_data.get('threshold', 10)
+        unit = gap_data.get('attempt_unit') or 'demand_id'
+        surface = gap_data.get('surface') or []
+        surface_str = f' (surface: {", ".join(map(str, surface))})' if surface and unit == 'lever_surface' else ''
+        
+        is_warning = attempts >= 7
+        if is_warning:
+            has_alarm = True
+        status_cls = 'badge-stale' if is_warning else 'badge-researching'
+        attempts_label = f'{attempts}/{threshold} attempts [{esc(unit)}]{esc(surface_str)}'
+
+        rows.append(
+            f'<li class="futility-item">'
+            f'<span class="badge {status_cls}">{esc(gap_id)}</span> '
+            f'<strong class="futility-attempts">{attempts_label}</strong>'
+            f'</li>'
+        )
+
+    if not rows:
+        return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: no valid records</p></div>'
+
+    alarm_class = ' futility-alarm' if has_alarm else ''
+    return (
+        f'<div class="hypo-futility-section{alarm_class}">'
+        f'<h3 class="hypo-futility-title">Goal Gap Futility Tracking</h3>'
+        f'<ul class="futility-list">{"".join(rows)}</ul>'
+        f'</div>'
     )
 
 
@@ -5260,7 +5321,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         llm_stats=data.get('llm_stats'),
     )
     hypotheses_panel = build_hypotheses_panel(
-        hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
+        hypotheses,
+        feed_cycles=feed_cycles,
+        hypotheses_durable=hypotheses_durable,
+        demand_futility=data.get('demand_futility'),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -5571,7 +5635,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
     )
     hypotheses_panel = build_hypotheses_panel(
-        hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
+        hypotheses,
+        feed_cycles=feed_cycles,
+        hypotheses_durable=hypotheses_durable,
+        demand_futility=data.get('demand_futility'),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
