@@ -879,7 +879,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">258</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">65.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 14:02:50.932425 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">6.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="13">data: 12s old &middot; generated 14:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 16s old &middot; generated 14:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -892,18 +892,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-02</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-43ab1f37ca0a">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-43ab1f37ca0a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-43ab1f37ca0a</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_confirmation_ratio): add get_confirmation_summary helper for scorecard metrics formatting</strong>
             <span class="feed-cid copyable" translate="no">(cycle-43ab1f37ca0a)</span>
             
-            
+            <a href="#node-b88a8f2" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-02T14:18:00.156715Z">14:18 UTC</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-c637935823ec</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-71a9cd75">lesson:LESS-20260823-71a9cd75</a></div>
-          
-          
+          <div class="feed-files">&#128193; scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py</div>
+          <div class="feed-cost">&#9889; 11 calls &middot; 472.8K tok &middot; dur 5m20s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-7f1e52e6cebe">
@@ -3025,14 +3025,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-bbaedf987aac">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(validate_unused_imports): support TYPE_CHECKING blocks to prevent false-positive unused import reports</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bbaedf987aac)</span>
             
             <a href="#node-537349e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-08-31T14:47:30.975375Z">Aug 31</span>
           </div>
           <div class="entity-links"><span class="entity-chip">goal-gap-2d9ab3aa9d09</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ad42b06f">lesson:LESS-20260825-ad42b06f</a></div>
-          <div class="feed-files">&#128193; scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py</div>
+          
           <div class="feed-cost">&#9889; 14 calls &middot; 263.8K tok &middot; dur 1m41s</div>
         </li>
         
@@ -3953,7 +3953,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9ec0a6181feb)</span>
             
-            <a href="#node-7ba6029" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-30T23:13:37.921818Z">Aug 30</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-620b77a48853</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-9e2ef2d1">lesson:LESS-20260825-9e2ef2d1</a></div>
@@ -24841,7 +24841,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-02 14:18:13 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 14:02:50.932425 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 14:28:47 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 14:02:50.932425 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
