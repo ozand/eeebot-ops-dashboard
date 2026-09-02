@@ -3887,7 +3887,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
              if (visible) shown += 1;
            }});
            var empty = document.querySelector('#panel-lessons [data-filter-empty]');
-           if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t.replace(/"/g, '&quot;') + '"' : ''; }}
+           if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }}
           input.value = t;
         }}
         var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
