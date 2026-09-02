@@ -877,20 +877,34 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">249</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 09:14:02.699635 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 16s old &middot; generated 09:45 UTC</span></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">250</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 09:48:36.492104 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="13">data: 12s old &middot; generated 09:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (1688 cycles)</h2>
+      <h2 class="panel-title">Cycle History (1689 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-02</li>
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-92906c876e37">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">cycle-92906c876e37</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-92906c876e37)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-02T09:50:00.876503Z">09:50 UTC</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-67e4888dc1ce</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ad42b06f">lesson:LESS-20260825-ad42b06f</a></div>
+          
+          
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-f06571ce7166">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
@@ -1578,7 +1592,7 @@
           <div class="feed-cost">&#9889; 25 calls &middot; 739.9K tok &middot; dur 5m40s</div>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-d39b50a2c1c7">
+        <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-d39b50a2c1c7">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
             <strong class="feed-title">partial: no artifact recorded</strong>
@@ -24574,7 +24588,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-02 09:45:17 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 09:14:02.699635 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 09:50:14 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 09:48:36.492104 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
