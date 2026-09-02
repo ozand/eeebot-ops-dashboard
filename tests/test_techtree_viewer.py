@@ -1235,6 +1235,41 @@ def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
 
 
 
+def test_issue169_remote_reader_script_compiles_and_imports() -> None:
+    code = tv.REMOTE_READER_SCRIPT
+    assert "from datetime import datetime, timezone, timedelta" in code
+    compiled = compile(code, "<remote_reader>", "exec")
+    assert compiled is not None
+
+
+def test_issue169_ledger_phases_pinned_at_module_level() -> None:
+    expected = {
+        'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
+        'evolution_tree', 'tech_tree', 'hypothesis',
+    }
+    assert tv.LEDGER_PHASES == expected
+
+
+def test_issue169_health_verdict_investigates_when_no_cycle_history() -> None:
+    verdict, reason = tv.health_verdict(120, None, [], False, '2026-09-01T02:00:00Z')
+    assert verdict == 'investigate'
+    assert reason == 'no cycle history available'
+
+
+def test_issue169_cycle_feed_title_indicates_recent_on_fallback() -> None:
+    rows = [{'phase': 'outcome', 'cycle_id': 'cycle-1', 'ts': '2026-09-01T00:00:00Z'}]
+    html_fallback = tv.build_cycle_feed(rows, history_mode=True, ledger_history=None)
+    assert 'Cycle History (Recent 1)' in html_fallback
+
+    html_full = tv.build_cycle_feed(rows, history_mode=True, ledger_history=rows)
+    assert 'Cycle History (1 cycles)' in html_full
+
+
+def test_issue169_cycle_details_data_lesson_href_when_details_empty() -> None:
+    template_html = tv._cycle_details_panel({})
+    assert 'data-lesson-href="lessons.html#q-cycle"' in template_html
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {
