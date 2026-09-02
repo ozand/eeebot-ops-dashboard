@@ -67,6 +67,8 @@ def health_verdict(
     proposer_llm_unavailable: bool,
     now: str,
 ) -> tuple[str, str]:
+    if not recent_outcomes and not last_integrated_ts:
+        return 'investigate', 'no cycle history available'
     if proposer_llm_unavailable:
         return 'investigate', 'proposer LLM is unavailable'
     streak = 0
@@ -103,7 +105,7 @@ INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 
 # Ledger-tail filter, mirrored inside REMOTE_READER_SCRIPT's own copy of
 # these constants.
-LEDGER_PHASES = {
+LEDGER_PHASES: set[str] = {
     'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
     'evolution_tree', 'tech_tree', 'hypothesis',
 }
@@ -123,6 +125,7 @@ _BAKED_GENERATOR_SHA: str = ''
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
 REMOTE_READER_SCRIPT = r'''
+from datetime import datetime, timezone, timedelta
 import gzip
 import json
 import os
@@ -2080,7 +2083,7 @@ def _build_vertical_day_lineage(
 (function () {{
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
-  function open(node) {{ var item = data[node.getAttribute('data-cycle-id')] || {{}}; var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha); if (item.files_changed && item.files_changed.length) html += '<h3>Files changed</h3><ul>' + item.files_changed.map(function (f) {{ return '<li>' + f + '</li>'; }}).join('') + '</ul>'; if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + item.lesson_insight + '</p>'; html += '<p><a href="cycles.html#cycle-' + encodeURIComponent(item.cycle_id || '') + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(item.cycle_id || '') + '">related lessons</a></p>'; panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  function open(node) {{ var cid = node.getAttribute('data-cycle-id'); var item = data[cid] || {{cycle_id: cid}}; var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha); if (item.files_changed && item.files_changed.length) html += '<h3>Files changed</h3><ul>' + item.files_changed.map(function (f) {{ return '<li>' + f + '</li>'; }}).join('') + '</ul>'; if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + item.lesson_insight + '</p>'; html += '<p><a href="cycles.html#cycle-' + encodeURIComponent(item.cycle_id || '') + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(item.cycle_id || '') + '">related lessons</a></p>'; panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = html; }}
   document.addEventListener('click', function (event) {{
     var node = event.target.closest('.lineage-node');
     if (node) {{ event.preventDefault(); open(node); }}
@@ -2365,7 +2368,10 @@ def _cycle_details_panel(details: dict[str, dict[str, Any]]) -> str:
     html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
     body.innerHTML = html; panel.hidden = false; history.replaceState(null, '', '#node-' + encodeURIComponent(nodeId)); panel.scrollIntoView({{block: 'nearest'}});
   }}
-  document.querySelectorAll('.arch-node[data-cycle-id]').forEach(function (node) {{ node.addEventListener('click', function (event) {{ event.preventDefault(); open(node); }}); }});
+  document.addEventListener('click', function (event) {{
+    var node = event.target.closest('.arch-node[data-cycle-id], .lineage-node[data-cycle-id]');
+    if (node) {{ event.preventDefault(); open(node); }}
+  }});
   panel.querySelector('.cycle-details-close').addEventListener('click', close);
   document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape') close(); }});
   function selectHash() {{ var match = decodeURIComponent(location.hash).match(/^#node-(.+)$/); if (!match) return; var val = match[1]; var node = document.querySelector('[data-node-id="' + CSS.escape(val) + '"]') || document.querySelector('[data-cycle-id="' + CSS.escape(val) + '"]'); if (node) {{ open(node); node.scrollIntoView({{block: 'center'}}); }} }}
@@ -2944,6 +2950,7 @@ def build_cycle_feed(
     llm_stats: dict[str, Any] | None = None,
     history_mode: bool = False,
     rendered_lesson_ids: set[str] | None = None,
+    ledger_history: list[Any] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -3297,7 +3304,10 @@ def build_cycle_feed(
             '})();'
             '</script>'
         )
-        title_line = f'Cycle History ({len(rows)} cycles)'
+        if ledger_history is None:
+            title_line = f'Cycle History (Recent {len(rows)})'
+        else:
+            title_line = f'Cycle History ({len(rows)} cycles)'
     else:
         filter_html = ''
         title_line = f'Cycle Feed (Recent {len(rows)})'
@@ -5490,6 +5500,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         llm_stats=data.get('llm_stats'),
         history_mode=True,
         rendered_lesson_ids=rendered_lesson_ids,
+        ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses, feed_cycles=feed_cycles, hypotheses_durable=hypotheses_durable
