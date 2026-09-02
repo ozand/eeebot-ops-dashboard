@@ -875,7 +875,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">238</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-01 23:37:56.213568 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="14">data: 14s old &middot; generated 23:39 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 16s old &middot; generated 00:10 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -884,7 +884,7 @@
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        <section class="health-verdict health-investigate" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>INVESTIGATE</strong> <span class="health-verdict-reason">3 consecutive failed or partial cycles</span></section>
+        <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all health signals are within thresholds</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">none</span></div>
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>test(count_recent_failures): add synthetic fixture tests for tallying and trailing-window filtering</strong> <span class="now-sub">(cycle-02e73e45c736 [d8fa81f8])</span></div>
         <div class="now-item">
@@ -897,67 +897,39 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 61 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 1 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
-        <li><a href="hypotheses.html">hypotheses</a> &mdash; 78 active / 2 answered + 19 strategist durable</li>
+        <li><a href="hypotheses.html">hypotheses</a> &mdash; 78 active / 2 answered + 20 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
       </ul>
     </section>
     
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
+      <h2 class="panel-title">Cycle Feed (Recent 1)</h2>
       
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-662480d7bab6">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-662480d7bab6">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-662480d7bab6</strong>
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-662480d7bab6)</span>
             
             
-            <span class="feed-ts" title="2026-09-01T23:38:50.685141Z">23:38 UTC</span>
+            <span class="feed-ts" title="2026-09-02T00:10:32.313653Z">00:10 UTC</span>
           </div>
-          <div class="entity-links"><span class="entity-chip">defect-e3b548b14df3</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e301a8a7">lesson:LESS-20260824-e301a8a7</a></div>
           
           
-        </li>
-        
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-551206fece4a">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-551206fece4a)</span>
-            
-            
-            <span class="feed-ts" title="2026-09-01T23:22:10.700240Z">23:22 UTC</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-752870387ede</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-ef380e88">lesson:LESS-20260823-ef380e88</a></div>
-          
-          <div class="feed-cost">&#9889; 15 calls &middot; 313.1K tok &middot; dur 1m43s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-9dbff62756ae">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-9dbff62756ae)</span>
-            
-            
-            <span class="feed-ts" title="2026-09-01T23:04:35.676860Z">23:04 UTC</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-aa9a84939a35</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-531cd89c">lesson:LESS-20260825-531cd89c</a></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; dur 21s</div>
+          <div class="feed-cost">&#9889; 14 calls &middot; 636.3K tok &middot; dur 26m13s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-01 23:39:05 UTC &middot; host eeepc &middot; newest source 14s old &middot; <span class="footer-computed">scorecard computed 2026-09-01 23:37:56.213568 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 00:10:48 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-01 23:37:56.213568 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
