@@ -4598,6 +4598,7 @@ CSS = '''
       grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
     }
+    .agent-subcol { min-width: 0; max-width: 100%; }
     @media (max-width: 1000px) {
       .agent-grid { grid-template-columns: 1fr; }
     }
