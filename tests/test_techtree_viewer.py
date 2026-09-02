@@ -2911,6 +2911,12 @@ def test_issue135_agent_wide_content_has_scoped_overflow_wrappers() -> None:
     assert 'agent-wide-content' in html
 
 
+def test_issue135_agent_columns_shrink_on_narrow_viewport() -> None:
+    html = tv.render_page(_fixture(), host='eeepc', generated_at='2026-09-01 02:00:00')
+    assert 'min-width: 0' in html
+    assert '.agent-subcol' in html
+
+
 def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> None:
     cycles = tv.build_cycle_feed([
         {'phase': 'outcome', 'cycle_id': 'cycle-pass', 'outcome': 'success', 'ts': '2026-09-01T01:00:00Z'},
