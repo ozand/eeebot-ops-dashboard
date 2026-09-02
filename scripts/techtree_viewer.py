@@ -3925,7 +3925,7 @@ def build_agent_panel(
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
-            f'<pre><code>{md_body}</code></pre></details>'
+            f'<div class="agent-wide-content"><pre><code>{md_body}</code></pre></div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -3938,7 +3938,7 @@ def build_agent_panel(
         goals_html = (
             f'<details class="charter-details goal-text-box">'
             f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
-            f'<pre><code>{g_body}</code></pre></details>'
+            f'<div class="agent-wide-content"><pre><code>{g_body}</code></pre></div></details>'
         )
 
     # 3. Skills fitness table
@@ -3985,14 +3985,14 @@ def build_agent_panel(
                     ''')
 
                 skills_html = f'''
-                <table class="skills-table">
+                    <div class="agent-wide-content"><table class="skills-table">
                   <thead>
                     <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; skill_fitness/evals.jsonl when present)</th></tr>
                   </thead>
                   <tbody>
                     {''.join(rows)}
                   </tbody>
-                </table>
+                </table></div>
                 '''
             else:
                 skills_html = '<p class="unavailable-note">no skill reads recorded</p>'
@@ -4768,6 +4768,8 @@ CSS = '''
       overflow: hidden;
       font-variant-numeric: tabular-nums;
     }
+    .agent-wide-content { max-width: 100%; overflow-x: auto; }
+    .agent-wide-content pre, .agent-wide-content .skills-table { min-width: max-content; }
     .skills-table th {
       text-align: left;
       padding: 6px 8px;
