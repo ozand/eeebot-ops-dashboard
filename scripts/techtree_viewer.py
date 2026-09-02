@@ -573,6 +573,7 @@ result = {
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
+    "bridge_exits": read_jsonl("bridge/exits.jsonl"),
     "demand_futility": read_json("demand/futility.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
@@ -609,6 +610,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'proposer_stats': None,
         'reflections': [],
         'bridge_exit_streak': None,
+        'bridge_exits': None,
         'demand_futility': None,
         'goal_text': None,
         'agents_md': None,
@@ -795,6 +797,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'lessons': [],
         'reflections': [],
         'bridge_exit_streak': None,
+        'bridge_exits': None,
         'demand_futility': None,
         '_newest_source_age_seconds': None,
     }
@@ -1122,6 +1125,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'lessons': read_lessons_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
+        'bridge_exits': read_jsonl('bridge/exits.jsonl'),
         'demand_futility': read_json('demand/futility.json'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
@@ -2797,6 +2801,44 @@ def build_tech_canvas(
 # Left rail -- ERAS (trust-ladder medallions) + GREAT LIBRARY summary.
 # ---------------------------------------------------------------------------
 
+def _render_failed_bridge_exits(bridge_exits: list[dict[str, Any]] | None) -> str:
+    """Issue #190: surface recent failed bridge exits (error + where) in a collapsible details section."""
+    if bridge_exits is None or not isinstance(bridge_exits, list):
+        return ''
+    failures = [
+        row for row in bridge_exits
+        if isinstance(row, dict) and (
+            row.get('outcome') != 'success' or (
+                row.get('exit_status') not in (0, None, '')
+            )
+        )
+    ]
+    if not failures:
+        return ''
+    recent_fails = failures[-10:]
+    recent_fails.reverse()
+    rows = []
+    for f in recent_fails:
+        ts = esc(str(f.get('ts') or ''))
+        err = esc(str(f.get('error') or ''))
+        where = esc(str(f.get('where') or ''))
+        status = esc(str(f.get('exit_status') if f.get('exit_status') is not None else ''))
+        loc = f' at {where}' if where else ''
+        rows.append(
+            f'<li><span class="fail-ts">{ts}</span>'
+            f' [status {status}]: <code>{err}</code>'
+            f'<span class="now-sub">{loc}</span></li>'
+        )
+    return f"""
+        <details class="failed-exits-details" open>
+          <summary><strong class="health-alert-text">Recent Failed Bridge Exits ({len(failures)})</strong></summary>
+          <ul class="failed-exits-list">
+            {''.join(rows)}
+          </ul>
+        </details>
+    """
+
+
 def build_now_panel(
     portfolio: dict[str, Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -2810,6 +2852,7 @@ def build_now_panel(
     health_last_integrated_ts: str | None = None,
     health_recent_outcomes: list[str] | None = None,
     bridge_exit_streak: dict[str, Any] | None = None,
+    bridge_exits: list[dict[str, Any]] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -2987,6 +3030,7 @@ def build_now_panel(
         {dir_html}
         {cycle_html}
         {streak_html}
+        {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           {demand_html}
@@ -5347,6 +5391,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
         bridge_exit_streak=data.get('bridge_exit_streak'),
+        bridge_exits=data.get('bridge_exits'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5650,6 +5695,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
         bridge_exit_streak=data.get('bridge_exit_streak'),
+        bridge_exits=data.get('bridge_exits'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
