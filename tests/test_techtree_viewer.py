@@ -2317,6 +2317,37 @@ def test_issue185_hypotheses_futility_meter_three_state() -> None:
     assert '9/10 attempts [lever_surface] (surface: host_metrics, stale_feed)' in html_root
 
 
+def test_issue193_futility_distinguishes_active_from_resolved_gaps() -> None:
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {
+        'goal-gap-active': {
+            'metric': 'confirmed_ratio',
+            'attempt_count': 8,
+            'threshold': 10,
+            'attempt_unit': 'demand_id',
+        },
+        'goal-gap-resolved': {
+            'metric': 'stale_feeds',
+            'attempt_count': 9,
+            'threshold': 10,
+            'attempt_unit': 'lever_surface',
+            'surface': ['host_metrics', 'stale_feed'],
+        },
+    }
+    scorecard = {
+        'gaps': [
+            {'metric': 'confirmed_ratio', 'vector': 'V2'},
+        ]
+    }
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    assert 'goal-gap-active' in html
+    assert 'goal-gap-resolved' in html
+    assert 'futility-alarm' in html  # active gap at 8/10
+    assert 'futility-resolved' in html  # resolved gap
+    assert '9/10 attempts [lever_surface] (surface: host_metrics, stale_feed)' in html
+    assert 'resolved' in html
+
+
 def test_issue70_techtree_redirects_to_index() -> None:
     redir = _site()['techtree.html']
     assert 'http-equiv="refresh" content="0; url=index.html"' in redir
