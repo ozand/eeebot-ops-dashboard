@@ -2348,6 +2348,55 @@ def test_issue193_futility_distinguishes_active_from_resolved_gaps() -> None:
     assert 'resolved' in html
 
 
+def test_issue193_resolved_gap_alone_raises_no_alarm() -> None:
+    """#193: the false alarm this issue is about, isolated.
+
+    The sibling test above always has an ACTIVE gap at 8/10, so the section
+    carries `futility-alarm` whether or not the resolved gap contributes one.
+    It therefore passes even if `is_active` is dropped from the warning
+    condition. This fixture removes the active gap entirely: the only gap at
+    or above the threshold is one the scorecard no longer lists, which is
+    exactly the live state that produced `9/10` for a gap that had resolved
+    itself. The section must not raise an alarm at all.
+    """
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {
+        'goal-gap-resolved': {
+            'metric': 'stale_feeds',
+            'attempt_count': 9,
+            'threshold': 10,
+            'attempt_unit': 'lever_surface',
+            'surface': ['host_metrics', 'stale_feed'],
+        },
+    }
+    scorecard = {'gaps': [{'metric': 'confirmed_ratio', 'vector': 'V2'}]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+
+    assert 'futility-alarm' not in html, (
+        "a gap the scorecard no longer lists still raised the section alarm"
+    )
+    assert 'futility-resolved' in html
+    assert 'badge-dim' in html
+    assert 'badge-stale' not in html
+    assert '(resolved)' in html
+
+
+def test_issue193_active_gap_below_threshold_raises_no_alarm() -> None:
+    """The other direction: active, but not yet at the warning level."""
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {
+        'goal-gap-active': {
+            'metric': 'confirmed_ratio', 'attempt_count': 6,
+            'threshold': 10, 'attempt_unit': 'demand_id',
+        },
+    }
+    scorecard = {'gaps': [{'metric': 'confirmed_ratio', 'vector': 'V2'}]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    assert 'futility-alarm' not in html
+    assert 'futility-resolved' not in html
+    assert 'badge-researching' in html
+
+
 def test_issue70_techtree_redirects_to_index() -> None:
     redir = _site()['techtree.html']
     assert 'http-equiv="refresh" content="0; url=index.html"' in redir
