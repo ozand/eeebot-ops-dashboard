@@ -66,11 +66,21 @@ def health_verdict(
     recent_outcomes: list[str],
     proposer_llm_unavailable: bool,
     now: str,
+    bridge_exit_streak: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     if not recent_outcomes and not last_integrated_ts:
         return 'investigate', 'no cycle history available'
     if proposer_llm_unavailable:
         return 'investigate', 'proposer LLM is unavailable'
+    if isinstance(bridge_exit_streak, dict):
+        consecutive_failures = bridge_exit_streak.get('consecutive_failures')
+        if isinstance(consecutive_failures, int) and consecutive_failures >= HEALTH_FAILURE_STREAK_LENGTH:
+            err = bridge_exit_streak.get('last_error') or ''
+            where = bridge_exit_streak.get('last_where') or ''
+            detail = f': {err}' if err else ''
+            if where:
+                detail += f' at {where}'
+            return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
     streak = 0
     for outcome in reversed(recent_outcomes):
         if outcome in {'failed', 'partial'}:
@@ -562,6 +572,7 @@ result = {
     "lessons": read_lessons(),
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
+    "bridge_exit_streak": read_json("bridge/exit_streak.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "cycle_titles": _cycle_titles,
@@ -595,7 +606,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_evals': [],
         'llm_stats': {},
         'proposer_stats': None,
-        'lessons': [],
+        'reflections': [],
+        'bridge_exit_streak': None,
         'goal_text': None,
         'agents_md': None,
         'cycle_titles': None,
@@ -780,6 +792,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'proposer_stats': None,
         'lessons': [],
         'reflections': [],
+        'bridge_exit_streak': None,
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -1105,6 +1118,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'proposer_stats': read_proposer_stats_local(),
         'lessons': read_lessons_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
+        'bridge_exit_streak': read_json('bridge/exit_streak.json'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'cycle_titles': titles,
@@ -2791,6 +2805,7 @@ def build_now_panel(
     proposer_llm_unavailable: bool = False,
     health_last_integrated_ts: str | None = None,
     health_recent_outcomes: list[str] | None = None,
+    bridge_exit_streak: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -2817,6 +2832,7 @@ def build_now_panel(
     last_integrated_ts = health_last_integrated_ts or tree_integrated_ts or ledger_integrated_ts
     verdict, verdict_reason = health_verdict(
         age_seconds, last_integrated_ts, health_recent_outcomes if health_recent_outcomes is not None else outcomes, proposer_llm_unavailable, now,
+        bridge_exit_streak=bridge_exit_streak,
     )
     health_banner = (
         f'<section class="health-verdict health-{verdict}" aria-label="Health verdict">'
@@ -2925,6 +2941,40 @@ def build_now_panel(
         c_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> {_render_demand_groups(completed_groups, "completed", "cycle")}</div>'
         demand_html = f'<div class="now-demand-grid">{s_part}{c_part}</div>'
 
+    # 4. Bridge exit streak (issue #182)
+    streak_html = ''
+    if bridge_exit_streak is None:
+        streak_html = (
+            '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
+            '<span class="unavailable-note">unavailable</span></div>'
+        )
+    elif isinstance(bridge_exit_streak, dict):
+        consec = bridge_exit_streak.get('consecutive_failures')
+        if not isinstance(consec, int):
+            streak_html = (
+                '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
+                '<span class="unavailable-note">unavailable</span></div>'
+            )
+        elif consec == 0:
+            streak_html = (
+                '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
+                '<span class="badge badge-available">0 failures (healthy)</span></div>'
+            )
+        else:
+            err = bridge_exit_streak.get('last_error') or ''
+            where = bridge_exit_streak.get('last_where') or ''
+            detail_parts = []
+            if err:
+                detail_parts.append(f'<code>{esc(err)}</code>')
+            if where:
+                detail_parts.append(f'<span class="now-sub">at {esc(where)}</span>')
+            detail_str = f' &mdash; {" ".join(detail_parts)}' if detail_parts else ''
+            streak_html = (
+                '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
+                f'<strong class="health-alert-text">{consec} consecutive failure{"s" if consec != 1 else ""}</strong>'
+                f'{detail_str}</div>'
+            )
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -2932,6 +2982,7 @@ def build_now_panel(
         {health_banner}
         {dir_html}
         {cycle_html}
+        {streak_html}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           {demand_html}
@@ -5178,6 +5229,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
+        bridge_exit_streak=data.get('bridge_exit_streak'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5477,6 +5529,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
+        bridge_exit_streak=data.get('bridge_exit_streak'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
