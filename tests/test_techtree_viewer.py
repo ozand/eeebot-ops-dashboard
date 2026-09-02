@@ -3142,3 +3142,53 @@ def test_issue130_duplicate_lessons_get_unique_anchors():
     assert 'q-LESS-REF-c871bf9abe41' in anchors
     assert 'q-LESS-REF-c871bf9abe41-2' in anchors
     assert 'q-LESS-20260828-c2f0da09' in anchors
+
+
+def test_issue188_provenance_badge_three_state() -> None:
+    # 1. Unavailable when scorecard or reader_status is missing/None:
+    html_no_readers = tv.build_empire_stats_strip({'loop': {}})
+    assert 'data inputs: unavailable' in html_no_readers
+
+    # 2. Complete summary when all 4 readers + 5 nested feeds are healthy:
+    scorecard_complete = {
+        'window_days': 7,
+        'gaps_status': 'complete',
+        'reader_status': {
+            'ledger': {'status': 'complete'},
+            'completed': {'status': 'present'},
+            'heldout': {'status': 'present'},
+            'history': {'status': 'present'},
+            'feeds': {
+                'usage': {'status': 'fresh'},
+                'heldout': {'status': 'fresh'},
+                'llm_calls': {'status': 'fresh'},
+                'host_metrics': {'status': 'fresh'},
+                'validator_harness_parent': {'status': 'fresh'},
+            },
+        },
+    }
+    html_complete = tv.build_empire_stats_strip(scorecard_complete)
+    assert 'Window: 7d (complete)' in html_complete
+    assert '⚠️' not in html_complete
+
+    # 3. Anomaly alert with specific feed/reader name:
+    scorecard_anomaly = {
+        'window_days': 7,
+        'gaps_status': 'complete',
+        'reader_status': {
+            'ledger': {'status': 'complete'},
+            'completed': {'status': 'present'},
+            'heldout': {'status': 'present'},
+            'history': {'status': 'present'},
+            'feeds': {
+                'usage': {'status': 'fresh'},
+                'heldout': {'status': 'fresh'},
+                'llm_calls': {'status': 'fresh'},
+                'host_metrics': {'status': 'stale'},
+                'validator_harness_parent': {'status': 'fresh'},
+            },
+        },
+    }
+    html_anomaly = tv.build_empire_stats_strip(scorecard_anomaly)
+    assert 'data inputs: host_metrics: stale' in html_anomaly
+    assert 'provenance-anomaly' in html_anomaly

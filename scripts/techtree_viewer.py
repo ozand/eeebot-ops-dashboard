@@ -4149,6 +4149,58 @@ def build_agent_panel(
     '''
 
 
+def _build_provenance_badge(scorecard: dict[str, Any] | None) -> str:
+    """Issue #188: 10-status data provenance indicator (4 readers + 5 feeds + gaps_status).
+    - Unavailable if scorecard or reader_status is missing.
+    - Compact 'Window: 7d (complete)' if all 10 inputs healthy.
+    - Specific anomaly alert naming degraded feed/reader otherwise.
+    """
+    if not isinstance(scorecard, dict):
+        return '<span class="provenance-badge provenance-unavailable">data inputs: unavailable</span>'
+    reader_status = scorecard.get('reader_status')
+    if not isinstance(reader_status, dict):
+        return '<span class="provenance-badge provenance-unavailable">data inputs: unavailable</span>'
+
+    healthy_statuses = {'complete', 'present', 'fresh'}
+    anomalies: list[str] = []
+
+    # 4 flat readers
+    for key in ('ledger', 'completed', 'heldout', 'history'):
+        val = reader_status.get(key)
+        if isinstance(val, dict):
+            status = val.get('status')
+            if status not in healthy_statuses:
+                anomalies.append(f'{key}: {status or "unknown"}')
+        else:
+            anomalies.append(f'{key}: missing')
+
+    # 5 nested feeds
+    feeds = reader_status.get('feeds')
+    if isinstance(feeds, dict):
+        for feed_name, feed_info in feeds.items():
+            if isinstance(feed_info, dict):
+                st = feed_info.get('status')
+                if st not in healthy_statuses:
+                    anomalies.append(f'{feed_name}: {st or "unknown"}')
+            else:
+                anomalies.append(f'{feed_name}: missing')
+    else:
+        anomalies.append('feeds: missing')
+
+    # gaps_status
+    gaps_status = scorecard.get('gaps_status')
+    if gaps_status and gaps_status not in healthy_statuses:
+        anomalies.append(f'gaps: {gaps_status}')
+
+    window_days = scorecard.get('window_days', 7)
+
+    if not anomalies:
+        return f'<span class="provenance-badge provenance-complete">Window: {window_days}d (complete)</span>'
+
+    anomaly_str = esc(', '.join(anomalies))
+    return f'<span class="provenance-badge provenance-anomaly" title="{anomaly_str}">&#x26a0;&#xfe0f; data inputs: {anomaly_str}</span>'
+
+
 def build_empire_stats_strip(
     scorecard: dict[str, Any] | None,
     age_seconds: float | None = None,
@@ -4240,10 +4292,13 @@ def build_empire_stats_strip(
     else:
         freshness_html = '<span class="freshness freshness-unknown">data: age unknown</span>'
 
+    prov_html = _build_provenance_badge(scorecard)
+
     return f'''
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats">{stat_html}</div>
+      {prov_html}
       <div class="empire-fresh">{freshness_html}</div>
     </header>
     '''
