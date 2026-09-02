@@ -3695,7 +3695,8 @@ def _build_demand_futility_section(demand_futility: dict[str, Any] | None) -> st
     if not isinstance(demand_futility, dict):
         return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: invalid format</p></div>'
 
-    gaps = demand_futility.get('gaps')
+    # Accept both root-keyed gap dict and nested {'gaps': {...}} structure
+    gaps = demand_futility.get('gaps') if isinstance(demand_futility.get('gaps'), dict) else demand_futility
     if not isinstance(gaps, dict) or not gaps:
         return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: no active gap tracking</p></div>'
 

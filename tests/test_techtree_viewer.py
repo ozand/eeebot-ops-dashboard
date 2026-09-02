@@ -2303,7 +2303,18 @@ def test_issue185_hypotheses_futility_meter_three_state() -> None:
     html_alarm = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility_alarm)
     assert 'futility-alarm' in html_alarm
     assert 'goal-gap-a820ca0c8bb3' in html_alarm
-    assert '9/10 attempts [lever_surface] (surface: host_metrics, subagents)' in html_alarm
+    # 4. Root-keyed dictionary format (direct map of gap_id to data):
+    futility_root_keyed = {
+        'goal-gap-a820ca0c8bb3': {
+            'attempt_count': 9,
+            'threshold': 10,
+            'attempt_unit': 'lever_surface',
+            'surface': ['host_metrics', 'stale_feed'],
+        }
+    }
+    html_root = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility_root_keyed)
+    assert 'futility-alarm' in html_root
+    assert '9/10 attempts [lever_surface] (surface: host_metrics, stale_feed)' in html_root
 
 
 def test_issue70_techtree_redirects_to_index() -> None:
