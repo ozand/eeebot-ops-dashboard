@@ -3430,6 +3430,7 @@ def build_hypotheses_panel(
     now: datetime | None = None,
     hypotheses_durable: dict[str, Any] | None = None,
     demand_futility: dict[str, Any] | None = None,
+    scorecard: dict[str, Any] | None = None,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -3615,10 +3616,18 @@ def build_hypotheses_panel(
     else:
         answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
+    # Extract active gap metrics from scorecard if available
+    active_gap_metrics = None
+    if isinstance(scorecard, dict) and isinstance(scorecard.get('gaps'), list):
+        active_gap_metrics = {
+            g.get('metric') for g in scorecard.get('gaps', [])
+            if isinstance(g, dict) and g.get('metric')
+        }
+
     # Issue #95: render strategist durable HADI hypotheses from backlog.json
     # as a separate section -- clearly labelled and separated from live data.
     durable_html = _build_durable_hadi_section(hypotheses_durable)
-    futility_html = _build_demand_futility_section(demand_futility)
+    futility_html = _build_demand_futility_section(demand_futility, active_gap_metrics=active_gap_metrics)
 
     return f'''
     <section class="panel panel-hypotheses" id="panel-hypotheses">
@@ -3726,7 +3735,10 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
     )
 
 
-def _build_demand_futility_section(demand_futility: dict[str, Any] | None) -> str:
+def _build_demand_futility_section(
+    demand_futility: dict[str, Any] | None,
+    active_gap_metrics: set[str] | None = None,
+) -> str:
     """Issue #185: surface goal gap futility progress from state/demand/futility.json.
     
     3-state reporting:
@@ -3755,15 +3767,29 @@ def _build_demand_futility_section(demand_futility: dict[str, Any] | None) -> st
         unit = gap_data.get('attempt_unit') or 'demand_id'
         surface = gap_data.get('surface') or []
         surface_str = f' (surface: {", ".join(map(str, surface))})' if surface and unit == 'lever_surface' else ''
-        
-        is_warning = attempts >= 7
+        metric = gap_data.get('metric')
+
+        # Check whether this gap corresponds to an active gap in the current scorecard
+        is_active = active_gap_metrics is None or (metric is not None and metric in active_gap_metrics)
+
+        is_warning = is_active and (attempts >= 7)
         if is_warning:
             has_alarm = True
-        status_cls = 'badge-stale' if is_warning else 'badge-researching'
-        attempts_label = f'{attempts}/{threshold} attempts [{esc(unit)}]{esc(surface_str)}'
+
+        if not is_active:
+            status_cls = 'badge-dim'
+            active_label = ' <span class="gap-status-note">(resolved)</span>'
+        elif is_warning:
+            status_cls = 'badge-stale'
+            active_label = ''
+        else:
+            status_cls = 'badge-researching'
+            active_label = ''
+
+        attempts_label = f'{attempts}/{threshold} attempts [{esc(unit)}]{esc(surface_str)}{active_label}'
 
         rows.append(
-            f'<li class="futility-item">'
+            f'<li class="futility-item{" futility-resolved" if not is_active else ""}">'
             f'<span class="badge {status_cls}">{esc(gap_id)}</span> '
             f'<strong class="futility-attempts">{attempts_label}</strong>'
             f'</li>'
@@ -5426,6 +5452,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         feed_cycles=feed_cycles,
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
+        scorecard=data.get('scorecard'),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -5741,6 +5768,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         feed_cycles=feed_cycles,
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
+        scorecard=data.get('scorecard'),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
