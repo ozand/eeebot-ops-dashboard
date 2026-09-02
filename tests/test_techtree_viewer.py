@@ -3192,3 +3192,40 @@ def test_issue188_provenance_badge_three_state() -> None:
     html_anomaly = tv.build_empire_stats_strip(scorecard_anomaly)
     assert 'data inputs: host_metrics: stale' in html_anomaly
     assert 'provenance-anomaly' in html_anomaly
+
+def test_issue190_now_panel_failed_bridge_exits_three_state() -> None:
+    # 1. When bridge_exits is None or empty / all successful: section is absent (clean render, no empty noise)
+    p_none = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exits=None)
+    assert 'failed-exits-details' not in p_none
+    assert 'Recent Failed Bridge Exits' not in p_none
+
+    p_success = tv.build_now_panel(
+        {'now': '2026-09-01T02:00:00Z'}, {}, [], None, None,
+        bridge_exits=[
+            {'ts': '2026-09-02T12:00:00Z', 'outcome': 'success', 'exit_status': 0, 'error': '', 'where': ''},
+            {'ts': '2026-09-02T12:05:00Z', 'outcome': 'success', 'exit_status': 0, 'error': '', 'where': ''},
+        ],
+    )
+    assert 'failed-exits-details' not in p_success
+    assert 'Recent Failed Bridge Exits' not in p_success
+
+    # 2. When failures exist: collapsible details section is present with error, where, and timestamp
+    p_failed = tv.build_now_panel(
+        {'now': '2026-09-01T02:00:00Z'}, {}, [], None, None,
+        bridge_exits=[
+            {'ts': '2026-09-02T12:00:00Z', 'outcome': 'success', 'exit_status': 0},
+            {
+                'ts': '2026-09-02T12:10:00Z',
+                'outcome': 'failure',
+                'exit_status': 1,
+                'error': "NameError: name '_parse_explore_mode' is not defined",
+                'where': 'bridge.py:1874',
+            },
+        ],
+    )
+    assert 'failed-exits-details' in p_failed
+    assert 'Recent Failed Bridge Exits (1)' in p_failed
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_failed or "NameError: name '_parse_explore_mode' is not defined" in p_failed
+    assert 'at bridge.py:1874' in p_failed
+    assert '2026-09-02T12:10:00Z' in p_failed
+
