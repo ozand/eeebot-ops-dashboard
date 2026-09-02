@@ -11,7 +11,7 @@
     var nodeIds = {};
     nodes.forEach(function (node) { nodeIds[node.sha] = true; });
     var records = nodes.map(function (node) {
-      return { id: node.sha, parentIds: node.parent && nodeIds[node.parent] ? [node.parent] : [], value: node };
+      return { id: node.sha, parentIds: node.parent && nodeIds[node.parent] && node.parent !== node.sha ? [node.parent] : [], value: node };
     });
     var dag;
     try {

@@ -2081,7 +2081,10 @@ def _build_vertical_day_lineage(
   var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
   function open(node) {{ var item = data[node.getAttribute('data-cycle-id')] || {{}}; var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha); if (item.files_changed && item.files_changed.length) html += '<h3>Files changed</h3><ul>' + item.files_changed.map(function (f) {{ return '<li>' + f + '</li>'; }}).join('') + '</ul>'; if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + item.lesson_insight + '</p>'; html += '<p><a href="cycles.html#cycle-' + encodeURIComponent(item.cycle_id || '') + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(item.cycle_id || '') + '">related lessons</a></p>'; panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = html; }}
-  document.querySelectorAll('.lineage-node').forEach(function (node) {{ node.addEventListener('click', function (event) {{ event.preventDefault(); open(node); }}); }});
+  document.addEventListener('click', function (event) {{
+    var node = event.target.closest('.lineage-node');
+    if (node) {{ event.preventDefault(); open(node); }}
+  }});
   var root = document.querySelector('.lineage-day-groups'); if (!root) return;
   var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
   function apply(mode) {{ var days = groups.map(function (g) {{ return g.getAttribute('data-day'); }}), keep = days.slice(-2); if (mode === 'today') keep = days.slice(-1); if (mode === 'range') {{ var a = document.querySelector('[data-lineage-from]').value, b = document.querySelector('[data-lineage-to]').value; keep = days.filter(function (d) {{ return (!a || d >= a) && (!b || d <= b); }}); }} groups.forEach(function (g) {{ g.hidden = keep.indexOf(g.getAttribute('data-day')) === -1; }}); }}
