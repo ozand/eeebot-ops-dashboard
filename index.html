@@ -878,7 +878,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">237</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 01:10:48.615640 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 15s old &middot; generated 01:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 01:23 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -889,7 +889,7 @@
       <div class="now-content">
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all health signals are within thresholds</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">none</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Add standalone validator script discovery and runner to scripts/verify_and_proof</strong> <span class="now-sub">(cycle-98afe6654fb2 [fb570c23])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(detect_plateaued_refactors): add ledger analysis for repeated low-yield AST refactor cycles</strong> <span class="now-sub">(cycle-ad8b1cf22339 [f614c72d])</span></div>
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
           <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="goal-gap-2d9ab3aa9d09 (served 2026-09-01T21:16:47.852458+00:00)">goal-gap &times;1</span> <span class="demand-chip served demand-group" translate="no" title="defect-752870387ede (served 2026-09-01T23:21:33.712595+00:00); defect-e3b548b14df3 (served 2026-09-01T23:38:16.750691+00:00); defect-c4095c7ab803 (served 2026-09-01T21:01:00.626372+00:00); defect-67e4888dc1ce (served 2026-09-01T20:55:47.394757+00:00); defect-1000ad587b76 (served 2026-09-01T22:00:26.931483+00:00); defect-330c5207f28d (served 2026-09-01T22:10:34.692059+00:00); defect-3ac2553e83c7 (served 2026-09-01T21:05:42.091783+00:00)">defect &times;7</span> <span class="demand-chip served demand-group" translate="no" title="reflection-fccdb742c3da (served 2026-09-01T23:17:09.513785+00:00); reflection-5f5d78618e8a (served 2026-09-01T23:12:47.820824+00:00); reflection-aa9a84939a35 (served 2026-09-01T23:04:01.198156+00:00); reflection-04703cbaa8d5 (served 2026-09-01T21:39:50.686269+00:00); reflection-76de8ee16e89 (served 2026-09-01T22:54:18.159222+00:00); hypothesis-1c61690d4b8e (served 2026-09-02T01:11:09.376039+00:00)">other &times;6</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
@@ -914,18 +914,18 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-ad8b1cf22339">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ad8b1cf22339">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-ad8b1cf22339</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(detect_plateaued_refactors): add ledger analysis for repeated low-yield AST refactor cycles</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ad8b1cf22339)</span>
             
-            
+            <a href="#node-f614c72" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-02T01:11:52.882563Z">01:11 UTC</span>
           </div>
           <div class="entity-links"><span class="entity-chip">hypothesis-1c61690d4b8e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-31e0fa04">lesson:LESS-20260824-31e0fa04</a></div>
-          
-          
+          <div class="feed-files">&#128193; scripts/detect_plateaued_refactors.py, tests/test_detect_plateaued_refactors.py</div>
+          <div class="feed-cost">&#9889; 18 calls &middot; 791.1K tok &middot; dur 6m11s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-98afe6654fb2">
@@ -960,7 +960,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-02 01:12:08 UTC &middot; host eeepc &middot; newest source 15s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 01:10:48.615640 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 01:23:05 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 01:10:48.615640 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
