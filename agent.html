@@ -646,6 +646,8 @@
       overflow: hidden;
       font-variant-numeric: tabular-nums;
     }
+    .agent-wide-content { max-width: 100%; overflow-x: auto; }
+    .agent-wide-content pre, .agent-wide-content .skills-table { min-width: max-content; }
     .skills-table th {
       text-align: left;
       padding: 6px 8px;
@@ -875,7 +877,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">238</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 00:14:05.139115 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="232">data: 3m old &middot; generated 00:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="11">data: 10s old &middot; generated 00:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -887,7 +889,7 @@
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
-          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (417 lines)</summary><pre><code># Instance Agent Instructions
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (417 lines)</summary><div class="agent-wide-content"><pre><code># Instance Agent Instructions
 
 ## Identity
 
@@ -929,20 +931,20 @@ runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
 they show as modified or untracked. If a non-target path appears staged,
 unstage it (`git restore --staged &lt;path&gt;`) before committing.
 
-## Forbidden ope...</code></pre></details>
+## Forbidden ope...</code></pre></div></details>
         </div>
         <div class="agent-subcol">
           <h3>Goals Charter</h3>
-          <details class="charter-details goal-text-box"><summary>Goals charter (19 lines)</summary><pre><code>eeebot is a resource-aware, self-evolving autonomous agent on an old, slow eeepc host. Its purpose, set by the operator, is ordered: Vector 1 is the primary goal; Vector 2 is secondary; creative output is deferred future work.
+          <details class="charter-details goal-text-box"><summary>Goals charter (19 lines)</summary><div class="agent-wide-content"><pre><code>eeebot is a resource-aware, self-evolving autonomous agent on an old, slow eeepc host. Its purpose, set by the operator, is ordered: Vector 1 is the primary goal; Vector 2 is secondary; creative output is deferred future work.
 
 Vector 1 (PRIMARY) — Self-Improvement of the Agent System: make the agent system itself more effective and higher-quality at running its own improvement cycles. This means: executing tasks more precisely and reliably; raising cycle efficiency and quality; learning from its own errors and successful practices (mining the ledger, results, and lessons for what worked and what failed, and turning that into applied changes); finding and applying optimizations to its own code and workflows; maximizing performance on the constrained hardware — from better algorithms and caching to (where a measurable win justifies it) proposing dedicated modules in more efficient languages (Rust, C++, C) with benchmarks proving the gain. Every optimization claim must come with a before/after measurement.
 
-Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the operator convenient, transparent insight into what the bot is doing, and interfaces to interact with it and track work status. Given the host&#x27;s low resolution and limited power, terminal-based rendering is often the most efficient medium (including pixel-art style output such as images/eeebot.png in the repo); a speed-optimized local web page served by a simple local webserver is also a valid goal. </code></pre></details>
+Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the operator convenient, transparent insight into what the bot is doing, and interfaces to interact with it and track work status. Given the host&#x27;s low resolution and limited power, terminal-based rendering is often the most efficient medium (including pixel-art style output such as images/eeebot.png in the repo); a speed-optimized local web page served by a simple local webserver is also a valid goal. </code></pre></div></details>
         </div>
         <div class="agent-subcol">
           <h3>Skill Fitness (Reads & Usage)</h3>
           
-                <table class="skills-table">
+                    <div class="agent-wide-content"><table class="skills-table">
                   <thead>
                     <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; skill_fitness/evals.jsonl when present)</th></tr>
                   </thead>
@@ -997,7 +999,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                   </tbody>
-                </table>
+                </table></div>
                 
         </div>
       </div>
@@ -1008,7 +1010,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-02 00:18:45 UTC &middot; host eeepc &middot; newest source 3m old &middot; <span class="footer-computed">scorecard computed 2026-09-02 00:14:05.139115 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 00:37:21 UTC &middot; host eeepc &middot; newest source 10s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 00:14:05.139115 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
