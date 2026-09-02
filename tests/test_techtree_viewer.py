@@ -1199,6 +1199,42 @@ def test_issue153_cycle_details_panel_click_listener_delegated() -> None:
     assert "event.target.closest('.lineage-node')" in html
 
 
+def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
+    history_row = {
+        'phase': 'outcome',
+        'cycle_id': 'cycle-hist-1',
+        'sha': 'sha-hist-1',
+        'parent_sha': 'sha-0',
+        'outcome': 'rejected',
+        'reason': 'test failure',
+        'ts': '2026-08-20T10:00:00Z',
+    }
+    tail_row = {
+        'phase': 'evolution_tree',
+        'cycle_id': 'cycle-tail-1',
+        'sha': 'sha-tail-1',
+        'parent_sha': '',
+        'outcome': 'integrated',
+        'ts': '2026-09-01T10:00:00Z',
+    }
+    data = {
+        'ledger_tail': [tail_row],
+        'ledger_history': [history_row, tail_row],
+        'evolution_tree': {'nodes': {}},
+        'portfolio': {},
+        'scorecard': {},
+    }
+    pages = tv.render_pages(data, host='test-host')
+    lineage_html = pages['lineage.html']
+    import re, json
+    m = re.search(r'<script type="application/json" id="cycle-details-data">(.*?)</script>', lineage_html)
+    assert m is not None
+    details = json.loads(m.group(1))
+    assert 'cycle-hist-1' in details
+    assert 'cycle-tail-1' in details
+
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {

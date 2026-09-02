@@ -5087,6 +5087,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     hypotheses = data.get('hypotheses')
     hypotheses_durable = data.get('hypotheses_durable')
     ledger_tail = data.get('ledger_tail')
+    ledger_history = data.get('ledger_history')
     demand_rotation = data.get('demand_rotation')
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
@@ -5094,9 +5095,14 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
+    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
-        ledger_tail, evolution_tree, data.get('lessons'), data.get('reflections'),
-        cycle_titles, data.get('cycle_files'),
+        ledger_history if ledger_history is not None else ledger_tail,
+        evolution_tree,
+        data.get('lessons'),
+        data.get('reflections'),
+        cycle_titles,
+        data.get('cycle_files'),
     )
 
     error_note = ''
@@ -5394,6 +5400,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     hypotheses = data.get('hypotheses')
     hypotheses_durable = data.get('hypotheses_durable')
     ledger_tail = data.get('ledger_tail')
+    ledger_history = data.get('ledger_history')
     demand_rotation = data.get('demand_rotation')
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
@@ -5401,9 +5408,14 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     goal_text = data.get('goal_text')
     agents_md = data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
+    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
-        ledger_tail, evolution_tree, data.get('lessons'), data.get('reflections'),
-        cycle_titles, data.get('cycle_files'),
+        ledger_history if ledger_history is not None else ledger_tail,
+        evolution_tree,
+        data.get('lessons'),
+        data.get('reflections'),
+        cycle_titles,
+        data.get('cycle_files'),
     )
 
     error_note = ''
