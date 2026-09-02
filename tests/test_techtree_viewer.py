@@ -1191,6 +1191,14 @@ def test_issue126_inline_vendor_scripts_preserve_source_newlines_and_marker() ->
     assert 'window.__lineageRendererLoaded = true' in html
 
 
+def test_issue153_cycle_details_panel_click_listener_delegated() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'sha-a', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
+    assert "event.target.closest('.lineage-node')" in html
+
+
 def test_hypotheses_panel_stale_badge_class() -> None:
     data = {
         'entries': {
