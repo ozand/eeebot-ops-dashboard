@@ -1548,7 +1548,7 @@ def test_dashboard_apis_expose_canonical_live_proof_pointers(tmp_path: Path) -> 
 def test_hypotheses_api_exposes_local_vs_live_diagnostics_and_prefers_live_canonical_backlog(tmp_path: Path, monkeypatch) -> None:
     import nanobot_ops_dashboard.app as dashboard_app
 
-    project_root = Path('/home/ozand/herkoot/Projects/nanobot/ops/dashboard')
+    project_root = Path(__file__).resolve().parents[1]
     repo_root = tmp_path / 'nanobot'
     db = tmp_path / 'dashboard.sqlite3'
     init_db(db)
