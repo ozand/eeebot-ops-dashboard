@@ -1388,6 +1388,39 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     assert html.index('<section class="health-verdict') > html.index(strip)
 
 
+def test_issue182_health_verdict_bridge_exit_streak() -> None:
+    # 1. absent/None -> does not trigger alarm
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=None) == ('healthy', 'all health signals are within thresholds')
+
+    # 2. streak = 0 -> healthy
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}) == ('healthy', 'all health signals are within thresholds')
+
+    # 3. streak >= 1 -> investigate alarm with error details
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}) == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+
+
+def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
+    # 1. absent/None -> unavailable note (not 0)
+    p_none = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak=None)
+    assert 'Bridge Exit Streak:' in p_none
+    assert '<span class="unavailable-note">unavailable</span>' in p_none
+    assert '0 failures' not in p_none
+
+    # 2. streak = 0 -> healthy badge
+    p_zero = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={'consecutive_failures': 0})
+    assert '0 failures (healthy)' in p_zero
+
+    # 3. streak > 0 -> alarm with details
+    p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
+        'consecutive_failures': 140,
+        'last_error': "NameError: name '_parse_explore_mode' is not defined",
+        'last_where': 'bridge.py:1874',
+    })
+    assert '140 consecutive failures' in p_alarm
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_alarm or "NameError: name '_parse_explore_mode' is not defined" in p_alarm
+    assert 'bridge.py:1874' in p_alarm
+
+
 def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
     """read_ledger_tail returns rows oldest-first over a 5000-row window, so the
     integration-recency signal must read the LAST evolution_tree row. Reading the
