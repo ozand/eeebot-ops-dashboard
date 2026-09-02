@@ -878,7 +878,7 @@
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-02 02:47:01.479685 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">5.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="13">data: 13s old &middot; generated 02:52 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 16s old &middot; generated 03:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -891,18 +891,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-02</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-1e2b615a52a2">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1e2b615a52a2">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-1e2b615a52a2</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_preexisting_regression): add git history inspector for pre-existing test failures</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1e2b615a52a2)</span>
             
-            
+            <a href="#node-6d9a962" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-02T02:52:38.341457Z">02:52 UTC</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5f5d78618e8a</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e8bf53c1">lesson:LESS-20260824-e8bf53c1</a></div>
-          
-          
+          <div class="feed-files">&#128193; scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py</div>
+          <div class="feed-cost">&#9889; 13 calls &middot; 426.7K tok &middot; dur 3m33s</div>
         </li>
         
         <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-06f4ae213cf3">
@@ -2912,14 +2912,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-dbb00f968b2f">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(run_all_tests): add --test-file flag for single test file scoping</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dbb00f968b2f)</span>
             
             <a href="#node-52f5320" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-08-31T05:15:36.893869Z">Aug 31</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e7e506c7abfb</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-be745246">lesson:LESS-20260826-be745246</a></div>
-          <div class="feed-files">&#128193; scripts/run_all_tests.py, tests/test_run_all_tests.py</div>
+          
           <div class="feed-cost">&#9889; 24 calls &middot; 1.37M tok &middot; dur 4m47s</div>
         </li>
         
@@ -4260,7 +4260,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fd91017c3016)</span>
             
-            <a href="#node-bd3db2e" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-08-30T05:08:36.476780Z">Aug 30</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-3efd21065aac</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-e1080a18">lesson:LESS-20260825-e1080a18</a></div>
@@ -24210,7 +24210,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-02 02:52:51 UTC &middot; host eeepc &middot; newest source 13s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 02:47:01.479685 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-02 03:01:32 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-02 02:47:01.479685 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
