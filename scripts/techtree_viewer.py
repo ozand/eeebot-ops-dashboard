@@ -133,7 +133,7 @@ INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 # these constants.
 LEDGER_PHASES: set[str] = {
     'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-    'evolution_tree', 'tech_tree', 'hypothesis',
+    'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
@@ -162,7 +162,7 @@ STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
 LEDGER_PHASES = {
     "started", "proposed", "outcome", "gate", "proposer_reject", "dedup", "idle",
-    "evolution_tree", "tech_tree", "hypothesis",
+    "evolution_tree", "tech_tree", "hypothesis", "doc_only_budget",
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
@@ -3040,6 +3040,12 @@ def build_now_panel(
                 f'{detail_str}</div>'
             )
 
+    # 5. Monitored feed ages
+    feed_ages_html = _build_monitored_feed_ages_item(scorecard)
+
+    # 6. Doc-only budget guard
+    doc_budget_html = _build_doc_only_budget_item(ledger_tail)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -3048,7 +3054,8 @@ def build_now_panel(
         {dir_html}
         {cycle_html}
         {streak_html}
-        {_build_monitored_feed_ages_item(scorecard)}
+        {feed_ages_html}
+        {doc_budget_html}
         {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
@@ -4289,6 +4296,55 @@ def _build_monitored_feed_ages_item(scorecard):
         '<div class="now-item"><span class="now-label">Feed Freshness:</span> '
         + ' '.join(badges)
         + '</div>'
+    )
+
+
+def _build_doc_only_budget_item(ledger_tail: list[dict[str, Any]] | None) -> str:
+    """Issue #200: doc-only budget guard item in the Now panel.
+    Extracts the latest doc_only_budget row from ledger_tail.
+    Renders 4 distinct states:
+    1. unavailable: ledger_tail missing/empty or no doc_only_budget row.
+    2. blind: ledger_blind=True (alert: ledger unreadable / fail-open).
+    3. deferring: doc_only_deferred > 0 (alert/warning badge: deferred N, X/Y cap).
+    4. cap reached vs within budget:
+       - exceeded=True (cap reached: X/Y 24h, 0 pending doc proposals of N)
+       - exceeded=False (within budget: X/Y 24h)
+    """
+    if not isinstance(ledger_tail, list) or not ledger_tail:
+        return '<div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>'
+
+    latest_doc_row: dict[str, Any] | None = None
+    for row in reversed(ledger_tail):
+        if isinstance(row, dict) and row.get('phase') == 'doc_only_budget':
+            latest_doc_row = row
+            break
+
+    if not latest_doc_row:
+        return '<div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>'
+
+    blind = bool(latest_doc_row.get('ledger_blind'))
+    deferred = int(latest_doc_row.get('doc_only_deferred') or 0)
+    int_24h = int(latest_doc_row.get('doc_only_integrations_24h') or 0)
+    budget_24h = int(latest_doc_row.get('doc_only_budget_24h') or 0)
+    exceeded = bool(latest_doc_row.get('doc_budget_exceeded'))
+    items = int(latest_doc_row.get('items_considered') or 0)
+
+    if blind:
+        badge_cls = 'health-alert-text'
+        status_text = 'ledger unreadable (fail-open)'
+    elif deferred > 0:
+        badge_cls = 'badge badge-rejected'
+        status_text = f'deferring doc-only ({deferred} deferred, {int_24h}/{budget_24h} cap)'
+    elif exceeded:
+        badge_cls = 'badge badge-available'
+        status_text = f'cap reached ({int_24h}/{budget_24h} 24h, 0 pending doc proposals of {items})'
+    else:
+        badge_cls = 'badge badge-available'
+        status_text = f'within budget ({int_24h}/{budget_24h} 24h)'
+
+    return (
+        f'<div class="now-item"><span class="now-label">Doc Budget Guard:</span> '
+        f'<span class="{badge_cls}">{esc(status_text)}</span></div>'
     )
 
 
