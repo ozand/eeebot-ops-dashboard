@@ -890,9 +890,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">298</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-03 12:00:46.271896 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">6.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">300</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-03 12:40:53.127688 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">6.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="37">data: 36s old &middot; generated 12:37 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 12:42 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -902,7 +902,16 @@
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
       <div class="hypo-futility-section futility-alarm"><h3 class="hypo-futility-title">Goal Gap Futility Tracking</h3><ul class="futility-list"><li class="futility-item"><span class="badge badge-stale">goal-gap-2d9ab3aa9d09</span> <strong class="futility-attempts">8/10 attempts [demand_id]</strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-5d4d5a9dc822</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item"><span class="badge badge-stale">goal-gap-a820ca0c8bb3</span> <strong class="futility-attempts">9/10 attempts [lever_surface] (surface: host_metrics, stale_feed)</strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-acb65b1911ab</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-c09521b7459a</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li></ul></div>
       <div class="hypo-split">
-        <div class="hypo-group"><h3>Active (98)</h3><ul class="hypo-list">
+        <div class="hypo-group"><h3>Active (99)</h3><ul class="hypo-list">
+            <li class="hypo-row active" id="q-hyp-0022">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">suppress-in-tree-proposals-for-host-metrics-staleness</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-03T12:41:34.421501Z">seen 12:41 UTC</span>
+                
+              </div>
+            </li>
+        
             <li class="hypo-row active" id="q-hypothesis-llm-proposer-cycle-b2de2a164ceb">
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export handling under read-only environments</strong>
@@ -1818,20 +1827,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Circuit breaker for multi-hour dedup cycle loops</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Cycles cycling through repeated started/dedup iterations without state mutation (e.g., cycle-3651dedc8157 iterating 9 times and cycle-6de9a5855ed5 iterating 5 times) directly inflate repeat_failure_rate (0.5084) and token consumption (2.88M tokens/integration); enforcing an automated termination after 2 consecutive stalled dedup/start iterations will eliminate runaway loop churn and lower repeat failure rates.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a max-dedup retry threshold (cap = 2) in the cycle runner that flags stalled runs as terminal failures rather than allowing multi-hour re-starts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if repeat_failure_rate drops below 0.38 and tokens_per_integration decreases by &gt;= 20%; refuted if repeat_failure_rate remains &gt;= 0.50.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-26T23:35:51.418750Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Shift focus from failure reporting scripts to runtime slice trust ladder</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Proposing auxiliary scripts to summarize failures (e.g., scripts/summarize_failure_*.py) under goal-gap-5d4d5a9dc822 yields negligible metric gain (-0.0043 over 151 integrations) and diverts capacity from core runtime optimization; redirecting proposals to the runtime trust ladder slice (nanobot/runtime/existence_index.py) will progress the control plane out of level 0 without generating unconfirmed script churn.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Direct the LLM proposer demand vector to prioritize changes and unit tests for SELFEVO_RUNTIME_SLICE (nanobot/runtime/existence_index.py) over standalone diagnostic scripts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if runtime_trust_ladder advances to level 1 and proposer_rejects ratio decreases by &gt;= 15%; refuted if runtime_trust_ladder remains at level 0.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-26T23:35:51.418806Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Automate execution guardrails over prompt-bloating AGENTS.md rules</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Replacing natural-language execution discipline in AGENTS.md with deterministic preflight checks in the runtime harness will reduce zero-edit step exhaustion without increasing prompt token bloat.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a deterministic preflight turn check in runtime harness instead of adding operational rules to AGENTS.md.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if partial cycle runs decrease to 0 and wasted_attempt_rate decreases by at least 0.08 over 10 cycles; refuted if partial cycles continue to occur at &gt;= 1 per 5 cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671386Z</div>
@@ -1955,11 +1950,25 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Suppressing repetitive static AST and CLI-argument modification tasks on targets with multiple recent inconclusive or skipped executor verdicts will reduce the wasted attempt rate below 0.08 without lowering successful integration throughput.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an existence/failure-signature gate in nanobot/runtime/demand.py that temporarily de-prioritizes AST/CLI refactor demands on targets exhibiting &gt;=2 consecutive inconclusive/skipped outcomes.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if wasted_attempt_rate drops below 0.08 and repeat_failure_rate drops below 0.04; refuted if net accepted integrations per 24h decreases by &gt;20%.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-02T00:00:28.574081Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">exercise-unconfirmed-scripts-via-test-harness</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Focusing test-expansion cycles on invoking CLI entrypoints of unconfirmed scripts in scripts/ (generating runtime bytecode and confirm_serves traces) rather than isolated test assertions will increase loop.confirmed_integrations by at least 5 without inflating completed_declared or worsening repeat failures.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Bias proposer demand selection towards integration tests that execute unconfirmed script surfaces from docs/SYSTEM_MAP.md via subprocess or import execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.confirmed_integrations increases by &gt;= 5 and value.confirmed_ratio exceeds 0.46; refuted if completed_declared continues to grow faster than confirmed integrations or loop.repeat_failure_rate exceeds 0.075.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-03T12:38:11.525226Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">suppress-in-tree-proposals-for-host-metrics-staleness</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Classifying host_metrics staleness as an external systemd timer/telemetry interval condition rather than an in-tree code defect will reduce wasted proposer attempts on goal-gap-a820ca0c8bb3 to zero without degrading fresh feed counts.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Mark goal-gap-a820ca0c8bb3 as in-tree futile for standard code-bearing edits and verify whether host_metrics refreshes on its next host service timer tick.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if zero wasted cycle proposals target host_metrics while the feed alternates according to timer mtime; refuted if in-tree code changes are proven necessary to restore telemetry collection.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-03T12:38:11.525303Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-03 12:37:35 UTC &middot; host eeepc &middot; newest source 36s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 12:00:46.271896 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-03 12:42:21 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 12:40:53.127688 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
