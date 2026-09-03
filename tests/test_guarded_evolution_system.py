@@ -46,3 +46,41 @@ def test_system_page_shows_guarded_evolution_status(tmp_path: Path, monkeypatch)
     assert '/tmp/release-1' in body
     assert '/tmp/release-0' in body
     assert 'repair first' in body
+
+
+def test_system_page_says_guarded_evolution_is_retired_when_state_is_absent(tmp_path: Path):
+    """eeebot-ops-dashboard#205: state/self_evolution/ has had no writer since
+    autoevolve was decommissioned (eeebot#1224). The card must say so, not
+    render a stack of 'not_collected' rows that reads as a quiet, healthy panel."""
+    db = tmp_path / 'dashboard.sqlite3'
+    init_db(db)
+    _seed_dashboard_data(db)
+    _seed_experiment_telemetry(tmp_path)
+    _seed_hypothesis_backlog(tmp_path)
+    assert not (tmp_path / 'nanobot' / 'workspace' / 'state' / 'self_evolution').exists()
+
+    cfg = _cfg(tmp_path, db)
+    app = create_app(cfg)
+    status, body = _call_app(app, '/system')
+    assert status.startswith('200')
+    assert 'Guarded evolution' in body
+    assert 'retired' in body
+    assert 'eeebot#1224' in body
+    assert 'Current candidate' not in body
+    assert 'Last failure learning' not in body
+    # The proof row survives the retirement branch and carries #207's label.
+    assert 'Decommissioned (selfevo runtime artifacts retired per eeebot#1224)' in body
+
+    # The same absence is labelled in the API, next to the two None values.
+    status, api_body = _call_app(app, '/api/system')
+    assert status.startswith('200')
+    system = json.loads(api_body)
+    dynamics = system['hypothesis_dynamics']
+    assert dynamics['terminal_selfevo_issue'] is None
+    assert dynamics['terminal_selfevo_pr'] is None
+    assert dynamics['terminal_selfevo_evidence'] == {
+        'status': 'unavailable',
+        'retired': True,
+        'reason': 'decommissioned (autoevolve removed in eeebot#1224)',
+    }
+    assert system['control_plane']['guarded_evolution']['retired'] is True

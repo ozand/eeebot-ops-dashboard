@@ -2104,10 +2104,10 @@ def _autonomy_verdict(*, analytics: dict, plan_latest: dict | None, experiment_v
     reward_gate = current_credits.get('reward_gate') if isinstance(current_credits.get('reward_gate'), dict) else {}
     if current_credits.get('delta') == 0.0 and reward_gate.get('status') == 'suppressed':
         reasons.append('suppressed_reward')
-    latest_noop_path = state_root / 'self_evolution' / 'runtime' / 'latest_noop.json'
-    latest_noop = _json_file(latest_noop_path) if latest_noop_path.exists() else {}
-    if latest_noop.get('status') == 'terminal_noop':
-        reasons.append('terminal_noop')
+    # 'terminal_noop' used to be read from state/self_evolution/runtime/latest_noop.json.
+    # Its only writer (autoevolve) was decommissioned in eeebot#1224 and the file has
+    # not existed on the host since 2026-06-20, so the reason could never fire again;
+    # a leftover file would be stale, not evidence (eeebot-ops-dashboard#205).
     material_progress = material_progress if isinstance(material_progress, dict) else {}
     material_allows_healthy = bool(material_progress.get('healthy_autonomy_allowed'))
     if material_progress and not material_allows_healthy:
@@ -3331,6 +3331,19 @@ def _selected_hypothesis_diagnostics(*, cycles: list[dict], hypotheses_visibilit
     if not isinstance(reward_gate, dict):
         reward_gate = {}
     terminal_issue, terminal_pr = _selected_hypothesis_terminal_evidence(cfg)
+    # The evidence files' only writer (autoevolve) was decommissioned in
+    # eeebot#1224; on the host state/self_evolution/ has been empty since
+    # 2026-06-20. Say so next to the two None values instead of letting
+    # "no terminal evidence" read as healthy (eeebot-ops-dashboard#205).
+    terminal_selfevo_evidence = (
+        {'status': 'available'}
+        if terminal_issue or terminal_pr
+        else {
+            'status': 'unavailable',
+            'retired': True,
+            'reason': 'decommissioned (autoevolve removed in eeebot#1224)',
+        }
+    )
     run_count = len(window_cycles)
     selected_hypothesis_repetition = run_count >= 5
     state = 'stagnant' if (
@@ -3391,6 +3404,7 @@ def _selected_hypothesis_diagnostics(*, cycles: list[dict], hypotheses_visibilit
         },
         'terminal_selfevo_issue': terminal_issue,
         'terminal_selfevo_pr': terminal_pr,
+        'terminal_selfevo_evidence': terminal_selfevo_evidence,
         'canonical_runtime_task_id': visibility.get('canonical_runtime_task_id'),
         'canonical_runtime_authority_resolution': visibility.get('canonical_runtime_authority_resolution'),
         'runtime_reconciled_selected_hypothesis': visibility.get('runtime_reconciled_selected_hypothesis'),
