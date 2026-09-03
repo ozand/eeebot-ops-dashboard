@@ -1106,7 +1106,8 @@ def _selfevo_current_proof_summary(cfg, guarded_evolution: dict | None, selfevo_
             summary_bits.append(f'branch {compact_pr["head_branch"]}')
         summary = ' / '.join(summary_bits)
     else:
-        summary = 'No local selfevo lifecycle or merge evidence found'
+        state = 'unavailable'
+        summary = 'Decommissioned (selfevo runtime artifacts retired per eeebot#1224)'
 
     return {
         'schema_version': 'selfevo-current-proof-v1',
@@ -1139,11 +1140,18 @@ def _control_plane_summary(repo_latest, eeepc_latest, current_experiment, curren
     producer_summary = _structured_file_payload(producer_summary_path) if producer_summary_path.exists() else {}
     producer_summary = _canonical_report_payload(cfg, producer_summary) if isinstance(producer_summary, dict) else {}
     guarded_state_path = cfg.nanobot_repo_root / 'workspace' / 'state' / 'self_evolution' / 'current_state.json'
-    guarded_evolution = _structured_file_payload(guarded_state_path) if guarded_state_path.exists() else {}
-    if isinstance(guarded_evolution, dict) and selfevo_remote_freshness is not None:
-        guarded_evolution = dict(guarded_evolution)
-        guarded_evolution['remote_ref_freshness'] = selfevo_remote_freshness
-    selfevo_current_proof = _selfevo_current_proof_summary(cfg, guarded_evolution, selfevo_remote_freshness)
+    guarded_evolution_data = _structured_file_payload(guarded_state_path) if guarded_state_path.exists() else {}
+    if guarded_state_path.exists():
+        guarded_evolution = dict(guarded_evolution_data)
+        if selfevo_remote_freshness is not None:
+            guarded_evolution['remote_ref_freshness'] = selfevo_remote_freshness
+    else:
+        guarded_evolution = {
+            'status': 'unavailable',
+            'retired': True,
+            'reason': 'decommissioned (autoevolve removed in eeebot#1224)',
+        }
+    selfevo_current_proof = _selfevo_current_proof_summary(cfg, guarded_evolution if guarded_state_path.exists() else {}, selfevo_remote_freshness)
     current_blocker = _canonicalize_current_blocker(current_blocker, producer_summary)
     local_ci_state_path = cfg.nanobot_repo_root / 'workspace' / 'state' / 'local_ci' / 'current_state.json'
     local_ci = _structured_file_payload(local_ci_state_path) if local_ci_state_path.exists() else {}
@@ -1693,7 +1701,6 @@ def _dashboard_runtime_parity(repo_plan: dict | None, eeepc_plan: dict | None, c
         'hypotheses_backlog': (state_root / 'hypotheses' / 'backlog.json').exists(),
         'credits_latest': (state_root / 'credits' / 'latest.json').exists(),
         'control_plane_current_summary': (state_root / 'control_plane' / 'current_summary.json').exists(),
-        'self_evolution_current_state': (state_root / 'self_evolution' / 'current_state.json').exists(),
     }
     reasons = []
     eeepc_raw = _json_loads_dict(eeepc_plan.get('raw_json')) if _has_value(eeepc_plan.get('raw_json')) else {}
@@ -2097,9 +2104,10 @@ def _autonomy_verdict(*, analytics: dict, plan_latest: dict | None, experiment_v
     reward_gate = current_credits.get('reward_gate') if isinstance(current_credits.get('reward_gate'), dict) else {}
     if current_credits.get('delta') == 0.0 and reward_gate.get('status') == 'suppressed':
         reasons.append('suppressed_reward')
-    latest_noop = _json_file(state_root / 'self_evolution' / 'runtime' / 'latest_noop.json')
-    if latest_noop.get('status') == 'terminal_noop':
-        reasons.append('terminal_noop')
+    # 'terminal_noop' used to be read from state/self_evolution/runtime/latest_noop.json.
+    # Its only writer (autoevolve) was decommissioned in eeebot#1224 and the file has
+    # not existed on the host since 2026-06-20, so the reason could never fire again;
+    # a leftover file would be stale, not evidence (eeebot-ops-dashboard#205).
     material_progress = material_progress if isinstance(material_progress, dict) else {}
     material_allows_healthy = bool(material_progress.get('healthy_autonomy_allowed'))
     if material_progress and not material_allows_healthy:
@@ -3182,8 +3190,10 @@ def _terminal_pr_evidence_is_live(pr: dict | None) -> bool:
 
 def _selected_hypothesis_terminal_evidence(cfg: DashboardConfig) -> tuple[dict | None, dict | None]:
     state_root = cfg.nanobot_repo_root / 'workspace' / 'state' / 'self_evolution'
-    current_state = _json_file(state_root / 'current_state.json')
-    latest_noop = _json_file(state_root / 'runtime' / 'latest_noop.json')
+    current_state_path = state_root / 'current_state.json'
+    latest_noop_path = state_root / 'runtime' / 'latest_noop.json'
+    current_state = _json_file(current_state_path) if current_state_path.exists() else {}
+    latest_noop = _json_file(latest_noop_path) if latest_noop_path.exists() else {}
     issue = current_state.get('selfevo_issue') if isinstance(current_state.get('selfevo_issue'), dict) else latest_noop.get('selfevo_issue') if isinstance(latest_noop.get('selfevo_issue'), dict) else None
     pr = current_state.get('last_pr') if isinstance(current_state.get('last_pr'), dict) else latest_noop.get('pr') if isinstance(latest_noop.get('pr'), dict) else None
     issue_live = _terminal_issue_evidence_is_live(issue)
@@ -3321,6 +3331,19 @@ def _selected_hypothesis_diagnostics(*, cycles: list[dict], hypotheses_visibilit
     if not isinstance(reward_gate, dict):
         reward_gate = {}
     terminal_issue, terminal_pr = _selected_hypothesis_terminal_evidence(cfg)
+    # The evidence files' only writer (autoevolve) was decommissioned in
+    # eeebot#1224; on the host state/self_evolution/ has been empty since
+    # 2026-06-20. Say so next to the two None values instead of letting
+    # "no terminal evidence" read as healthy (eeebot-ops-dashboard#205).
+    terminal_selfevo_evidence = (
+        {'status': 'available'}
+        if terminal_issue or terminal_pr
+        else {
+            'status': 'unavailable',
+            'retired': True,
+            'reason': 'decommissioned (autoevolve removed in eeebot#1224)',
+        }
+    )
     run_count = len(window_cycles)
     selected_hypothesis_repetition = run_count >= 5
     state = 'stagnant' if (
@@ -3381,6 +3404,7 @@ def _selected_hypothesis_diagnostics(*, cycles: list[dict], hypotheses_visibilit
         },
         'terminal_selfevo_issue': terminal_issue,
         'terminal_selfevo_pr': terminal_pr,
+        'terminal_selfevo_evidence': terminal_selfevo_evidence,
         'canonical_runtime_task_id': visibility.get('canonical_runtime_task_id'),
         'canonical_runtime_authority_resolution': visibility.get('canonical_runtime_authority_resolution'),
         'runtime_reconciled_selected_hypothesis': visibility.get('runtime_reconciled_selected_hypothesis'),

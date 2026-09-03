@@ -428,6 +428,7 @@ def test_dashboard_api_surfaces_selected_hypothesis_diagnostics_and_hypothesis_d
     assert hypothesis_dynamics['last_24h']['reward_gate']['reason'] == 'discarded_experiment_unresolved_revert'
     assert hypothesis_dynamics['terminal_selfevo_issue']['number'] == 61
     assert hypothesis_dynamics['terminal_selfevo_pr']['number'] == 62
+    assert hypothesis_dynamics['terminal_selfevo_evidence'] == {'status': 'available'}
     assert 'hypothesis_dynamics_stagnant' in system['autonomy_verdict']['reasons']
     assert system['autonomy_verdict']['state'] == 'stagnant'
 
@@ -559,6 +560,7 @@ def test_dashboard_api_marks_selected_hypothesis_stagnant_when_non_selected_cycl
     assert hypothesis_dynamics['last_24h']['reward_gate']['reason'] == 'discarded_experiment_unresolved_revert'
     assert hypothesis_dynamics['terminal_selfevo_issue']['number'] == 61
     assert hypothesis_dynamics['terminal_selfevo_pr']['number'] == 62
+    assert hypothesis_dynamics['terminal_selfevo_evidence'] == {'status': 'available'}
     assert 'hypothesis_dynamics_stagnant' in system['autonomy_verdict']['reasons']
     assert system['autonomy_verdict']['state'] == 'stagnant'
 
@@ -655,6 +657,7 @@ def test_dashboard_api_hydrates_summary_only_cycle_detail_from_report_source(tmp
     assert hypothesis_dynamics['last_24h']['reward_gate']['reason'] == 'discarded_experiment_unresolved_revert'
     assert hypothesis_dynamics['terminal_selfevo_issue']['number'] == 61
     assert hypothesis_dynamics['terminal_selfevo_pr']['number'] == 62
+    assert hypothesis_dynamics['terminal_selfevo_evidence'] == {'status': 'available'}
     assert 'hypothesis_dynamics_stagnant' in system['autonomy_verdict']['reasons']
     assert system['autonomy_verdict']['state'] == 'stagnant'
 
@@ -867,7 +870,9 @@ def test_autonomy_verdict_treats_stale_blockers_as_historical_after_material_pro
     assert 'same_task_streak' in verdict['historical_reasons']
     assert 'discarded_experiment' in verdict['historical_reasons']
     assert 'suppressed_reward' in verdict['historical_reasons']
-    assert 'terminal_noop' in verdict['historical_reasons']
+    # eeebot-ops-dashboard#205: latest_noop.json's writer (autoevolve) was
+    # decommissioned in eeebot#1224; a leftover file is stale data, not a reason.
+    assert 'terminal_noop' not in verdict['historical_reasons']
     assert 'runtime_parity_blocked' in verdict['historical_reasons']
 
 def test_autonomy_verdict_keeps_runtime_parity_blocking_when_live_hadi_artifacts_missing_after_material_progress(tmp_path: Path) -> None:
