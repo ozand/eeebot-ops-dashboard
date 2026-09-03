@@ -3531,3 +3531,81 @@ class TestIssue200DocOnlyBudgetGuard:
         assert 'Doc Budget Guard:' in html
         assert 'cap reached' in html
 
+class TestIssue204StrategistRunProvenance:
+    """A degraded strategist looks exactly like a healthy one from outside.
+
+    That is why #999 needed an audit rather than an alert: it advised from three
+    dead inputs for eight runs and nothing on the dashboard said so. The row
+    carries `inputs_status` so the condition is machine-readable; these tests pin
+    that the panel keeps the states apart rather than merely printing the row.
+    """
+
+    LIVE = {
+        "success": True,
+        "reason": "valid bounded advisory output applied",
+        "counts": {"advisories_recorded": 2, "advisories_written": 2, "hypotheses_appended": 2},
+        "inputs_status": {
+            "goals": {"chars": 2736, "source": "release_root", "status": "complete"},
+            "scorecard": {"history_rows": 55, "status": "complete"},
+            "funnel": {"ids": 200, "status": "complete"},
+            "insights": {"cards": 2, "legacy": 3, "status": "complete"},
+            "evolution_tree": {"nodes": 100, "status": "complete"},
+        },
+        "timestamp": "2026-09-03T12:37:17.640697Z",
+    }
+
+    def _text(self, decisions):
+        import re
+        return re.sub("<[^>]+>", "", tv._build_strategist_run_item(decisions)).strip()
+
+    def test_the_live_host_row_renders_time_ratio_and_output(self) -> None:
+        text = self._text([dict(self.LIVE)])
+        assert "ran" in text
+        assert "2026-09-03T12:37:17" in text
+        assert "inputs 5/5" in text
+        assert "2 hypotheses, 2 advisories" in text
+
+    def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
+        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
+        html = tv._build_strategist_run_item([refused])
+        healthy = tv._build_strategist_run_item([dict(self.LIVE)])
+        assert "refused" in self._text([refused])
+        assert "badge-available" in healthy
+        assert "badge-available" not in html, (
+            "a refusal rendered with the same badge as a healthy run")
+
+    def test_an_error_is_distinct_from_both(self) -> None:
+        errored = dict(self.LIVE, success=False, reason="LLM call failed: timeout")
+        html = tv._build_strategist_run_item([errored])
+        assert "error" in self._text([errored])
+        assert "badge-available" not in html
+        assert "badge-rejected" not in html
+
+    def test_degraded_inputs_are_named_not_just_counted(self) -> None:
+        degraded = dict(self.LIVE)
+        degraded["inputs_status"] = dict(self.LIVE["inputs_status"])
+        degraded["inputs_status"]["insights"] = {"cards": 0, "legacy": 0, "status": "empty"}
+        degraded["inputs_status"]["funnel"] = {"ids": 0, "status": "empty"}
+        text = self._text([degraded])
+        assert "inputs 3/5" in text
+        assert "insights:empty" in text
+        assert "funnel:empty" in text
+
+    def test_absent_or_unreadable_is_unavailable_not_zero(self) -> None:
+        for decisions in (None, [], ["not a dict"], [123]):
+            text = self._text(decisions)
+            assert "unavailable" in text, decisions
+            assert "0/5" not in text, decisions
+
+    def test_the_newest_row_wins(self) -> None:
+        old = dict(self.LIVE, timestamp="2026-09-01T03:00:00Z")
+        new = dict(self.LIVE, timestamp="2026-09-03T12:37:17Z")
+        text = self._text([old, new])
+        assert "2026-09-03" in text
+        assert "2026-09-01" not in text
+
+    def test_the_item_reaches_the_panel(self) -> None:
+        html = tv.build_now_panel(None, None, None, None, strategist_decisions=[dict(self.LIVE)])
+        assert "Strategist:" in html
+        assert "inputs 5/5" in html
+

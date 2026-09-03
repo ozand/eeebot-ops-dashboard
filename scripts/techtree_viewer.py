@@ -590,6 +590,7 @@ result = {
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
     "bridge_exits": read_jsonl("bridge/exits.jsonl"),
+    "strategist_decisions": read_jsonl("strategist/decisions.jsonl"),
     "demand_futility": read_json("demand/futility.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
@@ -627,6 +628,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'strategist_decisions': None,
         'demand_futility': None,
         'goal_text': None,
         'agents_md': None,
@@ -814,6 +816,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'strategist_decisions': None,
         'demand_futility': None,
         '_newest_source_age_seconds': None,
     }
@@ -1142,6 +1145,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
         'bridge_exits': read_jsonl('bridge/exits.jsonl'),
+        'strategist_decisions': read_jsonl('strategist/decisions.jsonl'),
         'demand_futility': read_json('demand/futility.json'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
@@ -2870,6 +2874,7 @@ def build_now_panel(
     bridge_exit_streak: dict[str, Any] | None = None,
     bridge_exits: list[dict[str, Any]] | None = None,
     scorecard: dict[str, Any] | None = None,
+    strategist_decisions: list[dict[str, Any]] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -3046,6 +3051,9 @@ def build_now_panel(
     # 6. Doc-only budget guard
     doc_budget_html = _build_doc_only_budget_item(ledger_tail)
 
+    # 7. Strategist run provenance (#204)
+    strategist_html = _build_strategist_run_item(strategist_decisions)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -3056,6 +3064,7 @@ def build_now_panel(
         {streak_html}
         {feed_ages_html}
         {doc_budget_html}
+        {strategist_html}
         {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
@@ -4298,6 +4307,70 @@ def _build_monitored_feed_ages_item(scorecard):
         + '</div>'
     )
 
+
+
+def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
+    """Issue #204: the strategist's newest run, from state/strategist/decisions.jsonl.
+
+    The strategist was paused for 36 hours because three of its five inputs were
+    structurally dead and it kept advising from them; nothing on this dashboard
+    showed that, which is why it took an audit rather than an alert. Each row
+    carries `inputs_status` per input (#1182) precisely so the condition is
+    machine-readable, so the states that must stay apart are:
+
+      unavailable  no file, unreadable, or no row -- not the same as a zero
+      refused      the guard declined the LLM call on a mostly empty view
+      error        the run failed
+      ok           it ran; the input ratio says on how much of a view
+
+    A refusal must never render like a healthy run: that conflation is the
+    original defect, moved from the runtime into the panel.
+    """
+    unavailable = ('<div class="now-item"><span class="now-label">Strategist:</span> '
+                   '<span class="unavailable-note">unavailable</span></div>')
+    if not isinstance(decisions, list) or not decisions:
+        return unavailable
+    row = None
+    for candidate in reversed(decisions):
+        if isinstance(candidate, dict):
+            row = candidate
+            break
+    if row is None:
+        return unavailable
+
+    status = row.get('inputs_status')
+    names = ('goals', 'scorecard', 'funnel', 'insights', 'evolution_tree')
+    complete, degraded = 0, []
+    if isinstance(status, dict):
+        for name in names:
+            entry = status.get(name)
+            state = entry.get('status') if isinstance(entry, dict) else None
+            if state == 'complete':
+                complete += 1
+            else:
+                degraded.append(f'{name}:{state or "?"}')
+    ratio = f'inputs {complete}/{len(names)}'
+
+    counts = row.get('counts') if isinstance(row.get('counts'), dict) else {}
+    produced = (f"{int(counts.get('hypotheses_appended') or 0)} hypotheses, "
+                f"{int(counts.get('advisories_written') or 0)} advisories")
+
+    reason = str(row.get('reason') or '')
+    if row.get('success') is True:
+        badge, label = 'badge badge-available', 'ran'
+    elif 'refus' in reason.lower():
+        badge, label = 'badge badge-rejected', 'refused'
+    else:
+        badge, label = 'health-alert-text', 'error'
+
+    when = str(row.get('timestamp') or row.get('ts') or '')[:19] or 'unknown time'
+    detail = f'{label} {when} — {ratio}, {produced}'
+    if degraded:
+        detail += ' — degraded: ' + ', '.join(degraded[:3])
+    if label != 'ran' and reason:
+        detail += f' — {reason[:80]}'
+    return (f'<div class="now-item"><span class="now-label">Strategist:</span> '
+            f'<span class="{badge}">{esc(detail)}</span></div>')
 
 def _build_doc_only_budget_item(ledger_tail: list[dict[str, Any]] | None) -> str:
     """Issue #200: doc-only budget guard item in the Now panel.
@@ -5561,6 +5634,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         bridge_exit_streak=data.get('bridge_exit_streak'),
         bridge_exits=data.get('bridge_exits'),
         scorecard=scorecard,
+        strategist_decisions=data.get('strategist_decisions'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -5867,6 +5941,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         bridge_exit_streak=data.get('bridge_exit_streak'),
         bridge_exits=data.get('bridge_exits'),
         scorecard=scorecard,
+        strategist_decisions=data.get('strategist_decisions'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
