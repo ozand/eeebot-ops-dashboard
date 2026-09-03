@@ -1245,7 +1245,7 @@ def test_issue169_remote_reader_script_compiles_and_imports() -> None:
 def test_issue169_ledger_phases_pinned_at_module_level() -> None:
     expected = {
         'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-        'evolution_tree', 'tech_tree', 'hypothesis',
+        'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
     }
     assert tv.LEDGER_PHASES == expected
 
@@ -3464,3 +3464,70 @@ def test_issue196_feed_ages_use_live_status_vocabulary_and_one_unit() -> None:
     # An unreadable feed still shows its threshold, and reads as a problem.
     assert 'llm_calls: unknown/24.0h' in html
     assert 'feed-badge-missing' in html
+
+class TestIssue200DocOnlyBudgetGuard:
+    """The row exists to tell three situations apart, so the panel must too.
+
+    A low deferral count has three causes and #1108 was unanswerable for months
+    because they were indistinguishable: the guard never reached, the guard
+    reached with nothing to suppress, and the guard triggered by an unreadable
+    ledger rather than a real over-budget count. The last is a fail-open and
+    must never render like a working guard.
+    """
+
+    LIVE = {
+        'phase': 'doc_only_budget', 'doc_only_deferred': 0,
+        'doc_only_integrations_24h': 5, 'doc_only_budget_24h': 5,
+        'ledger_blind': False, 'doc_budget_exceeded': True,
+        'items_considered': 8, 'ts': '2026-09-03T02:44:59Z',
+    }
+
+    def test_live_host_row_reads_as_reached_with_nothing_to_defer(self) -> None:
+        html = tv._build_doc_only_budget_item([dict(self.LIVE)])
+        assert '5/5' in html
+        assert 'cap reached' in html
+        assert 'of 8' in html
+        assert 'unavailable' not in html
+
+    def test_within_budget_is_distinct_from_cap_reached(self) -> None:
+        row = dict(self.LIVE, doc_only_integrations_24h=2, doc_budget_exceeded=False)
+        html = tv._build_doc_only_budget_item([row])
+        assert 'within budget' in html
+        assert '2/5' in html
+        assert 'cap reached' not in html
+
+    def test_ledger_blind_does_not_read_as_a_working_guard(self) -> None:
+        row = dict(self.LIVE, ledger_blind=True)
+        html = tv._build_doc_only_budget_item([row])
+        assert 'fail-open' in html
+        assert 'cap reached' not in html
+        assert 'within budget' not in html
+        healthy = tv._build_doc_only_budget_item([dict(self.LIVE)])
+        assert 'badge-available' in healthy
+        assert 'badge-available' not in html, (
+            'a fail-open guard rendered with the same badge as a healthy one')
+
+    def test_actual_deferral_is_visible_as_such(self) -> None:
+        row = dict(self.LIVE, doc_only_deferred=3)
+        html = tv._build_doc_only_budget_item([row])
+        assert 'deferring' in html
+        assert '3 deferred' in html
+
+    def test_absent_row_is_unavailable_not_zero(self) -> None:
+        for tail in (None, [], [{'phase': 'outcome', 'outcome': 'success'}]):
+            html = tv._build_doc_only_budget_item(tail)
+            assert 'unavailable' in html, tail
+            assert '0/0' not in html
+
+    def test_the_latest_row_wins(self) -> None:
+        old = dict(self.LIVE, doc_only_integrations_24h=1, doc_budget_exceeded=False)
+        new = dict(self.LIVE, doc_only_integrations_24h=9)
+        html = tv._build_doc_only_budget_item([old, {'phase': 'gate'}, new])
+        assert '9/5' in html
+        assert '1/5' not in html
+
+    def test_the_item_reaches_the_panel(self) -> None:
+        html = tv.build_now_panel(None, None, None, None, ledger_tail=[dict(self.LIVE)])
+        assert 'Doc Budget Guard:' in html
+        assert 'cap reached' in html
+
