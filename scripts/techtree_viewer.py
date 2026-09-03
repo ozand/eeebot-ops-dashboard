@@ -4239,17 +4239,22 @@ def build_agent_panel(
 
 
 def _fmt_feed_age_token(age_sec):
+    """Render one feed age or threshold.
+
+    Ages and thresholds are printed side by side as ``age/threshold``, so the
+    two must land in the same unit to be comparable at a glance. Every
+    ``_FEEDS`` threshold is 12h or 24h, so days only start at 48h; below that a
+    24h threshold reads ``24.0h`` rather than ``1.0d`` and a 15h age can be
+    compared to it without arithmetic.
+    """
     if age_sec is None or not isinstance(age_sec, (int, float)):
         return 'unknown'
-    m = int(age_sec // 60)
-    h = int(age_sec // 3600)
-    d = int(age_sec // 86400)
-    if d > 0:
+    if age_sec >= 172800:
         return f'{age_sec / 86400:.1f}d'
-    if h > 0:
+    if age_sec >= 3600:
         return f'{age_sec / 3600:.1f}h'
-    if m > 0:
-        return f'{m}m'
+    if age_sec >= 60:
+        return f'{int(age_sec // 60)}m'
     return f'{int(age_sec)}s'
 
 
@@ -4272,7 +4277,8 @@ def _build_monitored_feed_ages_item(scorecard):
         max_sec = info.get('max_age_seconds')
         age_str = _fmt_feed_age_token(age_sec)
         max_str = _fmt_feed_age_token(max_sec)
-        badge_cls = 'feed-badge-ok' if st == 'ok' else f'feed-badge-{esc(st)}'
+        # scorecard._feed_details emits fresh|stale|corrupt|unreadable|missing.
+        badge_cls = 'feed-badge-ok' if st in ('fresh', 'ok') else f'feed-badge-{esc(st)}'
         badges.append(
             f'<span class="feed-age-badge {badge_cls}" title="{esc(name)}: {esc(st)}">'
             f'{esc(name)}: {esc(age_str)}/{esc(max_str)}</span>'

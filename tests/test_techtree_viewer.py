@@ -3403,3 +3403,49 @@ def test_issue196_monitored_feed_ages_three_state() -> None:
     )
     assert 'Feed Freshness:' in html_empty
     assert 'unavailable' in html_empty
+
+
+def test_issue196_feed_ages_use_live_status_vocabulary_and_one_unit() -> None:
+    """Guard the two things a hand-written fixture can agree with and still be wrong.
+
+    ``scorecard._feed_details`` emits ``fresh``, never ``ok``, and the real
+    thresholds are 43200s and 86400s. A 24h threshold printed as ``1.0d`` next
+    to a 15h age cannot be compared without arithmetic, which is the whole
+    point of showing the pair (#196).
+    """
+    scorecard = {
+        'feeds': {
+            'feeds': {
+                'host_metrics': {
+                    'status': 'fresh',
+                    'age_seconds': 54055.2,
+                    'max_age_seconds': 86400,
+                },
+                'usage': {
+                    'status': 'fresh',
+                    'age_seconds': 21.0,
+                    'max_age_seconds': 43200,
+                },
+                'llm_calls': {
+                    'status': 'missing',
+                    'age_seconds': None,
+                    'max_age_seconds': 86400,
+                },
+            }
+        }
+    }
+    html = tv.build_now_panel(None, None, [], None, None, scorecard=scorecard)
+
+    # A feed drifting inside its threshold is comparable against it directly.
+    assert 'host_metrics: 15.0h/24.0h' in html, (
+        'the 24h threshold rendered in a coarser unit than the age beside it')
+    assert '1.0d' not in html
+    assert 'usage: 21s/12.0h' in html
+
+    # 'fresh' is the live healthy value; 'ok' never reaches this code.
+    assert 'feed-badge-ok' in html, "live 'fresh' status did not reach the ok badge"
+    assert 'feed-badge-fresh' not in html
+
+    # An unreadable feed still shows its threshold, and reads as a problem.
+    assert 'llm_calls: unknown/24.0h' in html
+    assert 'feed-badge-missing' in html
