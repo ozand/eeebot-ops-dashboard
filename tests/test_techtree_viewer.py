@@ -1285,17 +1285,32 @@ def test_hypotheses_panel_stale_badge_class() -> None:
     assert 'badge-researching' not in html
 
 
+def _hypo_ts(days_ago: int) -> str:
+    """A timestamp relative to now, because the panel's staleness rule is.
+
+    ``build_hypotheses_panel`` calls anything untouched for more than 14 days
+    stale, measured against the current time. Fixtures written with absolute
+    dates therefore pass until the wall clock crosses the threshold and then
+    fail for a reason that has nothing to do with the code: these two tests
+    pinned 'active' entries at 2026-08-20, which was inside the window when
+    they were written and fell outside it on 2026-09-03 (#202).
+    """
+    from datetime import datetime, timedelta, timezone
+
+    return (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
 def test_hypotheses_panel_stale_collapse_when_gt_6() -> None:
     # 2 active, 7 stale => stale collapsed in <details><summary>
     entries = {
-        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': '2026-08-20T10:00:00Z'},
-        'h-act-2': {'title': 'Act 2', 'status': 'researching', 'last_touched': '2026-08-21T10:00:00Z'},
+        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': _hypo_ts(2)},
+        'h-act-2': {'title': 'Act 2', 'status': 'researching', 'last_touched': _hypo_ts(1)},
     }
     for i in range(7):
         entries[f'h-stale-{i}'] = {
             'title': f'Stale {i}',
             'status': 'stale',
-            'last_touched': f'2026-07-0{i+1}T10:00:00Z',
+            'last_touched': _hypo_ts(60 + i),
         }
     data = {'entries': entries}
     html = tv.build_hypotheses_panel(data)
@@ -1314,13 +1329,13 @@ def test_hypotheses_panel_stale_collapse_when_gt_6() -> None:
 
 def test_hypotheses_panel_no_collapse_when_lte_6_stale() -> None:
     entries = {
-        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': '2026-08-20T10:00:00Z'},
+        'h-act-1': {'title': 'Act 1', 'status': 'researching', 'last_touched': _hypo_ts(2)},
     }
     for i in range(6):
         entries[f'h-stale-{i}'] = {
             'title': f'Stale {i}',
             'status': 'stale',
-            'last_touched': f'2026-07-0{i+1}T10:00:00Z',
+            'last_touched': _hypo_ts(60 + i),
         }
     data = {'entries': entries}
     html = tv.build_hypotheses_panel(data)
