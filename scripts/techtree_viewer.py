@@ -4255,13 +4255,13 @@ def _fmt_feed_age_token(age_sec):
 
 def _build_monitored_feed_ages_item(scorecard):
     if not isinstance(scorecard, dict):
-        return ''
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
     feeds_sec = scorecard.get('feeds')
     if not isinstance(feeds_sec, dict):
-        return ''
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
     feeds = feeds_sec.get('feeds')
     if not isinstance(feeds, dict) or not feeds:
-        return ''
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
     badges = []
     for name in sorted(feeds.keys()):
         info = feeds[name]
