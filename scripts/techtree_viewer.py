@@ -3048,6 +3048,7 @@ def build_now_panel(
         {dir_html}
         {cycle_html}
         {streak_html}
+        {_build_monitored_feed_ages_item(scorecard)}
         {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
@@ -4237,6 +4238,54 @@ def build_agent_panel(
     '''
 
 
+def _fmt_feed_age_token(age_sec):
+    if age_sec is None or not isinstance(age_sec, (int, float)):
+        return 'unknown'
+    m = int(age_sec // 60)
+    h = int(age_sec // 3600)
+    d = int(age_sec // 86400)
+    if d > 0:
+        return f'{age_sec / 86400:.1f}d'
+    if h > 0:
+        return f'{age_sec / 3600:.1f}h'
+    if m > 0:
+        return f'{m}m'
+    return f'{int(age_sec)}s'
+
+
+def _build_monitored_feed_ages_item(scorecard):
+    if not isinstance(scorecard, dict):
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
+    feeds_sec = scorecard.get('feeds')
+    if not isinstance(feeds_sec, dict):
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
+    feeds = feeds_sec.get('feeds')
+    if not isinstance(feeds, dict) or not feeds:
+        return '<div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="unavailable-note">unavailable</span></div>'
+    badges = []
+    for name in sorted(feeds.keys()):
+        info = feeds[name]
+        if not isinstance(info, dict):
+            continue
+        st = info.get('status') or 'unknown'
+        age_sec = info.get('age_seconds')
+        max_sec = info.get('max_age_seconds')
+        age_str = _fmt_feed_age_token(age_sec)
+        max_str = _fmt_feed_age_token(max_sec)
+        badge_cls = 'feed-badge-ok' if st == 'ok' else f'feed-badge-{esc(st)}'
+        badges.append(
+            f'<span class="feed-age-badge {badge_cls}" title="{esc(name)}: {esc(st)}">'
+            f'{esc(name)}: {esc(age_str)}/{esc(max_str)}</span>'
+        )
+    if not badges:
+        return ''
+    return (
+        '<div class="now-item"><span class="now-label">Feed Freshness:</span> '
+        + ' '.join(badges)
+        + '</div>'
+    )
+
+
 def _build_provenance_badge(scorecard: dict[str, Any] | None) -> str:
     """Issue #188: 10-status data provenance indicator (4 readers + 5 feeds + gaps_status).
     - Unavailable if scorecard or reader_status is missing.
@@ -4539,6 +4588,19 @@ CSS = '''
       display: flex;
       flex-direction: column;
       gap: 10px;
+    }
+    .feed-age-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      border: 1px solid #234234;
+      background: #0d1a15;
+    }
+    .feed-badge-stale, .feed-badge-corrupt, .feed-badge-missing, .feed-badge-unreadable {
+      border-color: #8c2a2a;
+      color: #ff9999;
+      background: #2b1111;
     }
     .now-item {
       display: flex;

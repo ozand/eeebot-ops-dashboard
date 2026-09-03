@@ -3355,3 +3355,51 @@ def test_issue196_health_verdict_fallback_when_scorecard_absent() -> None:
     )
     assert verdict == 'healthy'
     assert reason == 'all signals within thresholds across monitored feeds'
+
+
+import scripts.techtree_viewer as tv
+
+
+def test_issue196_monitored_feed_ages_three_state() -> None:
+    # 1. Healthy / active feeds: renders age and max_age for each feed
+    sc_ok = {
+        'feeds': {
+            'feeds': {
+                'usage': {
+                    'status': 'ok',
+                    'age_seconds': 3600,
+                    'max_age_seconds': 43200,
+                },
+                'host_metrics': {
+                    'status': 'stale',
+                    'age_seconds': 44000,
+                    'max_age_seconds': 43200,
+                },
+            }
+        }
+    }
+    html_ok = tv.build_now_panel(
+        None, None, [], None, None,
+        scorecard=sc_ok,
+    )
+    assert 'Feed Freshness:' in html_ok
+    assert 'usage: 1.0h/12.0h' in html_ok
+    assert 'host_metrics: 12.2h/12.0h' in html_ok
+    assert 'feed-badge-ok' in html_ok
+    assert 'feed-badge-stale' in html_ok
+
+    # 2. Unavailable: missing scorecard or missing feeds
+    html_none = tv.build_now_panel(
+        None, None, [], None, None,
+        scorecard=None,
+    )
+    assert 'Feed Freshness:' in html_none
+    assert 'unavailable' in html_none
+    assert '1.0h/12.0h' not in html_none
+
+    html_empty = tv.build_now_panel(
+        None, None, [], None, None,
+        scorecard={'feeds': {}},
+    )
+    assert 'Feed Freshness:' in html_empty
+    assert 'unavailable' in html_empty
