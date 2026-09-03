@@ -892,7 +892,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">303</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-03 15:15:09.121429 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">6.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 15:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 15:22 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -903,7 +903,7 @@
       <div class="now-content">
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">none</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(prevent_repeat_failures): add --no-commit-history flag and use it in mock tests</strong> <span class="now-sub">(cycle-32d2e2a45a64 [2a05cef4])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(check_target_completion): exit 0 with guidance on empty CLI invocation</strong> <span class="now-sub">(cycle-9ea67593c033 [a50106f3])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-stale" title="host_metrics: stale">host_metrics: 29.1h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 21s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 13m/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-available">cap reached (5/5 24h, 0 pending doc proposals of 9)</span></div>
@@ -932,18 +932,18 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-9ea67593c033">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9ea67593c033">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-9ea67593c033</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_target_completion): exit 0 with guidance on empty CLI invocation</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9ea67593c033)</span>
             
-            
+            <a href="#node-a50106f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-03T15:16:21.389167Z">15:16 UTC</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-06e224d23a1e</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-20-001">error:ERR-2026-06-20-001</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-ff3ff930">lesson:LESS-20260826-ff3ff930</a></div>
-          
-          
+          <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
+          <div class="feed-cost">&#9889; 8 calls &middot; 152.6K tok &middot; dur 73s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-32d2e2a45a64">
@@ -978,7 +978,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-03 15:16:34 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 15:15:09.121429 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-03 15:22:14 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 15:15:09.121429 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
