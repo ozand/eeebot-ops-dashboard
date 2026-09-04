@@ -892,7 +892,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">296</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-04 10:46:20.521584 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">7.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 10:56 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="15">data: 14s old &middot; generated 11:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -905,18 +905,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-04</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c5f237c60f5b">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c5f237c60f5b">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-c5f237c60f5b</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat: add test fixture vs runtime state inspection rule to prevent_repeat_failures.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c5f237c60f5b)</span>
             
-            
+            <a href="#node-bbd15cf" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T10:56:09.605742Z">10:56 UTC</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8746d0d0788c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
-          
-          
+          <div class="feed-files">&#128193; scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py</div>
+          <div class="feed-cost">&#9889; 76 calls &middot; 4.06M tok &middot; dur 10m5s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d44ed220091b">
@@ -2478,14 +2478,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c8b086bf20de">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">fix(validate_heredoc_urls): resolve false positives so validator exits cleanly</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c8b086bf20de)</span>
             
             <a href="#node-0ed5aff" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-02T21:13:32.789739Z">Sep 2</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0b09170cedf2</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-044af45f">lesson:LESS-20260827-044af45f</a></div>
-          <div class="feed-files">&#128193; scripts/validate_heredoc_urls.py</div>
+          
           <div class="feed-cost">&#9889; 62 calls &middot; 2.45M tok &middot; dur 11m41s</div>
         </li>
         
@@ -3405,7 +3405,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3c294cef18e5)</span>
             
-            <a href="#node-5885fc9" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-02T04:11:37.515642Z">Sep 2</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c4095c7ab803</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-c40c135f">lesson:LESS-20260823-c40c135f</a></div>
@@ -26802,7 +26802,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-04 10:56:30 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-04 10:46:20.521584 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-04 11:18:35 UTC &middot; host eeepc &middot; newest source 14s old &middot; <span class="footer-computed">scorecard computed 2026-09-04 10:46:20.521584 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
