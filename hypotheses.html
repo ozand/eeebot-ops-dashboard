@@ -892,7 +892,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">309</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">65.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-03 23:11:31.896329 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">7.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 23:22 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 00:08 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -907,7 +907,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add tests for query_ast_symbols covering nested scopes and unparseable syntax</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T19:23:55.946164Z">seen 19:23 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T19:23:55.946164Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -916,7 +916,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Use absolute script path in test_prevent_repeat_failures subprocess execution</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T13:03:53.659645Z">seen 13:03 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T13:03:53.659645Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -925,7 +925,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add host metrics staleness proposal suppression rule to prevent_repeat_failures.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T12:58:55.228595Z">seen 12:58 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T12:58:55.228595Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -934,7 +934,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export handling under read-only environments</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T05:32:35.327992Z">seen 05:32 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T05:32:35.327992Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -943,7 +943,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Assert complete JSON payload schema and field keys in test_check_feed_staleness.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T03:02:41.555312Z">seen 03:02 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T03:02:41.555312Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -1567,7 +1567,7 @@
               <span class="badge badge-stale">STALE</span>
               <strong class="hypo-title">suppress-in-tree-proposals-for-host-metrics-staleness</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T12:41:34.421501Z">seen 12:41 UTC</span>
+                <span class="hypo-ts" title="2026-09-03T12:41:34.421501Z">seen Sep 3</span>
                 
               </div>
             </li>
@@ -1854,20 +1854,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Automate execution guardrails over prompt-bloating AGENTS.md rules</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Replacing natural-language execution discipline in AGENTS.md with deterministic preflight checks in the runtime harness will reduce zero-edit step exhaustion without increasing prompt token bloat.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a deterministic preflight turn check in runtime harness instead of adding operational rules to AGENTS.md.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if partial cycle runs decrease to 0 and wasted_attempt_rate decreases by at least 0.08 over 10 cycles; refuted if partial cycles continue to occur at &gt;= 1 per 5 cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671386Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Self-refreshing feed collection during cycle teardown</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Binding host metric and usage collection to cycle teardown events dissolves the stale feed gap without expending proposer cycles on standalone test scaffolding.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Trigger scripts/collect_host_metrics.py and usage sync as an automated post-cycle hook in coordinator execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if stale_feeds metric reaches 0.0 and age_seconds remains below max_age_seconds; refuted if host_metrics remains stale (&gt; 86400s) after 3 completed cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671484Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Pre-proposer demand deduplication filtering</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing intent fingerprinting at demand ingestion before invoking the proposer will eliminate self-dedup cycle churn without degrading confirmed integration ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Apply deduplication hashing against recent cycle targets in nanobot/runtime/demand.py prior to candidate selection.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if skipped-duplicate drops to 0 and wasted_attempt_rate drops below 0.50 without reducing confirmed_integrations; refuted if confirmed_integration_ratio declines below 0.20.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671542Z</div>
@@ -1991,11 +1977,25 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Classifying host_metrics staleness as an external systemd timer/telemetry interval condition rather than an in-tree code defect will reduce wasted proposer attempts on goal-gap-a820ca0c8bb3 to zero without degrading fresh feed counts.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Mark goal-gap-a820ca0c8bb3 as in-tree futile for standard code-bearing edits and verify whether host_metrics refreshes on its next host service timer tick.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if zero wasted cycle proposals target host_metrics while the feed alternates according to timer mtime; refuted if in-tree code changes are proven necessary to restore telemetry collection.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-03T12:38:11.525303Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Pre-filtering exhausted demand IDs in candidate selection resolves proposer starvation</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Sequentially polling exhausted demands causes repeated proposer skips and starves executable proposals; filtering out exhausted demand IDs at candidate collection time will reduce consecutive skip bursts without degrading deduplication safety.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an active demand exclusion filter in candidate collection within the proposer pipeline for demand IDs that have reached dedup exhaustion in the current window.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if consecutive proposer_skip events drop by &gt;= 50% without increasing the repeat_failure_rate above 0.070; refuted if wasted attempt rate increases or valid novel demands are prematurely dropped.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-04T00:00:47.791299Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Turn-bounded direct-edit gate dissolves inspection-versus-completion budget trade-off</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Subagents fail with partial outcomes (0 files changed) because tool-call budgets are exhausted during inspection harnesses; enforcing a target-file edit requirement before turn 5 will convert partial cycles into code-bearing integrations without lowering clean compilation ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Inject a directive check in the subagent bridge prompt requiring an initial patch/edit application to target_path within the first 4 turns.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if partial outcomes with 0 files changed decrease by &gt;= 40% and confirmed_integration_ratio reaches &gt;= 0.70; refuted if compile_failing count exceeds 0.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-04T00:00:47.791393Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-03 23:22:17 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 23:11:31.896329 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-04 00:08:07 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-03 23:11:31.896329 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
