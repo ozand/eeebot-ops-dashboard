@@ -37,9 +37,7 @@ def test_manifest_entries_exist_and_cover_viewer_vendor_references() -> None:
     expected = {
         "scripts/techtree_viewer.py",
         "scripts/techtree_autopublish.py",
-        "assets/vendor/d3.min.js",
-        "assets/vendor/d3-dag.iife.min.js",
-        "assets/vendor/lineage-renderer.js",
+        "assets/vendor/lineage-renderer.js",  # #208: d3 + d3-dag are gone
     }
     assert expected <= entries
     assert all((ROOT / entry).is_file() for entry in entries)
