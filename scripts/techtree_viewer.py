@@ -1886,45 +1886,12 @@ def _lane_b_layout(
     }
 
 
-_ARCHIVE_RING = {
-    'integrated': '#2fd3c4',
-    'failed': '#b23a3a',
-    'partial': '#d19a66',
-    'skipped': '#7d9c8a',
-    'running': '#61afef',
-}
-
-
-def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
-    """Issue #71: outcome class + reason for a ledger-only cycle (no tree
-    node). Scans the cycle's ledger rows chronologically; most decisive
-    phase wins."""
-    kind, reason = 'running', ''
-    for row in rows:
-        phase = row.get('phase')
-        if phase == 'dedup':
-            decision = str(row.get('decision') or '')
-            if row.get('duplicate') or 'skip' in decision.lower() or 'duplicate' in decision.lower():
-                return 'skipped', decision or 'duplicate'
-        elif phase == 'proposer_reject':
-            kind, reason = 'skipped', str(row.get('reason') or 'rejected')
-        elif phase == 'gate' and row.get('status') == 'fail':
-            kind, reason = 'failed', str(row.get('reason') or 'gate failed')
-        elif phase == 'outcome':
-            # Issue #77: the live ledger carries the decisive value in the
-            # `outcome` field ('success'/'failed'/'partial'/
-            # 'skipped-duplicate'); `status` is None there. Keep the legacy
-            # `status` vocabulary as fallback for older shapes.
-            status = str(row.get('outcome') or row.get('status') or '')
-            if status in ('fail', 'failed'):
-                return 'failed', str(row.get('reason') or 'failed')
-            if status == 'partial':
-                return 'partial', str(row.get('reason') or 'partial')
-            if status in ('skipped', 'skipped-duplicate'):
-                return 'skipped', str(row.get('reason') or status)
-            if status == 'success':
-                return 'integrated', ''
-    return kind, reason
+# #208 review: _ARCHIVE_RING and _ledger_outcome_kind (#71/#77) served only the
+# deleted archive tree and are gone with it. Leaf outcomes on the day lineage
+# are classified inline in _build_vertical_day_lineage: failed / partial /
+# skipped. There is no `running` there — a cycle that has started and not
+# finished is not a leaf and does not appear on lineage.html (it does on the
+# cycle feed).
 
 
 def _lineage_day(ts: Any) -> str:

@@ -8,6 +8,7 @@ The generator half asserts on the per-day payload and the page assembly.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -28,7 +29,13 @@ NODE = shutil.which('node')
 
 def _render(payload: dict, tmp_path: Path, filter_probe: list[dict] | None = None) -> dict:
     if not NODE:
-        pytest.skip('node is not installed; the renderer tests execute JavaScript')
+        # Review on PR #209: a silent skip reads as a pass under `pytest -q`, and
+        # there is no CI to run this elsewhere. Fail loudly; skipping must be a
+        # deliberate, visible choice.
+        if os.environ.get('LINEAGE_SKIP_NODE_TESTS') == '1':
+            pytest.skip('LINEAGE_SKIP_NODE_TESTS=1: the #208 geometry tests were deliberately not executed')
+        pytest.fail('node is not installed, so the #208 renderer geometry tests did NOT run; '
+                    'install Node.js or set LINEAGE_SKIP_NODE_TESTS=1 to skip them explicitly')
     payload_file = tmp_path / 'payload.json'
     payload_file.write_text(json.dumps(payload), encoding='utf-8')
     args = [NODE, str(HARNESS), str(payload_file)]

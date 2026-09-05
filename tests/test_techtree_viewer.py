@@ -2751,20 +2751,12 @@ def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
 # has no legend; an in-flight cycle is not a leaf there.
 
 
-def test_issue77_live_outcome_vocabulary_parsed() -> None:
-    # live shape: status is None, outcome carries the value
-    kind, reason = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c1', 'status': None, 'outcome': 'failed', 'reason': 'gate_failed'},
-    ])
-    assert kind == 'failed' and reason == 'gate_failed'
-    kind, _ = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c2', 'outcome': 'skipped-duplicate', 'reason': 'recent_duplicate_failure'},
-    ])
-    assert kind == 'skipped'
-    kind, _ = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c3', 'outcome': 'partial'},
-    ])
-    assert kind == 'partial'
+# #208 review: test_issue77_live_outcome_vocabulary_parsed tested
+# _ledger_outcome_kind, whose only caller was the deleted archive tree; both
+# are gone. The day lineage classifies leaves inline in
+# _build_vertical_day_lineage (failed / partial / skipped) — and, as a
+# consequence, an in-flight cycle ("running") never appears on lineage.html;
+# it is a cycle-feed state only.
 
 # ---------------------------------------------------------------------------
 # Issue #72: cycles.html full history (.gz archives, day grouping, filter)
