@@ -1,124 +1,160 @@
-# Architecture Decision Record (ADR): Unified DAG + Visibility Projection (#218)
+# #218 Design Gate: Unified Lineage Graph with Date Projection
 
-## 1. Context
+Status: **Proposed — awaiting operator/reviewer GO before implementation**
 
-The operator requires a continuous, unbroken visual representation of the agent's
-evolution history (`techtree`/`lineage`), regardless of calendar-day boundaries.
-Currently, `techtree_viewer.py` emits independent `day-group` SVG trees, and the
-JavaScript renderer hides/shows them via CSS. This "cuts" cross-day parent
-relationships and makes the "24h" filter granular to the calendar day rather
-than the event timestamp.
+Canonical ADR: [`docs/adr/ADR-001-unified-lineage-date-projection.md`](../../adr/ADR-001-unified-lineage-date-projection.md)
 
-The updated requirements state:
-- The `parent_sha` basis must be immutable under projection; no "invented"
-  direct parents if the real parent is hidden; no recalculation of ancestry
-  based on remaining nodes.
-- Unknown origin stays unknown; inferred relationships stay dashed.
-- Calendar boundaries must not break SVG paths.
-- "Contextual ancestors" (nodes out of the selected window but required to root
-  an in-window node) must appear explicitly as collapsed pre-history.
-- Existing features (a11y cards, gate violations, legends) must survive.
+## Rules and source material read
 
-## 2. Decision and design elements
+- `README.md` — confirms `eeebot-ops-dashboard` is the canonical dashboard repo and `scripts/techtree_viewer.py` is the standalone, stdlib-only, self-contained static lineage/tech-tree page with lazy details JSON.
+- `docs/testing.md` — confirms CI/local baselines and known Windows-only failures.
+- `T:/Code/eeebot/REPO_GITHUB_WORKFLOW_RULES.md` — confirms issue/branch/PR isolation rules and that dashboard work belongs in this repo.
+- `docs/superpowers/plans/2026-08-26-lineage-cycle-panel.md` — prior lineage details-panel plan; #213 supersedes/preserves its hash/card/focus contract.
+- `scripts/techtree_viewer.py` and `assets/vendor/lineage-renderer.js` — current implementation evidence.
 
-We will move to a **unified payload + client-side visibility projection** model,
-reusing the existing custom `forest-layout` algorithm without introducing new UI
-frameworks.
+## Current implementation facts
 
-### 2.1 Payload contract (Generator)
+Current lineage rendering is day-bucketed:
 
-`techtree_viewer.py` will emit exactly **one** JSON payload representing the
-entire available history (up to `LINEAGE_DAYS`, truncated at `LINEAGE_DAY_CAP * DAYS`
-overall nodes if needed, though a global limit `14 * 120 = 1680` nodes is well
-within JS limits).
+1. `scripts/techtree_viewer.py::_build_vertical_day_lineage()` groups `evolution_tree` rows by `_lineage_day(ts)`.
+2. It emits one `<section class="lineage-day-group" data-day="YYYY-MM-DD">` per day.
+3. Each section contains an independent `<svg data-lineage-renderer>` and a per-day JSON script.
+4. `assets/vendor/lineage-renderer.js::attachFilter()` hides/shows whole `.lineage-day-group` sections.
+5. `_lineage_parent()` intentionally returns `(None, None, parent_day)` when a recorded parent exists in `all_nodes` but has a different day. The renderer then displays `↩ from <day>` instead of a real graph edge.
 
-```javascript
-window.lineageData = {
-  // Ordered historically
-  nodes: [
-    { sha, cycle_id, ts, outcome, reason, /* ...details */ },
-    // ...
+Therefore, calendar days are currently graph boundaries. This violates the new #218 requirement.
+
+## Target contract
+
+### Data model
+
+The generator emits one canonical lineage payload for the available coverage window:
+
+```jsonc
+{
+  "coverage": {
+    "from_ts": "...",
+    "to_ts": "...",
+    "raw_node_count": 0,
+    "emitted_node_count": 0,
+    "truncated": false,
+    "truncated_before_ts": null,
+    "truncated_count": 0
+  },
+  "nodes": [
+    {
+      "sha": "...",
+      "cycle_id": "cycle-...",
+      "ts": "2026-09-05T...Z",
+      "outcome": "integrated|failed|partial|skipped|unknown",
+      "title": "..."
+    }
   ],
-  // All confirmed edges across the time window
-  edges: [
-    { source: "sha_A", target: "sha_B", basis: "recorded" | "inferred" },
-    // ...
+  "edges": [
+    {
+      "source_sha": "parent-sha",
+      "target_sha": "child-sha",
+      "basis": "recorded|inferred",
+      "source_available": true
+    }
   ]
-};
+}
 ```
-The generator will still resolve `(parent_sha, basis, parent_day)`, but `parent_day`
-cross-day stubs are removed: all edges describe the unified DAG.
 
-### 2.2 Date projection filter (Renderer)
+Rules:
+- `parent_sha`/`basis` are canonical and immutable under filtering.
+- Filtering never recomputes parentage and never rewrites `basis`.
+- A missing/out-of-coverage parent is represented as unavailable/unknown context, not inferred as recorded ancestry.
+- `cycle_id` remains the stable public hash target: `#node-<cycle_id>`.
+- `sha` remains the canonical graph-edge identity and should be present as `data-sha` on DOM nodes where possible.
 
-`lineageDayFilter.select(mode, days)` becomes `lineageDateFilter.apply(mode, fromTs, toTs)`.
-The filtering happens inside `renderGraph(window.lineageData)`:
+### Projection semantics
 
-1. **Window inclusion**: For each node, `inWindow = (ts >= fromTs && ts <= toTs)`.
-2. **Ancestry trace**: For any in-window node, its ancestry path back to a root
-   (or the edge of available history) is traced. Out-of-window nodes on this path
-   are marked `isContext = true`.
-3. **Graph reduction**: Nodes where `!inWindow && !isContext` are pruned.
-4. **Collapsed path grouping (The "Ghost Path")**:
-   - Sequential out-of-window context nodes are collapsed into a single `contextual stub`
-     node in the data structure sent to the layout algorithm.
-   - The edge connecting an in-window node to a collapsed stub receives a specific
-     attribute (e.g., `data-collapsed-edges="3"`).
-   - The renderer draws these context edges as a distinct style (e.g., dotted,
-     faded, or explicit label "hidden history") — distinctly different from
-     `inferred`, and explicitly NOT drawn as a direct real parent edge.
+Projection is a view over the canonical payload:
 
-### 2.3 Multiple roots and multiple parents
+1. Compute `in_window` by UTC timestamp.
+2. For each `in_window` node, trace canonical ancestors within available coverage.
+3. Hide nodes that are outside the window and irrelevant to visible nodes.
+4. Preserve required out-of-window ancestors as contextual ancestry.
+5. Collapse a contiguous chain of hidden/out-of-window ancestors into a labelled collapsed-path marker.
 
-- **Multiple roots**: Supported natively by the existing `layoutDay` algorithm.
-  If the projection leaves multiple independent in-window subgraphs, they are
-  laid out as parallel trees.
-- **Multiple parents**: The source data (`cycle.parent_sha`) is inherently a
-  string, yielding exactly 0 or 1 recorded parent per cycle. If Git merges
-  (multiple parents) appear in `ledger`, the `techtree_viewer.py` currently
-  resolves to the primary `parent_sha` or falls back to `inferred`. We will
-  maintain the 1-parent limit structurally, as true DAG rendering (crisscrossing
-  merge lines) exceeds the current simplistic loop-less SVG layout constraint,
-  and the product spec restricts us from writing a brand new d3-DAG renderer from scratch.
+A context/collapsed path is **not** a direct recorded edge. It must have separate CSS/DOM markers, for example:
 
-### 2.4 Stable IDs and hash navigation (#213 compat)
+- `.lineage-context-node`
+- `.lineage-context-edge`
+- `data-context="ancestor"`
+- `data-collapsed-edges="N"`
+- visible label: `N hidden ancestors` / `outside selected range`
 
-- The `#node-<cycle_id>` URL hash contract remains mathematically unchanged.
-- If a deep link points to an out-of-window node (or collapsed context node),
-  the JS filter will automatically switch mode to `all` (or expand the window to
-  include the requested timestamp) and `scrollIntoView()`.
-- Deep links pointing to nodes outside the `LINEAGE_DAYS` server-side dataset
-  will fail gracefully (card: "details unavailable").
+### Filter controls
 
-### 2.5 Forest layout reuse
+- `All`: show full emitted coverage.
+- `Today`: UTC calendar day matching the viewer clock.
+- `24h`: exact `[now - 24h, now]` timestamp range.
+- `Yesterday+Today`: explicit calendar-day mode; may remain if useful but must be labelled as calendar-based.
+- Custom date range: inclusive UTC day bounds, e.g. from `YYYY-MM-DDT00:00:00Z` to `YYYY-MM-DDT23:59:59.999Z` unless the UI later adds time inputs.
 
-The current `layoutDay` performs a two-pass layout:
-1. DFS depth assignment.
-2. Sibling horizontal spacing (`x` coordinates) via column counters.
+### Empty and boundary states
 
-This algorithm works for any loopless planar tree, which the filtered DAG
-remains. We will apply `layoutDay` to the **reduced projection** graph. A single
-huge, tall SVG replaces the N separate day-SVG elements. The viewport scrolls
-normally. `scrollPanelIntoView` bounds continue working exactly as built in #213.
+- Empty range: render explicit empty-state message, not an older fallback graph.
+- Range with visible node but missing parent in source coverage: show unavailable context/root marker.
+- Deep link to node inside coverage but outside current range: make target and context visible and open the card; implementation may switch to `All` or temporarily extend the projection for that target.
+- Deep link outside coverage: show explicit unavailable/coverage message and do not invent a node.
 
-## 3. Browser acceptance and test strategy
+### Multiple roots / multiple parents
 
-The following new browser/integration tests will be written alongside implementation:
+- Multiple roots are valid and rendered as independent root trees in the same SVG.
+- Current data exposes one canonical `parent_sha` per node. If future raw data contains multiple parents, #218 must not silently pretend all were rendered. Minimum acceptable behaviour: label additional parents as unsupported/ambiguous metadata. True multi-parent routing is only in scope if implementation analysis proves the existing layout can show it without false edges.
 
-| Test Case | Verification |
+## Layout approach
+
+First attempt: **reuse/extend** the existing dependency-free forest layout.
+
+Rationale:
+- The repo intentionally ships a stdlib/static page and previously removed d3/d3-dag.
+- Current source effectively provides one canonical parent per node, so a forest renderer is likely sufficient for #218.
+- Reuse must be validated, not assumed. If implementation analysis shows the existing layout cannot represent required context/collapsed paths honestly, stop and report before bringing in a new engine.
+
+## Implementation sequence after GO
+
+1. Add failing fixtures/tests for unified payload and projection.
+2. Introduce a pure helper to build canonical lineage graph data from current rows.
+3. Keep existing per-day renderer untouched until new tests demonstrate the new graph contract.
+4. Update renderer to draw one SVG from the unified payload.
+5. Port #212 legend/outcome/edge styling to context/collapsed edge classes.
+6. Preserve #213 click/keyboard/hash/focus behaviour against new node elements.
+7. Preserve #215 gate-violations details-card rendering.
+8. Publish and browser-verify after merge.
+
+## Acceptance fixtures to add
+
+| Fixture | Assertion |
 |---|---|
-| **Cross-day chain without break** | A tree spanning Day 1 to Day 2 renders as one connected SVG; no "from Day 1" generic stubs. |
-| **Immutable canonical edges** | Filtering to Day 2 alone collapses Day 1 parent into a distinct "context" stub; the parent identity/SHA does not change in the DOM dataset; no edge is drawn directly between Day 2 node and Day 0 node over missing history. |
-| **24h strict TS filter** | `mode=24h` accurately includes only nodes within `[now - 24h, now]`. Nodes at `now - 25h` are pruned or collapsed to context, instead of drawing the whole day grid. |
-| **Unknown stays unknown** | Missing roots remain rootless under filtering; no fallback edge to nearest time neighbor. |
-| **Mobile responsive bounds** | SVG `viewBox` correctly rescales; legend wraps at 320px/390px/1280px. |
-| **Cold card deep link** | `#node-X` on a hidden node auto-expands the range, fetches, and scrolls precisely. |
+| Cross-day chain `A(day1) -> B(day2) -> C(day3)` | One SVG; canonical edges A→B and B→C exist; no per-day root break. |
+| Fork across dates `A(day1) -> B(day2)` and `A(day1) -> C(day3)` | Both children keep source A, even when filtering to day2/day3 separately. |
+| 24h strict boundary | Node at `now - 24h` included; node at `now - 24h - 1ms` excluded/context only if ancestor. |
+| Hidden ancestor chain | Filter to descendant only shows contextual/collapsed path with count; no direct recorded edge over hidden nodes. |
+| Unknown parent | Missing parent remains unknown/unavailable; no chronological fallback promoted to recorded. |
+| Multiple roots | Two root subtrees render in same SVG. |
+| Deep link outside current projection | Target/context visible and card open. |
+| Empty range | Explicit empty-state message. |
+| Responsive | 320/390/1280 viewport checks for legend, SVG, details card. |
+| Regression | #212, #213, #215 tests still pass. |
 
-## 4. Consequences
+## Browser acceptance plan
 
-- ✅ Resolves #214 accurately (true TS borders).
-- ✅ Removes JS hide/show toggles of large DOM blocks; redrawing the 1-SVG graph
-  dynamically is fast natively in the browser up to 1000 nodes.
-- ⚠️ Generating a single massive HTML inline for all days increases the max initial
-  DOM node count of that payload. The max (14 days × 120 nodes = 1680) is well
-  within performance limits, but lazy pagination is lost.
+- Use Playwright against generated HTML served over local HTTP when lazy JSON is needed.
+- Verify real rendered DOM, not only static strings:
+  - edge `data-source`, `data-target`, `data-basis`
+  - context/collapsed path classes and labels
+  - visible node/card bounds at 320/390/1280
+  - `#node-<cycle_id>` opens card after cold page load
+  - details body text visible after JSON resolves
+- Published-page gate after merge must quote footer SHA, visible filter behaviour, and one live node/card result.
+
+## Open questions before implementation GO
+
+1. Should a deep link outside the selected range switch the visible filter to `All`, or should it render a temporary `deep-link context` projection while leaving controls unchanged?
+2. Should collapsed context labels count hidden **nodes** or hidden **edges**? ADR uses edges; UX label may say ancestors.
+3. Should `Yesterday+Today` remain after strict `24h` exists, or should it move to a clearly-labelled calendar section?
+4. What is the maximum acceptable SVG node count before truncation messaging must appear? Proposed initial bound: existing `LINEAGE_DAYS * LINEAGE_DAY_CAP`.
