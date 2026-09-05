@@ -486,3 +486,174 @@ def test_issue212_mobile_legend_does_not_overflow(tmp_path: Path, viewport_width
     assert not result['overflowingItems'], (
         f'legend items overflow viewport at {viewport_width}px: {result["overflowingItems"]}; full={result}'
     )
+
+
+# ─── #213 tests ───────────────────────────────────────────────────────────────
+
+def test_issue213_panel_has_close_button_and_aria() -> None:
+    """#213: cycle-details panel must have a close button and aria-label."""
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, ROWS, ledger_history=ROWS, now='2026-09-01T05:00:00Z'
+    )
+    assert 'id="cycle-details-close"' in html, 'close button must have id=cycle-details-close'
+    assert 'aria-label="Close cycle details"' in html
+    assert 'aria-label="Cycle details"' in html, 'panel must have aria-label'
+
+
+def test_issue213_nodes_have_tabindex_and_role(tmp_path: Path) -> None:
+    """#213: lineage renderer must add tabindex=0 and role=button to each node circle."""
+    nodes = [
+        _node('r', None, '2026-09-01T00:00:00Z'),
+        _node('a', 'r', '2026-09-01T01:00:00Z', outcome='integrated'),
+    ]
+    result = _render(_payload(nodes, current_sha='a'), tmp_path)
+    circles = list(_circles(result).values())
+    assert circles, 'at least one circle rendered'
+    for c in circles:
+        assert c['attrs'].get('tabindex') == '0', f"tabindex missing on {c['attrs']}"
+        assert c['attrs'].get('role') == 'button', f"role=button missing on {c['attrs']}"
+        assert 'aria-label' in c['attrs'], f"aria-label missing on {c['attrs']}"
+
+
+def test_issue213_nodes_have_stable_id_for_deep_link(tmp_path: Path) -> None:
+    """#213: each node circle must get id='node-<cycle_id>' for #node-<id> deep-link."""
+    nodes = [
+        _node('sha1', None, '2026-09-01T00:00:00Z'),
+        _node('sha2', 'sha1', '2026-09-01T01:00:00Z'),
+    ]
+    result = _render(_payload(nodes), tmp_path)
+    for sha, circle in _circles(result).items():
+        cid = circle['attrs'].get('data-cycle-id', '')
+        assert circle['attrs'].get('id') == f'node-{cid}', (
+            f"node id missing or wrong for {sha}: attrs={circle['attrs']}"
+        )
+
+
+def test_issue213_inline_script_has_a11y_handlers() -> None:
+    """#213: the generated HTML must contain close, Escape, and hashchange handlers."""
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, ROWS, ledger_history=ROWS, now='2026-09-01T05:00:00Z'
+    )
+    assert 'closePanel' in html, 'closePanel function required'
+    assert 'clearSelection' in html, 'clearSelection function required'
+    assert "'Escape'" in html, 'Escape key handler required'
+    assert 'hashchange' in html, 'hashchange listener required'
+    assert 'handleHash' in html, 'handleHash function required'
+    assert '#node-' in html, '#node- fragment prefix required in handleHash'
+    assert 'scrollIntoView' in html, 'scrollIntoView required for panel visibility'
+    assert 'cycle-node-selected' in html, 'selection class reference required'
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue213_browser_node_click_shows_panel_and_selection(tmp_path: Path, viewport_width: int) -> None:
+    """#213: clicking a node must: add cycle-node-selected class, make panel visible.
+
+    Verifies scrollIntoView fires (panel.hidden=false is the observable proxy in
+    the test harness since smooth scroll cannot be timed in headless Chromium).
+    """
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-r', 'sha': 'r', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-r', 'outcome': 'integrated', 'ts': '2026-09-01T01:00:00Z'},
+    ]
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T05:00:00Z'
+    )
+    page_file = tmp_path / 'a11y_click.html'
+    page_file.write_text(html, encoding='utf-8')
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+
+        result = page.evaluate("""
+            () => {
+                var node = document.querySelector('.lineage-node');
+                if (!node) return {error: 'no .lineage-node found'};
+                var tabindex = node.getAttribute('tabindex');
+                var role = node.getAttribute('role');
+                var ariaLabel = node.getAttribute('aria-label');
+                var nodeId = node.getAttribute('id');
+                node.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                var panel = document.getElementById('cycle-details-panel');
+                var panelHidden = panel ? panel.hidden : true;
+                var hasSelection = node.classList.contains('cycle-node-selected');
+                var closeBtn = document.getElementById('cycle-details-close');
+                return {
+                    tabindex: tabindex,
+                    role: role,
+                    ariaLabel: ariaLabel,
+                    nodeId: nodeId,
+                    panelHidden: panelHidden,
+                    hasSelection: hasSelection,
+                    hasCloseBtn: !!closeBtn,
+                };
+            }
+        """)
+        escape_result = page.evaluate("""
+            () => {
+                var panel = document.getElementById('cycle-details-panel');
+                document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+                return {panelHiddenAfterEscape: panel ? panel.hidden : null};
+            }
+        """)
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['tabindex'] == '0', f'tabindex not 0: {result}'
+    assert result['role'] == 'button', f'role not button: {result}'
+    assert result['ariaLabel'], f'aria-label missing: {result}'
+    assert result['nodeId'], f'node id missing: {result}'
+    assert not result['panelHidden'], f'panel must be visible after click: {result}'
+    assert result['hasSelection'], f'cycle-node-selected must be set after click: {result}'
+    assert result['hasCloseBtn'], f'close button must exist: {result}'
+    assert escape_result['panelHiddenAfterEscape'], f'Escape must close panel: {escape_result}'
+
+
+def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
+    """#213: clicking the close button must hide the panel and clear selection."""
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-x', 'sha': 'x', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+    ]
+    html = tv.build_archive_tree(
+        {'current_sha': 'x', 'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T05:00:00Z'
+    )
+    page_file = tmp_path / 'close_btn.html'
+    page_file.write_text(html, encoding='utf-8')
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+
+        result = page.evaluate("""
+            () => {
+                var node = document.querySelector('.lineage-node');
+                if (!node) return {error: 'no lineage-node'};
+                node.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                var panel = document.getElementById('cycle-details-panel');
+                var openOk = !panel.hidden && node.classList.contains('cycle-node-selected');
+                var closeBtn = document.getElementById('cycle-details-close');
+                if (!closeBtn) return {error: 'no close button'};
+                closeBtn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                return {
+                    openOk: openOk,
+                    panelHiddenAfterClose: panel.hidden,
+                    selectionClearedAfterClose: !node.classList.contains('cycle-node-selected'),
+                };
+            }
+        """)
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['openOk'], f'panel must open on click first: {result}'
+    assert result['panelHiddenAfterClose'], f'panel must hide after close button: {result}'
+    assert result['selectionClearedAfterClose'], f'selection must clear after close: {result}'
