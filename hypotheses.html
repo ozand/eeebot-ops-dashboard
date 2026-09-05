@@ -892,7 +892,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">284</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">67.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-04 23:38:46.850185 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">8.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="12">data: 12s old &middot; generated 23:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="15">data: 14s old &middot; generated 00:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -907,7 +907,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests verifying repository-relative and directory-relative path resolution for markdown catalog indexes</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-04T10:21:37.742115Z">seen 10:21 UTC</span>
+                <span class="hypo-ts" title="2026-09-04T10:21:37.742115Z">seen Sep 4</span>
                 
               </div>
             </li>
@@ -916,7 +916,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Support directory-relative and repo-relative markdown links in test_memory_index_facts.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-04T02:06:41.522836Z">seen 02:06 UTC</span>
+                <span class="hypo-ts" title="2026-09-04T02:06:41.522836Z">seen Sep 4</span>
                 
               </div>
             </li>
@@ -1872,20 +1872,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Pre-proposer demand deduplication filtering</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing intent fingerprinting at demand ingestion before invoking the proposer will eliminate self-dedup cycle churn without degrading confirmed integration ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Apply deduplication hashing against recent cycle targets in nanobot/runtime/demand.py prior to candidate selection.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if skipped-duplicate drops to 0 and wasted_attempt_rate drops below 0.50 without reducing confirmed_integrations; refuted if confirmed_integration_ratio declines below 0.20.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-28T00:01:19.671542Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Harness Execution Coupling to Dissolve Confirmed Ratio Deficit</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling post-merge smoke validation to exercise entry points in newly completed scripts/*.py will increase completed_confirmed without generating additional script inventory, lifting confirmed_ratio above 0.50 while keeping tokens_per_integration below 2.7M.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Instrument harness validation to invoke --help or test fixtures for newly modified scripts under scripts/ during cycle gating.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if confirmed_ratio rises from 0.4095 to &gt;= 0.48 within 15 cycles with tokens_per_integration &lt;= 2.7M; refuted if confirmed_ratio remains &lt; 0.43.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941651Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Validator Parent Heartbeat Touch to Clear Stale Host Metrics</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Triggering a lightweight heartbeat stamp update for host_metrics during validator_harness_parent execution will clear the stale feed gap (stale_feeds=0) without spawning sidecar sub-processes that cause sidecar_write_during_spawn integrity incidents.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an in-process mtime refresh or passive host_metrics touch inside the validator harness parent execution routine.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if feeds.stale drops from 1 to 0 and host_metrics age remains &lt; 43200s over 5 consecutive cycles with 0 new integrity incidents; refuted if feed remains stale or sidecar integrity incidents increase.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941746Z</div>
@@ -2009,11 +1995,25 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Subagents fail with partial outcomes (0 files changed) because tool-call budgets are exhausted during inspection harnesses; enforcing a target-file edit requirement before turn 5 will convert partial cycles into code-bearing integrations without lowering clean compilation ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Inject a directive check in the subagent bridge prompt requiring an initial patch/edit application to target_path within the first 4 turns.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if partial outcomes with 0 files changed decrease by &gt;= 40% and confirmed_integration_ratio reaches &gt;= 0.70; refuted if compile_failing count exceeds 0.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-04T00:00:47.791393Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Inject recent git commit subjects into proposer context to dissolve self-dedup rejects</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Proposer rejects (50) and duplicate proposals (58) for repeat-failure CLI tools stem from the proposer LLM lacking recent commit subject history during prompt assembly. Providing recent git commit subjects for the target surface directly in the proposer prompt will reduce proposer self-dedup rejections by at least 40% without increasing cycle token overhead.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Update proposer context assembly to inject the last 15 git commit subject lines touching the candidate target file prior to calling the LLM proposer.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if self_dedup proposer rejects drop by &gt;=40% over 50 cycles with &lt;5% increase in proposer prompt tokens; refuted if reject rate remains above 8% of total proposals.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-05T00:00:39.952685Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Pre-seed standard library module cache to dissolve search turn-burn in subagent runs</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Subagents burn tool turns and time limits running dynamic inspection or redundant greps on absent stdlib/feature symbols (LESS-20260904-260bd269, LESS-20260904-d44ed220), driving repeat failures (rate 0.084) and wasted attempts (0.1126). Supplying sys.stdlib_module_names and strict single-grep absence rules in subagent system instructions will lower wasted attempt rate below 0.08.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an explicit runtime hint in subagent execution prompts specifying sys.stdlib_module_names lookup and single-sweep search termination rules.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.wasted_attempt_rate decreases to &lt;=0.08 and calls_per_integration decreases by &gt;=10%; refuted if wasted_attempt_rate stays &gt;=0.10.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-05T00:00:39.952792Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-04 23:55:48 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-09-04 23:38:46.850185 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-05 00:01:45 UTC &middot; host eeepc &middot; newest source 14s old &middot; <span class="footer-computed">scorecard computed 2026-09-04 23:38:46.850185 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
