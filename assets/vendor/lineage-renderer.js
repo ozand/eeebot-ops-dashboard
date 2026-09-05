@@ -121,6 +121,7 @@
     svg.setAttribute('data-lineage-rendered', 'lineage-tree');
     layout.edges.forEach(function (edge) {
       var path = svgEl('path');
+      path.setAttribute('fill', 'none');
       path.setAttribute('class', edge.basis === 'inferred' ? 'lineage-edge lineage-edge-chronological' : 'lineage-edge arch-edge');
       path.setAttribute('data-basis', edge.basis);
       path.setAttribute('data-source', edge.source);

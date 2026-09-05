@@ -221,6 +221,36 @@ def test_current_node_star_survives_the_client_render(tmp_path: Path) -> None:
     assert float(stars[0]['attrs']['x']) == float(_circles(result)['cycle-b']['attrs']['cx'])
 
 
+def test_issue212_edges_are_unfilled_and_lineage_has_outcome_legend(tmp_path: Path) -> None:
+    nodes = [
+        _node('root', None, '2026-09-01T00:00:00Z'),
+        _node('ok', 'root', '2026-09-01T01:00:00Z', outcome='integrated'),
+        _node('skip', 'root', '2026-09-01T02:00:00Z', outcome='skipped'),
+        _node('part', 'ok', '2026-09-01T03:00:00Z', outcome='partial'),
+        _node('fail', 'ok', '2026-09-01T04:00:00Z', outcome='failed'),
+    ]
+    result = _render(_payload(nodes, current_sha='ok'), tmp_path)
+    paths = _elements(result['svg'], 'path')
+    assert paths and all(path['attrs'].get('fill') == 'none' for path in paths), [path['attrs'] for path in paths]
+    classes = {part for circle in _circles(result).values() for part in circle['attrs']['class'].split()}
+    assert {'arch-integrated', 'arch-skipped', 'arch-partial', 'arch-failed'} <= classes
+
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-skip', 'outcome': 'skipped', 'ts': '2026-09-01T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-part', 'outcome': 'partial', 'ts': '2026-09-01T02:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-fail', 'outcome': 'failed', 'ts': '2026-09-01T03:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'current_sha': 'root', 'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T05:00:00Z')
+    assert '.lineage-edge { fill: none;' in tv.CSS
+    for style in ('.arch-node.arch-integrated', '.arch-node.arch-skipped', '.arch-node.arch-partial', '.arch-node.arch-failed'):
+        assert style in tv.CSS
+    assert html.count('stroke-dasharray') >= 3, 'non-integrated outcome styles and inferred edge legend are visually distinguishable beyond color'
+    assert 'class="lineage-legend"' in html
+    for label in ('recorded', 'inferred', 'integrated', 'skipped', 'partial', 'failed', 'current sha'):
+        assert label in html
+
+
 def test_day_filter_is_calendar_based_and_says_when_today_has_no_data(tmp_path: Path) -> None:
     days = ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05']
     probes = [
