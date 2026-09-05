@@ -2387,9 +2387,9 @@ def build_cycle_details(
         if not title and out.get('files_changed'):
             title = out['files_changed'][0]
         out['title'] = text(title or '(untitled cycle)')
-        if out.get('outcome') in ('failed', 'partial') and not out.get('gate_violations'):
-            out.pop('gate_violations', None)
-        else:
+        # #215: retain gate_violations when populated; strip only when empty so an
+        # empty list is not serialised but present violations are not silently dropped.
+        if not out.get('gate_violations'):
             out.pop('gate_violations', None)
     return records
 

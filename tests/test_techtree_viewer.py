@@ -3541,3 +3541,113 @@ class TestIssue204StrategistRunProvenance:
         assert "Strategist:" in html
         assert "inputs 5/5" in html
 
+
+# ─── #215 tests: gate_violations retained in cycle details export ─────────────
+
+def test_issue215_gate_violations_present_are_retained() -> None:
+    """#215: build_cycle_details() must keep gate_violations when the ledger row
+    contains violations. Previously both branches unconditionally popped the field.
+    """
+    details = tv.build_cycle_details(
+        ledger_rows=[{
+            'cycle_id': 'cycle-gv',
+            'outcome': 'failed',
+            'violations': ['budget exceeded', 'no tests added'],
+        }],
+        evolution_tree=None,
+        lessons=None,
+        reflections=None,
+    )
+    assert 'cycle-gv' in details
+    rec = details['cycle-gv']
+    assert 'gate_violations' in rec, (
+        'gate_violations must be present when violations are in the ledger row; '
+        f'keys present: {list(rec)}'
+    )
+    assert rec['gate_violations'] == ['budget exceeded', 'no tests added'], (
+        f'gate_violations content wrong: {rec["gate_violations"]}'
+    )
+
+
+def test_issue215_gate_violations_absent_are_stripped() -> None:
+    """#215: when no violations were recorded, gate_violations must not appear
+    in the output (empty list is not serialised — absence is not conflated with pass).
+    """
+    details = tv.build_cycle_details(
+        ledger_rows=[{
+            'cycle_id': 'cycle-ok',
+            'outcome': 'integrated',
+        }],
+        evolution_tree=None,
+        lessons=None,
+        reflections=None,
+    )
+    assert 'cycle-ok' in details
+    rec = details['cycle-ok']
+    assert 'gate_violations' not in rec, (
+        'gate_violations must be absent when no violations recorded; '
+        f'got: {rec.get("gate_violations")}'
+    )
+
+
+def test_issue215_gate_violations_field_missing_from_row_is_absent() -> None:
+    """#215: a ledger row with no violations key must not produce gate_violations
+    in the output — missing field is not conflated with gate pass (empty list).
+    """
+    details = tv.build_cycle_details(
+        ledger_rows=[{
+            'cycle_id': 'cycle-nf',
+            'outcome': 'partial',
+            # no 'violations' key at all
+        }],
+        evolution_tree=None,
+        lessons=None,
+        reflections=None,
+    )
+    assert 'cycle-nf' in details
+    rec = details['cycle-nf']
+    assert 'gate_violations' not in rec, (
+        'gate_violations must be absent when row has no violations key; '
+        f'got: {rec.get("gate_violations")}'
+    )
+
+
+def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
+    """#215 end-to-end: gate_violations from a ledger row must survive the full
+    render_pages() pipeline and appear in the published lineage-cycle-details.json.
+    """
+    fixture = {
+        'host': 'eeepc',
+        'now': '2026-09-01T05:00:00Z',
+        'evolution_tree': {'current_sha': 'sha-gv', 'nodes': {
+            'sha-gv': {'cycle_id': 'cycle-gv', 'parent_sha': None,
+                       'ts': '2026-09-01T01:00:00Z'},
+        }},
+        'ledger_tail': [{
+            'cycle_id': 'cycle-gv',
+            'phase': 'gate',
+            'outcome': 'failed',
+            'violations': ['tests must pass', 'coverage must be 80%'],
+            'ts': '2026-09-01T01:05:00Z',
+        }],
+        'lessons': None,
+        'reflections': None,
+        'cycle_titles': None,
+        'cycle_files': None,
+        'scorecard': None,
+        'task_titles': None,
+    }
+    pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-01 05:00:00')
+    assert tv.LINEAGE_DETAILS_FILE in pages, (
+        f'{tv.LINEAGE_DETAILS_FILE!r} not in rendered pages: {list(pages)}'
+    )
+    import json as _json
+    details = _json.loads(pages[tv.LINEAGE_DETAILS_FILE])
+    assert 'cycle-gv' in details, f'cycle-gv missing from details: {list(details)[:5]}'
+    rec = details['cycle-gv']
+    assert 'gate_violations' in rec, (
+        f'gate_violations lost in render_pages pipeline; keys: {list(rec)}'
+    )
+    assert 'tests must pass' in rec['gate_violations'], (
+        f'violation text missing: {rec["gate_violations"]}'
+    )
