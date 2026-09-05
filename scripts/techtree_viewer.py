@@ -5060,8 +5060,8 @@ CSS = '''
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
     .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
-    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
-    .lineage-legend-group { display: inline-flex; align-items: center; gap: 10px; }
+    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
+    .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
     .lineage-legend-title { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
     .lineage-legend-item { display: inline-flex; align-items: center; gap: 5px; color: #b8d0c2; }
     .lineage-legend-swatch { display: inline-block; vertical-align: middle; }
