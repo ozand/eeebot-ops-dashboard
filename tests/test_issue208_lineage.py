@@ -417,3 +417,72 @@ def test_d3_dag_is_gone_and_the_page_ships_only_the_renderer() -> None:
     assert 'sugiyama' not in html and 'graphStratify' not in html
     assert 'function renderDay' in html and 'lineageDayFilter' in html
     assert not re.search(r'<script[^>]+src=', html, re.I)
+
+
+@pytest.mark.parametrize('viewport_width', [320, 390])
+def test_issue212_mobile_legend_does_not_overflow(tmp_path: Path, viewport_width: int) -> None:
+    """#212 acceptance: the outcome legend must not overflow or clip at narrow mobile widths.
+
+    Regression: .lineage-legend-group was display:inline-flex without flex-wrap,
+    causing the Nodes group (integrated/skipped/partial/failed) to exceed viewport
+    at 390px and 320px — the "failed" label clipped ~7px beyond the edge.
+    Fix: flex-wrap:wrap on .lineage-legend-group.
+    """
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-r', 'sha': 'r', 'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-r', 'outcome': 'integrated', 'ts': '2026-09-01T01:00:00Z'},
+    ]
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T05:00:00Z'
+    )
+    page_file = tmp_path / 'legend_mobile.html'
+    page_file.write_text(html, encoding='utf-8')
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 800})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+
+        result = page.evaluate("""
+            () => {
+                const legend = document.querySelector('.lineage-legend');
+                if (!legend) return {error: 'no .lineage-legend found'};
+                const legendRect = legend.getBoundingClientRect();
+                const groups = Array.from(legend.querySelectorAll('.lineage-legend-group'));
+                const items = Array.from(legend.querySelectorAll('.lineage-legend-item'));
+                const overflowingGroups = groups.filter(g => g.scrollWidth > g.clientWidth + 2);
+                const overflowingItems = items.filter(el => {
+                    const r = el.getBoundingClientRect();
+                    return r.right > legendRect.right + 4;
+                });
+                return {
+                    legendRight: legendRect.right,
+                    legendScrollWidth: legend.scrollWidth,
+                    legendClientWidth: legend.clientWidth,
+                    groupsCount: groups.length,
+                    itemsCount: items.length,
+                    overflowingGroups: overflowingGroups.map(g => g.textContent.trim().slice(0, 40)),
+                    overflowingItems: overflowingItems.map(el => el.textContent.trim()),
+                };
+            }
+        """)
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['groupsCount'] >= 3, f'expected at least 3 legend groups, got {result}'
+    assert result['itemsCount'] >= 7, f'expected at least 7 legend items, got {result}'
+    assert result['legendScrollWidth'] <= result['legendClientWidth'] + 2, (
+        f'legend itself overflows at {viewport_width}px: '
+        f'scrollWidth={result["legendScrollWidth"]} > clientWidth={result["legendClientWidth"]}; '
+        f'result={result}'
+    )
+    assert not result['overflowingGroups'], (
+        f'overflowing groups at {viewport_width}px: {result["overflowingGroups"]}; full={result}'
+    )
+    assert not result['overflowingItems'], (
+        f'legend items overflow viewport at {viewport_width}px: {result["overflowingItems"]}; full={result}'
+    )
