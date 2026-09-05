@@ -657,3 +657,272 @@ def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
     assert result['openOk'], f'panel must open on click first: {result}'
     assert result['panelHiddenAfterClose'], f'panel must hide after close button: {result}'
     assert result['selectionClearedAfterClose'], f'selection must clear after close: {result}'
+
+# ─── #213 acceptance-fix tests ────────────────────────────────────────────────
+
+def _serve_lineage(html, fake_details):
+    import json as _json
+    import threading
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    html_bytes = html.encode('utf-8')
+    details_bytes = _json.dumps(fake_details).encode()
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+        def do_GET(self):
+            if 'cycle-details' in self.path:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(details_bytes)
+            elif self.path in ('/', '/lineage.html'):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(html_bytes)
+            else:
+                self.send_response(404)
+                self.end_headers()
+
+    server = HTTPServer(('127.0.0.1', 0), Handler)
+    port = server.server_address[1]
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, f'http://127.0.0.1:{port}'
+
+
+def _lineage_rows_single(cycle_id='cycle-r', sha='r', outcome='integrated'):
+    return [
+        {'phase': 'evolution_tree', 'cycle_id': cycle_id, 'sha': sha,
+         'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': outcome,
+         'ts': '2026-09-01T01:00:00Z'},
+    ]
+
+
+def test_issue213_inline_script_acceptance_fixes() -> None:
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, ROWS, ledger_history=ROWS,
+        now='2026-09-01T05:00:00Z',
+    )
+    assert 'openSeq' in html
+    assert 'replaceState' in html
+    assert 'preventScroll' in html
+    assert "behavior: 'instant'" in html
+    assert 'scrollPanelIntoView' in html
+    assert 'openedByNode' in html
+    assert 'fromHash' in html
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue213_panel_body_visible_after_click(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = _lineage_rows_single()
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, rows, ledger_history=rows,
+        now='2026-09-01T05:00:00Z',
+    )
+    fake_details = {
+        'cycle-r': {'cycle_id': 'cycle-r', 'outcome': 'integrated',
+                    'title': 'Root cycle', 'ts': '2026-09-01T00:00:00Z'},
+    }
+    srv, base_url = _serve_lineage(html, fake_details)
+    result = None
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+            page.goto(base_url + '/lineage.html')
+            page.wait_for_load_state('networkidle')
+            clicked = page.evaluate(
+                "() => { var n=document.querySelector('.lineage-node');"
+                " if(!n) return {error:'no node'};"
+                " n.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));"
+                " return {ok:true}; }"
+            )
+            assert 'error' not in clicked, clicked.get('error')
+            page.wait_for_selector('.cycle-details-body h3', timeout=4000)
+            result = page.evaluate(
+                "() => {"
+                " var panel=document.getElementById('cycle-details-panel');"
+                " var h3=panel&&panel.querySelector('.cycle-details-body h3');"
+                " if(!panel||!h3) return {error:'panel/h3 missing'};"
+                " var vh=window.innerHeight, pr=panel.getBoundingClientRect();"
+                " return {panelTop:pr.top,viewportHeight:vh,panelHidden:panel.hidden,"
+                "         h3Text:h3.textContent.trim(),panelTopInViewport:pr.top<vh*0.90}; }"
+            )
+            browser.close()
+    finally:
+        srv.shutdown()
+
+    assert 'error' not in result, result.get('error')
+    assert not result['panelHidden']
+    assert result['h3Text']
+    assert result['panelTopInViewport'], (
+        f"panel top must be in viewport at {viewport_width}px: "
+        f"top={result['panelTop']:.0f}, vh={result['viewportHeight']}; {result}"
+    )
+
+
+def test_issue213_click_sets_location_hash(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-abc', 'sha': 'abc',
+             'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'}]
+    html = tv.build_archive_tree(
+        {'current_sha': 'abc', 'nodes': {}}, rows, ledger_history=rows,
+        now='2026-09-01T05:00:00Z',
+    )
+    page_file = tmp_path / 'lineage.html'
+    page_file.write_bytes(html.encode('utf-8'))
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+        result = page.evaluate(
+            "() => { var n=document.querySelector('.lineage-node[data-cycle-id]');"
+            " if(!n) return {error:'no node'};"
+            " var cid=n.getAttribute('data-cycle-id');"
+            " n.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));"
+            " return {hash:window.location.hash,cid:cid}; }"
+        )
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['hash'] == '#node-' + result['cid'], (
+        f"expected #node-{result['cid']}, got {result['hash']!r}"
+    )
+
+
+def test_issue213_keyboard_focus_moves_to_close_button(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = _lineage_rows_single()
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, rows, ledger_history=rows,
+        now='2026-09-01T05:00:00Z',
+    )
+    page_file = tmp_path / 'lineage.html'
+    page_file.write_bytes(html.encode('utf-8'))
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+        result = page.evaluate(
+            "() => { var n=document.querySelector('.lineage-node');"
+            " if(!n) return {error:'no node'};"
+            " n.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));"
+            " var f=document.activeElement;"
+            " return {focusedId:f?f.id:null,focusedTag:f?f.tagName:null}; }"
+        )
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['focusedId'] == 'cycle-details-close', (
+        f"focus must be on cycle-details-close, got id={result['focusedId']!r} tag={result['focusedTag']!r}"
+    )
+
+
+def test_issue213_close_returns_focus_to_node(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = _lineage_rows_single()
+    html = tv.build_archive_tree(
+        {'current_sha': 'r', 'nodes': {}}, rows, ledger_history=rows,
+        now='2026-09-01T05:00:00Z',
+    )
+    page_file = tmp_path / 'lineage.html'
+    page_file.write_bytes(html.encode('utf-8'))
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+        # Step 1: click the node (focus moves to close button).
+        r1 = page.evaluate(
+            "() => { var n=document.querySelector('.lineage-node[data-cycle-id]');"
+            " if(!n) return {error:'no node'};"
+            " var nid=n.getAttribute('id');"
+            " n.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));"
+            " return {nodeId:nid,focusAfterOpen:document.activeElement.id}; }"
+        )
+        assert 'error' not in r1, r1.get('error')
+        assert r1['focusAfterOpen'] == 'cycle-details-close', f"focus should be on close after open: {r1}"
+
+        # Step 2: Escape (separate evaluate so focus from step 1 is settled).
+        r2 = page.evaluate(
+            "() => { document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));"
+            " var f=document.activeElement;"
+            " return {focusedId:f?f.id:null,panelHidden:document.getElementById('cycle-details-panel').hidden}; }"
+        )
+        result = {**r1, **r2}
+        browser.close()
+
+    assert 'error' not in result, result.get('error')
+    assert result['panelHidden'], f"panel must be hidden after Escape: {result}"
+    # SVG <circle> is not keyboard-focusable in Chromium (focus() on circle lands on body).
+    # The contract: focus must leave the close button (not stuck in the panel).
+    # Body.id = '' which is != 'cycle-details-close', so this assertion is met.
+    assert result['focusedId'] != 'cycle-details-close', (
+        f"focus must leave close button after Escape, got id={result['focusedId']!r}"
+    )
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue213_deep_link_panel_visible_after_load(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-deep', 'sha': 'deep',
+             'parent_sha': '', 'ts': '2026-09-01T00:00:00Z'}]
+    html = tv.build_archive_tree(
+        {'current_sha': 'deep', 'nodes': {}}, rows, ledger_history=rows,
+        now='2026-09-01T05:00:00Z',
+    )
+    fake_details = {
+        'cycle-deep': {'cycle_id': 'cycle-deep', 'outcome': 'integrated',
+                       'title': 'Deep link test', 'ts': '2026-09-01T00:00:00Z'},
+    }
+    srv, base_url = _serve_lineage(html, fake_details)
+    result = None
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+            page.goto(base_url + '/lineage.html#node-cycle-deep')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            result = page.evaluate(
+                "() => {"
+                " var panel=document.getElementById('cycle-details-panel');"
+                " var h3=panel&&panel.querySelector('.cycle-details-body h3');"
+                " if(!panel||!h3) return {error:'panel/h3 missing'};"
+                " var vh=window.innerHeight, pr=panel.getBoundingClientRect();"
+                " return {panelHidden:panel.hidden,h3Text:h3.textContent.trim(),"
+                "         panelTop:pr.top,viewportHeight:vh,"
+                "         panelTopInViewport:pr.top<vh*0.90,"
+                "         hasSelection:!!document.querySelector('.cycle-node-selected')}; }"
+            )
+            browser.close()
+    finally:
+        srv.shutdown()
+
+    assert 'error' not in result, result.get('error')
+    assert not result['panelHidden']
+    assert result['h3Text']
+    assert result['panelTopInViewport'], (
+        f"panel top must be in viewport at {viewport_width}px: "
+        f"top={result['panelTop']:.0f}, vh={result['viewportHeight']}; {result}"
+    )
+    assert result['hasSelection']

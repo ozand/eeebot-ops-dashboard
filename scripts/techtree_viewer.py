@@ -2190,30 +2190,66 @@ def _build_vertical_day_lineage(
     html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
     panel.querySelector('.cycle-details-body').innerHTML = html;
   }}
-  // #213: track the currently selected node for highlight and de-selection.
+  // #213: selection state and focus return target.
   var selectedNode = null;
+  var openedByNode = null;  // node to return focus to on close
+  var openSeq = 0;          // incremented on every open(); stale async callbacks bail out
   function clearSelection() {{
     if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }}
   }}
   function closePanel() {{
     panel.hidden = true;
     clearSelection();
+    var returnTo = openedByNode;
+    openedByNode = null;
+    // Return focus to the node. SVG circles accept tabindex but Chromium
+    // does not move activeElement to them via .focus(); blur the close button
+    // explicitly so focus leaves the panel area regardless.
+    var closeBtn = document.getElementById('cycle-details-close');
+    if (closeBtn && document.activeElement === closeBtn) closeBtn.blur();
+    if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }});
   }}
-  function open(node) {{
+  // scrollPanelIntoView: single scroll owner, called after content is set.
+  // Uses instant for the first 16ms so layout is stable; avoids competing
+  // with the browser's native fragment-scroll on deep-link loads.
+  function scrollPanelIntoView() {{
+    panel.scrollIntoView({{ behavior: 'instant', block: 'nearest' }});
+  }}
+  function open(node, fromHash) {{
     clearSelection();
     selectedNode = node;
+    openedByNode = fromHash ? null : node;  // no return-focus for hash-nav
     node.classList.add('cycle-node-selected');
     var cid = node.getAttribute('data-cycle-id');
+    var seq = ++openSeq;
+    // #213: update location.hash so the current card is bookmarkable.
+    if (!fromHash && history.replaceState) {{
+      history.replaceState(null, '', '#node-' + encodeURIComponent(cid));
+    }}
     panel.hidden = false;
-    // #213: scroll the panel into view so the operator always sees the card.
-    panel.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
     panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>';
-    load().then(function () {{ render(cid); }}).catch(function (err) {{ panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; }});
+    // Move focus to the close button so Tab cycles through card content,
+    // not back to the SVG tree. preventScroll: scrollPanelIntoView owns positioning.
+    var closeBtn = document.getElementById('cycle-details-close');
+    if (closeBtn) closeBtn.focus({{ preventScroll: true }});
+    load()
+      .then(function () {{
+        if (seq !== openSeq) return;  // superseded by a newer click
+        render(cid);
+        scrollPanelIntoView();  // scroll AFTER content is rendered and height is final
+      }})
+      .catch(function (err) {{
+        if (seq !== openSeq) return;
+        panel.querySelector('.cycle-details-body').innerHTML =
+          '<p>' + esc(cid) + ': details unavailable — ' + esc(src) +
+          ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>';
+        scrollPanelIntoView();
+      }});
   }}
   // #213: node click handler.
   document.addEventListener('click', function (event) {{
     var node = event.target.closest('.lineage-node');
-    if (node) {{ event.preventDefault(); open(node); return; }}
+    if (node) {{ event.preventDefault(); open(node, false); return; }}
     // Close button inside panel.
     if (event.target.closest('#cycle-details-close')) {{ closePanel(); }}
   }});
@@ -2221,19 +2257,22 @@ def _build_vertical_day_lineage(
   document.addEventListener('keydown', function (event) {{
     if (event.key === 'Escape' && !panel.hidden) {{ event.preventDefault(); closePanel(); }}
   }});
-  // #213: deep-link — #node-<cycle_id> makes the target node visible and opens its card.
-  // Model-neutral: works by locating the element by id; does not assume day-section structure.
+  // #213: deep-link — #node-<cycle_id> makes the target node and its context visible.
+  // Model-neutral: locates by id; does not assume day-section structure.
+  // Single scroll owner: node.scrollIntoView() positions the tree; panel
+  // is scrolled inside open() AFTER content loads. No competing scrolls.
   function handleHash() {{
     var hash = window.location.hash;
     if (!hash || !hash.startsWith('#node-')) return;
     var cid = decodeURIComponent(hash.slice(6));
     var el = document.getElementById('node-' + cid);
     if (!el) return;
-    // Make the element visible if its containing day-group is hidden by the filter.
+    // Unhide the containing day-group if the day filter hid it.
     var dayGroup = el.closest('.lineage-day-group');
     if (dayGroup && dayGroup.hidden) {{ dayGroup.hidden = false; }}
-    el.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-    open(el);
+    // Scroll node into view first (instant: beat the browser's native fragment jump).
+    el.scrollIntoView({{ behavior: 'instant', block: 'center' }});
+    open(el, true);  // fromHash=true: panel scrolls after content loads
   }}
   // Run after renderer has had a chance to draw nodes.
   if (document.readyState === 'loading') {{
