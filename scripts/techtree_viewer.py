@@ -2011,7 +2011,6 @@ def _build_vertical_day_lineage(
              # #208 step 7: filled by lineageDayFilter when the requested calendar window has no data.
              '<span class="lineage-filter-note" hidden></span></div>',
              '<div class="lineage-day-groups" data-lineage-default-mode="yesterday-today" data-lineage-default="' + ','.join(sorted(default_days)) + '">']
-    all_ordered = sorted(all_nodes.values(), key=lambda node: node['ts'])
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
     for day in days:
         trunk = sorted(grouped[day].values(), key=lambda node: node['ts'])

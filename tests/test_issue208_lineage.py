@@ -303,8 +303,9 @@ def test_one_parent_expression_feeds_nodes_edges_and_server_svg() -> None:
     parents = {twin_nodes['p']['parent'], twin_nodes['q']['parent']}
     assert None in parents and len(parents) == 2, twin_nodes
     # the server SVG (noscript fallback) uses the same basis: inferred edges are dashed, recorded are not
-    svg = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', html, re.S).group(1)
-    lines = re.findall(r'<line [^>]*>', svg)
+    svg_match = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', html, re.S)
+    assert svg_match is not None
+    lines = re.findall(r'<line [^>]*>', svg_match.group(1))
     inferred = [ln for ln in lines if 'lineage-edge-chronological' in ln]
     recorded = [ln for ln in lines if 'lineage-edge-chronological' not in ln]
     assert len(inferred) == 2 and all('stroke-dasharray' in ln for ln in inferred)
@@ -322,11 +323,15 @@ def test_cross_day_recorded_parent_is_a_stub_in_the_payload_not_a_guess() -> Non
     assert nodes['t']['parent'] is None and nodes['t'].get('parent_basis') is None
     assert nodes['t']['parent_day'] == '2026-08-31'
     assert nodes['u']['parent'] == 't' and nodes['u']['parent_basis'] == 'recorded'
-    section = re.search(r'<section class="lineage-day-group" data-day="2026-09-01">(.*?)</section>', html, re.S).group(1)
-    svg = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', section, re.S).group(1)
+    section_match = re.search(r'<section class="lineage-day-group" data-day="2026-09-01">(.*?)</section>', html, re.S)
+    assert section_match is not None
+    svg_match = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', section_match.group(1), re.S)
+    assert svg_match is not None
+    svg = svg_match.group(1)
     stub = re.search(r'<text class="lineage-hidden-parent" x="(\d+)" y="(\d+)"[^>]*>&#8617; from Aug 31</text>', svg)
     node_t = re.search(r'data-cycle-id="cycle-t" cx="(\d+)" cy="(\d+)"', svg)
-    assert stub and node_t
+    assert stub is not None
+    assert node_t is not None
     assert stub.group(1) == node_t.group(1) and int(stub.group(2)) == int(node_t.group(2)) - 14, 'the noscript stub sits on its node'
 
 
