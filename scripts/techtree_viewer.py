@@ -2010,6 +2010,18 @@ def _build_vertical_day_lineage(
              '<button type="button" data-lineage-filter="range">Apply</button>',
              # #208 step 7: filled by lineageDayFilter when the requested calendar window has no data.
              '<span class="lineage-filter-note" hidden></span></div>',
+             '<div class="lineage-legend" aria-label="Lineage Legend">',
+             '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>',
+             '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>',
+             '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>',
+             '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>',
+             '</div>',
              '<div class="lineage-day-groups" data-lineage-default-mode="yesterday-today" data-lineage-default="' + ','.join(sorted(default_days)) + '">']
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
     for day in days:
@@ -5043,7 +5055,20 @@ CSS = '''
        being scaled down until r=9 circles are 4 px and the labels unreadable. */
     .lineage-day-svg { display: block; height: auto; overflow: visible; }
     .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
-    .lineage-edge { stroke: #2f5c46; stroke-width: 2; }
+    .arch-node.arch-integrated { fill: #2fd3c4; stroke: #dcebe1; }
+    .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
+    .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
+    .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
+    .lineage-legend-group { display: inline-flex; align-items: center; gap: 10px; }
+    .lineage-legend-title { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-legend-item { display: inline-flex; align-items: center; gap: 5px; color: #b8d0c2; }
+    .lineage-legend-swatch { display: inline-block; vertical-align: middle; }
+    .lineage-legend-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend-edge-inferred { stroke-dasharray: 6 5; }
+    .lineage-legend-node { stroke-width: 2; }
+    .lineage-legend .arch-node { cursor: default; pointer-events: none; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
@@ -5056,7 +5081,7 @@ CSS = '''
     .cycle-details-body p { margin: 4px 0; }
     .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
     .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
-    .arch-star { fill: #56d364; font-size: 14px; }
+    .arch-star { fill: #56d364; color: #56d364; font-size: 14px; }
     .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
     /* Issue #93: day separator lines and date labels in the archive tree. */
     .arch-day-sep { stroke: #2f5c46; stroke-width: 1; stroke-dasharray: 4 3; }
