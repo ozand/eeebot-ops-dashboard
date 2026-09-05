@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Check out dashboard repository
         uses: actions/checkout@v4
+        with:
+          # #210: tests/test_techtree_sync_artifacts.py reads the pre-fix sync
+          # script from a pinned commit via `git show`; a depth-1 clone would
+          # silently skip that control test.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5

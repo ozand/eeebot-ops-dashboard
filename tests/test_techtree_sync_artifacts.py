@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import os
 import re
+import shutil
+import stat
 import subprocess
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,3 +114,329 @@ def test_sync_script_and_dropin_contract() -> None:
     assert "[ -s \"$tmp\" ]" in text
     assert "mv -f \"$tmp\" \"$destination\"" in text
     assert "rollback" in text
+    # #210: every curl call is time-bounded (an unreachable GitHub degrades
+    # instead of hanging the publish unit until TimeoutStartSec) and may not
+    # follow a redirect off https (what it fetches is installed as root).
+    assert "--max-time" in text and "--connect-timeout" in text and "--proto-redir =https" in text
+    curl_calls = len(re.findall(r"\bcurl --fail\b", text))
+    assert curl_calls >= 2
+    assert text.count("$CURL_OPTS") == curl_calls, "every curl call must carry the shared bounded options"
+
+
+# ---------------------------------------------------------------------------
+# Issue #210: the host's own copy of sync-manifest.txt is not itself a
+# manifest entry, so it can never update itself. A master change that
+# deletes or renames an entry (#209 removed the d3 assets) permanently
+# deadlocks every future sync: the stale local list names a file master no
+# longer has, and the all-or-nothing download rule aborts before the very
+# update that would fix the list. These tests drive the *actual* shipped
+# script end-to-end (bash -n only checks syntax, not behaviour) against a
+# fake `curl` on PATH, in a throwaway DEST -- never the real
+# /opt/eeebot-techtree, which requires root and does not exist in CI.
+# ---------------------------------------------------------------------------
+
+_FAKE_CURL_BODY = r"""#!/bin/sh
+url=""
+outfile=""
+# Consume the value-taking flags the real script passes explicitly, so the URL
+# is the only positional left whatever order the flags come in.
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -o) outfile="$2"; shift 2 ;;
+        --proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
+        -*) shift ;;
+        *) url="$1"; shift ;;
+    esac
+done
+mode="$(cat "$FAKE_CURL_MODE_FILE" 2>/dev/null || echo ok)"
+case "$url" in
+    */deploy/sync-manifest.txt)
+        if [ "$mode" = "manifest-404" ]; then
+            echo "curl: (22) The requested URL returned error: 404" >&2
+            exit 22
+        elif [ "$mode" = "manifest-garbage" ]; then
+            printf '%s' '<html>404 not found</html>' > "$outfile"
+            exit 0
+        elif [ "$mode" = "master-lists-missing" ]; then
+            printf '%s\n' 'scripts/foo.py' 'assets/vendor/missing.js' > "$outfile"
+            exit 0
+        else
+            printf '%s\n' 'scripts/foo.py' 'assets/vendor/bar.js' > "$outfile"
+            exit 0
+        fi
+        ;;
+    */scripts/foo.py)
+        printf '%s\n' 'print("ok")' > "$outfile"
+        exit 0
+        ;;
+    */assets/vendor/bar.js)
+        printf '%s\n' 'console.log(1);' > "$outfile"
+        exit 0
+        ;;
+    *)
+        echo "curl: (22) The requested URL returned error: 404" >&2
+        exit 22
+        ;;
+esac
+"""
+
+
+def _sh_path(path: Path) -> str:
+    """A path in the form the shell (sh: Git Bash / MSYS on Windows, native
+    on Linux) can use directly in the script under test -- a Windows
+    backslash path fed into a POSIX shell script is parsed as escape
+    sequences and word-split on the backslashes, not a single path."""
+    posix = path.as_posix()
+    if len(posix) > 1 and posix[1] == ":":
+        # C:/Temp/... -> /c/Temp/... (MSYS/Cygwin/WSL mount convention).
+        posix = f"/{posix[0].lower()}{posix[2:]}"
+    return posix
+
+
+def _write_fake_curl(bin_dir: Path, mode_file: Path) -> None:
+    curl_path = bin_dir / "curl"
+    body_without_shebang = _FAKE_CURL_BODY.split("\n", 1)[1]
+    curl_path.write_text(
+        f'#!/bin/sh\nFAKE_CURL_MODE_FILE="{_sh_path(mode_file)}"\n' + body_without_shebang,
+        encoding="utf-8",
+    )
+    curl_path.chmod(curl_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
+
+def _make_test_sync_script(dest: Path) -> Path:
+    """A copy of the real, shipped script with only DEST repointed at a
+    throwaway directory -- everything else, including the manifest-fetch
+    and self-heal logic under test, is byte-identical to what ships."""
+    text = SYNC.read_text(encoding="utf-8")
+    # A plain string replacement, not re.sub(..., f"DEST={dest}", ...): on
+    # Windows, dest contains backslashes, which re.sub's replacement-string
+    # parser interprets as escape sequences (\T is not a valid one).
+    patched = text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
+    assert patched != text, "could not locate DEST= line to redirect for the test"
+    script_path = dest.parent / "eeebot-techtree-sync-under-test.sh"
+    script_path.write_text(patched, encoding="utf-8")
+    script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    return script_path
+
+
+def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    # newline="\n": the host manifest is LF, and on Windows a default write_text
+    # emits CRLF, which `read -r` keeps -- the fake curl then sees
+    # "scripts/foo.py\r" and answers 404 for a file it serves.
+    (dest / "sync-manifest.txt").write_text(initial_manifest, encoding="utf-8", newline="\n")
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    mode_file = tmp_path / "mode.txt"
+    mode_file.write_text(mode, encoding="utf-8", newline="\n")
+    _write_fake_curl(bin_dir, mode_file)
+
+    script_path = _make_test_sync_script(dest)
+    env = dict(os.environ)
+    env.pop("SYNC_MANIFEST", None)  # a developer's own override must not steer the test
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    env.update(extra_env or {})
+    result = subprocess.run(
+        ["sh", str(script_path)],
+        capture_output=True, text=True, env=env,
+    )
+    result.dest = dest  # type: ignore[attr-defined]
+    return result
+
+
+@pytest.fixture()
+def sh_available() -> bool:
+    return shutil.which("sh") is not None
+
+
+def test_deleted_manifest_entry_no_longer_deadlocks_future_syncs(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """The exact #209/#210 scenario: the host's stale local manifest still
+    names a file (assets/vendor/old.js) that master has already deleted.
+    Before this fix, the sync always used the local copy and the download
+    for a deleted entry aborted the whole run (exit 1), forever, since the
+    manifest could never fix itself. After this fix, master's manifest --
+    which no longer lists the deleted entry -- is fetched and used instead,
+    so the deleted entry is never even requested and the remaining files
+    install successfully."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="ok",
+        initial_manifest="scripts/foo.py\nassets/vendor/old.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout
+    installed = sorted(p.relative_to(result.dest).as_posix() for p in result.dest.rglob("*") if p.is_file())
+    assert "assets/vendor/old.js" not in installed, "the deleted entry must never be fetched"
+    assert "assets/vendor/bar.js" in installed
+    assert "scripts/foo.py" in installed
+
+
+# The last pre-#210 revision of the sync script. Pinned to a commit, not to
+# origin/master: once this fix merges, origin/master IS the fixed script and a
+# control that read it would assert the bug against the fix.
+PRE_FIX_SYNC_REV = "fe68c075"
+
+
+def test_deleted_manifest_entry_deadlocks_the_pre_fix_script(tmp_path: Path, sh_available: bool) -> None:
+    """Non-regression control: reproduces the exact bug this issue reports
+    against the last un-patched revision of the script, so the fix above is
+    proven to fix a real, reproduced failure and not an imagined one."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    orig_text = subprocess.run(
+        ["git", "show", f"{PRE_FIX_SYNC_REV}:deploy/eeebot-techtree-sync.sh"],
+        cwd=ROOT, capture_output=True, text=True,
+    ).stdout
+    if not orig_text.strip():
+        pytest.skip(f"commit {PRE_FIX_SYNC_REV} not available in this checkout")
+    assert "manifest.remote" not in orig_text, "the pinned revision must be the pre-fix script"
+
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    (dest / "sync-manifest.txt").write_text(
+        "scripts/foo.py\nassets/vendor/old.js\n", encoding="utf-8", newline="\n"
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    mode_file = tmp_path / "mode.txt"
+    mode_file.write_text("ok", encoding="utf-8", newline="\n")
+    _write_fake_curl(bin_dir, mode_file)
+
+    patched = orig_text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
+    script_path = tmp_path / "eeebot-techtree-sync-pre-fix.sh"
+    script_path.write_text(patched, encoding="utf-8")
+    script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
+    env = dict(os.environ)
+    env.pop("SYNC_MANIFEST", None)
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    result = subprocess.run(["sh", str(script_path)], capture_output=True, text=True, env=env)
+
+    assert result.returncode != 0, (
+        f"expected the pre-fix script to deadlock on a deleted manifest entry, but it exited 0:\n{result.stdout}"
+    )
+    assert "download failed: assets/vendor/old.js" in result.stderr
+
+
+def test_manifest_fetch_failure_falls_back_visibly_and_still_syncs(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """Publish must never break because GitHub is unreachable. The fallback
+    to the local copy is not silent -- it prints a distinct journal line so
+    a run on the stale copy is never mistaken for a run on the fresh one."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="manifest-404",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "manifest fetch from master failed, falling back to local copy" in result.stderr
+    assert "using local manifest" in result.stdout
+    assert "installed 2 manifest file(s)" in result.stdout
+
+
+def test_unreachable_master_with_a_stale_local_copy_fails_loudly_not_silently(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """The residual failure mode this fix cannot remove: GitHub unreachable AND
+    the local copy still names a deleted file. The run must still exit non-zero
+    (nothing installed, publish proceeds on the existing generator via the
+    drop-in's `-`), but the journal must carry BOTH facts -- which manifest was
+    used and why -- so the operator can tell "GitHub was down" from "the
+    manifest deadlocked" without reading the script."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="manifest-404",
+        initial_manifest="scripts/foo.py\nassets/vendor/old.js\n",
+    )
+    assert result.returncode != 0
+    assert "manifest fetch from master failed, falling back to local copy" in result.stderr
+    assert "a stale local copy can still abort this run" in result.stderr
+    assert "using local manifest" in result.stdout
+    assert "download failed: assets/vendor/old.js" in result.stderr
+    assert not (result.dest / "scripts" / "foo.py").exists(), "all-or-nothing: nothing is installed on a failed run"
+
+
+def test_manifest_fetch_garbage_response_falls_back_visibly(tmp_path: Path, sh_available: bool) -> None:
+    """A 200 response that isn't a manifest (an HTML error page, a JSON
+    error body) must be rejected the same way a network failure is --
+    fall back to the local copy, log why, and keep publishing."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="manifest-garbage",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "manifest fetched from master is empty or unrecognisable, falling back to local copy" in result.stderr
+    assert "using local manifest" in result.stdout
+
+
+def test_write_back_is_skipped_when_a_master_manifest_entry_fails_to_install(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """The self-heal invariant: master's manifest replaces the local copy ONLY
+    after every file it names has installed. A manifest that lists a file the
+    fetch cannot get (raw CDN behind the push) fails the run, installs nothing,
+    and leaves the local copy byte-identical."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    initial = "scripts/foo.py\nassets/vendor/bar.js\n"
+    result = _run_sync(tmp_path, mode="master-lists-missing", initial_manifest=initial)
+    assert result.returncode != 0
+    assert "using master manifest" in result.stdout
+    assert "download failed: assets/vendor/missing.js" in result.stderr
+    assert "local manifest copy updated" not in result.stdout
+    assert not (result.dest / "scripts" / "foo.py").exists()
+    assert (result.dest / "sync-manifest.txt").read_text(encoding="utf-8") == initial
+
+
+def test_explicit_sync_manifest_override_is_never_overwritten(tmp_path: Path, sh_available: bool) -> None:
+    """SYNC_MANIFEST is an operator's pinned choice: it is read as the fallback
+    but master's manifest is not written over it after a successful sync."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    pinned = tmp_path / "pinned-manifest.txt"
+    pinned.write_text("scripts/foo.py\n", encoding="utf-8", newline="\n")
+    result = _run_sync(
+        tmp_path, mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={"SYNC_MANIFEST": _sh_path(pinned)},
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout  # master's manifest was still preferred for the run
+    assert "SYNC_MANIFEST is set explicitly; not updating it from master" in result.stdout
+    assert pinned.read_text(encoding="utf-8") == "scripts/foo.py\n"
+
+
+def test_crlf_manifest_lines_are_tolerated(tmp_path: Path, sh_available: bool) -> None:
+    """A local copy edited on Windows must not turn every entry into a 404."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(tmp_path, mode="manifest-404", initial_manifest="scripts/foo.py\r\nassets/vendor/bar.js\r\n")
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout
+
+
+def test_successful_master_sync_heals_the_local_manifest_copy(tmp_path: Path, sh_available: bool) -> None:
+    """Once master's manifest is fetched, validated, and every named file
+    actually installs, it is written back over the local fallback copy --
+    the step that stops a single deleted entry from deadlocking every
+    future run forever: the fallback now reflects the last manifest that
+    was proven to work, not whatever it was initialized with."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="ok",
+        initial_manifest="scripts/foo.py\nassets/vendor/old.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "local manifest copy updated from master" in result.stdout
+    healed = (result.dest / "sync-manifest.txt").read_text(encoding="utf-8")
+    assert healed == "scripts/foo.py\nassets/vendor/bar.js\n"
