@@ -157,13 +157,20 @@
         svg.appendChild(star);
       }
       var circle = svgEl('circle');
+      var cid = node.cycle_id || node.sha;
       circle.setAttribute('class', 'arch-node arch-' + (node.outcome || 'integrated') + ' lineage-node');
-      circle.setAttribute('data-cycle-id', node.cycle_id || node.sha);
+      circle.setAttribute('data-cycle-id', cid);
       circle.setAttribute('cx', position.x);
       circle.setAttribute('cy', position.y);
       circle.setAttribute('r', String(RADIUS));
+      // #213: keyboard accessibility — each node is a focusable interactive element.
+      circle.setAttribute('tabindex', '0');
+      circle.setAttribute('role', 'button');
+      circle.setAttribute('aria-label', (node.title || cid) + ' — click for details');
+      // #213: stable fragment id for deep-link navigation.
+      circle.setAttribute('id', 'node-' + cid);
       var title = svgEl('title');
-      title.textContent = node.title || node.cycle_id || node.sha;
+      title.textContent = node.title || cid;
       circle.appendChild(title);
       svg.appendChild(circle);
     });
@@ -242,9 +249,24 @@
     });
     var root = document.querySelector('.lineage-day-groups');
     if (root) attachFilter(root);
+    // #213: keyboard activation — Enter/Space on a focused lineage-node fires click.
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      var node = document.activeElement && document.activeElement.closest('.lineage-node');
+      if (node) { event.preventDefault(); node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); }
+    });
   }
 
-  window.lineageRenderer = { layoutDay: layoutDay, renderDay: renderDay };
+  // #213: selectNode(cycleId) — used by the deep-link handler to programmatically
+  // activate a node after the renderer has finished. Returns the element or null.
+  function selectNode(cycleId) {
+    var el = document.getElementById('node-' + cycleId);
+    if (!el) return null;
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return el;
+  }
+
+  window.lineageRenderer = { layoutDay: layoutDay, renderDay: renderDay, selectNode: selectNode };
   window.lineageDayFilter = { select: selectDays };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();

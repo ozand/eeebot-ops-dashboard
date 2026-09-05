@@ -2172,7 +2172,7 @@ def _build_vertical_day_lineage(
     # filtered: the 1,116 records without a node are the only place task
     # identity (title, serves, demand_id) is recorded. The day filter itself
     # lives in lineage-renderer.js (lineageDayFilter), not here.
-    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" data-cycle-details-src="{LINEAGE_DETAILS_FILE}" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{inline_scripts}<script>
+    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" data-cycle-details-src="{LINEAGE_DETAILS_FILE}" hidden aria-label="Cycle details"><h2 class="cycle-details-title">Cycle details <button class="cycle-details-close" id="cycle-details-close" aria-label="Close cycle details">&times;</button></h2><div class="cycle-details-body"></div></section>{inline_scripts}<script>
 (function () {{
   var panel = document.getElementById('cycle-details-panel'), src = panel.getAttribute('data-cycle-details-src'), data = null, loading = null;
   function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
@@ -2190,16 +2190,61 @@ def _build_vertical_day_lineage(
     html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
     panel.querySelector('.cycle-details-body').innerHTML = html;
   }}
+  // #213: track the currently selected node for highlight and de-selection.
+  var selectedNode = null;
+  function clearSelection() {{
+    if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }}
+  }}
+  function closePanel() {{
+    panel.hidden = true;
+    clearSelection();
+  }}
   function open(node) {{
+    clearSelection();
+    selectedNode = node;
+    node.classList.add('cycle-node-selected');
     var cid = node.getAttribute('data-cycle-id');
     panel.hidden = false;
+    // #213: scroll the panel into view so the operator always sees the card.
+    panel.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
     panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>';
     load().then(function () {{ render(cid); }}).catch(function (err) {{ panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; }});
   }}
+  // #213: node click handler.
   document.addEventListener('click', function (event) {{
     var node = event.target.closest('.lineage-node');
-    if (node) {{ event.preventDefault(); open(node); }}
+    if (node) {{ event.preventDefault(); open(node); return; }}
+    // Close button inside panel.
+    if (event.target.closest('#cycle-details-close')) {{ closePanel(); }}
   }});
+  // #213: Escape key closes the panel and clears selection.
+  document.addEventListener('keydown', function (event) {{
+    if (event.key === 'Escape' && !panel.hidden) {{ event.preventDefault(); closePanel(); }}
+  }});
+  // #213: deep-link — #node-<cycle_id> makes the target node visible and opens its card.
+  // Model-neutral: works by locating the element by id; does not assume day-section structure.
+  function handleHash() {{
+    var hash = window.location.hash;
+    if (!hash || !hash.startsWith('#node-')) return;
+    var cid = decodeURIComponent(hash.slice(6));
+    var el = document.getElementById('node-' + cid);
+    if (!el) return;
+    // Make the element visible if its containing day-group is hidden by the filter.
+    var dayGroup = el.closest('.lineage-day-group');
+    if (dayGroup && dayGroup.hidden) {{ dayGroup.hidden = false; }}
+    el.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+    open(el);
+  }}
+  // Run after renderer has had a chance to draw nodes.
+  if (document.readyState === 'loading') {{
+    document.addEventListener('DOMContentLoaded', handleHash);
+  }} else {{
+    // Renderer runs synchronously on DOMContentLoaded; by the time this inline
+    // script body runs the DOM is ready but renderer may not yet have fired.
+    // Use a microtask to let renderer finish first.
+    Promise.resolve().then(handleHash);
+  }}
+  window.addEventListener('hashchange', handleHash);
 }})();
 </script>''')
     return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
