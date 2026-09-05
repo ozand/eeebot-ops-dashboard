@@ -104,18 +104,23 @@ mkdir -p "$DEST" "$TMP_ROOT"
 # Either branch prints a distinct, visible journal line -- a silent
 # fallback to a stale local copy would just be the original bug in a new
 # wrapper, and the operator explicitly ruled that out.
+# Bounded network waits on every curl call: an unreachable GitHub must
+# degrade to the local copy, not hang this ExecStartPre until the unit's
+# TimeoutStartSec (300 s) kills the whole publish.
+CURL_TIMEOUTS="--connect-timeout 10 --max-time 60"
 MANIFEST="$LOCAL_MANIFEST"
 manifest_source=local
-if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
+# shellcheck disable=SC2086  # CURL_TIMEOUTS is deliberately word-split
+if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_TIMEOUTS \
     "$RAW_BASE/deploy/sync-manifest.txt" -o "$TMP_ROOT/manifest.remote"; then
     if manifest_looks_valid "$TMP_ROOT/manifest.remote"; then
         MANIFEST="$TMP_ROOT/manifest.remote"
         manifest_source=master
     else
-        echo "techtree sync: manifest fetched from master is empty or unrecognisable, falling back to local copy: $LOCAL_MANIFEST" >&2
+        echo "techtree sync: manifest fetched from master is empty or unrecognisable, falling back to local copy: $LOCAL_MANIFEST (a stale local copy can still abort this run on a deleted entry -- #210)" >&2
     fi
 else
-    echo "techtree sync: manifest fetch from master failed, falling back to local copy: $LOCAL_MANIFEST" >&2
+    echo "techtree sync: manifest fetch from master failed, falling back to local copy: $LOCAL_MANIFEST (a stale local copy can still abort this run on a deleted entry -- #210)" >&2
 fi
 [ -r "$MANIFEST" ] || { echo "techtree sync: manifest missing: $MANIFEST" >&2; exit 1; }
 echo "techtree sync: using $manifest_source manifest ($MANIFEST)"
@@ -127,7 +132,8 @@ while IFS= read -r relative || [ -n "$relative" ]; do
         /*|*..*) echo "techtree sync: unsafe manifest path: $relative" >&2; exit 1 ;;
     esac
     tmp="$TMP_ROOT/$index"
-    if ! curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
+    # shellcheck disable=SC2086
+    if ! curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_TIMEOUTS \
         "$RAW_BASE/$relative" -o "$tmp"; then
         echo "techtree sync: download failed: $relative" >&2
         exit 1

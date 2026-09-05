@@ -114,6 +114,10 @@ def test_sync_script_and_dropin_contract() -> None:
     assert "[ -s \"$tmp\" ]" in text
     assert "mv -f \"$tmp\" \"$destination\"" in text
     assert "rollback" in text
+    # #210: every curl call is time-bounded so an unreachable GitHub degrades
+    # instead of hanging the publish unit until TimeoutStartSec.
+    assert "--max-time" in text and "--connect-timeout" in text
+    assert text.count("$CURL_TIMEOUTS") == 2, "both the manifest fetch and the file fetch must be bounded"
 
 
 # ---------------------------------------------------------------------------
@@ -214,12 +218,15 @@ def _make_test_sync_script(dest: Path) -> Path:
 def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str) -> subprocess.CompletedProcess:
     dest = tmp_path / "dest"
     dest.mkdir()
-    (dest / "sync-manifest.txt").write_text(initial_manifest, encoding="utf-8")
+    # newline="\n": the host manifest is LF, and on Windows a default write_text
+    # emits CRLF, which `read -r` keeps -- the fake curl then sees
+    # "scripts/foo.py\r" and answers 404 for a file it serves.
+    (dest / "sync-manifest.txt").write_text(initial_manifest, encoding="utf-8", newline="\n")
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     mode_file = tmp_path / "mode.txt"
-    mode_file.write_text(mode, encoding="utf-8")
+    mode_file.write_text(mode, encoding="utf-8", newline="\n")
     _write_fake_curl(bin_dir, mode_file)
 
     script_path = _make_test_sync_script(dest)
@@ -263,28 +270,35 @@ def test_deleted_manifest_entry_no_longer_deadlocks_future_syncs(
     assert "scripts/foo.py" in installed
 
 
+# The last pre-#210 revision of the sync script. Pinned to a commit, not to
+# origin/master: once this fix merges, origin/master IS the fixed script and a
+# control that read it would assert the bug against the fix.
+PRE_FIX_SYNC_REV = "fe68c075"
+
+
 def test_deleted_manifest_entry_deadlocks_the_pre_fix_script(tmp_path: Path, sh_available: bool) -> None:
     """Non-regression control: reproduces the exact bug this issue reports
-    against origin/master's un-patched script, so the fix above is proven
-    to fix a real, reproduced failure and not an imagined one."""
+    against the last un-patched revision of the script, so the fix above is
+    proven to fix a real, reproduced failure and not an imagined one."""
     if not sh_available:
         pytest.skip("sh not available")
     orig_text = subprocess.run(
-        ["git", "show", "origin/master:deploy/eeebot-techtree-sync.sh"],
+        ["git", "show", f"{PRE_FIX_SYNC_REV}:deploy/eeebot-techtree-sync.sh"],
         cwd=ROOT, capture_output=True, text=True,
     ).stdout
     if not orig_text.strip():
-        pytest.skip("origin/master not available in this checkout")
+        pytest.skip(f"commit {PRE_FIX_SYNC_REV} not available in this checkout")
+    assert "manifest.remote" not in orig_text, "the pinned revision must be the pre-fix script"
 
     dest = tmp_path / "dest"
     dest.mkdir()
     (dest / "sync-manifest.txt").write_text(
-        "scripts/foo.py\nassets/vendor/old.js\n", encoding="utf-8"
+        "scripts/foo.py\nassets/vendor/old.js\n", encoding="utf-8", newline="\n"
     )
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     mode_file = tmp_path / "mode.txt"
-    mode_file.write_text("ok", encoding="utf-8")
+    mode_file.write_text("ok", encoding="utf-8", newline="\n")
     _write_fake_curl(bin_dir, mode_file)
 
     patched = orig_text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
@@ -318,6 +332,29 @@ def test_manifest_fetch_failure_falls_back_visibly_and_still_syncs(
     assert "manifest fetch from master failed, falling back to local copy" in result.stderr
     assert "using local manifest" in result.stdout
     assert "installed 2 manifest file(s)" in result.stdout
+
+
+def test_unreachable_master_with_a_stale_local_copy_fails_loudly_not_silently(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """The residual failure mode this fix cannot remove: GitHub unreachable AND
+    the local copy still names a deleted file. The run must still exit non-zero
+    (nothing installed, publish proceeds on the existing generator via the
+    drop-in's `-`), but the journal must carry BOTH facts -- which manifest was
+    used and why -- so the operator can tell "GitHub was down" from "the
+    manifest deadlocked" without reading the script."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(
+        tmp_path, mode="manifest-404",
+        initial_manifest="scripts/foo.py\nassets/vendor/old.js\n",
+    )
+    assert result.returncode != 0
+    assert "manifest fetch from master failed, falling back to local copy" in result.stderr
+    assert "a stale local copy can still abort this run" in result.stderr
+    assert "using local manifest" in result.stdout
+    assert "download failed: assets/vendor/old.js" in result.stderr
+    assert not (result.dest / "scripts" / "foo.py").exists(), "all-or-nothing: nothing is installed on a failed run"
 
 
 def test_manifest_fetch_garbage_response_falls_back_visibly(tmp_path: Path, sh_available: bool) -> None:
