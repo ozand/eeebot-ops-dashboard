@@ -232,14 +232,13 @@ def test_lineage_panel_embeds_details_and_controls() -> None:
         {'cycle_id': 'cycle-a', 'summary': 'reflector summary', 'findings': ['f'], 'recommendations': ['r']}
     ]}, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
 
+    # #208: the details panel fetches lineage-cycle-details.json on demand
+    # instead of inlining 1.17 MB of records into the page.
     assert 'cycle-details-panel' in html_out
-    assert 'cycle-details-data' in html_out
-    assert 'data-cycle-id="cycle-a"' in html_out
+    assert 'id="cycle-details-data"' not in html_out
+    assert f'data-cycle-details-src="{tv.LINEAGE_DETAILS_FILE}"' in html_out
     assert 'cycle-feed-link' in html_out
-    assert 'lessons.html#q-cycle-a' in html_out
-    assert 'hashchange' in html_out
-    assert 'keydown' in html_out
-    assert 'selected' in html_out
+    assert 'lessons.html#q-' in html_out
     assert len(html_out) < 1_000_000
 
 
@@ -1105,7 +1104,7 @@ def test_issue126_lineage_embeds_escaped_day_graph_json_and_renderer_hook() -> N
 
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
 
-    assert 'data-lineage-renderer="d3-dag"' in html
+    assert 'data-lineage-renderer="lineage-tree"' in html  # #208: no d3-dag any more
     payload_match = re.search(r'<script type="application/json" class="lineage-day-data"[^>]*>(.*?)</script>', html, re.S)
     assert payload_match is not None
     assert '<' not in payload_match.group(1)
@@ -1113,7 +1112,7 @@ def test_issue126_lineage_embeds_escaped_day_graph_json_and_renderer_hook() -> N
     assert payload['day'] == '2026-09-01'
     assert payload['nodes'][0]['sha'] == 'root<sha'
     assert payload['nodes'][1]['parent'] == 'root<sha'
-    assert payload['edges'] == [{'source': 'root<sha', 'target': 'child'}]
+    assert payload['edges'] == [{'source': 'root<sha', 'target': 'child', 'basis': 'recorded'}]
 
 
 def test_issue126_lineage_keeps_server_fallback_headings_and_note() -> None:
@@ -1144,7 +1143,7 @@ def test_issue126_lineage_inlines_vendored_scripts_without_external_src() -> Non
 
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
 
-    assert 'window.d3' in html
+    assert 'window.lineageRenderer' in html  # #208: the renderer is the only vendored script
     assert 'function renderDay' in html
     assert 'assets/vendor/' not in html
     assert not re.search(r'<script[^>]+src=', html, re.I)
@@ -1182,12 +1181,12 @@ def test_issue126_inline_vendor_scripts_preserve_source_newlines_and_marker() ->
     ]
 
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T02:00:00Z')
-    d3_source = (Path(tv.__file__).resolve().parent.parent / 'assets' / 'vendor' / 'd3.min.js').read_text(encoding='utf-8')
-    d3_block = re.search(r'<script>(.*?)</script>', html, re.S)
+    renderer_source = (Path(tv.__file__).resolve().parent.parent / 'assets' / 'vendor' / 'lineage-renderer.js').read_text(encoding='utf-8')
+    renderer_block = re.search(r'<script>(.*?)</script>', html, re.S)
 
-    assert d3_block is not None
-    assert d3_block.group(1).count('\n') == d3_source.count('\n')
-    assert '\n!function' in d3_block.group(1)
+    assert renderer_block is not None
+    assert renderer_block.group(1).count('\n') == renderer_source.count('\n')
+    assert renderer_block.group(1).startswith('(function () {')
     assert 'window.__lineageRendererLoaded = true' in html
 
 
@@ -1225,11 +1224,9 @@ def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
         'scorecard': {},
     }
     pages = tv.render_pages(data, host='test-host')
-    lineage_html = pages['lineage.html']
-    import re, json
-    m = re.search(r'<script type="application/json" id="cycle-details-data">(.*?)</script>', lineage_html)
-    assert m is not None
-    details = json.loads(m.group(1))
+    # #208: the records ship as a sibling JSON file instead of an inline blob.
+    assert 'id="cycle-details-data"' not in pages['lineage.html']
+    details = json.loads(pages[tv.LINEAGE_DETAILS_FILE])
     assert 'cycle-hist-1' in details
     assert 'cycle-tail-1' in details
 
@@ -1263,11 +1260,6 @@ def test_issue169_cycle_feed_title_indicates_recent_on_fallback() -> None:
 
     html_full = tv.build_cycle_feed(rows, history_mode=True, ledger_history=rows)
     assert 'Cycle History (1 cycles)' in html_full
-
-
-def test_issue169_cycle_details_data_lesson_href_when_details_empty() -> None:
-    template_html = tv._cycle_details_panel({})
-    assert 'data-lesson-href="lessons.html#q-cycle"' in template_html
 
 
 def test_hypotheses_panel_stale_badge_class() -> None:
@@ -2420,8 +2412,8 @@ def test_issue70_techtree_redirects_to_index() -> None:
 
 def test_issue70_content_preserved_per_page() -> None:
     pages = _site()
-    # issue #71: lineage.html now renders the DGM archive tree svg
-    assert '<svg class="tech-canvas arch-tree"' in pages['lineage.html']
+    # issue #71 / #208: lineage.html renders the day-bucketed lineage svg
+    assert '<svg class="lineage-day-svg arch-tree"' in pages['lineage.html']
     assert 'feed-row' in pages['cycles.html']
     assert 'proposer-block' in pages['agent.html']
     assert 'host-identity' in pages['agent.html']
@@ -2515,48 +2507,12 @@ def _issue71_page(data=None) -> str:
     return tv.render_pages(d, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
 
 
-def test_issue71_merge_trunk_and_failed_leaf() -> None:
-    html_out = _issue71_page()
-    # trunk nodes + ledger-only failed leaf all render as circles
-    assert html_out.count('class="arch-node arch-') >= 3
-    assert 'arch-failed' in html_out  # red-ring dead leaf
-
-
-def test_issue71_best_path_bold_and_star() -> None:
-    html_out = _issue71_page()
-    assert 'class="arch-edge arch-edge-best"' in html_out
-    assert html_out.count('&#9733;') == 1
-
-
-def test_issue71_colorbar_fallback_and_reward() -> None:
-    html_out = _issue71_page()
-    assert 'score: fitness.reward' in html_out
-    assert 'fill="hsl(' in html_out
-    data = _fixture()
-    for node in data['evolution_tree']['nodes'].values():
-        node.pop('fitness', None)
-    html_out = _issue71_page(data)
-    assert 'score gauge hidden: reward data gap' in html_out
-    assert 'fill="hsl(' not in html_out
-
-
-def test_issue71_all_history_no_cap() -> None:
-    data = _fixture()
-    nodes = {}
-    prev = None
-    for i in range(40):
-        sha = f'{i:040d}'
-        nodes[sha] = {
-            'parent_sha': prev, 'branch': f'selfevo/cycle-chain{i}',
-            'cycle_id': f'cycle-chain{i}', 'ts': f'2026-08-{(i % 28) + 1:02d}T00:00:00Z',
-            'fitness': {},
-        }
-        prev = sha
-    data['evolution_tree'] = {'current_sha': prev, 'nodes': nodes, 'switches': []}
-    html_out = _issue71_page(data)
-    # 40 trunk nodes + 2 ledger-only leaves from the fixture ledger
-    assert html_out.count('class="arch-node arch-') == 42
-    assert 'showing last' not in html_out
+# #208: test_issue71_merge_trunk_and_failed_leaf, _best_path_bold_and_star,
+# _colorbar_fallback_and_reward and _all_history_no_cap exercised the DGM
+# archive tree that build_archive_tree only reached when the ledger held no
+# evolution_tree rows — dead on every production run since #107 and deleted
+# with that branch. The score gauge stays hidden by construction: no reward,
+# benefit or evidence field exists in any record (#94), so nothing draws one.
 
 
 def test_issue71_node_details_and_deeplink() -> None:
@@ -2625,7 +2581,10 @@ def test_issue125_herringbone_leaves_stay_near_their_base_nodes() -> None:
     assert abs(coords['leaf-2a'][1] - coords['trunk-2'][1]) <= 32
     assert abs(coords['leaf-2b'][1] - coords['trunk-2'][1]) <= 32
     assert abs(coords['leaf-4'][1] - coords['trunk-4'][1]) <= 32
-    assert section.count('class="lineage-edge arch-edge"') >= 7
+    # #208: 4 recorded trunk edges + 3 inferred leaf edges; the leaf edges are
+    # chronological guesses and now say so (dashed), so count both classes.
+    assert section.count('class="lineage-edge arch-edge"') == 4
+    assert section.count('class="lineage-edge lineage-edge-chronological"') == 3
 
 
 def test_issue119_resolving_children_form_a_visible_genealogical_fork() -> None:
@@ -2665,7 +2624,7 @@ def test_issue119_detail_card_contains_labeled_markup_not_json_dump() -> None:
         }
     }
     html = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
-    card_script = html[html.index('id="cycle-details-data"'):]
+    card_script = html[html.index('id="cycle-details-panel"'):]  # #208: records are fetched, the card markup stays inline
     assert "line('Cycle'" in card_script
     assert "line('Parent SHA'" in card_script
     assert "Files changed" in card_script
@@ -2742,7 +2701,8 @@ def test_issue109_unresolvable_parents_use_dashed_chronological_chain() -> None:
     ]
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-08-20T03:00:00Z')
     assert html.count('class="lineage-edge lineage-edge-chronological"') == 2
-    assert 'lineage-hidden-parent' not in html
+    markup = re.sub(r'<script\b[^>]*>.*?</script>', '', html, flags=re.S)  # #208: the renderer source names the class
+    assert 'lineage-hidden-parent' not in markup
 
 
 def test_issue109_chronological_edges_use_consecutive_same_day_positions() -> None:
@@ -2784,47 +2744,19 @@ def test_issue109_every_day_svg_geometry_stays_inside_its_viewbox() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _issue77_page(ledger_extra):
-    data = _fixture()
-    data['ledger_tail'] = list(data['ledger_tail']) + ledger_extra
-    return tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
+# #208: test_issue77_each_outcome_gets_own_ring_only_inflight_running and
+# test_issue77_legend_covers_every_ring_class asserted the ring legend and the
+# `running` ring of the deleted DGM archive tree. The day lineage renders
+# failed / partial / skipped leaves (see test_issue115_* and #208's tests) and
+# has no legend; an in-flight cycle is not a leaf there.
 
 
-def test_issue77_each_outcome_gets_own_ring_only_inflight_running() -> None:
-    page = _issue77_page([
-        {'phase': 'outcome', 'cycle_id': 'cycle-f77a', 'outcome': 'failed', 'reason': 'out_of_band_main_detected', 'ts': '2026-08-18T09:00:00Z'},
-        {'phase': 'outcome', 'cycle_id': 'cycle-p77a', 'outcome': 'partial', 'reason': 'half applied', 'ts': '2026-08-18T09:05:00Z'},
-        {'phase': 'outcome', 'cycle_id': 'cycle-s77a', 'outcome': 'skipped-duplicate', 'reason': 'recent_duplicate_failure', 'ts': '2026-08-18T09:10:00Z'},
-        {'phase': 'started', 'cycle_id': 'cycle-r77a', 'ts': '2026-08-18T09:15:00Z'},
-    ])
-    assert 'arch-failed' in page
-    assert 'arch-partial' in page
-    assert 'arch-skipped' in page
-    assert 'arch-running' in page
-    # exactly one running node: the genuinely in-flight cycle
-    assert page.count('arch-node arch-running') == 1
-
-
-def test_issue77_legend_covers_every_ring_class() -> None:
-    page = _issue77_page([])
-    for kind in ('integrated', 'failed', 'partial', 'skipped', 'running'):
-        assert f'class="arch-legend-label">{kind}</text>' in page
-
-
-def test_issue77_live_outcome_vocabulary_parsed() -> None:
-    # live shape: status is None, outcome carries the value
-    kind, reason = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c1', 'status': None, 'outcome': 'failed', 'reason': 'gate_failed'},
-    ])
-    assert kind == 'failed' and reason == 'gate_failed'
-    kind, _ = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c2', 'outcome': 'skipped-duplicate', 'reason': 'recent_duplicate_failure'},
-    ])
-    assert kind == 'skipped'
-    kind, _ = tv._ledger_outcome_kind([
-        {'phase': 'outcome', 'cycle_id': 'c3', 'outcome': 'partial'},
-    ])
-    assert kind == 'partial'
+# #208 review: test_issue77_live_outcome_vocabulary_parsed tested
+# _ledger_outcome_kind, whose only caller was the deleted archive tree; both
+# are gone. The day lineage classifies leaves inline in
+# _build_vertical_day_lineage (failed / partial / skipped) — and, as a
+# consequence, an in-flight cycle ("running") never appears on lineage.html;
+# it is a cycle-feed state only.
 
 # ---------------------------------------------------------------------------
 # Issue #72: cycles.html full history (.gz archives, day grouping, filter)

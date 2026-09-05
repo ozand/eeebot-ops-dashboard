@@ -1886,45 +1886,12 @@ def _lane_b_layout(
     }
 
 
-_ARCHIVE_RING = {
-    'integrated': '#2fd3c4',
-    'failed': '#b23a3a',
-    'partial': '#d19a66',
-    'skipped': '#7d9c8a',
-    'running': '#61afef',
-}
-
-
-def _ledger_outcome_kind(rows: list[dict[str, Any]]) -> tuple[str, str]:
-    """Issue #71: outcome class + reason for a ledger-only cycle (no tree
-    node). Scans the cycle's ledger rows chronologically; most decisive
-    phase wins."""
-    kind, reason = 'running', ''
-    for row in rows:
-        phase = row.get('phase')
-        if phase == 'dedup':
-            decision = str(row.get('decision') or '')
-            if row.get('duplicate') or 'skip' in decision.lower() or 'duplicate' in decision.lower():
-                return 'skipped', decision or 'duplicate'
-        elif phase == 'proposer_reject':
-            kind, reason = 'skipped', str(row.get('reason') or 'rejected')
-        elif phase == 'gate' and row.get('status') == 'fail':
-            kind, reason = 'failed', str(row.get('reason') or 'gate failed')
-        elif phase == 'outcome':
-            # Issue #77: the live ledger carries the decisive value in the
-            # `outcome` field ('success'/'failed'/'partial'/
-            # 'skipped-duplicate'); `status` is None there. Keep the legacy
-            # `status` vocabulary as fallback for older shapes.
-            status = str(row.get('outcome') or row.get('status') or '')
-            if status in ('fail', 'failed'):
-                return 'failed', str(row.get('reason') or 'failed')
-            if status == 'partial':
-                return 'partial', str(row.get('reason') or 'partial')
-            if status in ('skipped', 'skipped-duplicate'):
-                return 'skipped', str(row.get('reason') or status)
-            if status == 'success':
-                return 'integrated', ''
-    return kind, reason
+# #208 review: _ARCHIVE_RING and _ledger_outcome_kind (#71/#77) served only the
+# deleted archive tree and are gone with it. Leaf outcomes on the day lineage
+# are classified inline in _build_vertical_day_lineage: failed / partial /
+# skipped. There is no `running` there — a cycle that has started and not
+# finished is not a leaf and does not appear on lineage.html (it does on the
+# cycle feed).
 
 
 def _lineage_day(ts: Any) -> str:
@@ -1934,12 +1901,66 @@ def _lineage_day(ts: Any) -> str:
 
 def _load_lineage_vendor_scripts() -> dict[str, str] | None:
     vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
-    names = ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js')
+    # #208: d3 + d3-dag (390 KB inlined per page load) are gone; the renderer
+    # lays the forest out itself and needs no library.
+    names = ('lineage-renderer.js',)
     try:
         scripts = {name: (vendor_root / name).read_text(encoding='utf-8') for name in names}
     except (OSError, UnicodeError):
         return None
     return {name: source.replace('</script', '<\\/script') for name, source in scripts.items()}
+
+
+LINEAGE_DETAILS_FILE = 'lineage-cycle-details.json'  # #208: published beside lineage.html, fetched on demand
+
+
+def _lineage_parent(
+    node: dict[str, Any],
+    trunk: list[dict[str, Any]],
+    graph_shas: set[str],
+    all_nodes: dict[str, dict[str, Any]],
+) -> tuple[str | None, str | None, str | None]:
+    """#208: THE parent expression, shared by the server SVG, ``nodes[]`` and ``edges[]``.
+
+    Returns ``(parent_sha, basis, parent_day)``:
+
+    - ``(sha, 'recorded', None)`` — the row's own ``parent_sha`` is a node of this day.
+    - ``(None, None, 'YYYY-MM-DD')`` — the recorded parent exists but in an earlier
+      day bucket; the client draws a cross-day stub, nothing is guessed.
+    - ``(sha, 'inferred', None)`` — the row has no usable parent (a failed attempt,
+      or a parent the ledger never saw): the latest trunk node at or before the
+      row's timestamp. This is adjacency in time, not provenance, and it is
+      rendered dashed everywhere for that reason.
+    - ``(None, None, None)`` — a root.
+
+    Until #208 ``nodes[].parent`` used the FIRST trunk node of the day and
+    ``edges[]`` the LATEST, so the two disagreed on 49.6% of the live edges.
+    """
+    sha = node['sha']
+    recorded = str(node.get('parent_sha') or '')
+    if recorded and recorded != sha and recorded in graph_shas:
+        return recorded, 'recorded', None
+    if recorded and recorded in all_nodes:
+        parent_day = _lineage_day(all_nodes[recorded]['ts'])
+        if parent_day != _lineage_day(node['ts']):
+            return None, None, parent_day
+        # Same day but not drawn (truncated at LINEAGE_DAY_CAP): a stub would
+        # point at today; fall through to the chronological guess instead.
+    order = {item['sha']: index for index, item in enumerate(trunk)}
+    if sha in order:
+        # A trunk row: the previous trunk node in timestamp order. Strictly
+        # earlier by POSITION, so two rows with an identical timestamp cannot
+        # become each other's parent (review finding on PR #209).
+        previous = trunk[order[sha] - 1] if order[sha] > 0 else None
+    else:
+        # A ledger-only leaf: the latest trunk node at or before its timestamp.
+        previous = max(
+            (item for item in trunk if item['ts'] <= node['ts']),
+            key=lambda item: (item['ts'], order[item['sha']]), default=None,
+        )
+    if previous is None:
+        return None, None, None
+    return previous['sha'], 'inferred', None
 
 
 def _build_vertical_day_lineage(
@@ -1986,9 +2007,10 @@ def _build_vertical_day_lineage(
              '<button type="button" data-lineage-filter="24h">24h</button>',
              '<button type="button" data-lineage-filter="yesterday-today" class="active">Yesterday+Today</button>',
              '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>',
-             '<button type="button" data-lineage-filter="range">Apply</button></div>',
-             '<div class="lineage-day-groups" data-lineage-default="' + ','.join(sorted(default_days)) + '">']
-    all_ordered = sorted(all_nodes.values(), key=lambda node: node['ts'])
+             '<button type="button" data-lineage-filter="range">Apply</button>',
+             # #208 step 7: filled by lineageDayFilter when the requested calendar window has no data.
+             '<span class="lineage-filter-note" hidden></span></div>',
+             '<div class="lineage-day-groups" data-lineage-default-mode="yesterday-today" data-lineage-default="' + ','.join(sorted(default_days)) + '">']
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
     for day in days:
         trunk = sorted(grouped[day].values(), key=lambda node: node['ts'])
@@ -2030,7 +2052,6 @@ def _build_vertical_day_lineage(
         parts.append('<noscript><p class="lineage-js-note">Enable JavaScript for the enhanced client-side lineage layout.</p></noscript>')
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
-        count = max(len(trunk), len(side), 1)
         height = 40 + (max(len(trunk), len(side), 1) * 32)
         positions: dict[str, tuple[int, int]] = {}
         slots: dict[int, int] = {}
@@ -2056,51 +2077,65 @@ def _build_vertical_day_lineage(
         # large empty bands around the tree.
         max_x = max((x for x, _ in positions.values()), default=60)
         width = max(180, max_x + 40)
-        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="d3-dag">')
-        for i, node in enumerate(trunk):
-            parent = node['parent_sha']
-            if parent in positions:
-                x1, y1 = positions[parent]; x2, y2 = positions[node['sha']]
-                cls = 'lineage-edge arch-edge'
-                if node['sha'] == current_sha or node['sha'] in by_sha:
-                    cls = 'lineage-edge arch-edge' + (' evo-elbow-best' if current_sha and node['sha'] == current_sha else '')
-                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="{cls}"/>')
-            elif parent and parent in all_nodes:
-                label = datetime.strptime(_lineage_day(all_nodes[parent]['ts']), '%Y-%m-%d').strftime('%b %d')
-                parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="16">&#8617; from {esc(label)}</text>')
-            elif i:
-                x1, y1 = positions[trunk[i - 1]['sha']]; x2, y2 = positions[node['sha']]
-                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5"/>')
-        for node in side[:LINEAGE_DAY_CAP]:
-            base = max((trunk_node for trunk_node in trunk if trunk_node['ts'] <= node['ts']), key=lambda item: item['ts'], default=None)
-            if base is not None:
-                x1, y1 = positions[base['sha']]
-                x2, y2 = positions[node['sha']]
-                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge arch-edge"/>')
+        parts.append(f'<svg class="lineage-day-svg arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="lineage-tree">')
+        # #208: ONE parent expression (_lineage_parent) feeds the server SVG,
+        # nodes[] and edges[]; each edge carries its basis, and the client
+        # keeps that basis in the rendered element.
         graph_nodes = trunk + side[:LINEAGE_DAY_CAP]
         graph_shas = {node['sha'] for node in graph_nodes}
+        resolved = {node['sha']: _lineage_parent(node, trunk, graph_shas, all_nodes) for node in graph_nodes}
+        for node in graph_nodes:
+            parent, basis, parent_day = resolved[node['sha']]
+            x2, y2 = positions[node['sha']]
+            if parent is not None and parent in positions:
+                x1, y1 = positions[parent]
+                if basis == 'recorded':
+                    cls = 'lineage-edge arch-edge' + (' evo-elbow-best' if current_sha and node['sha'] == current_sha else '')
+                    parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="{cls}" data-basis="recorded"/>')
+                else:
+                    parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5" data-basis="inferred"/>')
+            elif parent_day:
+                label = datetime.strptime(parent_day, '%Y-%m-%d').strftime('%b %d')
+                parts.append(f'<text class="lineage-hidden-parent" x="{x2}" y="{y2 - 14}" text-anchor="middle">&#8617; from {esc(label)}</text>')
+
+        def _node_title(node: dict[str, Any]) -> str:
+            # #208 step 1: cycle_details carries the real title for every
+            # rendered node (832/832 on the live page); task_titles (git merge
+            # subjects, 6.4% coverage) is the fallback, never the source.
+            cid = node['cycle_id'] or node['sha']
+            detail = (cycle_details or {}).get(cid)
+            title = str(detail.get('title') or '') if isinstance(detail, dict) else ''
+            if not title or title == '(untitled cycle)':
+                title = str((task_titles or {}).get(cid) or (task_titles or {}).get(cid.replace('cycle-', '', 1)) or '')
+            return title
+
+        payload_nodes: list[dict[str, Any]] = []
+        for node in graph_nodes:
+            parent, basis, parent_day = resolved[node['sha']]
+            entry: dict[str, Any] = {
+                'sha': node['sha'],
+                'cycle_id': node['cycle_id'],
+                'parent': parent,
+                'parent_basis': basis,
+                'ts': node['ts'],
+                'outcome': node.get('outcome', 'integrated'),
+                'kind': 'trunk' if node in trunk else 'leaf',
+            }
+            if parent_day:
+                entry['parent_day'] = parent_day
+            title = _node_title(node)
+            if title:
+                entry['title'] = title
+            if current_sha and node['sha'] == current_sha:
+                entry['current'] = True
+            payload_nodes.append(entry)
         day_payload = {
             'day': day,
             'current_sha': current_sha,
-            'nodes': [
-                {
-                    'sha': node['sha'],
-                    'cycle_id': node['cycle_id'],
-                    'parent': node.get('parent_sha') or next((base['sha'] for base in trunk if base['ts'] <= node['ts']), None),
-                    'ts': node['ts'],
-                    'outcome': node.get('outcome', 'integrated'),
-                    'kind': 'trunk' if node in trunk else 'leaf',
-                }
-                for node in graph_nodes
-            ],
+            'nodes': payload_nodes,
             'edges': [
-                {'source': node['parent_sha'], 'target': node['sha']}
-                for node in trunk if node['parent_sha'] in graph_shas
-            ] + [
-                {'source': base['sha'], 'target': node['sha']}
-                for node in side[:LINEAGE_DAY_CAP]
-                for base in [max((item for item in trunk if item['ts'] <= node['ts']), key=lambda item: item['ts'], default=None)]
-                if base is not None
+                {'source': entry['parent'], 'target': entry['sha'], 'basis': entry['parent_basis']}
+                for entry in payload_nodes if entry['parent']
             ],
         }
         day_json = json.dumps(day_payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
@@ -2108,32 +2143,51 @@ def _build_vertical_day_lineage(
         if current_sha in positions:
             x, y = positions[current_sha]
             parts.append(f'<text x="{x}" y="{y - 14}" text-anchor="middle" class="arch-star">&#9733;</text>')
-        for node in trunk + side[:LINEAGE_DAY_CAP]:
+        for node in graph_nodes:
             x, y = positions[node['sha']]
             cid = node['cycle_id'] or node['sha']
             kind = node.get('outcome', 'integrated')
-            title = (task_titles or {}).get(cid) or '(untitled cycle)'
+            title = _node_title(node) or cid
             parts.append(f'<circle class="arch-node arch-{esc(kind)} lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="9"><title>{esc(title)}</title></circle>')
         parts.append('</svg></section>')
     parts.append('</div></div>')
-    details_json = json.dumps(cycle_details or {}, ensure_ascii=True).replace('<', '\\u003c')
-    card_template = """<template id="cycle-detail-card-template"><div><p><b>Cycle</b></p><p><b>Outcome</b></p><p><b>Reason</b></p><p><b>Timestamp</b></p><p><b>SHA</b></p><p><b>Parent SHA</b></p><h3>Files changed</h3><ul></ul><h3>Lesson insight</h3><a>open in Cycle Feed</a> · <a>related lessons</a></div></template>"""
     inline_scripts = ''
     if vendor_scripts is not None:
-        inline_scripts = ''.join(f'<script>{vendor_scripts[name]}</script>' for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'))
-    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{card_template}<script type="application/json" id="cycle-details-data">{details_json}</script>{inline_scripts}<script>
+        inline_scripts = ''.join(f'<script>{vendor_scripts[name]}</script>' for name in ('lineage-renderer.js',))
+    # #208 step 8: cycle_details (1.17 MB of the 2.04 MB live page) is no longer
+    # inlined. render_pages() publishes it as LINEAGE_DETAILS_FILE beside this
+    # page and the panel fetches it on the first click. Records are not
+    # filtered: the 1,116 records without a node are the only place task
+    # identity (title, serves, demand_id) is recorded. The day filter itself
+    # lives in lineage-renderer.js (lineageDayFilter), not here.
+    parts.append(f'''<section class="cycle-details-panel" id="cycle-details-panel" data-cycle-details-src="{LINEAGE_DETAILS_FILE}" hidden><h2>Cycle details</h2><div class="cycle-details-body"></div></section>{inline_scripts}<script>
 (function () {{
-  var data = JSON.parse(document.getElementById('cycle-details-data').textContent), panel = document.getElementById('cycle-details-panel');
-  function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + String(value) + '</p>' : ''; }}
-  function open(node) {{ var cid = node.getAttribute('data-cycle-id'); var item = data[cid] || {{cycle_id: cid}}; var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha); if (item.files_changed && item.files_changed.length) html += '<h3>Files changed</h3><ul>' + item.files_changed.map(function (f) {{ return '<li>' + f + '</li>'; }}).join('') + '</ul>'; if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + item.lesson_insight + '</p>'; html += '<p><a href="cycles.html#cycle-' + encodeURIComponent(item.cycle_id || '') + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(item.cycle_id || '') + '">related lessons</a></p>'; panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  var panel = document.getElementById('cycle-details-panel'), src = panel.getAttribute('data-cycle-details-src'), data = null, loading = null;
+  function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
+  function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
+  function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+  // Default cache mode on purpose: the file is republished every cycle and 'force-cache' would pin the first copy for good.
+  // A failed fetch clears `loading`, so the next click retries instead of replaying the rejection.
+  function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
+  function render(cid) {{
+    var item = (data && data[cid]) || {{cycle_id: cid}};
+    var html = '<h3>' + esc(item.title || cid) + '</h3>' + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations);
+    if (item.lesson_problem || item.lesson_solution) html += '<h3>Lesson</h3>' + line('Problem', item.lesson_problem) + line('Solution', item.lesson_solution);
+    else if (item.lesson_insight) html += '<h3>Lesson insight</h3><p>' + esc(item.lesson_insight) + '</p>';
+    if (item.reflection) html += '<h3>Reflector</h3>' + line('Summary', item.reflection.summary) + list('Findings', item.reflection.findings) + list('Recommendations', item.reflection.recommendations);
+    html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
+    panel.querySelector('.cycle-details-body').innerHTML = html;
+  }}
+  function open(node) {{
+    var cid = node.getAttribute('data-cycle-id');
+    panel.hidden = false;
+    panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>';
+    load().then(function () {{ render(cid); }}).catch(function (err) {{ panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; }});
+  }}
   document.addEventListener('click', function (event) {{
     var node = event.target.closest('.lineage-node');
     if (node) {{ event.preventDefault(); open(node); }}
   }});
-  var root = document.querySelector('.lineage-day-groups'); if (!root) return;
-  var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
-  function apply(mode) {{ var days = groups.map(function (g) {{ return g.getAttribute('data-day'); }}), keep = days.slice(-2); if (mode === 'today') keep = days.slice(-1); if (mode === 'range') {{ var a = document.querySelector('[data-lineage-from]').value, b = document.querySelector('[data-lineage-to]').value; keep = days.filter(function (d) {{ return (!a || d >= a) && (!b || d <= b); }}); }} groups.forEach(function (g) {{ g.hidden = keep.indexOf(g.getAttribute('data-day')) === -1; }}); }}
-   document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {{ button.addEventListener('click', function () {{ apply(button.getAttribute('data-lineage-filter')); }}); }}); apply('yesterday-today');
 }})();
 </script>''')
     return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
@@ -2146,149 +2200,14 @@ def _build_day_bucketed_lineage(
     now: str | None,
     cycle_details: dict[str, dict[str, Any]] | None = None,
 ) -> str:
-    """Issue #107: render recent ledger evolution rows grouped by UTC day."""
+    """Issue #107: render recent ledger evolution rows grouped by UTC day.
+
+    #208: this is the ONLY lineage implementation. Its former ~140-line dead
+    tail (a second day-bucketed renderer behind this return) and the DGM
+    archive tree that used to follow :func:`build_archive_tree`'s early return
+    were deleted so a layout fix can only land in one place.
+    """
     return _build_vertical_day_lineage(ledger_rows, fallback_tree, task_titles, now, cycle_details)
-    grouped: dict[str, dict[str, dict[str, Any]]] = {}
-    leaves: dict[str, list[dict[str, Any]]] = {}
-    for row in ledger_rows:
-        if not isinstance(row, dict) or row.get('phase') != 'evolution_tree' or not row.get('sha'):
-            if isinstance(row, dict) and row.get('cycle_id') and row.get('phase') in {'outcome', 'gate', 'proposer_reject', 'dedup'}:
-                day = _lineage_day(row.get('ts'))
-                if day:
-                    leaves.setdefault(day, []).append(row)
-            continue
-        day = _lineage_day(row.get('ts'))
-        if not day:
-            continue
-        sha = str(row['sha'])
-        grouped.setdefault(day, {})[sha] = {
-            'sha': sha, 'cycle_id': str(row.get('cycle_id') or ''),
-            'parent_sha': str(row.get('parent_sha') or ''), 'ts': str(row.get('ts') or ''),
-        }
-    if not grouped and isinstance(fallback_tree, dict) and isinstance(fallback_tree.get('nodes'), dict):
-        for sha, node in fallback_tree['nodes'].items():
-            if isinstance(node, dict):
-                day = _lineage_day(node.get('ts'))
-                if day:
-                    grouped.setdefault(day, {})[str(sha)] = {
-                        'sha': str(sha), 'cycle_id': str(node.get('cycle_id') or ''),
-                        'parent_sha': str(node.get('parent_sha') or ''), 'ts': str(node.get('ts') or ''),
-                    }
-    days = sorted(grouped)[-LINEAGE_DAYS:]
-    all_nodes = {sha: node for day in days for sha, node in grouped[day].items()}
-    ordered_all = sorted(all_nodes.values(), key=lambda node: node['ts'])
-    all_shas = set(all_nodes)
-    nodes_by_sha = all_nodes
-    max_day = max(days, default='')
-    current_day = _lineage_day(now) or max_day
-    if current_day > max_day:
-        current_day = max_day
-    prior_days = sorted(day for day in days if day < current_day)
-    previous_day = prior_days[-1] if prior_days else ''
-    default_days = {day for day in (previous_day, current_day) if day}
-    parts: list[str] = ['<div class="lineage-day-filter" data-default-filter="yesterday-today"><div class="lineage-day-controls" data-default-filter="yesterday-today">',
-                        '<button type="button" data-lineage-filter="today">Today</button>',
-                        '<button type="button" data-lineage-filter="24h">24h</button>',
-                        '<button type="button" data-lineage-filter="yesterday-today" class="active">Yesterday+Today</button>',
-                        '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>',
-                        '<button type="button" data-lineage-filter="range">Apply</button></div>']
-    parts.append('<div class="lineage-day-groups" data-lineage-default="' + ','.join(sorted(default_days)) + '">')
-    for day in days:
-        nodes = list(sorted(grouped[day].values(), key=lambda n: n['ts']))
-        trunk_shas = {node['sha'] for node in nodes}
-        leaf_records = []
-        for row in leaves.get(day, []):
-            cid = str(row['cycle_id'])
-            if cid not in {node['cycle_id'] for node in nodes}:
-                leaf_records.append({'sha': 'leaf:' + cid, 'cycle_id': cid, 'parent_sha': '', 'ts': str(row.get('ts') or ''), 'outcome': 'failed' if row.get('outcome') in {'failed', 'fail'} or row.get('status') in {'failed', 'fail'} else 'partial' if row.get('outcome') == 'partial' else 'skipped'})
-        nodes.extend(leaf_records)
-        truncated = len(nodes) > LINEAGE_DAY_CAP
-        nodes = nodes[-LINEAGE_DAY_CAP:]
-        parts.append(f'<section class="lineage-day-group" data-day="{esc(day)}" data-node-count="{len(nodes)}">')
-        parts.append(f'<h3>{esc(day)}</h3>')
-        if truncated:
-            parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
-        depth: dict[str, int] = {}
-        def get_depth(sha: str, guard: set[str] | None = None) -> int:
-            if sha in depth:
-                return depth[sha]
-            guard = guard or set()
-            if sha in guard:
-                return 0
-            parent = nodes_by_sha[sha]['parent_sha']
-            if parent in all_shas:
-                depth[sha] = get_depth(parent, guard | {sha}) + 1
-            else:
-                prior = next((i - 1 for i, item in enumerate(ordered_all) if item['sha'] == sha), -1)
-                depth[sha] = 0 if prior < 0 else depth[ordered_all[prior]['sha']] + 1
-            return depth[sha]
-        for node in all_nodes.values():
-            get_depth(node['sha'])
-        for node in leaf_records:
-            depth[node['sha']] = depth.get(node['sha'], max(depth.values(), default=0) + 1)
-        slots: dict[int, int] = {}
-        for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
-            slots[depth[node['sha']]] = slots.get(depth[node['sha']], 0) + 1
-        max_slot = max(slots.values(), default=1)
-        svg_height = 40 + max_slot * 32
-        min_depth = min((depth[node['sha']] for node in nodes), default=0)
-        pitch = 40
-        max_x = max((30 + (depth[node['sha']] - min_depth) * pitch for node in nodes), default=30)
-        svg_width = max(60, max_x + 30)
-        parts.append(f'<svg class="lineage-day-svg" width="{svg_width}" height="{svg_height}" viewBox="0 0 {svg_width} {svg_height}">')
-        positions: dict[str, tuple[int, int]] = {}
-        depth_slots: dict[int, int] = {}
-        for node in sorted(nodes, key=lambda item: (depth[item['sha']], item['ts'])):
-            d = depth[node['sha']]
-            slot = depth_slots.get(d, 0)
-            depth_slots[d] = slot + 1
-            positions[node['sha']] = (30 + (d - min_depth) * pitch, 24 + slot * 32)
-        for node in nodes:
-            parent = node['parent_sha']
-            if parent in positions:
-                x1, y1 = positions[parent]; x2, y2 = positions[node['sha']]
-                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge"/>')
-            elif parent:
-                if parent in all_shas:
-                    parent_node = all_nodes[parent]
-                    label = datetime.strptime(_lineage_day(parent_node['ts']), '%Y-%m-%d').strftime('%b %d')
-                    parts.append(f'<text class="lineage-hidden-parent" x="{positions[node["sha"]][0]}" y="20">&#8617; from {esc(label)}</text>')
-                else:
-                    previous = next(
-                        (item for item in reversed(ordered_all)
-                         if item['ts'] < node['ts'] and _lineage_day(item['ts']) == day),
-                        None,
-                    )
-                    if previous:
-                        x1, y1 = positions.get(previous['sha'], (positions[node['sha']][0] - 80, positions[node['sha']][1]))
-                        x2, y2 = positions[node['sha']]
-                        parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5"/>')
-        for node in nodes:
-            x, y = positions[node['sha']]
-            cid = node['cycle_id'] or node['sha']
-            title = (task_titles or {}).get(cid) or (task_titles or {}).get(node['sha']) or '(untitled cycle)'
-            kind = node.get('outcome', 'integrated')
-            parts.append(f'<circle class="arch-node arch-{esc(kind)} lineage-node" data-cycle-id="{esc(cid)}" cx="{x}" cy="{y}" r="9"><title>{esc(title)}</title></circle>')
-        parts.append('</svg></section>')
-    parts.append('</div></div>')
-    parts.append('''<script>
-(function () {
-  var root = document.querySelector('.lineage-day-groups'); if (!root) return;
-  var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
-  function apply(mode) {
-    var days = groups.map(function (g) { return g.getAttribute('data-day'); });
-    var keep = days.slice(-2);
-    if (mode === 'today') keep = days.slice(-1);
-    if (mode === '24h') keep = days.slice(-2);
-    if (mode === 'range') { var a = document.querySelector('[data-lineage-from]').value, b = document.querySelector('[data-lineage-to]').value; keep = days.filter(function (d) { return (!a || d >= a) && (!b || d <= b); }); }
-    groups.forEach(function (g) { g.hidden = keep.indexOf(g.getAttribute('data-day')) === -1; });
-    document.querySelectorAll('[data-lineage-filter]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lineage-filter') === mode); });
-  }
-  document.querySelectorAll('[data-lineage-filter]').forEach(function (b) { b.addEventListener('click', function () { apply(b.getAttribute('data-lineage-filter')); }); });
-  apply('yesterday-today');
-})();
-</script>''')
-    return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
 
 
 def build_cycle_details(
@@ -2379,49 +2298,6 @@ def build_cycle_details(
     return records
 
 
-def _cycle_details_panel(details: dict[str, dict[str, Any]]) -> str:
-    payload = json.dumps(details, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
-    lesson_href = 'lessons.html#q-' + next(iter(details), 'cycle')
-    return f'''<section class="cycle-details-panel" id="cycle-details-panel" aria-live="polite" hidden>
-  <button type="button" class="cycle-details-close" aria-label="Close cycle details">close</button>
-  <h2 class="cycle-details-title">Cycle details</h2>
-  <div class="cycle-details-body"></div>
-</section>
-<script type="application/json" id="cycle-details-data">{payload}</script>
-<script>
-(function () {{
-  var data = JSON.parse(document.getElementById('cycle-details-data').textContent);
-  var panel = document.getElementById('cycle-details-panel');
-  var body = panel.querySelector('.cycle-details-body');
-  var selected = null;
-  function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
-  function line(label, value) {{ return value ? '<p><b>' + esc(label) + ':</b> ' + esc(value) + '</p>' : ''; }}
-  function list(label, values) {{ return values && values.length ? '<h3>' + esc(label) + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
-  function close() {{ panel.hidden = true; if (selected) selected.classList.remove('cycle-node-selected'); selected = null; }}
-  function open(node) {{
-    var cid = node.getAttribute('data-cycle-id'), item = data[cid] || {{cycle_id: cid, title: '(untitled cycle)'}};
-    var nodeId = node.getAttribute('data-node-id') || cid;
-    if (selected) selected.classList.remove('cycle-node-selected'); selected = node; node.classList.add('cycle-node-selected');
-    panel.querySelector('.cycle-details-title').textContent = item.title || '(untitled cycle)';
-    var html = line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations);
-    if (item.lesson_problem || item.lesson_solution) {{ html += '<h3>Lesson</h3>' + (item.lesson_problem ? '<p><b>Problem:</b> ' + esc(item.lesson_problem) + '</p>' : '') + (item.lesson_solution ? '<p><b>Solution:</b> ' + esc(item.lesson_solution) + '</p>' : ''); }}
-    else if (item.lesson_insight) {{ var _li = item.lesson_insight, _ll = _li.toLowerCase(); var _skip = _ll.indexOf('task completed with') !== -1 || _ll.indexOf('short utility scripts implementable') !== -1 || _ll.indexOf('improves operator value') !== -1; if (!_skip) html += '<h3>Lesson insight</h3><p>' + esc(_li) + '</p>'; }}
-    if (item.reflection) html += '<h3>Reflector</h3>' + line('Summary', item.reflection.summary) + list('Findings', item.reflection.findings) + list('Recommendations', item.reflection.recommendations);
-    html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>';
-    body.innerHTML = html; panel.hidden = false; history.replaceState(null, '', '#node-' + encodeURIComponent(nodeId)); panel.scrollIntoView({{block: 'nearest'}});
-  }}
-  document.addEventListener('click', function (event) {{
-    var node = event.target.closest('.arch-node[data-cycle-id], .lineage-node[data-cycle-id]');
-    if (node) {{ event.preventDefault(); open(node); }}
-  }});
-  panel.querySelector('.cycle-details-close').addEventListener('click', close);
-  document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape') close(); }});
-  function selectHash() {{ var match = decodeURIComponent(location.hash).match(/^#node-(.+)$/); if (!match) return; var val = match[1]; var node = document.querySelector('[data-node-id="' + CSS.escape(val) + '"]') || document.querySelector('[data-cycle-id="' + CSS.escape(val) + '"]'); if (node) {{ open(node); node.scrollIntoView({{block: 'center'}}); }} }}
-  window.addEventListener('hashchange', selectHash); selectHash();
-}})();
-</script><template id="cycle-details-link-template" data-lesson-href="{lesson_href}"></template>'''
-
-
 def build_archive_tree(
     evolution_tree: dict[str, Any] | None,
     ledger_tail: list[Any] | None,
@@ -2434,237 +2310,25 @@ def build_archive_tree(
     Trunk = evolution/tree.json nodes (integrated chain); every ledger-only
     cycle (failed/partial/skipped) attaches as a dead-end leaf under its
     chronological base trunk node. No last-N cap."""
-    if isinstance(ledger_history, list) and any(
-        isinstance(row, dict) and row.get('phase') == 'evolution_tree' for row in ledger_history
-    ):
-        return _build_day_bucketed_lineage(ledger_history, evolution_tree, task_titles, now or datetime.now(timezone.utc).isoformat(), cycle_details)
-    if not isinstance(evolution_tree, dict) or not isinstance(evolution_tree.get('nodes'), dict):
-        return unavailable_panel('Evolution Lineage', 'evolution tree unavailable')
-    nodes: dict[str, dict[str, Any]] = {
-        sha: n for sha, n in evolution_tree['nodes'].items() if isinstance(n, dict)
-    }
-    if not nodes:
-        return unavailable_panel('Evolution Lineage', 'no evolution nodes recorded yet')
-    current_sha = evolution_tree.get('current_sha')
-
-    # Chronological order + effective parents (recorded parent when it maps
-    # to a node, else previous-by-time -- same fallback as issue #53).
-    order = sorted(nodes.items(), key=lambda kv: str(kv[1].get('ts') or ''))
-    chrono_prev: dict[str, str] = {}
-    _last: str | None = None
-    for sha, _n in order:
-        if _last is not None:
-            chrono_prev[sha] = _last
-        _last = sha
-
-    def _eff_parent(sha: str) -> str | None:
-        parent = (nodes[sha].get('parent_sha') or '')
-        return str(parent) if parent in nodes else chrono_prev.get(sha)
-
-    # Unified node records: trunk + ledger-only leaves.
-    recs: dict[str, dict[str, Any]] = {}
-    for sha, n in order:
-        cid = str(n.get('cycle_id') or '')
-        recs[sha] = {
-            'kind': 'node', 'cid': cid, 'ts': str(n.get('ts') or ''),
-            'parent': _eff_parent(sha), 'sha': sha,
-        }
-    trunk_cids = {r['cid'] for r in recs.values() if r['cid']}
-    trunk_ts = [(r['ts'], key) for key, r in recs.items()]
-    if isinstance(ledger_tail, list):
-        by_cycle: dict[str, list[dict[str, Any]]] = {}
-        for row in ledger_tail:
-            if isinstance(row, dict) and row.get('cycle_id'):
-                by_cycle.setdefault(str(row['cycle_id']), []).append(row)
-        for cid, rows in by_cycle.items():
-            if cid in trunk_cids:
-                continue
-            kind, reason = _ledger_outcome_kind(rows)
-            ts = str(rows[-1].get('ts') or '')
-            base = None
-            for t, key in trunk_ts:
-                if t <= ts:
-                    base = key
-            if base is None and trunk_ts:
-                base = trunk_ts[0][1]
-            title = ''
-            if task_titles:
-                title = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or ''
-            recs['ledger:' + cid] = {
-                'kind': 'leaf', 'cid': cid, 'ts': ts, 'parent': base,
-                'outcome': kind, 'reason': reason, 'title': title,
-            }
-
-    # Layered top-down layout: depth = longest path from a root.
-    depth: dict[str, int] = {}
-
-    def _depth(key: str, guard: frozenset[str] = frozenset()) -> int:
-        if key in depth:
-            return depth[key]
-        if key in guard:
-            depth[key] = 0
-            return 0
-        parent = recs[key].get('parent')
-        depth[key] = _depth(parent, guard | {key}) + 1 if parent in recs else 0
-        return depth[key]
-
-    for key in recs:
-        _depth(key)
-    layers: dict[int, list[str]] = {}
-    for key in sorted(recs, key=lambda k: (str(recs[k].get('ts') or ''))):
-        layers.setdefault(depth[key], []).append(key)
-    max_d = max(layers, default=0)
-    max_slot = max((len(v) for v in layers.values()), default=1)
-
-    ROW_H, COL_W, R = 64, 44, 9
-    pos: dict[str, tuple[float, float]] = {}
-    for d, keys in layers.items():
-        for i, key in enumerate(keys):
-            pos[key] = (60 + i * COL_W, 40 + d * ROW_H)
-
-    # Best path = ancestry of current_sha (trunk nodes only).
-    best: set[str] = set()
-    if current_sha in recs:
-        cur: str | None = current_sha
-        guard: set[str] = set()
-        while cur and cur in recs and cur not in guard:
-            guard.add(cur)
-            best.add(cur)
-            cur = recs[cur].get('parent')
-
-    # Score fills: fitness.reward when recorded, neutral otherwise.
-    rewards = [
-        float(n['fitness']['reward']) for n in nodes.values()
-        if isinstance(n.get('fitness'), dict)
-        and isinstance(n['fitness'].get('reward'), (int, float))
-        and not isinstance(n['fitness'].get('reward'), bool)
-    ]
-    rmin = min(rewards) if rewards else None
-    rmax = max(rewards) if rewards else None
-
-    def _fill(key: str) -> str:
-        r = recs[key]
-        if r['kind'] != 'node':
-            return '#1f3a2d'
-        fit = nodes[key].get('fitness')
-        val = fit.get('reward') if isinstance(fit, dict) else None
-        if isinstance(val, (int, float)) and not isinstance(val, bool) and rmin is not None and rmax and rmax > rmin:
-            return _score_color((float(val) - rmin) / (rmax - rmin))
-        return '#1f3a2d'
-
-    # Issue #93: day separators -- horizontal dashed lines between depth layers
-    # that cross a date boundary. Each depth layer is one time-step; when the
-    # first node in layer d is on a different UTC date than the first node in
-    # layer d-1, a separator line + date label go between the two rows.
-    lx = max(120 + max_slot * COL_W, 240)
-    day_separators: list[str] = []
-    _layer_dates: dict[int, str] = {}
-    for d, keys in layers.items():
-        ts_list = [recs[k].get('ts') or '' for k in keys if recs[k].get('ts')]
-        if ts_list:
-            first_ts = sorted(ts_list)[0]
-            _dt = _parse_iso_ts(first_ts)
-            if _dt is not None:
-                _layer_dates[d] = _dt.strftime('%Y-%m-%d')
-    for d in sorted(layers):
-        if d == 0:
-            continue
-        prev_date = _layer_dates.get(d - 1, '')
-        cur_date = _layer_dates.get(d, '')
-        if prev_date and cur_date and cur_date != prev_date:
-            sep_y = 40 + d * ROW_H - ROW_H // 2
-            sep_w = max(lx - 20, 100)
-            day_separators.append(
-                f'<line x1="0" y1="{sep_y}" x2="{sep_w}" y2="{sep_y}" '
-                f'class="arch-day-sep"/>'
-                f'<text x="4" y="{sep_y - 2}" class="arch-day-label">{esc(cur_date)}</text>'
-            )
-
-    edges = []
-    for key, r in recs.items():
-        parent = r.get('parent')
-        if parent in pos:
-            x1, y1 = pos[parent]
-            x2, y2 = pos[key]
-            cls = 'arch-edge'
-            if key in best and parent in best:
-                cls = 'arch-edge arch-edge-best'
-            edges.append(
-                f'<line x1="{x1:.0f}" y1="{y1 + R:.0f}" x2="{x2:.0f}" y2="{y2 - R:.0f}" class="{cls}"/>'
-            )
-
-    circles = []
-    for key, r in recs.items():
-        x, y = pos[key]
-        if r['kind'] == 'node':
-            kind = 'integrated'
-            reason = ''
-        else:
-            kind = r.get('outcome') or 'running'
-            reason = r.get('reason') or ''
-        ring = _ARCHIVE_RING.get(kind, '#7d9c8a')
-        cid = r['cid'] or key
-        title_txt = ''
-        if task_titles:
-            title_txt = task_titles.get(cid) or task_titles.get(cid.replace('cycle-', '', 1)) or task_titles.get(key) or ''
-        if not title_txt and cycle_details and isinstance(cycle_details.get(cid), dict):
-            title_txt = str(cycle_details[cid].get('title') or '')
-        tip = esc(f'{cid} | {title_txt or "no title"} | {kind}' + (f': {reason}' if reason else '') + f' | {r["ts"]}')
-        star = f'<text x="{x:.0f}" y="{y - R - 5:.0f}" text-anchor="middle" class="arch-star">&#9733;</text>' if key == current_sha else ''
-        detail_attr = f' data-cycle-id="{esc(cid)}"' if cycle_details and cid in cycle_details else ''
-        node_sha_attr = f' data-node-id="{esc(short_sha(key))}"' if r['kind'] == 'node' and len(key) >= 7 else ''
-        circles.append(
-            f'<a href="cycles.html#cycle-{esc(cid)}">'
-            f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{R}" fill="{_fill(key)}" '
-            f'stroke="{ring}" stroke-width="3" class="arch-node arch-{kind}"{detail_attr}{node_sha_attr}>'
-            f'<title>{tip}</title></circle>{star}</a>'
-        )
-
-    # Legends (right side): outcome rings. Reward is not recorded for archive
-    # nodes, so do not render a permanently empty score gauge (issue #94).
-    lx = max(120 + max_slot * COL_W, 240)
-    if rmin is not None and rmax and rmax > rmin:
-        metric_label = 'score: fitness.reward'
-        legend = (
-            f'<defs><linearGradient id="archgrad" x1="0" y1="1" x2="0" y2="0">'
-            f'<stop offset="0" stop-color="{_score_color(0)}"/>'
-            f'<stop offset="1" stop-color="{_score_color(1)}"/>'
-            '</linearGradient></defs>'
-            f'<rect x="{lx}" y="40" width="14" height="120" rx="3" fill="url(#archgrad)"/>'
-            f'<text x="{lx + 20}" y="52" class="arch-legend-label">score {fmt_compact(rmax)}</text>'
-            f'<text x="{lx + 20}" y="158" class="arch-legend-label">score {fmt_compact(rmin)}</text>'
-            f'<text x="{lx}" y="176" class="arch-legend-label">{metric_label}</text>'
-        )
-    else:
-        legend = (
-            f'<text x="{lx}" y="176" class="arch-legend-label">score gauge hidden: reward data gap</text>'
-        )
-    ring_legend_y = 220
-    # Issue #77: running can legitimately appear (in-flight cycle), so the
-    # legend must cover every ring class that can render.
-    ring_kinds = list(_ARCHIVE_RING.items())
-    ring_items = ''.join(
-        f'<circle cx="{lx + 6}" cy="{ring_legend_y + i * 20}" r="6" fill="none" stroke="{color}" stroke-width="3"/>'
-        f'<text x="{lx + 20}" y="{ring_legend_y + i * 20 + 4}" class="arch-legend-label">{kind}</text>'
-        for i, (kind, color) in enumerate(ring_kinds)
+    # #208: one implementation. The ledger's evolution_tree rows are the
+    # primary source (present on every production run since #107); when they
+    # are absent the tree.json nodes go through the SAME day-bucketed renderer
+    # as its fallback_tree, so a layout fix cannot land in a second code path.
+    # The ~230-line DGM archive tree (#53/#71 legend, colorbar, best path,
+    # day separators, _cycle_details_panel) that used to follow an early
+    # return here was unreachable in production and is gone.
+    # `ledger_history or ledger_tail`: a fail-soft read leaves ledger_history as
+    # an EMPTY list, and the ledger-only leaves in ledger_tail must still render.
+    rows = (ledger_history if isinstance(ledger_history, list) else []) or (ledger_tail if isinstance(ledger_tail, list) else [])
+    has_rows = any(
+        isinstance(row, dict) and row.get('phase') == 'evolution_tree' and row.get('sha') and _lineage_day(row.get('ts'))
+        for row in rows
     )
-    legend += f'<g>{ring_items}</g>'
-
-    width = max(420, lx + 170)
-    height = 60 + (max_d + 1) * ROW_H + 40
-    svg = (
-        f'<svg class="tech-canvas arch-tree" role="img" '
-        f'aria-label="DGM archive tree: full evolution history, {len(recs)} nodes" '
-        f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
-        f'{"".join(day_separators)}{"" .join(edges)}{"" .join(circles)}{legend}</svg>'
-    )
-    total = len(recs)
-    panel = _cycle_details_panel(cycle_details or {}) if cycle_details else ''
-    return (
-        f'<div class="canvas-outer" id="panel-lineage">'
-        f'<div class="arch-note">archive tree: {total} nodes (full history, no cap) '
-        f'&#183; bold = best path &#183; click a node for its cycle</div>{svg}{panel}</div>'
-    )
+    tree_nodes = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else None
+    has_tree = isinstance(tree_nodes, dict) and any(isinstance(n, dict) and _lineage_day(n.get('ts')) for n in tree_nodes.values())
+    if not has_rows and not has_tree:
+        return unavailable_panel('Evolution Lineage', 'evolution tree unavailable (no node with a usable timestamp)')
+    return _build_day_bucketed_lineage(rows, evolution_tree, task_titles, now or datetime.now(timezone.utc).isoformat(), cycle_details)
 
 
 def _ts_range_label(evolution_tree: dict[str, Any] | None) -> str:
@@ -5370,10 +5034,14 @@ CSS = '''
     .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
-    .lineage-day-group { padding: 4px 12px 10px; }
+    .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
+    .lineage-filter-note { color: #d19a66; font-size: .8rem; }
+    .lineage-filter-note[hidden] { display: none; }
     .lineage-day-group[hidden] { display: none; }
     .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
-    .lineage-day-svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+    /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
+       being scaled down until r=9 circles are 4 px and the labels unreadable. */
+    .lineage-day-svg { display: block; height: auto; overflow: visible; }
     .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
     .lineage-edge { stroke: #2f5c46; stroke-width: 2; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
@@ -6019,6 +5687,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     pages: dict[str, str] = {
         'index.html': _page('eeebot / now', 'index.html', now_panel + teaser_html + teaser_feed),
         'lineage.html': _page('eeebot / lineage', 'lineage.html', canvas_html),
+        # #208 step 8: the cycle-details records travel as a sibling static JSON
+        # (published and written by the same loops as the pages), fetched by
+        # lineage.html on the first node click. Nothing is filtered out.
+        LINEAGE_DETAILS_FILE: json.dumps(cycle_details or {}, ensure_ascii=True, separators=(',', ':')),
         'cycles.html': _page('eeebot / cycles', 'cycles.html', cycle_feed),
         'lessons.html': _page('eeebot / lessons', 'lessons.html', lessons_panel),
         'agent.html': _page('eeebot / agent', 'agent.html', agent_panel),
@@ -6135,12 +5807,8 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
         return 1
 
     pages = dict(pages)
-    if any('assets/vendor/lineage-renderer.js' in html for html in pages.values()):
-        vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
-        for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'):
-            path = vendor_root / name
-            if path.is_file():
-                pages[f'assets/vendor/{name}'] = path.read_text(encoding='utf-8')
+    # (#208: the former "copy vendor files when a page references assets/vendor/"
+    # block was dead — the renderer is inlined and no page ever carried that path.)
 
     # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
@@ -6249,7 +5917,7 @@ def main(argv: list[str] | None = None) -> int:
         for fname, html in pages.items():
             (out_path / fname).write_text(html, encoding='utf-8')
         vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
-        for name in ('d3.min.js', 'd3-dag.iife.min.js', 'lineage-renderer.js'):
+        for name in ('lineage-renderer.js',):
             source = vendor_root / name
             if source.is_file():
                 destination = out_path / 'assets' / 'vendor' / name
