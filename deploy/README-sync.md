@@ -9,10 +9,11 @@ the host. The operator applies it manually after the PR is merged.
 repository `master` (issue #210): the host's own copy of the manifest is not a
 manifest entry and so could never update itself, which let one deleted entry
 (#209 removed two vendored d3 files) deadlock every sync forever. The fetched
-manifest is used when it is a recognisable manifest (non-empty, only `.py` /
-`.js` entries); otherwise the local copy `/opt/eeebot-techtree/sync-manifest.txt`
-(overridable with `SYNC_MANIFEST`) is the fallback, and the journal says which
-one was used and why:
+manifest is used when it is a recognisable manifest (at least one entry, only
+`.py` / `.js` paths, no leading `/`, no `..`, CRLF tolerated); otherwise the
+local copy `/opt/eeebot-techtree/sync-manifest.txt` is the fallback, and the
+journal says which one was used and why. `SYNC_MANIFEST` overrides the fallback
+path and, being an explicit operator choice, is read but never written back:
 
 ```
 techtree sync: using master manifest (...)                       # normal
@@ -23,18 +24,22 @@ techtree sync: local manifest copy updated from master (...)     # self-heal aft
 ```
 
 After every named file has installed from a master manifest, that manifest is
-written over the local copy, so the fallback reflects the last list proven to
-work. Every `curl` call is bounded (`--connect-timeout 10 --max-time 60`), so an
-unreachable GitHub degrades to the fallback instead of hanging the unit. The
-residual case — GitHub unreachable *and* the local copy still naming a deleted
-file — still fails the sync (nothing is installed, publish proceeds on the
-existing generator), but with both lines above in the journal rather than one.
+written atomically (tmp + `mv`) over the local copy, so the fallback reflects
+the last list proven to work. Every `curl` call is bounded (`--connect-timeout
+10 --max-time 60`) and may not follow a redirect off https (`--proto-redir
+=https`), so an unreachable GitHub degrades to the fallback instead of hanging
+the unit. The residual case — GitHub unreachable *and* the local copy still
+naming a deleted file — still fails the sync (nothing is installed, publish
+proceeds on the existing generator), but with both lines above in the journal
+rather than one. A 404 on an entry of master's own manifest (raw CDN behind a
+push) also fails that one run; the next run, one publish interval later,
+retries.
 
 It then downloads every manifest entry over HTTPS, runs `python3 -m py_compile`
-on each `.py` download, and only then touches any installed file. It creates one UTC-timestamped
-`.bak` of each current file and atomically replaces both with `mv`. Any
- download or compile failure occurs before replacement, leaves both existing
-files untouched, and returns nonzero. The drop-in uses `ExecStartPre=-+...`:
+on each `.py` download, and only then touches any installed file. It creates one
+UTC-timestamped `.bak` of each current file and atomically replaces each with
+`mv`. Any download or compile failure occurs before replacement, leaves every
+existing file untouched, and returns nonzero. The drop-in uses `ExecStartPre=-+...`:
 `-` makes this pre-command failure non-fatal so publish proceeds with existing
 generators; `+` runs the pre-command with full privileges. The service's
 existing `User=eeebot-publish`, `ProtectSystem=strict`, credentials, and all

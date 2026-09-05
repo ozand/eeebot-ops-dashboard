@@ -114,10 +114,13 @@ def test_sync_script_and_dropin_contract() -> None:
     assert "[ -s \"$tmp\" ]" in text
     assert "mv -f \"$tmp\" \"$destination\"" in text
     assert "rollback" in text
-    # #210: every curl call is time-bounded so an unreachable GitHub degrades
-    # instead of hanging the publish unit until TimeoutStartSec.
-    assert "--max-time" in text and "--connect-timeout" in text
-    assert text.count("$CURL_TIMEOUTS") == 2, "both the manifest fetch and the file fetch must be bounded"
+    # #210: every curl call is time-bounded (an unreachable GitHub degrades
+    # instead of hanging the publish unit until TimeoutStartSec) and may not
+    # follow a redirect off https (what it fetches is installed as root).
+    assert "--max-time" in text and "--connect-timeout" in text and "--proto-redir =https" in text
+    curl_calls = len(re.findall(r"\bcurl --fail\b", text))
+    assert curl_calls >= 2
+    assert text.count("$CURL_OPTS") == curl_calls, "every curl call must carry the shared bounded options"
 
 
 # ---------------------------------------------------------------------------
@@ -135,16 +138,14 @@ def test_sync_script_and_dropin_contract() -> None:
 _FAKE_CURL_BODY = r"""#!/bin/sh
 url=""
 outfile=""
-prev=""
-for arg in "$@"; do
-    if [ "$prev" = "-o" ]; then
-        outfile="$arg"
-        prev=""
-        continue
-    fi
-    case "$arg" in
-        -*) prev="$arg"; continue ;;
-        *) url="$arg" ;;
+# Consume the value-taking flags the real script passes explicitly, so the URL
+# is the only positional left whatever order the flags come in.
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -o) outfile="$2"; shift 2 ;;
+        --proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
+        -*) shift ;;
+        *) url="$1"; shift ;;
     esac
 done
 mode="$(cat "$FAKE_CURL_MODE_FILE" 2>/dev/null || echo ok)"
@@ -155,6 +156,9 @@ case "$url" in
             exit 22
         elif [ "$mode" = "manifest-garbage" ]; then
             printf '%s' '<html>404 not found</html>' > "$outfile"
+            exit 0
+        elif [ "$mode" = "master-lists-missing" ]; then
+            printf '%s\n' 'scripts/foo.py' 'assets/vendor/missing.js' > "$outfile"
             exit 0
         else
             printf '%s\n' 'scripts/foo.py' 'assets/vendor/bar.js' > "$outfile"
@@ -178,10 +182,10 @@ esac
 
 
 def _sh_path(path: Path) -> str:
-    """A path in the form the shell (sh, on Windows via MSYS/Cygwin or WSL,
-    on Linux natively) can use directly in the script under test -- a
-    Windows backslash path fed into a POSIX shell script is parsed as
-    escape sequences and word-split on the backslashes, not a single path."""
+    """A path in the form the shell (sh: Git Bash / MSYS on Windows, native
+    on Linux) can use directly in the script under test -- a Windows
+    backslash path fed into a POSIX shell script is parsed as escape
+    sequences and word-split on the backslashes, not a single path."""
     posix = path.as_posix()
     if len(posix) > 1 and posix[1] == ":":
         # C:/Temp/... -> /c/Temp/... (MSYS/Cygwin/WSL mount convention).
@@ -215,7 +219,7 @@ def _make_test_sync_script(dest: Path) -> Path:
     return script_path
 
 
-def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str) -> subprocess.CompletedProcess:
+def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
     dest = tmp_path / "dest"
     dest.mkdir()
     # newline="\n": the host manifest is LF, and on Windows a default write_text
@@ -231,7 +235,9 @@ def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str) -> subprocess
 
     script_path = _make_test_sync_script(dest)
     env = dict(os.environ)
+    env.pop("SYNC_MANIFEST", None)  # a developer's own override must not steer the test
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    env.update(extra_env or {})
     result = subprocess.run(
         ["sh", str(script_path)],
         capture_output=True, text=True, env=env,
@@ -307,6 +313,7 @@ def test_deleted_manifest_entry_deadlocks_the_pre_fix_script(tmp_path: Path, sh_
     script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
     env = dict(os.environ)
+    env.pop("SYNC_MANIFEST", None)
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     result = subprocess.run(["sh", str(script_path)], capture_output=True, text=True, env=env)
 
@@ -370,6 +377,51 @@ def test_manifest_fetch_garbage_response_falls_back_visibly(tmp_path: Path, sh_a
     assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
     assert "manifest fetched from master is empty or unrecognisable, falling back to local copy" in result.stderr
     assert "using local manifest" in result.stdout
+
+
+def test_write_back_is_skipped_when_a_master_manifest_entry_fails_to_install(
+    tmp_path: Path, sh_available: bool
+) -> None:
+    """The self-heal invariant: master's manifest replaces the local copy ONLY
+    after every file it names has installed. A manifest that lists a file the
+    fetch cannot get (raw CDN behind the push) fails the run, installs nothing,
+    and leaves the local copy byte-identical."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    initial = "scripts/foo.py\nassets/vendor/bar.js\n"
+    result = _run_sync(tmp_path, mode="master-lists-missing", initial_manifest=initial)
+    assert result.returncode != 0
+    assert "using master manifest" in result.stdout
+    assert "download failed: assets/vendor/missing.js" in result.stderr
+    assert "local manifest copy updated" not in result.stdout
+    assert not (result.dest / "scripts" / "foo.py").exists()
+    assert (result.dest / "sync-manifest.txt").read_text(encoding="utf-8") == initial
+
+
+def test_explicit_sync_manifest_override_is_never_overwritten(tmp_path: Path, sh_available: bool) -> None:
+    """SYNC_MANIFEST is an operator's pinned choice: it is read as the fallback
+    but master's manifest is not written over it after a successful sync."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    pinned = tmp_path / "pinned-manifest.txt"
+    pinned.write_text("scripts/foo.py\n", encoding="utf-8", newline="\n")
+    result = _run_sync(
+        tmp_path, mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={"SYNC_MANIFEST": _sh_path(pinned)},
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout  # master's manifest was still preferred for the run
+    assert "SYNC_MANIFEST is set explicitly; not updating it from master" in result.stdout
+    assert pinned.read_text(encoding="utf-8") == "scripts/foo.py\n"
+
+
+def test_crlf_manifest_lines_are_tolerated(tmp_path: Path, sh_available: bool) -> None:
+    """A local copy edited on Windows must not turn every entry into a 404."""
+    if not sh_available:
+        pytest.skip("sh not available")
+    result = _run_sync(tmp_path, mode="manifest-404", initial_manifest="scripts/foo.py\r\nassets/vendor/bar.js\r\n")
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout
 
 
 def test_successful_master_sync_heals_the_local_manifest_copy(tmp_path: Path, sh_available: bool) -> None:

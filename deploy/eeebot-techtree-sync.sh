@@ -82,11 +82,16 @@ trap 'exit 1' HUP INT TERM
 # manifest already, local or remote -- so a garbage response (an HTML error
 # page, a JSON error body, an empty body) is rejected here instead of
 # either aborting the whole sync or being fed unvalidated into the loop.
+# A manifest edited on Windows, or served with CRLF, would otherwise turn every
+# entry into "name.py<CR>" -- rejected here, and a hard 404 in the loop below.
+cr=$(printf '\r')
 manifest_looks_valid() {
     manifest_file="$1"
     [ -s "$manifest_file" ] || return 1
     saw_entry=0
+    line=
     while IFS= read -r line || [ -n "$line" ]; do
+        line=${line%"$cr"}
         case "$line" in
             ''|'#'*) continue ;;
             /*|*..*) return 1 ;;
@@ -104,14 +109,17 @@ mkdir -p "$DEST" "$TMP_ROOT"
 # Either branch prints a distinct, visible journal line -- a silent
 # fallback to a stale local copy would just be the original bug in a new
 # wrapper, and the operator explicitly ruled that out.
-# Bounded network waits on every curl call: an unreachable GitHub must
-# degrade to the local copy, not hang this ExecStartPre until the unit's
-# TimeoutStartSec (300 s) kills the whole publish.
-CURL_TIMEOUTS="--connect-timeout 10 --max-time 60"
+# Shared curl options for both fetches. Bounded network waits: an
+# unreachable GitHub must degrade to the local copy, not hang this
+# ExecStartPre until the unit's TimeoutStartSec (300 s) kills the whole
+# publish. --proto-redir keeps a redirect from downgrading to http; what is
+# fetched here is installed as root and, for the manifest, kept as the
+# offline fallback.
+CURL_OPTS="--connect-timeout 10 --max-time 60 --proto-redir =https"
 MANIFEST="$LOCAL_MANIFEST"
 manifest_source=local
-# shellcheck disable=SC2086  # CURL_TIMEOUTS is deliberately word-split
-if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_TIMEOUTS \
+# shellcheck disable=SC2086  # CURL_OPTS is deliberately word-split
+if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
     "$RAW_BASE/deploy/sync-manifest.txt" -o "$TMP_ROOT/manifest.remote"; then
     if manifest_looks_valid "$TMP_ROOT/manifest.remote"; then
         MANIFEST="$TMP_ROOT/manifest.remote"
@@ -125,15 +133,23 @@ fi
 [ -r "$MANIFEST" ] || { echo "techtree sync: manifest missing: $MANIFEST" >&2; exit 1; }
 echo "techtree sync: using $manifest_source manifest ($MANIFEST)"
 
+# Trade recorded (#210 review): with master's manifest in use, a 404 on one
+# of ITS entries (raw CDN still catching up on a file pushed in the same
+# commit) fails this run with no retry against the local copy. That is a
+# transient of one publish interval, and the local copy could not have
+# helped -- it does not know the new file either. The deadlock this PR
+# removes was permanent; this is not.
 index=0
+relative=
 while IFS= read -r relative || [ -n "$relative" ]; do
+    relative=${relative%"$cr"}
     case "$relative" in
         ''|'#'*) continue ;;
         /*|*..*) echo "techtree sync: unsafe manifest path: $relative" >&2; exit 1 ;;
     esac
     tmp="$TMP_ROOT/$index"
     # shellcheck disable=SC2086
-    if ! curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_TIMEOUTS \
+    if ! curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
         "$RAW_BASE/$relative" -o "$tmp"; then
         echo "techtree sync: download failed: $relative" >&2
         exit 1
@@ -192,8 +208,14 @@ echo "techtree sync: installed $installed manifest file(s)"
 # initialized with. Not fatal on its own: the files are already installed
 # by this point, so a failure to update the fallback copy is logged, not
 # rolled back.
+# Atomic (tmp in the same directory tree, then mv) so a signal or ENOSPC
+# mid-write cannot leave a truncated fallback -- the one file needed when
+# GitHub is next unreachable. An explicit SYNC_MANIFEST override is an
+# operator's pinned choice and is never overwritten.
 if [ "$manifest_source" = "master" ]; then
-    if cp "$MANIFEST" "$LOCAL_MANIFEST" 2>/dev/null; then
+    if [ -n "${SYNC_MANIFEST:-}" ]; then
+        echo "techtree sync: SYNC_MANIFEST is set explicitly; not updating it from master ($LOCAL_MANIFEST)"
+    elif cp "$MANIFEST" "$TMP_ROOT/manifest.new" && mv -f "$TMP_ROOT/manifest.new" "$LOCAL_MANIFEST"; then
         echo "techtree sync: local manifest copy updated from master ($LOCAL_MANIFEST)"
     else
         echo "techtree sync: WARNING: could not update local manifest copy at $LOCAL_MANIFEST" >&2
