@@ -134,9 +134,9 @@ def test_fork_children_share_depth_have_distinct_x_and_edges_do_not_cross(tmp_pa
 
 
 def test_every_coordinate_lies_inside_the_viewbox(tmp_path: Path) -> None:
-    nodes = [_node('t0', None, '2026-09-01T00:00:00Z'), _node('t1', 't0', '2026-09-01T00:10:00Z')]
+    nodes = [_node('t0', None, '2026-09-01T00:00:00Z', parent_day='2026-08-31', current=True), _node('t1', 't0', '2026-09-01T00:10:00Z')]
     nodes += [_node(f'l{i}', 't1', f'2026-09-01T01:{i:02d}:00Z', basis='inferred', kind='leaf', outcome='failed') for i in range(20)]
-    result = _render(_payload(nodes), tmp_path)
+    result = _render(_payload(nodes, current_sha='t0'), tmp_path)
     assert result['successes'] == 1, result['error']
     x0, y0, w, h = _viewbox(result)
     assert float(result['svg']['attrs']['width']) == w and float(result['svg']['attrs']['height']) == h
@@ -146,6 +146,9 @@ def test_every_coordinate_lies_inside_the_viewbox(tmp_path: Path) -> None:
     for path in _elements(result['svg'], 'path'):
         for x, y in _path_points(path['attrs']['d']):
             assert x0 <= x <= x0 + w and y0 <= y <= y0 + h, path['attrs']['d']
+    for text in _elements(result['svg'], 'text'):
+        assert x0 <= float(text['attrs']['x']) <= x0 + w and y0 <= float(text['attrs']['y']) <= y0 + h, text['attrs']
+    assert len(_elements(result['svg'], 'text')) == 2, 'the stub and the star are part of the bounds check'
     assert len(_elements(result['svg'], 'circle')) == 22, 'a wide fan-out is drawn, not dropped'
 
 
@@ -183,15 +186,23 @@ def test_node_title_comes_from_the_payload_not_a_placeholder(tmp_path: Path) -> 
 
 def test_cross_day_parent_renders_a_stub_and_leaves_no_isolated_node(tmp_path: Path) -> None:
     nodes = [_node('first', None, '2026-09-01T00:00:00Z', parent_day='2026-08-31'),
-             _node('second', 'first', '2026-09-01T01:00:00Z')]
+             _node('second', 'first', '2026-09-01T01:00:00Z'),
+             # a parent pointer at a node that is not in the payload (truncated away): drawn as a root, not dropped
+             _node('orphan', 'truncated-away', '2026-09-01T02:00:00Z'),
+             # a two-node parent cycle in a corrupt payload: both nodes must still be drawn
+             _node('cyc-a', 'cyc-b', '2026-09-01T03:00:00Z'), _node('cyc-b', 'cyc-a', '2026-09-01T04:00:00Z')]
     result = _render(_payload(nodes), tmp_path)
     assert result['successes'] == 1, result['error']
+    assert len(_circles(result)) == 5, 'every node is drawn, whatever its parent pointer says'
     stubs = [t for t in _elements(result['svg'], 'text') if 'lineage-hidden-parent' in t['attrs'].get('class', '').split()]
     assert len(stubs) == 1 and 'Aug 31' in stubs[0]['text']
+    assert float(stubs[0]['attrs']['y']) == float(_circles(result)['cycle-first']['attrs']['cy']) - 14
     linked = {p['attrs']['data-target'] for p in _elements(result['svg'], 'path')}
     stubbed = {t['attrs']['data-target'] for t in stubs}
-    isolated = [n['sha'] for n in nodes if n['sha'] not in linked and n['sha'] not in stubbed]
-    assert isolated == []
+    isolated = sorted(n['sha'] for n in nodes if n['sha'] not in linked and n['sha'] not in stubbed)
+    # the orphan is an honest root (no edge invented); the cycle's two recorded pointers are both drawn as given
+    assert isolated == ['orphan'], isolated
+    assert {(p['attrs']['data-source'], p['attrs']['data-target']) for p in _elements(result['svg'], 'path')} >= {('cyc-b', 'cyc-a'), ('cyc-a', 'cyc-b')}
 
 
 def test_current_node_star_survives_the_client_render(tmp_path: Path) -> None:
@@ -276,6 +287,14 @@ def test_one_parent_expression_feeds_nodes_edges_and_server_svg() -> None:
     assert nodes['leaf:cycle-fail']['parent'] == 'b' and nodes['leaf:cycle-fail']['parent_basis'] == 'inferred'
     assert nodes['x']['parent'] == 'b' and nodes['x']['parent_basis'] == 'inferred'
     assert nodes['r']['parent'] is None
+    # Two trunk rows with the same timestamp and no usable parent must not become each other's parent (review on PR #209).
+    twins = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-p', 'sha': 'p', 'parent_sha': 'gone-1', 'ts': '2026-09-02T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-q', 'sha': 'q', 'parent_sha': 'gone-2', 'ts': '2026-09-02T00:00:00Z'},
+    ]
+    twin_nodes = {n['sha']: n for n in _day_payload(tv.build_archive_tree({'nodes': {}}, twins, ledger_history=twins, now='2026-09-02T05:00:00Z'), day='2026-09-02')['nodes']}
+    parents = {twin_nodes['p']['parent'], twin_nodes['q']['parent']}
+    assert None in parents and len(parents) == 2, twin_nodes
     # the server SVG (noscript fallback) uses the same basis: inferred edges are dashed, recorded are not
     svg = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', html, re.S).group(1)
     lines = re.findall(r'<line [^>]*>', svg)
@@ -296,7 +315,12 @@ def test_cross_day_recorded_parent_is_a_stub_in_the_payload_not_a_guess() -> Non
     assert nodes['t']['parent'] is None and nodes['t'].get('parent_basis') is None
     assert nodes['t']['parent_day'] == '2026-08-31'
     assert nodes['u']['parent'] == 't' and nodes['u']['parent_basis'] == 'recorded'
-    assert 'lineage-hidden-parent' in html
+    section = re.search(r'<section class="lineage-day-group" data-day="2026-09-01">(.*?)</section>', html, re.S).group(1)
+    svg = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', section, re.S).group(1)
+    stub = re.search(r'<text class="lineage-hidden-parent" x="(\d+)" y="(\d+)"[^>]*>&#8617; from Aug 31</text>', svg)
+    node_t = re.search(r'data-cycle-id="cycle-t" cx="(\d+)" cy="(\d+)"', svg)
+    assert stub and node_t
+    assert stub.group(1) == node_t.group(1) and int(stub.group(2)) == int(node_t.group(2)) - 14, 'the noscript stub sits on its node'
 
 
 def test_payload_marks_the_current_node() -> None:

@@ -1974,11 +1974,23 @@ def _lineage_parent(
     if recorded and recorded != sha and recorded in graph_shas:
         return recorded, 'recorded', None
     if recorded and recorded in all_nodes:
-        return None, None, _lineage_day(all_nodes[recorded]['ts'])
-    previous = max(
-        (item for item in trunk if item['sha'] != sha and item['ts'] <= node['ts']),
-        key=lambda item: item['ts'], default=None,
-    )
+        parent_day = _lineage_day(all_nodes[recorded]['ts'])
+        if parent_day != _lineage_day(node['ts']):
+            return None, None, parent_day
+        # Same day but not drawn (truncated at LINEAGE_DAY_CAP): a stub would
+        # point at today; fall through to the chronological guess instead.
+    order = {item['sha']: index for index, item in enumerate(trunk)}
+    if sha in order:
+        # A trunk row: the previous trunk node in timestamp order. Strictly
+        # earlier by POSITION, so two rows with an identical timestamp cannot
+        # become each other's parent (review finding on PR #209).
+        previous = trunk[order[sha] - 1] if order[sha] > 0 else None
+    else:
+        # A ledger-only leaf: the latest trunk node at or before its timestamp.
+        previous = max(
+            (item for item in trunk if item['ts'] <= node['ts']),
+            key=lambda item: (item['ts'], order[item['sha']]), default=None,
+        )
     if previous is None:
         return None, None, None
     return previous['sha'], 'inferred', None
@@ -2074,7 +2086,6 @@ def _build_vertical_day_lineage(
         parts.append('<noscript><p class="lineage-js-note">Enable JavaScript for the enhanced client-side lineage layout.</p></noscript>')
         if truncated:
             parts.append(f'<p class="lineage-day-truncated">truncated at {LINEAGE_DAY_CAP} nodes</p>')
-        count = max(len(trunk), len(side), 1)
         height = 40 + (max(len(trunk), len(side), 1) * 32)
         positions: dict[str, tuple[int, int]] = {}
         slots: dict[int, int] = {}
@@ -2119,7 +2130,7 @@ def _build_vertical_day_lineage(
                     parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="lineage-edge lineage-edge-chronological" stroke-dasharray="6 5" data-basis="inferred"/>')
             elif parent_day:
                 label = datetime.strptime(parent_day, '%Y-%m-%d').strftime('%b %d')
-                parts.append(f'<text class="lineage-hidden-parent" x="{x2}" y="16">&#8617; from {esc(label)}</text>')
+                parts.append(f'<text class="lineage-hidden-parent" x="{x2}" y="{y2 - 14}" text-anchor="middle">&#8617; from {esc(label)}</text>')
 
         def _node_title(node: dict[str, Any]) -> str:
             # #208 step 1: cycle_details carries the real title for every
@@ -2188,8 +2199,10 @@ def _build_vertical_day_lineage(
   var panel = document.getElementById('cycle-details-panel'), src = panel.getAttribute('data-cycle-details-src'), data = null, loading = null;
   function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
-  function list(label, values) {{ return values && values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
-  function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src, {{cache: 'force-cache'}}).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}); return loading; }}
+  function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+  // Default cache mode on purpose: the file is republished every cycle and 'force-cache' would pin the first copy for good.
+  // A failed fetch clears `loading`, so the next click retries instead of replaying the rejection.
+  function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
   function render(cid) {{
     var item = (data && data[cid]) || {{cycle_id: cid}};
     var html = '<h3>' + esc(item.title || cid) + '</h3>' + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations);
@@ -2203,7 +2216,7 @@ def _build_vertical_day_lineage(
     var cid = node.getAttribute('data-cycle-id');
     panel.hidden = false;
     panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>';
-    load().then(function () {{ render(cid); }}, function (err) {{ panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded (' + esc(err && err.message || err) + ').</p>'; }});
+    load().then(function () {{ render(cid); }}).catch(function (err) {{ panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; }});
   }}
   document.addEventListener('click', function (event) {{
     var node = event.target.closest('.lineage-node');
@@ -2338,12 +2351,17 @@ def build_archive_tree(
     # The ~230-line DGM archive tree (#53/#71 legend, colorbar, best path,
     # day separators, _cycle_details_panel) that used to follow an early
     # return here was unreachable in production and is gone.
-    rows = ledger_history if isinstance(ledger_history, list) else (ledger_tail if isinstance(ledger_tail, list) else [])
-    has_rows = any(isinstance(row, dict) and row.get('phase') == 'evolution_tree' and row.get('sha') for row in rows)
+    # `ledger_history or ledger_tail`: a fail-soft read leaves ledger_history as
+    # an EMPTY list, and the ledger-only leaves in ledger_tail must still render.
+    rows = (ledger_history if isinstance(ledger_history, list) else []) or (ledger_tail if isinstance(ledger_tail, list) else [])
+    has_rows = any(
+        isinstance(row, dict) and row.get('phase') == 'evolution_tree' and row.get('sha') and _lineage_day(row.get('ts'))
+        for row in rows
+    )
     tree_nodes = evolution_tree.get('nodes') if isinstance(evolution_tree, dict) else None
-    has_tree = isinstance(tree_nodes, dict) and any(isinstance(n, dict) for n in tree_nodes.values())
+    has_tree = isinstance(tree_nodes, dict) and any(isinstance(n, dict) and _lineage_day(n.get('ts')) for n in tree_nodes.values())
     if not has_rows and not has_tree:
-        return unavailable_panel('Evolution Lineage', 'evolution tree unavailable')
+        return unavailable_panel('Evolution Lineage', 'evolution tree unavailable (no node with a usable timestamp)')
     return _build_day_bucketed_lineage(rows, evolution_tree, task_titles, now or datetime.now(timezone.utc).isoformat(), cycle_details)
 
 
@@ -5055,7 +5073,9 @@ CSS = '''
     .lineage-filter-note[hidden] { display: none; }
     .lineage-day-group[hidden] { display: none; }
     .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
-    .lineage-day-svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+    /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
+       being scaled down until r=9 circles are 4 px and the labels unreadable. */
+    .lineage-day-svg { display: block; height: auto; overflow: visible; }
     .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
     .lineage-edge { stroke: #2f5c46; stroke-width: 2; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
@@ -5821,12 +5841,8 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
         return 1
 
     pages = dict(pages)
-    if any('assets/vendor/lineage-renderer.js' in html for html in pages.values()):
-        vendor_root = Path(__file__).resolve().parent.parent / 'assets' / 'vendor'
-        for name in ('lineage-renderer.js',):
-            path = vendor_root / name
-            if path.is_file():
-                pages[f'assets/vendor/{name}'] = path.read_text(encoding='utf-8')
+    # (#208: the former "copy vendor files when a page references assets/vendor/"
+    # block was dead — the renderer is inlined and no page ever carried that path.)
 
     # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
