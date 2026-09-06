@@ -1057,6 +1057,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
     ]
     from test_techtree_viewer import _fixture
     data = _fixture()
+    data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}
     data['ledger_tail'] = rows
     data['ledger_history'] = rows
     data['cycle_titles'] = {'cycle-commit': 'Commit card', 'cycle-attempt': 'Attempt card'}
@@ -1066,7 +1067,9 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
+            errors = []
             page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(base_url + '/lineage.html')
             page.wait_for_load_state('networkidle')
             page.locator(f'.lineage-node[data-node-id="{node_id}"]').click()
@@ -1074,6 +1077,8 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             permalink = page.url
             assert f'#node-{node_id.replace(":", "%3A")}' in permalink
             fresh = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            fresh_errors = []
+            fresh.on('pageerror', lambda error: fresh_errors.append(str(error)))
             fresh.goto(permalink)
             fresh.wait_for_load_state('networkidle')
             fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
@@ -1081,12 +1086,16 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             selected = fresh.locator('.cycle-node-selected')
             assert selected.get_attribute('data-node-id') == node_id
             body = fresh.locator('.cycle-details-body')
-            assert 'Selected node' in body.inner_text()
-            assert cycle_id in body.inner_text()
-            assert fresh.locator('.cycle-details-body h3').count() >= 2
+            body_text = body.inner_text()
+            assert 'Selected node' in body_text
+            assert node_id in body_text and title in body_text and cycle_id in body_text
+            heading_box = fresh.locator('.cycle-details-body h3').first.bounding_box()
             body_box = body.bounding_box()
+            assert heading_box is not None and heading_box['y'] >= 0 and heading_box['y'] + heading_box['height'] <= 844
             assert body_box is not None and 0 <= body_box['y'] < 0.9 * 844
-            assert fresh.locator('#cycle-details-close').count() == 1
+            fresh.locator('#cycle-details-close').focus()
+            assert fresh.evaluate("() => document.activeElement === document.getElementById('cycle-details-close')")
+            assert errors == [] and fresh_errors == []
             fresh.close()
             browser.close()
     finally:
