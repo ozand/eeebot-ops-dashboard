@@ -3674,9 +3674,13 @@ def build_cycle_feed(
     history_mode: bool = False,
     rendered_lesson_ids: set[str] | None = None,
     ledger_history: list[Any] | None = None,
+    now: datetime | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
+    ref_now = now or datetime.now(timezone.utc)
+    if ref_now.tzinfo is None:
+        ref_now = ref_now.replace(tzinfo=timezone.utc)
 
     # Group ledger phases by cycle_id
     cycles_dict: dict[str, list[dict[str, Any]]] = {}
@@ -3931,7 +3935,7 @@ def build_cycle_feed(
                 delta_html = f'<span class="feed-delta">{fmt_compact(float(metric_delta), signed=True)}</span>'
             except (TypeError, ValueError):
                 delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>'
-        ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val)}</span>' if ts_val else ''
+        ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val, now=ref_now)}</span>' if ts_val else ''
 
         # Issue #60: per-cycle LLM cost line (calls / tokens / duration),
         # plus a budget-pressure marker when a call hit finish_reason=length.

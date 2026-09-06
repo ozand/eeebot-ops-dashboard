@@ -1247,24 +1247,31 @@ def test_issue218_sibling_links_are_exact_hash_keyboard_accessible_and_distingui
     ]
     from test_techtree_viewer import _fixture
     data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'second'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-dup': 'Duplicate cycle'}
-    data['cycle_details'] = {'cycle-dup': {'cycle_id': 'cycle-dup', 'title': 'Duplicate cycle'}}
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 03:00:00')
     srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
-            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle'); page.locator('.lineage-node[data-node-id="c:first"]').click(); page.wait_for_selector('.cycle-details-body'); page.wait_for_timeout(300); page.locator('.cycle-sibling-link').first.wait_for(timeout=5000, state='attached')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            page.locator('[data-lineage-from]').fill('2026-01-01'); page.locator('[data-lineage-to]').fill('2026-01-01'); page.locator('[data-lineage-filter="range"]').click(); page.wait_for_timeout(200)
+            assert page.locator('[data-lineage-filter="range"].active').count() == 1
+            assert page.locator('.lineage-node[data-node-id="c:second"]').count() == 0
+            assert page.locator('.lineage-node[data-node-id="a:cycle-dup"]').count() == 0
+            page.locator('.lineage-node[data-node-id="c:first"]').click(); page.locator('.cycle-sibling-link').first.wait_for(timeout=5000, state='attached')
             assert page.locator('.cycle-sibling-link').count() == 3
             links = page.locator('.cycle-sibling-link')
-            assert 'attempt (no commit recorded)' in links.nth(2).inner_text()
             assert links.nth(0).get_attribute('aria-current') == 'page'
             links.nth(1).focus(); links.nth(1).press('Enter'); page.wait_for_timeout(200)
+            assert page.locator('[data-lineage-filter="all"].active').count() == 1
             assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:second'
             assert page.url.endswith('#node-c%3Asecond')
-            assert page.locator('[data-lineage-filter="all"].active').count() == 1
+            assert 'Node: 2 of 3' in page.locator('.cycle-details-body').inner_text()
+            assert page.locator('.cycle-sibling-link[aria-current="page"]').get_attribute('data-node-id') == 'c:second'
             links_after = page.locator('.cycle-sibling-link')
             links_after.nth(2).click(); page.wait_for_timeout(200)
             assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'a:cycle-dup'
+            assert 'Node: 3 of 3' in page.locator('.cycle-details-body').inner_text()
+            assert page.locator('.cycle-sibling-link[aria-current="page"]').get_attribute('data-node-id') == 'a:cycle-dup'
             assert 'No commit recorded' in page.locator('.cycle-details-body').inner_text()
             browser.close()
     finally:
