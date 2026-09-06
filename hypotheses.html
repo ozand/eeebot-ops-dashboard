@@ -819,6 +819,9 @@
     .lineage-legend-node { stroke-width: 2; }
     .lineage-legend .arch-node { cursor: default; pointer-events: none; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
@@ -901,15 +904,281 @@
     .footer-computed {
       color: #7d8aa3;
     }
+
+
+/* Issue #227: Two-tier agent context visualization styling */
+.context-panel {
+  background: var(--color-bg-subtle, #161b22);
+  border: 1px solid var(--color-border-default, #30363d);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.context-header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.context-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+.badge-danger { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+.badge-secondary { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.cycle-pill { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: monospace; }
+.context-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.context-kpi-card {
+  background: var(--color-canvas-default, #0d1117);
+  border: 1px solid var(--color-border-muted, #21262d);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
+.kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
+.stat-good { color: #3fb950; }
+.stat-warn { color: #f85149; }
+.context-meter-box {
+  margin: 16px 0;
+  background: #0d1117;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+.context-progress-bar {
+  height: 10px;
+  background: #21262d;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.context-dropped-alert {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dropped-pill { background: rgba(248, 81, 73, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
+.two-tier-canvas {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.tier-col {
+  flex: 1;
+  min-width: 320px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+}
+.tier-col-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.tier-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.tag-t1 { background: #1f6feb; color: #fff; }
+.tag-t2 { background: #8957e5; color: #fff; }
+.tier-col-header h3 { font-size: 15px; margin: 0; color: #c9d1d9; }
+.tier-col-header p { font-size: 12px; color: #8b949e; margin: 2px 0 0; }
+.tier1-blocks-list { display: flex; flex-direction: column; gap: 6px; }
+.t1-block-item {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.t1-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.t1-name { font-weight: 600; color: #58a6ff; }
+.t1-sz { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.t1-desc { font-size: 11px; color: #8b949e; margin-left: 6px; }
+.t1-empty { opacity: 0.6; }
+.t1-linked { flex-direction: column; align-items: stretch; gap: 4px; }
+.t1-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tier-link-badge {
+  display: inline-block;
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid rgba(137, 87, 229, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tier-link-badge:hover { background: rgba(137, 87, 229, 0.3); text-decoration: none; }
+.t1-sep-row { background: transparent; border: 1px dashed #30363d; color: #8b949e; font-size: 11px; font-style: italic; justify-content: space-between; }
+.t1-msg { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.2); }
+.tier-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.bridge-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  max-width: 180px;
+}
+.bridge-arrow { font-size: 24px; color: #a371f7; display: block; margin-bottom: 4px; }
+.bridge-card strong { display: block; font-size: 13px; color: #c9d1d9; }
+.bridge-card p { font-size: 11px; color: #8b949e; margin: 2px 0 6px; }
+.bridge-cost { font-size: 10px; color: #a371f7; font-weight: 500; }
+.tier2-targets-list { display: flex; flex-direction: column; gap: 10px; }
+.t2-target-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.t2-card-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.t2-size { font-family: monospace; color: #a371f7; font-size: 12px; }
+.t2-target-card p { font-size: 12px; color: #8b949e; margin: 0 0 8px; }
+.t2-explore-btn { font-size: 11px; color: #58a6ff; text-decoration: none; font-weight: 500; }
+.t2-explore-btn:hover { text-decoration: underline; }
+.context-detail-section { margin-top: 32px; }
+.context-detail-section h3 { font-size: 17px; margin: 0 0 4px; color: #c9d1d9; }
+.section-sub { font-size: 13px; color: #8b949e; margin: 0 0 16px; }
+.context-block-details {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.block-summary {
+  padding: 10px 12px;
+  background: #161b22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  user-select: none;
+}
+.block-summary:hover { background: #1f242c; }
+.block-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.block-title { color: #58a6ff; }
+.block-label { color: #8b949e; font-size: 12px; }
+.block-meta { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.block-body { padding: 12px; max-height: 400px; overflow-y: auto; background: #0d1117; }
+.block-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: monospace; color: #c9d1d9; }
+.context-block-empty {
+  background: #0d1117;
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reconciliation-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-header h4 { margin: 0; font-size: 14px; color: #c9d1d9; }
+.reconciliation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reconciliation-table th, .reconciliation-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+.reconciliation-table th { color: #8b949e; font-weight: 500; }
+.reconciliation-table .num { text-align: right; font-family: monospace; }
+.reconciliation-table .sep-row { background: rgba(137, 87, 229, 0.05); color: #a371f7; }
+.reconciliation-table .muted-row { opacity: 0.6; }
+.reconciliation-table .total-row { border-top: 2px solid #30363d; font-weight: bold; background: #161b22; }
+.rec-note { font-size: 11px; color: #8b949e; margin: 8px 0 0; }
+.rec-unavailable { border-color: rgba(210, 153, 34, 0.4); background: rgba(210, 153, 34, 0.05); }
+.tier2-deep-section { margin-top: 32px; border-top: 1px solid #30363d; padding-top: 24px; }
+.t2-group { margin-bottom: 24px; }
+.t2-group-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.t2-group-header h4 { margin: 0; font-size: 15px; color: #c9d1d9; }
+.t2-group-note { font-size: 12px; color: #8b949e; }
+.skills-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skill-asset-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.skill-card-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card-name { color: #58a6ff; font-family: monospace; }
+.skill-card-size { color: #8b949e; font-size: 11px; }
+.skill-card-desc { font-size: 12px; color: #8b949e; margin: 0 0 10px; line-height: 1.4; flex-grow: 1; }
+.skill-card-details summary { font-size: 11px; color: #a371f7; cursor: pointer; user-select: none; }
+.skill-card-details pre { margin: 8px 0 0; max-height: 280px; overflow-y: auto; background: #161b22; padding: 8px; border-radius: 4px; font-size: 11px; }
+.missing-artifact-callout {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #f85149;
+}
+.callout-icon { font-size: 18px; }
+.missing-artifact-callout p { margin: 2px 0 0; font-size: 12px; color: #c9d1d9; }
+.lessons-pills, .memory-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lesson-pill, .memory-pill {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b949e;
+  font-family: monospace;
+}
+.pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
 </style>
 </head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">242</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 08:26:32 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">233</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 19:44:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="14">data: 14s old &middot; generated 05:42 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 17:02 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -925,7 +1194,7 @@
               <strong class="hypo-title">exercise-unconfirmed-scripts-via-test-harness</strong>
               <div class="hypo-meta">
                 <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 03:03 MSK</span>
-                <span class="hypo-ts" title="2026-09-06T05:42:33.055075Z">touched 08:42 MSK</span>
+                <span class="hypo-ts" title="2026-09-06T17:01:18.997686Z">touched 20:01 MSK</span>
               </div>
             </li>
         
@@ -2192,7 +2461,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 05:42:47 UTC &middot; host eeepc &middot; newest source 14s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 08:26:32 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 17:02:38 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 19:44:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

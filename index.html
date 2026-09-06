@@ -819,6 +819,9 @@
     .lineage-legend-node { stroke-width: 2; }
     .lineage-legend .arch-node { cursor: default; pointer-events: none; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
@@ -901,15 +904,281 @@
     .footer-computed {
       color: #7d8aa3;
     }
+
+
+/* Issue #227: Two-tier agent context visualization styling */
+.context-panel {
+  background: var(--color-bg-subtle, #161b22);
+  border: 1px solid var(--color-border-default, #30363d);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.context-header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.context-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+.badge-danger { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+.badge-secondary { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.cycle-pill { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: monospace; }
+.context-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.context-kpi-card {
+  background: var(--color-canvas-default, #0d1117);
+  border: 1px solid var(--color-border-muted, #21262d);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
+.kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
+.stat-good { color: #3fb950; }
+.stat-warn { color: #f85149; }
+.context-meter-box {
+  margin: 16px 0;
+  background: #0d1117;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+.context-progress-bar {
+  height: 10px;
+  background: #21262d;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.context-dropped-alert {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dropped-pill { background: rgba(248, 81, 73, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
+.two-tier-canvas {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.tier-col {
+  flex: 1;
+  min-width: 320px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+}
+.tier-col-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.tier-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.tag-t1 { background: #1f6feb; color: #fff; }
+.tag-t2 { background: #8957e5; color: #fff; }
+.tier-col-header h3 { font-size: 15px; margin: 0; color: #c9d1d9; }
+.tier-col-header p { font-size: 12px; color: #8b949e; margin: 2px 0 0; }
+.tier1-blocks-list { display: flex; flex-direction: column; gap: 6px; }
+.t1-block-item {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.t1-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.t1-name { font-weight: 600; color: #58a6ff; }
+.t1-sz { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.t1-desc { font-size: 11px; color: #8b949e; margin-left: 6px; }
+.t1-empty { opacity: 0.6; }
+.t1-linked { flex-direction: column; align-items: stretch; gap: 4px; }
+.t1-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tier-link-badge {
+  display: inline-block;
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid rgba(137, 87, 229, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tier-link-badge:hover { background: rgba(137, 87, 229, 0.3); text-decoration: none; }
+.t1-sep-row { background: transparent; border: 1px dashed #30363d; color: #8b949e; font-size: 11px; font-style: italic; justify-content: space-between; }
+.t1-msg { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.2); }
+.tier-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.bridge-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  max-width: 180px;
+}
+.bridge-arrow { font-size: 24px; color: #a371f7; display: block; margin-bottom: 4px; }
+.bridge-card strong { display: block; font-size: 13px; color: #c9d1d9; }
+.bridge-card p { font-size: 11px; color: #8b949e; margin: 2px 0 6px; }
+.bridge-cost { font-size: 10px; color: #a371f7; font-weight: 500; }
+.tier2-targets-list { display: flex; flex-direction: column; gap: 10px; }
+.t2-target-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.t2-card-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.t2-size { font-family: monospace; color: #a371f7; font-size: 12px; }
+.t2-target-card p { font-size: 12px; color: #8b949e; margin: 0 0 8px; }
+.t2-explore-btn { font-size: 11px; color: #58a6ff; text-decoration: none; font-weight: 500; }
+.t2-explore-btn:hover { text-decoration: underline; }
+.context-detail-section { margin-top: 32px; }
+.context-detail-section h3 { font-size: 17px; margin: 0 0 4px; color: #c9d1d9; }
+.section-sub { font-size: 13px; color: #8b949e; margin: 0 0 16px; }
+.context-block-details {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.block-summary {
+  padding: 10px 12px;
+  background: #161b22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  user-select: none;
+}
+.block-summary:hover { background: #1f242c; }
+.block-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.block-title { color: #58a6ff; }
+.block-label { color: #8b949e; font-size: 12px; }
+.block-meta { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.block-body { padding: 12px; max-height: 400px; overflow-y: auto; background: #0d1117; }
+.block-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: monospace; color: #c9d1d9; }
+.context-block-empty {
+  background: #0d1117;
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reconciliation-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-header h4 { margin: 0; font-size: 14px; color: #c9d1d9; }
+.reconciliation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reconciliation-table th, .reconciliation-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+.reconciliation-table th { color: #8b949e; font-weight: 500; }
+.reconciliation-table .num { text-align: right; font-family: monospace; }
+.reconciliation-table .sep-row { background: rgba(137, 87, 229, 0.05); color: #a371f7; }
+.reconciliation-table .muted-row { opacity: 0.6; }
+.reconciliation-table .total-row { border-top: 2px solid #30363d; font-weight: bold; background: #161b22; }
+.rec-note { font-size: 11px; color: #8b949e; margin: 8px 0 0; }
+.rec-unavailable { border-color: rgba(210, 153, 34, 0.4); background: rgba(210, 153, 34, 0.05); }
+.tier2-deep-section { margin-top: 32px; border-top: 1px solid #30363d; padding-top: 24px; }
+.t2-group { margin-bottom: 24px; }
+.t2-group-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.t2-group-header h4 { margin: 0; font-size: 15px; color: #c9d1d9; }
+.t2-group-note { font-size: 12px; color: #8b949e; }
+.skills-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skill-asset-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.skill-card-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card-name { color: #58a6ff; font-family: monospace; }
+.skill-card-size { color: #8b949e; font-size: 11px; }
+.skill-card-desc { font-size: 12px; color: #8b949e; margin: 0 0 10px; line-height: 1.4; flex-grow: 1; }
+.skill-card-details summary { font-size: 11px; color: #a371f7; cursor: pointer; user-select: none; }
+.skill-card-details pre { margin: 8px 0 0; max-height: 280px; overflow-y: auto; background: #161b22; padding: 8px; border-radius: 4px; font-size: 11px; }
+.missing-artifact-callout {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #f85149;
+}
+.callout-icon { font-size: 18px; }
+.missing-artifact-callout p { margin: 2px 0 0; font-size: 12px; color: #c9d1d9; }
+.lessons-pills, .memory-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lesson-pill, .memory-pill {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b949e;
+  font-family: monospace;
+}
+.pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
 </style>
 </head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">242</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 08:26:32 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">233</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 19:44:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="14">data: 14s old &middot; generated 05:42 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 17:02 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -918,24 +1187,24 @@
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        <section class="health-verdict health-investigate" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>INVESTIGATE</strong> <span class="health-verdict-reason">3 consecutive failed or partial cycles</span></section>
+        <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">none</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: add regex match debugging utility in scripts/debug_regex_matches.py</strong> <span class="now-sub">(cycle-1ca8e4e53486 [cc0a6d80])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>docs(memory): add decay and archival preflight inspection policy fact</strong> <span class="now-sub">(cycle-d44625988920 [26f83c63])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
-        <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 31m/12.0h</span> <span class="feed-age-badge feed-badge-stale" title="host_metrics: stale">host_metrics: 3.8d/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 8m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 36m/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 2.5h/12.0h</span></div>
-        <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-rejected">deferring doc-only (2 deferred, 5/5 cap)</span></div>
+        <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-stale" title="host_metrics: stale">host_metrics: 4.3d/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 5m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 43s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 1.8h/12.0h</span></div>
+        <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-rejected">deferring doc-only (1 deferred, 5/5 cap)</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-06T00:00:09 — inputs 5/5, 2 hypotheses, 2 advisories</span></div>
         
         <details class="failed-exits-details" open>
-          <summary><strong class="health-alert-text">Recent Failed Bridge Exits (17)</strong></summary>
+          <summary><strong class="health-alert-text">Recent Failed Bridge Exits (20)</strong></summary>
           <ul class="failed-exits-list">
-            <li><span class="fail-ts">2026-09-06T00:49:05.209544Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:07:11.917600Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T23:47:42.938978Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T22:19:49.439536Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:16:43.550047Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:12:02.133228Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:07:21.198368Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T13:45:38.516221Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T13:40:59.858726Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T13:35:36.403621Z</span> [status 3]: <code></code><span class="now-sub"></span></li>
+            <li><span class="fail-ts">2026-09-06T13:25:22.237022Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:20:50.176057Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:16:10.227303Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:49:05.209544Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:07:11.917600Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T23:47:42.938978Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T22:19:49.439536Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:16:43.550047Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:12:02.133228Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:07:21.198368Z</span> [status 3]: <code></code><span class="now-sub"></span></li>
           </ul>
         </details>
     
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
-          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="defect-31bf84b3745f (served 2026-09-06T05:01:36.610460+00:00); defect-e5f6134a6750 (served 2026-09-06T05:12:40.207850+00:00); defect-6921e3c00c7c (served 2026-09-06T05:22:31.206263+00:00); defect-b96330ecfeb1 (served 2026-09-06T05:27:18.089654+00:00); defect-63d689ad83aa (served 2026-09-06T05:42:16.948058+00:00); defect-323370cbb155 (served 2026-09-05T21:07:23.241497+00:00); defect-7fb85e239b4a (served 2026-09-05T22:44:05.813183+00:00); defect-d312feeded61 (served 2026-09-06T04:56:13.773021+00:00); +2 more">defect &times;10</span> <span class="demand-chip served demand-group" translate="no" title="priority-4ed3cb3a5b87 (served 2026-09-06T05:32:08.524924+00:00); priority-d4d14d435776 (served 2026-09-06T05:06:53.205150+00:00)">priority &times;2</span> <span class="demand-chip served demand-group" translate="no" title="reflection-0747383d8ece (served 2026-09-05T22:15:06.251416+00:00); reflection-93d19f5654e0 (served 2026-09-05T23:42:33.616269+00:00); hypothesis-05c240cd76a3 (served 2026-09-06T00:02:45.620554+00:00); reflection-7b72cbc4326b (served 2026-09-06T05:17:27.847893+00:00)">other &times;4</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
+          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="defect-cd1c474f6faa (served 2026-09-06T12:02:00.338869+00:00); defect-051e057bc31d (served 2026-09-06T12:07:34.294829+00:00); defect-bed7673b8411 (served 2026-09-06T12:30:41.743871+00:00); defect-a97ee8777ff0 (served 2026-09-06T13:05:08.814553+00:00); defect-39af8a1b7a52 (served 2026-09-06T11:48:25.414742+00:00); defect-9e0dd7a28fbe (served 2026-09-06T14:24:20.397664+00:00); defect-52d85e7236bf (served 2026-09-06T14:29:22.326788+00:00); defect-a3732c2b9ebd (served 2026-09-06T14:34:50.369540+00:00)">defect &times;8</span> <span class="demand-chip served demand-group" translate="no" title="priority-4ed3cb3a5b87 (served 2026-09-06T12:59:40.591744+00:00); priority-d4d14d435776 (served 2026-09-06T11:57:00.284880+00:00)">priority &times;2</span> <span class="demand-chip served demand-group" translate="no" title="hypothesis-05c240cd76a3 (served 2026-09-06T00:02:45.620554+00:00); reflection-57b44a6ec86e (served 2026-09-06T16:44:47.801661+00:00); reflection-b4a7a8beca40 (served 2026-09-06T17:01:03.023034+00:00)">other &times;3</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
         </div>
       </div>
     </section>
@@ -943,9 +1212,9 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 10 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 76 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
-        <li><a href="tokens.html">tokens</a> &mdash; 1.62B across 51 recorded days</li>
+        <li><a href="tokens.html">tokens</a> &mdash; 1.63B across 51 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 126 active / 2 answered + 20 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
@@ -958,53 +1227,53 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-76a1a7873a2c">
-          <div class="feed-header">
-            <span class="badge badge-rejected">REJECTED: futile_surface</span>
-            <strong class="feed-title">rejected: futile_surface</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-76a1a7873a2c)</span>
-            
-            
-            <span class="feed-ts" title="2026-09-06T05:37:56.142540Z">08:37 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.04K tok &middot; dur 14s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-2ea531c77807">
-          <div class="feed-header">
-            <span class="badge badge-rejected">REJECTED: futile_surface</span>
-            <strong class="feed-title">rejected: futile_surface</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-2ea531c77807)</span>
-            
-            
-            <span class="feed-ts" title="2026-09-06T05:32:53.955779Z">08:32 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-4ed3cb3a5b87</span></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.15K tok &middot; dur 13s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-7a964498ba86">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-bc9f740d1570">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: self_dedup</span>
             <strong class="feed-title">rejected: self_dedup</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-7a964498ba86)</span>
+            <span class="feed-cid copyable" translate="no">(cycle-bc9f740d1570)</span>
             
             
-            <span class="feed-ts" title="2026-09-06T05:18:08.140594Z">08:18 MSK</span>
+            <span class="feed-ts" title="2026-09-06T17:02:17.255346Z">20:02 MSK</span>
           </div>
-          <div class="entity-links"><span class="entity-chip">reflection-7b72cbc4326b</span></div>
+          <div class="entity-links"><span class="entity-chip">reflection-b4a7a8beca40</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.21K tok &middot; dur 13s</div>
+          <div class="feed-cost">&#9889; 2 calls &middot; 11.50K tok &middot; dur 45s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d44625988920">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">docs(memory): add decay and archival preflight inspection policy fact</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d44625988920)</span>
+            
+            <a href="#node-26f83c6" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-06T16:50:03.964172Z">19:50 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-1ebbe2708cbb</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260904-90931e43">lesson:LESS-20260904-90931e43</a></div>
+          <div class="feed-files">&#128193; memory/facts/decay_archival_policy.md, memory/index.md</div>
+          <div class="feed-cost">&#9889; 12 calls &middot; 165.0K tok &middot; dur 1m57s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-d15f11e648d4">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d15f11e648d4)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-06T16:45:33.605295Z">19:45 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-57b44a6ec86e</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 19.61K tok &middot; dur 12s</div>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 05:42:47 UTC &middot; host eeepc &middot; newest source 14s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 08:26:32 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 17:02:38 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 19:44:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
