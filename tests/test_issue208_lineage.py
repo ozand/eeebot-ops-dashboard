@@ -344,7 +344,7 @@ def test_one_parent_expression_feeds_nodes_edges_and_server_svg() -> None:
 
 def test_cross_day_recorded_parent_is_a_stub_in_the_payload_not_a_guess() -> None:
     rows = [
-        {'phase': 'evolution_tree', 'cycle_id': 'cycle-y', 'sha': 'y', 'parent_sha': '', 'ts': '2026-08-31T23:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-y', 'sha': 'y', 'parent_sha': '', 'ts': '2026-08-31T20:00:00Z'},
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-t', 'sha': 't', 'parent_sha': 'y', 'ts': '2026-09-01T01:00:00Z'},
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-u', 'sha': 'u', 'parent_sha': 't', 'ts': '2026-09-01T02:00:00Z'},
     ]
