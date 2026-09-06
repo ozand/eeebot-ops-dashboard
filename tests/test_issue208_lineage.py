@@ -1079,6 +1079,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             fresh = browser.new_page(viewport={'width': viewport_width, 'height': 844})
             fresh_errors = []
             fresh.on('pageerror', lambda error: fresh_errors.append(str(error)))
+            fresh.bring_to_front()
             fresh.goto(permalink)
             fresh.wait_for_load_state('networkidle')
             fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)

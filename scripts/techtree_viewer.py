@@ -3071,16 +3071,16 @@ def _build_unified_lineage(
   function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
   function closePanel() {{ openSeq++; panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; focusAtOpen = null; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
   function scrollPanelIntoView() {{ panel.scrollIntoView({{ behavior: 'instant', block: 'nearest' }}); }}
-  function focusAfterAsync(seq) {{
+  function focusAfterAsync(seq, forceFocus) {{
     if (seq !== openSeq || panel.hidden) return;
     var active = document.activeElement;
+    scrollPanelIntoView();
     if (seq === openSeq && !panel.hidden) {{
       var closeBtn = document.getElementById('cycle-details-close');
-      if (closeBtn) closeBtn.focus({{ preventScroll: true }});
+      if (closeBtn && (forceFocus || active === focusAtOpen || active === document.body || active === document.documentElement || active === closeBtn)) closeBtn.focus({{ preventScroll: true }});
     }}
-    scrollPanelIntoView();
   }}
-  function open(node, fromHash) {{ clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; focusAtOpen = document.activeElement; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; load().then(function () {{ if (seq !== openSeq || panel.hidden) return; render(node, cid); focusAfterAsync(seq); }}).catch(function (err) {{ if (seq !== openSeq || panel.hidden) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; focusAfterAsync(seq); }}); }}
+  function open(node, fromHash) {{ clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; focusAtOpen = document.activeElement; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; if (!fromHash) {{ var immediateClose = document.getElementById('cycle-details-close'); if (immediateClose) immediateClose.focus({{ preventScroll: true }}); }} load().then(function () {{ if (seq !== openSeq || panel.hidden) return; render(node, cid); focusAfterAsync(seq, fromHash); }}).catch(function (err) {{ if (seq !== openSeq || panel.hidden) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; focusAfterAsync(seq, fromHash); }}); }}
   document.addEventListener('click', function (event) {{ var node = event.target.closest('.lineage-node'); if (node) {{ event.preventDefault(); open(node, false); return; }} if (event.target.closest('#cycle-details-close')) {{ closePanel(); }} }});
   document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape' && !panel.hidden) {{ event.preventDefault(); closePanel(); }} }});
   function handleHash() {{ var hash = window.location.hash; if (!hash || !hash.startsWith('#node-')) return; var el = window.lineageRenderer && window.lineageRenderer.selectNodeFromHash ? window.lineageRenderer.selectNodeFromHash(hash) : document.getElementById(hash.slice(1)); if (!el) return; el.scrollIntoView({{ behavior: 'instant', block: 'center' }}); open(el, true); }}
