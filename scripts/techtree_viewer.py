@@ -3067,18 +3067,28 @@ def _build_unified_lineage(
   function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
   function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
   function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var nodeId = node.getAttribute('data-node-id') || ''; var sha = node.getAttribute('data-sha') || ''; var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var selected = '<h3>Selected node</h3>' + line('Node ID', nodeId) + line('SHA', sha) + line('Timestamp', node.getAttribute('data-ts')); var cycle = '<h3>Cycle summary (shared across ' + count + ' nodes)</h3>' + line('Cycle', item.cycle_id || cid) + line('Title', item.title) + line('Outcome', item.outcome || 'unknown') + line('Reason', item.reason) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); var html = selected + multi + cycle; html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
-  var selectedNode = null, openedByNode = null, openSeq = 0, focusAtOpen = null;
+  var selectedNode = null, openedByNode = null, openSeq = 0, focusAtOpen = null, userDeparted = false;
   function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
-  function closePanel() {{ openSeq++; panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; focusAtOpen = null; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
+  function markUserDeparture(event) {{
+    if (!event.isTrusted || panel.hidden) return;
+    var target = event.target;
+    if (target && target.closest && (target.closest('input,select,textarea') || (target.closest('button') && !target.closest('#cycle-details-close')) || target.closest('a'))) userDeparted = true;
+  }}
+  document.addEventListener('pointerdown', markUserDeparture, true);
+  document.addEventListener('focusin', markUserDeparture, true);
+  document.addEventListener('keydown', function (event) {{
+    if (event.isTrusted && event.key !== 'Escape' && event.target && event.target.closest && event.target.closest('input,button,a,select,textarea')) userDeparted = true;
+  }}, true);
+  function closePanel() {{ openSeq++; panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; focusAtOpen = null; userDeparted = false; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
   function scrollPanelIntoView() {{ panel.scrollIntoView({{ behavior: 'instant', block: 'nearest' }}); }}
   function focusAfterAsync(seq, forceFocus) {{
-    if (seq !== openSeq || panel.hidden) return;
+    if (seq !== openSeq || panel.hidden || userDeparted) return;
     var active = document.activeElement;
-    scrollPanelIntoView();
-    if (seq === openSeq && !panel.hidden) {{
+    if (seq === openSeq && !panel.hidden && (forceFocus || active === focusAtOpen || active === document.body || active === document.documentElement || active === document.getElementById('cycle-details-close') || (active && active.tagName === 'HTML'))) {{
       var closeBtn = document.getElementById('cycle-details-close');
-      if (closeBtn && (forceFocus || active === focusAtOpen || active === document.body || active === document.documentElement || active === closeBtn)) closeBtn.focus({{ preventScroll: true }});
+      if (closeBtn) closeBtn.focus({{ preventScroll: true }});
     }}
+    if (!userDeparted) scrollPanelIntoView();
   }}
   function open(node, fromHash) {{ clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; focusAtOpen = document.activeElement; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; if (!fromHash) {{ var immediateClose = document.getElementById('cycle-details-close'); if (immediateClose) immediateClose.focus({{ preventScroll: true }}); }} load().then(function () {{ if (seq !== openSeq || panel.hidden) return; render(node, cid); focusAfterAsync(seq, fromHash); }}).catch(function (err) {{ if (seq !== openSeq || panel.hidden) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; focusAfterAsync(seq, fromHash); }}); }}
   document.addEventListener('click', function (event) {{ var node = event.target.closest('.lineage-node'); if (node) {{ event.preventDefault(); open(node, false); return; }} if (event.target.closest('#cycle-details-close')) {{ closePanel(); }} }});
