@@ -1171,10 +1171,33 @@ def test_issue218_cold_focus_close_before_delayed_fetch_does_not_steal_focus() -
             browser = p.chromium.launch()
             page = browser.new_page(viewport={'width': 390, 'height': 844})
             page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
+            page.wait_for_timeout(50)
             page.locator('#cycle-details-close').click()
             page.wait_for_timeout(700)
             assert page.evaluate("() => document.getElementById('cycle-details-panel').hidden")
             assert page.evaluate("() => document.activeElement !== document.getElementById('cycle-details-close')")
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_cold_focus_user_date_input_survives_delayed_fetch() -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
+            page.locator('[data-lineage-from]').click(); page.locator('[data-lineage-from]').fill('2026-01-01')
+            page.wait_for_timeout(700)
+            assert page.locator('[data-lineage-from]').input_value() == '2026-01-01'
+            assert page.locator('[data-lineage-from]').evaluate('(node) => document.activeElement === node')
             browser.close()
     finally:
         srv.shutdown()
