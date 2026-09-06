@@ -258,10 +258,10 @@ def test_day_filter_is_calendar_based_and_says_when_today_has_no_data(tmp_path: 
     result = _render(_payload(nodes), tmp_path, filter_probe=probes)
     assert result['filter'] is not None, 'the renderer must expose lineageRenderer.projectUnifiedGraph'
     last24, today, today_stale = result['filter']
-    # 24h: a is before floor, b is in window
-    assert last24['nodeCount'] == 1 and not last24['empty']
-    # today: only b matches 2026-09-05
-    assert today['nodeCount'] == 1 and not today['empty']
+    # 24h: b is visible and a is retained as required contextual ancestry
+    assert last24['nodeCount'] == 2 and not last24['empty']
+    # today: b is visible and a remains contextual ancestry
+    assert today['nodeCount'] == 2 and not today['empty']
     # today stale: 2026-09-06 has no data
     assert today_stale['empty']
 
@@ -549,7 +549,7 @@ def test_issue213_nodes_have_stable_id_for_deep_link(tmp_path: Path) -> None:
         node_id = circle['attrs'].get('data-node-id', '')
         expected_id = 'node-' + node_id.replace('%', '_').replace(':', '_3A') if node_id else f'node-{cid}'
         actual_id = circle['attrs'].get('id', '')
-        assert actual_id.startswith('node-'), f"node id missing or wrong for {sha}: attrs={circle['attrs']}"
+        assert actual_id == 'node-' + __import__('urllib.parse', fromlist=['quote']).quote(node_id, safe=''), f"node id missing or wrong for {sha}: attrs={circle['attrs']}"
 
 
 def test_issue213_inline_script_has_a11y_handlers() -> None:

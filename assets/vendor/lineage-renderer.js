@@ -9,11 +9,13 @@
   var state = { payload: null, mode: 'yesterday-today', rendered: null };
 
   function nodeIdToDomId(nodeId) {
-    return 'node-' + encodeURIComponent(String(nodeId || '')).replace(/%/g, '_');
+    // Keep encodeURIComponent's percent escapes intact. Replacing '%' with '_'
+    // is not injective because node IDs may themselves contain underscores.
+    return 'node-' + encodeURIComponent(String(nodeId || ''));
   }
   function domIdToNodeId(domId) {
     if (!domId || !String(domId).startsWith('node-')) return null;
-    try { return decodeURIComponent(String(domId).slice(5).replace(/_/g, '%')); }
+    try { return decodeURIComponent(String(domId).slice(5)); }
     catch (_error) { return null; }
   }
   function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
@@ -134,8 +136,13 @@
     });
     var keep = {};
     visibleIds.forEach(function (id) { keep[id] = true; });
+    // Preserve contextual endpoints. A common ancestor/junction is retained;
+    // a single-descendant chain retains its root endpoint and collapses only
+    // the maximal linear intermediates into a provenance-bearing path.
     Object.keys(descendantHits).forEach(function (id) {
-      if (Object.keys(descendantHits[id]).length >= 2) keep[id] = true;
+      var descendants = Object.keys(descendantHits[id]);
+      var parent = pEdges[id] && pEdges[id].source;
+      if (descendants.length >= 2 || !parent || !nodeMap[parent]) keep[id] = true;
     });
     var projectedEdges = [];
     Object.keys(keep).forEach(function (target) {
@@ -146,29 +153,38 @@
       var hiddenCount = 0;
       var source = edge.source;
       var guard = {};
-      while (source && nodeMap[source] && !keep[source] && !guard[source]) {
+      while (source && nodeMap[source] && !guard[source]) {
         guard[source] = true;
         pathEdges.unshift(edge);
         pathIds.unshift(source);
-        hiddenCount += 1;
-        edge = pEdges[source];
-        source = edge && edge.source;
+        var nextEdge = pEdges[source];
+        var nextSource = nextEdge && nextEdge.source;
+        if (!nextSource || !nodeMap[nextSource]) break;
+        if (keep[source]) {
+          // This is the nearest retained contextual ancestor. Continue only
+          // when it is a junction; linear context nodes are collapsed below.
+          if (descendantHits[source] && Object.keys(descendantHits[source]).length >= 2) break;
+        }
+        edge = nextEdge;
+        source = nextSource;
       }
-      if (!(source && nodeMap[source] && keep[source])) return;
-      pathEdges.unshift(edge);
-      pathIds.unshift(source);
-      if (hiddenCount) {
+      if (!(source && nodeMap[source])) return;
+      if (source !== target && (!pathEdges.length || pathEdges[pathEdges.length - 1].target !== target)) {
+        pathEdges.push(pEdges[target]);
+      }
+      if (pathEdges.length > 1) {
         projectedEdges.push({
           source: source,
           target: target,
           basis: edgeBasisForPath(pathEdges),
           type: 'collapsed',
-          collapsedNodes: hiddenCount,
+          collapsedNodes: Math.max(0, pathIds.length - 2),
           collapsedEdges: pathEdges.length,
           path: pathIds
         });
       } else {
-        projectedEdges.push({ source: source, target: target, basis: edge.basis || 'recorded', type: visible[source] && visible[target] ? 'canonical' : 'context', path: [source, target] });
+        var direct = pEdges[target];
+        projectedEdges.push({ source: direct.source, target: target, basis: direct.basis || 'recorded', type: visible[direct.source] && visible[target] ? 'canonical' : 'context', path: [direct.source, target] });
       }
     });
     return { nodes: nodes.filter(function (node) { return keep[node.node_id]; }), edges: projectedEdges, visible: visible, descendantHits: descendantHits };

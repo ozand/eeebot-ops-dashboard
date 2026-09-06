@@ -2459,9 +2459,9 @@ def _node_id_for_commit(sha: str) -> str:
 
 
 def _safe_node_dom_id(node_id: str) -> str:
-    # Same injective mapping as lineage-renderer.js: encodeURIComponent then
-    # replace '%' with '_' so CSS/fragment IDs remain compact and reversible.
-    return 'node-' + quote(str(node_id), safe='').replace('%', '_')
+    # Same injective mapping as lineage-renderer.js. Keep percent escapes intact
+    # so literal underscores cannot collide with encoded characters.
+    return 'node-' + quote(str(node_id), safe='')
 
 
 def _leaf_outcome(row: dict[str, Any]) -> str:
@@ -2930,6 +2930,12 @@ def _build_unified_lineage(
     unique_candidate_nodes = len(candidates)
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
     current_node_id = _node_id_for_commit(current_sha) if current_sha else ''
+    # A current SHA may be supplied by the fallback tree even when the ledger
+    # window has no corresponding row. Materialise it as an explicit retained
+    # boundary node so the anchor invariant is honest and testable.
+    if current_node_id and current_node_id not in {node['node_id'] for node in candidates}:
+        candidates.append({'node_id': current_node_id, 'sha': current_sha, 'cycle_id': current_sha, 'parent_sha': '', 'parent': None, 'parent_basis': None, 'parent_known': False, 'ts': None, 'ts_status': 'invalid', 'outcome': 'unknown', 'kind': 'current-boundary', 'title': current_sha, 'current': True, 'boundary': 'fallback_current_unavailable'})
+        unique_candidate_nodes = len(candidates)
     retained = sorted(candidates, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))[-LINEAGE_MAX_NODES:]
     retained_ids = {node['node_id'] for node in retained}
     if current_node_id and current_node_id not in retained_ids:

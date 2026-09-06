@@ -67,7 +67,7 @@ if (inputPayload.version === 2) {
   // Convert old format: nodes use 'sha' as id; edges use source/target as sha
   const nodes = (inputPayload.nodes || []).map(function(n) {
     var nid = n.sha ? ('c:' + n.sha) : ('a:' + (n.cycle_id || n.sha));
-    return Object.assign({}, n, { node_id: nid });
+    return Object.assign({}, n, { node_id: nid, sha: n.sha || null });
   });
   const nodeById = {};
   nodes.forEach(function(n) { nodeById[n.node_id] = n; });
