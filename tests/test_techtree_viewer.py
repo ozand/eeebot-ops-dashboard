@@ -1534,25 +1534,88 @@ def test_fmt_ts_short() -> None:
 
 
 
+def _feed_html_at(ts: str, now: "datetime") -> str:
+    return tv.build_cycle_feed(
+        ledger_tail=[
+            {'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': ts, 'delta': '166519.3317'},
+        ],
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=None,
+        cycle_files=None,
+        now=now,
+    )
+
+
 def test_issue42_feed_delta_and_ts_humanized() -> None:
-    # ts is "today" relative to the test run so fmt_ts_short renders the
-    # HH:MM MSK form deterministically (date-dependent assertion guard).
+    # #235: the previous version derived "today" from datetime.now in UTC while
+    # fmt_ts_short decides HH:MM-versus-date in MSK. Between 21:00Z and midnight
+    # the two calendars disagree, so the test failed for three hours every day on
+    # every branch. Both sides of the comparison are pinned here instead.
     from datetime import datetime, timezone
-    today_ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT06:39:44Z')
-    ledger_tail = [
-        {'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': today_ts, 'delta': '166519.3317'},
+
+    ts = '2026-09-06T06:39:44Z'  # 09:39 MSK on the 6th
+    html = _feed_html_at(ts, datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc))
+
+    assert '+166.5K' in html
+    assert f'title="{ts}"' in html
+    assert 'MSK' in html
+    assert '09:39' in html
+
+
+def test_issue235_feed_ts_renders_the_date_once_it_is_no_longer_today_msk() -> None:
+    # The other branch of the same format. Without this, a change that made
+    # fmt_ts_short always print HH:MM would still pass the test above.
+    from datetime import datetime, timezone
+
+    ts = '2026-09-06T06:39:44Z'
+    html = _feed_html_at(ts, datetime(2026, 9, 8, 12, 0, tzinfo=timezone.utc))
+
+    assert 'Sep 6 MSK' in html
+    assert '09:39' not in html
+
+
+def test_issue235_feed_ts_does_not_depend_on_the_wall_clock() -> None:
+    # The failing window was 21:00Z-24:00Z, where UTC is still on the 6th but
+    # MSK has already rolled over to the 7th. Two instants inside it, two
+    # outside, one fixture, one expected rendering.
+    from datetime import datetime, timezone
+
+    ts = '2026-09-06T06:39:44Z'
+    outside = [
+        datetime(2026, 9, 6, 6, 40, tzinfo=timezone.utc),
+        datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc),
     ]
+    inside = [
+        datetime(2026, 9, 6, 21, 30, tzinfo=timezone.utc),
+        datetime(2026, 9, 6, 23, 34, tzinfo=timezone.utc),
+    ]
+
+    for now in outside:
+        assert '09:39' in _feed_html_at(ts, now), f'same MSK day at {now.isoformat()}'
+
+    # Inside the window the timestamp is genuinely yesterday in MSK, so the
+    # date form is the correct rendering — the old test asserted otherwise and
+    # that is what made it fail. The point is that the answer is stable, not
+    # that it is always HH:MM.
+    for now in inside:
+        assert 'Sep 6 MSK' in _feed_html_at(ts, now), f'next MSK day at {now.isoformat()}'
+
+
+def test_issue235_feed_still_reads_the_clock_when_no_instant_is_given() -> None:
+    # The seam must not change production behaviour: omitting `now` still
+    # renders against the real clock.
+    from datetime import datetime, timezone
+
+    ts = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     html = tv.build_cycle_feed(
-        ledger_tail=ledger_tail,
+        ledger_tail=[{'phase': 'outcome', 'cycle_id': 'cycle-aaa', 'ts': ts}],
         demand_completed=None,
         task_titles=None,
         evolution_tree=None,
         cycle_files=None,
     )
-    assert '+166.5K' in html
-    assert f'title="{today_ts}"' in html
     assert 'MSK' in html
-    assert '09:39' in html
 
 
 def test_issue42_now_lever_value_compact() -> None:
