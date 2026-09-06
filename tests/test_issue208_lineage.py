@@ -683,9 +683,10 @@ def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
 
 # ─── #213 acceptance-fix tests ────────────────────────────────────────────────
 
-def _serve_lineage(html, fake_details):
+def _serve_lineage(html, fake_details, details_delay: float = 0.0):
     import json as _json
     import threading
+    import time
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
     html_bytes = html.encode('utf-8')
@@ -696,6 +697,8 @@ def _serve_lineage(html, fake_details):
             pass
         def do_GET(self):
             if 'cycle-details' in self.path:
+                if details_delay:
+                    time.sleep(details_delay)
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -1033,6 +1036,168 @@ def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewpo
             assert box is not None
             assert box['x'] >= 0 and box['x'] + box['width'] <= viewport_width + 1
             assert page.locator('body').evaluate('(el) => el.scrollWidth <= el.clientWidth')
+            browser.close()
+    finally:
+        srv.shutdown()
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+@pytest.mark.parametrize('node_id,cycle_id,title', [
+    ('c:commit', 'cycle-commit', 'Commit card'),
+    ('a:cycle-attempt', 'cycle-attempt', 'Attempt card'),
+])
+def test_issue218_click_generated_exact_permalink_survives_cold_load(
+    tmp_path: Path, viewport_width: int, node_id: str, cycle_id: str, title: str,
+) -> None:
+    """#218/#213: full production page exact permalink survives a new document."""
+    pytest.importorskip('playwright')
+    from playwright.sync_api import expect, sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'task_title': 'Attempt card', 'ts': '2026-01-02T00:00:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture()
+    data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}
+    data['ledger_tail'] = rows
+    data['ledger_history'] = rows
+    data['cycle_titles'] = {'cycle-commit': 'Commit card', 'cycle-attempt': 'Attempt card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    fake_details = json.loads(pages['lineage-cycle-details.json'])
+    srv, base_url = _serve_lineage(pages['lineage.html'], fake_details, details_delay=0.15)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            errors = []
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.on('pageerror', lambda error: errors.append(str(error)))
+            page.goto(base_url + '/lineage.html')
+            page.wait_for_load_state('networkidle')
+            page.locator(f'.lineage-node[data-node-id="{node_id}"]').click()
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            permalink = page.url
+            assert f'#node-{node_id.replace(":", "%3A")}' in permalink
+            fresh = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            fresh_errors = []
+            fresh.on('pageerror', lambda error: fresh_errors.append(str(error)))
+            fresh.bring_to_front()
+            fresh.goto(permalink)
+            fresh.wait_for_load_state('networkidle')
+            fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            assert fresh.evaluate("() => !document.getElementById('cycle-details-panel').hidden")
+            selected = fresh.locator('.cycle-node-selected')
+            assert selected.get_attribute('data-node-id') == node_id
+            body = fresh.locator('.cycle-details-body')
+            body_text = body.inner_text()
+            assert 'Selected node' in body_text
+            assert node_id in body_text and title in body_text and cycle_id in body_text
+            heading_box = fresh.locator('.cycle-details-body h3').first.bounding_box()
+            body_box = body.bounding_box()
+            assert heading_box is not None and heading_box['y'] >= 0 and heading_box['y'] + heading_box['height'] <= 844
+            assert body_box is not None and 0 <= body_box['y'] < 0.9 * 844
+            expect(fresh.locator('#cycle-details-close')).to_be_focused(timeout=2000)
+            assert errors == [] and fresh_errors == []
+            fresh.close()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_unknown_exact_deep_link_shows_coverage_message(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-known', 'sha': 'known', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'}]
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'known'}, rows, ledger_history=rows, now='2026-01-01T01:00:00Z')
+    srv, base_url = _serve_lineage(html, {})
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Amissing')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_timeout(300)
+            assert 'not found in loaded history' in page.locator('.lineage-filter-note').inner_text()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_duplicate_cycle_exact_nodes_and_legacy_alias_after_renderer(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'first', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'second', 'parent_sha': 'first', 'ts': '2026-01-01T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-dup', 'outcome': 'failed', 'ts': '2026-01-01T02:00:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture()
+    data['ledger_tail'] = rows
+    data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 03:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Asecond')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:second'
+            assert page.locator('.cycle-node-selected').get_attribute('data-cycle-node-count') == '3'
+            assert 'Selected node' in page.locator('.cycle-details-body').inner_text()
+            page.goto(base_url + '/lineage.html#node-cycle-dup')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            selected = page.locator('.cycle-node-selected')
+            assert selected.get_attribute('data-node-id') == 'a:cycle-dup'
+            assert selected.get_attribute('data-cycle-node-index') == '3'
+            assert selected.get_attribute('data-cycle-node-count') == '3'
+            assert 'Node:' in page.locator('.cycle-details-body').inner_text()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_cold_focus_close_before_delayed_fetch_does_not_steal_focus() -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
+            page.wait_for_timeout(50)
+            page.locator('#cycle-details-close').click()
+            page.wait_for_timeout(700)
+            assert page.evaluate("() => document.getElementById('cycle-details-panel').hidden")
+            assert page.evaluate("() => document.activeElement !== document.getElementById('cycle-details-close')")
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_cold_focus_user_date_input_survives_delayed_fetch() -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
+            page.locator('[data-lineage-from]').click(); page.locator('[data-lineage-from]').fill('2026-01-01')
+            page.wait_for_timeout(700)
+            assert page.locator('[data-lineage-from]').input_value() == '2026-01-01'
+            assert page.locator('[data-lineage-from]').evaluate('(node) => document.activeElement === node')
             browser.close()
     finally:
         srv.shutdown()

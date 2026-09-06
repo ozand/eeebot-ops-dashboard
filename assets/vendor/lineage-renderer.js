@@ -312,8 +312,11 @@
       if (context) circle.setAttribute('data-context', (projection.descendantHits && projection.descendantHits[node.node_id] && Object.keys(projection.descendantHits[node.node_id]).length >= 2) ? 'junction' : 'ancestor');
       circle.setAttribute('data-cycle-id', cid);
       circle.setAttribute('data-node-id', node.node_id);
+      if (node.cycle_node_index) circle.setAttribute('data-cycle-node-index', String(node.cycle_node_index));
+      if (node.cycle_node_count) circle.setAttribute('data-cycle-node-count', String(node.cycle_node_count));
       if (node.sha) circle.setAttribute('data-sha', node.sha);
       if (node.ts_status === 'invalid') circle.setAttribute('data-ts-status', 'invalid');
+      if (node.ts) circle.setAttribute('data-ts', node.ts);
       if (node.parent_status) circle.setAttribute('data-parent-status', node.parent_status);
       if (node.parent_boundary) circle.setAttribute('data-boundary', node.parent_boundary);
       circle.setAttribute('cx', pos.x);
@@ -321,7 +324,7 @@
       circle.setAttribute('r', String(RADIUS));
       circle.setAttribute('tabindex', '0');
       circle.setAttribute('role', 'button');
-      circle.setAttribute('aria-label', (node.title || cid) + ' — click for details');
+      circle.setAttribute('aria-label', (node.title || cid) + (node.cycle_node_count > 1 ? ' — node ' + node.cycle_node_index + ' of ' + node.cycle_node_count + ' — click for details' : ' — click for details'));
       circle.setAttribute('id', nodeIdToDomId(node.node_id));
       var title = svgEl('title');
       title.textContent = node.title || cid;
