@@ -3661,14 +3661,19 @@ def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
 
 
 def test_classify_model_prefixes() -> None:
-    """Issue #223: verify model prefix classification into local vs gateway vs other."""
-    assert tv.classify_model('un/qwen3.8-27b-gguf') == 'local'
-    assert tv.classify_model('openai/un/qwen3.6-27b-mtp') == 'local'
-    assert tv.classify_model('cl/gpt-5.6-luna') == 'gateway'
-    assert tv.classify_model('openai/cl/gpt-5.6-luna') == 'gateway'
-    assert tv.classify_model('an/gemini-3.7-flash-high') == 'gateway'
-    assert tv.classify_model('openai/an/gemini-3-flash') == 'gateway'
+    """Issue #223: verify model prefix classification into self_hosted vs vendor vs other.
+    - un/* -> self_hosted (our LAN 3090Ti GPU)
+    - cl/*, an/* -> vendor (cloud vendor APIs via LiteLLM)
+    - everything else -> other (explicit unclassified class)
+    """
+    assert tv.classify_model('un/qwen3.8-27b-gguf') == 'self_hosted'
+    assert tv.classify_model('openai/un/qwen3.6-27b-mtp') == 'self_hosted'
+    assert tv.classify_model('cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('openai/cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('an/gemini-3.7-flash-high') == 'vendor'
+    assert tv.classify_model('openai/an/gemini-3-flash') == 'vendor'
     assert tv.classify_model('custom-model-x') == 'other'
+    assert tv.classify_model('anthropic/claude-3') == 'other'
     assert tv.classify_model('') == 'other'
     assert tv.classify_model(None) == 'other'
 
@@ -3722,12 +3727,13 @@ def test_read_token_heatmap_distinguishes_missing_file_from_quiet_hour(tmp_path:
     assert res['hourly']['2026-09-04'] is not None
     assert len(res['hourly']['2026-09-04']) == 24
     h10 = res['hourly']['2026-09-04'][10]
-    # h10 = [local, gateway, total, calls, top_comp]
+    # h10 = [self_hosted, vendor, other, total, calls, top_comp]
     assert h10[0] == 50000
     assert h10[1] == 12000
-    assert h10[2] == 62000
-    assert h10[3] == 2
-    assert h10[4] == 'bridge'
+    assert h10[2] == 0
+    assert h10[3] == 62000
+    assert h10[4] == 2
+    assert h10[5] == 'bridge'
 
     # Day 2: NO DATA (unobserved / gap in recording)
     assert res['hourly']['2026-09-05'] is None
@@ -3735,7 +3741,7 @@ def test_read_token_heatmap_distinguishes_missing_file_from_quiet_hour(tmp_path:
 
     # Day 3: 0 tokens (quiet day, but tracked)
     assert res['hourly']['2026-09-06'] is not None
-    assert all(h[2] == 0 for h in res['hourly']['2026-09-06'])
+    assert all(h[3] == 0 for h in res['hourly']['2026-09-06'])
 
 
 def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -> None:
@@ -3788,8 +3794,10 @@ def test_tokens_page_generated_and_weight_under_300kb() -> None:
 
     # Must contain key structural components
     assert 'Token Heatmap' in tokens_html
-    assert 'Gateway LLM Calls' in tokens_html
-    assert 'Local LLM Calls' in tokens_html
+    assert 'Vendor API' in tokens_html
+    assert 'Self-hosted GPU' in tokens_html
+    assert '192.168.1.35' in tokens_html  # infrastructure routing notice
+    assert 'tkn-infra-notice' in tokens_html
     assert 'tkn-strip-wrap' in tokens_html
     assert 'cell-nodata' in tokens_html
     assert 'cell-zero' in tokens_html

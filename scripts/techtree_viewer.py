@@ -319,9 +319,9 @@ def classify_model(model_str):
     if s.startswith("openai/"):
         s = s[7:]
     if s.startswith("un/"):
-        return "local"
+        return "self_hosted"
     if s.startswith(("cl/", "an/")):
-        return "gateway"
+        return "vendor"
     return "other"
 
 
@@ -370,6 +370,7 @@ def read_token_heatmap(max_days=62):
     tot_calls_all = 0
     loc_tok_all = 0
     gw_tok_all = 0
+    oth_tok_all = 0
     days_present_count = 0
 
     all_h_gw = []
@@ -385,7 +386,7 @@ def read_token_heatmap(max_days=62):
             five_min[d_str] = None
             continue
         days_present_count += 1
-        h_data = [[0, 0, 0, 0, {}] for _ in range(24)]
+        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
         b_data = {}
         fpath = dates_present[d_str]
         try:
@@ -420,25 +421,30 @@ def read_token_heatmap(max_days=62):
 
                     tot_tok_all += tok
                     tot_calls_all += 1
-                    if cat == "local":
+                    if cat == "self_hosted":
                         loc_tok_all += tok
                         h_data[hour][0] += tok
-                    elif cat == "gateway":
+                    elif cat == "vendor":
                         gw_tok_all += tok
                         h_data[hour][1] += tok
-                    h_data[hour][2] += tok
-                    h_data[hour][3] += 1
-                    h_data[hour][4][comp] = h_data[hour][4].get(comp, 0) + tok
+                    else:
+                        oth_tok_all += tok
+                        h_data[hour][2] += tok
+                    h_data[hour][3] += tok
+                    h_data[hour][4] += 1
+                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
 
                     if b_idx not in b_data:
-                        b_data[b_idx] = [0, 0, 0, 0, {}]
-                    if cat == "local":
+                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
+                    if cat == "self_hosted":
                         b_data[b_idx][0] += tok
-                    elif cat == "gateway":
+                    elif cat == "vendor":
                         b_data[b_idx][1] += tok
-                    b_data[b_idx][2] += tok
-                    b_data[b_idx][3] += 1
-                    b_data[b_idx][4][comp] = b_data[b_idx][4].get(comp, 0) + tok
+                    else:
+                        b_data[b_idx][2] += tok
+                    b_data[b_idx][3] += tok
+                    b_data[b_idx][4] += 1
+                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
         except Exception:
             hourly[d_str] = None
             five_min[d_str] = None
@@ -446,10 +452,10 @@ def read_token_heatmap(max_days=62):
 
         fin_h = []
         for h in range(24):
-            c_dict = h_data[h][4]
+            c_dict = h_data[h][5]
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ""
-            loc_t, gw_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3]
-            fin_h.append([loc_t, gw_t, tot_t, calls, top_c])
+            loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
+            fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
             if gw_t > 0:
                 all_h_gw.append(gw_t)
             if loc_t > 0:
@@ -460,10 +466,10 @@ def read_token_heatmap(max_days=62):
 
         fin_b = {}
         for b_idx, vals in b_data.items():
-            c_dict = vals[4]
+            c_dict = vals[5]
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ""
-            loc_t, gw_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3]
-            fin_b[str(b_idx)] = [loc_t, gw_t, tot_t, calls, top_c]
+            loc_t, gw_t, oth_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3], vals[4]
+            fin_b[str(b_idx)] = [loc_t, gw_t, oth_t, tot_t, calls, top_c]
             if gw_t > 0:
                 all_5m_gw.append(gw_t)
             if loc_t > 0:
@@ -479,6 +485,9 @@ def read_token_heatmap(max_days=62):
         "summary": {
             "total_tokens": tot_tok_all,
             "total_calls": tot_calls_all,
+            "self_hosted_tokens": loc_tok_all,
+            "vendor_tokens": gw_tok_all,
+            "other_tokens": oth_tok_all,
             "local_tokens": loc_tok_all,
             "gateway_tokens": gw_tok_all,
             "days_span": len(calendar_dates),
@@ -1514,14 +1523,18 @@ def fmt_ts_short(ts_str: Any, now: datetime | None = None) -> str:
 
 
 def classify_model(model_str: str) -> str:
-    """Issue #223: Classify LLM model string into 'local' (un/*, qwen) or 'gateway' (cl/*, an/*)."""
+    """Issue #223: Classify LLM model string into:
+    - 'self_hosted': un/* (Qwen on local LAN GPU 3090Ti)
+    - 'vendor': cl/*, an/* (Cloud vendor APIs via LiteLLM)
+    - 'other': unclassified / unknown model prefix
+    """
     s = str(model_str or '').strip()
     if s.startswith('openai/'):
         s = s[7:]
     if s.startswith('un/'):
-        return 'local'
+        return 'self_hosted'
     if s.startswith(('cl/', 'an/')):
-        return 'gateway'
+        return 'vendor'
     return 'other'
 
 
@@ -1602,6 +1615,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
     total_calls_all = 0
     local_tokens_all = 0
     gateway_tokens_all = 0
+    other_tokens_all = 0
     days_present_count = 0
 
     all_hourly_gateway_vals: list[int] = []
@@ -1619,7 +1633,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
             continue
 
         days_present_count += 1
-        h_data = [[0, 0, 0, 0, {}] for _ in range(24)]
+        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
         b_data: dict[int, list[Any]] = {}
 
         file_path = dates_present[d_str]
@@ -1659,25 +1673,30 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
                     total_tokens_all += tok
                     total_calls_all += 1
 
-                    if cat == 'local':
+                    if cat == 'self_hosted':
                         local_tokens_all += tok
                         h_data[hour][0] += tok
-                    elif cat == 'gateway':
+                    elif cat == 'vendor':
                         gateway_tokens_all += tok
                         h_data[hour][1] += tok
-                    h_data[hour][2] += tok
-                    h_data[hour][3] += 1
-                    h_data[hour][4][comp] = h_data[hour][4].get(comp, 0) + tok
+                    else:
+                        other_tokens_all += tok
+                        h_data[hour][2] += tok
+                    h_data[hour][3] += tok
+                    h_data[hour][4] += 1
+                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
 
                     if b_idx not in b_data:
-                        b_data[b_idx] = [0, 0, 0, 0, {}]
-                    if cat == 'local':
+                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
+                    if cat == 'self_hosted':
                         b_data[b_idx][0] += tok
-                    elif cat == 'gateway':
+                    elif cat == 'vendor':
                         b_data[b_idx][1] += tok
-                    b_data[b_idx][2] += tok
-                    b_data[b_idx][3] += 1
-                    b_data[b_idx][4][comp] = b_data[b_idx][4].get(comp, 0) + tok
+                    else:
+                        b_data[b_idx][2] += tok
+                    b_data[b_idx][3] += tok
+                    b_data[b_idx][4] += 1
+                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
         except Exception:
             hourly[d_str] = None
             five_min[d_str] = None
@@ -1685,10 +1704,10 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
 
         fin_h: list[list[Any]] = []
         for h in range(24):
-            c_dict = h_data[h][4]
+            c_dict = h_data[h][5]
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ''
-            loc_t, gw_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3]
-            fin_h.append([loc_t, gw_t, tot_t, calls, top_c])
+            loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
+            fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
             if gw_t > 0:
                 all_hourly_gateway_vals.append(gw_t)
             if loc_t > 0:
@@ -1699,10 +1718,10 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
 
         fin_b: dict[str, list[Any]] = {}
         for b_idx, vals in b_data.items():
-            c_dict = vals[4]
+            c_dict = vals[5]
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ''
-            loc_t, gw_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3]
-            fin_b[str(b_idx)] = [loc_t, gw_t, tot_t, calls, top_c]
+            loc_t, gw_t, oth_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3], vals[4]
+            fin_b[str(b_idx)] = [loc_t, gw_t, oth_t, tot_t, calls, top_c]
             if gw_t > 0:
                 all_5min_gateway_vals.append(gw_t)
             if loc_t > 0:
@@ -1718,6 +1737,9 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
         "summary": {
             "total_tokens": total_tokens_all,
             "total_calls": total_calls_all,
+            "self_hosted_tokens": local_tokens_all,
+            "vendor_tokens": gateway_tokens_all,
+            "other_tokens": other_tokens_all,
             "local_tokens": local_tokens_all,
             "gateway_tokens": gateway_tokens_all,
             "days_span": len(calendar_dates),
@@ -4775,15 +4797,22 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     summary = token_heatmap.get('summary') or {}
     total_tokens = summary.get('total_tokens', 0)
-    gateway_tokens = summary.get('gateway_tokens', 0)
-    local_tokens = summary.get('local_tokens', 0)
+    vendor_tokens = summary.get('vendor_tokens', summary.get('gateway_tokens', 0))
+    self_hosted_tokens = summary.get('self_hosted_tokens', summary.get('local_tokens', 0))
+    other_tokens = summary.get('other_tokens', 0)
     total_calls = summary.get('total_calls', 0)
     days_span = summary.get('days_span', 0)
     days_present = summary.get('days_present', 0)
     days_missing = summary.get('days_missing', 0)
 
-    gw_pct = (gateway_tokens / total_tokens * 100) if total_tokens else 0.0
-    loc_pct = (local_tokens / total_tokens * 100) if total_tokens else 0.0
+    gw_pct = (vendor_tokens / total_tokens * 100) if total_tokens else 0.0
+    loc_pct = (self_hosted_tokens / total_tokens * 100) if total_tokens else 0.0
+    oth_pct = (other_tokens / total_tokens * 100) if total_tokens else 0.0
+
+    other_kpi_card = f'''    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{fmt_tokens(other_tokens)} <span class="tkn-kpi-pct">({oth_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Unclassified Models</div>
+    </div>''' if other_tokens > 0 else ''
 
     raw_json = json.dumps(token_heatmap)
 
@@ -4800,13 +4829,14 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       <div class="tkn-kpi-lbl">Total Tokens</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(gateway_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
-      <div class="tkn-kpi-lbl">Gateway (cl/*, an/*)</div>
+      <div class="tkn-kpi-val">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Vendor API (cl/*, an/*)</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(local_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
-      <div class="tkn-kpi-lbl">Local (un/qwen)</div>
+      <div class="tkn-kpi-val">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Self-hosted GPU (un/qwen)</div>
     </div>
+{other_kpi_card}
     <div class="tkn-kpi-card">
       <div class="tkn-kpi-val">{total_calls:,}</div>
       <div class="tkn-kpi-lbl">LLM Calls</div>
@@ -4819,16 +4849,16 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
   <div class="tkn-controls">
     <span class="tkn-ctrl-label">View:</span>
-    <button type="button" class="tkn-btn active" data-view="split">Split View (Gateway vs Local)</button>
-    <button type="button" class="tkn-btn" data-view="gateway">Gateway Only (Cloud)</button>
-    <button type="button" class="tkn-btn" data-view="local">Local Only (Host Qwen)</button>
+    <button type="button" class="tkn-btn active" data-view="split">Split View (Self-hosted vs Vendor)</button>
+    <button type="button" class="tkn-btn" data-view="gateway">Vendor API (Gemini / Claude)</button>
+    <button type="button" class="tkn-btn" data-view="local">Self-hosted GPU (Qwen)</button>
     <button type="button" class="tkn-btn" data-view="total">Combined Total</button>
   </div>
 
   <div class="tkn-grid-container" id="tkn-grid-container">
     <div class="tkn-card" id="tkn-card-gw">
       <div class="tkn-card-header">
-        <h3>Gateway LLM Calls (Cloud / LiteLLM)</h3>
+        <h3>Vendor API (cl/*, an/* — Cloud Providers)</h3>
         <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Quantile scale</span>
       </div>
       <div class="tkn-matrix-wrap" id="matrix-gw"></div>
@@ -4837,8 +4867,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     <div class="tkn-card" id="tkn-card-loc">
       <div class="tkn-card-header">
-        <h3>Local LLM Calls (Worker / Host Qwen)</h3>
-        <span class="tkn-card-sub">Bridge Executor &bull; Quantile scale</span>
+        <h3>Self-hosted GPU (un/* — Qwen на 3090Ti)</h3>
+        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Quantile scale</span>
       </div>
       <div class="tkn-matrix-wrap" id="matrix-loc"></div>
       <div class="tkn-legend" id="legend-loc"></div>
@@ -4851,6 +4881,15 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       </div>
       <div class="tkn-matrix-wrap" id="matrix-tot"></div>
       <div class="tkn-legend" id="legend-tot"></div>
+    </div>
+  </div>
+
+  <div class="tkn-infra-notice">
+    <div class="tkn-notice-icon">&#9432;</div>
+    <div class="tkn-notice-body">
+      <strong>Инфраструктурный маршрут:</strong> обе категории моделей маршрутизируются через общий локальный шлюз LiteLLM на <code>192.168.1.35:4001</code>.
+      EeePC выступает исключительно локальным оркестратором (CPU Atom N270, 2 ГБ RAM) — вызовы <code>un/qwen</code> обслуживаются на выделенной GPU в LAN (RTX 3090Ti, без потокенной оплаты), а вызовы <code>cl/*</code> и <code>an/*</code> уходят во внешние вендорские API.
+      При отказе LAN-шлюза вызовы обеих категорий останавливаются одновременно (резервирования между ними нет).
     </div>
   </div>
 
@@ -4946,6 +4985,33 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       border-radius: 6px;
       padding: 16px;
       overflow-x: auto;
+    }}
+    .tkn-infra-notice {{
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-left: 4px solid #f0883e;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 0 0 24px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: #c9d1d9;
+    }}
+    .tkn-notice-icon {{
+      font-size: 1.15rem;
+      color: #f0883e;
+      line-height: 1.2;
+    }}
+    .tkn-notice-body code {{
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #30363d;
+      color: #58a6ff;
+      font-size: 0.8rem;
     }}
     .tkn-card-header {{
       display: flex;
