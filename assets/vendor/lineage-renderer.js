@@ -146,46 +146,35 @@
     });
     var projectedEdges = [];
     Object.keys(keep).forEach(function (target) {
-      var edge = pEdges[target];
-      if (!edge || !edge.source) return;
+      var direct = pEdges[target];
+      if (!direct || !direct.source) return;
+      var source = direct.source;
       var pathIds = [target];
-      var pathEdges = [];
-      var hiddenCount = 0;
-      var source = edge.source;
+      var pathEdges = [direct];
       var guard = {};
-      while (source && nodeMap[source] && !guard[source]) {
+      // Walk only through hidden nodes. A retained visible/context node is an
+      // endpoint, never an intermediate in a shortcut path.
+      while (source && nodeMap[source] && !guard[source] && !visible[source]) {
         guard[source] = true;
-        pathEdges.unshift(edge);
         pathIds.unshift(source);
-        var nextEdge = pEdges[source];
-        var nextSource = nextEdge && nextEdge.source;
-        if (!nextSource || !nodeMap[nextSource]) break;
-        if (keep[source]) {
-          // This is the nearest retained contextual ancestor. Continue only
-          // when it is a junction; linear context nodes are collapsed below.
-          if (descendantHits[source] && Object.keys(descendantHits[source]).length >= 2) break;
-        }
-        edge = nextEdge;
-        source = nextSource;
+        var next = pEdges[source];
+        if (!next || !next.source || !nodeMap[next.source]) break;
+        pathEdges.unshift(next);
+        source = next.source;
       }
-      if (!(source && nodeMap[source])) return;
-      if (source !== target && (!pathEdges.length || pathEdges[pathEdges.length - 1].target !== target)) {
-        pathEdges.push(pEdges[target]);
-      }
-      if (pathEdges.length > 1) {
-        projectedEdges.push({
-          source: source,
-          target: target,
-          basis: edgeBasisForPath(pathEdges),
-          type: 'collapsed',
-          collapsedNodes: Math.max(0, pathIds.length - 2),
-          collapsedEdges: pathEdges.length,
-          path: pathIds
-        });
-      } else {
-        var direct = pEdges[target];
-        projectedEdges.push({ source: direct.source, target: target, basis: direct.basis || 'recorded', type: visible[direct.source] && visible[target] ? 'canonical' : 'context', path: [direct.source, target] });
-      }
+      if (pathIds[0] !== source) pathIds.unshift(source);
+      if (!nodeMap[source]) return;
+      var basis = edgeBasisForPath(pathEdges);
+      var hiddenCount = Math.max(0, pathIds.length - 2);
+      projectedEdges.push({
+        source: source,
+        target: target,
+        basis: basis,
+        type: hiddenCount ? 'collapsed' : (visible[source] && visible[target] ? 'canonical' : 'context'),
+        collapsedNodes: hiddenCount,
+        collapsedEdges: pathEdges.length,
+        path: pathIds
+      });
     });
     return { nodes: nodes.filter(function (node) { return keep[node.node_id]; }), edges: projectedEdges, visible: visible, descendantHits: descendantHits };
   }
@@ -259,7 +248,9 @@
       if (!source || !target) return;
       var path = svgEl('path');
       path.setAttribute('fill', 'none');
-      path.setAttribute('class', edge.basis === 'recorded' ? 'lineage-edge arch-edge' : 'lineage-edge lineage-edge-chronological');
+      var edgeClass = edge.basis === 'recorded' ? 'lineage-edge arch-edge' : 'lineage-edge lineage-edge-chronological';
+      if (edge.type === 'context' || edge.type === 'collapsed') edgeClass += ' lineage-context-edge';
+      path.setAttribute('class', edgeClass);
       path.setAttribute('data-edge-type', edge.type || 'canonical');
       path.setAttribute('data-basis', edge.basis || 'recorded');
       path.setAttribute('data-source', edge.source);
@@ -346,6 +337,12 @@
       var cov = payload.coverage || {};
       showNote('Node ' + token + ' not found in loaded history (coverage: ' + (cov.from_ts || '?') + ' to ' + (cov.to_ts || '?') + ')');
       return null;
+    }
+    var targetNode = (payload.nodes || []).filter(function (node) { return node.node_id === nodeId; })[0];
+    if (state.mode !== 'all' && targetNode && !inWindow(targetNode, windowForMode(state.mode, payload))) {
+      // A deep link must not leave the user looking at an active filter that
+      // hides its target. Make the visible filter state honest first.
+      applyFilter('all');
     }
     var el = document.getElementById(nodeIdToDomId(nodeId));
     if (!el) { applyFilter('all'); el = document.getElementById(nodeIdToDomId(nodeId)); }
