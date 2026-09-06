@@ -970,12 +970,12 @@ def test_lineage_uses_ledger_history_day_buckets_and_default_window() -> None:
     tree = {
         'current_sha': 'sha-today',
         'nodes': {
-            'sha-yesterday': {'cycle_id': 'cycle-yesterday', 'ts': '2026-08-31T23:00:00Z', 'parent_sha': None},
+            'sha-yesterday': {'cycle_id': 'cycle-yesterday', 'ts': '2026-08-31T20:00:00Z', 'parent_sha': None},
             'sha-today': {'cycle_id': 'cycle-today', 'ts': '2026-09-01T01:00:00Z', 'parent_sha': 'sha-yesterday'},
         },
     }
     ledger = [
-        {'phase': 'evolution_tree', 'cycle_id': 'cycle-yesterday', 'sha': 'sha-yesterday', 'parent_sha': None, 'ts': '2026-08-31T23:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-yesterday', 'sha': 'sha-yesterday', 'parent_sha': None, 'ts': '2026-08-31T20:00:00Z'},
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-today', 'sha': 'sha-today', 'parent_sha': 'sha-yesterday', 'ts': '2026-09-01T01:00:00Z'},
     ]
 
@@ -1512,17 +1512,21 @@ def test_fmt_compact() -> None:
 def test_fmt_ts_short() -> None:
     from datetime import datetime, timezone
     ref_now = datetime(2026, 8, 24, 15, 30, 0, tzinfo=timezone.utc)
-    # Today timestamp -> HH:MM UTC
+    # Today timestamp in UTC (06:39 UTC -> 09:39 MSK today)
     today_ts = '2026-08-24T06:39:15Z'
-    assert tv.fmt_ts_short(today_ts, now=ref_now) == '06:39 UTC'
+    assert tv.fmt_ts_short(today_ts, now=ref_now) == '09:39 MSK'
 
-    # Same year, older date -> Mon DD
+    # Same year, older date -> Mon DD MSK
     older_same_year = '2026-08-14T10:00:00Z'
-    assert tv.fmt_ts_short(older_same_year, now=ref_now) == 'Aug 14'
+    assert tv.fmt_ts_short(older_same_year, now=ref_now) == 'Aug 14 MSK'
 
-    # Different year -> Mon DD YYYY
+    # Different year -> Mon DD YYYY MSK
     older_diff_year = '2025-08-14T10:00:00Z'
-    assert tv.fmt_ts_short(older_diff_year, now=ref_now) == 'Aug 14 2025'
+    assert tv.fmt_ts_short(older_diff_year, now=ref_now) == 'Aug 14 2025 MSK'
+
+    # Midnight boundary: 22:30 UTC on Aug 23 is 01:30 MSK on Aug 24 ("today" relative to ref_now)
+    edge_ts = '2026-08-23T22:30:00Z'
+    assert tv.fmt_ts_short(edge_ts, now=ref_now) == '01:30 MSK'
 
     # Invalid / empty
     assert tv.fmt_ts_short(None, now=ref_now) == 'n/a'
@@ -1532,7 +1536,7 @@ def test_fmt_ts_short() -> None:
 
 def test_issue42_feed_delta_and_ts_humanized() -> None:
     # ts is "today" relative to the test run so fmt_ts_short renders the
-    # HH:MM UTC form deterministically (date-dependent assertion guard).
+    # HH:MM MSK form deterministically (date-dependent assertion guard).
     from datetime import datetime, timezone
     today_ts = datetime.now(timezone.utc).strftime('%Y-%m-%dT06:39:44Z')
     ledger_tail = [
@@ -1547,8 +1551,8 @@ def test_issue42_feed_delta_and_ts_humanized() -> None:
     )
     assert '+166.5K' in html
     assert f'title="{today_ts}"' in html
-    assert 'UTC' in html
-    assert '06:39' in html
+    assert 'MSK' in html
+    assert '09:39' in html
 
 
 def test_issue42_now_lever_value_compact() -> None:
@@ -1610,7 +1614,7 @@ def test_issue43_footer_has_computed_timestamp() -> None:
     html = tv.render_page({'scorecard': scorecard, '_newest_source_age_seconds': 100}, host='testhost', generated_at='2026-08-24 12:30:00')
     assert '<footer class="page-footer">' in html
     assert 'footer-computed' in html
-    assert 'scorecard computed 2026-08-24 12:00:00' in html
+    assert 'scorecard computed 2026-08-24 15:00:00 MSK' in html
 
 
 def test_issue43_render_page_omits_scorecard_computed_when_missing() -> None:
@@ -2240,7 +2244,7 @@ def test_issue63_last_skip_decision_from_ledger() -> None:
 # Issue #70: multi-page site (index/lineage/cycles/lessons/agent/hypotheses)
 # ---------------------------------------------------------------------------
 
-SITE_PAGE_NAMES = ['index.html', 'lineage.html', 'cycles.html', 'lessons.html', 'agent.html', 'hypotheses.html', 'techtree.html']
+SITE_PAGE_NAMES = ['index.html', 'lineage.html', 'cycles.html', 'tokens.html', 'lessons.html', 'agent.html', 'hypotheses.html', 'techtree.html']
 
 
 def _site() -> dict:
@@ -2256,7 +2260,7 @@ def test_issue70_render_pages_returns_all_files() -> None:
 
 def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
     pages = _site()
-    for name in SITE_PAGE_NAMES[:6]:
+    for name in [n for n in SITE_PAGE_NAMES if n != 'techtree.html']:
         html = pages[name]
         assert 'empire-strip' in html
         assert 'freshness' in html
@@ -2266,6 +2270,7 @@ def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
     assert 'href="index.html" class="nav-current"' in pages['index.html']
     assert 'href="lineage.html" class="nav-current"' in pages['lineage.html']
     assert 'href="cycles.html" class="nav-current"' in pages['cycles.html']
+    assert 'href="tokens.html" class="nav-current"' in pages['tokens.html']
     assert 'href="lessons.html" class="nav-current"' in pages['lessons.html']
     assert 'href="agent.html" class="nav-current"' in pages['agent.html']
     assert 'href="hypotheses.html" class="nav-current"' in pages['hypotheses.html']
@@ -2273,7 +2278,7 @@ def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
 
 def test_issue70_no_nav_link_404s() -> None:
     pages = _site()
-    for name in SITE_PAGE_NAMES[:6]:
+    for name in [n for n in SITE_PAGE_NAMES if n != 'techtree.html']:
         for fname, _label in tv.SITE_PAGES:
             assert f'href="{fname}"' in pages[name]
             assert fname in pages  # every nav target exists as a produced file
@@ -3671,3 +3676,268 @@ def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
     assert 'tests must pass' in rec['gate_violations'], (
         f'violation text missing: {rec["gate_violations"]}'
     )
+
+
+
+# ---------------------------------------------------------------------------
+# Issue #223: token consumption heatmap (tokens.html)
+# ---------------------------------------------------------------------------
+
+
+def test_classify_model_prefixes() -> None:
+    """Issue #223: verify model prefix classification into self_hosted vs vendor vs other.
+    - un/* -> self_hosted (our LAN 3090Ti GPU)
+    - cl/*, an/* -> vendor (cloud vendor APIs via LiteLLM)
+    - everything else -> other (explicit unclassified class)
+    """
+    assert tv.classify_model('un/qwen3.8-27b-gguf') == 'self_hosted'
+    assert tv.classify_model('openai/un/qwen3.6-27b-mtp') == 'self_hosted'
+    assert tv.classify_model('cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('openai/cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('an/gemini-3.7-flash-high') == 'vendor'
+    assert tv.classify_model('openai/an/gemini-3-flash') == 'vendor'
+    assert tv.classify_model('custom-model-x') == 'other'
+    assert tv.classify_model('anthropic/claude-3') == 'other'
+    assert tv.classify_model('') == 'other'
+    assert tv.classify_model(None) == 'other'
+
+
+def test_compute_quantiles() -> None:
+    """Issue #223: quantiles must handle positive integers and default on empty."""
+    # Empty input
+    assert tv.compute_quantiles([]) == [1000, 5000, 20000, 100000]
+    # Sample numbers
+    vals = list(range(1, 101))
+    q = tv.compute_quantiles(vals)
+    assert len(q) == 4
+    assert q[0] <= q[1] <= q[2] <= q[3]
+    assert q[0] == 26
+    assert q[1] == 51
+    assert q[2] == 76
+    assert q[3] == 96
+
+
+def test_read_token_heatmap_distinguishes_missing_file_from_quiet_hour(tmp_path: Path) -> None:
+    """Issue #223: missing calendar days (gaps in tracking) must be None / NO DATA,
+    while existing files with 0 calls in an hour must be recorded as 0 tokens (quiet hour).
+    """
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+
+    # Day 1: 2026-09-04 has 2 calls (one local, one gateway)
+    day1_file = llm_dir / '2026-09-04.jsonl'
+    lines = [
+        json.dumps({'ts': '2026-09-04T10:15:00Z', 'model': 'un/qwen3.8-27b-gguf', 'total_tokens': 50000, 'component': 'bridge'}),
+        json.dumps({'ts': '2026-09-04T10:20:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 12000, 'component': 'proposer'}),
+    ]
+    day1_file.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+    # Day 2: 2026-09-05 is completely missing on disk (gap!)
+
+    # Day 3: 2026-09-06 is present on disk, but has 0 lines (quiet day)
+    day3_file = llm_dir / '2026-09-06.jsonl'
+    day3_file.write_text('', encoding='utf-8')
+
+    res = tv.read_token_heatmap(tmp_path)
+    assert res is not None
+
+    dates = res['dates']
+    assert dates == ['2026-09-04', '2026-09-05', '2026-09-06']
+    assert res['summary']['days_span'] == 3
+    assert res['summary']['days_present'] == 2
+    assert res['summary']['days_missing'] == 1
+
+    # Day 1: has data (10:15 UTC -> 13:15 MSK, so hour 13 has data while hour 10 is 0 tokens)
+    assert res['hourly']['2026-09-04'] is not None
+    assert len(res['hourly']['2026-09-04']) == 24
+    h13 = res['hourly']['2026-09-04'][13]
+    # h13 = [self_hosted, vendor, other, total, calls, top_comp]
+    assert h13[0] == 50000
+    assert h13[1] == 12000
+    assert h13[2] == 0
+    assert h13[3] == 62000
+    assert h13[4] == 2
+    assert h13[5] == 'bridge'
+    assert res['hourly']['2026-09-04'][10][3] == 0
+
+    # Day 2: NO DATA (unobserved / gap in recording)
+    assert res['hourly']['2026-09-05'] is None
+    assert res['five_min']['2026-09-05'] is None
+
+    # Day 3: 0 tokens (quiet day, but tracked)
+    assert res['hourly']['2026-09-06'] is not None
+    assert all(h[3] == 0 for h in res['hourly']['2026-09-06'])
+
+
+def test_read_token_heatmap_utc_boundary_lands_in_next_msk_day(tmp_path: Path) -> None:
+    """Issue #225: A record logged at 22:00 UTC on day D must land in the NEXT MSK day (D+1)
+    at hour 01:00 MSK, not in day D.
+    This guarantees that MSK day rows represent 00:00 to 23:59 MSK of that date,
+    re-bucketing UTC timestamps rather than shifting labels on UTC buckets.
+    """
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+
+    # 2026-09-04.jsonl contains:
+    # 1. 20:59 UTC -> 23:59 MSK on 2026-09-04 (same MSK day, hour 23, 5-min bucket 287)
+    # 2. 22:00 UTC -> 01:00 MSK on 2026-09-05 (NEXT MSK day, hour 01, 5-min bucket 12)
+    day_file = llm_dir / '2026-09-04.jsonl'
+    lines = [
+        json.dumps({'ts': '2026-09-04T20:59:00Z', 'model': 'un/qwen3.8-27b-gguf', 'total_tokens': 1000, 'component': 'bridge'}),
+        json.dumps({'ts': '2026-09-04T22:00:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 2500, 'component': 'proposer'}),
+    ]
+    day_file.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+    res = tv.read_token_heatmap(tmp_path)
+    assert res is not None
+
+    # Both MSK days must be present
+    assert '2026-09-04' in res['dates']
+    assert '2026-09-05' in res['dates']
+
+    # On day 2026-09-04: hour 23 has 1000 tokens, hour 22 is 0 tokens
+    h23 = res['hourly']['2026-09-04'][23]
+    assert h23[0] == 1000
+    assert h23[3] == 1000
+    assert h23[4] == 1
+    assert res['hourly']['2026-09-04'][22][3] == 0
+    # 5-min bucket 287 (23:55-24:00 MSK) has the call
+    assert '287' in res['five_min']['2026-09-04']
+    assert res['five_min']['2026-09-04']['287'][0] == 1000
+
+    # On day 2026-09-05: hour 01 has 2500 tokens, hour 00 is 0 tokens
+    h1 = res['hourly']['2026-09-05'][1]
+    assert h1[1] == 2500
+    assert h1[3] == 2500
+    assert h1[4] == 1
+    assert res['hourly']['2026-09-05'][0][3] == 0
+    # 5-min bucket 12 (01:00-01:05 MSK) has the call
+    assert '12' in res['five_min']['2026-09-05']
+    assert res['five_min']['2026-09-05']['12'][1] == 2500
+
+    # Summary reflects both calls and labels timezone
+    assert res['summary']['total_tokens'] == 3500
+    assert res['summary']['timezone'] == 'MSK'
+
+
+def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -> None:
+    """Issue #223: fail-soft on missing or empty llm_calls directory."""
+    assert tv.read_token_heatmap(tmp_path / 'nonexistent') is None
+
+    empty_dir = tmp_path / 'empty'
+    (empty_dir / 'llm_calls').mkdir(parents=True)
+    assert tv.read_token_heatmap(empty_dir) is None
+
+
+def test_tokens_page_generated_and_weight_under_300kb() -> None:
+    """Issue #223: tokens.html must be generated in render_pages and weigh < 300 KB."""
+    fixture = _fixture()
+    # Provide synthetic heatmap data with 1 active day and 1 gap day
+    fixture['token_heatmap'] = {
+        'dates': ['2026-09-05', '2026-09-06'],
+        'hourly': {
+            '2026-09-05': [[1000, 2000, 3000, 1, 'bridge'] for _ in range(24)],
+            '2026-09-06': None,
+        },
+        'five_min': {
+            '2026-09-05': {'0': [1000, 2000, 3000, 1, 'bridge']},
+            '2026-09-06': None,
+        },
+        'summary': {
+            'total_tokens': 72000,
+            'total_calls': 24,
+            'local_tokens': 24000,
+            'gateway_tokens': 48000,
+            'days_span': 2,
+            'days_present': 1,
+            'days_missing': 1,
+            'quantiles_hourly': {
+                'gateway': [1000, 2000, 3000, 4000],
+                'local': [500, 1000, 1500, 2000],
+                'total': [1500, 3000, 4500, 6000],
+            },
+            'quantiles_5min': {
+                'gateway': [100, 200, 300, 400],
+                'local': [50, 100, 150, 200],
+                'total': [150, 300, 450, 600],
+            },
+        },
+    }
+
+    pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')
+    assert 'tokens.html' in pages
+    tokens_html = pages['tokens.html']
+
+    # Must contain key structural components
+    assert 'Token Heatmap' in tokens_html
+    assert 'Vendor API' in tokens_html
+    assert 'Self-hosted GPU' in tokens_html
+    assert '192.168.1.35' in tokens_html  # infrastructure routing notice
+    assert 'tkn-infra-notice' in tokens_html
+    assert 'tkn-strip-wrap' in tokens_html
+    assert 'cell-nodata' in tokens_html
+    assert 'cell-zero' in tokens_html
+    assert 'token-heatmap-data' in tokens_html
+
+    # Weight check: must be strictly under 300 KB
+    byte_len = len(tokens_html.encode('utf-8'))
+    assert byte_len < 300_000, f'tokens.html is too heavy: {byte_len} bytes (limit: 300,000 bytes)'
+
+
+def test_index_page_contains_tokens_teaser() -> None:
+    """Issue #223: index.html teaser list must link to tokens.html."""
+    idx = _site()['index.html']
+    assert 'href="tokens.html">tokens</a>' in idx
+
+
+def test_tokens_page_has_explicit_msk_and_utc_notice() -> None:
+    """Issue #225: tokens.html must clearly state that source data is UTC and display is MSK."""
+    fixture = _fixture()
+    fixture['token_heatmap'] = {
+        'dates': ['2026-09-06'],
+        'hourly': {'2026-09-06': [[0, 0, 0, 0, 0, ''] for _ in range(24)]},
+        'five_min': {'2026-09-06': {}},
+        'summary': {
+            'total_tokens': 0,
+            'total_calls': 0,
+            'local_tokens': 0,
+            'gateway_tokens': 0,
+            'days_span': 1,
+            'days_present': 1,
+            'days_missing': 0,
+            'timezone': 'MSK',
+            'quantiles_hourly': {'gateway': [0, 0, 0, 0], 'local': [0, 0, 0, 0], 'total': [0, 0, 0, 0]},
+            'quantiles_5min': {'gateway': [0, 0, 0, 0], 'local': [0, 0, 0, 0], 'total': [0, 0, 0, 0]},
+        },
+    }
+    pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')
+    tokens_html = pages['tokens.html']
+    assert 'MSK' in tokens_html
+    assert 'UTC+3' in tokens_html
+    assert 'Часовой пояс:' in tokens_html
+    assert 'UTC' in tokens_html
+    assert '(24h MSK)' in tokens_html
+
+
+def test_lineage_day_buckets_utc_crossing_to_next_msk_day() -> None:
+    """Issue #225: _lineage_day must bucket UTC timestamps past 21:00 UTC into the next MSK day."""
+    assert tv._lineage_day('2026-09-06T20:59:00Z') == '2026-09-06'
+    assert tv._lineage_day('2026-09-06T21:00:00Z') == '2026-09-07'
+    assert tv._lineage_day('2026-09-06T22:00:00Z') == '2026-09-07'
+
+
+def test_cycle_feed_history_day_header_utc_crossing_to_next_msk_day() -> None:
+    """Issue #225: build_cycle_feed day header in history mode must group and label by MSK date."""
+    ledger = [
+        {'phase': 'outcome', 'cycle_id': 'c-night', 'ts': '2026-09-06T22:00:00Z'},
+    ]
+    html = tv.build_cycle_feed(ledger_tail=ledger, history_mode=True)
+    assert '<li class="feed-day-header">2026-09-07 MSK</li>' in html
+
+
+def test_fmt_ts_full_iso_conversion_to_msk() -> None:
+    """Issue #225: fmt_ts converts ISO UTC timestamp into YYYY-MM-DD HH:MM:SS MSK."""
+    assert tv.fmt_ts('2026-09-06T22:15:30Z') == '2026-09-07 01:15:30 MSK'
+    assert tv.fmt_ts('2026-09-06T10:00:00Z') == '2026-09-06 13:00:00 MSK'
+    assert tv.fmt_ts('') == 'unknown time'
+    assert tv.fmt_ts(None) == 'unknown time'
