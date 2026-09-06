@@ -907,12 +907,12 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">254</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 00:25:14.970750 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">250</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 03:11:04.530033 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="11">data: 11s old &middot; generated 00:26 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="91">data: 1m old &middot; generated 03:36 UTC</span></div>
     </header>
     
-<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-agent" id="panel-agent">
@@ -921,7 +921,7 @@
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
-          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (442 lines)</summary><div class="agent-wide-content"><pre><code># Instance Agent Instructions
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (168 lines)</summary><div class="agent-wide-content"><pre><code># Instance Agent Instructions
 
 ## Identity
 
@@ -943,18 +943,6 @@ to `main`; the harness owns integration. Its gate compiles changed scripts and
 runs affected tests. A cycle that is not integrated is a normal outcome, not an
 error to bypass.
 
-## Prompt budget (droppable sections)
-
-The executor&#x27;s system prompt is capped. Every `## ` section of this file is
-critical by default and is never dropped; a section whose body carries an HTML
-comment line reading `prompt-fit: droppable` (the exact marker is
-`ContextBuilder.DROPPABLE_MARKER` in ozand/eeebot) may be removed whole, largest
-first, when the prompt does not fit. If the critical sections alone do not fit, the cycle fails
-loudly instead of running on a truncated prompt. Mark efficiency guidance
-droppable; never mark a rule the gate or the repo&#x27;s safety depends on. New
-sections must carry the marker unless the operator adds them to the critical
-list in `tests/test_agents_structure.py`.
-
 ## Immediate skip protocol
 
 Before any edit, confirm the target work is not already complete: check the
@@ -962,7 +950,20 @@ Before any edit, confirm the target work is not already complete: check the
 target path or task title). If inspection confirms the task is already done or
 not applicable, stop immediately and report `outcome: skipped` — do not
 re-implement, do not make a bookkeeping commit, and do not spend further tool
-cal...</code></pre></div></details>
+calls. A skip is a valid, complete outcome, not a failure to work around.
+
+## Staging protocol (target paths only)
+
+Stage only the files the task designates as targets. Never use `git add -A`
+or `git add .`; always pass explicit paths (`git add &lt;file&gt;`). Before
+committing, run `git status --porcelain` and confirm every staged path is a
+designated target inside an allowed surface (`surfaces/`, `scripts/`,
+`memory/`, `lessons/`, `docs/`, `tests/`, `skills/`, `AGENTS.md`). Live
+runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
+they show as modified or untracked. If a non-target path appears staged,
+unstage it (`git restore --staged &lt;path&gt;`) before committing.
+
+## Forbidden ope...</code></pre></div></details>
         </div>
         <div class="agent-subcol">
           <h3>Goals Charter</h3>
@@ -1008,7 +1009,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     <tr class="skill-high-ratio">
                       <td class="skill-name">batch_grep</td>
                       <td class="skill-reads">5</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span> <span class="skill-eval-delta">eval delta: +1</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span> <span class="skill-eval-delta">eval delta: +2</span></td>
                     </tr>
                     
                     <tr class="">
@@ -1041,6 +1042,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
                     </tr>
                     
+                    <tr class="">
+                      <td class="skill-name">early-turn-direct-file-inspection-and-editing-turns-1-4</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
                   </tbody>
                 </table></div>
                 
@@ -1048,12 +1055,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (futile_surface)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.7-flash-high</span> &middot; 872 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-06</td><td class="skill-reads">3</td><td>15.92K</td><td>5s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr><tr><td>2026-09-02</td><td class="skill-reads">166</td><td>949.4K</td><td>16s</td></tr><tr><td>2026-09-01</td><td class="skill-reads">114</td><td>560.0K</td><td>12s</td></tr><tr><td>2026-08-31</td><td class="skill-reads">163</td><td>901.3K</td><td>9s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add chained git commit command builder in scripts/chain_git_operations.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.7-flash-high</span> &middot; 902 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-06</td><td class="skill-reads">33</td><td>195.4K</td><td>7s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr><tr><td>2026-09-02</td><td class="skill-reads">166</td><td>949.4K</td><td>16s</td></tr><tr><td>2026-09-01</td><td class="skill-reads">114</td><td>560.0K</td><td>12s</td></tr><tr><td>2026-08-31</td><td class="skill-reads">163</td><td>901.3K</td><td>9s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 00:26:26 UTC &middot; host eeepc &middot; newest source 11s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 00:25:14.970750 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 03:36:29 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-09-06 03:11:04.530033 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
