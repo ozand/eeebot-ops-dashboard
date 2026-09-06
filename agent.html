@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">235</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 20:54:17 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 18:15 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 18:35 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1194,7 +1194,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-7bbff99b9849</span>
+      <span class="cycle-pill">cycle-baa4b62c7c07</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1220,7 +1220,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 18:06:08.498292 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 18:18:41.370757 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1240,7 +1240,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,060c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,499c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1708,9 +1708,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,060 chars &bull; ~2,015 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add JSON output mode and category summary flags to scripts/lessons_summary.py
-Request ID: llm-proposer-cycle-7bbff99b9849
-Cycle ID: cycle-7bbff99b9849
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,499 chars &bull; ~1,874 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add skill command block validation support in scripts/validate_skill_format.py
+Request ID: llm-proposer-cycle-baa4b62c7c07
+Cycle ID: cycle-baa4b62c7c07
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1724,76 +1724,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- c31194a9 merge: integrate selfevo/cycle-cycle-7bbff99b9849
+- bf3d481e feat(lessons_summary): add --categories flag and structured summary block to --json output
 - 983a2f99 merge: integrate selfevo/cycle-cycle-4dd9a703b90b
 - 5feb070f feat(verify_imports): add --resolve-local mode for in-repo dependency path resolution
 - f73bde18 merge: integrate selfevo/cycle-cycle-1fd12ef4dbc1
 - 4fdc5051 docs(memory): add decay lane exclusion enforcement rule to do-not-touch fact
 - 26f83c63 merge: integrate selfevo/cycle-cycle-d44625988920
 - 09bc3c11 docs(memory): add decay and archival preflight inspection policy fact
-- 0687daa1 fix(tests): point the two skill tests at their post-#1341 locations (#192)
-- c3e7d1c6 chore: record structured error for [cycle-de7121]
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add lesson card on signature key heuristics for multi-schema validation: recent_duplicate_failure
-- Add lesson card on early target script modification within sequence turn budget: gate_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7bbff99b9849.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-baa4b62c7c07.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add JSON output mode and category summary flags to scripts/lessons_summary.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Re-wires and extends the idle scripts/lessons_summary.py with a machine-readable --json output flag and structured counts to enable programmatic consumption.\n\nTarget path: scripts/lessons_summary.py&quot;,
+    &quot;title&quot;: &quot;Add skill command block validation support in scripts/validate_skill_format.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extend scripts/validate_skill_format.py to validate runnable command blocks within skill files including skills/run-tests/SKILL.md, repairing the unvalidated skill defect with executable code validation.\n\nTarget path: scripts/validate_skill_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add JSON output mode and category summary flags to scripts/lessons_summary.py (target: scripts/lessons_summary.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add skill command block validation support in scripts/validate_skill_format.py (target: scripts/validate_skill_format.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Running scripts/lessons_summary.py --json outputs valid JSON and exits with return code 0&quot;,
+    &quot;claim&quot;: &quot;scripts/validate_skill_format.py successfully validates code/command blocks within skills/run-tests/SKILL.md and exits with 0&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/lessons_summary.py --json&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-dd865bde  Title: Implementing &quot;Add error location tracking and structured summary output to scripts/validate_json_syntax.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_json_syntax.py, tests/test_validate_json_syntax.py
+ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-dd865bde] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Ensure uncommitted workspace changes and untracked artifacts are cleanly committed, stashed, or reset prior to cycle harness initialization to prevent repeated &#x27;dirty_tree&#x27; startup aborts from prematu
-- Lingering uncommitted files or untracked modifications in the repository workspace caused an immediate harness startup abort with reason &#x27;dirty_tree&#x27; right after deduplication passed, preventing worke
-- When assigned a defect or idle-script repair demand on a target script that recently failed integration, propose companion test authoring under tests/ (e.g. tests/test_approval_truth.py) or a caller m
+- Remove or clean up unexpected untracked artifacts (especially under skills/ or scripts/) before completing a cycle, because gate verification inspects workspace filesystem layout.
+- When supporting standalone execution flags such as --test, make operational arguments optional in argparse and validate them conditionally after verifying flag execution.
+- The agent observed untracked &#x27;skills/batch_grep/&#x27; in &#x27;git status --porcelain&#x27; and consciously left it untouched believing uncommitted files would not affect integration, repeating the exact gate failu
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-06 17:50 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py, tests/test_verify_imports.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-06 18:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/lessons_summary.py, tests/test_lessons_summary.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-06 17:50 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py, tests/test_verify_imports.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add JSON output mode and category summary flags to scripts/lessons_summary.py
+Title: Add skill command block validation support in scripts/validate_skill_format.py
 
 
-Re-wires and extends the idle scripts/lessons_summary.py with a machine-readable --json output flag and structured counts to enable programmatic consumption.
+Extend scripts/validate_skill_format.py to validate runnable command blocks within skill files including skills/run-tests/SKILL.md, repairing the unvalidated skill defect with executable code validation.
 
-Target path: scripts/lessons_summary.py
+Target path: scripts/validate_skill_format.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Running scripts/lessons_summary.py --json outputs valid JSON and exits with return code 0
+scripts/validate_skill_format.py successfully validates code/command blocks within skills/run-tests/SKILL.md and exits with 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2014,7 +2001,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 18:15:11 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 20:54:17 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 18:35:56 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 20:54:17 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
