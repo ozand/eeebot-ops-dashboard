@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">237</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 23:24:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="43">data: 42s old &middot; generated 20:31 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 20:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-6a4e04c1a32a</span>
+      <span class="cycle-pill">cycle-32422316c74b</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 20:14:46.372569 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 20:34:56.732806 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,214c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,830c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1709,9 +1709,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,214 chars &bull; ~2,303 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add concrete_next_action recommendation output for verified target files in scripts/check_target_completion.py
-Request ID: llm-proposer-cycle-6a4e04c1a32a
-Cycle ID: cycle-6a4e04c1a32a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,830 chars &bull; ~1,957 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py
+Request ID: llm-proposer-cycle-32422316c74b
+Cycle ID: cycle-32422316c74b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1725,73 +1725,67 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- a763c88c merge: integrate selfevo/cycle-cycle-6a4e04c1a32a
+- 730f7213 feat(check_target_completion): add concrete_next_action recommendation for verified targets
 - 77a07476 merge: integrate selfevo/cycle-cycle-ac7149706732
 - 09278530 refactor(smoke_test_loop): hoist build_parser ahead of check helpers
 - 64c6c114 merge: integrate selfevo/cycle-cycle-c83ba44797fc
 - be3d1b55 feat(check_preexisting_regression): add concrete_next_action recommendation for pre-existing failures
 - 1bb0e699 merge: integrate selfevo/cycle-cycle-e95147054f90
 - eef168a6 selfevo: auto-commit uncommitted subagent work — Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_
-- f922834c feat(analyze_repeat_failures): add safety-stop and tool-repetition pattern detection
-- c31194a9 merge: integrate selfevo/cycle-cycle-7bbff99b9849
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add loop breaker warning audit and post-warning repetition detection to scripts/loop_health_report.py: recent_duplicate_failure
 - Add field-weight scoring and result deduplication to scripts/search_subagent_archive.py: recent_duplicate_failure
-- Add loop breaker payload repeat detection to scripts/search_subagent_archive.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6a4e04c1a32a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-32422316c74b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add concrete_next_action recommendation output for verified target files in scripts/check_target_completion.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle-1dc3f7d2e36b, the agent verified target script and test file presence early but looped on exploratory find/grep commands. Adding a concrete_next_action recommendation to scripts/check_target_completion.py directs execution immediately to code editing or companion test runs once target state is verified, preventing exploratory search stalls.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements the AST-based entrypoint inspection in scripts/validate_script_entrypoints.py identified in cycle-4bd4c8c37274, providing robust syntax tree inspection while honoring the code-bearing steering guidance.\n\nTarget path: scripts/validate_script_entrypoints.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add concrete_next_action recommendation output for verified target files in scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py (target: scripts/validate_script_entrypoints.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_script_entrypoints.py executes cleanly and parses entrypoint functions and __main__ blocks using ast.&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_script_entrypoints.py --help&quot;
+    }
+  }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-3c711db47ed9-d63a  Title: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
-Problem: The agent deferred the heading case fix for `lessons/out_of_band_main_detected.md` to keep `files_changed` restricted strictly to `lessons/early_edit_turn_discipline.md`.
-Solution: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
-If you apply this lesson, cite [Lesson LESS-REF-3c711db47ed9-d63a] in your proposal/response.
-Related: LESS-20260827-3c711db4
+ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When creating a new skill directory under `skills/`, enforce kebab-case naming (e.g. `target-scope-discipline`) to satisfy the regex `^[a-z0-9]+(-[a-z0-9]+)*$` enforced by gate validators.
-- Write unique skill descriptions with domain-specific terminology or check whether to extend existing workflow skills to avoid tripping gate duplicate skill similarity thresholds (&gt;= 0.4 overlap).
-- Creating the skill directory with snake_case (`skills/target_scope_discipline/`) violated the repository&#x27;s directory naming schema rule requiring kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`).
+- When assigned a reflection demand on code optimization or AST analysis, target an engineering skill guide in skills/&lt;skill-name&gt;/SKILL.md or a script enhancement rather than lessons/lessons.yaml while
+- Before proposing functional additions to heavily iterated scripts like scripts/targeted_file_slice.py, check recent git commit logs to avoid proposing already completed features.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-06 19:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/smoke_test_loop.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-06 19:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
-- Attempt 3 (2026-09-06 19:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
+- Attempt 1 (2026-09-06 20:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 2 (2026-09-06 19:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/smoke_test_loop.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add concrete_next_action recommendation output for verified target files in scripts/check_target_completion.py
+Title: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py
 
 
-In cycle-1dc3f7d2e36b, the agent verified target script and test file presence early but looped on exploratory find/grep commands. Adding a concrete_next_action recommendation to scripts/check_target_completion.py directs execution immediately to code editing or companion test runs once target state is verified, preventing exploratory search stalls.
+Implements the AST-based entrypoint inspection in scripts/validate_script_entrypoints.py identified in cycle-4bd4c8c37274, providing robust syntax tree inspection while honoring the code-bearing steering guidance.
 
-Target path: scripts/check_target_completion.py
+Target path: scripts/validate_script_entrypoints.py
 
-## Concrete task to implement
-Implement and commit: Add concrete_next_action recommendation output for verified target files in scripts/check_target_completion.py (target: scripts/check_target_completion.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_script_entrypoints.py executes cleanly and parses entrypoint functions and __main__ blocks using ast.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2012,7 +2006,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 20:31:52 UTC &middot; host eeepc &middot; newest source 42s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 23:24:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 20:37:33 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 23:24:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
