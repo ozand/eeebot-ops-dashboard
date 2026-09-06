@@ -1,3 +1,4 @@
+scripts/agent_context.py
 scripts/techtree_viewer.py
 scripts/techtree_autopublish.py
 assets/vendor/lineage-renderer.js
