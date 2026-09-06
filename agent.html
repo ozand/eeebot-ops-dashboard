@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">234</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 20:24:11 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 17:37 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 17:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1194,7 +1194,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-1fd12ef4dbc1</span>
+      <span class="cycle-pill">cycle-4dd9a703b90b</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1220,7 +1220,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 17:30:05.730524 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 17:41:46.828259 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1240,7 +1240,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,061c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,167c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1708,9 +1708,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,061 chars &bull; ~2,015 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add decay lane exclusion enforcement rule to memory/facts/do-not-touch.md
-Request ID: llm-proposer-cycle-1fd12ef4dbc1
-Cycle ID: cycle-1fd12ef4dbc1
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,167 chars &bull; ~1,791 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add local dependency path resolution mode to scripts/verify_imports.py
+Request ID: llm-proposer-cycle-4dd9a703b90b
+Cycle ID: cycle-4dd9a703b90b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1724,67 +1724,64 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- f73bde18 merge: integrate selfevo/cycle-cycle-1fd12ef4dbc1
+- 4fdc5051 docs(memory): add decay lane exclusion enforcement rule to do-not-touch fact
 - 26f83c63 merge: integrate selfevo/cycle-cycle-d44625988920
 - 09bc3c11 docs(memory): add decay and archival preflight inspection policy fact
 - 0687daa1 fix(tests): point the two skill tests at their post-#1341 locations (#192)
 - c3e7d1c6 chore: record structured error for [cycle-de7121]
 - dcfb221f chore: record structured error for [cycle-44f3e4]
 - 898165bc merge: integrate selfevo/cycle-cycle-7299bd0ccae8
-- 3d61c97d docs(lessons): add lesson card on setting fast execution as default to prevent caller harness timeouts
-- 40de105e merge: integrate selfevo/cycle-cycle-26e8ad4fef79
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add lesson card on signature key heuristics for multi-schema validation: recent_duplicate_failure
 - Add lesson card on early target script modification within sequence turn budget: gate_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1fd12ef4dbc1.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4dd9a703b90b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add decay lane exclusion enforcement rule to memory/facts/do-not-touch.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Clarifies in memory/facts/do-not-touch.md that decay proposers must cross-reference protected files before proposing deprecation tasks, resolving reflection-f45a467c35af.\n\nTarget path: memory/facts/do-not-touch.md&quot;,
+    &quot;title&quot;: &quot;Add local dependency path resolution mode to scripts/verify_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extends verify_imports.py to resolve in-repo import statements for a target file to exact file paths, enabling subagents to restrict exploratory searches to directly imported dependencies.\n\nTarget path: scripts/verify_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add decay lane exclusion enforcement rule to memory/facts/do-not-touch.md (target: memory/facts/do-not-touch.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add local dependency path resolution mode to scripts/verify_imports.py (target: scripts/verify_imports.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;memory/facts/do-not-touch.md contains explicit decay lane exclusion rules&quot;,
+    &quot;claim&quot;: &quot;scripts/verify_imports.py provides a CLI mode to resolve and print in-repo file paths for modules imported by a target script&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;memory/facts/do-not-touch.md&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/verify_imports.py --help&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260904-90931e43  Title: Support both repository-relative (&#x27;memory/facts/...&#x27;) and directory-relative (&#x27;facts/...&#x27;) markdown link formats in catalog index consistency tests
-Problem: In cycle-90931e43a3db, a markdown catalog index consistency test resolved every relative link in the index against a single base (the memory/ directory), so links written in the other common format — repository-relative (&#x27;memory/facts/...&#x27;) instead of directory-relative (&#x27;facts/...&#x27;) — were reported as missing files even though the target exists on disk. The test failed on a valid index purely bec
-Solution: When validating relative markdown links in a catalog index (e.g. memory/index.md), resolve each link against both candidate bases — the index file&#x27;s own directory and the repository root — and treat the link as valid if either resolution yields an existing file. Only report a link as missing when neither candidate path exists. This makes the consistency check format-agnostic for the two relative p
-If you apply this lesson, cite [Lesson LESS-20260904-90931e43] in your proposal/response.
+ID: LESS-20260823-f6cf166c  Title: Implementing &quot;Add local package resolution and syntax error resilience to scripts/verify_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_imports.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260823-f6cf166c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When assigned a decay demand for a script whose deprecation/archival task recently failed, return no_valuable_task or formulate tests verifying deprecation behavior rather than repeating the failing a
-- Proposing an archival task on scripts/lesson_lookup.py collided with a recent failure (&#x27;Add archival deprecation docstring header and warning to scripts/lesson_lookup.py&#x27;), resulting in an immediate d
-- Creating the skill directory with snake_case (`skills/target_scope_discipline/`) violated the repository&#x27;s directory naming schema rule requiring kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`).
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-06 16:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: memory/facts/decay_archival_policy.md, memory/index.md. Reward signal will be upgraded by…
+- When assigned an implementation task for functionality already present in the codebase, authoring robust test coverage verifying stdout serialization and exit codes satisfies the task intent cleanly w
+- When adding new memory fact files, verify relative link path resolution against `tests/test_memory_index_links.py` expectations before committing.
+- Ensure uncommitted workspace changes are committed or cleaned at cycle boundaries to eliminate cascading &#x27;dirty_tree&#x27; initialization failures.
 
 ## Concrete task to implement
 
-Title: Add decay lane exclusion enforcement rule to memory/facts/do-not-touch.md
+Title: Add local dependency path resolution mode to scripts/verify_imports.py
 
 
-Clarifies in memory/facts/do-not-touch.md that decay proposers must cross-reference protected files before proposing deprecation tasks, resolving reflection-f45a467c35af.
+Extends verify_imports.py to resolve in-repo import statements for a target file to exact file paths, enabling subagents to restrict exploratory searches to directly imported dependencies.
 
-Target path: memory/facts/do-not-touch.md
+Target path: scripts/verify_imports.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-memory/facts/do-not-touch.md contains explicit decay lane exclusion rules
+scripts/verify_imports.py provides a CLI mode to resolve and print in-repo file paths for modules imported by a target script
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2005,7 +2002,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 17:37:49 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 20:24:11 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 17:50:37 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 20:24:11 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
