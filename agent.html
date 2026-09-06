@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">233</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">67.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 02:34:33 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 16s old &middot; generated 23:42 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 23:51 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-fa7aba97719d</span>
+      <span class="cycle-pill">cycle-a449a0b379a9</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 23:14:34.561127 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 23:46:09.351292 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,457c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,171c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1709,9 +1709,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,457 chars &bull; ~2,114 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Normalize parameterized test IDs in scripts/check_preexisting_regression.py for consistent scope classification
-Request ID: llm-proposer-cycle-fa7aba97719d
-Cycle ID: cycle-fa7aba97719d
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,171 chars &bull; ~2,042 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add raw 2-column porcelain status preservation to scripts/check_target_completion.py
+Request ID: llm-proposer-cycle-a449a0b379a9
+Cycle ID: cycle-a449a0b379a9
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1725,70 +1725,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 2ea72b5b merge: integrate selfevo/cycle-cycle-fa7aba97719d
+- f11017f6 feat(check_preexisting_regression): normalize parameterized test IDs for consistent scope classification
 - 49972dba merge: integrate selfevo/cycle-cycle-c95ba066bcb5
 - 2d29eb67 feat(check_preexisting_regression): add baseline git revision comparison for test failure signatures
 - ce1137d2 merge: integrate selfevo/cycle-cycle-54d21ce9beed
 - e21914d3 selfevo: auto-commit uncommitted subagent work — Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST vali
 - 916a200c feat(validate_open_encoding): add --self-test flag for synthetic in-memory AST validation
 - 64bce672 curator: promote 1 fact(s), 3 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
-- a763c88c merge: integrate selfevo/cycle-cycle-6a4e04c1a32a
-- 730f7213 feat(check_target_completion): add concrete_next_action recommendation for verified targets
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Ensure _init_repo creates parent directories for simulated files in tests/test_check_preexisting_regression.py: existence_index_duplicate
 - Add unit tests in tests/test_workspace_validation_helpers.py for run_advisory_check return shape normalization: existence_index_duplicate
-- Add daemon thread run_with_timeout helper returning (result, timed_out) to scripts/workspace_validation_helpers.py: recent_duplicate_failure
-- Add test suite in tests/test_early_turn_staging.py to consume and validate skills/early-turn-staging/SKILL.md: existence_index_duplicate
-- Consume collect_host_metrics in scripts/loop_health_report.py to display host resource metrics: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-fa7aba97719d.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a449a0b379a9.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Normalize parameterized test IDs in scripts/check_preexisting_regression.py for consistent scope classification&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-f93402a4028f by extending the established ID parsing logic in scripts/check_preexisting_regression.py to normalize parameterized test identifiers, ensuring consistent in-scope versus out-of-scope failure classification across proof reporting.\n\nTarget path: scripts/check_preexisting_regression.py&quot;,
+    &quot;title&quot;: &quot;Add raw 2-column porcelain status preservation to scripts/check_target_completion.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves reflection-3d82a74c70ea where 2-column git status --porcelain indicators like &#x27; M&#x27; were stripped to &#x27;M&#x27;, by preserving the raw 2-character status alongside the stripped status in check_target_file_modification.\n\nTarget path: scripts/check_target_completion.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Normalize parameterized test IDs in scripts/check_preexisting_regression.py for consistent scope classification (target: scripts/check_preexisting_regression.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add raw 2-column porcelain status preservation to scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_preexisting_regression.py normalizes parameterized test IDs and executes cleanly with --help&quot;,
+    &quot;claim&quot;: &quot;check_target_file_modification preserves raw 2-column porcelain status codes without whitespace stripping&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_preexisting_regression.py --help&quot;
+      &quot;command&quot;: &quot;pytest tests/test_check_target_completion.py&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-29209bf8  Title: Implementing &quot;Add error classification matching and structured JSON output to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 2 commit(s): scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
+ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-29209bf8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Never run repository-wide pytest suites (`pytest tests/`) on constrained hardware; restrict execution strictly to targeted unit tests matching the modified files.
-- When assigned a lesson card authoring task, validate only the newly added YAML entry and do not remediate pre-existing errors in untouched legacy entries.
-- Running broad repository test suites (`pytest tests/`) on constrained hardware led to command timeouts (60s and 300s+) and cascading errors in unrelated skill test files.
+- When assigned a subagent archive defect where script modifications to search_subagent_archive.py have recently failed, target companion tests under tests/ (e.g. tests/test_search_subagent_archive.py) 
+- Proposing status filtering and error detail extraction in scripts/search_subagent_archive.py triggered deduplication rejection (&#x27;skipped_recent_failure&#x27;) against the recent failure &#x27;Add error status f
+- When global test suites exhibit pre-existing failures on untouched files, run targeted one-liner validation scripts against modified entries and compare baseline test status with git stash to cleanly 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-06 23:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
-- Attempt 2 (2026-09-06 22:04 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/validate_open_encoding.py,…
+- Attempt 1 (2026-09-06 23:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
+- Attempt 2 (2026-09-06 23:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
 
 ## Concrete task to implement
 
-Title: Normalize parameterized test IDs in scripts/check_preexisting_regression.py for consistent scope classification
+Title: Add raw 2-column porcelain status preservation to scripts/check_target_completion.py
 
 
-Addresses reflection-f93402a4028f by extending the established ID parsing logic in scripts/check_preexisting_regression.py to normalize parameterized test identifiers, ensuring consistent in-scope versus out-of-scope failure classification across proof reporting.
+Resolves reflection-3d82a74c70ea where 2-column git status --porcelain indicators like &#x27; M&#x27; were stripped to &#x27;M&#x27;, by preserving the raw 2-character status alongside the stripped status in check_target_file_modification.
 
-Target path: scripts/check_preexisting_regression.py
+Target path: scripts/check_target_completion.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_preexisting_regression.py normalizes parameterized test IDs and executes cleanly with --help
+check_target_file_modification preserves raw 2-column porcelain status codes without whitespace stripping
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2009,7 +2007,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 23:42:39 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 02:34:33 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 23:51:56 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 02:34:33 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
