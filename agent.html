@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 23:58:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 21:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 21:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-32422316c74b</span>
+      <span class="cycle-pill">cycle-08759252f294</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 20:34:56.732806 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 21:16:45.203701 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,830c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,220c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1651,9 +1651,7 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">4,030 chars &bull; ~1,007 tokens</span></summary><div class="block-body"><pre><code># Memory
 
 ## Long-term Memory
-e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scripts support standalone flags
-
-* [CLI stderr/JSON separation](facts/cli-stderr-json-separation.md) - CLI tools with JSON output must route logs to stderr
+SON output must route logs to stderr
 
 * [Daemon Runtime Paths](facts/daemon-runtime-paths.md) - Path isolation rules for systemd service units and workspaces
 
@@ -1700,6 +1698,8 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
 * [Style validator execution modes](facts/style-validator-execution-modes.md) - scripts/check_style.py provides a --fast flag to avoid AST multi-pass timeouts
 
 * [Decay and archival preflight inspection](facts/decay_archival_policy.md) - Safety checklist requiring git commit history and do-not-touch policy inspection prior to executing script decay or archival demands
+
+* [Markdown catalog link integrity tests](facts/markdown-catalog-link-integrity.md) - Relative path verification in markdown indexes requires stripping anchor fragments and URI schemes
 </code></pre></div></details>
     <div class="reconciliation-box">
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
@@ -1709,9 +1709,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,830 chars &bull; ~1,957 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py
-Request ID: llm-proposer-cycle-32422316c74b
-Cycle ID: cycle-32422316c74b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,220 chars &bull; ~2,305 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py
+Request ID: llm-proposer-cycle-08759252f294
+Cycle ID: cycle-08759252f294
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1725,6 +1725,7 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 64bce672 curator: promote 1 fact(s), 3 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 - a763c88c merge: integrate selfevo/cycle-cycle-6a4e04c1a32a
 - 730f7213 feat(check_target_completion): add concrete_next_action recommendation for verified targets
 - 77a07476 merge: integrate selfevo/cycle-cycle-ac7149706732
@@ -1732,60 +1733,62 @@ Recently completed (recent commits):
 - 64c6c114 merge: integrate selfevo/cycle-cycle-c83ba44797fc
 - be3d1b55 feat(check_preexisting_regression): add concrete_next_action recommendation for pre-existing failures
 - 1bb0e699 merge: integrate selfevo/cycle-cycle-e95147054f90
-- eef168a6 selfevo: auto-commit uncommitted subagent work — Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add test suite in tests/test_early_turn_staging.py to consume and validate skills/early-turn-staging/SKILL.md: existence_index_duplicate
+- Consume collect_host_metrics in scripts/loop_health_report.py to display host resource metrics: recent_duplicate_failure
+- Add stem normalization to keyword overlap checking in scripts/validate_curator_facts.py: recent_duplicate_failure
 - Add loop breaker warning audit and post-warning repetition detection to scripts/loop_health_report.py: recent_duplicate_failure
 - Add field-weight scoring and result deduplication to scripts/search_subagent_archive.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-32422316c74b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-08759252f294.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements the AST-based entrypoint inspection in scripts/validate_script_entrypoints.py identified in cycle-4bd4c8c37274, providing robust syntax tree inspection while honoring the code-bearing steering guidance.\n\nTarget path: scripts/validate_script_entrypoints.py&quot;,
+    &quot;title&quot;: &quot;Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves defect-52d85e7236bf by extending scripts/summarize_failure_reasons.py to parse subagent result files with status=error, extracting failure diagnostics and categorizing failure reasons for automated inspection.\n\nTarget path: scripts/summarize_failure_reasons.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py (target: scripts/validate_script_entrypoints.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_script_entrypoints.py executes cleanly and parses entrypoint functions and __main__ blocks using ast.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_script_entrypoints.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py (target: scripts/summarize_failure_reasons.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
+Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
+Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
+ID: LESS-20260827-185dfdfe  Title: Implementing &quot;Implement summarize_failure_reasons in scripts/summarize_failure_reasons.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/summarize_failure_reasons.py, tests/test_summarize_failure_reasons.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-185dfdfe] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When assigned a reflection demand on code optimization or AST analysis, target an engineering skill guide in skills/&lt;skill-name&gt;/SKILL.md or a script enhancement rather than lessons/lessons.yaml while
-- Before proposing functional additions to heavily iterated scripts like scripts/targeted_file_slice.py, check recent git commit logs to avoid proposing already completed features.
+- When editing indented python code blocks via string replacement, run a quick syntax check (`python3 -m py_compile &lt;file&gt;`) before invoking the pytest runner to catch whitespace errors immediately.
+- Inspect existing implementations of sibling features in recently modified files to reuse established helper signatures and JSON envelope fields.
+- An off-by-one indentation discrepancy (7 spaces instead of 8) was introduced when editing `_run_self_tests()`, triggering an `IndentationError` during the initial pytest collection.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-06 20:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 2 (2026-09-06 19:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/smoke_test_loop.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-06 21:09 UTC): no commits (blocked). Task &quot;Add test suite in tests/test_early_turn_staging.py to consum&quot; matched an existing artifact…
+- Attempt 2 (2026-09-06 20:58 UTC): no commits (blocked). Task &quot;Consume collect_host_metrics in scripts/loop_health_report.p&quot; matches recently-failed/rejected proposal &quot;Add…
+- Attempt 3 (2026-09-06 20:51 UTC): no commits (blocked). Task &quot;Add stem normalization to keyword overlap checking in script&quot; matches recently-failed/rejected proposal &quot;Add…
 
 ## Concrete task to implement
 
-Title: Add AST-based entrypoint analysis to scripts/validate_script_entrypoints.py
+Title: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py
 
 
-Implements the AST-based entrypoint inspection in scripts/validate_script_entrypoints.py identified in cycle-4bd4c8c37274, providing robust syntax tree inspection while honoring the code-bearing steering guidance.
+Resolves defect-52d85e7236bf by extending scripts/summarize_failure_reasons.py to parse subagent result files with status=error, extracting failure diagnostics and categorizing failure reasons for automated inspection.
 
-Target path: scripts/validate_script_entrypoints.py
+Target path: scripts/summarize_failure_reasons.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_script_entrypoints.py executes cleanly and parses entrypoint functions and __main__ blocks using ast.
+## Concrete task to implement
+Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py (target: scripts/summarize_failure_reasons.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2006,7 +2009,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 21:12:56 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 23:58:49 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 21:26:49 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 23:58:49 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
