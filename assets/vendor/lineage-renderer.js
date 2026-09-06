@@ -316,6 +316,7 @@
       if (node.cycle_node_count) circle.setAttribute('data-cycle-node-count', String(node.cycle_node_count));
       if (node.sha) circle.setAttribute('data-sha', node.sha);
       if (node.ts_status === 'invalid') circle.setAttribute('data-ts-status', 'invalid');
+      if (node.ts) circle.setAttribute('data-ts', node.ts);
       if (node.parent_status) circle.setAttribute('data-parent-status', node.parent_status);
       if (node.parent_boundary) circle.setAttribute('data-boundary', node.parent_boundary);
       circle.setAttribute('cx', pos.x);
