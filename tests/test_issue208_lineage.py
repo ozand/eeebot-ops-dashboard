@@ -1095,3 +1095,40 @@ def test_issue218_unknown_exact_deep_link_shows_coverage_message(tmp_path: Path)
             browser.close()
     finally:
         srv.shutdown()
+
+
+def test_issue218_duplicate_cycle_exact_nodes_and_legacy_alias_after_renderer(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'first', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'second', 'parent_sha': 'first', 'ts': '2026-01-01T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-dup', 'outcome': 'failed', 'ts': '2026-01-01T02:00:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture()
+    data['ledger_tail'] = rows
+    data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 03:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Asecond')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:second'
+            assert page.locator('.cycle-node-selected').get_attribute('data-cycle-node-count') == '3'
+            assert 'Selected node:' in page.locator('.cycle-details-body').inner_text()
+            page.goto(base_url + '/lineage.html#node-cycle-dup')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            selected = page.locator('.cycle-node-selected')
+            assert selected.get_attribute('data-node-id') == 'a:cycle-dup'
+            assert selected.get_attribute('data-cycle-node-index') == '3'
+            assert selected.get_attribute('data-cycle-node-count') == '3'
+            assert 'Node:' in page.locator('.cycle-details-body').inner_text()
+            browser.close()
+    finally:
+        srv.shutdown()

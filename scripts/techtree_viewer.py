@@ -3066,7 +3066,7 @@ def _build_unified_lineage(
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
   function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
   function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
-  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var html = '<h3>' + esc(item.title || cid) + '</h3>' + multi + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var nodeId = node.getAttribute('data-node-id') || ''; var sha = node.getAttribute('data-sha') || ''; var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var selected = '<p><b>Selected node:</b> ' + esc(nodeId) + (sha ? ' · <b>SHA:</b> ' + esc(sha) : '') + '</p>'; var html = '<h3>' + esc(item.title || cid) + '</h3>' + selected + multi + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
   var selectedNode = null, openedByNode = null, openSeq = 0;
   function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
   function closePanel() {{ panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
@@ -3640,16 +3640,9 @@ def build_cycle_feed(
     history_mode: bool = False,
     rendered_lesson_ids: set[str] | None = None,
     ledger_history: list[Any] | None = None,
-    now: datetime | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
-    # #235: the humanized timestamp is date-dependent, so the reference
-    # instant has to be injectable or the rendering is only reproducible
-    # for as long as the wall clock agrees. Same shape as build_hypotheses.
-    ref_now = now or datetime.now(timezone.utc)
-    if ref_now.tzinfo is None:
-        ref_now = ref_now.replace(tzinfo=timezone.utc)
 
     # Group ledger phases by cycle_id
     cycles_dict: dict[str, list[dict[str, Any]]] = {}
@@ -3904,7 +3897,7 @@ def build_cycle_feed(
                 delta_html = f'<span class="feed-delta">{fmt_compact(float(metric_delta), signed=True)}</span>'
             except (TypeError, ValueError):
                 delta_html = f'<span class="feed-delta">{esc(metric_delta)}</span>'
-        ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val, now=ref_now)}</span>' if ts_val else ''
+        ts_html = f'<span class="feed-ts" title="{esc(str(ts_val))}">{fmt_ts_short(ts_val)}</span>' if ts_val else ''
 
         # Issue #60: per-cycle LLM cost line (calls / tokens / duration),
         # plus a budget-pressure marker when a call hit finish_reason=length.
