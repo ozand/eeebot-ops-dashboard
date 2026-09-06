@@ -1,274 +1,371 @@
 (function () {
   'use strict';
-  // #208: the lineage renderer. No dependencies. The generator emits one payload per
-  // UTC day: nodes[] with sha, cycle_id, parent, parent_basis ('recorded' | 'inferred'),
-  // optional parent_day (recorded parent lives in an earlier day), ts, outcome, kind,
-  // optional title, optional current. Every parent here was decided by the generator's
-  // single parent expression; the renderer never invents an edge. Edge provenance is
-  // carried into the element: inferred edges are dashed `lineage-edge-chronological`,
-  // recorded edges are solid `arch-edge`, and both carry data-basis.
-  //
-  // Layout: a tidy top-down forest. Each subtree occupies a disjoint x-interval and a
-  // parent is centred over its children, so edges of different subtrees never cross —
-  // the crossing minimisation d3-dag was vendored for is a property of this layout,
-  // not a computation, which is why the 390 KB of d3 + d3-dag were dropped (#208).
-  var PITCH_X = 36;   // horizontal distance between neighbouring leaves
-  var PITCH_Y = 48;   // vertical distance between depths
-  var MARGIN_X = 20;
-  var MARGIN_TOP = 28; // room for the ★ / ↩ marks above the first row
-  var RADIUS = 9;
 
-  function layoutDay(payload) {
+  var PITCH_X = 44;
+  var PITCH_Y = 54;
+  var MARGIN_X = 24;
+  var MARGIN_TOP = 32;
+  var RADIUS = 9;
+  var state = { payload: null, mode: 'yesterday-today', rendered: null };
+
+  function nodeIdToDomId(nodeId) {
+    return 'node-' + encodeURIComponent(String(nodeId || '')).replace(/%/g, '_');
+  }
+  function domIdToNodeId(domId) {
+    if (!domId || !String(domId).startsWith('node-')) return null;
+    try { return decodeURIComponent(String(domId).slice(5).replace(/_/g, '%')); }
+    catch (_error) { return null; }
+  }
+  function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+  function parseTs(node) {
+    if (!node || node.ts == null || node.ts === '') return null;
+    var value = Date.parse(node.ts);
+    return isNaN(value) ? null : value;
+  }
+  function utcDay(date) { return date.toISOString().slice(0, 10); }
+  function dayStartMs(day) { return Date.parse(day + 'T00:00:00.000Z'); }
+  function byNodeId(payload) {
+    var out = {};
+    ((payload && payload.nodes) || []).forEach(function (node) { out[node.node_id] = node; });
+    return out;
+  }
+  function parentEdges(payload) {
+    var out = {};
+    ((payload && payload.edges) || []).forEach(function (edge) {
+      if (edge && edge.target) out[edge.target] = edge;
+    });
+    return out;
+  }
+  function resolveToken(payload, token) {
+    if (!payload || !token) return null;
+    var raw = String(token);
+    var exact = domIdToNodeId(raw.startsWith('node-') ? raw : 'node-' + raw);
+    var nodes = byNodeId(payload);
+    if (exact && nodes[exact]) return exact;
+    try {
+      var decoded = decodeURIComponent(raw);
+      if (nodes[decoded]) return decoded;
+      if (payload.aliases && payload.aliases[decoded]) return payload.aliases[decoded];
+      if (payload.aliases && payload.aliases[raw]) return payload.aliases[raw];
+    } catch (_error) {
+      if (payload.aliases && payload.aliases[raw]) return payload.aliases[raw];
+    }
+    return null;
+  }
+  function showNote(text) {
+    var note = document.querySelector('.lineage-filter-note');
+    if (!note) return;
+    note.textContent = text || '';
+    note.hidden = !text;
+  }
+  function setActiveButton(mode) {
+    document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
+      button.classList.toggle('active', button.getAttribute('data-lineage-filter') === mode);
+    });
+  }
+  function windowForMode(mode, payload, nowValue) {
+    if (mode === 'all') return { all: true, note: '' };
+    var now = nowValue ? new Date(nowValue) : new Date();
+    if (isNaN(now.getTime())) return { all: true, note: 'Clock unavailable; showing all loaded history.' };
+    if (mode === '24h') return { start: now.getTime() - 86400000, end: now.getTime(), note: '' };
+    if (mode === 'today') {
+      var todayStart = dayStartMs(utcDay(now));
+      return { start: todayStart, end: now.getTime(), note: '' };
+    }
+    if (mode === 'range') {
+      var fromEl = document.querySelector('[data-lineage-from]');
+      var toEl = document.querySelector('[data-lineage-to]');
+      var from = fromEl && fromEl.value;
+      var to = toEl && toEl.value;
+      if (from && to && from > to) return { invalid: true, note: "Invalid range: 'from' must be before or equal to 'to'" };
+      return {
+        start: from ? dayStartMs(from) : -Infinity,
+        end: to ? dayStartMs(to) + 86400000 : Infinity,
+        halfOpen: true,
+        note: ''
+      };
+    }
+    var start = dayStartMs(utcDay(new Date(now.getTime() - 86400000)));
+    return { start: start, end: now.getTime(), note: '' };
+  }
+  function inWindow(node, win) {
+    if (win.all) return true;
+    var ts = parseTs(node);
+    if (ts == null) return false;
+    if (win.halfOpen) return ts >= win.start && ts < win.end;
+    return ts >= win.start && ts <= win.end;
+  }
+  function edgeBasisForPath(pathEdges) {
+    var seen = {};
+    pathEdges.forEach(function (edge) { seen[edge.basis || 'recorded'] = true; });
+    var keys = Object.keys(seen);
+    return keys.length > 1 ? 'mixed' : (keys[0] || 'recorded');
+  }
+  function projectUnifiedGraph(payload, opts) {
+    opts = opts || {};
     var nodes = (payload && payload.nodes) || [];
-    var byId = {};
-    nodes.forEach(function (node) { byId[node.sha] = node; });
-    var children = {};
-    var roots = [];
-    nodes.forEach(function (node) {
-      var parent = node.parent;
-      if (parent && byId[parent] && parent !== node.sha) {
-        (children[parent] || (children[parent] = [])).push(node.sha);
-      } else {
-        roots.push(node.sha);
+    var nodeMap = byNodeId(payload);
+    var pEdges = parentEdges(payload);
+    var win = opts.window || { all: true };
+    if (win.invalid) return { nodes: [], edges: [], empty: false, note: win.note, invalid: true };
+    var visible = {};
+    nodes.forEach(function (node) { if (inWindow(node, win)) visible[node.node_id] = true; });
+    var visibleIds = Object.keys(visible);
+    if (!win.all && visibleIds.length === 0) {
+      return { nodes: [], edges: [], empty: true, note: 'No cycles recorded in selected interval' };
+    }
+    if (win.all) {
+      return { nodes: nodes.slice(), edges: ((payload && payload.edges) || []).filter(function (edge) { return nodeMap[edge.source] && nodeMap[edge.target]; }).map(function (edge) {
+        return { source: edge.source, target: edge.target, basis: edge.basis || 'recorded', type: 'canonical', path: [edge.source, edge.target] };
+      }), visible: visible };
+    }
+    var descendantHits = {};
+    visibleIds.forEach(function (id) {
+      var seen = {};
+      var cur = id;
+      while (pEdges[cur] && pEdges[cur].source && !seen[cur]) {
+        seen[cur] = true;
+        var parent = pEdges[cur].source;
+        if (!nodeMap[parent]) break;
+        descendantHits[parent] = descendantHits[parent] || {};
+        descendantHits[parent][id] = true;
+        cur = parent;
       }
     });
-    // Children keep the generator's chronological order (nodes[] is sorted by ts).
+    var keep = {};
+    visibleIds.forEach(function (id) { keep[id] = true; });
+    Object.keys(descendantHits).forEach(function (id) {
+      if (Object.keys(descendantHits[id]).length >= 2) keep[id] = true;
+    });
+    var projectedEdges = [];
+    Object.keys(keep).forEach(function (target) {
+      var edge = pEdges[target];
+      if (!edge || !edge.source) return;
+      var pathIds = [target];
+      var pathEdges = [];
+      var hiddenCount = 0;
+      var source = edge.source;
+      var guard = {};
+      while (source && nodeMap[source] && !keep[source] && !guard[source]) {
+        guard[source] = true;
+        pathEdges.unshift(edge);
+        pathIds.unshift(source);
+        hiddenCount += 1;
+        edge = pEdges[source];
+        source = edge && edge.source;
+      }
+      if (!(source && nodeMap[source] && keep[source])) return;
+      pathEdges.unshift(edge);
+      pathIds.unshift(source);
+      if (hiddenCount) {
+        projectedEdges.push({
+          source: source,
+          target: target,
+          basis: edgeBasisForPath(pathEdges),
+          type: 'collapsed',
+          collapsedNodes: hiddenCount,
+          collapsedEdges: pathEdges.length,
+          path: pathIds
+        });
+      } else {
+        projectedEdges.push({ source: source, target: target, basis: edge.basis || 'recorded', type: visible[source] && visible[target] ? 'canonical' : 'context', path: [source, target] });
+      }
+    });
+    return { nodes: nodes.filter(function (node) { return keep[node.node_id]; }), edges: projectedEdges, visible: visible, descendantHits: descendantHits };
+  }
+  function layoutProjection(projection) {
+    var nodes = projection.nodes || [];
+    var nodeMap = {};
+    nodes.forEach(function (node) { nodeMap[node.node_id] = node; });
+    var children = {};
+    var incoming = {};
+    (projection.edges || []).forEach(function (edge) {
+      if (!nodeMap[edge.source] || !nodeMap[edge.target]) return;
+      (children[edge.source] || (children[edge.source] = [])).push(edge.target);
+      incoming[edge.target] = true;
+    });
+    var roots = nodes.filter(function (node) { return !incoming[node.node_id]; }).map(function (node) { return node.node_id; });
     var width = {};
-    function measure(sha, guard) {
-      if (guard[sha]) return 1;
-      guard[sha] = true;
-      var kids = children[sha] || [];
+    var cycle_detected = false;
+    function measure(id, guard) {
+      if (guard[id]) { cycle_detected = true; return 1; }
+      guard[id] = true;
       var total = 0;
-      kids.forEach(function (kid) { total += measure(kid, guard); });
-      width[sha] = Math.max(1, total);
-      return width[sha];
+      (children[id] || []).forEach(function (kid) { total += measure(kid, Object.assign({}, guard)); });
+      width[id] = Math.max(1, total);
+      return width[id];
     }
     roots.forEach(function (root) { measure(root, {}); });
     var positions = {};
     var maxDepth = 0;
-    function place(sha, left, depth, guard) {
-      if (guard[sha]) return;
-      guard[sha] = true;
-      var span = width[sha] || 1;
-      positions[sha] = {
-        x: MARGIN_X + (left + span / 2) * PITCH_X,
-        y: MARGIN_TOP + depth * PITCH_Y,
-        depth: depth
-      };
+    function place(id, left, depth, guard) {
+      if (guard[id]) { cycle_detected = true; return; }
+      guard[id] = true;
+      var span = width[id] || 1;
+      positions[id] = { x: MARGIN_X + (left + span / 2) * PITCH_X, y: MARGIN_TOP + depth * PITCH_Y, depth: depth };
       if (depth > maxDepth) maxDepth = depth;
       var cursor = left;
-      (children[sha] || []).forEach(function (kid) {
-        place(kid, cursor, depth + 1, guard);
-        cursor += width[kid] || 1;
-      });
+      (children[id] || []).forEach(function (kid) { place(kid, cursor, depth + 1, Object.assign({}, guard)); cursor += width[kid] || 1; });
     }
     var cursor = 0;
-    roots.forEach(function (root) {
-      place(root, cursor, 0, {});
-      cursor += width[root] || 1;
-    });
-    // A parent cycle (a→b→a) makes every member a non-root and nothing above
-    // would place it. Re-root anything still unplaced so a bad payload draws
-    // every node instead of a blank svg, and say so on the counter.
+    roots.forEach(function (root) { place(root, cursor, 0, {}); cursor += width[root] || 1; });
     nodes.forEach(function (node) {
-      if (positions[node.sha]) return;
-      window.__lineageRendererReRooted = (window.__lineageRendererReRooted || 0) + 1;
-      measure(node.sha, {});
-      place(node.sha, cursor, 0, {});
-      cursor += width[node.sha] || 1;
+      if (positions[node.node_id]) return;
+      cycle_detected = true;
+      measure(node.node_id, {});
+      place(node.node_id, cursor, 0, {});
+      cursor += width[node.node_id] || 1;
     });
-    var totalUnits = Math.max(1, cursor);
-    var svgWidth = Math.max(180, Math.round(MARGIN_X * 2 + totalUnits * PITCH_X));
-    var svgHeight = Math.max(72, MARGIN_TOP + maxDepth * PITCH_Y + RADIUS + 20);
-    var edges = [];
-    nodes.forEach(function (node) {
-      var parent = node.parent;
-      if (!(parent && byId[parent] && parent !== node.sha)) return;
-      var source = positions[parent];
-      var target = positions[node.sha];
-      if (!source || !target) return;
-      edges.push({
-        source: parent,
-        target: node.sha,
-        basis: node.parent_basis === 'inferred' ? 'inferred' : 'recorded',
-        points: [[source.x, source.y], [source.x, (source.y + target.y) / 2], [target.x, (source.y + target.y) / 2], [target.x, target.y]]
-      });
-    });
-    return { width: svgWidth, height: svgHeight, positions: positions, edges: edges, nodes: nodes };
+    return { positions: positions, width: Math.max(220, Math.round(MARGIN_X * 2 + Math.max(1, cursor) * PITCH_X)), height: Math.max(84, MARGIN_TOP + maxDepth * PITCH_Y + RADIUS + 28), cycle_detected: cycle_detected };
   }
-
-  function monthDay(day) {
-    var parts = String(day || '').split('-');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var month = months[Number(parts[1]) - 1];
-    if (parts.length !== 3 || !month || isNaN(Number(parts[2]))) return String(day || '');
-    return month + ' ' + String(Number(parts[2])).padStart(2, '0');
-  }
-
-  function svgEl(tag) {
-    return document.createElementNS('http://www.w3.org/2000/svg', tag);
-  }
-
-  function renderDay(svg, payload) {
-    window.__lineageRendererAttempts = (window.__lineageRendererAttempts || 0) + 1;
-    var nodes = (payload && payload.nodes) || [];
-    if (!nodes.length) return;
-    var layout = layoutDay(payload);
+  function renderUnified(svg, payload, projection) {
+    projection = projection || projectUnifiedGraph(payload, { window: { all: true } });
+    var layout = layoutProjection(projection);
+    state.rendered = projection;
     svg.setAttribute('width', layout.width);
     svg.setAttribute('height', layout.height);
     svg.setAttribute('viewBox', '0 0 ' + layout.width + ' ' + layout.height);
+    svg.setAttribute('data-lineage-rendered', 'unified-dag');
+    if (layout.cycle_detected) svg.setAttribute('data-cycle-detected', 'true');
     svg.replaceChildren();
-    svg.setAttribute('data-lineage-rendered', 'lineage-tree');
-    layout.edges.forEach(function (edge) {
+    if (projection.empty || projection.invalid) {
+      var text = svgEl('text');
+      text.setAttribute('class', 'lineage-empty-state');
+      text.setAttribute('x', 16);
+      text.setAttribute('y', 32);
+      text.textContent = projection.note || 'No lineage nodes to render';
+      svg.appendChild(text);
+      return;
+    }
+    (projection.edges || []).forEach(function (edge) {
+      var source = layout.positions[edge.source];
+      var target = layout.positions[edge.target];
+      if (!source || !target) return;
       var path = svgEl('path');
       path.setAttribute('fill', 'none');
-      path.setAttribute('class', edge.basis === 'inferred' ? 'lineage-edge lineage-edge-chronological' : 'lineage-edge arch-edge');
-      path.setAttribute('data-basis', edge.basis);
+      path.setAttribute('class', edge.basis === 'recorded' ? 'lineage-edge arch-edge' : 'lineage-edge lineage-edge-chronological');
+      path.setAttribute('data-edge-type', edge.type || 'canonical');
+      path.setAttribute('data-basis', edge.basis || 'recorded');
       path.setAttribute('data-source', edge.source);
       path.setAttribute('data-target', edge.target);
-      if (edge.basis === 'inferred') path.setAttribute('stroke-dasharray', '6 5');
-      path.setAttribute('d', edge.points.map(function (point, index) {
-        return (index ? 'L' : 'M') + point[0] + ' ' + point[1];
-      }).join(' '));
-      svg.appendChild(path);
-    });
-    nodes.forEach(function (node) {
-      var position = layout.positions[node.sha];
-      if (!position) return;
-      var isCurrent = node.current || (payload.current_sha && node.sha === payload.current_sha);
-      if (node.parent_day) {
-        var stub = svgEl('text');
-        stub.setAttribute('class', 'lineage-hidden-parent');
-        stub.setAttribute('data-target', node.sha);
-        stub.setAttribute('x', position.x);
-        // Above the star when the node carries both marks.
-        stub.setAttribute('y', position.y - (isCurrent ? 26 : 14));
-        stub.setAttribute('text-anchor', 'middle');
-        stub.textContent = '↩ from ' + monthDay(node.parent_day);
-        svg.appendChild(stub);
+      path.setAttribute('data-path', (edge.path || [edge.source, edge.target]).join('->'));
+      if (edge.type === 'collapsed') {
+        path.setAttribute('data-collapsed-nodes', String(edge.collapsedNodes || 0));
+        path.setAttribute('data-collapsed-edges', String(edge.collapsedEdges || 0));
       }
-      if (isCurrent) {
+      if (edge.basis !== 'recorded') path.setAttribute('stroke-dasharray', edge.basis === 'mixed' ? '2 3 8 3' : '6 5');
+      var mid = (source.y + target.y) / 2;
+      path.setAttribute('d', 'M' + source.x + ' ' + source.y + 'L' + source.x + ' ' + mid + 'L' + target.x + ' ' + mid + 'L' + target.x + ' ' + target.y);
+      svg.appendChild(path);
+      if (edge.type === 'collapsed') {
+        var label = svgEl('text');
+        label.setAttribute('class', 'lineage-collapsed-label');
+        label.setAttribute('x', (source.x + target.x) / 2);
+        label.setAttribute('y', mid - 4);
+        label.setAttribute('text-anchor', 'middle');
+        label.textContent = String(edge.collapsedNodes || 0) + ' hidden nodes';
+        svg.appendChild(label);
+      }
+    });
+    var visible = projection.visible || {};
+    (projection.nodes || []).forEach(function (node) {
+      var pos = layout.positions[node.node_id];
+      if (!pos) return;
+      if (node.current || (payload.current_node_id && node.node_id === payload.current_node_id)) {
         var star = svgEl('text');
         star.setAttribute('class', 'arch-star');
-        star.setAttribute('x', position.x);
-        star.setAttribute('y', position.y - 14);
+        star.setAttribute('x', pos.x);
+        star.setAttribute('y', pos.y - 14);
         star.setAttribute('text-anchor', 'middle');
         star.textContent = '★';
         svg.appendChild(star);
       }
+      if (node.parent_known === false) {
+        var unknown = svgEl('text');
+        unknown.setAttribute('class', 'lineage-hidden-parent');
+        unknown.setAttribute('x', pos.x);
+        unknown.setAttribute('y', pos.y - (node.current ? 26 : 14));
+        unknown.setAttribute('text-anchor', 'middle');
+        unknown.textContent = 'unknown parent';
+        svg.appendChild(unknown);
+      }
       var circle = svgEl('circle');
-      var cid = node.cycle_id || node.sha;
-      circle.setAttribute('class', 'arch-node arch-' + (node.outcome || 'integrated') + ' lineage-node');
+      var cid = node.cycle_id || node.node_id;
+      var context = state.mode !== 'all' && !visible[node.node_id];
+      circle.setAttribute('class', 'arch-node arch-' + (node.outcome || 'integrated') + ' lineage-node' + (context ? ' lineage-context-node' : ''));
+      if (context) circle.setAttribute('data-context', (projection.descendantHits && projection.descendantHits[node.node_id] && Object.keys(projection.descendantHits[node.node_id]).length >= 2) ? 'junction' : 'ancestor');
       circle.setAttribute('data-cycle-id', cid);
-      circle.setAttribute('cx', position.x);
-      circle.setAttribute('cy', position.y);
+      circle.setAttribute('data-node-id', node.node_id);
+      if (node.sha) circle.setAttribute('data-sha', node.sha);
+      if (node.ts_status === 'invalid') circle.setAttribute('data-ts-status', 'invalid');
+      circle.setAttribute('cx', pos.x);
+      circle.setAttribute('cy', pos.y);
       circle.setAttribute('r', String(RADIUS));
-      // #213: keyboard accessibility — each node is a focusable interactive element.
       circle.setAttribute('tabindex', '0');
       circle.setAttribute('role', 'button');
       circle.setAttribute('aria-label', (node.title || cid) + ' — click for details');
-      // #213: stable fragment id for deep-link navigation.
-      circle.setAttribute('id', 'node-' + cid);
+      circle.setAttribute('id', nodeIdToDomId(node.node_id));
       var title = svgEl('title');
       title.textContent = node.title || cid;
       circle.appendChild(title);
       svg.appendChild(circle);
     });
-    // Counted last: a render that threw half-way is not a success.
-    window.__lineageRendererSuccesses = (window.__lineageRendererSuccesses || 0) + 1;
   }
-
-  // Day filter (#208 step 7). Calendar-based on the viewer's clock: "today" is the UTC
-  // date of `now`, not the newest day that happens to have data, and when the requested
-  // window holds no data the note says so instead of silently showing an older day.
-  function utcDay(date) { return date.toISOString().slice(0, 10); }
-  function selectDays(mode, days, nowValue) {
-    var now = nowValue ? new Date(nowValue) : new Date();
-    if (isNaN(now.getTime())) return { keep: days.slice(), note: '' };  // unparseable clock: show everything, claim nothing
-    var latest = days.length ? days[days.length - 1] : '';
-    var today = utcDay(now);
-    var yesterday = utcDay(new Date(now.getTime() - 86400000));
-    var keep;
-    if (mode === 'today') {
-      keep = days.filter(function (day) { return day === today; });
-    } else if (mode === '24h') {
-      // Day-granular by design: the sections are UTC days, so "24h" keeps every
-      // day that overlaps [now - 24h, now] — up to two of them.
-      var floor = now.getTime() - 86400000;
-      keep = days.filter(function (day) {
-        var start = Date.parse(day + 'T00:00:00Z');
-        return start + 86400000 > floor && start <= now.getTime();
-      });
-    } else if (mode === 'yesterday-today') {
-      keep = days.filter(function (day) { return day === today || day === yesterday; });
-    } else {
-      // 'range' (and anything unknown) is resolved by attachFilter from the inputs; here it means "no calendar filter".
-      keep = days.slice();
-    }
-    var note = '';
-    if (mode !== 'range' && days.indexOf(today) === -1) {
-      note = 'No data for ' + today + ' (UTC) yet' + (latest ? '; latest day with data: ' + latest : '') + '.';
-    }
-    return { keep: keep, note: note };
+  function applyFilter(mode) {
+    var payload = state.payload;
+    var svg = document.getElementById('lineage-svg');
+    if (!payload || !svg) return;
+    state.mode = mode || 'all';
+    setActiveButton(state.mode);
+    var win = windowForMode(state.mode, payload);
+    var projection = projectUnifiedGraph(payload, { window: win });
+    showNote(projection.note || win.note || '');
+    renderUnified(svg, payload, projection);
   }
-
-  function attachFilter(root) {
-    var groups = Array.prototype.slice.call(root.querySelectorAll('.lineage-day-group'));
-    var days = groups.map(function (group) { return group.getAttribute('data-day'); }).sort();
-    var noteEl = document.querySelector('.lineage-filter-note');
-    function apply(mode) {
-      var keep;
-      var note = '';
-      if (mode === 'range') {
-        var from = document.querySelector('[data-lineage-from]').value;
-        var to = document.querySelector('[data-lineage-to]').value;
-        keep = days.filter(function (day) { return (!from || day >= from) && (!to || day <= to); });
-      } else {
-        var selection = selectDays(mode, days);
-        keep = selection.keep;
-        note = selection.note;
-      }
-      groups.forEach(function (group) { group.hidden = keep.indexOf(group.getAttribute('data-day')) === -1; });
-      if (noteEl) { noteEl.textContent = note; noteEl.hidden = !note; }
-      document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
-        button.classList.toggle('active', button.getAttribute('data-lineage-filter') === mode);
-      });
+  function selectNode(token) {
+    var payload = state.payload;
+    if (!payload) return null;
+    var nodeId = resolveToken(payload, token);
+    if (!nodeId) {
+      var cov = payload.coverage || {};
+      showNote('Node ' + token + ' not found in loaded history (coverage: ' + (cov.from_ts || '?') + ' to ' + (cov.to_ts || '?') + ')');
+      return null;
     }
-    document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
-      button.addEventListener('click', function () { apply(button.getAttribute('data-lineage-filter')); });
-    });
-    apply(root.getAttribute('data-lineage-default-mode') || 'yesterday-today');
+    var el = document.getElementById(nodeIdToDomId(nodeId));
+    if (!el) { applyFilter('all'); el = document.getElementById(nodeIdToDomId(nodeId)); }
+    if (!el) return null;
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return el;
   }
-
+  function selectNodeFromHash(hash) {
+    if (!hash || String(hash).indexOf('#node-') !== 0) return null;
+    return selectNode(String(hash).slice(6));
+  }
   function start() {
-    document.querySelectorAll('.lineage-day-data').forEach(function (script) {
-      var section = script.closest('.lineage-day-group');
-      var svg = section && section.querySelector('svg[data-lineage-renderer]');
-      if (!svg) return;
-      try { renderDay(svg, JSON.parse(script.textContent)); } catch (_error) { window.__lineageRendererError = String(_error); }
+    var script = document.getElementById('lineage-data');
+    var svg = document.getElementById('lineage-svg');
+    if (!script || !svg) return;
+    try { state.payload = JSON.parse(script.textContent); } catch (error) { window.__lineageRendererError = String(error); return; }
+    document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
+      button.addEventListener('click', function () { applyFilter(button.getAttribute('data-lineage-filter')); });
     });
-    var root = document.querySelector('.lineage-day-groups');
-    if (root) attachFilter(root);
-    // #213: keyboard activation — Enter/Space on a focused lineage-node fires click.
+    applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'yesterday-today');
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       var node = document.activeElement && document.activeElement.closest('.lineage-node');
       if (node) { event.preventDefault(); node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); }
     });
+    window.__lineageRendererLoaded = true;
   }
-
-  // #213: selectNode(cycleId) — used by the deep-link handler to programmatically
-  // activate a node after the renderer has finished. Returns the element or null.
-  function selectNode(cycleId) {
-    var el = document.getElementById('node-' + cycleId);
-    if (!el) return null;
-    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    return el;
-  }
-
-  window.lineageRenderer = { layoutDay: layoutDay, renderDay: renderDay, selectNode: selectNode };
-  window.lineageDayFilter = { select: selectDays };
+  window.lineageRenderer = {
+    nodeIdToDomId: nodeIdToDomId,
+    domIdToNodeId: domIdToNodeId,
+    projectUnifiedGraph: projectUnifiedGraph,
+    renderUnified: renderUnified,
+    applyFilter: applyFilter,
+    selectNode: selectNode,
+    selectNodeFromHash: selectNodeFromHash
+  };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
-  window.__lineageRendererLoaded = true;
 }());
