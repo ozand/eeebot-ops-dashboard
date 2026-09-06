@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">235</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 00:30:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 21:32 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 22:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-08759252f294</span>
+      <span class="cycle-pill">cycle-54d21ce9beed</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 21:16:45.203701 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 21:36:39.990015 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,220c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,353c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1709,9 +1709,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,220 chars &bull; ~2,305 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py
-Request ID: llm-proposer-cycle-08759252f294
-Cycle ID: cycle-08759252f294
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,353 chars &bull; ~2,088 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation
+Request ID: llm-proposer-cycle-54d21ce9beed
+Cycle ID: cycle-54d21ce9beed
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1738,57 +1738,57 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add test suite in tests/test_early_turn_staging.py to consume and validate skills/early-turn-staging/SKILL.md: existence_index_duplicate
 - Consume collect_host_metrics in scripts/loop_health_report.py to display host resource metrics: recent_duplicate_failure
 - Add stem normalization to keyword overlap checking in scripts/validate_curator_facts.py: recent_duplicate_failure
-- Add loop breaker warning audit and post-warning repetition detection to scripts/loop_health_report.py: recent_duplicate_failure
-- Add field-weight scoring and result deduplication to scripts/search_subagent_archive.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-08759252f294.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-54d21ce9beed.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves defect-52d85e7236bf by extending scripts/summarize_failure_reasons.py to parse subagent result files with status=error, extracting failure diagnostics and categorizing failure reasons for automated inspection.\n\nTarget path: scripts/summarize_failure_reasons.py&quot;,
+    &quot;title&quot;: &quot;Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-b2facd906755, turns were exhausted testing ad-hoc files like bad.py on disk without persisting changes. Adding a --self-test mode to scripts/validate_open_encoding.py enables direct in-memory AST verification without scratch files.\n\nTarget path: scripts/validate_open_encoding.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py (target: scripts/summarize_failure_reasons.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation (target: scripts/validate_open_encoding.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;Running scripts/validate_open_encoding.py with --self-test validates positive and negative syntax samples and exits 0&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_open_encoding.py --self-test&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
-Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
-Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-185dfdfe  Title: Implementing &quot;Implement summarize_failure_reasons in scripts/summarize_failure_reasons.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/summarize_failure_reasons.py, tests/test_summarize_failure_reasons.py
+ID: LESS-20260824-e301a8a7  Title: Implementing &quot;Add Path read_text and write_text encoding check to scripts/validate_open_encoding.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_open_encoding.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-185dfdfe] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-e301a8a7] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When editing indented python code blocks via string replacement, run a quick syntax check (`python3 -m py_compile &lt;file&gt;`) before invoking the pytest runner to catch whitespace errors immediately.
-- Inspect existing implementations of sibling features in recently modified files to reuse established helper signatures and JSON envelope fields.
-- An off-by-one indentation discrepancy (7 spaces instead of 8) was introduced when editing `_run_self_tests()`, triggering an `IndentationError` during the initial pytest collection.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-06 21:09 UTC): no commits (blocked). Task &quot;Add test suite in tests/test_early_turn_staging.py to consum&quot; matched an existing artifact…
-- Attempt 2 (2026-09-06 20:58 UTC): no commits (blocked). Task &quot;Consume collect_host_metrics in scripts/loop_health_report.p&quot; matches recently-failed/rejected proposal &quot;Add…
-- Attempt 3 (2026-09-06 20:51 UTC): no commits (blocked). Task &quot;Add stem normalization to keyword overlap checking in script&quot; matches recently-failed/rejected proposal &quot;Add…
+- Cross-reference target script paths and task descriptions against &#x27;Recent cycle outcomes&#x27; before finalizing a proposal; if the target script recently failed, formulate companion tests (under tests/) o
+- Proposing a validation enhancement targeting scripts/validate_lessons.py triggered an immediate deduplication rejection (&#x27;skipped_recent_failure&#x27;) against the recently failed task &#x27;Fix lesson validati
+- When assigned a defect demand on a target script that appears in &#x27;Recent cycle outcomes&#x27; as failed, formulate an independent reproducing test under tests/ or return no_valuable_task rather than propos
 
 ## Concrete task to implement
 
-Title: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py
+Title: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation
 
 
-Resolves defect-52d85e7236bf by extending scripts/summarize_failure_reasons.py to parse subagent result files with status=error, extracting failure diagnostics and categorizing failure reasons for automated inspection.
+In cycle-b2facd906755, turns were exhausted testing ad-hoc files like bad.py on disk without persisting changes. Adding a --self-test mode to scripts/validate_open_encoding.py enables direct in-memory AST verification without scratch files.
 
-Target path: scripts/summarize_failure_reasons.py
+Target path: scripts/validate_open_encoding.py
 
-## Concrete task to implement
-Implement and commit: Add subagent error result JSON parsing and categorization to scripts/summarize_failure_reasons.py (target: scripts/summarize_failure_reasons.py)
+## Expected outcome (frozen claim from the proposal — informational)
+Running scripts/validate_open_encoding.py with --self-test validates positive and negative syntax samples and exits 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2009,7 +2009,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 21:32:41 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 00:30:16 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 22:04:36 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 00:30:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
