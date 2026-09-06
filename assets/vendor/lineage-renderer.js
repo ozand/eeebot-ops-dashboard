@@ -294,13 +294,15 @@
         star.textContent = '★';
         svg.appendChild(star);
       }
-      if (node.parent_known === false) {
+      if (node.parent_known === false && node.parent_status && node.parent_status !== 'root' && node.parent_status !== 'inferred') {
         var unknown = svgEl('text');
         unknown.setAttribute('class', 'lineage-hidden-parent');
+        unknown.setAttribute('data-parent-status', node.parent_status);
+        if (node.parent_boundary) unknown.setAttribute('data-boundary', node.parent_boundary);
         unknown.setAttribute('x', pos.x);
         unknown.setAttribute('y', pos.y - (node.current ? 26 : 14));
         unknown.setAttribute('text-anchor', 'middle');
-        unknown.textContent = 'unknown parent';
+        unknown.textContent = node.parent_status === 'truncated' ? 'history truncated' : node.parent_status === 'current_unavailable' ? 'current unavailable' : node.parent_status === 'cycle' ? 'cycle detected' : 'recorded parent unavailable';
         svg.appendChild(unknown);
       }
       var circle = svgEl('circle');
@@ -312,6 +314,8 @@
       circle.setAttribute('data-node-id', node.node_id);
       if (node.sha) circle.setAttribute('data-sha', node.sha);
       if (node.ts_status === 'invalid') circle.setAttribute('data-ts-status', 'invalid');
+      if (node.parent_status) circle.setAttribute('data-parent-status', node.parent_status);
+      if (node.parent_boundary) circle.setAttribute('data-boundary', node.parent_boundary);
       circle.setAttribute('cx', pos.x);
       circle.setAttribute('cy', pos.y);
       circle.setAttribute('r', String(RADIUS));
@@ -334,6 +338,11 @@
     var win = windowForMode(state.mode, payload);
     var projection = projectUnifiedGraph(payload, { window: win });
     showNote(projection.note || win.note || '');
+    var coverage = payload.coverage || {};
+    var coverageEl = document.querySelector('.lineage-coverage-note');
+    if (coverageEl && !coverageEl.getAttribute('data-default-text')) coverageEl.setAttribute('data-default-text', coverageEl.textContent);
+    // Projection changes visibility only; retain the complete server-formatted
+    // receipt instead of replacing it with a lossy fallback string.
     renderUnified(svg, payload, projection);
   }
   function selectNode(token) {
