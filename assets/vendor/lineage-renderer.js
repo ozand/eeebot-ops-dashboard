@@ -122,6 +122,7 @@
       }), visible: visible };
     }
     var descendantHits = {};
+    var branchHits = {};
     visibleIds.forEach(function (id) {
       var seen = {};
       var cur = id;
@@ -131,6 +132,9 @@
         if (!nodeMap[parent]) break;
         descendantHits[parent] = descendantHits[parent] || {};
         descendantHits[parent][id] = true;
+        branchHits[parent] = branchHits[parent] || {};
+        // `cur` is the immediate child branch from parent toward this visible node.
+        branchHits[parent][cur] = true;
         cur = parent;
       }
     });
@@ -140,29 +144,32 @@
     // a single-descendant chain retains its root endpoint and collapses only
     // the maximal linear intermediates into a provenance-bearing path.
     Object.keys(descendantHits).forEach(function (id) {
-      var descendants = Object.keys(descendantHits[id]);
       var parent = pEdges[id] && pEdges[id].source;
-      if (descendants.length >= 2 || !parent || !nodeMap[parent]) keep[id] = true;
+      var branches = branchHits[id] ? Object.keys(branchHits[id]).length : 0;
+      // A junction is defined by distinct immediate child branches, not by the
+      // number of visible descendants below one linear child.
+      if (branches >= 2 || !parent || !nodeMap[parent]) keep[id] = true;
     });
     var projectedEdges = [];
     Object.keys(keep).forEach(function (target) {
-      var direct = pEdges[target];
-      if (!direct || !direct.source) return;
-      var source = direct.source;
+      if (!pEdges[target] || !pEdges[target].source) return;
+      var current = target;
       var pathIds = [target];
-      var pathEdges = [direct];
+      var pathEdges = [];
       var guard = {};
-      // Walk only through hidden nodes. A retained visible/context node is an
-      // endpoint, never an intermediate in a shortcut path.
-      while (source && nodeMap[source] && !guard[source] && !visible[source]) {
-        guard[source] = true;
-        pathIds.unshift(source);
-        var next = pEdges[source];
-        if (!next || !next.source || !nodeMap[next.source]) break;
-        pathEdges.unshift(next);
-        source = next.source;
+      // Walk toward the nearest visible/context endpoint. Never pass through a
+      // retained visible node or junction: doing so would create a shortcut in
+      // addition to the canonical edge from that intermediate node.
+      while (pEdges[current] && pEdges[current].source && !guard[current]) {
+        guard[current] = true;
+        var edge = pEdges[current];
+        pathEdges.unshift(edge);
+        pathIds.unshift(edge.source);
+        current = edge.source;
+        if (visible[current] || (keep[current] && current !== target)) break;
+        if (!nodeMap[current]) return;
       }
-      if (pathIds[0] !== source) pathIds.unshift(source);
+      var source = pathIds[0];
       if (!nodeMap[source]) return;
       var basis = edgeBasisForPath(pathEdges);
       var hiddenCount = Math.max(0, pathIds.length - 2);
