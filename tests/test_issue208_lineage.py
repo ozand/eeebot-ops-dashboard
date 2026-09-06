@@ -1050,7 +1050,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
 ) -> None:
     """#218/#213: full production page exact permalink survives a new document."""
     pytest.importorskip('playwright')
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'},
         {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'task_title': 'Attempt card', 'ts': '2026-01-02T00:00:00Z'},
@@ -1093,7 +1093,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             body_box = body.bounding_box()
             assert heading_box is not None and heading_box['y'] >= 0 and heading_box['y'] + heading_box['height'] <= 844
             assert body_box is not None and 0 <= body_box['y'] < 0.9 * 844
-            assert fresh.locator('#cycle-details-close').evaluate("(node) => document.activeElement === node")
+            expect(fresh.locator('#cycle-details-close')).to_be_focused(timeout=2000)
             assert errors == [] and fresh_errors == []
             fresh.close()
             browser.close()
@@ -1152,6 +1152,28 @@ def test_issue218_duplicate_cycle_exact_nodes_and_legacy_alias_after_renderer(tm
             assert selected.get_attribute('data-cycle-node-index') == '3'
             assert selected.get_attribute('data-cycle-node-count') == '3'
             assert 'Node:' in page.locator('.cycle-details-body').inner_text()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_cold_focus_close_before_delayed_fetch_does_not_steal_focus() -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
+            page.locator('#cycle-details-close').click()
+            page.wait_for_timeout(700)
+            assert page.evaluate("() => document.getElementById('cycle-details-panel').hidden")
+            assert page.evaluate("() => document.activeElement !== document.getElementById('cycle-details-close')")
             browser.close()
     finally:
         srv.shutdown()
