@@ -2459,9 +2459,10 @@ def _node_id_for_commit(sha: str) -> str:
 
 
 def _safe_node_dom_id(node_id: str) -> str:
-    # Same injective mapping as lineage-renderer.js: encodeURIComponent then
-    # replace '%' with '_' so CSS/fragment IDs remain compact and reversible.
-    return 'node-' + quote(str(node_id), safe='').replace('%', '_')
+    # Match JavaScript encodeURIComponent exactly: RFC-3986 unescaped marks are
+    # retained, while Python's quote() otherwise leaves '/' unescaped by default.
+    encoded = quote(str(node_id), safe="-_.!~*'()")
+    return 'node-' + encoded
 
 
 def _leaf_outcome(row: dict[str, Any]) -> str:
@@ -2930,6 +2931,12 @@ def _build_unified_lineage(
     unique_candidate_nodes = len(candidates)
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
     current_node_id = _node_id_for_commit(current_sha) if current_sha else ''
+    # A current SHA may be supplied by the fallback tree even when the ledger
+    # window has no corresponding row. Materialise it as an explicit retained
+    # boundary node so the anchor invariant is honest and testable.
+    if current_node_id and current_node_id not in {node['node_id'] for node in candidates}:
+        candidates.append({'node_id': current_node_id, 'sha': current_sha, 'cycle_id': current_sha, 'parent_sha': '', 'parent': None, 'parent_basis': None, 'parent_known': False, 'ts': None, 'ts_status': 'invalid', 'outcome': 'unknown', 'kind': 'current-boundary', 'title': current_sha, 'current': True, 'boundary': 'fallback_current_unavailable'})
+        unique_candidate_nodes = len(candidates)
     retained = sorted(candidates, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))[-LINEAGE_MAX_NODES:]
     retained_ids = {node['node_id'] for node in retained}
     if current_node_id and current_node_id not in retained_ids:
@@ -3017,6 +3024,8 @@ def _build_unified_lineage(
         kind = str(node.get('outcome') or 'integrated')
         title = str(node.get('title') or cid)
         attrs = [f'class="arch-node arch-{esc(kind)} lineage-node"', f'data-cycle-id="{esc(cid)}"', f'data-node-id="{esc(node["node_id"])}"', f'data-cycle-node-index="{int(node.get("cycle_node_index") or 1)}"', f'data-cycle-node-count="{int(node.get("cycle_node_count") or 1)}"', f'cx="{x}"', f'cy="{y}"', 'r="9"', 'tabindex="0"', 'role="button"', f'aria-label="{esc(title)} — click for details"', f'id="{_safe_node_dom_id(node["node_id"])}"']
+        if node.get('boundary'):
+            attrs.append(f'data-boundary="{esc(node["boundary"])}"')
         if node.get('sha'):
             attrs.append(f'data-sha="{esc(node["sha"])}"')
         if node.get('ts_status') == 'invalid':
@@ -6595,6 +6604,9 @@ CSS = '''
     .lineage-legend-node { stroke-width: 2; }
     .lineage-legend .arch-node { cursor: default; pointer-events: none; }
     .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }

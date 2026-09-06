@@ -9,11 +9,13 @@
   var state = { payload: null, mode: 'yesterday-today', rendered: null };
 
   function nodeIdToDomId(nodeId) {
-    return 'node-' + encodeURIComponent(String(nodeId || '')).replace(/%/g, '_');
+    // Keep encodeURIComponent's percent escapes intact. Replacing '%' with '_'
+    // is not injective because node IDs may themselves contain underscores.
+    return 'node-' + encodeURIComponent(String(nodeId || ''));
   }
   function domIdToNodeId(domId) {
     if (!domId || !String(domId).startsWith('node-')) return null;
-    try { return decodeURIComponent(String(domId).slice(5).replace(/_/g, '%')); }
+    try { return decodeURIComponent(String(domId).slice(5)); }
     catch (_error) { return null; }
   }
   function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
@@ -120,6 +122,7 @@
       }), visible: visible };
     }
     var descendantHits = {};
+    var branchHits = {};
     visibleIds.forEach(function (id) {
       var seen = {};
       var cur = id;
@@ -129,47 +132,56 @@
         if (!nodeMap[parent]) break;
         descendantHits[parent] = descendantHits[parent] || {};
         descendantHits[parent][id] = true;
+        branchHits[parent] = branchHits[parent] || {};
+        // `cur` is the immediate child branch from parent toward this visible node.
+        branchHits[parent][cur] = true;
         cur = parent;
       }
     });
     var keep = {};
     visibleIds.forEach(function (id) { keep[id] = true; });
+    // Preserve contextual endpoints. A common ancestor/junction is retained;
+    // a single-descendant chain retains its root endpoint and collapses only
+    // the maximal linear intermediates into a provenance-bearing path.
     Object.keys(descendantHits).forEach(function (id) {
-      if (Object.keys(descendantHits[id]).length >= 2) keep[id] = true;
+      var parent = pEdges[id] && pEdges[id].source;
+      var branches = branchHits[id] ? Object.keys(branchHits[id]).length : 0;
+      // A junction is defined by distinct immediate child branches, not by the
+      // number of visible descendants below one linear child.
+      if (branches >= 2 || !parent || !nodeMap[parent]) keep[id] = true;
     });
     var projectedEdges = [];
     Object.keys(keep).forEach(function (target) {
-      var edge = pEdges[target];
-      if (!edge || !edge.source) return;
+      if (!pEdges[target] || !pEdges[target].source) return;
+      var current = target;
       var pathIds = [target];
       var pathEdges = [];
-      var hiddenCount = 0;
-      var source = edge.source;
       var guard = {};
-      while (source && nodeMap[source] && !keep[source] && !guard[source]) {
-        guard[source] = true;
+      // Walk toward the nearest visible/context endpoint. Never pass through a
+      // retained visible node or junction: doing so would create a shortcut in
+      // addition to the canonical edge from that intermediate node.
+      while (pEdges[current] && pEdges[current].source && !guard[current]) {
+        guard[current] = true;
+        var edge = pEdges[current];
         pathEdges.unshift(edge);
-        pathIds.unshift(source);
-        hiddenCount += 1;
-        edge = pEdges[source];
-        source = edge && edge.source;
+        pathIds.unshift(edge.source);
+        current = edge.source;
+        if (visible[current] || (keep[current] && current !== target)) break;
+        if (!nodeMap[current]) return;
       }
-      if (!(source && nodeMap[source] && keep[source])) return;
-      pathEdges.unshift(edge);
-      pathIds.unshift(source);
-      if (hiddenCount) {
-        projectedEdges.push({
-          source: source,
-          target: target,
-          basis: edgeBasisForPath(pathEdges),
-          type: 'collapsed',
-          collapsedNodes: hiddenCount,
-          collapsedEdges: pathEdges.length,
-          path: pathIds
-        });
-      } else {
-        projectedEdges.push({ source: source, target: target, basis: edge.basis || 'recorded', type: visible[source] && visible[target] ? 'canonical' : 'context', path: [source, target] });
-      }
+      var source = pathIds[0];
+      if (!nodeMap[source]) return;
+      var basis = edgeBasisForPath(pathEdges);
+      var hiddenCount = Math.max(0, pathIds.length - 2);
+      projectedEdges.push({
+        source: source,
+        target: target,
+        basis: basis,
+        type: hiddenCount ? 'collapsed' : (visible[source] && visible[target] ? 'canonical' : 'context'),
+        collapsedNodes: hiddenCount,
+        collapsedEdges: pathEdges.length,
+        path: pathIds
+      });
     });
     return { nodes: nodes.filter(function (node) { return keep[node.node_id]; }), edges: projectedEdges, visible: visible, descendantHits: descendantHits };
   }
@@ -243,7 +255,9 @@
       if (!source || !target) return;
       var path = svgEl('path');
       path.setAttribute('fill', 'none');
-      path.setAttribute('class', edge.basis === 'recorded' ? 'lineage-edge arch-edge' : 'lineage-edge lineage-edge-chronological');
+      var edgeClass = edge.basis === 'recorded' ? 'lineage-edge arch-edge' : 'lineage-edge lineage-edge-chronological';
+      if (edge.type === 'context' || edge.type === 'collapsed') edgeClass += ' lineage-context-edge';
+      path.setAttribute('class', edgeClass);
       path.setAttribute('data-edge-type', edge.type || 'canonical');
       path.setAttribute('data-basis', edge.basis || 'recorded');
       path.setAttribute('data-source', edge.source);
@@ -330,6 +344,12 @@
       var cov = payload.coverage || {};
       showNote('Node ' + token + ' not found in loaded history (coverage: ' + (cov.from_ts || '?') + ' to ' + (cov.to_ts || '?') + ')');
       return null;
+    }
+    var targetNode = (payload.nodes || []).filter(function (node) { return node.node_id === nodeId; })[0];
+    if (state.mode !== 'all' && targetNode && !inWindow(targetNode, windowForMode(state.mode, payload))) {
+      // A deep link must not leave the user looking at an active filter that
+      // hides its target. Make the visible filter state honest first.
+      applyFilter('all');
     }
     var el = document.getElementById(nodeIdToDomId(nodeId));
     if (!el) { applyFilter('all'); el = document.getElementById(nodeIdToDomId(nodeId)); }
