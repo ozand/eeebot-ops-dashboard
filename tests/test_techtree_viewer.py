@@ -2225,7 +2225,7 @@ def test_issue63_last_skip_decision_from_ledger() -> None:
 # Issue #70: multi-page site (index/lineage/cycles/lessons/agent/hypotheses)
 # ---------------------------------------------------------------------------
 
-SITE_PAGE_NAMES = ['index.html', 'lineage.html', 'cycles.html', 'lessons.html', 'agent.html', 'hypotheses.html', 'techtree.html']
+SITE_PAGE_NAMES = ['index.html', 'lineage.html', 'cycles.html', 'tokens.html', 'lessons.html', 'agent.html', 'hypotheses.html', 'techtree.html']
 
 
 def _site() -> dict:
@@ -2241,7 +2241,7 @@ def test_issue70_render_pages_returns_all_files() -> None:
 
 def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
     pages = _site()
-    for name in SITE_PAGE_NAMES[:6]:
+    for name in [n for n in SITE_PAGE_NAMES if n != 'techtree.html']:
         html = pages[name]
         assert 'empire-strip' in html
         assert 'freshness' in html
@@ -2251,6 +2251,7 @@ def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
     assert 'href="index.html" class="nav-current"' in pages['index.html']
     assert 'href="lineage.html" class="nav-current"' in pages['lineage.html']
     assert 'href="cycles.html" class="nav-current"' in pages['cycles.html']
+    assert 'href="tokens.html" class="nav-current"' in pages['tokens.html']
     assert 'href="lessons.html" class="nav-current"' in pages['lessons.html']
     assert 'href="agent.html" class="nav-current"' in pages['agent.html']
     assert 'href="hypotheses.html" class="nav-current"' in pages['hypotheses.html']
@@ -2258,7 +2259,7 @@ def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
 
 def test_issue70_no_nav_link_404s() -> None:
     pages = _site()
-    for name in SITE_PAGE_NAMES[:6]:
+    for name in [n for n in SITE_PAGE_NAMES if n != 'techtree.html']:
         for fname, _label in tv.SITE_PAGES:
             assert f'href="{fname}"' in pages[name]
             assert fname in pages  # every nav target exists as a produced file
@@ -3651,3 +3652,163 @@ def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
     assert 'tests must pass' in rec['gate_violations'], (
         f'violation text missing: {rec["gate_violations"]}'
     )
+
+
+
+# ---------------------------------------------------------------------------
+# Issue #223: token consumption heatmap (tokens.html)
+# ---------------------------------------------------------------------------
+
+
+def test_classify_model_prefixes() -> None:
+    """Issue #223: verify model prefix classification into self_hosted vs vendor vs other.
+    - un/* -> self_hosted (our LAN 3090Ti GPU)
+    - cl/*, an/* -> vendor (cloud vendor APIs via LiteLLM)
+    - everything else -> other (explicit unclassified class)
+    """
+    assert tv.classify_model('un/qwen3.8-27b-gguf') == 'self_hosted'
+    assert tv.classify_model('openai/un/qwen3.6-27b-mtp') == 'self_hosted'
+    assert tv.classify_model('cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('openai/cl/gpt-5.6-luna') == 'vendor'
+    assert tv.classify_model('an/gemini-3.7-flash-high') == 'vendor'
+    assert tv.classify_model('openai/an/gemini-3-flash') == 'vendor'
+    assert tv.classify_model('custom-model-x') == 'other'
+    assert tv.classify_model('anthropic/claude-3') == 'other'
+    assert tv.classify_model('') == 'other'
+    assert tv.classify_model(None) == 'other'
+
+
+def test_compute_quantiles() -> None:
+    """Issue #223: quantiles must handle positive integers and default on empty."""
+    # Empty input
+    assert tv.compute_quantiles([]) == [1000, 5000, 20000, 100000]
+    # Sample numbers
+    vals = list(range(1, 101))
+    q = tv.compute_quantiles(vals)
+    assert len(q) == 4
+    assert q[0] <= q[1] <= q[2] <= q[3]
+    assert q[0] == 26
+    assert q[1] == 51
+    assert q[2] == 76
+    assert q[3] == 96
+
+
+def test_read_token_heatmap_distinguishes_missing_file_from_quiet_hour(tmp_path: Path) -> None:
+    """Issue #223: missing calendar days (gaps in tracking) must be None / NO DATA,
+    while existing files with 0 calls in an hour must be recorded as 0 tokens (quiet hour).
+    """
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+
+    # Day 1: 2026-09-04 has 2 calls (one local, one gateway)
+    day1_file = llm_dir / '2026-09-04.jsonl'
+    lines = [
+        json.dumps({'ts': '2026-09-04T10:15:00Z', 'model': 'un/qwen3.8-27b-gguf', 'total_tokens': 50000, 'component': 'bridge'}),
+        json.dumps({'ts': '2026-09-04T10:20:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 12000, 'component': 'proposer'}),
+    ]
+    day1_file.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+    # Day 2: 2026-09-05 is completely missing on disk (gap!)
+
+    # Day 3: 2026-09-06 is present on disk, but has 0 lines (quiet day)
+    day3_file = llm_dir / '2026-09-06.jsonl'
+    day3_file.write_text('', encoding='utf-8')
+
+    res = tv.read_token_heatmap(tmp_path)
+    assert res is not None
+
+    dates = res['dates']
+    assert dates == ['2026-09-04', '2026-09-05', '2026-09-06']
+    assert res['summary']['days_span'] == 3
+    assert res['summary']['days_present'] == 2
+    assert res['summary']['days_missing'] == 1
+
+    # Day 1: has data
+    assert res['hourly']['2026-09-04'] is not None
+    assert len(res['hourly']['2026-09-04']) == 24
+    h10 = res['hourly']['2026-09-04'][10]
+    # h10 = [self_hosted, vendor, other, total, calls, top_comp]
+    assert h10[0] == 50000
+    assert h10[1] == 12000
+    assert h10[2] == 0
+    assert h10[3] == 62000
+    assert h10[4] == 2
+    assert h10[5] == 'bridge'
+
+    # Day 2: NO DATA (unobserved / gap in recording)
+    assert res['hourly']['2026-09-05'] is None
+    assert res['five_min']['2026-09-05'] is None
+
+    # Day 3: 0 tokens (quiet day, but tracked)
+    assert res['hourly']['2026-09-06'] is not None
+    assert all(h[3] == 0 for h in res['hourly']['2026-09-06'])
+
+
+def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -> None:
+    """Issue #223: fail-soft on missing or empty llm_calls directory."""
+    assert tv.read_token_heatmap(tmp_path / 'nonexistent') is None
+
+    empty_dir = tmp_path / 'empty'
+    (empty_dir / 'llm_calls').mkdir(parents=True)
+    assert tv.read_token_heatmap(empty_dir) is None
+
+
+def test_tokens_page_generated_and_weight_under_300kb() -> None:
+    """Issue #223: tokens.html must be generated in render_pages and weigh < 300 KB."""
+    fixture = _fixture()
+    # Provide synthetic heatmap data with 1 active day and 1 gap day
+    fixture['token_heatmap'] = {
+        'dates': ['2026-09-05', '2026-09-06'],
+        'hourly': {
+            '2026-09-05': [[1000, 2000, 3000, 1, 'bridge'] for _ in range(24)],
+            '2026-09-06': None,
+        },
+        'five_min': {
+            '2026-09-05': {'0': [1000, 2000, 3000, 1, 'bridge']},
+            '2026-09-06': None,
+        },
+        'summary': {
+            'total_tokens': 72000,
+            'total_calls': 24,
+            'local_tokens': 24000,
+            'gateway_tokens': 48000,
+            'days_span': 2,
+            'days_present': 1,
+            'days_missing': 1,
+            'quantiles_hourly': {
+                'gateway': [1000, 2000, 3000, 4000],
+                'local': [500, 1000, 1500, 2000],
+                'total': [1500, 3000, 4500, 6000],
+            },
+            'quantiles_5min': {
+                'gateway': [100, 200, 300, 400],
+                'local': [50, 100, 150, 200],
+                'total': [150, 300, 450, 600],
+            },
+        },
+    }
+
+    pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')
+    assert 'tokens.html' in pages
+    tokens_html = pages['tokens.html']
+
+    # Must contain key structural components
+    assert 'Token Heatmap' in tokens_html
+    assert 'Vendor API' in tokens_html
+    assert 'Self-hosted GPU' in tokens_html
+    assert '192.168.1.35' in tokens_html  # infrastructure routing notice
+    assert 'tkn-infra-notice' in tokens_html
+    assert 'tkn-strip-wrap' in tokens_html
+    assert 'cell-nodata' in tokens_html
+    assert 'cell-zero' in tokens_html
+    assert 'token-heatmap-data' in tokens_html
+
+    # Weight check: must be strictly under 300 KB
+    byte_len = len(tokens_html.encode('utf-8'))
+    assert byte_len < 300_000, f'tokens.html is too heavy: {byte_len} bytes (limit: 300,000 bytes)'
+
+
+def test_index_page_contains_tokens_teaser() -> None:
+    """Issue #223: index.html teaser list must link to tokens.html."""
+    idx = _site()['index.html']
+    assert 'href="tokens.html">tokens</a>' in idx

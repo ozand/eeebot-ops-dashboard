@@ -314,6 +314,199 @@ def read_proposer_stats():
     return out if found else None
 
 
+def classify_model(model_str):
+    s = str(model_str or "").strip()
+    if s.startswith("openai/"):
+        s = s[7:]
+    if s.startswith("un/"):
+        return "self_hosted"
+    if s.startswith(("cl/", "an/")):
+        return "vendor"
+    return "other"
+
+
+def compute_quantiles(values):
+    pos = sorted(int(v) for v in values if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0)
+    if not pos:
+        return [1000, 5000, 20000, 100000]
+    n = len(pos)
+    return [
+        pos[int(n * 0.25)],
+        pos[int(n * 0.50)],
+        pos[int(n * 0.75)],
+        pos[min(int(n * 0.95), n - 1)],
+    ]
+
+
+def read_token_heatmap(max_days=62):
+    ldir = os.path.join(STATE_ROOT, "llm_calls")
+    if not os.path.isdir(ldir):
+        return None
+    try:
+        names = [n for n in os.listdir(ldir) if n.endswith(".jsonl") and len(n) == 16 and n[:10].replace("-", "").isdigit()]
+    except Exception:
+        return None
+    if not names:
+        return None
+    dates_present = {n[:10]: os.path.join(ldir, n) for n in names}
+    d_min = min(dates_present.keys())
+    d_max = max(dates_present.keys())
+    try:
+        d0 = datetime.strptime(d_min, "%Y-%m-%d").date()
+        d1 = datetime.strptime(d_max, "%Y-%m-%d").date()
+    except Exception:
+        return None
+    if (d1 - d0).days > max_days:
+        d0 = d1 - timedelta(days=max_days - 1)
+    calendar_dates = []
+    curr = d0
+    while curr <= d1:
+        calendar_dates.append(curr.isoformat())
+        curr += timedelta(days=1)
+
+    hourly = {}
+    five_min = {}
+    tot_tok_all = 0
+    tot_calls_all = 0
+    loc_tok_all = 0
+    gw_tok_all = 0
+    oth_tok_all = 0
+    days_present_count = 0
+
+    all_h_gw = []
+    all_h_loc = []
+    all_h_tot = []
+    all_5m_gw = []
+    all_5m_loc = []
+    all_5m_tot = []
+
+    for d_str in calendar_dates:
+        if d_str not in dates_present:
+            hourly[d_str] = None
+            five_min[d_str] = None
+            continue
+        days_present_count += 1
+        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
+        b_data = {}
+        fpath = dates_present[d_str]
+        try:
+            with open(fpath, "r", encoding="utf-8", errors="replace") as fp:
+                for line in fp:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+                    ts = str(row.get("ts") or "")
+                    if len(ts) < 16 or ts[10] != "T":
+                        continue
+                    try:
+                        hour = int(ts[11:13])
+                        minute = int(ts[14:16])
+                    except Exception:
+                        continue
+                    if not (0 <= hour < 24 and 0 <= minute < 60):
+                        continue
+                    tok = row.get("total_tokens")
+                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
+                        tok = (row.get("prompt_tokens") or 0) + (row.get("completion_tokens") or 0)
+                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    cat = classify_model(row.get("model"))
+                    comp = str(row.get("component") or "unknown").strip().lower()
+                    b_idx = hour * 12 + (minute // 5)
+
+                    tot_tok_all += tok
+                    tot_calls_all += 1
+                    if cat == "self_hosted":
+                        loc_tok_all += tok
+                        h_data[hour][0] += tok
+                    elif cat == "vendor":
+                        gw_tok_all += tok
+                        h_data[hour][1] += tok
+                    else:
+                        oth_tok_all += tok
+                        h_data[hour][2] += tok
+                    h_data[hour][3] += tok
+                    h_data[hour][4] += 1
+                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
+
+                    if b_idx not in b_data:
+                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
+                    if cat == "self_hosted":
+                        b_data[b_idx][0] += tok
+                    elif cat == "vendor":
+                        b_data[b_idx][1] += tok
+                    else:
+                        b_data[b_idx][2] += tok
+                    b_data[b_idx][3] += tok
+                    b_data[b_idx][4] += 1
+                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
+        except Exception:
+            hourly[d_str] = None
+            five_min[d_str] = None
+            continue
+
+        fin_h = []
+        for h in range(24):
+            c_dict = h_data[h][5]
+            top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ""
+            loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
+            fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
+            if gw_t > 0:
+                all_h_gw.append(gw_t)
+            if loc_t > 0:
+                all_h_loc.append(loc_t)
+            if tot_t > 0:
+                all_h_tot.append(tot_t)
+        hourly[d_str] = fin_h
+
+        fin_b = {}
+        for b_idx, vals in b_data.items():
+            c_dict = vals[5]
+            top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ""
+            loc_t, gw_t, oth_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3], vals[4]
+            fin_b[str(b_idx)] = [loc_t, gw_t, oth_t, tot_t, calls, top_c]
+            if gw_t > 0:
+                all_5m_gw.append(gw_t)
+            if loc_t > 0:
+                all_5m_loc.append(loc_t)
+            if tot_t > 0:
+                all_5m_tot.append(tot_t)
+        five_min[d_str] = fin_b
+
+    return {
+        "dates": calendar_dates,
+        "hourly": hourly,
+        "five_min": five_min,
+        "summary": {
+            "total_tokens": tot_tok_all,
+            "total_calls": tot_calls_all,
+            "self_hosted_tokens": loc_tok_all,
+            "vendor_tokens": gw_tok_all,
+            "other_tokens": oth_tok_all,
+            "local_tokens": loc_tok_all,
+            "gateway_tokens": gw_tok_all,
+            "days_span": len(calendar_dates),
+            "days_present": days_present_count,
+            "days_missing": len(calendar_dates) - days_present_count,
+            "quantiles_hourly": {
+                "gateway": compute_quantiles(all_h_gw),
+                "local": compute_quantiles(all_h_loc),
+                "total": compute_quantiles(all_h_tot),
+            },
+            "quantiles_5min": {
+                "gateway": compute_quantiles(all_5m_gw),
+                "local": compute_quantiles(all_5m_loc),
+                "total": compute_quantiles(all_5m_tot),
+            },
+        },
+    }
+
+
 def read_ledger_history():
     """Issue #72: FULL cycle history for cycles.html -- live ledger plus
     daily .gz archives, capped at LEDGER_HISTORY_DAYS (documented on the
@@ -585,6 +778,7 @@ result = {
     "skill_evals": read_jsonl("skill_fitness/evals.jsonl"),
     "llm_stats": read_llm_stats(),
     "proposer_stats": read_proposer_stats(),
+    "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
@@ -625,6 +819,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_evals': [],
         'llm_stats': {},
         'proposer_stats': None,
+        'token_heatmap': None,
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
@@ -1055,6 +1250,18 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
     node_shas = list(tree_for_titles.get('nodes', {}).keys()) if isinstance(tree_for_titles, dict) else []
     titles, cycle_files, titles_error = extract_git_titles_local(repo_path, node_shas=node_shas)
 
+    def read_token_heatmap_local() -> dict[str, Any] | None:
+        """Issue #223: local mirror of read_token_heatmap()."""
+        res = read_token_heatmap(root)
+        if res and res.get('dates'):
+            llm_dir = root / 'llm_calls' if (root / 'llm_calls').is_dir() else (root / 'state' / 'llm_calls')
+            try:
+                for f in llm_dir.glob('*.jsonl'):
+                    mtimes.append(f.stat().st_mtime)
+            except Exception:
+                pass
+        return res
+
     def read_lessons_local() -> list[dict[str, Any]]:
         """Issue #73: lessons from the instance repo (lessons.yaml + daily
         .yaml.gz archives). Local mirror of the REMOTE_READER_SCRIPT
@@ -1141,6 +1348,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
+        'token_heatmap': read_token_heatmap_local(),
         'lessons': read_lessons_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
@@ -1311,6 +1519,245 @@ def fmt_ts_short(ts_str: Any, now: datetime | None = None) -> str:
         return dt.strftime('%b %d').replace(' 0', ' ')
     else:
         return dt.strftime('%b %d %Y').replace(' 0', ' ')
+
+
+
+def classify_model(model_str: str) -> str:
+    """Issue #223: Classify LLM model string into:
+    - 'self_hosted': un/* (Qwen on local LAN GPU 3090Ti)
+    - 'vendor': cl/*, an/* (Cloud vendor APIs via LiteLLM)
+    - 'other': unclassified / unknown model prefix
+    """
+    s = str(model_str or '').strip()
+    if s.startswith('openai/'):
+        s = s[7:]
+    if s.startswith('un/'):
+        return 'self_hosted'
+    if s.startswith(('cl/', 'an/')):
+        return 'vendor'
+    return 'other'
+
+
+def compute_quantiles(values: list[int | float]) -> list[int]:
+    """Issue #223: Compute [p25, p50, p75, p95] thresholds for positive numbers."""
+    pos = sorted(int(v) for v in values if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0)
+    if not pos:
+        return [1000, 5000, 20000, 100000]
+    n = len(pos)
+    return [
+        pos[int(n * 0.25)],
+        pos[int(n * 0.50)],
+        pos[int(n * 0.75)],
+        pos[min(int(n * 0.95), n - 1)],
+    ]
+
+
+def fmt_tokens(n: int | float | None) -> str:
+    """Issue #223: format token counts compactly with B / M / K suffixes."""
+    if n is None:
+        return 'n/a'
+    try:
+        val = float(n)
+    except (TypeError, ValueError):
+        return 'n/a'
+    if val >= 1_000_000_000:
+        return f"{val / 1_000_000_000:.2f}B"
+    if val >= 1_000_000:
+        return f"{val / 1_000_000:.1f}M"
+    if val >= 1_000:
+        return f"{val / 1_000:.1f}K"
+    return str(int(val))
+
+
+def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] | None:
+    """Issue #223: aggregate hourly and 5-minute token consumption from llm_calls/*.jsonl.
+    Distinguishes NO DATA (missing/unobserved day/hour) from ZERO TOKENS (quiet hour).
+    Separates local (un/*, qwen) from gateway (cl/*, an/*) models.
+    """
+    p = Path(root)
+    llm_dir = p / 'llm_calls' if (p / 'llm_calls').is_dir() else (p / 'state' / 'llm_calls')
+    if not llm_dir.is_dir():
+        return None
+
+    try:
+        daily_files = [
+            f for f in llm_dir.iterdir()
+            if f.is_file() and f.name.endswith('.jsonl') and len(f.name) == 16 and f.name[:10].replace('-', '').isdigit()
+        ]
+    except Exception:
+        return None
+
+    if not daily_files:
+        return None
+
+    dates_present = {f.name[:10]: f for f in daily_files}
+    d_min = min(dates_present.keys())
+    d_max = max(dates_present.keys())
+
+    try:
+        d0 = datetime.strptime(d_min, "%Y-%m-%d").date()
+        d1 = datetime.strptime(d_max, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+    if (d1 - d0).days > max_days:
+        d0 = d1 - timedelta(days=max_days - 1)
+
+    calendar_dates: list[str] = []
+    curr = d0
+    while curr <= d1:
+        calendar_dates.append(curr.isoformat())
+        curr += timedelta(days=1)
+
+    hourly: dict[str, list[list[Any]] | None] = {}
+    five_min: dict[str, dict[str, list[Any]] | None] = {}
+    total_tokens_all = 0
+    total_calls_all = 0
+    local_tokens_all = 0
+    gateway_tokens_all = 0
+    other_tokens_all = 0
+    days_present_count = 0
+
+    all_hourly_gateway_vals: list[int] = []
+    all_hourly_local_vals: list[int] = []
+    all_hourly_total_vals: list[int] = []
+
+    all_5min_gateway_vals: list[int] = []
+    all_5min_local_vals: list[int] = []
+    all_5min_total_vals: list[int] = []
+
+    for d_str in calendar_dates:
+        if d_str not in dates_present:
+            hourly[d_str] = None
+            five_min[d_str] = None
+            continue
+
+        days_present_count += 1
+        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
+        b_data: dict[int, list[Any]] = {}
+
+        file_path = dates_present[d_str]
+        try:
+            with file_path.open('r', encoding='utf-8', errors='replace') as fp:
+                for line in fp:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+
+                    ts = str(row.get('ts') or '')
+                    if len(ts) < 16 or ts[10] != 'T':
+                        continue
+                    try:
+                        hour = int(ts[11:13])
+                        minute = int(ts[14:16])
+                    except Exception:
+                        continue
+                    if not (0 <= hour < 24 and 0 <= minute < 60):
+                        continue
+
+                    tok = row.get('total_tokens')
+                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
+                        tok = (row.get('prompt_tokens') or 0) + (row.get('completion_tokens') or 0)
+                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+
+                    cat = classify_model(str(row.get('model') or ''))
+                    comp = str(row.get('component') or 'unknown').strip().lower()
+                    b_idx = hour * 12 + (minute // 5)
+
+                    total_tokens_all += tok
+                    total_calls_all += 1
+
+                    if cat == 'self_hosted':
+                        local_tokens_all += tok
+                        h_data[hour][0] += tok
+                    elif cat == 'vendor':
+                        gateway_tokens_all += tok
+                        h_data[hour][1] += tok
+                    else:
+                        other_tokens_all += tok
+                        h_data[hour][2] += tok
+                    h_data[hour][3] += tok
+                    h_data[hour][4] += 1
+                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
+
+                    if b_idx not in b_data:
+                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
+                    if cat == 'self_hosted':
+                        b_data[b_idx][0] += tok
+                    elif cat == 'vendor':
+                        b_data[b_idx][1] += tok
+                    else:
+                        b_data[b_idx][2] += tok
+                    b_data[b_idx][3] += tok
+                    b_data[b_idx][4] += 1
+                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
+        except Exception:
+            hourly[d_str] = None
+            five_min[d_str] = None
+            continue
+
+        fin_h: list[list[Any]] = []
+        for h in range(24):
+            c_dict = h_data[h][5]
+            top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ''
+            loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
+            fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
+            if gw_t > 0:
+                all_hourly_gateway_vals.append(gw_t)
+            if loc_t > 0:
+                all_hourly_local_vals.append(loc_t)
+            if tot_t > 0:
+                all_hourly_total_vals.append(tot_t)
+        hourly[d_str] = fin_h
+
+        fin_b: dict[str, list[Any]] = {}
+        for b_idx, vals in b_data.items():
+            c_dict = vals[5]
+            top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ''
+            loc_t, gw_t, oth_t, tot_t, calls = vals[0], vals[1], vals[2], vals[3], vals[4]
+            fin_b[str(b_idx)] = [loc_t, gw_t, oth_t, tot_t, calls, top_c]
+            if gw_t > 0:
+                all_5min_gateway_vals.append(gw_t)
+            if loc_t > 0:
+                all_5min_local_vals.append(loc_t)
+            if tot_t > 0:
+                all_5min_total_vals.append(tot_t)
+        five_min[d_str] = fin_b
+
+    return {
+        "dates": calendar_dates,
+        "hourly": hourly,
+        "five_min": five_min,
+        "summary": {
+            "total_tokens": total_tokens_all,
+            "total_calls": total_calls_all,
+            "self_hosted_tokens": local_tokens_all,
+            "vendor_tokens": gateway_tokens_all,
+            "other_tokens": other_tokens_all,
+            "local_tokens": local_tokens_all,
+            "gateway_tokens": gateway_tokens_all,
+            "days_span": len(calendar_dates),
+            "days_present": days_present_count,
+            "days_missing": len(calendar_dates) - days_present_count,
+            "quantiles_hourly": {
+                "gateway": compute_quantiles(all_hourly_gateway_vals),
+                "local": compute_quantiles(all_hourly_local_vals),
+                "total": compute_quantiles(all_hourly_total_vals),
+            },
+            "quantiles_5min": {
+                "gateway": compute_quantiles(all_5min_gateway_vals),
+                "local": compute_quantiles(all_5min_local_vals),
+                "total": compute_quantiles(all_5min_total_vals),
+            },
+        },
+    }
+
 
 
 def title_case_name(name: Any) -> str:
@@ -4340,6 +4787,679 @@ def build_empire_stats_strip(
 # Page assembly
 # ---------------------------------------------------------------------------
 
+
+
+def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str | None = None) -> str:
+    """Issue #223: Standalone interactive token heatmap panel for tokens.html."""
+    token_heatmap = data.get('token_heatmap')
+    if not token_heatmap or not token_heatmap.get('dates'):
+        return unavailable_panel('Token Heatmap', 'no LLM calls data recorded')
+
+    summary = token_heatmap.get('summary') or {}
+    total_tokens = summary.get('total_tokens', 0)
+    vendor_tokens = summary.get('vendor_tokens', summary.get('gateway_tokens', 0))
+    self_hosted_tokens = summary.get('self_hosted_tokens', summary.get('local_tokens', 0))
+    other_tokens = summary.get('other_tokens', 0)
+    total_calls = summary.get('total_calls', 0)
+    days_span = summary.get('days_span', 0)
+    days_present = summary.get('days_present', 0)
+    days_missing = summary.get('days_missing', 0)
+
+    gw_pct = (vendor_tokens / total_tokens * 100) if total_tokens else 0.0
+    loc_pct = (self_hosted_tokens / total_tokens * 100) if total_tokens else 0.0
+    oth_pct = (other_tokens / total_tokens * 100) if total_tokens else 0.0
+
+    other_kpi_card = f'''    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{fmt_tokens(other_tokens)} <span class="tkn-kpi-pct">({oth_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Unclassified Models</div>
+    </div>''' if other_tokens > 0 else ''
+
+    raw_json = json.dumps(token_heatmap)
+
+    return f"""
+<section class="panel" id="panel-tokens">
+  <div class="panel-header">
+    <h2>Token Heatmap</h2>
+    <p class="panel-subtitle">Hourly and 5-minute LLM token consumption across all recorded autonomous cycles (UTC).</p>
+  </div>
+
+  <div class="tkn-kpi-strip">
+    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{fmt_tokens(total_tokens)}</div>
+      <div class="tkn-kpi-lbl">Total Tokens</div>
+    </div>
+    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Vendor API (cl/*, an/*)</div>
+    </div>
+    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Self-hosted GPU (un/qwen)</div>
+    </div>
+{other_kpi_card}
+    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{total_calls:,}</div>
+      <div class="tkn-kpi-lbl">LLM Calls</div>
+    </div>
+    <div class="tkn-kpi-card">
+      <div class="tkn-kpi-val">{days_span}d <span class="tkn-kpi-pct">({days_present} active, {days_missing} unobserved)</span></div>
+      <div class="tkn-kpi-lbl">Calendar Window</div>
+    </div>
+  </div>
+
+  <div class="tkn-controls">
+    <span class="tkn-ctrl-label">View:</span>
+    <button type="button" class="tkn-btn active" data-view="split">Split View (Self-hosted vs Vendor)</button>
+    <button type="button" class="tkn-btn" data-view="gateway">Vendor API (Gemini / Claude)</button>
+    <button type="button" class="tkn-btn" data-view="local">Self-hosted GPU (Qwen)</button>
+    <button type="button" class="tkn-btn" data-view="total">Combined Total</button>
+  </div>
+
+  <div class="tkn-grid-container" id="tkn-grid-container">
+    <div class="tkn-card" id="tkn-card-gw">
+      <div class="tkn-card-header">
+        <h3>Vendor API (cl/*, an/* — Cloud Providers)</h3>
+        <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Quantile scale</span>
+      </div>
+      <div class="tkn-matrix-wrap" id="matrix-gw"></div>
+      <div class="tkn-legend" id="legend-gw"></div>
+    </div>
+
+    <div class="tkn-card" id="tkn-card-loc">
+      <div class="tkn-card-header">
+        <h3>Self-hosted GPU (un/* — Qwen на 3090Ti)</h3>
+        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Quantile scale</span>
+      </div>
+      <div class="tkn-matrix-wrap" id="matrix-loc"></div>
+      <div class="tkn-legend" id="legend-loc"></div>
+    </div>
+
+    <div class="tkn-card" id="tkn-card-tot" style="display: none;">
+      <div class="tkn-card-header">
+        <h3>Combined Total LLM Calls</h3>
+        <span class="tkn-card-sub">All models aggregated &bull; Quantile scale</span>
+      </div>
+      <div class="tkn-matrix-wrap" id="matrix-tot"></div>
+      <div class="tkn-legend" id="legend-tot"></div>
+    </div>
+  </div>
+
+  <div class="tkn-infra-notice">
+    <div class="tkn-notice-icon">&#9432;</div>
+    <div class="tkn-notice-body">
+      <strong>Инфраструктурный маршрут:</strong> обе категории моделей маршрутизируются через общий локальный шлюз LiteLLM на <code>192.168.1.35:4001</code>.
+      EeePC выступает исключительно локальным оркестратором (CPU Atom N270, 2 ГБ RAM) — вызовы <code>un/qwen</code> обслуживаются на выделенной GPU в LAN (RTX 3090Ti, без потокенной оплаты), а вызовы <code>cl/*</code> и <code>an/*</code> уходят во внешние вендорские API.
+      При отказе LAN-шлюза вызовы обеих категорий останавливаются одновременно (резервирования между ними нет).
+    </div>
+  </div>
+
+  <div class="tkn-card tkn-detail-card" id="tkn-day-detail">
+    <div class="tkn-card-header">
+      <h3>Day Detail: <span id="tkn-active-date-label"></span></h3>
+      <span class="tkn-card-sub">288 five-minute intervals (24h UTC) &bull; Hover for breakdown, click an hour above to inspect</span>
+    </div>
+    <div class="tkn-strip-wrap" id="tkn-strip-wrap"></div>
+    <div class="tkn-strip-hours">
+      <span>00h</span><span>03h</span><span>06h</span><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>21h</span><span>24h</span>
+    </div>
+    <div class="tkn-detail-info" id="tkn-detail-info">Hover over any 5-minute block to inspect tokens and top component.</div>
+  </div>
+
+  <div id="tkn-tooltip" class="tkn-tooltip" style="display: none;"></div>
+
+  <script id="token-heatmap-data" type="application/json">{raw_json}</script>
+
+  <style>
+    .tkn-kpi-strip {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 16px 0 24px 0;
+    }}
+    .tkn-kpi-card {{
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px 16px;
+      flex: 1 1 170px;
+    }}
+    .tkn-kpi-val {{
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #f0f6fc;
+    }}
+    .tkn-kpi-pct {{
+      font-size: 0.85rem;
+      font-weight: normal;
+      color: #8b949e;
+    }}
+    .tkn-kpi-lbl {{
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #8b949e;
+      margin-top: 4px;
+    }}
+    .tkn-controls {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }}
+    .tkn-ctrl-label {{
+      font-size: 0.85rem;
+      color: #8b949e;
+      font-weight: 600;
+    }}
+    .tkn-btn {{
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }}
+    .tkn-btn:hover {{
+      background: #30363d;
+      color: #fff;
+    }}
+    .tkn-btn.active {{
+      background: #1f6feb;
+      color: #fff;
+      border-color: #388bfd;
+    }}
+    .tkn-grid-container {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 24px;
+    }}
+    .tkn-card {{
+      flex: 1 1 480px;
+      min-width: 320px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+    }}
+    .tkn-infra-notice {{
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-left: 4px solid #f0883e;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 0 0 24px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: #c9d1d9;
+    }}
+    .tkn-notice-icon {{
+      font-size: 1.15rem;
+      color: #f0883e;
+      line-height: 1.2;
+    }}
+    .tkn-notice-body code {{
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #30363d;
+      color: #58a6ff;
+      font-size: 0.8rem;
+    }}
+    .tkn-card-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }}
+    .tkn-card-header h3 {{
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #f0f6fc;
+    }}
+    .tkn-card-sub {{
+      font-size: 0.76rem;
+      color: #8b949e;
+    }}
+    .tkn-matrix-wrap {{
+      display: flex;
+      gap: 2px;
+      user-select: none;
+      padding-bottom: 4px;
+    }}
+    .tkn-hour-col {{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-right: 6px;
+    }}
+    .tkn-hour-lbl {{
+      height: 11px;
+      line-height: 11px;
+      font-size: 9px;
+      color: #6e7681;
+      text-align: right;
+      width: 16px;
+    }}
+    .tkn-day-col {{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+    }}
+    .tkn-day-col:hover .tkn-cell {{
+      outline: 1px solid #58a6ff;
+    }}
+    .tkn-day-col.active-col .tkn-cell {{
+      outline: 1px solid #f0883e;
+    }}
+    .tkn-cell {{
+      width: 11px;
+      height: 11px;
+      border-radius: 2px;
+      box-sizing: border-box;
+      transition: transform 0.05s ease;
+    }}
+    .tkn-cell:hover {{
+      transform: scale(1.25);
+      z-index: 2;
+    }}
+    /* Distinct NO DATA vs ZERO */
+    .cell-nodata {{
+      background: repeating-linear-gradient(
+        45deg,
+        #13171f,
+        #13171f 2px,
+        #21262d 2px,
+        #21262d 4px
+      ) !important;
+      border: 1px solid #21262d;
+    }}
+    .cell-zero {{
+      background: #161b22;
+    }}
+    /* Gateway scale (Blue) */
+    .gw-lvl-1 {{ background: #0e2d54; }}
+    .gw-lvl-2 {{ background: #114b8b; }}
+    .gw-lvl-3 {{ background: #1f6feb; }}
+    .gw-lvl-4 {{ background: #58a6ff; }}
+    .gw-lvl-5 {{ background: #a5d6ff; }}
+
+    /* Local scale (Green) */
+    .loc-lvl-1 {{ background: #0e4429; }}
+    .loc-lvl-2 {{ background: #006d32; }}
+    .loc-lvl-3 {{ background: #26a641; }}
+    .loc-lvl-4 {{ background: #39d353; }}
+    .loc-lvl-5 {{ background: #7ee787; }}
+
+    /* Total scale (Purple) */
+    .tot-lvl-1 {{ background: #2b1d4c; }}
+    .tot-lvl-2 {{ background: #49288f; }}
+    .tot-lvl-3 {{ background: #6e40c9; }}
+    .tot-lvl-4 {{ background: #8957e5; }}
+    .tot-lvl-5 {{ background: #d2a8ff; }}
+
+    .tkn-legend {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 10px;
+      color: #8b949e;
+      flex-wrap: wrap;
+    }}
+    .tkn-swatch {{
+      width: 11px;
+      height: 11px;
+      border-radius: 2px;
+      display: inline-block;
+      vertical-align: middle;
+    }}
+    .tkn-legend-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }}
+    .tkn-detail-card {{
+      margin-top: 20px;
+    }}
+    .tkn-strip-wrap {{
+      display: flex;
+      gap: 1px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 4px;
+      height: 28px;
+      align-items: flex-end;
+      overflow-x: auto;
+    }}
+    .tkn-strip-cell {{
+      flex: 1 1 2px;
+      min-width: 2px;
+      height: 100%;
+      border-radius: 1px;
+      cursor: pointer;
+    }}
+    .tkn-strip-cell:hover {{
+      transform: scaleY(1.15);
+      outline: 1px solid #58a6ff;
+    }}
+    .tkn-strip-hours {{
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #6e7681;
+      margin-top: 4px;
+      padding: 0 4px;
+    }}
+    .tkn-detail-info {{
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #8b949e;
+      min-height: 1.4em;
+    }}
+    .tkn-tooltip {{
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid #30363d;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      color: #c9d1d9;
+      line-height: 1.35;
+      max-width: 280px;
+    }}
+    .tkn-tt-title {{
+      font-weight: 600;
+      color: #f0f6fc;
+      margin-bottom: 4px;
+    }}
+    .tkn-tt-row {{
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }}
+  </style>
+
+  <script>
+  (function() {{
+    const raw = document.getElementById('token-heatmap-data');
+    if (!raw) return;
+    let data;
+    try {{ data = JSON.parse(raw.textContent); }} catch (e) {{ return; }}
+    if (!data || !data.dates) return;
+
+    const dates = data.dates;
+    const hourly = data.hourly || {{}};
+    const fiveMin = data.five_min || {{}};
+    const summary = data.summary || {{}};
+    const qHourly = summary.quantiles_hourly || {{}};
+    const q5m = summary.quantiles_5min || {{}};
+
+    let activeDate = dates[dates.length - 1];
+    for (let i = dates.length - 1; i >= 0; i--) {{
+      if (hourly[dates[i]] !== null) {{
+        activeDate = dates[i];
+        break;
+      }}
+    }}
+
+    function fmtTok(n) {{
+      if (n === null || n === undefined) return 'n/a';
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return String(n);
+    }}
+
+    function getLevel(tok, q) {{
+      if (tok === 0) return 0;
+      if (!q || !q.length) return 1;
+      if (tok <= q[0]) return 1;
+      if (tok <= q[1]) return 2;
+      if (tok <= q[2]) return 3;
+      if (tok <= q[3]) return 4;
+      return 5;
+    }}
+
+    const tooltip = document.getElementById('tkn-tooltip');
+    function showTooltip(e, html) {{
+      if (!tooltip) return;
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+      moveTooltip(e);
+    }}
+    function moveTooltip(e) {{
+      if (!tooltip || tooltip.style.display === 'none') return;
+      let x = e.clientX + 14;
+      let y = e.clientY + 14;
+      if (x + 290 > window.innerWidth) x = e.clientX - 290;
+      if (y + 160 > window.innerHeight) y = e.clientY - 160;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }}
+    function hideTooltip() {{
+      if (tooltip) tooltip.style.display = 'none';
+    }}
+
+    function renderMatrix(containerId, legendId, fieldIdx, qKey, lvlPrefix) {{
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+
+      const hourCol = document.createElement('div');
+      hourCol.className = 'tkn-hour-col';
+      for (let h = 0; h < 24; h++) {{
+        const lbl = document.createElement('div');
+        lbl.className = 'tkn-hour-lbl';
+        lbl.textContent = (h % 3 === 0) ? String(h).padStart(2, '0') : '';
+        hourCol.appendChild(lbl);
+      }}
+      container.appendChild(hourCol);
+
+      const q = qHourly[qKey] || [1000, 5000, 20000, 100000];
+
+      dates.forEach(d => {{
+        const col = document.createElement('div');
+        col.className = 'tkn-day-col' + (d === activeDate ? ' active-col' : '');
+        col.setAttribute('data-date', d);
+        col.addEventListener('click', () => {{
+          selectDate(d);
+        }});
+
+        const dayData = hourly[d];
+        for (let h = 0; h < 24; h++) {{
+          const cell = document.createElement('div');
+          cell.className = 'tkn-cell';
+          cell.setAttribute('data-date', d);
+          cell.setAttribute('data-hour', h);
+
+          if (dayData === null || dayData === undefined) {{
+            cell.classList.add('cell-nodata');
+            cell.addEventListener('mouseenter', (e) => {{
+              showTooltip(e, '<div class="tkn-tt-title">' + d + ' (Unobserved)</div><div>No tracking record for this calendar day.</div>');
+            }});
+          }} else {{
+            const row = dayData[h] || [0, 0, 0, 0, ''];
+            const tok = row[fieldIdx] || 0;
+            const lvl = getLevel(tok, q);
+            if (lvl === 0) {{
+              cell.classList.add('cell-zero');
+            }} else {{
+              cell.classList.add(lvlPrefix + '-' + lvl);
+            }}
+            cell.addEventListener('mouseenter', (e) => {{
+              const hStr = String(h).padStart(2, '0') + ':00 UTC';
+              let html = '<div class="tkn-tt-title">' + d + ' ' + hStr + '</div>';
+              if (row[2] === 0) {{
+                html += '<div>0 tokens (Quiet hour, 0 calls)</div>';
+              }} else {{
+                html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(row[2]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(row[1]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(row[0]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + row[3] + '</span></div>';
+                if (row[4]) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + row[4] + '</span></div>';
+              }}
+              showTooltip(e, html);
+            }});
+          }}
+          cell.addEventListener('mousemove', moveTooltip);
+          cell.addEventListener('mouseleave', hideTooltip);
+          col.appendChild(cell);
+        }}
+        container.appendChild(col);
+      }});
+
+      const leg = document.getElementById(legendId);
+      if (leg) {{
+        leg.innerHTML = '';
+        const items = [
+          {{ label: 'No Data', cls: 'cell-nodata' }},
+          {{ label: '0 tokens', cls: 'cell-zero' }},
+          {{ label: '< ' + fmtTok(q[0]), cls: lvlPrefix + '-1' }},
+          {{ label: fmtTok(q[0]) + '..' + fmtTok(q[1]), cls: lvlPrefix + '-2' }},
+          {{ label: fmtTok(q[1]) + '..' + fmtTok(q[2]), cls: lvlPrefix + '-3' }},
+          {{ label: fmtTok(q[2]) + '..' + fmtTok(q[3]), cls: lvlPrefix + '-4' }},
+          {{ label: '> ' + fmtTok(q[3]), cls: lvlPrefix + '-5' }},
+        ];
+        items.forEach(it => {{
+          const sp = document.createElement('span');
+          sp.className = 'tkn-legend-item';
+          sp.innerHTML = '<span class="tkn-swatch ' + it.cls + '"></span> ' + it.label;
+          leg.appendChild(sp);
+        }});
+      }}
+    }}
+
+    function renderDayDetail(dateStr) {{
+      const lbl = document.getElementById('tkn-active-date-label');
+      if (lbl) lbl.textContent = dateStr;
+      const wrap = document.getElementById('tkn-strip-wrap');
+      const info = document.getElementById('tkn-detail-info');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+
+      const buckets = fiveMin[dateStr];
+      const isMissing = (buckets === null || buckets === undefined);
+      const q = q5m.gateway || [500, 2000, 8000, 50000];
+
+      let dayTotal = 0, dayGw = 0, dayLoc = 0, dayCalls = 0;
+
+      for (let b = 0; b < 288; b++) {{
+        const cell = document.createElement('div');
+        cell.className = 'tkn-strip-cell';
+        const h = Math.floor(b / 12);
+        const m = (b % 12) * 5;
+        const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' UTC';
+
+        if (isMissing) {{
+          cell.classList.add('cell-nodata');
+          cell.addEventListener('mouseenter', (e) => {{
+            showTooltip(e, '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div><div>No tracking data recorded for this day.</div>');
+          }});
+        }} else {{
+          const bRow = buckets[String(b)];
+          if (!bRow) {{
+            cell.classList.add('cell-zero');
+            cell.addEventListener('mouseenter', (e) => {{
+              showTooltip(e, '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div><div>0 tokens (quiet 5m)</div>');
+            }});
+          }} else {{
+            const loc = bRow[0], gw = bRow[1], tot = bRow[2], calls = bRow[3], top = bRow[4];
+            dayTotal += tot; dayGw += gw; dayLoc += loc; dayCalls += calls;
+            const lvl = getLevel(gw > 0 ? gw : loc, q);
+            cell.classList.add(gw > 0 ? ('gw-lvl-' + lvl) : ('loc-lvl-' + lvl));
+            cell.addEventListener('mouseenter', (e) => {{
+              let html = '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div>';
+              html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(tot) + '</span></div>';
+              html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(gw) + '</span></div>';
+              html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(loc) + '</span></div>';
+              html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + calls + '</span></div>';
+              if (top) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + top + '</span></div>';
+              showTooltip(e, html);
+            }});
+          }}
+        }}
+        cell.addEventListener('mousemove', moveTooltip);
+        cell.addEventListener('mouseleave', hideTooltip);
+        wrap.appendChild(cell);
+      }}
+
+      if (info) {{
+        if (isMissing) {{
+          info.textContent = 'Date ' + dateStr + ' has no recorded LLM calls data (unobserved gap).';
+        }} else {{
+          info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local) across ' + dayCalls + ' calls.';
+        }}
+      }}
+    }}
+
+    function selectDate(d) {{
+      activeDate = d;
+      document.querySelectorAll('.tkn-day-col').forEach(col => {{
+        if (col.getAttribute('data-date') === d) {{
+          col.classList.add('active-col');
+        }} else {{
+          col.classList.remove('active-col');
+        }}
+      }});
+      renderDayDetail(d);
+    }}
+
+    renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
+    renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
+    renderMatrix('matrix-tot', 'legend-tot', 2, 'total', 'tot-lvl');
+    renderDayDetail(activeDate);
+
+    document.querySelectorAll('.tkn-btn').forEach(btn => {{
+      btn.addEventListener('click', () => {{
+        document.querySelectorAll('.tkn-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const view = btn.getAttribute('data-view');
+        const cardGw = document.getElementById('tkn-card-gw');
+        const cardLoc = document.getElementById('tkn-card-loc');
+        const cardTot = document.getElementById('tkn-card-tot');
+
+        if (view === 'split') {{
+          if (cardGw) cardGw.style.display = 'block';
+          if (cardLoc) cardLoc.style.display = 'block';
+          if (cardTot) cardTot.style.display = 'none';
+        }} else if (view === 'gateway') {{
+          if (cardGw) cardGw.style.display = 'block';
+          if (cardLoc) cardLoc.style.display = 'none';
+          if (cardTot) cardTot.style.display = 'none';
+        }} else if (view === 'local') {{
+          if (cardGw) cardGw.style.display = 'none';
+          if (cardLoc) cardLoc.style.display = 'block';
+          if (cardTot) cardTot.style.display = 'none';
+        }} else if (view === 'total') {{
+          if (cardGw) cardGw.style.display = 'none';
+          if (cardLoc) cardLoc.style.display = 'none';
+          if (cardTot) cardTot.style.display = 'block';
+        }}
+      }});
+    }});
+  }})();
+  </script>
+</section>
+"""
+
+
 CSS = '''
     :root {
       color-scheme: dark;
@@ -5487,6 +6607,7 @@ SITE_PAGES = [
     ('index.html', 'now'),
     ('lineage.html', 'lineage'),
     ('cycles.html', 'cycles'),
+    ('tokens.html', 'tokens'),
     ('lessons.html', 'lessons'),
     ('agent.html', 'agent'),
     ('hypotheses.html', 'hypotheses'),
@@ -5614,12 +6735,21 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
         durable_count = len(durable_entries) if isinstance(durable_entries, (list, dict)) else 0
         hypotheses_teaser = f'{active} active / {answered} answered + {durable_count} strategist durable'
 
+    token_heatmap = data.get('token_heatmap')
+    if token_heatmap and isinstance(token_heatmap, dict) and token_heatmap.get('summary'):
+        tot = token_heatmap['summary'].get('total_tokens', 0)
+        days = token_heatmap['summary'].get('days_present', 0)
+        tokens_teaser = f'{fmt_tokens(tot)} across {days} recorded days'
+    else:
+        tokens_teaser = 'unavailable'
+
     return f'''
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
         <li><a href="cycles.html">cycles</a> &mdash; {cycles_teaser}</li>
         <li><a href="lineage.html">lineage</a> &mdash; {lineage_teaser}</li>
+        <li><a href="tokens.html">tokens</a> &mdash; {tokens_teaser}</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; {hypotheses_teaser}</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
@@ -5801,6 +6931,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         # lineage.html on the first node click. Nothing is filtered out.
         LINEAGE_DETAILS_FILE: json.dumps(cycle_details or {}, ensure_ascii=True, separators=(',', ':')),
         'cycles.html': _page('eeebot / cycles', 'cycles.html', cycle_feed),
+        'tokens.html': _page('eeebot / tokens', 'tokens.html', build_tokens_panel(data, host, generated_at)),
         'lessons.html': _page('eeebot / lessons', 'lessons.html', lessons_panel),
         'agent.html': _page('eeebot / agent', 'agent.html', agent_panel),
         'hypotheses.html': _page('eeebot / hypotheses', 'hypotheses.html', hypotheses_panel),
