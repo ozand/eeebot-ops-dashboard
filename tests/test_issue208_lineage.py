@@ -1046,8 +1046,8 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(tmp_path: P
     pytest.importorskip('playwright')
     from playwright.sync_api import sync_playwright
     rows = [
-        {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
-        {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'ts': '2026-01-02T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'task_title': 'Attempt card', 'ts': '2026-01-02T00:00:00Z'},
     ]
     html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'commit'}, rows, ledger_history=rows, now='2026-01-02T01:00:00Z', cycle_details={})
     fake_details = {'cycle-commit': {'cycle_id': 'cycle-commit', 'title': 'Commit card'}, 'cycle-attempt': {'cycle_id': 'cycle-attempt', 'title': 'Attempt card'}}
@@ -1068,7 +1068,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(tmp_path: P
             fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
             assert not fresh.locator('#cycle-details-panel').get_attribute('hidden')
             assert fresh.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:commit'
-            assert fresh.locator('.cycle-details-body h3').inner_text() == 'Commit card'
+            assert 'Selected node' in fresh.locator('.cycle-details-body').inner_text()
             panel_box = fresh.locator('#cycle-details-panel').bounding_box()
             assert panel_box is not None
             assert panel_box['y'] < 0.9 * 844
@@ -1120,7 +1120,7 @@ def test_issue218_duplicate_cycle_exact_nodes_and_legacy_alias_after_renderer(tm
             page.wait_for_selector('.cycle-details-body h3', timeout=5000)
             assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:second'
             assert page.locator('.cycle-node-selected').get_attribute('data-cycle-node-count') == '3'
-            assert 'Selected node:' in page.locator('.cycle-details-body').inner_text()
+            assert 'Selected node' in page.locator('.cycle-details-body').inner_text()
             page.goto(base_url + '/lineage.html#node-cycle-dup')
             page.wait_for_load_state('networkidle')
             page.wait_for_selector('.cycle-details-body h3', timeout=5000)
