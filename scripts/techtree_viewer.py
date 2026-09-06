@@ -3066,14 +3066,18 @@ def _build_unified_lineage(
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
   function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
   function siblingLinks(node, cid) {{
-    var nodes = Array.prototype.filter.call(document.querySelectorAll('.lineage-node[data-cycle-id]'), function (candidate) {{ return candidate.getAttribute('data-cycle-id') === cid; }});
+    var script = document.getElementById('lineage-data');
+    var payload = script ? JSON.parse(script.textContent) : {{nodes: []}};
+    var nodes = (payload.nodes || []).filter(function (candidate) {{ return candidate.cycle_id === cid; }}).sort(function (a, b) {{ return (Number(a.cycle_node_index || 0) - Number(b.cycle_node_index || 0)) || String(a.node_id).localeCompare(String(b.node_id)); }});
     if (nodes.length < 2) return '';
+    var selectedId = node.getAttribute('data-node-id') || '';
     return '<h3>Other nodes for ' + esc(cid) + '</h3><ul class="cycle-sibling-links">' + nodes.map(function (candidate) {{
-      var nodeId = candidate.getAttribute('data-node-id') || '';
-      var candidateSha = candidate.getAttribute('data-sha');
+      var nodeId = candidate.node_id || '';
+      var candidateSha = candidate.sha;
       var label = candidateSha ? 'commit ' + candidateSha : 'attempt (no commit recorded)';
-      var current = candidate === node ? ' aria-current="page"' : '';
-      return '<li><a class="cycle-sibling-link" href="#' + candidate.id + '" data-node-id="' + esc(nodeId) + '"' + current + '>' + esc(label) + '</a></li>';
+      var current = nodeId === selectedId ? ' aria-current="page"' : '';
+      var domId = window.lineageRenderer && window.lineageRenderer.nodeIdToDomId ? window.lineageRenderer.nodeIdToDomId(nodeId) : 'node-' + encodeURIComponent(nodeId);
+      return '<li><a class="cycle-sibling-link" href="#' + domId + '" data-node-id="' + esc(nodeId) + '"' + current + '>' + esc(label) + '</a></li>';
     }}).join('') + '</ul>';
   }}
   function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}

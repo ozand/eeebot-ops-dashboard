@@ -1242,17 +1242,18 @@ def test_issue218_sibling_links_are_exact_hash_keyboard_accessible_and_distingui
     from playwright.sync_api import sync_playwright
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'first', 'parent_sha': '', 'task_title': 'First', 'ts': '2026-01-01T00:00:00Z'},
-        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'second', 'parent_sha': 'first', 'task_title': 'Second', 'ts': '2026-01-01T01:00:00Z'},
-        {'phase': 'outcome', 'cycle_id': 'cycle-dup', 'outcome': 'failed', 'task_title': 'Attempt', 'ts': '2026-01-01T02:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-dup', 'sha': 'second', 'parent_sha': 'first', 'task_title': 'Second', 'ts': '2026-01-02T01:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-dup', 'outcome': 'failed', 'task_title': 'Attempt', 'ts': '2026-01-03T02:00:00Z'},
     ]
     from test_techtree_viewer import _fixture
     data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'second'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-dup': 'Duplicate cycle'}
+    data['cycle_details'] = {'cycle-dup': {'cycle_id': 'cycle-dup', 'title': 'Duplicate cycle'}}
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 03:00:00')
     srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
-            page.goto(base_url + '/lineage.html#node-c%3Afirst'); page.wait_for_load_state('networkidle'); page.wait_for_selector('.cycle-sibling-link')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle'); page.locator('.lineage-node[data-node-id="c:first"]').click(); page.wait_for_selector('.cycle-details-body'); page.wait_for_timeout(300); page.locator('.cycle-sibling-link').first.wait_for(timeout=5000, state='attached')
             assert page.locator('.cycle-sibling-link').count() == 3
             links = page.locator('.cycle-sibling-link')
             assert 'attempt (no commit recorded)' in links.nth(2).inner_text()
@@ -1260,7 +1261,7 @@ def test_issue218_sibling_links_are_exact_hash_keyboard_accessible_and_distingui
             links.nth(1).focus(); links.nth(1).press('Enter'); page.wait_for_timeout(200)
             assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:second'
             assert page.url.endswith('#node-c%3Asecond')
-            assert page.locator('.cycle-details-body').get_attribute('data-x') is None
+            assert page.locator('[data-lineage-filter="all"].active').count() == 1
             links_after = page.locator('.cycle-sibling-link')
             links_after.nth(2).click(); page.wait_for_timeout(200)
             assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'a:cycle-dup'
