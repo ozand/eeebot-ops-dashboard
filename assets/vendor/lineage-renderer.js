@@ -294,13 +294,13 @@
         star.textContent = '★';
         svg.appendChild(star);
       }
-      if (node.parent_known === false) {
+      if (node.parent_known === false && node.parent_status && node.parent_status !== 'root' && node.parent_status !== 'inferred') {
         var unknown = svgEl('text');
         unknown.setAttribute('class', 'lineage-hidden-parent');
         unknown.setAttribute('x', pos.x);
         unknown.setAttribute('y', pos.y - (node.current ? 26 : 14));
         unknown.setAttribute('text-anchor', 'middle');
-        unknown.textContent = 'unknown parent';
+        unknown.textContent = node.parent_status === 'truncated' ? 'history truncated' : node.parent_status === 'current_unavailable' ? 'current unavailable' : node.parent_status === 'cycle' ? 'cycle detected' : 'recorded parent unavailable';
         svg.appendChild(unknown);
       }
       var circle = svgEl('circle');
@@ -334,6 +334,9 @@
     var win = windowForMode(state.mode, payload);
     var projection = projectUnifiedGraph(payload, { window: win });
     showNote(projection.note || win.note || '');
+    var coverage = payload.coverage || {};
+    var coverageEl = document.querySelector('.lineage-coverage-note');
+    if (coverageEl) coverageEl.textContent = coverageEl.getAttribute('data-default-text') || ('Available graph: ' + (coverage.emitted_nodes || 0) + ' of ' + (coverage.unique_candidate_nodes || 0) + ' candidate nodes emitted; ' + (coverage.excluded_nodes || 0) + ' omitted by retention; older or missing ancestry may be unavailable.');
     renderUnified(svg, payload, projection);
   }
   function selectNode(token) {

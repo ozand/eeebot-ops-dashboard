@@ -2848,6 +2848,24 @@ def _build_vertical_day_lineage(
     return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
 
 
+def _lineage_coverage_text(coverage: dict[str, Any]) -> str:
+    unique = int(coverage.get('unique_candidate_nodes') or 0)
+    emitted = int(coverage.get('emitted_nodes') or 0)
+    excluded = int(coverage.get('excluded_nodes') or max(0, unique - emitted))
+    limit = coverage.get('retention_limit')
+    span_from = str(coverage.get('from_ts') or '')
+    span_to = str(coverage.get('to_ts') or '')
+    parts = [f'Available graph: {emitted} of {unique} candidate nodes emitted']
+    if limit:
+        parts.append(f'retention limit {int(limit)}')
+    if excluded:
+        parts.append(f'{excluded} omitted by retention')
+    if span_from or span_to:
+        parts.append(f'emitted timestamp span {span_from or "?"} to {span_to or "?"}')
+    parts.append('older or missing ancestry may be unavailable')
+    return '; '.join(parts) + '.'
+
+
 def _build_unified_lineage(
     ledger_rows: list[Any],
     fallback_tree: dict[str, Any] | None,
@@ -2898,14 +2916,14 @@ def _build_unified_lineage(
         if not title or title == '(untitled cycle)':
             title = str((task_titles or {}).get(cid) or (task_titles or {}).get(cid.replace('cycle-', '', 1)) or '')
         parsed_ts = _parse_lineage_ts(row.get('ts'))
-        candidates.append({'node_id': _node_id_for_commit(sha), 'sha': sha, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': str(row.get('outcome') or 'integrated'), 'kind': 'trunk', 'title': title})
+        candidates.append({'node_id': _node_id_for_commit(sha), 'sha': sha, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'parent_status': 'root', 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': str(row.get('outcome') or 'integrated'), 'kind': 'trunk', 'title': title})
     for cid, row in leaves.items():
         detail = (cycle_details or {}).get(cid) if cycle_details else None
         title = str(detail.get('title') or '') if isinstance(detail, dict) else ''
         if not title or title == '(untitled cycle)':
             title = str((task_titles or {}).get(cid) or (task_titles or {}).get(cid.replace('cycle-', '', 1)) or '')
         parsed_ts = _parse_lineage_ts(row.get('ts'))
-        candidates.append({'node_id': 'a:' + cid, 'sha': None, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': _leaf_outcome(row), 'kind': 'leaf', 'title': title})
+        candidates.append({'node_id': 'a:' + cid, 'sha': None, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'parent_status': 'root', 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': _leaf_outcome(row), 'kind': 'leaf', 'title': title})
 
     commit_by_sha = {str(node['sha']): node for node in candidates if node.get('sha')}
     trunk_by_time = sorted((node for node in candidates if node['kind'] == 'trunk'), key=lambda node: (node.get('ts') or '', node['node_id']))
@@ -2916,17 +2934,21 @@ def _build_unified_lineage(
             if parent:
                 node['parent'] = parent['node_id']
                 node['parent_basis'] = 'recorded'
+                node['parent_status'] = 'recorded'
             else:
                 node['parent_known'] = False
+                node['parent_status'] = 'recorded_unknown'
             continue
         if recorded and recorded == node.get('sha'):
             node['parent_known'] = False
+            node['parent_status'] = 'cycle'
             continue
         if node['kind'] == 'leaf' and node.get('ts'):
             previous = max((item for item in trunk_by_time if item.get('ts') and item['ts'] <= node['ts']), key=lambda item: (item['ts'], item['node_id']), default=None)
             if previous:
                 node['parent'] = previous['node_id']
                 node['parent_basis'] = 'inferred'
+                node['parent_status'] = 'inferred'
 
     unique_candidate_nodes = len(candidates)
     current_sha = str((fallback_tree or {}).get('current_sha') or '')
@@ -2935,7 +2957,7 @@ def _build_unified_lineage(
     # window has no corresponding row. Materialise it as an explicit retained
     # boundary node so the anchor invariant is honest and testable.
     if current_node_id and current_node_id not in {node['node_id'] for node in candidates}:
-        candidates.append({'node_id': current_node_id, 'sha': current_sha, 'cycle_id': current_sha, 'parent_sha': '', 'parent': None, 'parent_basis': None, 'parent_known': False, 'ts': None, 'ts_status': 'invalid', 'outcome': 'unknown', 'kind': 'current-boundary', 'title': current_sha, 'current': True, 'boundary': 'fallback_current_unavailable'})
+        candidates.append({'node_id': current_node_id, 'sha': current_sha, 'cycle_id': current_sha, 'parent_sha': '', 'parent': None, 'parent_basis': None, 'parent_known': False, 'parent_status': 'current_unavailable', 'ts': None, 'ts_status': 'invalid', 'outcome': 'unknown', 'kind': 'current-boundary', 'title': current_sha, 'current': True, 'boundary': 'fallback_current_unavailable'})
         unique_candidate_nodes = len(candidates)
     retained = sorted(candidates, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))[-LINEAGE_MAX_NODES:]
     retained_ids = {node['node_id'] for node in retained}
@@ -2961,6 +2983,7 @@ def _build_unified_lineage(
             payload_edges.append({'source': parent, 'target': node['node_id'], 'basis': node.get('parent_basis') or 'recorded', 'source_available': True})
         elif parent:
             entry['parent_known'] = False
+            entry['parent_status'] = 'truncated'
             entry['parent_boundary'] = 'truncated_history'
             payload_edges.append({'source': parent, 'target': node['node_id'], 'basis': node.get('parent_basis') or 'recorded', 'source_available': False, 'source_boundary': 'truncated_history'})
         payload_nodes.append(entry)
@@ -2977,7 +3000,7 @@ def _build_unified_lineage(
             item['cycle_node_count'] = len(ordered)
 
     ts_values = [node['ts'] for node in payload_nodes if node.get('ts')]
-    payload = {'version': 2, 'current_sha': current_sha, 'current_node_id': current_node_id, 'coverage': {'raw_read_rows': raw_read_rows, 'unique_candidate_nodes': unique_candidate_nodes, 'emitted_nodes': len(payload_nodes), 'truncated': truncated, 'truncated_before_ts': truncated_before_ts, 'from_ts': min(ts_values) if ts_values else None, 'to_ts': max(ts_values) if ts_values else None}, 'nodes': payload_nodes, 'edges': payload_edges, 'aliases': aliases}
+    payload = {'version': 2, 'current_sha': current_sha, 'current_node_id': current_node_id, 'coverage': {'raw_read_rows': raw_read_rows, 'unique_candidate_nodes': unique_candidate_nodes, 'emitted_nodes': len(payload_nodes), 'excluded_nodes': max(0, unique_candidate_nodes - len(payload_nodes)), 'retention_limit': LINEAGE_MAX_NODES, 'truncated': truncated, 'truncated_before_ts': truncated_before_ts, 'from_ts': min(ts_values) if ts_values else None, 'to_ts': max(ts_values) if ts_values else None}, 'nodes': payload_nodes, 'edges': payload_edges, 'aliases': aliases}
 
     parent_lookup = {edge['target']: edge['source'] for edge in payload_edges if edge.get('source_available') and edge.get('source') in retained_ids}
     depth_cache: dict[str, int] = {}
@@ -3003,7 +3026,7 @@ def _build_unified_lineage(
     height = max(84, max((y for _, y in positions.values()), default=42) + 36)
     data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
 
-    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="all" data-lineage-default-mode="all" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all" class="active">All</button>', '<button type="button" data-lineage-filter="today">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', f'<svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="all" data-lineage-default-mode="all" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all" class="active">All</button>', '<button type="button" data-lineage-filter="today">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite">' + _lineage_coverage_text(payload['coverage']) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', f'<svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
     for edge in payload_edges:
         if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
             continue
@@ -6582,6 +6605,7 @@ CSS = '''
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
     .lineage-filter-note { color: #d19a66; font-size: .8rem; }
+    .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
     .lineage-filter-note[hidden] { display: none; }
     .lineage-day-group[hidden] { display: none; }
     .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
