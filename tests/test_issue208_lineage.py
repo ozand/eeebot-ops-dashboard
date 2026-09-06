@@ -1041,38 +1041,52 @@ def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewpo
         srv.shutdown()
 
 @pytest.mark.parametrize('viewport_width', [390, 1280])
-def test_issue218_click_generated_exact_permalink_survives_cold_load(tmp_path: Path, viewport_width: int) -> None:
-    """#218/#213: exact click-created encoded hash survives a new document."""
+@pytest.mark.parametrize('node_id,cycle_id,title', [
+    ('c:commit', 'cycle-commit', 'Commit card'),
+    ('a:cycle-attempt', 'cycle-attempt', 'Attempt card'),
+])
+def test_issue218_click_generated_exact_permalink_survives_cold_load(
+    tmp_path: Path, viewport_width: int, node_id: str, cycle_id: str, title: str,
+) -> None:
+    """#218/#213: full production page exact permalink survives a new document."""
     pytest.importorskip('playwright')
     from playwright.sync_api import sync_playwright
     rows = [
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'},
         {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'task_title': 'Attempt card', 'ts': '2026-01-02T00:00:00Z'},
     ]
-    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'commit'}, rows, ledger_history=rows, now='2026-01-02T01:00:00Z', cycle_details={})
-    fake_details = {'cycle-commit': {'cycle_id': 'cycle-commit', 'title': 'Commit card'}, 'cycle-attempt': {'cycle_id': 'cycle-attempt', 'title': 'Attempt card'}}
-    srv, base_url = _serve_lineage(html, fake_details, details_delay=0.15)
+    from test_techtree_viewer import _fixture
+    data = _fixture()
+    data['ledger_tail'] = rows
+    data['ledger_history'] = rows
+    data['cycle_titles'] = {'cycle-commit': 'Commit card', 'cycle-attempt': 'Attempt card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    fake_details = json.loads(pages['lineage-cycle-details.json'])
+    srv, base_url = _serve_lineage(pages['lineage.html'], fake_details, details_delay=0.15)
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
             page.goto(base_url + '/lineage.html')
             page.wait_for_load_state('networkidle')
-            page.locator('.lineage-node[data-node-id="c:commit"]').click()
-            page.wait_for_selector('.cycle-details-body h3')
+            page.locator(f'.lineage-node[data-node-id="{node_id}"]').click()
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
             permalink = page.url
-            assert '#node-c%3Acommit' in permalink
+            assert f'#node-{node_id.replace(":", "%3A")}' in permalink
             fresh = browser.new_page(viewport={'width': viewport_width, 'height': 844})
             fresh.goto(permalink)
             fresh.wait_for_load_state('networkidle')
             fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
             assert fresh.evaluate("() => !document.getElementById('cycle-details-panel').hidden")
-            assert fresh.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:commit'
-            assert 'Selected node' in fresh.locator('.cycle-details-body').inner_text()
-            panel_box = fresh.locator('#cycle-details-panel').bounding_box()
-            body_box = fresh.locator('.cycle-details-body').bounding_box()
-            assert panel_box is not None and body_box is not None
-            assert 0 <= body_box['y'] < 0.9 * 844
+            selected = fresh.locator('.cycle-node-selected')
+            assert selected.get_attribute('data-node-id') == node_id
+            body = fresh.locator('.cycle-details-body')
+            assert 'Selected node' in body.inner_text()
+            assert cycle_id in body.inner_text()
+            assert fresh.locator('.cycle-details-body h3').count() >= 2
+            body_box = body.bounding_box()
+            assert body_box is not None and 0 <= body_box['y'] < 0.9 * 844
+            assert fresh.locator('#cycle-details-close').count() == 1
             fresh.close()
             browser.close()
     finally:
