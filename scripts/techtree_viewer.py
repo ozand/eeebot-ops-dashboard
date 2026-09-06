@@ -49,6 +49,19 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.agent_context import (
+        AGENT_CONTEXT_CSS,
+        build_two_tier_context_html,
+        read_agent_context_dict,
+    )
+except ImportError:
+    from agent_context import (
+        AGENT_CONTEXT_CSS,
+        build_two_tier_context_html,
+        read_agent_context_dict,
+    )
+
 MSK_TZ = timezone(timedelta(hours=3))
 
 SSH_USER = 'ozand'
@@ -866,6 +879,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'cycle_titles': None,
         'cycle_files': {},
         'cycle_titles_error': None,
+        'agent_context': None,
         '_newest_source_age_seconds': None,
     }
     command = [
@@ -1396,6 +1410,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'cycle_titles': titles,
         'cycle_files': cycle_files,
         'cycle_titles_error': titles_error,
+        'agent_context': read_agent_context_dict(root, instance_repo),
         'generator_sha': '',
         '_newest_source_age_seconds': None,
     }
@@ -4423,7 +4438,9 @@ def build_agent_panel(
     ledger_tail: list[dict[str, Any]] | None = None,
     host: str | None = None,
     proposer_stats: dict[str, Any] | None = None,
+    agent_context: dict[str, Any] | None = None,
 ) -> str:
+    context_html = build_two_tier_context_html(agent_context)
     # 1. AGENTS.md
     if agents_md is not None:
         md_text = agents_md.strip()
@@ -4508,6 +4525,7 @@ def build_agent_panel(
     return f'''
     <section class="panel panel-agent" id="panel-agent">
       <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      {context_html}
       {_host_identity(host, agents_md)}
       <div class="agent-grid">
         <div class="agent-subcol">
@@ -6651,10 +6669,11 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         ledger_tail=ledger_tail,
         host=host,
         proposer_stats=data.get('proposer_stats'),
+        agent_context=data.get('agent_context'),
     )
 
     return PAGE_TEMPLATE.format(
-        css=CSS,
+        css=CSS + '\n' + AGENT_CONTEXT_CSS,
         empire_strip=empire_strip,
         panel_nav=panel_nav,
         now_panel=now_panel,
@@ -6756,7 +6775,7 @@ def _site_page(title: str, current: str, empire_strip: str, page_main: str,
                generated_at: str, host: str, source_age: str,
                computed_note: str, error_note: str, titles_note: str, generator_sha: str = 'unknown') -> str:
     return SITE_TEMPLATE.format(
-        css=CSS,
+        css=CSS + '\n' + AGENT_CONTEXT_CSS,
         title=esc(title),
         empire_strip=empire_strip,
         site_nav=_site_nav(current),
@@ -6979,6 +6998,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_tail=ledger_tail,
         host=host,
         proposer_stats=data.get('proposer_stats'),
+        agent_context=data.get('agent_context'),
     )
     lessons_panel = build_lessons_panel(data.get('lessons'))
 
