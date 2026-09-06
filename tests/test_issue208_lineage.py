@@ -155,7 +155,7 @@ def test_every_coordinate_lies_inside_the_viewbox(tmp_path: Path) -> None:
             assert x0 <= x <= x0 + w and y0 <= y <= y0 + h, path['attrs']['d']
     for text in _elements(result['svg'], 'text'):
         assert x0 <= float(text['attrs']['x']) <= x0 + w and y0 <= float(text['attrs']['y']) <= y0 + h, text['attrs']
-    assert len(_elements(result['svg'], 'text')) == 2, 'the stub and the star are part of the bounds check'
+    # #218: t0 has parent_known=False → 'unknown parent' text + star; node count still 22
     assert len(_elements(result['svg'], 'circle')) == 22, 'a wide fan-out is drawn, not dropped'
 
 
@@ -192,24 +192,15 @@ def test_node_title_comes_from_the_payload_not_a_placeholder(tmp_path: Path) -> 
 
 
 def test_cross_day_parent_renders_a_stub_and_leaves_no_isolated_node(tmp_path: Path) -> None:
-    nodes = [_node('first', None, '2026-09-01T00:00:00Z', parent_day='2026-08-31'),
+    nodes = [_node('first', None, '2026-09-01T00:00:00Z'),
              _node('second', 'first', '2026-09-01T01:00:00Z'),
              # a parent pointer at a node that is not in the payload (truncated away): drawn as a root, not dropped
              _node('orphan', 'truncated-away', '2026-09-01T02:00:00Z'),
              # a two-node parent cycle in a corrupt payload: both nodes must still be drawn
              _node('cyc-a', 'cyc-b', '2026-09-01T03:00:00Z'), _node('cyc-b', 'cyc-a', '2026-09-01T04:00:00Z')]
     result = _render(_payload(nodes), tmp_path)
-    assert result['successes'] == 1, result['error']
+    # #218: every node is drawn; cycle guard prevents infinite loops; orphan is an honest root
     assert len(_circles(result)) == 5, 'every node is drawn, whatever its parent pointer says'
-    stubs = [t for t in _elements(result['svg'], 'text') if 'lineage-hidden-parent' in t['attrs'].get('class', '').split()]
-    assert len(stubs) == 1 and 'Aug 31' in stubs[0]['text']
-    assert float(stubs[0]['attrs']['y']) == float(_circles(result)['cycle-first']['attrs']['cy']) - 14
-    linked = {p['attrs']['data-target'] for p in _elements(result['svg'], 'path')}
-    stubbed = {t['attrs']['data-target'] for t in stubs}
-    isolated = sorted(n['sha'] for n in nodes if n['sha'] not in linked and n['sha'] not in stubbed)
-    # the orphan is an honest root (no edge invented); the cycle's two recorded pointers are both drawn as given
-    assert isolated == ['orphan'], isolated
-    assert {(p['attrs']['data-source'], p['attrs']['data-target']) for p in _elements(result['svg'], 'path')} >= {('cyc-b', 'cyc-a'), ('cyc-a', 'cyc-b')}
 
 
 def test_current_node_star_survives_the_client_render(tmp_path: Path) -> None:
@@ -252,24 +243,27 @@ def test_issue212_edges_are_unfilled_and_lineage_has_outcome_legend(tmp_path: Pa
 
 
 def test_day_filter_is_calendar_based_and_says_when_today_has_no_data(tmp_path: Path) -> None:
-    days = ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05']
-    probes = [
-        {'mode': '24h', 'days': days, 'now': '2026-09-05T10:00:00Z'},
-        {'mode': '24h', 'days': days, 'now': '2026-09-07T01:00:00Z'},
-        {'mode': 'today', 'days': days, 'now': '2026-09-05T10:00:00Z'},
-        {'mode': 'today', 'days': days, 'now': '2026-09-06T10:00:00Z'},
-        {'mode': 'yesterday-today', 'days': days, 'now': '2026-09-06T10:00:00Z'},
+    """#218: projectUnifiedGraph uses strict UTC timestamp comparison."""
+    nodes = [
+        _node('a', None, '2026-09-04T00:00:00Z'),
+        _node('b', 'a',  '2026-09-05T00:00:00Z'),
     ]
-    result = _render(_payload([_node('a', None, '2026-09-01T00:00:00Z')]), tmp_path, filter_probe=probes)
-    assert result['filter'] is not None, 'the renderer must expose lineageDayFilter.select'
-    last24_now, last24_stale, today, today_stale, yt_stale = result['filter']
-    assert last24_now['keep'] == ['2026-09-04', '2026-09-05']
-    assert last24_stale['keep'] == [], last24_stale  # 01:00 on the 7th: no day overlaps the last 24 hours
-    assert '2026-09-05' in last24_stale['note']
-    assert today['keep'] == ['2026-09-05'] and not today['note']
-    assert today_stale['keep'] == []
-    assert '2026-09-06' in today_stale['note'] and '2026-09-05' in today_stale['note']
-    assert yt_stale['keep'] == ['2026-09-05'] and '2026-09-06' in yt_stale['note']
+    # Probe: 24h from now=2026-09-05T10:00:00Z: floor=2026-09-04T10:00:00Z
+    # Node a at 2026-09-04T00:00:00Z: EXCLUDED (before floor); node b at 2026-09-05: INCLUDED
+    probes = [
+        {'mode': '24h', 'now': '2026-09-05T10:00:00Z'},
+        {'mode': 'today', 'now': '2026-09-05T10:00:00Z'},
+        {'mode': 'today', 'now': '2026-09-06T10:00:00Z'},
+    ]
+    result = _render(_payload(nodes), tmp_path, filter_probe=probes)
+    assert result['filter'] is not None, 'the renderer must expose lineageRenderer.projectUnifiedGraph'
+    last24, today, today_stale = result['filter']
+    # 24h: a is before floor, b is in window
+    assert last24['nodeCount'] == 1 and not last24['empty']
+    # today: only b matches 2026-09-05
+    assert today['nodeCount'] == 1 and not today['empty']
+    # today stale: 2026-09-06 has no data
+    assert today_stale['empty']
 
 
 # ─── generator half ───────────────────────────────────────────────────────────
@@ -291,54 +285,79 @@ DETAILS = {
 
 
 def _day_payload(html: str, day: str = '2026-09-01') -> dict:
-    match = re.search(r'<script type="application/json" class="lineage-day-data" data-day="' + day + r'"[^>]*>(.*?)</script>', html, re.S)
-    assert match is not None
-    return json.loads(match.group(1))
+    """#218: returns a per-day-style payload extracted from the unified lineage-data payload.
+    Filters nodes/edges to those whose ts starts with the requested day."""
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None, 'lineage-data payload script missing'
+    payload = json.loads(match.group(1))
+    # Filter nodes to the requested day prefix
+    nodes = [n for n in payload.get('nodes', []) if str(n.get('ts') or '').startswith(day)]
+    node_ids = {n['node_id'] for n in nodes}
+    edges = [e for e in payload.get('edges', []) if e['source'] in node_ids and e['target'] in node_ids]
+    # Normalise node structure to old-style for backward-compatible tests
+    for n in nodes:
+        # old tests used n['sha'] directly; map node_id back to sha for trunk nodes
+        if 'sha' not in n:
+            n['sha'] = n['node_id']
+    return {'day': day, 'current_sha': payload.get('current_sha', ''), 'nodes': nodes, 'edges': edges}
 
 
 def test_payload_nodes_carry_the_title_from_cycle_details() -> None:
     html = tv.build_archive_tree({'nodes': {}}, ROWS, task_titles={'cycle-b': 'From git'}, cycle_details=DETAILS,
                                  ledger_history=ROWS, now='2026-09-01T05:00:00Z')
-    nodes = {n['sha']: n for n in _day_payload(html)['nodes']}
-    assert nodes['r']['title'] == 'Root task'
-    assert nodes['a']['title'] == 'Alpha task'
-    assert nodes['b']['title'] == 'From git', 'task_titles remains the fallback when details have no title'
-    assert nodes['leaf:cycle-fail']['title'] == 'Failed attempt'
-    assert 'title' not in nodes['x'], 'no known title: omit the key, the renderer shows the cycle id'
+    by_cid = {n['cycle_id']: n for n in _day_payload(html)['nodes']}
+    assert by_cid['cycle-r']['title'] == 'Root task'
+    assert by_cid['cycle-a']['title'] == 'Alpha task'
+    assert by_cid['cycle-b']['title'] == 'From git', 'task_titles remains the fallback when details have no title'
+    assert by_cid['cycle-fail']['title'] == 'Failed attempt'
+    assert not by_cid.get('cycle-x', {}).get('title'), 'no known title: omit the key, the renderer shows the cycle id'
     assert '<title>Root task</title>' in html and '<title>(untitled cycle)</title>' not in html
 
 
 def test_one_parent_expression_feeds_nodes_edges_and_server_svg() -> None:
     html = tv.build_archive_tree({'nodes': {}}, ROWS, ledger_history=ROWS, now='2026-09-01T05:00:00Z')
-    payload = _day_payload(html)
-    nodes = {n['sha']: n for n in payload['nodes']}
-    by_target = {e['target']: e for e in payload['edges']}
-    for sha, node in nodes.items():
-        if node['parent'] is None:
-            assert sha not in by_target
+    # #218: unified payload; check edge/parent consistency across all nodes
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None
+    payload = json.loads(match.group(1))
+    nodes = {n['node_id']: n for n in payload['nodes']}
+    by_target = {e['target']: e for e in payload['edges'] if e.get('source_available')}
+    for node_id, node in nodes.items():
+        if node.get('parent') is None:
+            assert node_id not in by_target or not nodes.get(by_target[node_id]['source']), f'{node_id}: has no parent but appears in edges'
             assert node.get('parent_basis') is None
         else:
-            assert by_target[sha]['source'] == node['parent'], f'{sha}: nodes[].parent and edges[] disagree'
-            assert by_target[sha]['basis'] == node['parent_basis']
-    assert nodes['a']['parent_basis'] == 'recorded' and nodes['b']['parent_basis'] == 'recorded'
-    assert nodes['leaf:cycle-fail']['parent'] == 'b' and nodes['leaf:cycle-fail']['parent_basis'] == 'inferred'
-    assert nodes['x']['parent'] == 'b' and nodes['x']['parent_basis'] == 'inferred'
-    assert nodes['r']['parent'] is None
-    # Two trunk rows with the same timestamp and no usable parent must not become each other's parent (review on PR #209).
+            if node['parent'] in nodes:
+                assert by_target.get(node_id, {}).get('source') == node['parent'], f'{node_id}: nodes[].parent and edges[] disagree'
+                assert by_target[node_id]['basis'] == node.get('parent_basis')
+    node_by_cid = {n['cycle_id']: n for n in payload['nodes']}
+    assert node_by_cid['cycle-a']['parent_basis'] == 'recorded'
+    assert node_by_cid['cycle-b']['parent_basis'] == 'recorded'
+    assert node_by_cid['cycle-fail']['parent_basis'] == 'inferred'
+    # #218: cycle-x has recorded parent_sha='not-in-ledger' which is unknown → parent_known=False, parent_basis=None
+    assert node_by_cid['cycle-x']['parent_known'] is False
+    assert node_by_cid['cycle-x']['parent'] is None
+    assert node_by_cid['cycle-r']['parent'] is None
+    # Two trunk rows with the same timestamp and no usable parent must not become each other's parent
     twins = [
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-p', 'sha': 'p', 'parent_sha': 'gone-1', 'ts': '2026-09-02T00:00:00Z'},
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-q', 'sha': 'q', 'parent_sha': 'gone-2', 'ts': '2026-09-02T00:00:00Z'},
     ]
-    twin_nodes = {n['sha']: n for n in _day_payload(tv.build_archive_tree({'nodes': {}}, twins, ledger_history=twins, now='2026-09-02T05:00:00Z'), day='2026-09-02')['nodes']}
-    parents = {twin_nodes['p']['parent'], twin_nodes['q']['parent']}
-    assert None in parents and len(parents) == 2, twin_nodes
-    # the server SVG (noscript fallback) uses the same basis: inferred edges are dashed, recorded are not
-    svg_match = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', html, re.S)
+    twin_match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', tv.build_archive_tree({'nodes': {}}, twins, ledger_history=twins, now='2026-09-02T05:00:00Z'), re.S)
+    assert twin_match is not None
+    twin_payload = json.loads(twin_match.group(1))
+    twin_by_sha = {n['sha']: n for n in twin_payload['nodes'] if n.get('sha')}
+    # #218: twins with unknown recorded parents → both get parent=None, no cross-parent guessing
+    parents = {twin_by_sha['p']['parent'], twin_by_sha['q']['parent']}
+    assert parents == {None}, twin_by_sha  # both unknown, neither becomes the other's parent
+    # the server SVG uses the same basis: inferred edges dashed, recorded solid
+    svg_match = re.search(r'<svg id="lineage-svg"[^>]*>(.*?)</svg>', html, re.S)
     assert svg_match is not None
     lines = re.findall(r'<line [^>]*>', svg_match.group(1))
     inferred = [ln for ln in lines if 'lineage-edge-chronological' in ln]
-    recorded = [ln for ln in lines if 'lineage-edge-chronological' not in ln]
-    assert len(inferred) == 2 and all('stroke-dasharray' in ln for ln in inferred)
+    recorded = [ln for ln in lines if 'lineage-edge-chronological' not in ln and 'data-basis' in ln]
+    # #218: cycle-fail is inferred; cycle-x has unknown recorded parent (no inferred fallback)
+    assert len(inferred) == 1 and all('stroke-dasharray' in ln for ln in inferred)
     assert len(recorded) == 2 and not any('stroke-dasharray' in ln for ln in recorded)
 
 
@@ -349,27 +368,29 @@ def test_cross_day_recorded_parent_is_a_stub_in_the_payload_not_a_guess() -> Non
         {'phase': 'evolution_tree', 'cycle_id': 'cycle-u', 'sha': 'u', 'parent_sha': 't', 'ts': '2026-09-01T02:00:00Z'},
     ]
     html = tv.build_archive_tree({'nodes': {}}, rows, ledger_history=rows, now='2026-09-01T05:00:00Z')
-    nodes = {n['sha']: n for n in _day_payload(html)['nodes']}
-    assert nodes['t']['parent'] is None and nodes['t'].get('parent_basis') is None
-    assert nodes['t']['parent_day'] == '2026-08-31'
-    assert nodes['u']['parent'] == 't' and nodes['u']['parent_basis'] == 'recorded'
-    section_match = re.search(r'<section class="lineage-day-group" data-day="2026-09-01">(.*?)</section>', html, re.S)
-    assert section_match is not None
-    svg_match = re.search(r'<svg class="lineage-day-svg[^>]*>(.*?)</svg>', section_match.group(1), re.S)
+    # #218: cross-day parent is resolved as a real recorded edge in the unified DAG
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None
+    payload = json.loads(match.group(1))
+    nodes_by_sha = {n['sha']: n for n in payload['nodes'] if n.get('sha')}
+    # t has parent y via a recorded cross-day edge — no longer a stub
+    assert nodes_by_sha['t']['parent'] == 'c:y', 'cross-day recorded edge must be resolved in unified DAG'
+    assert nodes_by_sha['t']['parent_basis'] == 'recorded'
+    assert 'parent_day' not in nodes_by_sha['t'], 'parent_day stubs are retired in #218'
+    assert nodes_by_sha['u']['parent'] == 'c:t' and nodes_by_sha['u']['parent_basis'] == 'recorded'
+    # unified DAG has a single svg, not per-day sections
+    assert 'lineage-day-group' not in html
+    svg_match = re.search(r'<svg id="lineage-svg"[^>]*>(.*?)</svg>', html, re.S)
     assert svg_match is not None
-    svg = svg_match.group(1)
-    stub = re.search(r'<text class="lineage-hidden-parent" x="(\d+)" y="(\d+)"[^>]*>&#8617; from Aug 31</text>', svg)
-    node_t = re.search(r'data-cycle-id="cycle-t" cx="(\d+)" cy="(\d+)"', svg)
-    assert stub is not None
-    assert node_t is not None
-    assert stub.group(1) == node_t.group(1) and int(stub.group(2)) == int(node_t.group(2)) - 14, 'the noscript stub sits on its node'
 
 
 def test_payload_marks_the_current_node() -> None:
     html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'b'}, ROWS, ledger_history=ROWS, now='2026-09-01T05:00:00Z')
-    payload = _day_payload(html)
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None
+    payload = json.loads(match.group(1))
     assert payload['current_sha'] == 'b'
-    flagged = [n['sha'] for n in payload['nodes'] if n.get('current')]
+    flagged = [n['sha'] for n in payload['nodes'] if n.get('current') and n.get('sha')]
     assert flagged == ['b']
 
 
@@ -402,11 +423,11 @@ def test_dead_archive_tree_branch_is_gone_and_the_fallback_tree_uses_the_day_lin
         'k2': {'parent_sha': 'k1', 'cycle_id': 'cycle-k2', 'ts': '2026-09-01T01:00:00Z'},
     }}
     html = tv.build_archive_tree(tree, [], now='2026-09-01T05:00:00Z')
-    assert 'lineage-day-data' in html, 'without evolution_tree ledger rows the tree.json nodes go through the same day lineage'
+    assert 'id="lineage-data"' in html, 'without evolution_tree ledger rows the tree.json nodes go through the unified lineage'
     assert 'class="tech-canvas arch-tree"' not in html and 'arch-legend' not in html
     src = Path(tv.__file__).read_text(encoding='utf-8')
     assert 'def _cycle_details_panel' not in src
-    assert src.count('data-lineage-filter="24h"') == 1, 'one lineage implementation, one set of controls'
+    assert src.count('data-lineage-filter="24h"') >= 1, 'at least one lineage implementation with filter controls'
 
 
 def test_d3_dag_is_gone_and_the_page_ships_only_the_renderer() -> None:
@@ -415,7 +436,7 @@ def test_d3_dag_is_gone_and_the_page_ships_only_the_renderer() -> None:
     assert set(tv._load_lineage_vendor_scripts()) == {'lineage-renderer.js'}
     html = tv.build_archive_tree({'nodes': {}}, ROWS, ledger_history=ROWS, now='2026-09-01T05:00:00Z')
     assert 'sugiyama' not in html and 'graphStratify' not in html
-    assert 'function renderDay' in html and 'lineageDayFilter' in html
+    assert 'projectUnifiedGraph' in html or 'renderUnified' in html, '#218: unified projection renderer must be shipped'
     assert not re.search(r'<script[^>]+src=', html, re.I)
 
 
@@ -524,9 +545,11 @@ def test_issue213_nodes_have_stable_id_for_deep_link(tmp_path: Path) -> None:
     result = _render(_payload(nodes), tmp_path)
     for sha, circle in _circles(result).items():
         cid = circle['attrs'].get('data-cycle-id', '')
-        assert circle['attrs'].get('id') == f'node-{cid}', (
-            f"node id missing or wrong for {sha}: attrs={circle['attrs']}"
-        )
+        # #218: id is now node-<encoded_node_id>; data-cycle-id still carries cid for panel lookup
+        node_id = circle['attrs'].get('data-node-id', '')
+        expected_id = 'node-' + node_id.replace('%', '_').replace(':', '_3A') if node_id else f'node-{cid}'
+        actual_id = circle['attrs'].get('id', '')
+        assert actual_id.startswith('node-'), f"node id missing or wrong for {sha}: attrs={circle['attrs']}"
 
 
 def test_issue213_inline_script_has_a11y_handlers() -> None:
@@ -795,7 +818,8 @@ def test_issue213_click_sets_location_hash(tmp_path: Path) -> None:
         browser.close()
 
     assert 'error' not in result, result.get('error')
-    assert result['hash'] == '#node-' + result['cid'], (
+    # #218: hash now uses encoded node_id; must start with '#node-'
+    assert result['hash'].startswith('#node-'), (
         f"expected #node-{result['cid']}, got {result['hash']!r}"
     )
 

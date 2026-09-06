@@ -48,6 +48,7 @@ import webbrowser
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
@@ -1430,8 +1431,7 @@ EVO_BOX_W = 180
 EVO_BOX_H = 64
 EVO_ROW_H = 80
 EVO_MARGIN_X = 60
-LINEAGE_DAYS = 14
-LINEAGE_DAY_CAP = 120
+LINEAGE_MAX_NODES = 1500  # #218: unified lineage payload budget
 EVO_MAX_DISPLAY = 30  # legacy canvas path; lineage.html uses day buckets
 
 # Fixed, deterministic glyph table for research directions -- plain numeric
@@ -1914,6 +1914,35 @@ def _load_lineage_vendor_scripts() -> dict[str, str] | None:
 LINEAGE_DETAILS_FILE = 'lineage-cycle-details.json'  # #208: published beside lineage.html, fetched on demand
 
 
+def _parse_lineage_ts(ts: Any) -> str | None:
+    value = str(ts or '').strip()
+    if not value:
+        return None
+    try:
+        datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    return value
+
+
+def _node_id_for_commit(sha: str) -> str:
+    return 'c:' + str(sha)
+
+
+def _safe_node_dom_id(node_id: str) -> str:
+    # Same injective mapping as lineage-renderer.js: encodeURIComponent then
+    # replace '%' with '_' so CSS/fragment IDs remain compact and reversible.
+    return 'node-' + quote(str(node_id), safe='').replace('%', '_')
+
+
+def _leaf_outcome(row: dict[str, Any]) -> str:
+    if row.get('outcome') in {'failed', 'fail'} or row.get('status') in {'failed', 'fail'}:
+        return 'failed'
+    if row.get('outcome') == 'partial':
+        return 'partial'
+    return 'skipped'
+
+
 def _lineage_parent(
     node: dict[str, Any],
     trunk: list[dict[str, Any]],
@@ -2289,6 +2318,206 @@ def _build_vertical_day_lineage(
     return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
 
 
+def _build_unified_lineage(
+    ledger_rows: list[Any],
+    fallback_tree: dict[str, Any] | None,
+    task_titles: dict[str, str] | None,
+    now: str | None,
+    cycle_details: dict[str, dict[str, Any]] | None = None,
+) -> str:
+    """#218: one canonical lineage graph; date controls are projections."""
+    vendor_scripts = _load_lineage_vendor_scripts()
+    raw_read_rows = sum(1 for row in ledger_rows if isinstance(row, dict))
+    commits: dict[str, dict[str, Any]] = {}
+    leaves: dict[str, dict[str, Any]] = {}
+
+    def ts_key(value: Any) -> tuple[int, str]:
+        parsed = _parse_lineage_ts(value)
+        return (1, parsed) if parsed is not None else (0, '')
+
+    def keep_newer(existing: dict[str, Any] | None, row: dict[str, Any]) -> dict[str, Any]:
+        if existing is None:
+            return row
+        return row if (ts_key(row.get('ts')), str(row.get('cycle_id') or ''), str(row.get('sha') or '')) >= (ts_key(existing.get('ts')), str(existing.get('cycle_id') or ''), str(existing.get('sha') or '')) else existing
+
+    for row in ledger_rows:
+        if not isinstance(row, dict):
+            continue
+        phase = row.get('phase')
+        sha = str(row.get('sha') or '')
+        cid = str(row.get('cycle_id') or '')
+        if phase == 'evolution_tree' and sha:
+            commits[sha] = keep_newer(commits.get(sha), row)
+        elif cid and phase in {'outcome', 'gate', 'proposer_reject', 'dedup'} and not sha:
+            outcome = str(row.get('outcome') or row.get('status') or '').lower()
+            if outcome not in {'integrated', 'success', 'succeeded', 'ok', 'pass', 'passed'}:
+                leaves[cid] = keep_newer(leaves.get(cid), row)
+    if not commits and isinstance(fallback_tree, dict) and isinstance(fallback_tree.get('nodes'), dict):
+        for sha, node in fallback_tree['nodes'].items():
+            if isinstance(node, dict):
+                row = dict(node)
+                row['sha'] = str(sha)
+                row.setdefault('cycle_id', str(node.get('cycle_id') or sha))
+                commits[str(sha)] = row
+
+    candidates: list[dict[str, Any]] = []
+    for sha, row in commits.items():
+        cid = str(row.get('cycle_id') or sha)
+        detail = (cycle_details or {}).get(cid) if cycle_details else None
+        title = str(detail.get('title') or '') if isinstance(detail, dict) else ''
+        if not title or title == '(untitled cycle)':
+            title = str((task_titles or {}).get(cid) or (task_titles or {}).get(cid.replace('cycle-', '', 1)) or '')
+        parsed_ts = _parse_lineage_ts(row.get('ts'))
+        candidates.append({'node_id': _node_id_for_commit(sha), 'sha': sha, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': str(row.get('outcome') or 'integrated'), 'kind': 'trunk', 'title': title})
+    for cid, row in leaves.items():
+        detail = (cycle_details or {}).get(cid) if cycle_details else None
+        title = str(detail.get('title') or '') if isinstance(detail, dict) else ''
+        if not title or title == '(untitled cycle)':
+            title = str((task_titles or {}).get(cid) or (task_titles or {}).get(cid.replace('cycle-', '', 1)) or '')
+        parsed_ts = _parse_lineage_ts(row.get('ts'))
+        candidates.append({'node_id': 'a:' + cid, 'sha': None, 'cycle_id': cid, 'parent_sha': str(row.get('parent_sha') or ''), 'parent': None, 'parent_basis': None, 'parent_known': True, 'ts': parsed_ts, 'ts_status': 'valid' if parsed_ts else 'invalid', 'outcome': _leaf_outcome(row), 'kind': 'leaf', 'title': title})
+
+    commit_by_sha = {str(node['sha']): node for node in candidates if node.get('sha')}
+    trunk_by_time = sorted((node for node in candidates if node['kind'] == 'trunk'), key=lambda node: (node.get('ts') or '', node['node_id']))
+    for node in sorted(candidates, key=lambda item: (item.get('ts') or '', item['node_id'])):
+        recorded = str(node.get('parent_sha') or '')
+        if recorded and recorded != node.get('sha'):
+            parent = commit_by_sha.get(recorded)
+            if parent:
+                node['parent'] = parent['node_id']
+                node['parent_basis'] = 'recorded'
+            else:
+                node['parent_known'] = False
+            continue
+        if recorded and recorded == node.get('sha'):
+            node['parent_known'] = False
+            continue
+        if node['kind'] == 'leaf' and node.get('ts'):
+            previous = max((item for item in trunk_by_time if item.get('ts') and item['ts'] <= node['ts']), key=lambda item: (item['ts'], item['node_id']), default=None)
+            if previous:
+                node['parent'] = previous['node_id']
+                node['parent_basis'] = 'inferred'
+
+    unique_candidate_nodes = len(candidates)
+    current_sha = str((fallback_tree or {}).get('current_sha') or '')
+    current_node_id = _node_id_for_commit(current_sha) if current_sha else ''
+    retained = sorted(candidates, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))[-LINEAGE_MAX_NODES:]
+    retained_ids = {node['node_id'] for node in retained}
+    if current_node_id and current_node_id not in retained_ids:
+        current_node = next((node for node in candidates if node['node_id'] == current_node_id), None)
+        if current_node is not None:
+            if len(retained) >= LINEAGE_MAX_NODES and retained:
+                retained.pop(0)
+            retained.append(current_node)
+    retained = sorted(retained, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))
+    retained_ids = {node['node_id'] for node in retained}
+    truncated = unique_candidate_nodes > len(retained)
+    truncated_before_ts = next((node.get('ts') for node in retained if node.get('ts')), None) if truncated else None
+
+    payload_nodes: list[dict[str, Any]] = []
+    payload_edges: list[dict[str, Any]] = []
+    for node in retained:
+        entry = dict(node)
+        if node['node_id'] == current_node_id:
+            entry['current'] = True
+        parent = node.get('parent')
+        if parent and parent in retained_ids:
+            payload_edges.append({'source': parent, 'target': node['node_id'], 'basis': node.get('parent_basis') or 'recorded', 'source_available': True})
+        elif parent:
+            entry['parent_known'] = False
+            entry['parent_boundary'] = 'truncated_history'
+            payload_edges.append({'source': parent, 'target': node['node_id'], 'basis': node.get('parent_basis') or 'recorded', 'source_available': False, 'source_boundary': 'truncated_history'})
+        payload_nodes.append(entry)
+
+    by_cycle: dict[str, list[dict[str, Any]]] = {}
+    for node in payload_nodes:
+        by_cycle.setdefault(str(node.get('cycle_id') or node['node_id']), []).append(node)
+    aliases: dict[str, str] = {}
+    for cid, nodes in by_cycle.items():
+        ordered = sorted(nodes, key=lambda node: (1 if node.get('ts') else 0, node.get('ts') or '', node['node_id']))
+        aliases[cid] = ordered[-1]['node_id']
+        for index, item in enumerate(ordered, start=1):
+            item['cycle_node_index'] = index
+            item['cycle_node_count'] = len(ordered)
+
+    ts_values = [node['ts'] for node in payload_nodes if node.get('ts')]
+    payload = {'version': 2, 'current_sha': current_sha, 'current_node_id': current_node_id, 'coverage': {'raw_read_rows': raw_read_rows, 'unique_candidate_nodes': unique_candidate_nodes, 'emitted_nodes': len(payload_nodes), 'truncated': truncated, 'truncated_before_ts': truncated_before_ts, 'from_ts': min(ts_values) if ts_values else None, 'to_ts': max(ts_values) if ts_values else None}, 'nodes': payload_nodes, 'edges': payload_edges, 'aliases': aliases}
+
+    parent_lookup = {edge['target']: edge['source'] for edge in payload_edges if edge.get('source_available') and edge.get('source') in retained_ids}
+    depth_cache: dict[str, int] = {}
+    def node_depth(node_id: str, guard: set[str] | None = None) -> int:
+        if node_id in depth_cache:
+            return depth_cache[node_id]
+        guard = guard or set()
+        if node_id in guard:
+            return 0
+        parent = parent_lookup.get(node_id)
+        depth_cache[node_id] = node_depth(parent, guard | {node_id}) + 1 if parent else 0
+        return depth_cache[node_id]
+    for node in payload_nodes:
+        node_depth(node['node_id'])
+    levels: dict[int, int] = {}
+    positions: dict[str, tuple[int, int]] = {}
+    for node in sorted(payload_nodes, key=lambda item: (node_depth(item['node_id']), item.get('ts') or '', item['node_id'])):
+        d = node_depth(node['node_id'])
+        slot = levels.get(d, 0)
+        levels[d] = slot + 1
+        positions[node['node_id']] = (40 + slot * 54, 32 + d * 48)
+    width = max(220, max((x for x, _ in positions.values()), default=180) + 40)
+    height = max(84, max((y for _, y in positions.values()), default=42) + 36)
+    data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
+
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="all" data-lineage-default-mode="all" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all" class="active">All</button>', '<button type="button" data-lineage-filter="today">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', f'<svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    for edge in payload_edges:
+        if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
+            continue
+        x1, y1 = positions[edge['source']]
+        x2, y2 = positions[edge['target']]
+        basis = edge.get('basis') or 'recorded'
+        cls = 'lineage-edge arch-edge' if basis == 'recorded' else 'lineage-edge lineage-edge-chronological'
+        dash = ' stroke-dasharray="6 5"' if basis != 'recorded' else ''
+        path_value = edge['source'] + '->' + edge['target']
+        parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" class="{cls}" data-edge-type="canonical" data-basis="{esc(basis)}" data-source="{esc(edge["source"])}" data-target="{esc(edge["target"])}" data-path="{esc(path_value)}" fill="none"{dash}/>')
+    for node in payload_nodes:
+        x, y = positions[node['node_id']]
+        if node.get('current'):
+            parts.append(f'<text x="{x}" y="{y - 14}" text-anchor="middle" class="arch-star">&#9733;</text>')
+        if node.get('parent_known') is False:
+            parts.append(f'<text class="lineage-hidden-parent" x="{x}" y="{y - (26 if node.get("current") else 14)}" text-anchor="middle">unknown parent</text>')
+        cid = str(node.get('cycle_id') or node['node_id'])
+        kind = str(node.get('outcome') or 'integrated')
+        title = str(node.get('title') or cid)
+        attrs = [f'class="arch-node arch-{esc(kind)} lineage-node"', f'data-cycle-id="{esc(cid)}"', f'data-node-id="{esc(node["node_id"])}"', f'data-cycle-node-index="{int(node.get("cycle_node_index") or 1)}"', f'data-cycle-node-count="{int(node.get("cycle_node_count") or 1)}"', f'cx="{x}"', f'cy="{y}"', 'r="9"', 'tabindex="0"', 'role="button"', f'aria-label="{esc(title)} — click for details"', f'id="{_safe_node_dom_id(node["node_id"])}"']
+        if node.get('sha'):
+            attrs.append(f'data-sha="{esc(node["sha"])}"')
+        if node.get('ts_status') == 'invalid':
+            attrs.append('data-ts-status="invalid"')
+        parts.append('<circle ' + ' '.join(attrs) + f'><title>{esc(title)}</title></circle>')
+    parts.append('</svg></div>')
+    inline_scripts = ''.join(f'<script>{vendor_scripts[name]}</script>' for name in ('lineage-renderer.js',)) if vendor_scripts is not None else ''
+    parts.append(f"""<section class="cycle-details-panel" id="cycle-details-panel" data-cycle-details-src="{LINEAGE_DETAILS_FILE}" hidden aria-label="Cycle details"><h2 class="cycle-details-title">Cycle details <button class="cycle-details-close" id="cycle-details-close" aria-label="Close cycle details">&times;</button></h2><div class="cycle-details-body"></div></section>{inline_scripts}<script>
+(function () {{
+  var panel = document.getElementById('cycle-details-panel'), src = panel.getAttribute('data-cycle-details-src'), data = null, loading = null;
+  function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
+  function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
+  function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+  function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
+  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var html = '<h3>' + esc(item.title || cid) + '</h3>' + multi + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  var selectedNode = null, openedByNode = null, openSeq = 0;
+  function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
+  function closePanel() {{ panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
+  function scrollPanelIntoView() {{ panel.scrollIntoView({{ behavior: 'instant', block: 'nearest' }}); }}
+  function open(node, fromHash) {{ clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn) closeBtn.focus({{ preventScroll: true }}); load().then(function () {{ if (seq !== openSeq) return; render(node, cid); scrollPanelIntoView(); }}).catch(function (err) {{ if (seq !== openSeq) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; scrollPanelIntoView(); }}); }}
+  document.addEventListener('click', function (event) {{ var node = event.target.closest('.lineage-node'); if (node) {{ event.preventDefault(); open(node, false); return; }} if (event.target.closest('#cycle-details-close')) {{ closePanel(); }} }});
+  document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape' && !panel.hidden) {{ event.preventDefault(); closePanel(); }} }});
+  function handleHash() {{ var hash = window.location.hash; if (!hash || !hash.startsWith('#node-')) return; var el = window.lineageRenderer && window.lineageRenderer.selectNodeFromHash ? window.lineageRenderer.selectNodeFromHash(hash) : document.getElementById(hash.slice(1)); if (!el) return; el.scrollIntoView({{ behavior: 'instant', block: 'center' }}); open(el, true); }}
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', handleHash); else Promise.resolve().then(handleHash);
+  window.addEventListener('hashchange', handleHash);
+}})();
+</script>""")
+    return '<div class="canvas-outer" id="panel-lineage">' + ''.join(parts) + '</div>'
+
+
 def _build_day_bucketed_lineage(
     ledger_rows: list[Any],
     fallback_tree: dict[str, Any] | None,
@@ -2303,7 +2532,7 @@ def _build_day_bucketed_lineage(
     archive tree that used to follow :func:`build_archive_tree`'s early return
     were deleted so a layout fix can only land in one place.
     """
-    return _build_vertical_day_lineage(ledger_rows, fallback_tree, task_titles, now, cycle_details)
+    return _build_unified_lineage(ledger_rows, fallback_tree, task_titles, now, cycle_details)
 
 
 def build_cycle_details(
