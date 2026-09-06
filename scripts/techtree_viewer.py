@@ -49,6 +49,8 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
+MSK_TZ = timezone(timedelta(hours=3))
+
 SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
 SSH_TIMEOUT_SECONDS = 45
@@ -348,15 +350,100 @@ def read_token_heatmap(max_days=62):
         return None
     if not names:
         return None
-    dates_present = {n[:10]: os.path.join(ldir, n) for n in names}
-    d_min = min(dates_present.keys())
-    d_max = max(dates_present.keys())
+    names.sort()
+    active_names = names[-(max_days + 2):]
+
+    msk_raw_hourly = {}
+    msk_raw_5min = {}
+    msk_records_dates = set()
+
+    for n in active_names:
+        fpath = os.path.join(ldir, n)
+        try:
+            with open(fpath, "r", encoding="utf-8", errors="replace") as fp:
+                for line in fp:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+                    ts_raw = row.get("ts")
+                    if not ts_raw:
+                        continue
+                    s = str(ts_raw).strip()
+                    if len(s) < 16 or s[10] != "T":
+                        continue
+                    if s.endswith("Z") or s.endswith("z"):
+                        s = s[:-1] + "+00:00"
+                    try:
+                        dt = datetime.fromisoformat(s)
+                    except Exception:
+                        continue
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    dt_msk = dt.astimezone(timezone(timedelta(hours=3)))
+                    d_msk = dt_msk.date().isoformat()
+                    h_msk = dt_msk.hour
+                    m_msk = dt_msk.minute
+                    b_idx = h_msk * 12 + (m_msk // 5)
+
+                    tok = row.get("total_tokens")
+                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
+                        tok = (row.get("prompt_tokens") or 0) + (row.get("completion_tokens") or 0)
+                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    cat = classify_model(row.get("model"))
+                    comp = str(row.get("component") or "unknown").strip().lower()
+
+                    msk_records_dates.add(d_msk)
+
+                    if d_msk not in msk_raw_hourly:
+                        msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
+                        msk_raw_5min[d_msk] = {}
+
+                    h_cell = msk_raw_hourly[d_msk][h_msk]
+                    if cat == "self_hosted":
+                        h_cell[0] += tok
+                    elif cat == "vendor":
+                        h_cell[1] += tok
+                    else:
+                        h_cell[2] += tok
+                    h_cell[3] += tok
+                    h_cell[4] += 1
+                    h_cell[5][comp] = h_cell[5].get(comp, 0) + tok
+
+                    b_dict = msk_raw_5min[d_msk]
+                    if b_idx not in b_dict:
+                        b_dict[b_idx] = [0, 0, 0, 0, 0, {}]
+                    b_cell = b_dict[b_idx]
+                    if cat == "self_hosted":
+                        b_cell[0] += tok
+                    elif cat == "vendor":
+                        b_cell[1] += tok
+                    else:
+                        b_cell[2] += tok
+                    b_cell[3] += tok
+                    b_cell[4] += 1
+                    b_cell[5][comp] = b_cell[5].get(comp, 0) + tok
+        except Exception:
+            continue
+
+    utc_files_dates = {n[:10] for n in active_names}
+    days_present_set = set(utc_files_dates) | msk_records_dates
+    if not days_present_set:
+        return None
+
+    min_d_str = min(days_present_set)
+    max_d_str = max(days_present_set)
     try:
-        d0 = datetime.strptime(d_min, "%Y-%m-%d").date()
-        d1 = datetime.strptime(d_max, "%Y-%m-%d").date()
+        d0 = datetime.strptime(min_d_str, "%Y-%m-%d").date()
+        d1 = datetime.strptime(max_d_str, "%Y-%m-%d").date()
     except Exception:
         return None
-    if (d1 - d0).days > max_days:
+    if (d1 - d0).days > max_days - 1:
         d0 = d1 - timedelta(days=max_days - 1)
     calendar_dates = []
     curr = d0
@@ -381,74 +468,15 @@ def read_token_heatmap(max_days=62):
     all_5m_tot = []
 
     for d_str in calendar_dates:
-        if d_str not in dates_present:
+        if d_str not in days_present_set:
             hourly[d_str] = None
             five_min[d_str] = None
             continue
         days_present_count += 1
-        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
-        b_data = {}
-        fpath = dates_present[d_str]
-        try:
-            with open(fpath, "r", encoding="utf-8", errors="replace") as fp:
-                for line in fp:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        row = json.loads(line)
-                    except Exception:
-                        continue
-                    if not isinstance(row, dict):
-                        continue
-                    ts = str(row.get("ts") or "")
-                    if len(ts) < 16 or ts[10] != "T":
-                        continue
-                    try:
-                        hour = int(ts[11:13])
-                        minute = int(ts[14:16])
-                    except Exception:
-                        continue
-                    if not (0 <= hour < 24 and 0 <= minute < 60):
-                        continue
-                    tok = row.get("total_tokens")
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get("prompt_tokens") or 0) + (row.get("completion_tokens") or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
-                    cat = classify_model(row.get("model"))
-                    comp = str(row.get("component") or "unknown").strip().lower()
-                    b_idx = hour * 12 + (minute // 5)
-
-                    tot_tok_all += tok
-                    tot_calls_all += 1
-                    if cat == "self_hosted":
-                        loc_tok_all += tok
-                        h_data[hour][0] += tok
-                    elif cat == "vendor":
-                        gw_tok_all += tok
-                        h_data[hour][1] += tok
-                    else:
-                        oth_tok_all += tok
-                        h_data[hour][2] += tok
-                    h_data[hour][3] += tok
-                    h_data[hour][4] += 1
-                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
-
-                    if b_idx not in b_data:
-                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
-                    if cat == "self_hosted":
-                        b_data[b_idx][0] += tok
-                    elif cat == "vendor":
-                        b_data[b_idx][1] += tok
-                    else:
-                        b_data[b_idx][2] += tok
-                    b_data[b_idx][3] += tok
-                    b_data[b_idx][4] += 1
-                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
-        except Exception:
-            hourly[d_str] = None
-            five_min[d_str] = None
-            continue
+        h_data = msk_raw_hourly.get(d_str)
+        if h_data is None:
+            h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
+        b_data = msk_raw_5min.get(d_str, {})
 
         fin_h = []
         for h in range(24):
@@ -456,6 +484,11 @@ def read_token_heatmap(max_days=62):
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ""
             loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
             fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
+            tot_tok_all += tot_t
+            tot_calls_all += calls
+            loc_tok_all += loc_t
+            gw_tok_all += gw_t
+            oth_tok_all += oth_t
             if gw_t > 0:
                 all_h_gw.append(gw_t)
             if loc_t > 0:
@@ -493,6 +526,9 @@ def read_token_heatmap(max_days=62):
             "days_span": len(calendar_dates),
             "days_present": days_present_count,
             "days_missing": len(calendar_dates) - days_present_count,
+            "timezone": "MSK",
+            "timezone_offset_hours": 3,
+            "source_timezone": "UTC",
             "quantiles_hourly": {
                 "gateway": compute_quantiles(all_h_gw),
                 "local": compute_quantiles(all_h_loc),
@@ -1419,7 +1455,10 @@ def short_sha(sha: Any, length: int = 7) -> str:
 def fmt_ts(ts: Any) -> str:
     if not ts:
         return 'unknown time'
-    return esc(str(ts).replace('T', ' ').replace('Z', ' UTC'))
+    dt = _parse_iso_ts(ts)
+    if dt is not None:
+        return esc(dt.astimezone(MSK_TZ).strftime('%Y-%m-%d %H:%M:%S MSK'))
+    return esc(str(ts))
 
 
 def fmt_compact(value: Any, signed: bool = False) -> str:
@@ -1496,7 +1535,7 @@ def _parse_iso_ts(ts_str: Any) -> datetime | None:
 
 
 def fmt_ts_short(ts_str: Any, now: datetime | None = None) -> str:
-    """Format ISO timestamp into short glanceable string (HH:MM UTC if today UTC, else Mon DD or Mon DD YYYY)."""
+    """Format ISO timestamp into short glanceable string (HH:MM MSK if today MSK, else Mon DD MSK or Mon DD YYYY MSK)."""
     if not ts_str:
         return 'n/a'
     s = str(ts_str).strip()
@@ -1513,12 +1552,15 @@ def fmt_ts_short(ts_str: Any, now: datetime | None = None) -> str:
     else:
         now = now.astimezone(timezone.utc)
 
-    if dt.date() == now.date():
-        return f'{dt.strftime("%H:%M")} UTC'
-    elif dt.year == now.year:
-        return dt.strftime('%b %d').replace(' 0', ' ')
+    dt_msk = dt.astimezone(MSK_TZ)
+    now_msk = now.astimezone(MSK_TZ)
+
+    if dt_msk.date() == now_msk.date():
+        return f'{dt_msk.strftime("%H:%M")} MSK'
+    elif dt_msk.year == now_msk.year:
+        return f'{dt_msk.strftime("%b %d")} MSK'.replace(' 0', ' ')
     else:
-        return dt.strftime('%b %d %Y').replace(' 0', ' ')
+        return f'{dt_msk.strftime("%b %d %Y")} MSK'.replace(' 0', ' ')
 
 
 
@@ -1570,9 +1612,12 @@ def fmt_tokens(n: int | float | None) -> str:
 
 
 def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] | None:
-    """Issue #223: aggregate hourly and 5-minute token consumption from llm_calls/*.jsonl.
+    """Issue #223, #225: aggregate hourly and 5-minute token consumption from llm_calls/*.jsonl.
+    Source records store timestamps in UTC. Display buckets are aggregated into Moscow Time
+    (MSK, UTC+3) so that each day row represents 00:00:00 to 23:59:59 MSK of that date,
+    and 5-minute intervals cover the 288 slices of the MSK day.
     Distinguishes NO DATA (missing/unobserved day/hour) from ZERO TOKENS (quiet hour).
-    Separates local (un/*, qwen) from gateway (cl/*, an/*) models.
+    Separates self-hosted (un/*, qwen) from vendor gateway (cl/*, an/*) and other models.
     """
     p = Path(root)
     llm_dir = p / 'llm_calls' if (p / 'llm_calls').is_dir() else (p / 'state' / 'llm_calls')
@@ -1590,17 +1635,92 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
     if not daily_files:
         return None
 
-    dates_present = {f.name[:10]: f for f in daily_files}
-    d_min = min(dates_present.keys())
-    d_max = max(dates_present.keys())
+    daily_files.sort(key=lambda f: f.name[:10])
+    active_files = daily_files[-(max_days + 2):]
 
+    msk_raw_hourly: dict[str, list[list[Any]]] = {}
+    msk_raw_5min: dict[str, dict[int, list[Any]]] = {}
+    msk_records_dates: set[str] = set()
+
+    for file_path in active_files:
+        try:
+            with file_path.open('r', encoding='utf-8', errors='replace') as fp:
+                for line in fp:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if not isinstance(row, dict):
+                        continue
+
+                    dt = _parse_iso_ts(row.get('ts'))
+                    if dt is None:
+                        continue
+
+                    dt_msk = dt.astimezone(MSK_TZ)
+                    d_msk = dt_msk.date().isoformat()
+                    h_msk = dt_msk.hour
+                    m_msk = dt_msk.minute
+                    b_idx = h_msk * 12 + (m_msk // 5)
+
+                    tok = row.get('total_tokens')
+                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
+                        tok = (row.get('prompt_tokens') or 0) + (row.get('completion_tokens') or 0)
+                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+
+                    cat = classify_model(str(row.get('model') or ''))
+                    comp = str(row.get('component') or 'unknown').strip().lower()
+
+                    msk_records_dates.add(d_msk)
+
+                    if d_msk not in msk_raw_hourly:
+                        msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
+                        msk_raw_5min[d_msk] = {}
+
+                    h_cell = msk_raw_hourly[d_msk][h_msk]
+                    if cat == 'self_hosted':
+                        h_cell[0] += tok
+                    elif cat == 'vendor':
+                        h_cell[1] += tok
+                    else:
+                        h_cell[2] += tok
+                    h_cell[3] += tok
+                    h_cell[4] += 1
+                    h_cell[5][comp] = h_cell[5].get(comp, 0) + tok
+
+                    b_dict = msk_raw_5min[d_msk]
+                    if b_idx not in b_dict:
+                        b_dict[b_idx] = [0, 0, 0, 0, 0, {}]
+                    b_cell = b_dict[b_idx]
+                    if cat == 'self_hosted':
+                        b_cell[0] += tok
+                    elif cat == 'vendor':
+                        b_cell[1] += tok
+                    else:
+                        b_cell[2] += tok
+                    b_cell[3] += tok
+                    b_cell[4] += 1
+                    b_cell[5][comp] = b_cell[5].get(comp, 0) + tok
+        except Exception:
+            continue
+
+    utc_files_dates = {f.name[:10] for f in active_files}
+    days_present_set = set(utc_files_dates) | msk_records_dates
+    if not days_present_set:
+        return None
+
+    min_d_str = min(days_present_set)
+    max_d_str = max(days_present_set)
     try:
-        d0 = datetime.strptime(d_min, "%Y-%m-%d").date()
-        d1 = datetime.strptime(d_max, "%Y-%m-%d").date()
+        d0 = datetime.strptime(min_d_str, "%Y-%m-%d").date()
+        d1 = datetime.strptime(max_d_str, "%Y-%m-%d").date()
     except Exception:
         return None
 
-    if (d1 - d0).days > max_days:
+    if (d1 - d0).days > max_days - 1:
         d0 = d1 - timedelta(days=max_days - 1)
 
     calendar_dates: list[str] = []
@@ -1627,80 +1747,17 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
     all_5min_total_vals: list[int] = []
 
     for d_str in calendar_dates:
-        if d_str not in dates_present:
+        if d_str not in days_present_set:
             hourly[d_str] = None
             five_min[d_str] = None
             continue
 
         days_present_count += 1
-        h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
-        b_data: dict[int, list[Any]] = {}
+        h_data = msk_raw_hourly.get(d_str)
+        if h_data is None:
+            h_data = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
 
-        file_path = dates_present[d_str]
-        try:
-            with file_path.open('r', encoding='utf-8', errors='replace') as fp:
-                for line in fp:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        row = json.loads(line)
-                    except Exception:
-                        continue
-                    if not isinstance(row, dict):
-                        continue
-
-                    ts = str(row.get('ts') or '')
-                    if len(ts) < 16 or ts[10] != 'T':
-                        continue
-                    try:
-                        hour = int(ts[11:13])
-                        minute = int(ts[14:16])
-                    except Exception:
-                        continue
-                    if not (0 <= hour < 24 and 0 <= minute < 60):
-                        continue
-
-                    tok = row.get('total_tokens')
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get('prompt_tokens') or 0) + (row.get('completion_tokens') or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
-
-                    cat = classify_model(str(row.get('model') or ''))
-                    comp = str(row.get('component') or 'unknown').strip().lower()
-                    b_idx = hour * 12 + (minute // 5)
-
-                    total_tokens_all += tok
-                    total_calls_all += 1
-
-                    if cat == 'self_hosted':
-                        local_tokens_all += tok
-                        h_data[hour][0] += tok
-                    elif cat == 'vendor':
-                        gateway_tokens_all += tok
-                        h_data[hour][1] += tok
-                    else:
-                        other_tokens_all += tok
-                        h_data[hour][2] += tok
-                    h_data[hour][3] += tok
-                    h_data[hour][4] += 1
-                    h_data[hour][5][comp] = h_data[hour][5].get(comp, 0) + tok
-
-                    if b_idx not in b_data:
-                        b_data[b_idx] = [0, 0, 0, 0, 0, {}]
-                    if cat == 'self_hosted':
-                        b_data[b_idx][0] += tok
-                    elif cat == 'vendor':
-                        b_data[b_idx][1] += tok
-                    else:
-                        b_data[b_idx][2] += tok
-                    b_data[b_idx][3] += tok
-                    b_data[b_idx][4] += 1
-                    b_data[b_idx][5][comp] = b_data[b_idx][5].get(comp, 0) + tok
-        except Exception:
-            hourly[d_str] = None
-            five_min[d_str] = None
-            continue
+        b_data = msk_raw_5min.get(d_str, {})
 
         fin_h: list[list[Any]] = []
         for h in range(24):
@@ -1708,6 +1765,11 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
             top_c = max(c_dict.items(), key=lambda x: x[1])[0] if c_dict else ''
             loc_t, gw_t, oth_t, tot_t, calls = h_data[h][0], h_data[h][1], h_data[h][2], h_data[h][3], h_data[h][4]
             fin_h.append([loc_t, gw_t, oth_t, tot_t, calls, top_c])
+            total_tokens_all += tot_t
+            total_calls_all += calls
+            local_tokens_all += loc_t
+            gateway_tokens_all += gw_t
+            other_tokens_all += oth_t
             if gw_t > 0:
                 all_hourly_gateway_vals.append(gw_t)
             if loc_t > 0:
@@ -1731,33 +1793,35 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
         five_min[d_str] = fin_b
 
     return {
-        "dates": calendar_dates,
-        "hourly": hourly,
-        "five_min": five_min,
-        "summary": {
-            "total_tokens": total_tokens_all,
-            "total_calls": total_calls_all,
-            "self_hosted_tokens": local_tokens_all,
-            "vendor_tokens": gateway_tokens_all,
-            "other_tokens": other_tokens_all,
-            "local_tokens": local_tokens_all,
-            "gateway_tokens": gateway_tokens_all,
-            "days_span": len(calendar_dates),
-            "days_present": days_present_count,
-            "days_missing": len(calendar_dates) - days_present_count,
-            "quantiles_hourly": {
-                "gateway": compute_quantiles(all_hourly_gateway_vals),
-                "local": compute_quantiles(all_hourly_local_vals),
-                "total": compute_quantiles(all_hourly_total_vals),
+        'dates': calendar_dates,
+        'hourly': hourly,
+        'five_min': five_min,
+        'summary': {
+            'total_tokens': total_tokens_all,
+            'total_calls': total_calls_all,
+            'self_hosted_tokens': local_tokens_all,
+            'vendor_tokens': gateway_tokens_all,
+            'other_tokens': other_tokens_all,
+            'local_tokens': local_tokens_all,
+            'gateway_tokens': gateway_tokens_all,
+            'days_span': len(calendar_dates),
+            'days_present': days_present_count,
+            'days_missing': len(calendar_dates) - days_present_count,
+            'timezone': 'MSK',
+            'timezone_offset_hours': 3,
+            'source_timezone': 'UTC',
+            'quantiles_hourly': {
+                'gateway': compute_quantiles(all_hourly_gateway_vals),
+                'local': compute_quantiles(all_hourly_local_vals),
+                'total': compute_quantiles(all_hourly_total_vals),
             },
-            "quantiles_5min": {
-                "gateway": compute_quantiles(all_5min_gateway_vals),
-                "local": compute_quantiles(all_5min_local_vals),
-                "total": compute_quantiles(all_5min_total_vals),
+            'quantiles_5min': {
+                'gateway': compute_quantiles(all_5min_gateway_vals),
+                'local': compute_quantiles(all_5min_local_vals),
+                'total': compute_quantiles(all_5min_total_vals),
             },
         },
     }
-
 
 
 def title_case_name(name: Any) -> str:
@@ -2342,6 +2406,9 @@ def _lane_b_layout(
 
 
 def _lineage_day(ts: Any) -> str:
+    dt = _parse_iso_ts(ts)
+    if dt is not None:
+        return dt.astimezone(MSK_TZ).strftime('%Y-%m-%d')
     value = str(ts or '')
     return value[:10] if len(value) >= 10 else ''
 
@@ -2903,13 +2970,15 @@ def _ts_range_label(evolution_tree: dict[str, Any] | None) -> str:
         return ''
 
     def _short(dt: datetime) -> str:
-        return dt.strftime('%b %d').replace(' 0', ' ')
+        dt_msk = dt.astimezone(MSK_TZ)
+        return dt_msk.strftime('%b %d').replace(' 0', ' ')
 
     lo, hi = min(dts), max(dts)
-    if lo.year == hi.year:
-        label = f'{_short(lo)} - {_short(hi)}'
+    lo_msk, hi_msk = lo.astimezone(MSK_TZ), hi.astimezone(MSK_TZ)
+    if lo_msk.year == hi_msk.year:
+        label = f'{_short(lo_msk)} - {_short(hi_msk)} MSK'
     else:
-        label = f'{_short(lo)} {lo.year} - {_short(hi)} {hi.year}'
+        label = f'{_short(lo_msk)} {lo_msk.year} - {_short(hi_msk)} {hi_msk.year} MSK'
     return f'<text x="10" y="46" class="lane-note">time range: {esc(label)}</text>'
 
 
@@ -3575,13 +3644,14 @@ def build_cycle_feed(
                 )
             cost_html += '</div>'
 
-        # Issue #72: day grouping (newest-first) + outcome filter attribute.
+        # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
         if history_mode and ts_val:
-            day = str(ts_val)[:10]
+            dt = _parse_iso_ts(ts_val)
+            day = dt.astimezone(MSK_TZ).strftime('%Y-%m-%d') if dt is not None else str(ts_val)[:10]
             if day != last_day:
                 last_day = day
-                day_html = f'<li class="feed-day-header">{esc(day)}</li>\n        '
+                day_html = f'<li class="feed-day-header">{esc(day)} MSK</li>\n        '
 
         rows.append(f'''
         {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" id="cycle-{esc(cid)}">
@@ -4820,7 +4890,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 <section class="panel" id="panel-tokens">
   <div class="panel-header">
     <h2>Token Heatmap</h2>
-    <p class="panel-subtitle">Hourly and 5-minute LLM token consumption across all recorded autonomous cycles (UTC).</p>
+    <p class="panel-subtitle">Hourly and 5-minute LLM token consumption across all recorded autonomous cycles (displayed in MSK, UTC+3; source stored in UTC).</p>
   </div>
 
   <div class="tkn-kpi-strip">
@@ -4890,13 +4960,15 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       <strong>Инфраструктурный маршрут:</strong> обе категории моделей маршрутизируются через общий локальный шлюз LiteLLM на <code>192.168.1.35:4001</code>.
       EeePC выступает исключительно локальным оркестратором (CPU Atom N270, 2 ГБ RAM) — вызовы <code>un/qwen</code> обслуживаются на выделенной GPU в LAN (RTX 3090Ti, без потокенной оплаты), а вызовы <code>cl/*</code> и <code>an/*</code> уходят во внешние вендорские API.
       При отказе LAN-шлюза вызовы обеих категорий останавливаются одновременно (резервирования между ними нет).
+      <br><br>
+      <strong>Часовой пояс:</strong> журнал и исходные данные хранятся в <strong>UTC</strong>. Все графики, ячейки часов, строки дней и 5-минутные интервалы пересчитаны и отображаются в <strong>MSK (UTC+3)</strong>. Строка даты MSK строго содержит 24 часа с 00:00 до 23:59 MSK (события после 21:00 UTC попадают в следующие сутки MSK).
     </div>
   </div>
 
   <div class="tkn-card tkn-detail-card" id="tkn-day-detail">
     <div class="tkn-card-header">
       <h3>Day Detail: <span id="tkn-active-date-label"></span></h3>
-      <span class="tkn-card-sub">288 five-minute intervals (24h UTC) &bull; Hover for breakdown, click an hour above to inspect</span>
+      <span class="tkn-card-sub">288 five-minute intervals (24h MSK) &bull; Источник: UTC &bull; Отображение: MSK (UTC+3) &bull; Hover for breakdown, click an hour above to inspect</span>
     </div>
     <div class="tkn-strip-wrap" id="tkn-strip-wrap"></div>
     <div class="tkn-strip-hours">
@@ -5304,8 +5376,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               cell.classList.add(lvlPrefix + '-' + lvl);
             }}
             cell.addEventListener('mouseenter', (e) => {{
-              const hStr = String(h).padStart(2, '0') + ':00 UTC';
-              let html = '<div class="tkn-tt-title">' + d + ' ' + hStr + '</div>';
+              const hStr = String(h).padStart(2, '0') + ':00 MSK';
+          const utcH = String((h - 3 + 24) % 24).padStart(2, '0');
+              let html = '<div class="tkn-tt-title">' + d + ' ' + hStr + ' <span style="font-size:11px;color:#8b949e">(' + utcH + ':00 UTC)</span></div>';
               if (row[2] === 0) {{
                 html += '<div>0 tokens (Quiet hour, 0 calls)</div>';
               }} else {{
@@ -5365,7 +5438,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         cell.className = 'tkn-strip-cell';
         const h = Math.floor(b / 12);
         const m = (b % 12) * 5;
-        const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' UTC';
+        const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' MSK';
+        const utcH = String((h - 3 + 24) % 24).padStart(2, '0');
 
         if (isMissing) {{
           cell.classList.add('cell-nodata');
@@ -5385,7 +5459,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
             const lvl = getLevel(gw > 0 ? gw : loc, q);
             cell.classList.add(gw > 0 ? ('gw-lvl-' + lvl) : ('loc-lvl-' + lvl));
             cell.addEventListener('mouseenter', (e) => {{
-              let html = '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div>';
+              let html = '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + ' <span style="font-size:11px;color:#8b949e">(' + utcH + ':' + String(m).padStart(2, '0') + ' UTC)</span></div>';
               html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(tot) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(gw) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(loc) + '</span></div>';
