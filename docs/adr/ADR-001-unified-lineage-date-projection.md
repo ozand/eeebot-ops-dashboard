@@ -1,97 +1,148 @@
 # ADR-001: Unified Lineage Graph with Date-Projection Filtering
 
-- Status: Proposed
-- Date: 2026-09-05
-- Deciders: operator, autonomous dev session
-- Consulted: subagent-chat-01a071f4-ea48-77ea (independent reviewer)
-- Informed: issue #218, #214, #213, #215, #212
+- **Status**: Accepted (Design Gate Approved with Invariant Constraints, Issue #218)
+- **Date**: 2026-09-05
+- **Deciders**: @ozand, @reviewer (subagent-chat-01a071f4-ea48-77ea)
+- **Consulted**: Issue #214, Issue #218, PR #222
 
-## Context and Problem Statement
+---
 
-`lineage.html` previously partitioned lineage history into separate `<section class="lineage-day-group">` elements, each with its own independent SVG tree. When a cycle's parent commit lived on an earlier day, the cross-day edge was broken into a textual `↩ from <day>` stub instead of drawing a continuous edge in the graph. Furthermore, date filtering worked by hiding whole day sections, tearing graph topology apart at arbitrary 00:00 UTC boundaries.
+## Context
 
-The operator and user requirement is unambiguous: **lineage must be rendered as one continuous graph over available history**. Selecting a date range or "24h" must act as a visibility projection over this single canonical graph, reducing visible clutter without destroying branch continuity, recomputing parentage, or inventing false direct edges across hidden nodes.
+`lineage.html` previously partitioned cycles into independent daily SVG trees (`LINEAGE_DAYS=14` calendar days, each day capped at `LINEAGE_DAY_CAP=120` trunk and 120 side nodes). Each day rendered as an isolated SVG with its own layout and coordinate system:
+1. Cross-day edges were drawn as hanging stubs pointing at the boundary.
+2. Filter buttons (`Today`, `Yesterday+Today`, `24h`, custom range) manipulated day-container visibility (`display: none`), so "24h" actually showed 1 or 2 calendar days rather than a true rolling 24-hour UTC window.
+3. Edges across day boundaries were not connected, breaking lineage continuity.
+
+Issue #218 mandates replacing this multi-tree architecture with a **single unified DAG** across the available history, with client-side interactive date filtering acting as a **visibility projection** over that graph.
+
+---
+
+## Decision Drivers
+
+1. **Continuity**: The lineage graph must represent the true DAG of evolution cycles and commits across time without artificial day-boundary cuts.
+2. **True Rolling 24h**: The `24h` filter must filter nodes strictly by `[now - 24h, now]`, resolving Issue #214 properly.
+3. **Immutability of History**: Filtering must never invent, delete, recompute, or mutate recorded graph edges.
+4. **Preservation of Branching**: Intermediate collapsed ancestors must preserve fork/junction structure and basis fidelity (`recorded` vs `inferred` vs `mixed`).
+5. **Traceability**: Stable, reversible node identities and deterministic URL hash routing.
+6. **Robustness**: Bounded DOM budget, defensive guards against cycles, malformed timestamps, and missing source data.
+
+---
 
 ## Decision
 
-1. **One Canonical Graph Payload**
-   The generator emits one unified payload containing `nodes[]` and `edges[]` covering the full available source history (up to bounded caps).
-   - Every node has a globally unique `node_id`:
-     - Commit-bearing node: `c:<sha>`
-     - Attempt/leaf without commit: `a:<cycle_id>[:<disambiguator>]`
-   - `sha` is nullable (`str | None`); failed/skipped attempts without a commit have `sha: null` and are NEVER assigned synthetic commit SHAs.
-   - Canonical edges connect `source_node_id` -> `target_node_id` with immutable `basis` (`recorded` | `inferred`).
-   - The canonical graph payload is strictly immutable: client-side date filtering never adds, removes, or rewrites canonical edges or node parentage.
+### 1. Data Model & Node Identity
 
-2. **DOM Element IDs and Deep Links**
-   - Each node element in the SVG has a strictly unique DOM id: `id="node-" + safe_id(node_id)` (e.g. `id="node-c-ecbe56903f35"` or `id="node-a-cycle-123"`).
-   - Direct deep link: `#node-<node_id>` selects that exact node.
-   - Legacy alias: `#node-<cycle_id>` is preserved as an alias. If a cycle produced multiple nodes (e.g. 2 commits or 1 commit + 1 leaf attempt), the alias deterministically selects the node with the latest `ts` (tie-break by `node_id` lexicographically). The details panel/card explicitly notes: `"Node 1 of N for <cycle_id>"` with links/buttons to toggle between sibling nodes of that cycle.
-   - Deep link outside active filter window: immediately switches the UI filter controls to `All` (visually marking `All` as active) so the user sees the active filter state honestly, scrolls the target node into view, and opens the details card.
+Every node in the graph has a globally unique, deterministic, injective identifier:
+- **Git Commit Node**: `c:<sha>` (where `<sha>` is the exact commit SHA).
+- **Non-Commit / Attempt Node**: `a:<cycle_id>[:<disambiguator>]` (e.g. `a:cycle-ecbe56903f35`).
+- **SHA Nullability**: The `sha` attribute is `str | null`. A failed or non-committing cycle never receives a fabricated commit SHA (the legacy `leaf:<cid>` convention is retired).
+- **Injective DOM & Hash Mapping**:
+  - A single bidirectional function maps `node_id` to DOM ID and URL hash:
+    ```javascript
+    function nodeIdToDomId(nodeId) {
+      return "node-" + encodeURIComponent(nodeId).replace(/%/g, "_");
+    }
+    function domIdToNodeId(domId) {
+      if (!domId.startsWith("node-")) return null;
+      return decodeURIComponent(domId.slice(5).replace(/_/g, "%"));
+    }
+    ```
+  - This avoids collisions between hyphenated names and colon namespaces.
+- **Deep-Linking & Legacy Alias**:
+  - Direct exact link: `#node-<encoded_node_id>` selects that exact node.
+  - Legacy alias `#node-<cycle_id>`: if multiple nodes share the same `cycle_id` (e.g. a failed proposer attempt and a subsequent commit node), the alias deterministically resolves to the node with the **latest `ts`** (tie-broken by `node_id` lexicographically). The details panel explicitly states: `"Node 1 of N for cycle-X"` with navigation links to the other attempts.
+  - Unknown deep-link: if a hash points to a node not present in loaded history, the UI displays an explicit non-modal notice: `"Node <id> not found in loaded history (coverage: <from> to <to>)"`.
 
-3. **Visibility Projection Semantics**
-   - Date filtering is a client-side visibility projection over the single canonical graph.
-   - Strict UTC boundaries:
-     - `24h`: exact timestamp range `[now - 24h, now]` where `now` is captured once at filter invocation time.
-     - `Today`: `[today_midnight_utc, tomorrow_midnight_utc)`.
-     - `Yesterday+Today (UTC calendar)`: explicitly labelled as calendar days `[yesterday_midnight_utc, tomorrow_midnight_utc)`.
-     - Custom date range: `[from_utc_midnight, to_utc_midnight + 24h)` (half-open, inclusive of the entire 'to' date up to the next midnight, avoiding sub-millisecond truncation).
-     - Range validation: if `from > to`, the UI renders a clear warning `"Invalid date range: 'from' must be before or equal to 'to'"` and does not clear or corrupt the graph.
-   - Nodes inside the window are visible primary nodes.
-   - Empty range: when no nodes match the active window, the UI renders an explicit empty-state message `"No cycles recorded in selected interval"`, never falling back to an older graph.
+### 2. Canonical Resolution & Parent Invariants
 
-4. **Branching Preservation & Contextual Ancestor Collapsing**
-   - Ancestors outside the active window required to connect visible nodes are rendered as contextual ancestry.
-   - **Maximal Non-branching Chains**: out-of-window nodes are collapsed if and only if they form a linear path without junctions (every intermediate node has in-degree == 1 and out-degree == 1 in the ancestor forest, and no other visible descendants).
-   - **Junction Preservation**: if a hidden ancestor `J` is a common ancestor of two or more distinct visible branches, `J` MUST NOT be collapsed into an edge. `J` is rendered as a distinct **context junction node** (`.lineage-context-node`, `data-context="junction"`).
-   - **Collapsed Path Marker**: linear collapsed chains are rendered as a single context edge with:
-     - Visible label counting hidden **NODES**: `"N hidden nodes"` / `"N ancestors"`.
-     - DOM provenance attributes: `data-edge-type="collapsed"`, `data-collapsed-nodes="N"`, `data-collapsed-edges="M"`, `data-path="id1->id2->..."`.
-     - Mixed basis: if the collapsed chain contains both `recorded` and `inferred` steps, its basis is composite `data-basis="mixed"` and must NEVER be styled or labelled as `recorded`.
-     - Interactive expansion: clicking the collapsed path marker expands that linear segment or switches filter to `All`.
+Parent resolution occurs during server-side payload generation across the entire loaded ledger history **BEFORE** applying retention caps:
+1. **Recorded Parent Priority**: If `parent_sha` is recorded and present in the loaded history, the edge is `basis: 'recorded'`.
+2. **Missing Recorded Parent**: If `parent_sha` is recorded but absent from loaded history (e.g. before retention cutoff), the node retains `parent_sha: '<sha>'`, `parent_known: false`. **A recorded unknown parent is NEVER replaced by a chronological guess.**
+3. **Missing Source != Proven Root**: An unresolvable parent indicates an out-of-coverage boundary, not that the node is a proven root of repository history. The UI displays an explicit boundary indicator.
+4. **Inferred Edges**: Inferred parents are used **ONLY** when no parent was recorded at all (e.g. leaf attempts), linking to the latest trunk node at or before the node's timestamp with explicit `basis: 'inferred'`.
+5. **Multiple Roots & Extra Parents**: Multiple roots are natural in a forest (initial commits, truncated boundaries). If merge commits with multiple parents occur, the primary parent is drawn as the structural edge and secondary parents are documented in `node.secondary_parents`.
+6. **Rollback Events**: Rollbacks are recorded as distinct forward cycles/events in the timeline; history is never rewritten or mutated.
 
-5. **Coverage, Retention Budget & Caps**
-   - Tier 1: Source read window (`LEDGER_HISTORY_DAYS` in generator).
-   - Tier 2: Emitted graph cap:
-     - Target budget: `LINEAGE_MAX_NODES = 1500` nodes (or newest 14 calendar days).
-     - Deterministic retention: newest events up to cap; trunk HEAD / current SHA is always anchored and retained.
-     - The payload includes an explicit `coverage` block:
-       `{ "from_ts": "...", "to_ts": "...", "raw_node_count": N, "emitted_node_count": M, "truncated": bool, "truncated_before_ts": "...", "truncated_count": K }`
-     - Edges pointing to ancestors before `truncated_before_ts` have `source_available: false, source_boundary: "truncated_history"`.
-     - Truncated boundaries are explicitly labelled as history truncation, NOT as proven root commits.
-   - Tier 3: UI filter projection over the emitted graph.
+### 3. Emitted Graph Budget & Retention
 
-6. **Defensive Graph Traversal**
-   - All graph traversals (depth, ancestor walk, descendant collection) maintain a `visited: set[str]` guard to prevent infinite loops on corrupted or cyclic parent references. If a cycle is detected, traversal terminates and flags `cycle_detected: true`.
-   - Timestamps: malformed or unparseable timestamps are parsed to `ts: null`, tagged with `data-ts-status="invalid"`, and rendered safely at boundary slots rather than throwing unhandled exceptions.
+Reader constants from `scripts/techtree_viewer.py`:
+- `LEDGER_HISTORY_DAYS = 90` (history read from disk: `cycles-*.jsonl.gz` + live `cycles.jsonl`).
+- Deduplication: raw ledger rows (which contain multiple phases per cycle) are deduplicated to unique candidate nodes.
+- Emitted payload budget:
+  - `LINEAGE_MAX_NODES = 1500` maximum nodes in the embedded payload.
+  - Retention selects the newest 1500 unique nodes by timestamp order.
+  - **Anchor invariant**: The current HEAD / `current_sha` node is unconditionally retained inside the budget (replacing the oldest node if necessary).
+  - Truncation metadata is explicitly declared:
+    ```json
+    "coverage": {
+      "raw_read_rows": 4820,
+      "unique_candidate_nodes": 1820,
+      "emitted_nodes": 1500,
+      "truncated": true,
+      "truncated_before_ts": "2026-08-23T14:00:00Z",
+      "from_ts": "2026-08-23T14:00:00Z",
+      "to_ts": "2026-09-05T22:00:00Z"
+    }
+    ```
+  - Graph projection and client filtering **NEVER recompute parent edges**.
 
-7. **Preservation of Prior Verified Increments**
-   - #212: outcome styles (`integrated`, `skipped`, `partial`, `failed`), dash styles, and mobile flex-wrap legend (320px/390px) remain fully preserved.
-   - #213: cycle details panel, keyboard navigation (Tab, Enter, Space), close button (`×`), Escape key handling, focus return, and `history.replaceState` hash updates remain preserved.
-   - #215: `gate_violations` array preservation from ledger to JSON to details card remains preserved.
+### 4. Projection Engine & Immutability Contract
+
+The canonical graph in the payload (`nodes[]`, `edges[]`) is **strictly immutable**. Client-side filtering computes a projected view for rendering:
+1. **Node Visibility**: A node is visible if its timestamp falls within the active filter window.
+2. **Invalid Timestamps**: Nodes with null or unparseable timestamps are excluded from time-bounded windows (`Today`, `24h`, custom range) and appear only under `All` in an undated section with `data-ts-status="invalid"`.
+3. **Branching-Preserving Collapse**:
+   - Only **maximal non-branching chains** of out-of-window ancestors are collapsed into a synthetic edge.
+   - If an out-of-window ancestor is a **common ancestor / junction** for two or more visible subtrees, it **MUST NOT** be collapsed; it is rendered as a **context junction node** (`class="lineage-context-node"`).
+   - If an out-of-window ancestor path contains both `recorded` and `inferred` segments, the resulting collapsed edge basis is `'mixed'`, rendered with distinct dash styling. It is **NEVER** labelled `recorded`.
+4. **DOM Provenance Attributes**:
+   - Every rendered SVG edge carries: `data-edge-type="canonical|context|collapsed"`, `data-source="<node_id>"`, `data-target="<node_id>"`, `data-basis="recorded|inferred|mixed"`.
+   - Collapsed edges additionally carry: `data-collapsed-nodes="N"`, `data-collapsed-edges="M"`, `data-path="<id1>-><id2>..."`.
+
+### 5. Filter Controls & Window Semantics
+
+- **`24h`**: Strict UTC rolling window `[now - 24h, now]`. Value of `now` is captured exactly once per evaluation.
+- **`Today`**: `[today 00:00:00.000Z, now]`.
+- **`Yesterday+Today`**: Labelled `Yesterday+Today (UTC calendar)`, spanning `[yesterday 00:00:00.000Z, now]`.
+- **`Range [from, to]`**: Half-open interval `[from 00:00:00.000Z, to + 1 day 00:00:00.000Z)`. If `from > to`, UI shows an inline error: `"Invalid range: 'from' must be before or equal to 'to'"` without corrupting the graph.
+- **Deep-link Out-of-Window**: If a deep-link targets a node outside the current filter window, the UI automatically switches the filter to `All` (updating the active button state) so the target node is visible and focused.
+
+---
 
 ## Consequences
 
 ### Positive
-- Cross-day lineages render continuously without artificial date cuts.
-- Date filters reduce cognitive clutter without mangling graph topology.
-- Canonical edges are immutable and verifiable.
-- Ambiguity regarding multiple SHAs per cycle is resolved with unique `node_id`s and a deterministic legacy fallback.
-- No third-party heavyweight DAG library (e.g. d3-dag) is required; existing forest layout is reused and extended.
+- Cross-day lineage continuity is fully restored; edges span seamlessly across time.
+- Issue #214 is completely resolved by strict UTC 24-hour evaluation.
+- Branching topology and edge basis fidelity are preserved under all filter settings.
+- Memory and DOM consumption remain strictly bounded under `LINEAGE_MAX_NODES = 1500`.
 
 ### Negative / Trade-offs
-- Rendering a single SVG across 14 days requires careful coordinate scaling and viewport containment.
-- Collapsed-chain calculation introduces client-side graph traversal logic that must be unit-tested.
+- Client-side projection logic is required in vanilla JS (~250 lines), replacing simple CSS `display: none`.
+- Layout must handle disconnected forest roots and context junction nodes gracefully.
 
-## Test Contract
+---
 
-The test suite must verify:
-1. **Canonical Immutability**: `payload.edges` remains identical in count, source, target, and basis before and after any client projection call.
-2. **Displayed Edge Provenance**: every displayed SVG edge maps either to a canonical edge or a valid collapsed path (`data-path` matches a real path in canonical edges).
-3. **Unique DOM IDs**: every rendered node has a unique `id="node-..."` even when 2 SHAs and 1 leaf share the same `cycle_id`.
-4. **Junction Preservation**: hidden common ancestor of two visible branches renders as a context node, not a merged edge.
-5. **Mixed Basis**: a collapsed chain with both recorded and inferred links has `data-basis="mixed"`, not `recorded`.
-6. **Strict 24h Boundary**: node at `now - 24h` is in-window; node at `now - 24h - 1s` is out-of-window (context only if ancestor).
-7. **Invalid Range**: `from > to` displays error text and does not crash.
-8. **Deep Link Auto-All**: opening `#node-<out_of_window_id>` sets filter to `All` and opens card.
-9. **Regression Gate**: #212, #213, #215 assertions continue to pass.
+## Verification & Test Plan
+
+1. **Exact 24h Boundary**:
+   - Node at `now - 24h - 1ms`: strictly excluded from `24h`.
+   - Node at `now - 24h + 1ms`: strictly included in `24h`.
+2. **Boundary & Empty Range**:
+   - Filter range with 0 matching nodes renders clean empty state with note, no JS exception.
+3. **Cross-Day Chain & Fork**:
+   - Chain crossing UTC midnight renders continuous edge without stubs.
+   - Hidden common ancestor branching to two visible descendants on different days renders as context junction node.
+4. **Mixed & Inferred Collapse**:
+   - Hidden path containing 1 recorded and 1 inferred step collapses to `data-basis="mixed"`.
+5. **Unknown Parent & Cycle Guard**:
+   - Recorded parent missing from history renders with `parent_known: false` boundary stub; does NOT fall back to chronological guess.
+   - Deliberately cyclic parent links in test data break cleanly via `visited` guard without infinite recursion.
+6. **Null / Malformed Timestamps**:
+   - Node with `ts: "corrupt"` excluded from `24h`/`Today`, included in `All` with `data-ts-status="invalid"`.
+7. **Node Identity & Legacy Alias**:
+   - Cycle with 2 commit nodes and 1 non-commit leaf: unique DOM IDs for all 3; `#node-<cycle_id>` alias selects latest node; UI indicates "1 of 3 nodes for cycle".
+8. **Deep Link & Responsive Cold Load**:
+   - Deep link to node outside initial window switches filter to `All`, scrolls target into view, opens card.
+   - Verified at 320px, 390px, and desktop viewports.
