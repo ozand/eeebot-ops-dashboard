@@ -1093,8 +1093,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             body_box = body.bounding_box()
             assert heading_box is not None and heading_box['y'] >= 0 and heading_box['y'] + heading_box['height'] <= 844
             assert body_box is not None and 0 <= body_box['y'] < 0.9 * 844
-            fresh.locator('#cycle-details-close').focus()
-            assert fresh.evaluate("() => document.activeElement === document.getElementById('cycle-details-close')")
+            assert fresh.locator('#cycle-details-close').evaluate("(node) => document.activeElement === node")
             assert errors == [] and fresh_errors == []
             fresh.close()
             browser.close()
