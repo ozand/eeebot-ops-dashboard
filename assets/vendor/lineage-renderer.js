@@ -336,7 +336,9 @@
     showNote(projection.note || win.note || '');
     var coverage = payload.coverage || {};
     var coverageEl = document.querySelector('.lineage-coverage-note');
-    if (coverageEl) coverageEl.textContent = coverageEl.getAttribute('data-default-text') || ('Available graph: ' + (coverage.emitted_nodes || 0) + ' of ' + (coverage.unique_candidate_nodes || 0) + ' candidate nodes emitted; ' + (coverage.excluded_nodes || 0) + ' omitted by retention; older or missing ancestry may be unavailable.');
+    if (coverageEl && !coverageEl.getAttribute('data-default-text')) coverageEl.setAttribute('data-default-text', coverageEl.textContent);
+    // Projection changes visibility only; retain the complete server-formatted
+    // receipt instead of replacing it with a lossy fallback string.
     renderUnified(svg, payload, projection);
   }
   function selectNode(token) {

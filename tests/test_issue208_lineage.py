@@ -950,3 +950,78 @@ def test_issue213_deep_link_panel_visible_after_load(tmp_path: Path, viewport_wi
         f"top={result['panelTop']:.0f}, vh={result['viewportHeight']}; {result}"
     )
     assert result['hasSelection']
+
+# #218 coverage acceptance increment: durable regression tests for the visible receipt
+# and the distinction between actual recorded-parent loss, inferred ancestry, and
+# retention-boundary omission. These are deliberately small and deterministic.
+def test_issue218_coverage_receipt_and_parent_statuses() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-unknown', 'sha': 'unknown', 'parent_sha': 'missing', 'ts': '2026-01-01T00:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'ts': '2026-01-01T00:02:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'root'}, rows, ledger_history=rows, now='2026-01-01T01:00:00Z')
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None
+    payload = json.loads(match.group(1))
+    assert payload['coverage']['unique_candidate_nodes'] == 3
+    assert payload['coverage']['emitted_nodes'] == 3
+    assert payload['coverage']['excluded_nodes'] == 0
+    assert payload['coverage']['retention_limit'] == tv.LINEAGE_MAX_NODES
+    nodes = {node['node_id']: node for node in payload['nodes']}
+    assert nodes['c:root']['parent_status'] == 'root'
+    assert nodes['c:unknown']['parent_status'] == 'recorded_unknown'
+    assert nodes['a:cycle-attempt']['parent_status'] == 'inferred'
+    assert 'lineage-coverage-note' in html
+    assert 'Available graph: 3 of 3 candidate nodes emitted' in html
+    assert 'data-parent-status="recorded_unknown"' in html
+
+
+def test_issue218_coverage_retention_reports_excluded_nodes_and_boundary_status() -> None:
+    rows = []
+    for index in range(tv.LINEAGE_MAX_NODES + 2):
+        rows.append({
+            'phase': 'evolution_tree',
+            'cycle_id': f'cycle-{index}',
+            'sha': f'sha-{index}',
+            'parent_sha': f'sha-{index - 1}' if index else '',
+            'ts': f'2026-01-01T00:{index // 60:02d}:{index % 60:02d}Z',
+        })
+    # The current node is deliberately older than the retention cut and must be pinned.
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'sha-0'}, rows, ledger_history=rows, now='2026-01-02T00:00:00Z')
+    match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, re.S)
+    assert match is not None
+    payload = json.loads(match.group(1))
+    coverage = payload['coverage']
+    assert coverage['unique_candidate_nodes'] == tv.LINEAGE_MAX_NODES + 2
+    assert coverage['emitted_nodes'] == tv.LINEAGE_MAX_NODES
+    assert coverage['excluded_nodes'] == 2
+    assert coverage['retention_limit'] == tv.LINEAGE_MAX_NODES
+    assert coverage['truncated'] is True
+    assert any(node['node_id'] == 'c:sha-0' and node.get('current') for node in payload['nodes'])
+    assert 'omitted by retention' in html
+
+
+@pytest.mark.parametrize('viewport_width', [320, 390])
+def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'root'}, rows, ledger_history=rows, now='2026-01-01T01:00:00Z')
+    page_file = tmp_path / 'lineage.html'
+    page_file.write_bytes(html.encode('utf-8'))
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+        page.goto(page_file.as_uri())
+        page.wait_for_load_state('networkidle')
+        page.wait_for_selector('.lineage-coverage-note')
+        note = page.locator('.lineage-coverage-note')
+        assert note.inner_text().startswith('Available graph:')
+        assert note.bounding_box()['x'] >= 0
+        assert note.bounding_box()['x'] + note.bounding_box()['width'] <= viewport_width + 1
+        page.locator('[data-lineage-filter="today"]').click()
+        assert page.locator('.lineage-coverage-note').inner_text().startswith('Available graph:')
+        browser.close()
