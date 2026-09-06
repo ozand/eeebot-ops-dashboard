@@ -297,6 +297,8 @@
       if (node.parent_known === false && node.parent_status && node.parent_status !== 'root' && node.parent_status !== 'inferred') {
         var unknown = svgEl('text');
         unknown.setAttribute('class', 'lineage-hidden-parent');
+        unknown.setAttribute('data-parent-status', node.parent_status);
+        if (node.parent_boundary) unknown.setAttribute('data-boundary', node.parent_boundary);
         unknown.setAttribute('x', pos.x);
         unknown.setAttribute('y', pos.y - (node.current ? 26 : 14));
         unknown.setAttribute('text-anchor', 'middle');
@@ -312,6 +314,8 @@
       circle.setAttribute('data-node-id', node.node_id);
       if (node.sha) circle.setAttribute('data-sha', node.sha);
       if (node.ts_status === 'invalid') circle.setAttribute('data-ts-status', 'invalid');
+      if (node.parent_status) circle.setAttribute('data-parent-status', node.parent_status);
+      if (node.parent_boundary) circle.setAttribute('data-boundary', node.parent_boundary);
       circle.setAttribute('cx', pos.x);
       circle.setAttribute('cy', pos.y);
       circle.setAttribute('r', String(RADIUS));

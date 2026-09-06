@@ -1006,22 +1006,33 @@ def test_issue218_coverage_retention_reports_excluded_nodes_and_boundary_status(
 def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewport_width: int) -> None:
     pytest.importorskip('playwright')
     from playwright.sync_api import sync_playwright
-    rows = [
-        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
-    ]
-    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'root'}, rows, ledger_history=rows, now='2026-01-01T01:00:00Z')
-    page_file = tmp_path / 'lineage.html'
-    page_file.write_bytes(html.encode('utf-8'))
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
-        page.goto(page_file.as_uri())
-        page.wait_for_load_state('networkidle')
-        page.wait_for_selector('.lineage-coverage-note')
-        note = page.locator('.lineage-coverage-note')
-        assert note.inner_text().startswith('Available graph:')
-        assert note.bounding_box()['x'] >= 0
-        assert note.bounding_box()['x'] + note.bounding_box()['width'] <= viewport_width + 1
-        page.locator('[data-lineage-filter="today"]').click()
-        assert page.locator('.lineage-coverage-note').inner_text().startswith('Available graph:')
-        browser.close()
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'root', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture()
+    data['ledger_tail'] = rows
+    data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    html = pages['lineage.html']
+    expected = re.search(r'<div class="lineage-coverage-note"[^>]*>(.*?)</div>', html, re.S)
+    assert expected is not None
+    expected_text = re.sub(r'<[^>]+>', '', expected.group(1))
+    srv, base_url = _serve_lineage(html, json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.goto(base_url + '/lineage.html')
+            page.wait_for_load_state('networkidle')
+            note = page.locator('.lineage-coverage-note')
+            assert note.inner_text() == expected_text
+            assert page.locator('.lineage-node[data-parent-status="root"]').count() >= 1
+            for mode in ('today', '24h', 'all'):
+                page.locator(f'[data-lineage-filter="{mode}"]').click()
+                assert note.inner_text() == expected_text
+            box = note.bounding_box()
+            assert box is not None
+            assert box['x'] >= 0 and box['x'] + box['width'] <= viewport_width + 1
+            assert page.locator('body').evaluate('(el) => el.scrollWidth <= el.clientWidth')
+            browser.close()
+    finally:
+        srv.shutdown()
