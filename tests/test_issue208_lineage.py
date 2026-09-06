@@ -683,9 +683,10 @@ def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
 
 # ─── #213 acceptance-fix tests ────────────────────────────────────────────────
 
-def _serve_lineage(html, fake_details):
+def _serve_lineage(html, fake_details, details_delay: float = 0.0):
     import json as _json
     import threading
+    import time
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
     html_bytes = html.encode('utf-8')
@@ -696,6 +697,8 @@ def _serve_lineage(html, fake_details):
             pass
         def do_GET(self):
             if 'cycle-details' in self.path:
+                if details_delay:
+                    time.sleep(details_delay)
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -1033,6 +1036,62 @@ def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewpo
             assert box is not None
             assert box['x'] >= 0 and box['x'] + box['width'] <= viewport_width + 1
             assert page.locator('body').evaluate('(el) => el.scrollWidth <= el.clientWidth')
+            browser.close()
+    finally:
+        srv.shutdown()
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue218_click_generated_exact_permalink_survives_cold_load(tmp_path: Path, viewport_width: int) -> None:
+    """#218/#213: exact click-created encoded hash survives a new document."""
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-attempt', 'outcome': 'failed', 'ts': '2026-01-02T00:00:00Z'},
+    ]
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'commit'}, rows, ledger_history=rows, now='2026-01-02T01:00:00Z', cycle_details={})
+    fake_details = {'cycle-commit': {'cycle_id': 'cycle-commit', 'title': 'Commit card'}, 'cycle-attempt': {'cycle_id': 'cycle-attempt', 'title': 'Attempt card'}}
+    srv, base_url = _serve_lineage(html, fake_details, details_delay=0.15)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.goto(base_url + '/lineage.html')
+            page.wait_for_load_state('networkidle')
+            page.locator('.lineage-node[data-node-id="c:commit"]').click()
+            page.wait_for_selector('.cycle-details-body h3')
+            permalink = page.url
+            assert '#node-c%3Acommit' in permalink
+            fresh = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            fresh.goto(permalink)
+            fresh.wait_for_load_state('networkidle')
+            fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            assert not fresh.locator('#cycle-details-panel').get_attribute('hidden')
+            assert fresh.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:commit'
+            assert fresh.locator('.cycle-details-body h3').inner_text() == 'Commit card'
+            panel_box = fresh.locator('#cycle-details-panel').bounding_box()
+            assert panel_box is not None
+            assert panel_box['y'] < 0.9 * 844
+            fresh.close()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_unknown_exact_deep_link_shows_coverage_message(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-known', 'sha': 'known', 'parent_sha': '', 'ts': '2026-01-01T00:00:00Z'}]
+    html = tv.build_archive_tree({'nodes': {}, 'current_sha': 'known'}, rows, ledger_history=rows, now='2026-01-01T01:00:00Z')
+    srv, base_url = _serve_lineage(html, {})
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Amissing')
+            page.wait_for_load_state('networkidle')
+            page.wait_for_timeout(300)
+            assert 'not found in loaded history' in page.locator('.lineage-filter-note').inner_text()
             browser.close()
     finally:
         srv.shutdown()
