@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">233</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 19:44:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 17:13 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 17:20 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1194,7 +1194,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-d44625988920</span>
+      <span class="cycle-pill">cycle-749d922c7fbc</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1220,7 +1220,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 16:53:59.862685 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 17:17:10.604554 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1240,7 +1240,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,146c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,058c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1650,9 +1650,7 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">4,030 chars &bull; ~1,007 tokens</span></summary><div class="block-body"><pre><code># Memory
 
 ## Long-term Memory
-xt inspection](facts/bounded-text-inspection.md) - Safe text reading utilities return structured truncation metadata
-
-* [CLI positional arguments with standalone flags](facts/cli-positional-optional-for-standalone-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scripts support standalone flags
+e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scripts support standalone flags
 
 * [CLI stderr/JSON separation](facts/cli-stderr-json-separation.md) - CLI tools with JSON output must route logs to stderr
 
@@ -1699,6 +1697,8 @@ xt inspection](facts/bounded-text-inspection.md) - Safe text reading utilities r
 * [Validate open encoding binary mode filtering](facts/validate-open-encoding-binary-mode.md) - scripts/validate_open_encoding.py excludes binary mode open calls from encoding requirements
 
 * [Style validator execution modes](facts/style-validator-execution-modes.md) - scripts/check_style.py provides a --fast flag to avoid AST multi-pass timeouts
+
+* [Decay and archival preflight inspection](facts/decay_archival_policy.md) - Safety checklist requiring git commit history and do-not-touch policy inspection prior to executing script decay or archival demands
 </code></pre></div></details>
     <div class="reconciliation-box">
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
@@ -1708,9 +1708,9 @@ xt inspection](facts/bounded-text-inspection.md) - Safe text reading utilities r
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,146 chars &bull; ~2,036 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add decay and archival preflight inspection procedure to memory/facts/decay_archival_policy.md
-Request ID: llm-proposer-cycle-d44625988920
-Cycle ID: cycle-d44625988920
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,058 chars &bull; ~1,764 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add symbol-level function and class extraction to scripts/targeted_file_slice.py
+Request ID: llm-proposer-cycle-749d922c7fbc
+Cycle ID: cycle-749d922c7fbc
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1724,66 +1724,62 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 26f83c63 merge: integrate selfevo/cycle-cycle-d44625988920
+- 09bc3c11 docs(memory): add decay and archival preflight inspection policy fact
+- 0687daa1 fix(tests): point the two skill tests at their post-#1341 locations (#192)
 - c3e7d1c6 chore: record structured error for [cycle-de7121]
 - dcfb221f chore: record structured error for [cycle-44f3e4]
 - 898165bc merge: integrate selfevo/cycle-cycle-7299bd0ccae8
 - 3d61c97d docs(lessons): add lesson card on setting fast execution as default to prevent caller harness timeouts
 - 40de105e merge: integrate selfevo/cycle-cycle-26e8ad4fef79
-- b4469c6c docs(skills): add handle-loop-breaker execution strategy transition guide
-- 0f24371c merge: integrate selfevo/cycle-cycle-61034291295d
-- be19105c docs(lessons): add lesson card for diagnosing non-zero exit codes before re-executing scripts
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add lesson card on signature key heuristics for multi-schema validation: recent_duplicate_failure
 - Add lesson card on early target script modification within sequence turn budget: gate_failed
-- Add target script focus and scope discipline guide in skills/target_scope_discipline.md: mutation_surface_violation
-- Add lesson card for single-pass AST traversal to prevent repository analysis delays: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d44625988920.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-749d922c7fbc.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add decay and archival preflight inspection procedure to memory/facts/decay_archival_policy.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Documents safety checklist requiring git commit history and do-not-touch policy inspection prior to executing script decay or archival demands.\n\nTarget path: memory/facts/decay_archival_policy.md&quot;,
+    &quot;title&quot;: &quot;Add symbol-level function and class extraction to scripts/targeted_file_slice.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Enables early, direct inspection of target functions and classes in target scripts without loading entire files into token context, addressing cycle step and prompt token exhaustion.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add decay and archival preflight inspection procedure to memory/facts/decay_archival_policy.md (target: memory/facts/decay_archival_policy.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add symbol-level function and class extraction to scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;A dedicated decay and archival safety policy document exists in memory/facts/&quot;,
+    &quot;claim&quot;: &quot;scripts/targeted_file_slice.py supports extracting symbols by name with line numbers&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;memory/facts/decay_archival_policy.md&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260904-90931e43  Title: Support both repository-relative (&#x27;memory/facts/...&#x27;) and directory-relative (&#x27;facts/...&#x27;) markdown link formats in catalog index consistency tests
-Problem: In cycle-90931e43a3db, a markdown catalog index consistency test resolved every relative link in the index against a single base (the memory/ directory), so links written in the other common format — repository-relative (&#x27;memory/facts/...&#x27;) instead of directory-relative (&#x27;facts/...&#x27;) — were reported as missing files even though the target exists on disk. The test failed on a valid index purely bec
-Solution: When validating relative markdown links in a catalog index (e.g. memory/index.md), resolve each link against both candidate bases — the index file&#x27;s own directory and the repository root — and treat the link as valid if either resolution yields an existing file. Only report a link as missing when neither candidate path exists. This makes the consistency check format-agnostic for the two relative p
-If you apply this lesson, cite [Lesson LESS-20260904-90931e43] in your proposal/response.
+ID: LESS-20260826-87a1594c  Title: Implementing &quot;Add failure classification and detailed error context extraction to scripts/extract_last_failure.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/extract_last_failure.py, tests/test_extract_last_failure.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260826-87a1594c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When assigned a decay demand for a script whose deprecation/archival task recently failed, return no_valuable_task or formulate tests verifying deprecation behavior rather than repeating the failing a
-- Proposing an archival task on scripts/lesson_lookup.py collided with a recent failure (&#x27;Add archival deprecation docstring header and warning to scripts/lesson_lookup.py&#x27;), resulting in an immediate d
-- Ensure uncommitted workspace modifications are cleanly committed or reset before cycle initiation to prevent recurring &#x27;dirty_tree&#x27; harness startup aborts.
+- When assigned a subagent archive defect where script modifications to search_subagent_archive.py have recently failed, target companion tests under tests/ (e.g. tests/test_search_subagent_archive.py) 
+- Proposing status filtering and error detail extraction in scripts/search_subagent_archive.py triggered deduplication rejection (&#x27;skipped_recent_failure&#x27;) against the recent failure &#x27;Add error status f
 
 ## Concrete task to implement
 
-Title: Add decay and archival preflight inspection procedure to memory/facts/decay_archival_policy.md
+Title: Add symbol-level function and class extraction to scripts/targeted_file_slice.py
 
 
-Documents safety checklist requiring git commit history and do-not-touch policy inspection prior to executing script decay or archival demands.
+Enables early, direct inspection of target functions and classes in target scripts without loading entire files into token context, addressing cycle step and prompt token exhaustion.
 
-Target path: memory/facts/decay_archival_policy.md
+Target path: scripts/targeted_file_slice.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-A dedicated decay and archival safety policy document exists in memory/facts/
+scripts/targeted_file_slice.py supports extracting symbols by name with line numbers
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2004,7 +2000,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 17:13:29 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 19:44:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 17:20:25 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 19:44:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
