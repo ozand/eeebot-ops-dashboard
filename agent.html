@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">235</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 01:08:47 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 22:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 22:45 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-54d21ce9beed</span>
+      <span class="cycle-pill">cycle-be3fdd5445b2</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 21:36:39.990015 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 22:39:17.218352 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,353c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,229c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1709,9 +1709,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,353 chars &bull; ~2,088 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation
-Request ID: llm-proposer-cycle-54d21ce9beed
-Cycle ID: cycle-54d21ce9beed
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,229 chars &bull; ~2,057 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Detect whitespace-only link targets in scripts/validate_markdown_format.py
+Request ID: llm-proposer-cycle-be3fdd5445b2
+Cycle ID: cycle-be3fdd5445b2
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1725,70 +1725,71 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- ce1137d2 merge: integrate selfevo/cycle-cycle-54d21ce9beed
+- e21914d3 selfevo: auto-commit uncommitted subagent work — Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST vali
+- 916a200c feat(validate_open_encoding): add --self-test flag for synthetic in-memory AST validation
 - 64bce672 curator: promote 1 fact(s), 3 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 - a763c88c merge: integrate selfevo/cycle-cycle-6a4e04c1a32a
 - 730f7213 feat(check_target_completion): add concrete_next_action recommendation for verified targets
 - 77a07476 merge: integrate selfevo/cycle-cycle-ac7149706732
 - 09278530 refactor(smoke_test_loop): hoist build_parser ahead of check helpers
-- 64c6c114 merge: integrate selfevo/cycle-cycle-c83ba44797fc
-- be3d1b55 feat(check_preexisting_regression): add concrete_next_action recommendation for pre-existing failures
-- 1bb0e699 merge: integrate selfevo/cycle-cycle-e95147054f90
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests in tests/test_workspace_validation_helpers.py for run_advisory_check return shape normalization: existence_index_duplicate
+- Add daemon thread run_with_timeout helper returning (result, timed_out) to scripts/workspace_validation_helpers.py: recent_duplicate_failure
 - Add test suite in tests/test_early_turn_staging.py to consume and validate skills/early-turn-staging/SKILL.md: existence_index_duplicate
 - Consume collect_host_metrics in scripts/loop_health_report.py to display host resource metrics: recent_duplicate_failure
-- Add stem normalization to keyword overlap checking in scripts/validate_curator_facts.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-54d21ce9beed.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-be3fdd5445b2.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle-b2facd906755, turns were exhausted testing ad-hoc files like bad.py on disk without persisting changes. Adding a --self-test mode to scripts/validate_open_encoding.py enables direct in-memory AST verification without scratch files.\n\nTarget path: scripts/validate_open_encoding.py&quot;,
+    &quot;title&quot;: &quot;Detect whitespace-only link targets in scripts/validate_markdown_format.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves reflection-026d771e0a53 by ensuring the link regex captures whitespace-only targets like [text]( ) rather than bypassing tokenization, flagging them as empty link errors.\n\nTarget path: scripts/validate_markdown_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation (target: scripts/validate_open_encoding.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Running scripts/validate_open_encoding.py with --self-test validates positive and negative syntax samples and exits 0&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_open_encoding.py --self-test&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Detect whitespace-only link targets in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e301a8a7  Title: Implementing &quot;Add Path read_text and write_text encoding check to scripts/validate_open_encoding.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_open_encoding.py
+ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e301a8a7] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Cross-reference target script paths and task descriptions against &#x27;Recent cycle outcomes&#x27; before finalizing a proposal; if the target script recently failed, formulate companion tests (under tests/) o
-- Proposing a validation enhancement targeting scripts/validate_lessons.py triggered an immediate deduplication rejection (&#x27;skipped_recent_failure&#x27;) against the recently failed task &#x27;Fix lesson validati
-- When assigned a defect demand on a target script that appears in &#x27;Recent cycle outcomes&#x27; as failed, formulate an independent reproducing test under tests/ or return no_valuable_task rather than propos
+- When adding new memory fact files, verify relative link path resolution against `tests/test_memory_index_links.py` expectations before committing.
+- When adding governance rules to memory facts, link to related policy facts and verify consistency against tests/test_memory_index_links.py and curator validation suites.
+- When implementing workspace-relative dependency resolution utilities, account for test scenarios where target files reside in temp directories outside the git workspace root.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-06 22:04 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/validate_open_encoding.py,…
 
 ## Concrete task to implement
 
-Title: Add --self-test flag to scripts/validate_open_encoding.py for synthetic AST validation
+Title: Detect whitespace-only link targets in scripts/validate_markdown_format.py
 
 
-In cycle-b2facd906755, turns were exhausted testing ad-hoc files like bad.py on disk without persisting changes. Adding a --self-test mode to scripts/validate_open_encoding.py enables direct in-memory AST verification without scratch files.
+Resolves reflection-026d771e0a53 by ensuring the link regex captures whitespace-only targets like [text]( ) rather than bypassing tokenization, flagging them as empty link errors.
 
-Target path: scripts/validate_open_encoding.py
+Target path: scripts/validate_markdown_format.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-Running scripts/validate_open_encoding.py with --self-test validates positive and negative syntax samples and exits 0
+## Concrete task to implement
+Implement and commit: Detect whitespace-only link targets in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2009,7 +2010,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 22:35:43 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 01:08:47 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 22:45:04 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 01:08:47 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
