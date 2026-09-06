@@ -1066,12 +1066,13 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(tmp_path: P
             fresh.goto(permalink)
             fresh.wait_for_load_state('networkidle')
             fresh.wait_for_selector('.cycle-details-body h3', timeout=5000)
-            assert not fresh.locator('#cycle-details-panel').get_attribute('hidden')
+            assert fresh.evaluate("() => !document.getElementById('cycle-details-panel').hidden")
             assert fresh.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:commit'
             assert 'Selected node' in fresh.locator('.cycle-details-body').inner_text()
             panel_box = fresh.locator('#cycle-details-panel').bounding_box()
-            assert panel_box is not None
-            assert panel_box['y'] < 0.9 * 844
+            body_box = fresh.locator('.cycle-details-body').bounding_box()
+            assert panel_box is not None and body_box is not None
+            assert 0 <= body_box['y'] < 0.9 * 844
             fresh.close()
             browser.close()
     finally:
