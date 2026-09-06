@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 22:13:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 19:20 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 19:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1194,7 +1194,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-e95147054f90</span>
+      <span class="cycle-pill">cycle-c83ba44797fc</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1220,7 +1220,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 18:50:52.798487 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 19:23:48.533759 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1240,7 +1240,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,447c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,349c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1708,9 +1708,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,447 chars &bull; ~1,861 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py
-Request ID: llm-proposer-cycle-e95147054f90
-Cycle ID: cycle-e95147054f90
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,349 chars &bull; ~2,087 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add concrete_next_action recommendation output for pre-existing failures in scripts/check_preexisting_regression.py
+Request ID: llm-proposer-cycle-c83ba44797fc
+Cycle ID: cycle-c83ba44797fc
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1724,64 +1724,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 1bb0e699 merge: integrate selfevo/cycle-cycle-e95147054f90
+- eef168a6 selfevo: auto-commit uncommitted subagent work — Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_
+- f922834c feat(analyze_repeat_failures): add safety-stop and tool-repetition pattern detection
 - c31194a9 merge: integrate selfevo/cycle-cycle-7bbff99b9849
 - bf3d481e feat(lessons_summary): add --categories flag and structured summary block to --json output
 - 983a2f99 merge: integrate selfevo/cycle-cycle-4dd9a703b90b
 - 5feb070f feat(verify_imports): add --resolve-local mode for in-repo dependency path resolution
 - f73bde18 merge: integrate selfevo/cycle-cycle-1fd12ef4dbc1
-- 4fdc5051 docs(memory): add decay lane exclusion enforcement rule to do-not-touch fact
-- 26f83c63 merge: integrate selfevo/cycle-cycle-d44625988920
-- 09bc3c11 docs(memory): add decay and archival preflight inspection policy fact
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add loop breaker payload repeat detection to scripts/search_subagent_archive.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e95147054f90.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c83ba44797fc.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Enhances repeat failure analysis to detect and categorize safety stop loop breaker events and repeated tool call warnings from cycle logs.\n\nTarget path: scripts/analyze_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Add concrete_next_action recommendation output for pre-existing failures in scripts/check_preexisting_regression.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;When check_preexisting_regression.py detects pre-existing failures on origin/main, generating an explicit concrete_next_action diagnostic string ensures agents can cleanly report root causes for future cycles without attempting out-of-scope fixes.\n\nTarget path: scripts/check_preexisting_regression.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py (target: scripts/analyze_repeat_failures.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add concrete_next_action recommendation output for pre-existing failures in scripts/check_preexisting_regression.py (target: scripts/check_preexisting_regression.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/analyze_repeat_failures.py recognizes safety stop loop breaker patterns in cycle failure logs&quot;,
+    &quot;claim&quot;: &quot;scripts/check_preexisting_regression.py supports formatting a concrete_next_action suggestion when pre-existing base branch failures are detected.&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/analyze_repeat_failures.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/check_preexisting_regression.py --help&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-5c2f9e95  Title: Implementing &quot;Add failure pattern clustering and recurring error threshold detection to scripts/analyze_repeat_failures.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-5c2f9e95] in your proposal/response.
+ID: LESS-REF-3c711db47ed9-d63a  Title: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
+Problem: The agent deferred the heading case fix for `lessons/out_of_band_main_detected.md` to keep `files_changed` restricted strictly to `lessons/early_edit_turn_discipline.md`.
+Solution: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
+If you apply this lesson, cite [Lesson LESS-REF-3c711db47ed9-d63a] in your proposal/response.
+Related: LESS-20260827-3c711db4
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Ensure uncommitted workspace modifications are cleanly committed or discarded across cycle boundaries to stop recurring &#x27;dirty_tree&#x27; harness aborts.
-- Ensure uncommitted workspace files and residual modifications are cleanly committed, stashed, or reset prior to cycle startup so that valid proposals can proceed to worker execution instead of abortin
-- When a search query yields no results, do not repeat the query; proceed directly with authoring the requested card based on the task description and existing schema patterns.
+- Ensure repository working tree state is clean or reset at cycle startup/teardown boundaries to prevent cascading &#x27;dirty_tree&#x27; failures.
+- When global test suites exhibit pre-existing failures on untouched files, run targeted one-liner validation scripts against modified entries and compare baseline test status with git stash to cleanly 
+- When task descriptions propose flat skill file paths (e.g. `skills/foo.md`), check repository conformance tests early to map the path to the canonical `skills/foo/SKILL.md` layout before authoring.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-06 18:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/lessons_summary.py, tests/test_lessons_summary.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-06 17:50 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py, tests/test_verify_imports.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-06 19:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
+- Attempt 2 (2026-09-06 18:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/lessons_summary.py, tests/test_lessons_summary.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py
+Title: Add concrete_next_action recommendation output for pre-existing failures in scripts/check_preexisting_regression.py
 
 
-Enhances repeat failure analysis to detect and categorize safety stop loop breaker events and repeated tool call warnings from cycle logs.
+When check_preexisting_regression.py detects pre-existing failures on origin/main, generating an explicit concrete_next_action diagnostic string ensures agents can cleanly report root causes for future cycles without attempting out-of-scope fixes.
 
-Target path: scripts/analyze_repeat_failures.py
+Target path: scripts/check_preexisting_regression.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/analyze_repeat_failures.py recognizes safety stop loop breaker patterns in cycle failure logs
+scripts/check_preexisting_regression.py supports formatting a concrete_next_action suggestion when pre-existing base branch failures are detected.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2002,7 +2006,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 19:20:09 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 22:13:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 19:32:11 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 22:13:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 22:13:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 19:20 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 19:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1189,7 +1189,7 @@
       <div class="now-content">
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">none</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_</strong> <span class="now-sub">(cycle-e95147054f90 [1bb0e699])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(check_preexisting_regression): add concrete_next_action recommendation for pre-existing failures</strong> <span class="now-sub">(cycle-c83ba44797fc [64c6c114])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-stale" title="host_metrics: stale">host_metrics: 4.4d/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 6m/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 4.3h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-available">cap reached (5/5 24h, 0 pending doc proposals of 19)</span></div>
@@ -1214,7 +1214,7 @@
       <ul class="teaser-list">
         <li><a href="cycles.html">cycles</a> &mdash; 85 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
-        <li><a href="tokens.html">tokens</a> &mdash; 1.63B across 51 recorded days</li>
+        <li><a href="tokens.html">tokens</a> &mdash; 1.64B across 51 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 126 active / 2 answered + 20 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
@@ -1227,18 +1227,18 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c83ba44797fc">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c83ba44797fc">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-c83ba44797fc</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_preexisting_regression): add concrete_next_action recommendation for pre-existing failures</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c83ba44797fc)</span>
             
-            
+            <a href="#node-64c6c11" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-06T19:19:47.906411Z">22:19 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-618e81cd92ab</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-3c711db47ed9-d63a">lesson:LESS-REF-3c711db47ed9-d63a</a></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 6.74K tok &middot; dur 11s</div>
+          <div class="feed-files">&#128193; scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py</div>
+          <div class="feed-cost">&#9889; 18 calls &middot; 458.1K tok &middot; dur 3m9s</div>
         </li>
         
         <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-c3a4a72e7a6d">
@@ -1252,7 +1252,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-560fea3f7b03</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-001">error:ERR-2026-09-06-001</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 1 calls &middot; 10.19K tok &middot; dur 21s</div>
+          <div class="feed-cost">&#9889; 2 calls &middot; 25.86K tok &middot; dur 31s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e95147054f90">
@@ -1266,14 +1266,14 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-afb572d4c9aa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-5c2f9e95">lesson:LESS-20260824-5c2f9e95</a></div>
           <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py</div>
-          <div class="feed-cost">&#9889; 28 calls &middot; 1.48M tok &middot; dur 6m30s</div>
+          <div class="feed-cost">&#9889; 29 calls &middot; 1.50M tok &middot; dur 7m22s</div>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 19:20:09 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 22:13:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 19:32:11 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 22:13:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
