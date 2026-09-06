@@ -683,7 +683,7 @@ def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
 
 # ─── #213 acceptance-fix tests ────────────────────────────────────────────────
 
-def _serve_lineage(html, fake_details, details_delay: float = 0.0):
+def _serve_lineage(html, fake_details, details_delay: float = 0.0, details_started=None, details_release=None):
     import json as _json
     import threading
     import time
@@ -697,7 +697,11 @@ def _serve_lineage(html, fake_details, details_delay: float = 0.0):
             pass
         def do_GET(self):
             if 'cycle-details' in self.path:
-                if details_delay:
+                if details_started is not None:
+                    details_started.set()
+                if details_release is not None:
+                    details_release.wait(timeout=10)
+                elif details_delay:
                     time.sleep(details_delay)
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -1160,44 +1164,74 @@ def test_issue218_duplicate_cycle_exact_nodes_and_legacy_alias_after_renderer(tm
 
 def test_issue218_cold_focus_close_before_delayed_fetch_does_not_steal_focus() -> None:
     pytest.importorskip('playwright')
+    from threading import Event
     from playwright.sync_api import sync_playwright
     rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
     from test_techtree_viewer import _fixture
     data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
-    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    started, release = Event(), Event()
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_started=started, details_release=release)
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={'width': 390, 'height': 844})
-            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
-            page.wait_for_timeout(50)
+            page.goto(base_url + '/lineage.html#node-c%3Acommit', wait_until='domcontentloaded')
+            assert started.wait(timeout=5), 'details request did not become pending'
             page.locator('#cycle-details-close').click()
-            page.wait_for_timeout(700)
+            release.set(); page.wait_for_timeout(300)
             assert page.evaluate("() => document.getElementById('cycle-details-panel').hidden")
             assert page.evaluate("() => document.activeElement !== document.getElementById('cycle-details-close')")
             browser.close()
     finally:
-        srv.shutdown()
+        release.set(); srv.shutdown()
 
 
 def test_issue218_cold_focus_user_date_input_survives_delayed_fetch() -> None:
     pytest.importorskip('playwright')
+    from threading import Event
     from playwright.sync_api import sync_playwright
     rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-commit', 'sha': 'commit', 'parent_sha': '', 'task_title': 'Commit card', 'ts': '2026-01-01T00:00:00Z'}]
     from test_techtree_viewer import _fixture
     data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'commit'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-commit': 'Commit card'}
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
-    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_delay=0.5)
+    started, release = Event(), Event()
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_started=started, details_release=release)
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page(viewport={'width': 390, 'height': 844})
-            page.goto(base_url + '/lineage.html#node-c%3Acommit'); page.wait_for_load_state('networkidle')
-            page.locator('[data-lineage-from]').click(); page.locator('[data-lineage-from]').fill('2026-01-01')
-            page.wait_for_timeout(700)
-            assert page.locator('[data-lineage-from]').input_value() == '2026-01-01'
-            assert page.locator('[data-lineage-from]').evaluate('(node) => document.activeElement === node')
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Acommit', wait_until='domcontentloaded')
+            assert started.wait(timeout=5), 'details request did not become pending'
+            field = page.locator('[data-lineage-from]'); field.click(); field.fill('2026-01-01')
+            release.set(); page.wait_for_timeout(300)
+            assert field.input_value() == '2026-01-01'
+            assert field.evaluate('(node) => document.activeElement === node')
             browser.close()
     finally:
-        srv.shutdown()
+        release.set(); srv.shutdown()
+
+
+def test_issue218_rapid_node_selection_only_latest_card_and_focus_survives() -> None:
+    pytest.importorskip('playwright')
+    from threading import Event
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-a', 'sha': 'a', 'parent_sha': '', 'task_title': 'A card', 'ts': '2026-01-01T00:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-b', 'sha': 'b', 'parent_sha': 'a', 'task_title': 'B card', 'ts': '2026-01-01T01:00:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'b'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-a': 'A card', 'cycle-b': 'B card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 02:00:00')
+    started, release = Event(), Event(); srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']), details_started=started, details_release=release)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.goto(base_url + '/lineage.html#node-c%3Aa', wait_until='domcontentloaded')
+            assert started.wait(timeout=5), 'details request did not become pending'
+            page.locator('.lineage-node[data-node-id="c:b"]').click(); release.set(); page.wait_for_timeout(300)
+            assert page.locator('.cycle-node-selected').get_attribute('data-node-id') == 'c:b'
+            assert 'B card' in page.locator('.cycle-details-body').inner_text()
+            assert page.evaluate("() => document.activeElement === document.getElementById('cycle-details-close')")
+            browser.close()
+    finally:
+        release.set(); srv.shutdown()
