@@ -1178,7 +1178,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">236</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-06 21:39:56 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">14.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 18:47 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="40">data: 39s old &middot; generated 19:03 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1194,7 +1194,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-baa4b62c7c07</span>
+      <span class="cycle-pill">cycle-e95147054f90</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1220,7 +1220,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 18:18:41.370757 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-06 18:50:52.798487 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1240,7 +1240,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,499c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,447c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1708,9 +1708,9 @@ e-flags.md) - Define positional arguments with nargs=&#x27;?&#x27; when CLI scri
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,499 chars &bull; ~1,874 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add skill command block validation support in scripts/validate_skill_format.py
-Request ID: llm-proposer-cycle-baa4b62c7c07
-Cycle ID: cycle-baa4b62c7c07
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,447 chars &bull; ~1,861 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py
+Request ID: llm-proposer-cycle-e95147054f90
+Cycle ID: cycle-e95147054f90
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1734,37 +1734,38 @@ Recently completed (recent commits):
 - 09bc3c11 docs(memory): add decay and archival preflight inspection policy fact
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-baa4b62c7c07.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e95147054f90.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add skill command block validation support in scripts/validate_skill_format.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend scripts/validate_skill_format.py to validate runnable command blocks within skill files including skills/run-tests/SKILL.md, repairing the unvalidated skill defect with executable code validation.\n\nTarget path: scripts/validate_skill_format.py&quot;,
+    &quot;title&quot;: &quot;Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Enhances repeat failure analysis to detect and categorize safety stop loop breaker events and repeated tool call warnings from cycle logs.\n\nTarget path: scripts/analyze_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add skill command block validation support in scripts/validate_skill_format.py (target: scripts/validate_skill_format.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py (target: scripts/analyze_repeat_failures.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_skill_format.py successfully validates code/command blocks within skills/run-tests/SKILL.md and exits with 0&quot;,
+    &quot;claim&quot;: &quot;scripts/analyze_repeat_failures.py recognizes safety stop loop breaker patterns in cycle failure logs&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/analyze_repeat_failures.py --help&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
+ID: LESS-20260824-5c2f9e95  Title: Implementing &quot;Add failure pattern clustering and recurring error threshold detection to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-5c2f9e95] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Remove or clean up unexpected untracked artifacts (especially under skills/ or scripts/) before completing a cycle, because gate verification inspects workspace filesystem layout.
-- When supporting standalone execution flags such as --test, make operational arguments optional in argparse and validate them conditionally after verifying flag execution.
-- The agent observed untracked &#x27;skills/batch_grep/&#x27; in &#x27;git status --porcelain&#x27; and consciously left it untouched believing uncommitted files would not affect integration, repeating the exact gate failu
+- Ensure uncommitted workspace modifications are cleanly committed or discarded across cycle boundaries to stop recurring &#x27;dirty_tree&#x27; harness aborts.
+- Ensure uncommitted workspace files and residual modifications are cleanly committed, stashed, or reset prior to cycle startup so that valid proposals can proceed to worker execution instead of abortin
+- When a search query yields no results, do not repeat the query; proceed directly with authoring the requested card based on the task description and existing schema patterns.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-06 18:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/lessons_summary.py, tests/test_lessons_summary.py. Reward signal will be upgraded by…
@@ -1772,15 +1773,15 @@ If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/
 
 ## Concrete task to implement
 
-Title: Add skill command block validation support in scripts/validate_skill_format.py
+Title: Add safety stop and tool repetition pattern detection to scripts/analyze_repeat_failures.py
 
 
-Extend scripts/validate_skill_format.py to validate runnable command blocks within skill files including skills/run-tests/SKILL.md, repairing the unvalidated skill defect with executable code validation.
+Enhances repeat failure analysis to detect and categorize safety stop loop breaker events and repeated tool call warnings from cycle logs.
 
-Target path: scripts/validate_skill_format.py
+Target path: scripts/analyze_repeat_failures.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_skill_format.py successfully validates code/command blocks within skills/run-tests/SKILL.md and exits with 0
+scripts/analyze_repeat_failures.py recognizes safety stop loop breaker patterns in cycle failure logs
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2001,7 +2002,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-06 18:47:17 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 21:39:56 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 19:03:56 UTC &middot; host eeepc &middot; newest source 39s old &middot; <span class="footer-computed">scorecard computed 2026-09-06 21:39:56 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
