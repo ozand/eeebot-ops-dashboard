@@ -909,7 +909,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">256</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-05 23:51:38.263752 UTC) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="14">data: 13s old &middot; generated 23:58 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="10">data: 10s old &middot; generated 00:03 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -919,12 +919,93 @@
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
       <div class="hypo-futility-section futility-alarm"><h3 class="hypo-futility-title">Goal Gap Futility Tracking</h3><ul class="futility-list"><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-2d9ab3aa9d09</span> <strong class="futility-attempts">8/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-5d4d5a9dc822</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item"><span class="badge badge-stale">goal-gap-a820ca0c8bb3</span> <strong class="futility-attempts">10/10 attempts [lever_surface] (surface: host_metrics, stale_feed)</strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-acb65b1911ab</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-c09521b7459a</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li></ul></div>
       <div class="hypo-split">
-        <div class="hypo-group"><h3>Active (114)</h3><ul class="hypo-list">
+        <div class="hypo-group"><h3>Active (121)</h3><ul class="hypo-list">
+            <li class="hypo-row active" id="q-hyp-bc6108a189f8a6d0">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Pre-Proposer Suppression of Plateaued AST Refactors</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-05d64abbc54ef36b">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">suppress-in-tree-proposals-for-host-metrics-staleness</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-a1d109619cbf54a7">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">exercise-unconfirmed-scripts-via-test-harness</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-ca97e7915a7c2146">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Pre-filtering exhausted demand IDs in candidate selection resolves proposer starvation</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-8efe873312e15f33">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Turn-bounded direct-edit gate dissolves inspection-versus-completion budget trade-off</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-75fd3a1ea58660d5">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Inject recent git commit subjects into proposer context to dissolve self-dedup rejects</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-f6ceec99b326044d">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Pre-seed standard library module cache to dissolve search turn-burn in subagent runs</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-95dbecd0dbdbcd6e">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Dynamic skill catalogue compaction to prevent system prompt overflow</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-414f5af1e7e54c34">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Pre-proposer futile surface pruning to dissolve proposal rejection churn</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen 00:03 UTC</span>
+                
+              </div>
+            </li>
+        
             <li class="hypo-row active" id="q-hypothesis-llm-proposer-cycle-59e4cf013f19">
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add structural negative test cases for date regex formatting in tests/test_check_feed_freshness.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T23:52:54.572399Z">seen 23:52 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T23:52:54.572399Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -933,7 +1014,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add steering notice detection to scripts/preflight_failure_check.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T22:49:25.939929Z">seen 22:49 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T22:49:25.939929Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -942,7 +1023,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add template section structure check to scripts/validate_curator_facts.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T22:24:45.586321Z">seen 22:24 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T22:24:45.586321Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -951,7 +1032,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add steering notice filter option to scripts/search_subagent_archive.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T21:13:50.699108Z">seen 21:13 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T21:13:50.699108Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -960,7 +1041,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add test for unindexed memory files in tests/test_memory_consolidation_types.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T16:41:45.158123Z">seen 16:41 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T16:41:45.158123Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -969,7 +1050,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests for post-refresh state re-evaluation in tests/test_preflight_feed_cache.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T16:36:27.941973Z">seen 16:36 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T16:36:27.941973Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -978,7 +1059,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add test cases for feed staleness state re-evaluation after feed refresh in tests/test_check_feed_freshness.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T09:44:17.236389Z">seen 09:44 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T09:44:17.236389Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -987,7 +1068,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests for subagent archive query filters in tests/test_search_subagent_archive.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T06:51:43.459249Z">seen 06:51 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T06:51:43.459249Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -996,7 +1077,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add budget notice pattern extraction to scripts/summarize_failure_reasons.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T04:49:37.686514Z">seen 04:49 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T04:49:37.686514Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -1005,7 +1086,7 @@
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">Implement and commit: Add unit tests for mutation surface code-bearing checks in tests/test_check_mutation_surface.py</strong>
               <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-05T04:13:03.584632Z">seen 04:13 UTC</span>
+                <span class="hypo-ts" title="2026-09-05T04:13:03.584632Z">seen Sep 5</span>
                 
               </div>
             </li>
@@ -1677,29 +1758,11 @@
             </li>
         
         <details class="hypo-details">
-          <summary class="hypo-summary">30 stale hypotheses &mdash; show</summary>
+          <summary class="hypo-summary">28 stale hypotheses &mdash; show</summary>
           <ul class="hypo-list">
-            <li class="hypo-row active" id="q-hyp-0022">
-              <span class="badge badge-stale">STALE</span>
-              <strong class="hypo-title">suppress-in-tree-proposals-for-host-metrics-staleness</strong>
-              <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-03T12:41:34.421501Z">seen Sep 3</span>
-                
-              </div>
-            </li>
-        
             <li class="hypo-row active" id="q-hyp-0020">
               <span class="badge badge-stale">STALE</span>
               <strong class="hypo-title">Automated Harness Coupling for Standalone Validator Scripts</strong>
-              <div class="hypo-meta">
-                <span class="hypo-ts" title="2026-09-02T00:14:41.190081Z">seen Sep 2</span>
-                
-              </div>
-            </li>
-        
-            <li class="hypo-row active" id="q-hyp-0021">
-              <span class="badge badge-stale">STALE</span>
-              <strong class="hypo-title">Pre-Proposer Suppression of Plateaued AST Refactors</strong>
               <div class="hypo-meta">
                 <span class="hypo-ts" title="2026-09-02T00:14:41.190081Z">seen Sep 2</span>
                 
@@ -1979,20 +2042,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Validator Parent Heartbeat Touch to Clear Stale Host Metrics</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Triggering a lightweight heartbeat stamp update for host_metrics during validator_harness_parent execution will clear the stale feed gap (stale_feeds=0) without spawning sidecar sub-processes that cause sidecar_write_during_spawn integrity incidents.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an in-process mtime refresh or passive host_metrics touch inside the validator harness parent execution routine.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if feeds.stale drops from 1 to 0 and host_metrics age remains &lt; 43200s over 5 consecutive cycles with 0 new integrity incidents; refuted if feed remains stale or sidecar integrity incidents increase.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941746Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Dedup-Throttled Demand Selection to Lower Wasted Attempt Rate</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing a temporary backoff on demands with self_dedup count &gt; 10 (such as goal-gap-5d4d5a9dc822 and repetitive decay demands) will reduce wasted_attempt_rate from 0.604 to &lt; 0.45 without decreasing net confirmed integrations per day.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Configure proposer demand selection to penalize demands where self_dedup to integrated ratio exceeds 3:1 until other vector gaps are addressed.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if wasted_attempt_rate falls below 0.45 across 20 subsequent cycles while daily integrations remain &gt;= 10; refuted if wasted_attempt_rate stays above 0.55.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T00:01:06.941802Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Harness Execution Coupling to Dissolve Unconfirmed Integration Deficit</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling script completions in scripts/*.py directly with dedicated test executions in tests/ will increase value.confirmed_ratio from 0.4286 to &gt;= 0.50 without requiring manual operator execution.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add targeted execution tests under tests/ for the highest-priority unconfirmed utility scripts so confirm_serves detects pycache execution evidence during standard verification passes.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if value.confirmed_ratio reaches &gt;= 0.50 within 15 cycles while tokens_per_integration does not increase by more than 15%; refuted if confirmed_ratio remains below 0.45.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-29T05:24:35.929739Z</div>
@@ -2116,11 +2165,25 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Subagents burn tool turns and time limits running dynamic inspection or redundant greps on absent stdlib/feature symbols (LESS-20260904-260bd269, LESS-20260904-d44ed220), driving repeat failures (rate 0.084) and wasted attempts (0.1126). Supplying sys.stdlib_module_names and strict single-grep absence rules in subagent system instructions will lower wasted attempt rate below 0.08.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an explicit runtime hint in subagent execution prompts specifying sys.stdlib_module_names lookup and single-sweep search termination rules.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.wasted_attempt_rate decreases to &lt;=0.08 and calls_per_integration decreases by &gt;=10%; refuted if wasted_attempt_rate stays &gt;=0.10.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-05T00:00:39.952792Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Dynamic skill catalogue compaction to prevent system prompt overflow</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Filtering and compacting skills_catalogue injection when estimated prompt size approaches the 24,000 character cap will eliminate system_prompt_overflow failures without degrading tool execution accuracy.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement dynamic skill descriptor truncation or targeted skill selection in the prompt builder when system prompt sections exceed 20,000 total characters, evaluating over a 20-cycle window.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if system_prompt_overflow occurrences drop to 0 and wasted_attempt_rate declines from 0.2073 to under 0.15; refuted if executor tool-misuse failure rate rises by more than 5%.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-06T00:00:49.137964Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Pre-proposer futile surface pruning to dissolve proposal rejection churn</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing deterministic surface-level exclusion of registered futile gaps (such as host_metrics/purge_stale_feeds) at the demand selection stage prior to LLM proposer invocation will eliminate futile-surface proposer rejections and reduce tokens per integration.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an upstream check in the demand queue scheduler to filter out candidate demands mapping to active futile surfaces before formatting proposer prompts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if futile_surface proposer rejections drop to 0 and tokens_per_integration decreases by at least 5%; refuted if unblocked non-futile demands show a decrease in proposal generation rate.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-06T00:00:49.138056Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-05 23:58:37 UTC &middot; host eeepc &middot; newest source 13s old &middot; <span class="footer-computed">scorecard computed 2026-09-05 23:51:38.263752 UTC</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-06 00:03:29 UTC &middot; host eeepc &middot; newest source 10s old &middot; <span class="footer-computed">scorecard computed 2026-09-05 23:51:38.263752 UTC</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
