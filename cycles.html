@@ -804,6 +804,7 @@
     /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
        being scaled down until r=9 circles are 4 px and the labels unreadable. */
     .lineage-day-svg { display: block; height: auto; overflow: visible; }
+    .lineage-graph-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
     .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
     .arch-node.arch-integrated { fill: #2fd3c4; stroke: #dcebe1; }
     .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
@@ -1179,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 06:54:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 16s old &middot; generated 04:09 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 04:35 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1192,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-07 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-45fe76c8c8d1">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-45fe76c8c8d1">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-45fe76c8c8d1</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Detect repeated commands following safety stop warnings in scripts/analyze_repea</strong>
             <span class="feed-cid copyable" translate="no">(cycle-45fe76c8c8d1)</span>
             
-            
+            <a href="#node-5d2e06a" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-07T04:09:07.813084Z">07:09 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5720764abe8c</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 9.40K tok &middot; dur 18s</div>
+          <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py</div>
+          <div class="feed-cost">&#9889; 51 calls &middot; 2.72M tok &middot; dur 11m41s</div>
         </li>
         
         <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-0bad3c17bbd0">
@@ -1217,7 +1218,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ac9490fcaf68</span></div>
           
-          <div class="feed-cost">&#9889; 1 calls &middot; 9.86K tok &middot; dur 20s</div>
+          <div class="feed-cost">&#9889; 2 calls &middot; 26.28K tok &middot; dur 39s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-03481cc9b8e5">
@@ -1492,7 +1493,7 @@
             <strong class="feed-title">feat(check_preexisting_regression): normalize parameterized test IDs for consistent scope classification</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fa7aba97719d)</span>
             
-            <a href="#node-2ea72b5" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-06T23:10:08.902301Z">02:10 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f93402a4028f</span></div>
@@ -3465,14 +3466,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-76791ead8b6a">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(summarize_failure_reasons): add min_count threshold filtering for failure counts</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-76791ead8b6a)</span>
             
             <a href="#node-dbbf225" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T22:49:33.585664Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9864d82a4955</span></div>
-          <div class="feed-files">&#128193; scripts/summarize_failure_reasons.py, tests/test_summarize_failure_reasons.py</div>
+          
           <div class="feed-cost">&#9889; 24 calls &middot; 571.2K tok &middot; dur 3m7s</div>
         </li>
         
@@ -29681,7 +29682,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 04:09:24 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 06:54:49 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 04:35:28 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 06:54:49 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
