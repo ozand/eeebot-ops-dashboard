@@ -6,7 +6,7 @@
   var MARGIN_X = 24;
   var MARGIN_TOP = 32;
   var RADIUS = 9;
-  var state = { payload: null, mode: 'today', rendered: null };
+  var state = { payload: null, mode: 'today', rendered: null, initialRevealScheduled: false, initialRevealDone: false };
 
   function nodeIdToDomId(nodeId) {
     // Keep encodeURIComponent's percent escapes intact. Replacing '%' with '_'
@@ -332,6 +332,51 @@
       svg.appendChild(circle);
     });
   }
+  function revealInitialGraph() {
+    if (state.initialRevealScheduled || state.initialRevealDone) return;
+    state.initialRevealScheduled = true;
+    var scroller = document.querySelector('[data-lineage-graph-scroll]');
+    var svg = document.getElementById('lineage-svg');
+    var projection = state.rendered;
+    var initialMode = state.mode;
+    var initialHash = window.location.hash;
+    if (!scroller || !svg || !projection || !projection.nodes || !projection.nodes.length || initialMode !== 'today' || initialHash) {
+      state.initialRevealDone = true;
+      return;
+    }
+    var initialScrollLeft = scroller.scrollLeft;
+    var schedule = window.requestAnimationFrame || function (callback) { return window.setTimeout(callback, 0); };
+    schedule(function () {
+      if (state.initialRevealDone || state.mode !== initialMode || window.location.hash !== initialHash || scroller.scrollLeft !== initialScrollLeft) { state.initialRevealDone = true; return; }
+      var nodeMap = byNodeId(state.payload);
+      var rendered = projection.nodes.filter(function (node) {
+        return nodeMap[node.node_id] && document.getElementById(nodeIdToDomId(node.node_id));
+      });
+      var primary = rendered.filter(function (node) {
+        return document.getElementById(nodeIdToDomId(node.node_id)).classList.contains('lineage-context-node') === false;
+      });
+      if (!primary.length) { state.initialRevealDone = true; return; }
+      var currentId = state.payload && state.payload.current_node_id;
+      var anchor = primary.filter(function (node) { return node.node_id === currentId; })[0];
+      if (!anchor) {
+        anchor = primary.slice().sort(function (a, b) {
+          var at = parseTs(a); var bt = parseTs(b);
+          if (at == null && bt == null) return String(a.node_id).localeCompare(String(b.node_id));
+          if (at == null) return 1;
+          if (bt == null) return -1;
+          return (bt - at) || String(b.node_id).localeCompare(String(a.node_id));
+        })[0];
+      }
+      var anchorEl = document.getElementById(nodeIdToDomId(anchor.node_id));
+      if (!anchorEl) { state.initialRevealDone = true; return; }
+      var containerRect = scroller.getBoundingClientRect();
+      var anchorRect = anchorEl.getBoundingClientRect();
+      var desired = scroller.scrollLeft + (anchorRect.left + anchorRect.width / 2) - (containerRect.left + containerRect.width / 2);
+      var maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+      scroller.scrollLeft = Math.max(0, Math.min(maxScroll, desired));
+      state.initialRevealDone = true;
+    });
+  }
   function applyFilter(mode) {
     var payload = state.payload;
     var svg = document.getElementById('lineage-svg');
@@ -382,6 +427,7 @@
       button.addEventListener('click', function () { applyFilter(button.getAttribute('data-lineage-filter')); });
     });
     applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
+    revealInitialGraph();
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       var node = document.activeElement && document.activeElement.closest('.lineage-node');
