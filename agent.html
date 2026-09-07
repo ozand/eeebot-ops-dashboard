@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 14:16:07 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 11:40 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 11:47 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-bc87cc8595e2</span>
+      <span class="cycle-pill">cycle-dc311a0a137e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 11:30:09.640843 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 11:43:37.619554 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,841c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,480c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,841 chars &bull; ~2,210 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add positive and negative controls for exit code propagation to scripts/check_style.py self-test
-Request ID: llm-proposer-cycle-bc87cc8595e2
-Cycle ID: cycle-bc87cc8595e2
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,480 chars &bull; ~2,120 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Prune ignored directories top-down using os.walk in scripts/validate_sys_path_modification.py
+Request ID: llm-proposer-cycle-dc311a0a137e
+Cycle ID: cycle-dc311a0a137e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1737,43 +1737,40 @@ Recently completed (recent commits):
 - a00ca10d fix(check_feed_freshness): exit 0 on no-args when default feed absent
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bc87cc8595e2.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dc311a0a137e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add positive and negative controls for exit code propagation to scripts/check_style.py self-test&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-8257f08a45bd by incorporating explicit negative controls (rejecting bare unpropagated main() calls) and positive controls (accepting sys.exit(main()) and raise SystemExit(main())) into scripts/check_style.py self-test routines.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Prune ignored directories top-down using os.walk in scripts/validate_sys_path_modification.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-3fb9900d3e88, file discovery in scripts/validate_sys_path_modification.py used Path.rglob(&#x27;*.py&#x27;) with post-traversal path filtering, which traverses deeply into ignored directories before discarding them. Replacing rglob with top-down os.walk and in-place dirnames pruning prevents unnecessary directory descent and improves scan performance.\n\nTarget path: scripts/validate_sys_path_modification.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add positive and negative controls for exit code propagation to scripts/check_style.py self-test (target: scripts/check_style.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_style.py --self-test passes while verifying positive and negative entrypoint exit code propagation cases&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_style.py --self-test&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Prune ignored directories top-down using os.walk in scripts/validate_sys_path_modification.py (target: scripts/validate_sys_path_modification.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
-Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
-Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-ea545ca8  Title: Implementing &quot;Add min-ratio threshold validation and non-zero exit code to scripts/check_confirmation_ratio.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py
+ID: LESS-20260824-1c25796d  Title: Implementing &quot;Fix AST inspection and return status in scripts/validate_sys_path_modification.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/validate_sys_path_modification.py, tests/test_validate_sys_path_modification.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-ea545ca8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-1c25796d] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When a loop_breaker safety stop is triggered, immediately halt repetitive inspection commands and transition directly to modifying the target code or running verification tests.
-- Cap external caller reconnaissance to a single search command; once a grep confirms zero external invocations, proceed immediately to the file edit phase rather than repeating filtered query variation
-- The worker entered an execution loop by issuing the exact same grep command five consecutive times across turns, disregarding the loop_breaker warning message and causing the cycle to terminate withou
+- When addressing general reflection items under doc-budget limits, avoid frequently collided shared files such as scripts/workspace_validation_helpers.py; propose a dedicated focused tool or verify whe
+- The proposer selected scripts/workspace_validation_helpers.py, which was under cooldown or similarity matching against a prior failure (&#x27;Add uncommitted changes detector to scripts/workspace_validatio
+- When modifying scripts with extensive monolithic self-test suites containing pre-existing defects, test the newly added functions specifically or via targeted test suites before running full monolithi
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-07 11:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
@@ -1782,15 +1779,15 @@ If you apply this lesson, cite [Lesson LESS-20260825-ea545ca8] in your proposal/
 
 ## Concrete task to implement
 
-Title: Add positive and negative controls for exit code propagation to scripts/check_style.py self-test
+Title: Prune ignored directories top-down using os.walk in scripts/validate_sys_path_modification.py
 
 
-Addresses reflection-8257f08a45bd by incorporating explicit negative controls (rejecting bare unpropagated main() calls) and positive controls (accepting sys.exit(main()) and raise SystemExit(main())) into scripts/check_style.py self-test routines.
+In cycle-3fb9900d3e88, file discovery in scripts/validate_sys_path_modification.py used Path.rglob(&#x27;*.py&#x27;) with post-traversal path filtering, which traverses deeply into ignored directories before discarding them. Replacing rglob with top-down os.walk and in-place dirnames pruning prevents unnecessary directory descent and improves scan performance.
 
-Target path: scripts/check_style.py
+Target path: scripts/validate_sys_path_modification.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_style.py --self-test passes while verifying positive and negative entrypoint exit code propagation cases
+## Concrete task to implement
+Implement and commit: Prune ignored directories top-down using os.walk in scripts/validate_sys_path_modification.py (target: scripts/validate_sys_path_modification.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2017,7 +2014,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 11:40:06 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 14:16:07 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 11:47:26 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 14:16:07 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
