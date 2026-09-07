@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 13:15:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 10:45 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 11:12 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-19d314e29971</span>
+      <span class="cycle-pill">cycle-f6af482155af</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 10:21:13.337686 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 10:49:43.673834 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,800c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,692c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,800 chars &bull; ~2,200 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add target path filtering to scripts/preflight_failure_check.py to bound error log lookups
-Request ID: llm-proposer-cycle-19d314e29971
-Cycle ID: cycle-19d314e29971
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,692 chars &bull; ~2,173 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add zero-change turn exhaustion pattern detection to scripts/preflight_failure_check.py
+Request ID: llm-proposer-cycle-f6af482155af
+Cycle ID: cycle-f6af482155af
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,28 +1727,28 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b881021c merge: integrate selfevo/cycle-cycle-19d314e29971
+- ca7f64b3 feat(preflight_failure_check): bound subagent error-log lookups to target path
 - 4adefeeb merge: integrate selfevo/cycle-cycle-a5d11226c728
 - f2f9f0fc fix(verify_and_proof): exit 0 with usage on zero-argument execution
 - 5b34f452 merge: integrate selfevo/cycle-cycle-ed7157092eb8
 - a00ca10d fix(check_feed_freshness): exit 0 on no-args when default feed absent
 - 0071fb85 merge: integrate selfevo/cycle-cycle-d2fafc55b3f2
 - f1a0e5ff feat(run_all_tests): support package-qualified and root-relative test IDs in unittest discovery
-- 2ae002bd merge: integrate selfevo/cycle-cycle-6d9078011267
-- 0ed81993 feat(targeted_file_slice): add --numbered line prefix support to --scan mode
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-19d314e29971.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f6af482155af.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add target path filtering to scripts/preflight_failure_check.py to bound error log lookups&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle-46e5f4c07cd9, the agent consumed 80 turns reading unrelated historical error logs. Adding target-path filtering to scripts/preflight_failure_check.py restricts failure log lookups strictly to records mentioning the target script, bounding preflight inspection and keeping attention focused on the target script and tests.\n\nTarget path: scripts/preflight_failure_check.py&quot;,
+    &quot;title&quot;: &quot;Add zero-change turn exhaustion pattern detection to scripts/preflight_failure_check.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycle cycle-46e5f4c07cd9 terminated after 80 turns with partial outcome and zero file changes. Adding detection for zero-change turn exhaustion patterns to scripts/preflight_failure_check.py warns agents during preflight when recent history shows turn exhaustion with no code changes, prompting early incremental edits and verification.\n\nTarget path: scripts/preflight_failure_check.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add target path filtering to scripts/preflight_failure_check.py to bound error log lookups (target: scripts/preflight_failure_check.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add zero-change turn exhaustion pattern detection to scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)&quot;
 }
 ```
 
@@ -1758,32 +1758,32 @@ Root cause: The agent treated a non-zero exit code as a transient signal worth r
 Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
+ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
+Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- The proposer selected a target script (scripts/search_subagent_archive.py) that was subject to active failure deduplication matching against &#x27;Add error status filtering and summary reporting to script
-- Avoid proposing enhancements on scripts listed under &#x27;Recently proposed&#x27; rejected themes; if a demand item points towards a cooled or recently collided target script, target companion test suites unde
-- The proposer selected scripts/search_subagent_archive.py despite the target having appeared under &#x27;Recently proposed&#x27; rejected duplicates in the prompt context, triggering an immediate deduplication f
+- Construct multi-attribute sorting logic using a single tuple key in the initial implementation to eliminate redundant sorting calls and follow-up cleanup turns.
+- Use targeted grep or pattern search directly when verifying newly inserted code regions rather than guessing line number ranges with sed, avoiding multiple offset correction turns.
+- When executing large companion test suites containing hundreds of subprocess-based CLI test cases, run targeted test filters (`-k &lt;feature&gt;`) first and supply an explicit timeout parameter when runnin
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 10:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
-- Attempt 2 (2026-09-07 09:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_feed_freshness.py, tests/test_check_feed_freshness.py. Reward signal will be…
-- Attempt 3 (2026-09-07 09:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-07 10:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
+- Attempt 2 (2026-09-07 10:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 3 (2026-09-07 09:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_feed_freshness.py, tests/test_check_feed_freshness.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add target path filtering to scripts/preflight_failure_check.py to bound error log lookups
+Title: Add zero-change turn exhaustion pattern detection to scripts/preflight_failure_check.py
 
 
-In cycle-46e5f4c07cd9, the agent consumed 80 turns reading unrelated historical error logs. Adding target-path filtering to scripts/preflight_failure_check.py restricts failure log lookups strictly to records mentioning the target script, bounding preflight inspection and keeping attention focused on the target script and tests.
+Cycle cycle-46e5f4c07cd9 terminated after 80 turns with partial outcome and zero file changes. Adding detection for zero-change turn exhaustion patterns to scripts/preflight_failure_check.py warns agents during preflight when recent history shows turn exhaustion with no code changes, prompting early incremental edits and verification.
 
 Target path: scripts/preflight_failure_check.py
 
 ## Concrete task to implement
-Implement and commit: Add target path filtering to scripts/preflight_failure_check.py to bound error log lookups (target: scripts/preflight_failure_check.py)
+Implement and commit: Add zero-change turn exhaustion pattern detection to scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2010,7 +2010,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 10:45:58 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 13:15:12 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 11:12:20 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 13:15:12 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
