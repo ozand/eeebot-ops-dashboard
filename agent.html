@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 20:24:57 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 17:27 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 17:36 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-8f39e974fa74</span>
+      <span class="cycle-pill">cycle-41067a85566a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 17:00:53.650626 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 17:31:03.950330 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,265c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,137c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,265 chars &bull; ~1,816 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire count_recent_failures threshold check into scripts/preflight_failure_check.py
-Request ID: llm-proposer-cycle-8f39e974fa74
-Cycle ID: cycle-8f39e974fa74
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,137 chars &bull; ~2,034 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add pytest suite covering CLI arguments and JSON output in tests/test_control_plane_summary.py
+Request ID: llm-proposer-cycle-41067a85566a
+Cycle ID: cycle-41067a85566a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,58 +1727,62 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- ea75ad4d merge: integrate selfevo/cycle-cycle-8f39e974fa74
+- 8cbd50b1 feat(preflight_failure_check): wire count_recent_failures threshold gate into preflight
 - 89293544 merge: integrate selfevo/cycle-cycle-21342fa5af1b
 - 4f1f0741 feat(control_plane_summary): add --json CLI flag with test coverage
 - f9ca0d0d merge: integrate selfevo/cycle-cycle-4c6c8019aabf
 - 7a7a7fc5 feat(lesson_lookup): add find_matching_lessons keyword search
 - 739f7bf7 merge: integrate selfevo/cycle-cycle-d6d67500345e
 - fb490cab docs(run-tests): add early transition checkpoint for test-expansion cycles
-- 7350af32 merge: integrate selfevo/cycle-cycle-bc6f9b85f973
-- 0eee98ab fix(validate_lessons): resolve exit code 1 false positives against real repo data
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8f39e974fa74.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-41067a85566a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire count_recent_failures threshold check into scripts/preflight_failure_check.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves reflection-743a15b25661 by wiring the --threshold exit-code contract of scripts/count_recent_failures.py into scripts/preflight_failure_check.py to enforce failure rate limits during preflight pipeline validation.\n\nTarget path: scripts/preflight_failure_check.py&quot;,
+    &quot;title&quot;: &quot;Add pytest suite covering CLI arguments and JSON output in tests/test_control_plane_summary.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Following the addition of argparse CLI options to scripts/control_plane_summary.py, add dedicated pytest tests in tests/test_control_plane_summary.py to maintain dual test coverage across standalone CLI and pytest harnesses.\n\nTarget path: tests/test_control_plane_summary.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire count_recent_failures threshold check into scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add pytest suite covering CLI arguments and JSON output in tests/test_control_plane_summary.py (target: tests/test_control_plane_summary.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-ffa5537a  Title: Implementing &quot;Integrate check_repeat_failures into preflight_failure_check runner&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
+ID: LESS-20260827-ff456c1b  Title: Implementing &quot;Extend control_plane_summary.py to compute runtime trust ladder levels and proposer quality metrics&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/control_plane_summary.py, tests/test_control_plane_summary.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-ffa5537a] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-ff456c1b] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When adding a check to a test harness or gate pipeline, inspect only the execution dispatch pipeline rather than browsing the individual implementations of all existing sibling checks.
-- Cross-check CLI print statements directly against companion test string assertions before executing pytest to avoid round-trip assertion fixes.
-- Asserted a CLI header string (`&quot;Zero-change turn-exhaustion check:&quot;`) in `test_cli_text_output_mentions_zero_change_exhaustion_check` that did not match the actual warning header emitted by the CLI im
+- Continue executing targeted test node IDs before running full companion test modules to ensure fast feedback loops on constrained hosts.
+- Consolidate argparse CLI argument registration and downstream dispatch/conditional logic within the same target file into a single edit_file invocation to reduce round-trip turn overhead.
+- Avoid executing identical shell or Python diagnostic commands consecutively; if a command yields empty or unexpected output, modify the query parameters or inspect preceding steps immediately instead 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 16:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/control_plane_summary.py, tests/test_control_plane_summary.py. Reward signal will be…
-- Attempt 2 (2026-09-07 16:13 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-07 15:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/lesson_lookup.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-07 17:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
+- Attempt 2 (2026-09-07 16:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/control_plane_summary.py, tests/test_control_plane_summary.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Wire count_recent_failures threshold check into scripts/preflight_failure_check.py
+Title: Add pytest suite covering CLI arguments and JSON output in tests/test_control_plane_summary.py
 
 
-Resolves reflection-743a15b25661 by wiring the --threshold exit-code contract of scripts/count_recent_failures.py into scripts/preflight_failure_check.py to enforce failure rate limits during preflight pipeline validation.
+Following the addition of argparse CLI options to scripts/control_plane_summary.py, add dedicated pytest tests in tests/test_control_plane_summary.py to maintain dual test coverage across standalone CLI and pytest harnesses.
 
-Target path: scripts/preflight_failure_check.py
+Target path: tests/test_control_plane_summary.py
 
 ## Concrete task to implement
-Implement and commit: Wire count_recent_failures threshold check into scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)
+Implement and commit: Add pytest suite covering CLI arguments and JSON output in tests/test_control_plane_summary.py (target: tests/test_control_plane_summary.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2011,7 +2015,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 17:27:26 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 20:24:57 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 17:36:33 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 20:24:57 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
