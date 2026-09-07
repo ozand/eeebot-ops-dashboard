@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">67.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 18:01:38 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 15:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 15:13 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-bc6f9b85f973</span>
+      <span class="cycle-pill">cycle-f7c5891db77c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 14:45:28.286343 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 15:07:57.029333 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,096c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,678c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,096 chars &bull; ~2,024 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix exit code 1 validation failure in scripts/validate_lessons.py
-Request ID: llm-proposer-cycle-bc6f9b85f973
-Cycle ID: cycle-bc6f9b85f973
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,678 chars &bull; ~1,919 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Ensure conditional construct guard expressions are visited and tested in scripts/validate_unused_imports.py
+Request ID: llm-proposer-cycle-f7c5891db77c
+Cycle ID: cycle-f7c5891db77c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,65 +1727,61 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 7350af32 merge: integrate selfevo/cycle-cycle-bc6f9b85f973
+- 0eee98ab fix(validate_lessons): resolve exit code 1 false positives against real repo data
 - b1945c75 merge: integrate selfevo/cycle-cycle-6c70fa0e3a4f
 - 6fd1deef docs(run-tests): re-wire skill to scripts/run_all_tests.py with bounded commands
 - 933cec1d chore: record structured error for [cycle-bd9c0b]
 - dad6b919 merge: integrate selfevo/cycle-cycle-3cf96f9c107b
 - 960f1dbe feat(validate_documentation_code_blocks): support explicit positional path arguments to restrict validation scope
 - e8ab9491 merge: integrate selfevo/cycle-cycle-4954e54626ab
-- 30be4e5e docs: update docstring to mention index.md exclusion
-- a7948ea6 fix: skip index.md in lesson markdown section check to avoid false alarms
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add test cases for dynamic mode variables and positional encodings in tests/test_validate_open_encoding.py: existence_index_duplicate
 - Add self-test suite and CLI execution entry point to scripts/approval_truth.py: mutation_surface_violation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bc6f9b85f973.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f7c5891db77c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Fix exit code 1 validation failure in scripts/validate_lessons.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves the validation failure in scripts/validate_lessons.py that causes it to exit with code 1 when validating repository lessons.\n\nTarget path: scripts/validate_lessons.py&quot;,
+    &quot;title&quot;: &quot;Ensure conditional construct guard expressions are visited and tested in scripts/validate_unused_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-bbaedf987aac, omitting guard test expression traversal in AST visitors caused TYPE_CHECKING imports to be falsely flagged. This task ensures conditional AST visitors visit node.test and adds regression self-tests.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix exit code 1 validation failure in scripts/validate_lessons.py (target: scripts/validate_lessons.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Ensure conditional construct guard expressions are visited and tested in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
-Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
-Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-649a0480  Title: Implementing &quot;Add test module mapping and non-zero exit code reporting to scripts/validate_test_existence.py&quot; improves operator value.
-Problem: Committed 2 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-649a0480] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Update accompanying docstrings and comments in the same edit pass as the functional code change to avoid making redundant secondary edit and commit passes.
-- Avoid executing repository-wide test suites (`pytest tests/`) in bounded cycle turns; restrict verification to the targeted companion test file to prevent 60-second execution timeouts on constrained h
-- The worker launched repository-wide pytest sweeps (pytest tests/) across at least seven turns despite continuous 60s and 120s timeouts (exit code 124), violating explicit steering reflections warning 
+- When writing regression tests that verify the removal of high-count scan caps, consider using lightweight path mocks or synthetic in-memory paths where possible rather than writing hundreds of physica
+- Continue grouping multi-location edits within a target file into a single parallel tool-call turn to conserve turn budget and limit context expansion.
+- When testing entry points where `main()` inspects both injectable `argv` and raw `sys.argv`, test both invocation paths using `unittest.mock.patch.object(sys, &#x27;argv&#x27;, ...)` to ensure consistency betwe
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 13:40 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_documentation_code_blocks.py,…
+- Attempt 1 (2026-09-07 14:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_lessons.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-07 13:40 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_documentation_code_blocks.py,…
 
 ## Concrete task to implement
 
-Title: Fix exit code 1 validation failure in scripts/validate_lessons.py
+Title: Ensure conditional construct guard expressions are visited and tested in scripts/validate_unused_imports.py
 
 
-Resolves the validation failure in scripts/validate_lessons.py that causes it to exit with code 1 when validating repository lessons.
+In cycle-bbaedf987aac, omitting guard test expression traversal in AST visitors caused TYPE_CHECKING imports to be falsely flagged. This task ensures conditional AST visitors visit node.test and adds regression self-tests.
 
-Target path: scripts/validate_lessons.py
+Target path: scripts/validate_unused_imports.py
 
 ## Concrete task to implement
-Implement and commit: Fix exit code 1 validation failure in scripts/validate_lessons.py (target: scripts/validate_lessons.py)
+Implement and commit: Ensure conditional construct guard expressions are visited and tested in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2012,7 +2008,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 15:04:11 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 18:01:38 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 15:13:16 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 18:01:38 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
