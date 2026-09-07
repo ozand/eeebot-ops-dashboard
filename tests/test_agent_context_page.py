@@ -257,3 +257,98 @@ def test_agent_page_weight_under_budget():
     byte_len = len(html.encode('utf-8'))
     print(f'\nagent.html page weight: {byte_len:,} bytes ({byte_len/1024:.1f} KB)')
     assert byte_len < 500_000, f'agent.html is too heavy: {byte_len} bytes (budget: 500,000 bytes)'
+
+
+def test_issue234_arithmetic_reconciliation_exact_and_overflow_and_distinct_states():
+    """Issue #234: Exact arithmetic reconciliation, overflow rows with missing chars, and distinct active_skills states."""
+    # 1. Overflow row with chars missing (chars is None or key absent)
+    fixture_overflow = _base_fixture()
+    fixture_overflow['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-6fac1e4f8a03',
+            'cap': 24000,
+            'over_by': 2922,
+            'overflow': True,
+            'sections': {
+                'identity': 1446,
+                'bootstrap': 9374,
+                'skills_catalogue': 12051,
+                'memory': 4030,
+            },
+            'dropped': [],
+            'ts': '2026-09-06T04:00:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'index_status': 'missing', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'index_status': 'missing', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    pages = tv.render_pages(fixture_overflow, host='eeepc', generated_at='2026-09-06 12:00:00')
+    html_ov = pages['agent.html']
+    # Total chars must be computed as cap + over_by (26,922), not fabricated as 0!
+    assert 'OVERFLOW (+2,922 chars over cap)' in html_ov
+    assert 'Recorded chars: 26,922' in html_ov
+    assert 'Exact Match' in html_ov
+    # active_skills is absent in this row
+    assert 'absent from breakdown' in html_ov
+
+    # 2. active_skills present-and-zero
+    fixture_zero = _base_fixture()
+    fixture_zero['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-zero',
+            'cap': 30000,
+            'chars': 27184,
+            'overflow': False,
+            'sections': {
+                'identity': 1446,
+                'bootstrap': 9636,
+                'active_skills': 0,
+                'skills_catalogue': 12051,
+                'memory': 4030,
+            },
+            'dropped': [],
+            'ts': '2026-09-06T04:00:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'index_status': 'missing', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'index_status': 'missing', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    pages = tv.render_pages(fixture_zero, host='eeepc', generated_at='2026-09-06 12:00:00')
+    html_zero = pages['agent.html']
+    assert '0c (empty under loop profile)' in html_zero
+    assert 'Exact Match' in html_zero
+
+    # 3. active_skills dropped-by-the-fit
+    fixture_dropped = _base_fixture()
+    fixture_dropped['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-dropped',
+            'cap': 24000,
+            'chars': 23487,
+            'overflow': False,
+            'sections': {
+                'identity': 1446,
+                'bootstrap': 9347,
+                'skills_catalogue': 8643,
+                'memory': 4030,
+            },
+            'dropped': [{'name': 'active_skills', 'chars': 1200}],
+            'ts': '2026-09-06T04:00:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'index_status': 'missing', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'index_status': 'missing', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    pages = tv.render_pages(fixture_dropped, host='eeepc', generated_at='2026-09-06 12:00:00')
+    html_dropped = pages['agent.html']
+    assert '<s>active_skills</s> (1,200c)' in html_dropped
+
