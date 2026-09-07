@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 15:57:30 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="8">data: 8s old &middot; generated 13:29 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 13:40 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-e3075bc377ef</span>
+      <span class="cycle-pill">cycle-3cf96f9c107b</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 13:03:45.600392 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 13:33:38.499626 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,017c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,518c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,017 chars &bull; ~2,004 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Parse file AST once per Python file in scripts/check_style.py and share tree across AST checkers
-Request ID: llm-proposer-cycle-e3075bc377ef
-Cycle ID: cycle-e3075bc377ef
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,518 chars &bull; ~1,879 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Support explicit path arguments in scripts/validate_documentation_code_blocks.py to restrict validation scope
+Request ID: llm-proposer-cycle-3cf96f9c107b
+Cycle ID: cycle-3cf96f9c107b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1736,59 +1736,48 @@ Recently completed (recent commits):
 - 2f39310e merge: integrate selfevo/cycle-cycle-dc311a0a137e
 - 31b73f14 perf(validate_sys_path_modification): prune ignored dirs top-down via os.walk
 
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add unittest suite in tests/test_verify_and_proof_skip_cache.py for verify_and_proof cache mechanics: existence_index_duplicate
-
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e3075bc377ef.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3cf96f9c107b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Parse file AST once per Python file in scripts/check_style.py and share tree across AST checkers&quot;,
-    &quot;backlog_instructions&quot;: &quot;In validate_workspace_file, AST re-parsing across multiple checks accounts for the majority of execution time. Parsing the AST once per Python file and passing the parsed tree to AST-based checkers eliminates redundant parsing overhead.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Support explicit path arguments in scripts/validate_documentation_code_blocks.py to restrict validation scope&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycle-162aa0f1baf5 exhausted turns searching across repository markdown files. Adding explicit file and directory arguments to scripts/validate_documentation_code_blocks.py enables scoped validation of target files without repo-wide discovery scans.\n\nTarget path: scripts/validate_documentation_code_blocks.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Parse file AST once per Python file in scripts/check_style.py and share tree across AST checkers (target: scripts/check_style.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_style.py parses AST once per Python file for rules and passes its self-test cleanly.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_style.py --self-test&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Support explicit path arguments in scripts/validate_documentation_code_blocks.py to restrict validation scope (target: scripts/validate_documentation_code_blocks.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-ef380e88  Title: Implementing &quot;Optimize scripts/check_style.py file traversal and AST checking to finish within timeout&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/check_style.py, scripts/validate_deprecation_status.py
+ID: LESS-20260825-8871470d  Title: Implementing &quot;Add structured JSON reporting and line offset tracking to scripts/validate_documentation_code_blocks.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_documentation_code_blocks.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-ef380e88] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-8871470d] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Transition directly to implementation once reference patterns have been inspected rather than conducting open-ended grep searches across unrelated test suites.
-- Once the target function and its existing self-tests are located in a monolithic script, transition directly to reproducing the failing test assertion instead of querying line numbers of surrounding h
-- Cap external caller reconnaissance to a single search command; once a grep confirms zero external invocations, proceed immediately to the file edit phase rather than repeating filtered query variation
+- Limit test execution strictly to targeted companion test files (e.g. tests/test_&lt;target&gt;.py) rather than running the full repository test suite on resource-constrained hosts.
+- When a command times out at 60s or 120s, halt broad repository verification attempts immediately rather than retrying the same sweep with minor flag tweaks.
+- The worker launched repository-wide pytest sweeps (pytest tests/) across at least seven turns despite continuous 60s and 120s timeouts (exit code 124), violating explicit steering reflections warning 
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-07 12:53 UTC): 3 commit(s) pushed ✓. Committed 3 change(s) to: scripts/check_lesson_markdown_sections.py. Reward signal will be upgraded by coordinator.
 - Attempt 2 (2026-09-07 12:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_skill_format.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-07 11:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Parse file AST once per Python file in scripts/check_style.py and share tree across AST checkers
+Title: Support explicit path arguments in scripts/validate_documentation_code_blocks.py to restrict validation scope
 
 
-In validate_workspace_file, AST re-parsing across multiple checks accounts for the majority of execution time. Parsing the AST once per Python file and passing the parsed tree to AST-based checkers eliminates redundant parsing overhead.
+Cycle-162aa0f1baf5 exhausted turns searching across repository markdown files. Adding explicit file and directory arguments to scripts/validate_documentation_code_blocks.py enables scoped validation of target files without repo-wide discovery scans.
 
-Target path: scripts/check_style.py
+Target path: scripts/validate_documentation_code_blocks.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_style.py parses AST once per Python file for rules and passes its self-test cleanly.
+## Concrete task to implement
+Implement and commit: Support explicit path arguments in scripts/validate_documentation_code_blocks.py to restrict validation scope (target: scripts/validate_documentation_code_blocks.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2015,7 +2004,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 13:29:42 UTC &middot; host eeepc &middot; newest source 8s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 15:57:30 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 13:40:58 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 15:57:30 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
