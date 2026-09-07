@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 06:22:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="16">data: 16s old &middot; generated 03:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 03:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-40eda361d594</span>
+      <span class="cycle-pill">cycle-1ea053cccf0a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 03:13:37.829036 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 03:29:04.624452 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,405c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,574c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1710,9 +1710,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,405 chars &bull; ~1,851 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports
-Request ID: llm-proposer-cycle-40eda361d594
-Cycle ID: cycle-40eda361d594
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,574 chars &bull; ~2,143 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add dual-harness execution mode in scripts/run_all_tests.py to run embedded and companion tests
+Request ID: llm-proposer-cycle-1ea053cccf0a
+Cycle ID: cycle-1ea053cccf0a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,59 +1726,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 2927f4c7 merge: integrate selfevo/cycle-cycle-40eda361d594
+- 322e4b6f selfevo: auto-commit uncommitted subagent work — Track enclosing scope in scripts/validate_unused_imports.py AST visitor to class
 - 99b410f0 merge: integrate selfevo/cycle-cycle-bf380a02a0f5
 - 7657b46a selfevo: auto-commit uncommitted subagent work — Add isolated sub-runner verification check mode in scripts/run_all_tests.py
 - 71a33bb5 merge: integrate selfevo/cycle-cycle-f2ef26cb1279
 - 4d502889 fix: add missing version frontmatter and H1 headers to 14 skill files; fix table column defect
 - 29e72fe3 feat(validate_skill_format): support explicit SKILL_FILE positional args for single skill validation
 - 44455757 merge: integrate selfevo/cycle-cycle-a449a0b379a9
-- c425d99e feat(workspace_validation_helpers): preserve raw 2-column porcelain status in check_target_file_modification
-- 2ea72b5b merge: integrate selfevo/cycle-cycle-fa7aba97719d
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add legacy description length exemption for fast_path_redundancy_skip in tests/test_skill_conformance.py: existence_index_duplicate
-- Add missing header diagnostic output to lesson validation checks in tests/test_lessons_integrity.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-40eda361d594.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1ea053cccf0a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements enclosing scope tracking within scripts/validate_unused_imports.py&#x27;s AST import visitor as highlighted in reflection-48e853b5365c, enabling distinction between module-level and function-level deferred imports.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
+    &quot;title&quot;: &quot;Add dual-harness execution mode in scripts/run_all_tests.py to run embedded and companion tests&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-f9476de33e2a by adding dual-harness test resolution to scripts/run_all_tests.py, allowing verification of both a script&#x27;s embedded self-test and its companion unittest suite in a single invocation.\n\nTarget path: scripts/run_all_tests.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports (target: scripts/validate_unused_imports.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add dual-harness execution mode in scripts/run_all_tests.py to run embedded and companion tests (target: scripts/run_all_tests.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
+ID: LESS-20260826-be745246  Title: Implementing &quot;Add test execution timing summary and pattern filtering to scripts/run_all_tests.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/run_all_tests.py, tests/test_run_all_tests.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-be745246] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Cap external caller reconnaissance to a single search command; once a grep confirms zero external invocations, proceed immediately to the file edit phase rather than repeating filtered query variation
+- When proposing improvements from backlog items or historical cycle references, verify whether key symbols (such as ast.parse or target functions) already exist in the target file to avoid proposing al
+- When verifying if a task is already done under the immediate skip protocol, confirm the presence of requested code patterns and run the acceptance check; avoid searching repo history or documentation 
+- The proposer generated a redundant task for AST-based entrypoint analysis on scripts/validate_script_entrypoints.py, referencing an older cycle (cycle-4bd4c8c37274) without verifying that four prior c
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 03:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-07 02:28 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/validate_skill_format.py,…
+- Attempt 1 (2026-09-07 03:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_unused_imports.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-07 03:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Attempt 3 (2026-09-07 02:42 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports
+Title: Add dual-harness execution mode in scripts/run_all_tests.py to run embedded and companion tests
 
 
-Implements enclosing scope tracking within scripts/validate_unused_imports.py&#x27;s AST import visitor as highlighted in reflection-48e853b5365c, enabling distinction between module-level and function-level deferred imports.
+Addresses reflection-f9476de33e2a by adding dual-harness test resolution to scripts/run_all_tests.py, allowing verification of both a script&#x27;s embedded self-test and its companion unittest suite in a single invocation.
 
-Target path: scripts/validate_unused_imports.py
+Target path: scripts/run_all_tests.py
 
 ## Concrete task to implement
-Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports (target: scripts/validate_unused_imports.py)
+Implement and commit: Add dual-harness execution mode in scripts/run_all_tests.py to run embedded and companion tests (target: scripts/run_all_tests.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1999,7 +2003,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 03:24:41 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 06:22:49 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 03:39:22 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 06:22:49 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
