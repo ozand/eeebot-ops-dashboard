@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">222</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 07:39:06 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 16s old &middot; generated 05:05 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 05:17 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-55a1dfd21708</span>
+      <span class="cycle-pill">cycle-cfa3964d09a0</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 04:45:42.309547 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 05:09:30.260685 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,004c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,402c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,004 chars &bull; ~2,001 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add file baseline comparison helper in scripts/check_preexisting_regression.py to verify pre-existing findings
-Request ID: llm-proposer-cycle-55a1dfd21708
-Cycle ID: cycle-55a1dfd21708
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,402 chars &bull; ~2,100 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Support heading line index slicing for markdown sections in scripts/targeted_file_slice.py
+Request ID: llm-proposer-cycle-cfa3964d09a0
+Cycle ID: cycle-cfa3964d09a0
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,61 +1727,61 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 5f0a28f7 merge: integrate selfevo/cycle-cycle-55a1dfd21708
+- ec32c5e0 feat(check_preexisting_regression): add compare_file_baseline helper to verify flagged paths against git baseline
 - 5d2e06ab merge: integrate selfevo/cycle-cycle-45fe76c8c8d1
 - 7e26ea95 selfevo: auto-commit uncommitted subagent work — Detect repeated commands following safety stop warnings in scripts/analyze_repea
 - 7c8a320d feat(analyze_repeat_failures): detect repeated commands following safety stop warnings
 - b9522306 merge: integrate selfevo/cycle-cycle-1ea053cccf0a
 - 1c7ec90f feat(run_all_tests): add dual-harness execution mode (--dual-target) for embedded + companion tests
 - 2927f4c7 merge: integrate selfevo/cycle-cycle-40eda361d594
-- 322e4b6f selfevo: auto-commit uncommitted subagent work — Track enclosing scope in scripts/validate_unused_imports.py AST visitor to class
-- 99b410f0 merge: integrate selfevo/cycle-cycle-bf380a02a0f5
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add checkpoint_working_modifications helper in scripts/workspace_validation_helpers.py to stage working changes: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-55a1dfd21708.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-cfa3964d09a0.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add file baseline comparison helper in scripts/check_preexisting_regression.py to verify pre-existing findings&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves cycle-cb35b2ef4a9b where the agent stalled investigating flagged repository files; adds a helper in scripts/check_preexisting_regression.py to compare flagged file paths against git baseline so pre-existing external issues can be confirmed immediately without looping.\n\nTarget path: scripts/check_preexisting_regression.py&quot;,
+    &quot;title&quot;: &quot;Support heading line index slicing for markdown sections in scripts/targeted_file_slice.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extends scripts/targeted_file_slice.py to support extracting markdown sections by heading line index alongside heading title and pattern matches, fulfilling reflection-5494942155f6.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add file baseline comparison helper in scripts/check_preexisting_regression.py to verify pre-existing findings (target: scripts/check_preexisting_regression.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Support heading line index slicing for markdown sections in scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+ID: LESS-20260904-90931e43  Title: Support both repository-relative (&#x27;memory/facts/...&#x27;) and directory-relative (&#x27;facts/...&#x27;) markdown link formats in catalog index consistency tests
+Problem: In cycle-90931e43a3db, a markdown catalog index consistency test resolved every relative link in the index against a single base (the memory/ directory), so links written in the other common format — repository-relative (&#x27;memory/facts/...&#x27;) instead of directory-relative (&#x27;facts/...&#x27;) — were reported as missing files even though the target exists on disk. The test failed on a valid index purely bec
+Solution: When validating relative markdown links in a catalog index (e.g. memory/index.md), resolve each link against both candidate bases — the index file&#x27;s own directory and the repository root — and treat the link as valid if either resolution yields an existing file. Only report a link as missing when neither candidate path exists. This makes the consistency check format-agnostic for the two relative p
+If you apply this lesson, cite [Lesson LESS-20260904-90931e43] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When adding top-level definitions via edit_file, ensure replacement text contains no leading whitespace; if an IndentationError occurs, inspect exact column-zero characters using cat -A before retryin
-- Maintain the practice of running only targeted test suites and direct CLI flag invocations, staging exclusively the designated script and companion test files.
-- Introduced a leading space before &#x27;class TestExtractFailureSignatures:&#x27; during an edit_file call, causing an IndentationError. The initial edit retry attempted to replace &#x27;class ...&#x27; without matching 
+- The proposer generated a unit test proposal for run_advisory_check normalization that duplicated a prior cycle proposal already tracked in the existence index (llm-proposer-cycle-5a19c79a7edb), which 
+- The proposer submitted a task targeting helper logic in tests/test_check_preexisting_regression.py that duplicated a previous proposal tracked in the existence index (llm-proposer-cycle-8e1dcda36ab7) 
+- Limit test file reconnaissance to identifying the relevant test module and a representative test case; once located, proceed immediately to editing the implementation and running targeted verification
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 04:35 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
-- Attempt 2 (2026-09-07 03:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
-- Attempt 3 (2026-09-07 03:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_unused_imports.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-07 04:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
+- Attempt 2 (2026-09-07 04:35 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
+- Attempt 3 (2026-09-07 03:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add file baseline comparison helper in scripts/check_preexisting_regression.py to verify pre-existing findings
+Title: Support heading line index slicing for markdown sections in scripts/targeted_file_slice.py
 
 
-Resolves cycle-cb35b2ef4a9b where the agent stalled investigating flagged repository files; adds a helper in scripts/check_preexisting_regression.py to compare flagged file paths against git baseline so pre-existing external issues can be confirmed immediately without looping.
+Extends scripts/targeted_file_slice.py to support extracting markdown sections by heading line index alongside heading title and pattern matches, fulfilling reflection-5494942155f6.
 
-Target path: scripts/check_preexisting_regression.py
+Target path: scripts/targeted_file_slice.py
 
 ## Concrete task to implement
-Implement and commit: Add file baseline comparison helper in scripts/check_preexisting_regression.py to verify pre-existing findings (target: scripts/check_preexisting_regression.py)
+Implement and commit: Support heading line index slicing for markdown sections in scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2002,7 +2002,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 05:05:54 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 07:39:06 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 05:17:30 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 07:39:06 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
