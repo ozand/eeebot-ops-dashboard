@@ -1179,7 +1179,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">67.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 05:46:00 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-anomaly" title="host_metrics: stale">&#x26a0;&#xfe0f; data inputs: host_metrics: stale</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 03:09 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 03:19 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,7 +1195,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-bf380a02a0f5</span>
+      <span class="cycle-pill">cycle-40eda361d594</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1221,7 +1221,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 02:51:49.030410 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 03:13:37.829036 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1241,7 +1241,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,363c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,405c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1710,9 +1710,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,363 chars &bull; ~1,840 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add isolated sub-runner verification check mode in scripts/run_all_tests.py
-Request ID: llm-proposer-cycle-bf380a02a0f5
-Cycle ID: cycle-bf380a02a0f5
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,405 chars &bull; ~1,851 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports
+Request ID: llm-proposer-cycle-40eda361d594
+Cycle ID: cycle-40eda361d594
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,60 +1726,59 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 99b410f0 merge: integrate selfevo/cycle-cycle-bf380a02a0f5
+- 7657b46a selfevo: auto-commit uncommitted subagent work — Add isolated sub-runner verification check mode in scripts/run_all_tests.py
 - 71a33bb5 merge: integrate selfevo/cycle-cycle-f2ef26cb1279
 - 4d502889 fix: add missing version frontmatter and H1 headers to 14 skill files; fix table column defect
 - 29e72fe3 feat(validate_skill_format): support explicit SKILL_FILE positional args for single skill validation
 - 44455757 merge: integrate selfevo/cycle-cycle-a449a0b379a9
 - c425d99e feat(workspace_validation_helpers): preserve raw 2-column porcelain status in check_target_file_modification
 - 2ea72b5b merge: integrate selfevo/cycle-cycle-fa7aba97719d
-- f11017f6 feat(check_preexisting_regression): normalize parameterized test IDs for consistent scope classification
-- 49972dba merge: integrate selfevo/cycle-cycle-c95ba066bcb5
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add legacy description length exemption for fast_path_redundancy_skip in tests/test_skill_conformance.py: existence_index_duplicate
 - Add missing header diagnostic output to lesson validation checks in tests/test_lessons_integrity.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bf380a02a0f5.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-40eda361d594.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add isolated sub-runner verification check mode in scripts/run_all_tests.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements isolated pre-execution checks against both sub-runners in multi-mode verification within scripts/run_all_tests.py to verify runner readiness independently.\n\nTarget path: scripts/run_all_tests.py&quot;,
+    &quot;title&quot;: &quot;Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements enclosing scope tracking within scripts/validate_unused_imports.py&#x27;s AST import visitor as highlighted in reflection-48e853b5365c, enabling distinction between module-level and function-level deferred imports.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add isolated sub-runner verification check mode in scripts/run_all_tests.py (target: scripts/run_all_tests.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports (target: scripts/validate_unused_imports.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-700e8c54  Title: Implementing &quot;Add configurable window days and threshold verification to scripts/check_confirmation_ratio.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/confirmation_status.json, scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py
+ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-700e8c54] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Before proposing functional additions to heavily iterated scripts like scripts/targeted_file_slice.py, check recent git commit logs to avoid proposing already completed features.
-- When implementing failure and error pattern classifiers, check existing diagnostic scripts (such as scripts/preflight_failure_check.py) to reuse established regex constants and classification categori
-- When refactoring utility scripts, combine CLI invocation checks, internal self-tests, and bytecode compilation into a single chained execution step to minimize turn overhead on constrained hardware.
+- Cap external caller reconnaissance to a single search command; once a grep confirms zero external invocations, proceed immediately to the file edit phase rather than repeating filtered query variation
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 02:28 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/validate_skill_format.py,…
+- Attempt 1 (2026-09-07 03:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-07 02:28 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/validate_skill_format.py,…
 
 ## Concrete task to implement
 
-Title: Add isolated sub-runner verification check mode in scripts/run_all_tests.py
+Title: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports
 
 
-Implements isolated pre-execution checks against both sub-runners in multi-mode verification within scripts/run_all_tests.py to verify runner readiness independently.
+Implements enclosing scope tracking within scripts/validate_unused_imports.py&#x27;s AST import visitor as highlighted in reflection-48e853b5365c, enabling distinction between module-level and function-level deferred imports.
 
-Target path: scripts/run_all_tests.py
+Target path: scripts/validate_unused_imports.py
 
 ## Concrete task to implement
-Implement and commit: Add isolated sub-runner verification check mode in scripts/run_all_tests.py (target: scripts/run_all_tests.py)
+Implement and commit: Track enclosing scope in scripts/validate_unused_imports.py AST visitor to classify deferred imports (target: scripts/validate_unused_imports.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2000,7 +1999,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 03:09:49 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 05:46:00 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 03:19:16 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 05:46:00 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
