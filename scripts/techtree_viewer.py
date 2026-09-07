@@ -4369,7 +4369,7 @@ def _build_demand_futility_section(
     active_gap_metrics: set[str] | None = None,
 ) -> str:
     """Issue #185: surface goal gap futility progress from state/demand/futility.json.
-    
+
     3-state reporting:
     - Missing/unavailable: rendered as unavailable note (not 0/10).
     - Healthy / Low attempts: rendered as compact meter.

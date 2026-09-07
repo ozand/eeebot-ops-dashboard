@@ -431,7 +431,7 @@ def test_extract_git_titles_local_dubious_ownership_error(monkeypatch: pytest.Mo
 def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo = tmp_path / 'repo'
     repo.mkdir()
-    
+
     def fake_run(cmd, *args, **kwargs):
         if 'log' in cmd and '--first-parent' in cmd:
             return subprocess.CompletedProcess(
