@@ -168,6 +168,7 @@ if (filterProbe && globalThis.lineageRenderer && typeof globalThis.lineageRender
       edgeCount: proj.edges.length,
       empty: proj.empty || false,
       note: proj.note || '',
+      visibleNodeIds: Object.keys(proj.visible || {}),
     };
   });
 } else if (filterProbe && globalThis.lineageDayFilter && typeof globalThis.lineageDayFilter.select === 'function') {

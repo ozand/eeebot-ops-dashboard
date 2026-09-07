@@ -6,7 +6,7 @@
   var MARGIN_X = 24;
   var MARGIN_TOP = 32;
   var RADIUS = 9;
-  var state = { payload: null, mode: 'yesterday-today', rendered: null };
+  var state = { payload: null, mode: 'today', rendered: null };
 
   function nodeIdToDomId(nodeId) {
     // Keep encodeURIComponent's percent escapes intact. Replacing '%' with '_'
@@ -381,7 +381,7 @@
     document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
       button.addEventListener('click', function () { applyFilter(button.getAttribute('data-lineage-filter')); });
     });
-    applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'yesterday-today');
+    applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       var node = document.activeElement && document.activeElement.closest('.lineage-node');
