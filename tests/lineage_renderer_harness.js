@@ -31,6 +31,7 @@ class El {
   replaceChildren() { this.children = []; }
   closest() { return null; }
   querySelector(selector) {
+    if (selector && selector.indexOf('data-lineage-graph-scroll') >= 0) return graphScroll;
     if (selector && (selector.indexOf('svg') >= 0 || selector === '#lineage-svg')) return svg;
     if (selector && selector.indexOf('[data-lineage-from]') >= 0) return null;
     if (selector && selector.indexOf('[data-lineage-to]') >= 0) return null;
@@ -47,6 +48,11 @@ class El {
   }
 }
 
+const graphScroll = new El('div');
+graphScroll.setAttribute('data-lineage-graph-scroll', '');
+graphScroll.scrollLeft = 0;
+graphScroll.scrollWidth = 220;
+graphScroll.clientWidth = 220;
 const svg = new El('svg');
 svg.setAttribute('id', 'lineage-svg');
 svg.setAttribute('class', 'lineage-day-svg lineage-unified-dag arch-tree');
@@ -100,6 +106,7 @@ const document = {
   querySelectorAll(selector) { return []; },
   querySelector(selector) {
     if (!selector) return null;
+    if (selector.indexOf('data-lineage-graph-scroll') >= 0) return graphScroll;
     if (selector === '#lineage-svg' || selector.indexOf('lineage-svg') >= 0) return svg;
     if (selector.indexOf('lineage-filter-note') >= 0) return filterNote;
     if (selector.indexOf('[data-lineage-from]') >= 0) return null;

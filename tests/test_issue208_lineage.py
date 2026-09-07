@@ -1205,6 +1205,126 @@ def test_issue218_empty_today_stays_today_without_auto_all(tmp_path: Path, viewp
         srv.shutdown()
 
 
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue218_initial_reveal_uses_graph_scroller_only(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': f'cycle-{i}', 'sha': f'sha-{i}', 'parent_sha': '',
+         'ts': f'2026-01-02T00:{i:02d}:00Z'}
+        for i in range(24)
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'sha-23'}
+    data['ledger_tail'] = rows; data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            page.wait_for_timeout(100)
+            graph = page.locator('[data-lineage-graph-scroll]')
+            anchor = page.locator('.lineage-node[data-node-id="c:sha-23"]')
+            assert page.locator('[data-lineage-filter="today"].active').count() == 1
+            assert anchor.count() == 1
+            metrics = page.evaluate("""() => {
+                const graph = document.querySelector('[data-lineage-graph-scroll]');
+                const anchor = document.querySelector('.lineage-node[data-node-id="c:sha-23"]');
+                const graphRect = graph.getBoundingClientRect();
+                const anchorRect = anchor.getBoundingClientRect();
+                const controls = [...document.querySelectorAll('.lineage-day-controls, .lineage-coverage-note, .lineage-legend')].map(el => {
+                    const r = el.getBoundingClientRect(); return {left:r.left, right:r.right};
+                });
+                const maxScroll = Math.max(0, graph.scrollWidth - graph.clientWidth);
+                const expected = Math.max(0, Math.min(maxScroll,
+                    graph.scrollLeft + (anchorRect.left + anchorRect.width / 2) - (graphRect.left + graphRect.width / 2)));
+                return {
+                    scrollLeft: graph.scrollLeft, maxScroll, expected,
+                    bodyScrollLeft: document.body.scrollLeft,
+                    bodyOverflow: document.body.scrollWidth - document.body.clientWidth,
+                    graphWidth: graphRect.width, anchorLeft: anchorRect.left, anchorRight: anchorRect.right,
+                    controls, activeId: document.activeElement && document.activeElement.id,
+                    hash: window.location.hash,
+                };
+            }""")
+            assert abs(metrics['scrollLeft'] - metrics['expected']) <= 1
+            if viewport_width == 390:
+                assert metrics['scrollLeft'] > 0
+            assert metrics['bodyScrollLeft'] == 0
+            assert metrics['bodyOverflow'] <= 1
+            assert all(item['left'] >= -1 and item['right'] <= viewport_width + 1 for item in metrics['controls'])
+            assert metrics['hash'] == ''
+            assert metrics['activeId'] not in ('cycle-details-close', 'lineage-graph-scroll')
+            assert page.locator('[data-lineage-graph-scroll]').get_attribute('tabindex') == '0'
+            assert page.locator('[data-lineage-graph-scroll]').get_attribute('role') == 'region'
+            assert page.locator('[data-lineage-graph-scroll]').get_attribute('aria-label') == 'Lineage graph'
+            screenshot = tmp_path / f'initial-reveal-{viewport_width}.png'
+            page.screenshot(path=str(screenshot), full_page=True)
+            assert screenshot.exists() and screenshot.stat().st_size > 0
+            before = metrics['scrollLeft']
+            page.locator('[data-lineage-filter="all"]').click(); page.wait_for_timeout(50)
+            page.locator('[data-lineage-filter="today"]').click(); page.wait_for_timeout(100)
+            after_filters = page.locator('[data-lineage-graph-scroll]').evaluate('(el) => el.scrollLeft')
+            assert after_filters == before
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_initial_reveal_is_consumed_by_deep_link_and_empty_projection(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-old', 'sha': 'old', 'parent_sha': '',
+             'ts': '2026-01-01T23:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'old'}
+    data['ledger_tail'] = rows; data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            assert page.locator('.lineage-empty-state').text_content() == 'No cycles recorded in selected interval'
+            assert page.locator('[data-lineage-graph-scroll]').evaluate('(el) => el.scrollLeft') == 0
+            page.locator('[data-lineage-filter="all"]').click(); page.locator('[data-lineage-filter="today"]').click(); page.wait_for_timeout(100)
+            assert page.locator('[data-lineage-graph-scroll]').evaluate('(el) => el.scrollLeft') == 0
+            assert page.evaluate('() => document.body.scrollLeft') == 0
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+def test_issue218_initial_reveal_deep_link_consumes_one_shot(tmp_path: Path) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-old', 'sha': 'old', 'parent_sha': '', 'ts': '2026-01-01T23:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-new', 'sha': 'new', 'parent_sha': 'old', 'ts': '2026-01-02T00:30:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'new'}
+    data['ledger_tail'] = rows; data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': 390, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
+            page.goto(base_url + '/lineage.html#node-c%3Anew'); page.wait_for_load_state('networkidle')
+            graph = page.locator('[data-lineage-graph-scroll]'); graph.evaluate('(el) => el.scrollLeft = 0')
+            page.evaluate("() => history.replaceState(null, '', location.pathname)")
+            page.locator('[data-lineage-filter="today"]').click(); page.wait_for_timeout(100)
+            assert graph.evaluate('(el) => el.scrollLeft') == 0
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
 def test_issue218_unknown_exact_deep_link_shows_coverage_message(tmp_path: Path) -> None:
     pytest.importorskip('playwright')
     from playwright.sync_api import sync_playwright
