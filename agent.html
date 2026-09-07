@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 23:38:55 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 20:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 21:12 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-ef55a8983af5</span>
+      <span class="cycle-pill">cycle-4d3c1900fdec</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 20:29:47.933489 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 20:58:45.434086 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,115c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,192c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,115 chars &bull; ~1,778 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Define workspace snapshot capture and clean git state recovery procedures in skills/early-turn-staging/SKILL.md
-Request ID: llm-proposer-cycle-ef55a8983af5
-Cycle ID: cycle-ef55a8983af5
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,192 chars &bull; ~1,798 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py
+Request ID: llm-proposer-cycle-4d3c1900fdec
+Cycle ID: cycle-4d3c1900fdec
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,61 +1727,56 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 07314b8f merge: integrate selfevo/cycle-cycle-ef55a8983af5
+- 8fac8abc docs(early-turn-staging): add workspace snapshot capture and clean git state recovery procedures
 - d5d69687 merge: integrate selfevo/cycle-cycle-3c83e7c36646
 - 1dc556bd feat(control_plane_summary): wire --json CLI output verification into --test smoke check
 - 54134a60 merge: integrate selfevo/cycle-cycle-1c3da664872b
 - 58b871c2 feat(check_style): prune non-source dirs in git ls-files discovery path
 - a63527a0 merge: integrate selfevo/cycle-cycle-f319debe7b86
 - 78c22ec5 docs(run-tests): add loop-breaker handling to stop repeated diagnostic execution
-- ea75ad4d merge: integrate selfevo/cycle-cycle-8f39e974fa74
-- 8cbd50b1 feat(preflight_failure_check): wire count_recent_failures threshold gate into preflight
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ef55a8983af5.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4d3c1900fdec.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Define workspace snapshot capture and clean git state recovery procedures in skills/early-turn-staging/SKILL.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves defect-a97ee8777ff0 by extending idle skill skills/early-turn-staging/SKILL.md with explicit procedures for workspace diff snapshotting and clean git state restoration during initial cycle phases.\n\nTarget path: skills/early-turn-staging/SKILL.md&quot;,
+    &quot;title&quot;: &quot;Add token normalization and stemming to scripts/validate_curator_facts.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;The defect reports 4 staged facts with no keyword overlap between support_claim and evidence source. Extending scripts/validate_curator_facts.py with token normalization, punctuation stripping, and stemming enables morphological keyword matching between claims and evidence, resolving keyword mismatch rejections in manifest validation.\n\nTarget path: scripts/validate_curator_facts.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Define workspace snapshot capture and clean git state recovery procedures in skills/early-turn-staging/SKILL.md (target: skills/early-turn-staging/SKILL.md)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;skills/early-turn-staging/SKILL.md specifies workspace snapshot and recovery procedures while passing format validation&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_skill_format.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py (target: scripts/validate_curator_facts.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-3c711db4  Title: Implementing &quot;Document early-turn edit budget discipline and inspection limits in lessons&quot; improves operator value.
-Problem: Committed 1 commit(s): lessons/early_edit_turn_discipline.md
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260827-3c711db4] in your proposal/response.
-Related: LESS-REF-3c711db47ed9-d63a
+ID: LESS-20260827-044af45f  Title: Implementing &quot;Extend scripts/validate_test_existence.py with missing test pair reporting and structured JSON output&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260827-044af45f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Always specify an explicit execution timeout (`timeout: 300` or greater) when running full companion test suites containing hundreds of subprocess CLI executions (such as `tests/test_preflight_failure
-- Cross-check CLI print statements directly against companion test string assertions before executing pytest to avoid round-trip assertion fixes.
-- Asserted a CLI header string (`&quot;Zero-change turn-exhaustion check:&quot;`) in `test_cli_text_output_mentions_zero_change_exhaustion_check` that did not match the actual warning header emitted by the CLI im
+- Avoid executing identical shell or Python diagnostic commands consecutively; if a command yields empty or unexpected output, modify the query parameters or inspect preceding steps immediately instead 
+- Run targeted test filters (`pytest -k &lt;filter&gt;`) on large companion test files like `tests/test_run_all_tests.py` rather than launching the entire test suite, which exceeds the execution tool&#x27;s 60-sec
+- Enforce a strict turn budget for diagnostic reproduction (5 to 10 turns max) before initiating code edits to prevent exploratory paralysis.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-07 18:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/control_plane_summary.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Define workspace snapshot capture and clean git state recovery procedures in skills/early-turn-staging/SKILL.md
+Title: Add token normalization and stemming to scripts/validate_curator_facts.py
 
 
-Resolves defect-a97ee8777ff0 by extending idle skill skills/early-turn-staging/SKILL.md with explicit procedures for workspace diff snapshotting and clean git state restoration during initial cycle phases.
+The defect reports 4 staged facts with no keyword overlap between support_claim and evidence source. Extending scripts/validate_curator_facts.py with token normalization, punctuation stripping, and stemming enables morphological keyword matching between claims and evidence, resolving keyword mismatch rejections in manifest validation.
 
-Target path: skills/early-turn-staging/SKILL.md
+Target path: scripts/validate_curator_facts.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-skills/early-turn-staging/SKILL.md specifies workspace snapshot and recovery procedures while passing format validation
+## Concrete task to implement
+Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py (target: scripts/validate_curator_facts.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2020,7 +2015,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 20:55:00 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 23:38:55 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 21:12:40 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 23:38:55 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
