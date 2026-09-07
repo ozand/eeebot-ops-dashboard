@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 15:24:59 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 12:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 12:53 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-d9755d1a79d9</span>
+      <span class="cycle-pill">cycle-4954e54626ab</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 12:18:18.620555 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 12:38:47.545994 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,540c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,040c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,540 chars &bull; ~1,885 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks
-Request ID: llm-proposer-cycle-d9755d1a79d9
-Cycle ID: cycle-d9755d1a79d9
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,040 chars &bull; ~2,260 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Align lesson section aliases in scripts/check_lesson_markdown_sections.py with scripts/validate_lessons.py
+Request ID: llm-proposer-cycle-4954e54626ab
+Cycle ID: cycle-4954e54626ab
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,66 +1727,74 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 59c1cf80 merge: integrate selfevo/cycle-cycle-d9755d1a79d9
+- e283f4fe refactor(validate_skill_format): use shared normalize_name_identifier for skill name checks
 - 2f39310e merge: integrate selfevo/cycle-cycle-dc311a0a137e
 - 31b73f14 perf(validate_sys_path_modification): prune ignored dirs top-down via os.walk
 - c0a034e4 merge: integrate selfevo/cycle-cycle-f6af482155af
 - 709c120a feat(preflight_failure_check): detect zero-change turn exhaustion patterns
 - b881021c merge: integrate selfevo/cycle-cycle-19d314e29971
 - ca7f64b3 feat(preflight_failure_check): bound subagent error-log lookups to target path
-- 4adefeeb merge: integrate selfevo/cycle-cycle-a5d11226c728
-- f2f9f0fc fix(verify_and_proof): exit 0 with usage on zero-argument execution
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unittest suite in tests/test_verify_and_proof_skip_cache.py for verify_and_proof cache mechanics: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d9755d1a79d9.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4954e54626ab.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks&quot;,
-    &quot;backlog_instructions&quot;: &quot;Imports normalize_name_identifier from workspace_validation_helpers into scripts/validate_skill_format.py to resolve hyphen-underscore separator mismatches during skill name and directory comparisons.\n\nTarget path: scripts/validate_skill_format.py&quot;,
+    &quot;title&quot;: &quot;Align lesson section aliases in scripts/check_lesson_markdown_sections.py with scripts/validate_lessons.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Incorporate canonical LESSON_SECTION_ALIASES into scripts/check_lesson_markdown_sections.py to align recognized headings with scripts/validate_lessons.py schemas, directly resolving the stalled harmonization failure.\n\nTarget path: scripts/check_lesson_markdown_sections.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks (target: scripts/validate_skill_format.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_skill_format.py executes successfully and normalizes separator differences during skill identifier checks&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_skill_format.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Align lesson section aliases in scripts/check_lesson_markdown_sections.py with scripts/validate_lessons.py (target: scripts/check_lesson_markdown_sections.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
+Root cause: The deployment script copies Python source files but does not create the lessons/ directory
+or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
+was invisible — no log, no error, just silent no-op.
+
+Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
+   as part of every release activation step.
+2. After deploying lessons integration, verify with:
+   sudo ls -la /opt/.../current/lessons
+   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-37d6a551  Title: Implementing &quot;Add Windows reserved name checks and JSON report output to scripts/validate_filename_compatibility.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_filename_compatibility.py, tests/test_validate_filename_compatibility.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-37d6a551] in your proposal/response.
+ID: LESS-20260905-521b6562  Title: Pair every new required AGENTS.md section with a REQUIRED_SECTIONS entry in tests/test_agents_structure.py in the same cycle so the standing instruction is permanently enforced against accidental remo
+Problem: In reflection-521b6562e356, a cycle added a new required section to AGENTS.md but left REQUIRED_SECTIONS in tests/test_agents_structure.py untouched, so the new standing instruction had no structural test guarding it and could be dropped in a later cycle without any gate failure. The omission was only caught by manual review, not by the test suite.
+Solution: Whenever a new required section is introduced in AGENTS.md, add its exact heading to REQUIRED_SECTIONS in tests/test_agents_structure.py in the same commit, then run python3 -m pytest tests/test_agents_structure.py to confirm the new entry resolves to a present heading. Treat the AGENTS.md edit and the test registration as one atomic change: a section that is not registered is not yet standing pol
+If you apply this lesson, cite [Lesson LESS-20260905-521b6562] in your proposal/response.
+Related: LESS-REF-5b349fbfddd0
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Run targeted test files directly rather than triggering repository-wide test suites that risk exceeding the 60-second command timeout on constrained test runtimes.
-- Proceed directly to file modification once problem patterns are identified rather than re-running identical inspection commands across multiple turns.
-- Check whether a target path is a directory or use standard directory listing commands before invoking read_file.
+- Align default minimum occurrence thresholds with sister detection functions across the module to avoid false-negative results on baseline single-occurrence test cases.
+- When addressing heuristic discrepancies between scripts and test suites where the test suite has recent duplicate history, consider targeting the corresponding utility script (e.g. scripts/validate_ma
+- The proposal targeted tests/test_lessons_integrity.py despite recent duplicate skips on that path, triggering an existence_index_duplicate match against existence-index:tests/test_lesson_integrity.py.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 11:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-07 12:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_skill_format.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-07 11:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks
+Title: Align lesson section aliases in scripts/check_lesson_markdown_sections.py with scripts/validate_lessons.py
 
 
-Imports normalize_name_identifier from workspace_validation_helpers into scripts/validate_skill_format.py to resolve hyphen-underscore separator mismatches during skill name and directory comparisons.
+Incorporate canonical LESSON_SECTION_ALIASES into scripts/check_lesson_markdown_sections.py to align recognized headings with scripts/validate_lessons.py schemas, directly resolving the stalled harmonization failure.
 
-Target path: scripts/validate_skill_format.py
+Target path: scripts/check_lesson_markdown_sections.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_skill_format.py executes successfully and normalizes separator differences during skill identifier checks
+## Concrete task to implement
+Implement and commit: Align lesson section aliases in scripts/check_lesson_markdown_sections.py with scripts/validate_lessons.py (target: scripts/check_lesson_markdown_sections.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2013,7 +2021,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 12:35:22 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 15:24:59 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 12:53:24 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 15:24:59 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
