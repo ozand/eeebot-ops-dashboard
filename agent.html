@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 09:00:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 06:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 06:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-1bbb6065351c</span>
+      <span class="cycle-pill">cycle-1aa3ec0c3ad3</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 05:27:16.964894 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 06:19:41.040751 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,284c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,531c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,284 chars &bull; ~2,071 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py
-Request ID: llm-proposer-cycle-1bbb6065351c
-Cycle ID: cycle-1bbb6065351c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,531 chars &bull; ~2,132 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add output line truncation for command execution in scripts/verify_and_proof.py
+Request ID: llm-proposer-cycle-1aa3ec0c3ad3
+Cycle ID: cycle-1aa3ec0c3ad3
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,6 +1727,7 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 85558dba chore: record structured error for [cycle-1bbb60]
 - 84152418 merge: integrate selfevo/cycle-cycle-cfa3964d09a0
 - b1ef1675 feat(targeted_file_slice): add heading line index slicing (slice_section_by_index, --section-index CLI)
 - 5f0a28f7 merge: integrate selfevo/cycle-cycle-55a1dfd21708
@@ -1734,56 +1735,57 @@ Recently completed (recent commits):
 - 5d2e06ab merge: integrate selfevo/cycle-cycle-45fe76c8c8d1
 - 7e26ea95 selfevo: auto-commit uncommitted subagent work — Detect repeated commands following safety stop warnings in scripts/analyze_repea
 - 7c8a320d feat(analyze_repeat_failures): detect repeated commands following safety stop warnings
-- b9522306 merge: integrate selfevo/cycle-cycle-1ea053cccf0a
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Support case-insensitive required section heading matching in tests/test_lessons_integrity.py: existence_index_duplicate
+- Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py: gate_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1bbb6065351c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1aa3ec0c3ad3.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-4b0886b0e834 by adding validation logic in scripts/check_mutation_surface.py to verify target and staged paths against runtime deny-set restrictions and mutation surface boundaries prior to committing.\n\nTarget path: scripts/check_mutation_surface.py&quot;,
+    &quot;title&quot;: &quot;Add output line truncation for command execution in scripts/verify_and_proof.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-41e263b66c06, accumulated tool outputs exceeded the 98,048 token limit. Adding an output line-budget cap with head/tail preservation in scripts/verify_and_proof.py prevents verbose test runs from exhausting context.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py (target: scripts/check_mutation_surface.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add output line truncation for command execution in scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260831-6554c7fc  Title: Cycle cycle-6554c7fc697d failed: mutation_surface_violation
-Root cause: The cycle gate verification or execution failed with mutation_surface_violation. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-9e2ef2d1  Title: Implementing &quot;Add target surface boundary and git diff validation to scripts/validate_cycle_handoff.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_cycle_handoff.py, tests/test_validate_cycle_handoff.py
+ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-9e2ef2d1] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Do not select target paths that appear in &#x27;Recent cycle outcomes&#x27; with &#x27;skipped-duplicate&#x27; or &#x27;failed&#x27; statuses; choose unblocked consumer files or test harnesses instead.
-- Continue using AST syntax validation (`ast.parse`) after multi-line file edits as a fast, zero-side-effect sanity check prior to executing long-running test suites.
-- Once grep confirms that only the target unit test references the modified script and targeted tests pass, proceed directly to staging and committing rather than initiating broad test sweeps.
+- The worker entered an infinite repetitive tool-call loop, issuing the exact same inline python regex execution command six times across consecutive turns without interpreting the output or advancing t
+- When editing indented python code blocks via string replacement, run a quick syntax check (`python3 -m py_compile &lt;file&gt;`) before invoking the pytest runner to catch whitespace errors immediately.
+- When verifying if a task is already done under the immediate skip protocol, confirm the presence of requested code patterns and run the acceptance check; avoid searching repo history or documentation 
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-07 05:17 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
-- Attempt 2 (2026-09-07 04:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py. Reward…
-- Attempt 3 (2026-09-07 04:35 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
 
 ## Concrete task to implement
 
-Title: Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py
+Title: Add output line truncation for command execution in scripts/verify_and_proof.py
 
 
-Addresses reflection-4b0886b0e834 by adding validation logic in scripts/check_mutation_surface.py to verify target and staged paths against runtime deny-set restrictions and mutation surface boundaries prior to committing.
+In cycle-41e263b66c06, accumulated tool outputs exceeded the 98,048 token limit. Adding an output line-budget cap with head/tail preservation in scripts/verify_and_proof.py prevents verbose test runs from exhausting context.
 
-Target path: scripts/check_mutation_surface.py
+Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py (target: scripts/check_mutation_surface.py)
+Implement and commit: Add output line truncation for command execution in scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2004,7 +2006,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 06:16:13 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 09:00:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 06:32:29 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 09:00:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
