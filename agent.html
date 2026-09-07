@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 00:16:29 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 21:20 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 21:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-4d3c1900fdec</span>
+      <span class="cycle-pill">cycle-b983c68a4743</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 20:58:45.434086 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 21:23:59.653568 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,192c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,210c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,192 chars &bull; ~1,798 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py
-Request ID: llm-proposer-cycle-4d3c1900fdec
-Cycle ID: cycle-4d3c1900fdec
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,210 chars &bull; ~2,052 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix unhandled FileExistsError on existing target paths in scripts/scaffold_script_entrypoint.py
+Request ID: llm-proposer-cycle-b983c68a4743
+Cycle ID: cycle-b983c68a4743
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,56 +1727,64 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- ddf57b8e curator: promote 0 fact(s), 6 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
+- 58d19d49 merge: integrate selfevo/cycle-cycle-4d3c1900fdec
+- 6cc52dcc selfevo: auto-commit uncommitted subagent work — Add token normalization and stemming to scripts/validate_curator_facts.py
+- be1e6994 feat(validate_curator_facts): add token normalization and stemming for morphological keyword overlap
 - 07314b8f merge: integrate selfevo/cycle-cycle-ef55a8983af5
 - 8fac8abc docs(early-turn-staging): add workspace snapshot capture and clean git state recovery procedures
 - d5d69687 merge: integrate selfevo/cycle-cycle-3c83e7c36646
 - 1dc556bd feat(control_plane_summary): wire --json CLI output verification into --test smoke check
-- 54134a60 merge: integrate selfevo/cycle-cycle-1c3da664872b
-- 58b871c2 feat(check_style): prune non-source dirs in git ls-files discovery path
-- a63527a0 merge: integrate selfevo/cycle-cycle-f319debe7b86
-- 78c22ec5 docs(run-tests): add loop-breaker handling to stop repeated diagnostic execution
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4d3c1900fdec.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b983c68a4743.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add token normalization and stemming to scripts/validate_curator_facts.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The defect reports 4 staged facts with no keyword overlap between support_claim and evidence source. Extending scripts/validate_curator_facts.py with token normalization, punctuation stripping, and stemming enables morphological keyword matching between claims and evidence, resolving keyword mismatch rejections in manifest validation.\n\nTarget path: scripts/validate_curator_facts.py&quot;,
+    &quot;title&quot;: &quot;Fix unhandled FileExistsError on existing target paths in scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves idle defect defect-82a27ab0bc38 by repairing scaffold_script_entrypoint.py to catch FileExistsError and exit cleanly with an error message instead of raising an unhandled exception when the target path already exists.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py (target: scripts/validate_curator_facts.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix unhandled FileExistsError on existing target paths in scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-20-001  Title: Systemd services failed with 226/NAMESPACE after opencode user deletion
+Root cause: Multiple systemd unit files, drop-in overrides, and instance configuration files (.env) contained hardcoded paths referencing /home/opencode/ (for repositories, PYTHONPATH, virtual environments, and target workspaces). Once the user was deleted, systemd namespace mount options (like ReadWritePaths=) failed to mount the missing directory structure, preventing service execution.
+
+Prevention: 1. Avoid using personal developer home directories (such as /home/opencode) for daemon workspaces, virtual environments, or scripts.
+2. Maintain all runtime resources (venvs, workspaces, logs) inside dedicated application directories (like /opt/eeepc-agent or /var/lib/eeepc-agent) owned by the application service account.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-044af45f  Title: Implementing &quot;Extend scripts/validate_test_existence.py with missing test pair reporting and structured JSON output&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-044af45f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid executing identical shell or Python diagnostic commands consecutively; if a command yields empty or unexpected output, modify the query parameters or inspect preceding steps immediately instead 
-- Run targeted test filters (`pytest -k &lt;filter&gt;`) on large companion test files like `tests/test_run_all_tests.py` rather than launching the entire test suite, which exceeds the execution tool&#x27;s 60-sec
-- Enforce a strict turn budget for diagnostic reproduction (5 to 10 turns max) before initiating code edits to prevent exploratory paralysis.
+- When improving test coverage for scripts that already have active companion test files, prefer proposing extensions to existing suites (e.g. tests/test_verify_and_proof.py) rather than inventing new c
+- When proposing tasks for demand items that include parenthetical example filenames, avoid reusing the exact example path verbatim to prevent deduplication collisions against earlier cycles that adopte
+- The proposer adopted the verbatim parenthetical example path from the demand item text (&#x27;tests/test_verify_and_proof_skip_cache.py&#x27;), resulting in a deduplication match against an earlier proposal in 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 18:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/control_plane_summary.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-07 21:12 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/validate_curator_facts.py,…
 
 ## Concrete task to implement
 
-Title: Add token normalization and stemming to scripts/validate_curator_facts.py
+Title: Fix unhandled FileExistsError on existing target paths in scripts/scaffold_script_entrypoint.py
 
 
-The defect reports 4 staged facts with no keyword overlap between support_claim and evidence source. Extending scripts/validate_curator_facts.py with token normalization, punctuation stripping, and stemming enables morphological keyword matching between claims and evidence, resolving keyword mismatch rejections in manifest validation.
+Resolves idle defect defect-82a27ab0bc38 by repairing scaffold_script_entrypoint.py to catch FileExistsError and exit cleanly with an error message instead of raising an unhandled exception when the target path already exists.
 
-Target path: scripts/validate_curator_facts.py
+Target path: scripts/scaffold_script_entrypoint.py
 
 ## Concrete task to implement
-Implement and commit: Add token normalization and stemming to scripts/validate_curator_facts.py (target: scripts/validate_curator_facts.py)
+Implement and commit: Fix unhandled FileExistsError on existing target paths in scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2015,7 +2023,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 21:20:08 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 00:16:29 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 21:26:50 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 00:16:29 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
