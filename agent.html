@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 21:57:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 19:21 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 19:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-3c83e7c36646</span>
+      <span class="cycle-pill">cycle-a643a9daa0b9</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 18:41:52.479425 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 19:25:01.848701 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,068c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,970c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,068 chars &bull; ~2,017 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire --json CLI option verification into scripts/control_plane_summary.py internal self-test
-Request ID: llm-proposer-cycle-3c83e7c36646
-Cycle ID: cycle-3c83e7c36646
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,970 chars &bull; ~1,742 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high
+Request ID: llm-proposer-cycle-a643a9daa0b9
+Cycle ID: cycle-a643a9daa0b9
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,70 +1727,60 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- d5d69687 merge: integrate selfevo/cycle-cycle-3c83e7c36646
+- 1dc556bd feat(control_plane_summary): wire --json CLI output verification into --test smoke check
 - 54134a60 merge: integrate selfevo/cycle-cycle-1c3da664872b
 - 58b871c2 feat(check_style): prune non-source dirs in git ls-files discovery path
 - a63527a0 merge: integrate selfevo/cycle-cycle-f319debe7b86
 - 78c22ec5 docs(run-tests): add loop-breaker handling to stop repeated diagnostic execution
 - ea75ad4d merge: integrate selfevo/cycle-cycle-8f39e974fa74
 - 8cbd50b1 feat(preflight_failure_check): wire count_recent_failures threshold gate into preflight
-- 89293544 merge: integrate selfevo/cycle-cycle-21342fa5af1b
-- 4f1f0741 feat(control_plane_summary): add --json CLI flag with test coverage
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3c83e7c36646.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a643a9daa0b9.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire --json CLI option verification into scripts/control_plane_summary.py internal self-test&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-38d44ef8e166 by updating scripts/control_plane_summary.py&#x27;s internal --test smoke check to exercise and validate the recently introduced --json CLI output option.\n\nTarget path: scripts/control_plane_summary.py&quot;,
+    &quot;title&quot;: &quot;Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high&quot;,
+    &quot;backlog_instructions&quot;: &quot;Records fallback routing and endpoint verification steps for an/gemini-3.7-flash-high to prevent 404 Not Found GeminiException failures during escalation.\n\nTarget path: docs/model_routing.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire --json CLI option verification into scripts/control_plane_summary.py internal self-test (target: scripts/control_plane_summary.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high (target: docs/model_routing.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/control_plane_summary.py --test executes successfully and validates JSON mode output&quot;,
+    &quot;claim&quot;: &quot;docs/model_routing.md exists and documents fallback routes for an/gemini-3.7-flash-high&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/control_plane_summary.py --test&quot;
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;docs/model_routing.md&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-c09e3799  Title: Implementing &quot;Add confirmed integration metrics and cycle health stats to scripts/control_plane_summary.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/control_plane_summary.py, tests/test_control_plane_summary.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-c09e3799] in your proposal/response.
+ID: LESS-REF-f8d2a453853f-daa5  Title: Verify endpoint configuration and route mapping for &#x27;an/gemini-3.7-flash-high&#x27; in the bridge or configure fallback handlers to recover from NotFound/404 provider errors.
+Problem: In cycle-f8d2a453853f seq 1, invoking &#x27;an/gemini-3.7-flash-high&#x27; immediately returned &#x27;litellm.NotFoundError: GeminiException - {&quot;detail&quot;:&quot;Not Found&quot;}&#x27;, causing the cycle to exit as inconclusive.
+Solution: Verify endpoint configuration and route mapping for &#x27;an/gemini-3.7-flash-high&#x27; in the bridge or configure fallback handlers to recover from NotFound/404 provider errors.
+If you apply this lesson, cite [Lesson LESS-REF-f8d2a453853f-daa5] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate argparse CLI argument registration and downstream dispatch/conditional logic within the same target file into a single edit_file invocation to reduce round-trip turn overhead.
-- Consolidate module import additions and function body modifications within the same source file into a single edit operation rather than making successive edit calls.
-- Continue executing targeted test node IDs before running full companion test modules to ensure fast feedback loops on constrained hosts.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-07 18:23 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-07 18:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: skills/run-tests/SKILL.md. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-07 17:36 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Do not search state/ or log files for demand reflection IDs once the implementation gap has already been identified; proceed directly from reproduction to code modification.
+- Restrict verification to the companion test suite for the modified script rather than invoking unrelated integration tests that may contain pre-existing failures.
+- Consolidate helper function additions and their call-site integrations within the same target file into a single edit_file call.
 
 ## Concrete task to implement
 
-Title: Wire --json CLI option verification into scripts/control_plane_summary.py internal self-test
+Title: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high
 
 
-Addresses reflection-38d44ef8e166 by updating scripts/control_plane_summary.py&#x27;s internal --test smoke check to exercise and validate the recently introduced --json CLI output option.
+Records fallback routing and endpoint verification steps for an/gemini-3.7-flash-high to prevent 404 Not Found GeminiException failures during escalation.
 
-Target path: scripts/control_plane_summary.py
+Target path: docs/model_routing.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/control_plane_summary.py --test executes successfully and validates JSON mode output
+docs/model_routing.md exists and documents fallback routes for an/gemini-3.7-flash-high
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2029,7 +2019,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 19:21:24 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 21:57:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 19:32:56 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 21:57:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
