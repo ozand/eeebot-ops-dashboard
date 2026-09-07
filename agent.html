@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 22:36:22 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 19:38 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 19:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-a643a9daa0b9</span>
+      <span class="cycle-pill">cycle-2bdbdffd738d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 19:25:01.848701 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-07 19:42:57.119786 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,970c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,333c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,970 chars &bull; ~1,742 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high
-Request ID: llm-proposer-cycle-a643a9daa0b9
-Cycle ID: cycle-a643a9daa0b9
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,333 chars &bull; ~2,083 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add result ID search and error summary display to scripts/search_subagent_archive.py
+Request ID: llm-proposer-cycle-2bdbdffd738d
+Cycle ID: cycle-2bdbdffd738d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1737,50 +1737,53 @@ Recently completed (recent commits):
 - 8cbd50b1 feat(preflight_failure_check): wire count_recent_failures threshold gate into preflight
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a643a9daa0b9.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2bdbdffd738d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high&quot;,
-    &quot;backlog_instructions&quot;: &quot;Records fallback routing and endpoint verification steps for an/gemini-3.7-flash-high to prevent 404 Not Found GeminiException failures during escalation.\n\nTarget path: docs/model_routing.md&quot;,
+    &quot;title&quot;: &quot;Add result ID search and error summary display to scripts/search_subagent_archive.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses subagent result error fc483620 by extending scripts/search_subagent_archive.py to support querying specific result IDs and scanning active result directories to extract error details.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high (target: docs/model_routing.md)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;docs/model_routing.md exists and documents fallback routes for an/gemini-3.7-flash-high&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;docs/model_routing.md&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add result ID search and error summary display to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
+Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
+Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-f8d2a453853f-daa5  Title: Verify endpoint configuration and route mapping for &#x27;an/gemini-3.7-flash-high&#x27; in the bridge or configure fallback handlers to recover from NotFound/404 provider errors.
-Problem: In cycle-f8d2a453853f seq 1, invoking &#x27;an/gemini-3.7-flash-high&#x27; immediately returned &#x27;litellm.NotFoundError: GeminiException - {&quot;detail&quot;:&quot;Not Found&quot;}&#x27;, causing the cycle to exit as inconclusive.
-Solution: Verify endpoint configuration and route mapping for &#x27;an/gemini-3.7-flash-high&#x27; in the bridge or configure fallback handlers to recover from NotFound/404 provider errors.
-If you apply this lesson, cite [Lesson LESS-REF-f8d2a453853f-daa5] in your proposal/response.
+ID: LESS-20260826-dd865bde  Title: Implementing &quot;Add error location tracking and structured summary output to scripts/validate_json_syntax.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_json_syntax.py, tests/test_validate_json_syntax.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260826-dd865bde] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Do not search state/ or log files for demand reflection IDs once the implementation gap has already been identified; proceed directly from reproduction to code modification.
-- Restrict verification to the companion test suite for the modified script rather than invoking unrelated integration tests that may contain pre-existing failures.
-- Consolidate helper function additions and their call-site integrations within the same target file into a single edit_file call.
+- When updating zero-argument dispatch behavior in entry-point scripts with multiple subcommands or flags, explicitly smoke-test adjacent invocation modes (e.g. `--help`, specific flags, and invalid par
+- When testing entry points where `main()` inspects both injectable `argv` and raw `sys.argv`, test both invocation paths using `unittest.mock.patch.object(sys, &#x27;argv&#x27;, ...)` to ensure consistency betwe
+- Accept negative search results immediately when a grep or inspection tool yields empty or zero matches; do not re-run identical searches with piped counters on the same target.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-07 19:32 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-07 18:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/control_plane_summary.py. Reward signal will be upgraded by coordinator.
+- Attempt 3 (2026-09-07 18:23 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Document fallback routes and endpoint configuration for an/gemini-3.7-flash-high
+Title: Add result ID search and error summary display to scripts/search_subagent_archive.py
 
 
-Records fallback routing and endpoint verification steps for an/gemini-3.7-flash-high to prevent 404 Not Found GeminiException failures during escalation.
+Addresses subagent result error fc483620 by extending scripts/search_subagent_archive.py to support querying specific result IDs and scanning active result directories to extract error details.
 
-Target path: docs/model_routing.md
+Target path: scripts/search_subagent_archive.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-docs/model_routing.md exists and documents fallback routes for an/gemini-3.7-flash-high
+## Concrete task to implement
+Implement and commit: Add result ID search and error summary display to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2019,7 +2022,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 19:38:56 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 22:36:22 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 19:50:14 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 22:36:22 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
