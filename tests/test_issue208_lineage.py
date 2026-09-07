@@ -266,6 +266,43 @@ def test_day_filter_is_calendar_based_and_says_when_today_has_no_data(tmp_path: 
     assert today_stale['empty']
 
 
+def test_issue218_collapsed_recorded_path_exposes_explicit_marker(tmp_path: Path) -> None:
+    nodes = [
+        _node('a', None, '2026-01-01T00:00:00Z'),
+        _node('b', 'a', '2026-01-01T01:00:00Z'),
+        _node('c', 'b', '2026-01-01T02:00:00Z'),
+        _node('d', 'c', '2026-01-02T00:30:00Z'),
+    ]
+    probes = [{'mode': 'today', 'now': '2026-01-02T01:00:00Z', 'render': True}]
+    result = _render(_payload(nodes), tmp_path, filter_probe=probes)
+    projection_edges = result['filter'][0]['edges']
+    collapsed = [edge for edge in projection_edges if edge['type'] == 'collapsed']
+    assert collapsed == [{
+        'source': 'c:a', 'target': 'c:d', 'type': 'collapsed', 'basis': 'recorded',
+        'collapsedNodes': 2, 'collapsedEdges': 3,
+        'path': ['c:a', 'c:b', 'c:c', 'c:d'],
+    }]
+    rendered = result['filter'][0]['rendered']
+    assert rendered is not None
+    paths = [child for child in rendered['children'] if child['tag'] == 'path']
+    assert len(paths) == 1
+    path = paths[0]
+    assert path['attrs']['data-edge-type'] == 'collapsed'
+    assert path['attrs']['data-source'] == 'c:a'
+    assert path['attrs']['data-target'] == 'c:d'
+    assert path['attrs']['data-basis'] == 'recorded'
+    assert path['attrs']['data-collapsed-nodes'] == '2'
+    assert path['attrs']['data-collapsed-edges'] == '3'
+    assert path['attrs']['data-path'] == 'c:a->c:b->c:c->c:d'
+    assert 'lineage-context-edge' in path['attrs']['class'].split()
+    labels = [child for child in rendered['children'] if child['tag'] == 'text' and child['attrs'].get('class') == 'lineage-collapsed-label']
+    assert [label['text'] for label in labels] == ['2 hidden nodes']
+    circles = [child for child in rendered['children'] if child['tag'] == 'circle' and child['attrs'].get('class', '').find('lineage-node') >= 0]
+    assert {circle['attrs']['data-node-id'] for circle in circles} == {'c:a', 'c:d'}
+    assert any(circle['attrs']['data-node-id'] == 'c:a' and 'lineage-context-node' in circle['attrs']['class'] for circle in circles)
+    assert any(circle['attrs']['data-node-id'] == 'c:d' and 'lineage-context-node' not in circle['attrs']['class'] for circle in circles)
+
+
 def test_today_boundary_is_strict_and_context_is_allowed(tmp_path: Path) -> None:
     nodes = [
         _node('before', None, '2026-01-01T23:59:59.999Z'),
