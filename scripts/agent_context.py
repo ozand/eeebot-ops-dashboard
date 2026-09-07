@@ -233,7 +233,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                 raw_sections_text["goals"] = p
 
     if chars is None and sections:
-        chars = sum(sections.values()) + max(0, len(sections) - 1) * SEPARATOR_LEN
+        # For overflow rows, chars key is absent; total is cap + over_by or sum of non-empty sections + separators
+        if overflow and cap is not None and over_by is not None:
+            chars = cap + over_by
+        else:
+            non_empty_sec = sum(1 for v in sections.values() if (v or 0) > 0)
+            chars = sum(sections.values()) + max(0, non_empty_sec - 1) * SEPARATOR_LEN
 
     total_chars = chars or (len(prompt_text) if prompt_text else 0)
     total_tokens = estimate_tokens(total_chars)
@@ -373,18 +378,25 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     if sections:
         for key, label in CANONICAL_ASSEMBLY_ORDER:
             sec_sz = sections.get(key)
-            if sec_sz is not None:
+            # Check if key is explicitly present in sections (including 0)
+            if key in sections:
+                sec_sz = sec_sz or 0
                 sec_tokens = estimate_tokens(sec_sz)
                 total_sections_chars += sec_sz
                 if sec_sz > 0:
                     non_empty_count += 1
                 sec_text = raw_sections_text.get(key, "")
-                reconciliation_rows.append(f"<tr><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class=\"num\">{sec_sz:,}</td><td class=\"num\">~{sec_tokens:,}</td><td>{sec_sz:,}c</td></tr>")
-                out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>')
+                if sec_sz == 0:
+                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr>')
+                    out.append(f'<div class="context-block-empty"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; 0 chars (empty under loop profile)</div>')
+                else:
+                    reconciliation_rows.append(f"<tr><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class=\"num\">{sec_sz:,}</td><td class=\"num\">~{sec_tokens:,}</td><td>{sec_sz:,}c</td></tr>")
+                    out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>')
                 block_seq += 1
-            elif key == "active_skills":
-                reconciliation_rows.append('<tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr>')
-                out.append(f'<div class="context-block-empty"><span class="block-seq">#{block_seq}</span><strong>active_skills</strong> &mdash; 0 chars (empty under current loop profile)</div>')
+            else:
+                # Key is absent from sections breakdown
+                reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr>')
+                out.append(f'<div class="context-block-absent"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; <em>absent</em> (not configured/emitted)</div>')
                 block_seq += 1
 
         sep_count = max(0, non_empty_count - 1)
