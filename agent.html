@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 14:51:07 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 12:14 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 12:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-d3b002fd867a</span>
+      <span class="cycle-pill">cycle-d9755d1a79d9</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 12:02:55.934712 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 12:18:18.620555 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,970c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,540c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,970 chars &bull; ~1,992 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Resolve pre-existing self-test failures in scripts/isolate_base_branch_failures.py
-Request ID: llm-proposer-cycle-d3b002fd867a
-Cycle ID: cycle-d3b002fd867a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,540 chars &bull; ~1,885 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks
+Request ID: llm-proposer-cycle-d9755d1a79d9
+Cycle ID: cycle-d9755d1a79d9
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,49 +1740,53 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unittest suite in tests/test_verify_and_proof_skip_cache.py for verify_and_proof cache mechanics: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d3b002fd867a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d9755d1a79d9.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Resolve pre-existing self-test failures in scripts/isolate_base_branch_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Fix the failure list extraction and regression classification logic in scripts/isolate_base_branch_failures.py to resolve the four self-test assertion failures observed during self-test runs.\n\nTarget path: scripts/isolate_base_branch_failures.py&quot;,
+    &quot;title&quot;: &quot;Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks&quot;,
+    &quot;backlog_instructions&quot;: &quot;Imports normalize_name_identifier from workspace_validation_helpers into scripts/validate_skill_format.py to resolve hyphen-underscore separator mismatches during skill name and directory comparisons.\n\nTarget path: scripts/validate_skill_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Resolve pre-existing self-test failures in scripts/isolate_base_branch_failures.py (target: scripts/isolate_base_branch_failures.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks (target: scripts/validate_skill_format.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_skill_format.py executes successfully and normalizes separator differences during skill identifier checks&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_skill_format.py&quot;
+    }
+  }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-c871bf9abe41  Title: When introducing new default-enabled repository introspection features to CLI scripts, verify that existing mock test suites pass flags to disable live VCS scanning or isolate repository context.
-Problem: In cycle-c871bf9abe41, test_prevent_repeat_failures_matching failed because the live git history for scripts/optimize_git_storage.py produced duplicate_feature_commit matches in mock test runs until --no-commit-history was supplied.
-Solution: When introducing new default-enabled repository introspection features to CLI scripts, verify that existing mock test suites pass flags to disable live VCS scanning or isolate repository context.
-If you apply this lesson, cite [Lesson LESS-REF-c871bf9abe41] in your proposal/response.
-Related: LESS-REF-c871bf9abe41-8608
+ID: LESS-20260825-37d6a551  Title: Implementing &quot;Add Windows reserved name checks and JSON report output to scripts/validate_filename_compatibility.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_filename_compatibility.py, tests/test_validate_filename_compatibility.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-37d6a551] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Verify exact leading whitespace when editing indented blocks or import statements with edit_file to prevent secondary IndentationError compile failures.
-- Avoid executing identical shell or Python diagnostic commands consecutively; if a command yields empty or unexpected output, modify the query parameters or inspect preceding steps immediately instead 
-- Run targeted test filters (`pytest -k &lt;filter&gt;`) on large companion test files like `tests/test_run_all_tests.py` rather than launching the entire test suite, which exceeds the execution tool&#x27;s 60-sec
+- Run targeted test files directly rather than triggering repository-wide test suites that risk exceeding the 60-second command timeout on constrained test runtimes.
+- Proceed directly to file modification once problem patterns are identified rather than re-running identical inspection commands across multiple turns.
+- Check whether a target path is a directory or use standard directory listing commands before invoking read_file.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-07 11:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-07 11:33 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-07 11:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Resolve pre-existing self-test failures in scripts/isolate_base_branch_failures.py
+Title: Use normalize_name_identifier in scripts/validate_skill_format.py for separator-agnostic skill name checks
 
 
-Fix the failure list extraction and regression classification logic in scripts/isolate_base_branch_failures.py to resolve the four self-test assertion failures observed during self-test runs.
+Imports normalize_name_identifier from workspace_validation_helpers into scripts/validate_skill_format.py to resolve hyphen-underscore separator mismatches during skill name and directory comparisons.
 
-Target path: scripts/isolate_base_branch_failures.py
+Target path: scripts/validate_skill_format.py
 
-## Concrete task to implement
-Implement and commit: Resolve pre-existing self-test failures in scripts/isolate_base_branch_failures.py (target: scripts/isolate_base_branch_failures.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_skill_format.py executes successfully and normalizes separator differences during skill identifier checks
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2009,7 +2013,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 12:14:30 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 14:51:07 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 12:21:26 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 14:51:07 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
