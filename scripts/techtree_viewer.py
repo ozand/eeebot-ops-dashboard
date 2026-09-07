@@ -3065,14 +3065,48 @@ def _build_unified_lineage(
   function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
   function line(label, value) {{ return value ? '<p><b>' + label + ':</b> ' + esc(value) + '</p>' : ''; }}
   function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + label + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+  function siblingLinks(node, cid) {{
+    var script = document.getElementById('lineage-data');
+    var payload = script ? JSON.parse(script.textContent) : {{nodes: []}};
+    var nodes = (payload.nodes || []).filter(function (candidate) {{ return candidate.cycle_id === cid; }}).sort(function (a, b) {{ return (Number(a.cycle_node_index || 0) - Number(b.cycle_node_index || 0)) || String(a.node_id).localeCompare(String(b.node_id)); }});
+    if (nodes.length < 2) return '';
+    var selectedId = node.getAttribute('data-node-id') || '';
+    return '<h3>Other nodes for ' + esc(cid) + '</h3><ul class="cycle-sibling-links">' + nodes.map(function (candidate) {{
+      var nodeId = candidate.node_id || '';
+      var candidateSha = candidate.sha;
+      var label = candidateSha ? 'commit ' + candidateSha : 'attempt (no commit recorded)';
+      var current = nodeId === selectedId ? ' aria-current="page"' : '';
+      var domId = window.lineageRenderer && window.lineageRenderer.nodeIdToDomId ? window.lineageRenderer.nodeIdToDomId(nodeId) : 'node-' + encodeURIComponent(nodeId);
+      return '<li><a class="cycle-sibling-link" href="#' + domId + '" data-node-id="' + esc(nodeId) + '"' + current + '>' + esc(label) + '</a></li>';
+    }}).join('') + '</ul>';
+  }}
   function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
-  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var html = '<h3>' + esc(item.title || cid) + '</h3>' + multi + line('Cycle', item.cycle_id) + line('Outcome', item.outcome) + line('Reason', item.reason) + line('Timestamp', item.ts) + line('SHA', item.sha) + line('Parent SHA', item.parent_sha) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
-  var selectedNode = null, openedByNode = null, openSeq = 0;
+  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var nodeId = node.getAttribute('data-node-id') || ''; var sha = node.getAttribute('data-sha') || ''; var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var selected = '<h3>Selected node</h3>' + line('Node ID', nodeId) + '<p><b>SHA:</b> ' + esc(sha || 'No commit recorded') + '</p>' + line('Timestamp', node.getAttribute('data-ts')); var cycle = '<h3>Cycle summary (shared across ' + count + ' nodes)</h3>' + line('Cycle', item.cycle_id || cid) + line('Title', item.title) + line('Outcome', item.outcome || 'unknown') + line('Reason', item.reason) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); var html = selected + multi + cycle + siblingLinks(node, cid); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  var selectedNode = null, openedByNode = null, openSeq = 0, focusAtOpen = null, userDeparted = false;
   function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
-  function closePanel() {{ panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
+  function markUserDeparture(event) {{
+    if (!event.isTrusted || panel.hidden) return;
+    var target = event.target;
+    if (target && target.closest && (target.closest('input,select,textarea') || (target.closest('button') && !target.closest('#cycle-details-close')) || target.closest('a'))) userDeparted = true;
+  }}
+  document.addEventListener('pointerdown', markUserDeparture, true);
+  document.addEventListener('focusin', markUserDeparture, true);
+  document.addEventListener('keydown', function (event) {{
+    if (event.isTrusted && event.key !== 'Escape' && event.target && event.target.closest && event.target.closest('input,button,a,select,textarea')) userDeparted = true;
+  }}, true);
+  function closePanel() {{ openSeq++; panel.hidden = true; clearSelection(); var returnTo = openedByNode; openedByNode = null; focusAtOpen = null; userDeparted = false; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn && document.activeElement === closeBtn) closeBtn.blur(); if (returnTo && returnTo.focus) returnTo.focus({{ preventScroll: true }}); }}
   function scrollPanelIntoView() {{ panel.scrollIntoView({{ behavior: 'instant', block: 'nearest' }}); }}
-  function open(node, fromHash) {{ clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; var closeBtn = document.getElementById('cycle-details-close'); if (closeBtn) closeBtn.focus({{ preventScroll: true }}); load().then(function () {{ if (seq !== openSeq) return; render(node, cid); scrollPanelIntoView(); }}).catch(function (err) {{ if (seq !== openSeq) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; scrollPanelIntoView(); }}); }}
-  document.addEventListener('click', function (event) {{ var node = event.target.closest('.lineage-node'); if (node) {{ event.preventDefault(); open(node, false); return; }} if (event.target.closest('#cycle-details-close')) {{ closePanel(); }} }});
+  function focusAfterAsync(seq, forceFocus) {{
+    if (seq !== openSeq || panel.hidden || userDeparted) return;
+    var active = document.activeElement;
+    if (seq === openSeq && !panel.hidden && (forceFocus || active === focusAtOpen || active === document.body || active === document.documentElement || active === document.getElementById('cycle-details-close') || (active && active.tagName === 'HTML'))) {{
+      var closeBtn = document.getElementById('cycle-details-close');
+      if (closeBtn) closeBtn.focus({{ preventScroll: true }});
+    }}
+    if (!userDeparted) scrollPanelIntoView();
+  }}
+  function open(node, fromHash) {{ userDeparted = false; clearSelection(); selectedNode = node; openedByNode = fromHash ? null : node; focusAtOpen = document.activeElement; node.classList.add('cycle-node-selected'); var cid = node.getAttribute('data-cycle-id'); var seq = ++openSeq; if (!fromHash && history.replaceState) history.replaceState(null, '', '#' + node.id); panel.hidden = false; panel.querySelector('.cycle-details-body').innerHTML = '<p>loading ' + esc(cid) + ' …</p>'; if (!fromHash) {{ var immediateClose = document.getElementById('cycle-details-close'); if (immediateClose) immediateClose.focus({{ preventScroll: true }}); }} load().then(function () {{ if (seq !== openSeq || panel.hidden) return; render(node, cid); focusAfterAsync(seq, fromHash); }}).catch(function (err) {{ if (seq !== openSeq || panel.hidden) return; panel.querySelector('.cycle-details-body').innerHTML = '<p>' + esc(cid) + ': details unavailable — ' + esc(src) + ' could not be loaded or rendered (' + esc(err && err.message || err) + ').</p>'; focusAfterAsync(seq, fromHash); }}); }}
+  document.addEventListener('click', function (event) {{ var node = event.target.closest('.lineage-node'); if (node) {{ event.preventDefault(); open(node, false); return; }} var sibling = event.target.closest('.cycle-sibling-link'); if (sibling) {{ event.preventDefault(); if (history.replaceState) history.replaceState(null, '', sibling.getAttribute('href')); handleHash(); return; }} if (event.target.closest('#cycle-details-close')) {{ closePanel(); }} }});
   document.addEventListener('keydown', function (event) {{ if (event.key === 'Escape' && !panel.hidden) {{ event.preventDefault(); closePanel(); }} }});
   function handleHash() {{ var hash = window.location.hash; if (!hash || !hash.startsWith('#node-')) return; var el = window.lineageRenderer && window.lineageRenderer.selectNodeFromHash ? window.lineageRenderer.selectNodeFromHash(hash) : document.getElementById(hash.slice(1)); if (!el) return; el.scrollIntoView({{ behavior: 'instant', block: 'center' }}); open(el, true); }}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', handleHash); else Promise.resolve().then(handleHash);
@@ -3644,9 +3678,6 @@ def build_cycle_feed(
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
-    # #235: the humanized timestamp is date-dependent, so the reference
-    # instant has to be injectable or the rendering is only reproducible
-    # for as long as the wall clock agrees. Same shape as build_hypotheses.
     ref_now = now or datetime.now(timezone.utc)
     if ref_now.tzinfo is None:
         ref_now = ref_now.replace(tzinfo=timezone.utc)
@@ -4338,7 +4369,7 @@ def _build_demand_futility_section(
     active_gap_metrics: set[str] | None = None,
 ) -> str:
     """Issue #185: surface goal gap futility progress from state/demand/futility.json.
-    
+
     3-state reporting:
     - Missing/unavailable: rendered as unavailable note (not 0/10).
     - Healthy / Low attempts: rendered as compact meter.

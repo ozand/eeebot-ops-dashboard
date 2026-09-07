@@ -431,7 +431,7 @@ def test_extract_git_titles_local_dubious_ownership_error(monkeypatch: pytest.Mo
 def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo = tmp_path / 'repo'
     repo.mkdir()
-    
+
     def fake_run(cmd, *args, **kwargs):
         if 'log' in cmd and '--first-parent' in cmd:
             return subprocess.CompletedProcess(
@@ -2713,9 +2713,10 @@ def test_issue119_detail_card_contains_labeled_markup_not_json_dump() -> None:
     }
     html = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
     card_script = html[html.index('id="cycle-details-panel"'):]  # #208: records are fetched, the card markup stays inline
-    assert "line('Cycle'" in card_script
-    assert "line('Parent SHA'" in card_script
-    assert "Files changed" in card_script
+    assert 'Selected node' in card_script
+    assert 'Cycle summary (shared across' in card_script
+    assert 'Parent SHA' not in card_script
+    assert "line('Parent SHA'" not in card_script
     assert 'JSON.stringify(item)' not in card_script
 
 
@@ -2729,9 +2730,9 @@ def test_issue119_detail_card_is_rendered_with_cycle_detail_fields() -> None:
         }
     }
     html = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
-    assert "line('Cycle'" in html
-    assert "line('Parent SHA'" in html
-    assert "Files changed" in html
+    assert 'Selected node' in html
+    assert 'Cycle summary (shared across' in html
+    assert 'Files changed' in html
     assert 'open in Cycle Feed' in html
     assert 'related lessons' in html
     assert 'textContent = JSON.stringify(item)' not in html
@@ -2741,7 +2742,7 @@ def test_issue119_detail_card_renders_labeled_fields_not_raw_json() -> None:
     html = tv.render_pages({**_fixture(), 'cycle_details': {
         'cycle-a': {'cycle_id': 'cycle-a', 'outcome': 'success', 'reason': 'ok', 'ts': '2026-08-16T00:00:00Z', 'sha': 'sha', 'parent_sha': 'parent', 'files_changed': ['src/x.py'], 'lesson_insight': 'useful'}
     }}, host='eeepc', generated_at='2026-08-18 12:00:00')['lineage.html']
-    assert 'Cycle' in html and 'Outcome' in html and 'Parent SHA' in html and 'Files changed' in html
+    assert 'Selected node' in html and 'Cycle summary (shared across' in html and 'Files changed' in html
     assert 'open in Cycle Feed' in html and 'related lessons' in html
     assert 'cycle-details-body' in html
 
