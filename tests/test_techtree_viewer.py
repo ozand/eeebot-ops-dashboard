@@ -984,6 +984,10 @@ def test_lineage_uses_ledger_history_day_buckets_and_default_window() -> None:
     # #218: unified DAG — no per-day sections, but filter controls and timestamps present
     assert 'lineage-day-filter' in html
     assert 'Today' in html and 'Yesterday+Today' in html and '24h' in html
+    assert 'data-default-filter="today"' in html
+    assert 'data-lineage-default-mode="today"' in html
+    assert '<button type="button" data-lineage-filter="today" class="active">Today</button>' in html
+    assert '<button type="button" data-lineage-filter="all">All</button>' in html
     assert 'id="lineage-data"' in html
     import json, re as _re
     m = _re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', html, _re.S)

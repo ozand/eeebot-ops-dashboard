@@ -266,6 +266,19 @@ def test_day_filter_is_calendar_based_and_says_when_today_has_no_data(tmp_path: 
     assert today_stale['empty']
 
 
+def test_today_boundary_is_strict_and_context_is_allowed(tmp_path: Path) -> None:
+    nodes = [
+        _node('before', None, '2026-01-01T23:59:59.999Z'),
+        _node('start', 'before', '2026-01-02T00:00:00.000Z'),
+        _node('now', 'start', '2026-01-02T01:00:00.000Z'),
+        _node('after', 'now', '2026-01-02T01:00:00.001Z'),
+    ]
+    result = _render(_payload(nodes), tmp_path, filter_probe=[{'mode': 'today', 'now': '2026-01-02T01:00:00Z'}])
+    today = result['filter'][0]
+    assert today['visibleNodeIds'] == ['c:start', 'c:now']
+    assert today['nodeCount'] == 3
+
+
 # ─── generator half ───────────────────────────────────────────────────────────
 
 ROWS = [
@@ -590,6 +603,7 @@ def test_issue213_browser_node_click_shows_panel_and_selection(tmp_path: Path, v
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+        page.clock.install(time='2026-09-01T05:00:00Z')
         page.goto(page_file.as_uri())
         page.wait_for_load_state('networkidle')
 
@@ -654,6 +668,7 @@ def test_issue213_browser_close_button_hides_panel(tmp_path: Path) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.clock.install(time='2026-09-01T05:00:00Z')
         page.goto(page_file.as_uri())
         page.wait_for_load_state('networkidle')
 
@@ -765,6 +780,7 @@ def test_issue213_panel_body_visible_after_click(tmp_path: Path, viewport_width:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+            page.clock.install(time='2026-09-01T05:00:00Z')
             page.goto(base_url + '/lineage.html')
             page.wait_for_load_state('networkidle')
             clicked = page.evaluate(
@@ -813,6 +829,7 @@ def test_issue213_click_sets_location_hash(tmp_path: Path) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.clock.install(time='2026-09-01T05:00:00Z')
         page.goto(page_file.as_uri())
         page.wait_for_load_state('networkidle')
         result = page.evaluate(
@@ -846,6 +863,7 @@ def test_issue213_keyboard_focus_moves_to_close_button(tmp_path: Path) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.clock.install(time='2026-09-01T05:00:00Z')
         page.goto(page_file.as_uri())
         page.wait_for_load_state('networkidle')
         result = page.evaluate(
@@ -878,6 +896,7 @@ def test_issue213_close_returns_focus_to_node(tmp_path: Path) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': 1280, 'height': 900})
+        page.clock.install(time='2026-09-01T05:00:00Z')
         page.goto(page_file.as_uri())
         page.wait_for_load_state('networkidle')
         # Step 1: click the node (focus moves to close button).
@@ -1028,8 +1047,11 @@ def test_issue218_coverage_receipt_visible_after_renderer(tmp_path: Path, viewpo
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.clock.install(time='2026-01-01T01:00:00Z')
             page.goto(base_url + '/lineage.html')
             page.wait_for_load_state('networkidle')
+            assert page.locator('[data-lineage-filter="today"].active').count() == 1
+            assert page.locator('[data-lineage-filter="all"].active').count() == 0
             note = page.locator('.lineage-coverage-note')
             assert note.inner_text() == expected_text
             assert page.locator('.lineage-node[data-parent-status="root"]').count() >= 1
@@ -1073,6 +1095,7 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             browser = p.chromium.launch()
             errors = []
             page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(base_url + '/lineage.html')
             page.wait_for_load_state('networkidle')
@@ -1101,6 +1124,82 @@ def test_issue218_click_generated_exact_permalink_survives_cold_load(
             expect(fresh.locator('#cycle-details-close')).to_be_focused(timeout=2000)
             assert errors == [] and fresh_errors == []
             fresh.close()
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue218_today_default_preserves_payload_and_all_toggle(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-old', 'sha': 'old', 'parent_sha': '', 'ts': '2026-01-01T23:00:00Z'},
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-today', 'sha': 'today', 'parent_sha': 'old', 'ts': '2026-01-02T00:30:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'today'}; data['ledger_tail'] = rows; data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    payload_match = re.search(r'<script type="application/json" id="lineage-data"[^>]*>(.*?)</script>', pages['lineage.html'], re.S)
+    assert payload_match is not None
+    expected_payload = json.loads(payload_match.group(1))
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            assert page.locator('[data-lineage-filter="today"].active').count() == 1
+            # Today keeps the hidden recorded parent as one contextual ancestor.
+            assert page.locator('.lineage-node').count() == 2
+            assert page.locator('.lineage-node[data-node-id="c:today"]').count() == 1
+            assert page.locator('.lineage-node[data-node-id="c:old"][data-context="ancestor"]').count() == 1
+            primary = page.locator('.lineage-node:not(.lineage-context-node)')
+            assert primary.evaluate_all("nodes => nodes.map(n => n.getAttribute('data-node-id'))") == ['c:today']
+            primary_ts = primary.evaluate_all("nodes => nodes.map(n => n.getAttribute('data-ts'))")
+            assert primary_ts == ['2026-01-02T00:30:00Z']
+            assert all('2026-01-02T00:00:00Z' <= ts <= '2026-01-02T01:00:00Z' for ts in primary_ts)
+            assert page.locator('body').evaluate('(el) => el.scrollWidth <= el.clientWidth')
+            svg_box = page.locator('#lineage-svg').bounding_box()
+            assert svg_box is not None and svg_box['width'] <= 600 and svg_box['height'] <= 300
+            payload_after_today = page.evaluate("() => JSON.parse(document.getElementById('lineage-data').textContent)")
+            assert payload_after_today == expected_payload
+            page.locator('[data-lineage-filter="all"]').click(); page.wait_for_timeout(100)
+            assert page.locator('[data-lineage-filter="all"].active').count() == 1
+            assert page.locator('.lineage-node').count() == len(expected_payload['nodes'])
+            payload_after_all = page.evaluate("() => JSON.parse(document.getElementById('lineage-data').textContent)")
+            assert payload_after_all == expected_payload
+            page.locator('[data-lineage-filter="today"]').click(); page.wait_for_timeout(100)
+            assert page.locator('[data-lineage-filter="today"].active').count() == 1
+            assert page.locator('.lineage-node').count() == 2
+            assert page.locator('.lineage-node:not(.lineage-context-node)').evaluate_all("nodes => nodes.map(n => n.getAttribute('data-node-id'))") == ['c:today']
+            assert page.locator('.lineage-node[data-node-id="c:old"][data-context="ancestor"]').count() == 1
+            assert page.locator('body').evaluate('(el) => el.scrollWidth <= el.clientWidth')
+            returned_svg = page.locator('#lineage-svg').bounding_box()
+            assert returned_svg is not None and returned_svg['width'] <= 600 and returned_svg['height'] <= 300
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1280])
+def test_issue218_empty_today_stays_today_without_auto_all(tmp_path: Path, viewport_width: int) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [{'phase': 'evolution_tree', 'cycle_id': 'cycle-old', 'sha': 'old', 'parent_sha': '', 'ts': '2026-01-01T23:00:00Z'}]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'old'}; data['ledger_tail'] = rows; data['ledger_history'] = rows
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': viewport_width, 'height': 844})
+            page.clock.install(time='2026-01-02T01:00:00Z')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            assert page.locator('[data-lineage-filter="today"].active').count() == 1
+            assert page.locator('.lineage-empty-state').text_content() == 'No cycles recorded in selected interval'
+            assert page.locator('[data-lineage-filter="all"].active').count() == 0
             browser.close()
     finally:
         srv.shutdown()
