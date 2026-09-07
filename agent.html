@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">214</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">66.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 12:41:13 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 09:43 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 09:54 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-d2fafc55b3f2</span>
+      <span class="cycle-pill">cycle-ed7157092eb8</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 09:14:18.603228 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 09:47:10.732119 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,862c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,670c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,862 chars &bull; ~2,215 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Support package-qualified and root-relative test IDs in test discovery parsing in scripts/run_all_tests.py
-Request ID: llm-proposer-cycle-d2fafc55b3f2
-Cycle ID: cycle-d2fafc55b3f2
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,670 chars &bull; ~2,167 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix exit code 1 failure when scripts/check_feed_freshness.py is invoked without arguments
+Request ID: llm-proposer-cycle-ed7157092eb8
+Cycle ID: cycle-ed7157092eb8
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,73 +1727,73 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0071fb85 merge: integrate selfevo/cycle-cycle-d2fafc55b3f2
+- f1a0e5ff feat(run_all_tests): support package-qualified and root-relative test IDs in unittest discovery
 - 2ae002bd merge: integrate selfevo/cycle-cycle-6d9078011267
 - 0ed81993 feat(targeted_file_slice): add --numbered line prefix support to --scan mode
 - 7b4f9e41 merge: integrate selfevo/cycle-cycle-a1fc0a14ca34
 - e7332100 feat(check_style): add --benchmark timing measurement mode
 - d2d0d668 merge: integrate selfevo/cycle-cycle-7fa367a113c2
 - dd20e224 feat(check_target_completion): add companion test coverage audit for implemented targets
-- 8395d419 merge: integrate selfevo/cycle-cycle-dad33a99f912
-- 20c38c87 feat(workspace_validation_helpers): add inspect_slice_result truncation inspection helper
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add negative control tests in tests/test_validate_sys_path_modification.py for AST rule violations: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d2fafc55b3f2.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ed7157092eb8.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Support package-qualified and root-relative test IDs in test discovery parsing in scripts/run_all_tests.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Normalize unittest discovery output test identifiers in scripts/run_all_tests.py to support both package-qualified (tests.test_*) and root-relative (test_*) test names regardless of package root or __init__.py presence.\n\nTarget path: scripts/run_all_tests.py&quot;,
+    &quot;title&quot;: &quot;Fix exit code 1 failure when scripts/check_feed_freshness.py is invoked without arguments&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/check_feed_freshness.py fails with exit code 1 during validator runs; handling default invocation and missing feeds cleanly resolves the failure.\n\nTarget path: scripts/check_feed_freshness.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Support package-qualified and root-relative test IDs in test discovery parsing in scripts/run_all_tests.py (target: scripts/run_all_tests.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix exit code 1 failure when scripts/check_feed_freshness.py is invoked without arguments (target: scripts/check_feed_freshness.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/run_all_tests.py accommodates both tests.test_* and test_* discovery formats without crashing&quot;,
+    &quot;claim&quot;: &quot;scripts/check_feed_freshness.py exits with code 0 when invoked without arguments&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/run_all_tests.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/check_feed_freshness.py&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-be745246  Title: Implementing &quot;Add test execution timing summary and pattern filtering to scripts/run_all_tests.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/run_all_tests.py, tests/test_run_all_tests.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-be745246] in your proposal/response.
+ID: LESS-20260826-ff3ff930  Title: Implementing &quot;Add target threshold evaluation and failure exit code to scripts/check_confirmation_ratio.py&quot; improves operator value.
+Problem: Committed 1 commit(s): memory/confirmation_status.json
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260826-ff3ff930] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When adding top-level definitions via edit_file, ensure replacement text contains no leading whitespace; if an IndentationError occurs, inspect exact column-zero characters using cat -A before retryin
-- Maintain the practice of running only targeted test suites and direct CLI flag invocations, staging exclusively the designated script and companion test files.
-- Introduced a leading space before &#x27;class TestExtractFailureSignatures:&#x27; during an edit_file call, causing an IndentationError. The initial edit retry attempted to replace &#x27;class ...&#x27; without matching 
+- The worker entered an execution loop by issuing the exact same grep command five consecutive times across turns, disregarding the loop_breaker warning message and causing the cycle to terminate withou
+- Avoid spending early turns searching state and archive directories for historical reflection or demand records when the assigned task title and target files already provide clear, self-contained imple
+- When a loop_breaker safety stop is triggered, immediately halt repetitive inspection commands and transition directly to modifying the target code or running verification tests.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 09:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
-- Attempt 2 (2026-09-07 08:35 UTC): no commits (blocked). Task &quot;Add negative control tests in tests/test_validate_sys_path_m&quot; matched an existing artifact…
+- Attempt 1 (2026-09-07 09:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-07 09:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
 - Attempt 3 (2026-09-07 08:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Support package-qualified and root-relative test IDs in test discovery parsing in scripts/run_all_tests.py
+Title: Fix exit code 1 failure when scripts/check_feed_freshness.py is invoked without arguments
 
 
-Normalize unittest discovery output test identifiers in scripts/run_all_tests.py to support both package-qualified (tests.test_*) and root-relative (test_*) test names regardless of package root or __init__.py presence.
+scripts/check_feed_freshness.py fails with exit code 1 during validator runs; handling default invocation and missing feeds cleanly resolves the failure.
 
-Target path: scripts/run_all_tests.py
+Target path: scripts/check_feed_freshness.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/run_all_tests.py accommodates both tests.test_* and test_* discovery formats without crashing
+scripts/check_feed_freshness.py exits with code 0 when invoked without arguments
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2020,7 +2020,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 09:43:24 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 12:41:13 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 09:54:41 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 12:41:13 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
