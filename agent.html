@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">65.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-07 09:35:58 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 06:53 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 07:00 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+513 chars spare)</span>
-      <span class="cycle-pill">cycle-b4e999976a97</span>
+      <span class="cycle-pill">cycle-8f283595b563</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 06:41:35.290943 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,487 / 24,000 chars)</span><span>2026-09-07 06:57:12.860915 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,780c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,731c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,466c) + 3 separators &times; 7c (21c) = 23,487 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,780 chars &bull; ~1,945 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add token budget compaction routine to scripts/truncate_conversation.py for model context window limits
-Request ID: llm-proposer-cycle-b4e999976a97
-Cycle ID: cycle-b4e999976a97
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,731 chars &bull; ~1,932 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix premature scan truncation in audit_sensitive_tokens in scripts/workspace_validation_helpers.py
+Request ID: llm-proposer-cycle-8f283595b563
+Cycle ID: cycle-8f283595b563
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,60 +1727,61 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0ef6f40f merge: integrate selfevo/cycle-cycle-b4e999976a97
+- 8d2d3864 feat(truncate_conversation): add token-budget compaction routine for model context windows
 - 85558dba chore: record structured error for [cycle-1bbb60]
 - 84152418 merge: integrate selfevo/cycle-cycle-cfa3964d09a0
 - b1ef1675 feat(targeted_file_slice): add heading line index slicing (slice_section_by_index, --section-index CLI)
 - 5f0a28f7 merge: integrate selfevo/cycle-cycle-55a1dfd21708
 - ec32c5e0 feat(check_preexisting_regression): add compare_file_baseline helper to verify flagged paths against git baseline
 - 5d2e06ab merge: integrate selfevo/cycle-cycle-45fe76c8c8d1
-- 7e26ea95 selfevo: auto-commit uncommitted subagent work — Detect repeated commands following safety stop warnings in scripts/analyze_repea
-- 7c8a320d feat(analyze_repeat_failures): detect repeated commands following safety stop warnings
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Support case-insensitive required section heading matching in tests/test_lessons_integrity.py: existence_index_duplicate
 - Add runtime deny-set and surface boundary validation for target paths in scripts/check_mutation_surface.py: gate_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b4e999976a97.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8f283595b563.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add token budget compaction routine to scripts/truncate_conversation.py for model context window limits&quot;,
-    &quot;backlog_instructions&quot;: &quot;Evidence in cycle-41e263b66c06 showed failure when litellm lacked context compaction for un/qwen3.8-27b-gguf. Adding a token-budget compaction helper in scripts/truncate_conversation.py enables proactive history truncation prior to LLM calls.\n\nTarget path: scripts/truncate_conversation.py&quot;,
+    &quot;title&quot;: &quot;Fix premature scan truncation in audit_sensitive_tokens in scripts/workspace_validation_helpers.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;audit_sensitive_tokens prematurely truncates workspace scans at 500 files. Removing the hardcoded file scan ceiling ensures complete token auditing across repositories of any size.\n\nTarget path: scripts/workspace_validation_helpers.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add token budget compaction routine to scripts/truncate_conversation.py for model context window limits (target: scripts/truncate_conversation.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix premature scan truncation in audit_sensitive_tokens in scripts/workspace_validation_helpers.py (target: scripts/workspace_validation_helpers.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-15f1a566  Title: Implementing &quot;Add rolling window filtering and pattern clustering to scripts/analyze_repeat_failures.py&quot; improves operator value.
-Problem: Committed 1 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
+ID: LESS-20260827-20e9962c  Title: Implementing &quot;Extend workspace_validation_helpers.py with CLI entrypoint and unified workspace integrity check&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-15f1a566] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-20e9962c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When assigned a defect concerning staged facts while doc-only changes are blocked by daily budget limits, prefer writing test fixtures or unit tests under tests/ rather than modifying validation scrip
-- When an assigned demand primarily calls for data or documentation updates that are constrained by doc-only budget limits and no safe code-bearing target is available, emit no_valuable_task.
-- When assigned a process or behavioral reflection demand under doc-budget limits and no distinct code-bearing script tool is warranted, return no_valuable_task rather than proposing minor assertion exe
+- When implementing standalone utility patterns from reflection demands under doc-only restrictions, consider introducing targeted test suites or dedicated micro-utilities rather than modifying shared h
+- The proposer targeted scripts/workspace_validation_helpers.py, triggering a deduplication rejection (skipped_recent_failure) against a prior failure on that file that was absent from the prompt&#x27;s cool
+- Once a misplaced function is found in the codebase, proceed directly to inspecting and modifying the code rather than diverting into state/ and archive directories to look up historical demand artifac
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 05:17 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
+- Attempt 1 (2026-09-07 06:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/truncate_conversation.py, tests/test_truncate_conversation.py. Reward signal will be…
+- Attempt 2 (2026-09-07 05:17 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add token budget compaction routine to scripts/truncate_conversation.py for model context window limits
+Title: Fix premature scan truncation in audit_sensitive_tokens in scripts/workspace_validation_helpers.py
 
 
-Evidence in cycle-41e263b66c06 showed failure when litellm lacked context compaction for un/qwen3.8-27b-gguf. Adding a token-budget compaction helper in scripts/truncate_conversation.py enables proactive history truncation prior to LLM calls.
+audit_sensitive_tokens prematurely truncates workspace scans at 500 files. Removing the hardcoded file scan ceiling ensures complete token auditing across repositories of any size.
 
-Target path: scripts/truncate_conversation.py
+Target path: scripts/workspace_validation_helpers.py
 
 ## Concrete task to implement
-Implement and commit: Add token budget compaction routine to scripts/truncate_conversation.py for model context window limits (target: scripts/truncate_conversation.py)
+Implement and commit: Fix premature scan truncation in audit_sensitive_tokens in scripts/workspace_validation_helpers.py (target: scripts/workspace_validation_helpers.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2007,7 +2008,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 06:53:34 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 09:35:58 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-07 07:00:50 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-07 09:35:58 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
