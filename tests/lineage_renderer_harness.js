@@ -169,6 +169,27 @@ if (filterProbe && globalThis.lineageRenderer && typeof globalThis.lineageRender
       win = { all: true };
     }
     var proj = globalThis.lineageRenderer.projectUnifiedGraph(v2payload, { window: win });
+    var rendered = null;
+    if (probe.render && globalThis.lineageRenderer && typeof globalThis.lineageRenderer.applyFilter === 'function') {
+      var NativeDate = globalThis.Date;
+      if (probe.now) {
+        var fixedMs = NativeDate.parse(probe.now);
+        function ProbeDate() {
+          if (arguments.length === 0) return new NativeDate(fixedMs);
+          return Reflect.construct(NativeDate, Array.prototype.slice.call(arguments));
+        }
+        ProbeDate.parse = NativeDate.parse;
+        ProbeDate.UTC = NativeDate.UTC;
+        ProbeDate.now = function() { return fixedMs; };
+        globalThis.Date = ProbeDate;
+      }
+      try {
+        globalThis.lineageRenderer.applyFilter(probe.mode || 'all');
+        rendered = svg.toJSON();
+      } finally {
+        globalThis.Date = NativeDate;
+      }
+    }
     return {
       mode: probe.mode,
       nodeCount: proj.nodes.length,
@@ -176,6 +197,12 @@ if (filterProbe && globalThis.lineageRenderer && typeof globalThis.lineageRender
       empty: proj.empty || false,
       note: proj.note || '',
       visibleNodeIds: Object.keys(proj.visible || {}),
+      edges: (proj.edges || []).map(function(edge) {
+        return {source: edge.source, target: edge.target, type: edge.type, basis: edge.basis,
+          collapsedNodes: edge.collapsedNodes || 0, collapsedEdges: edge.collapsedEdges || 0,
+          path: edge.path || [edge.source, edge.target]};
+      }),
+      rendered: rendered,
     };
   });
 } else if (filterProbe && globalThis.lineageDayFilter && typeof globalThis.lineageDayFilter.select === 'function') {
