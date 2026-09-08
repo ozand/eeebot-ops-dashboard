@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">222</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 18:34:15 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 15:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 16:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-be206c9eba77</span>
+      <span class="cycle-pill">cycle-5a12febb3dd2</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 15:48:03.546485 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 16:00:52.759954 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,207c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,303c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,207 chars &bull; ~2,051 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Replace subprocess module checks with in-process find_spec in scripts/verify_imports.py
-Request ID: llm-proposer-cycle-be206c9eba77
-Cycle ID: cycle-be206c9eba77
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,303 chars &bull; ~2,075 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py
+Request ID: llm-proposer-cycle-5a12febb3dd2
+Cycle ID: cycle-5a12febb3dd2
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1737,36 +1737,47 @@ Recently completed (recent commits):
 - 9d48bf3a feat(verify_and_proof): add staged test execution with focused selectors
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-be206c9eba77.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5a12febb3dd2.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Replace subprocess module checks with in-process find_spec in scripts/verify_imports.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The validator times out after 60s because invoking subprocesses to test import availability has high process startup overhead on slow hardware. Replacing subprocess imports with in-process importlib.util.find_spec eliminates process creation overhead and allows the script to finish well within the 60s budget.\n\nTarget path: scripts/verify_imports.py&quot;,
+    &quot;title&quot;: &quot;Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements prune_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines to scan feed_dir, delete cache files older than max_age_hours, and return deleted file count (returning 0 if feed_dir is missing) as required by Priority 35.\n\nTarget path: scripts/prune_stale_feeds.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Replace subprocess module checks with in-process find_spec in scripts/verify_imports.py (target: scripts/verify_imports.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py (target: scripts/prune_stale_feeds.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/prune_stale_feeds exports prune_stale_feeds returning 0 for missing directory&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.prune_stale_feeds import prune_stale_feeds; assert prune_stale_feeds(&#x27;nonexistent&#x27;) == 0\&quot;&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
-Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
+ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/check_stale_feeds.py, tests/test_check_stale_feeds.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When validating skip conditions, run the existing target self-test (--test) or companion suite first before writing standalone inline test fixtures to confirm behavior in fewer turns.
-- Focus analysis directly on the core resolution logic in the script under test and its companion test suite rather than querying external callers across unrelated directories like .github/ and ops/.
-- When a search command returns an expected or empty result, do not re-run identical queries across subsequent turns; accept the result and transition immediately to implementing changes.
+- Halt repetitive tool executions immediately upon receiving a loop_breaker safety stop notice and pivot to modifying code or evaluating next steps.
+- Keep task execution focused on the assigned defect scope (filtering try-except imports in verify_imports.py) rather than fixing broader codebase issues uncovered by running the tool.
+- The agent repeated the exact same inline python execution command five consecutive times, failing to change strategy even after the harness issued an explicit loop_breaker safety stop alert.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-08 14:58 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
@@ -1775,15 +1786,15 @@ If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/
 
 ## Concrete task to implement
 
-Title: Replace subprocess module checks with in-process find_spec in scripts/verify_imports.py
+Title: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py
 
 
-The validator times out after 60s because invoking subprocesses to test import availability has high process startup overhead on slow hardware. Replacing subprocess imports with in-process importlib.util.find_spec eliminates process creation overhead and allows the script to finish well within the 60s budget.
+Implements prune_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines to scan feed_dir, delete cache files older than max_age_hours, and return deleted file count (returning 0 if feed_dir is missing) as required by Priority 35.
 
-Target path: scripts/verify_imports.py
+Target path: scripts/prune_stale_feeds.py
 
-## Concrete task to implement
-Implement and commit: Replace subprocess module checks with in-process find_spec in scripts/verify_imports.py (target: scripts/verify_imports.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/prune_stale_feeds exports prune_stale_feeds returning 0 for missing directory
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2022,7 +2033,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 15:57:32 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 18:34:15 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 16:28:21 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 18:34:15 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
