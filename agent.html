@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 01:42:30 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 22:52 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 23:36 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-eb258832340c</span>
+      <span class="cycle-pill">cycle-762775d921aa</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 21:59:50.340871 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 22:56:21.481926 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,972c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,373c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,972 chars &bull; ~1,993 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow
-Request ID: llm-proposer-cycle-eb258832340c
-Cycle ID: cycle-eb258832340c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,373 chars &bull; ~2,093 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add chained Python verification runner to scripts/verify_and_proof.py consuming chained-python-execution skill
+Request ID: llm-proposer-cycle-762775d921aa
+Cycle ID: cycle-762775d921aa
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,72 +1726,67 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b1e6d71e merge: integrate selfevo/cycle-cycle-eb258832340c
+- c6f8cb6f feat(verify_and_proof): add doc-only bypass check for pure-documentation cycles
 - 1a3dd5e9 merge: integrate selfevo/cycle-cycle-641683b7f31a
 - 2cc1a9ea test: add unit tests for validate_open_encoding AST mode argument parsing
 - 04f426c1 chore: archive 1 week(s) to MEMORY_ARCHIVE.md
 - b9ca675f merge: integrate selfevo/cycle-cycle-7dc01159cf68
 - 842f456d feat: add check_cycle_budget script to track turn and token limits during validation phases
 - fb528d5e chore: archive 0 week(s) to MEMORY_ARCHIVE.md
-- 388ffabc merge: integrate selfevo/cycle-cycle-92551e6391c0
-- 0ceffeca selfevo: auto-commit uncommitted subagent work — Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests verifying structure and pattern execution contract for batch-grep skill: existence_index_duplicate
 - Add unit tests exercising path existence and structure from demand-and-reflection lookup skill: existence_index_duplicate
 - Add unit tests exercising command output bounding rules in tests/test_command_output_bounding.py: existence_index_duplicate
 - Add unit tests exercising bounded-reading skill validation in tests/test_validate_skill_format.py: existence_index_duplicate
-- Add regression tests for existence_index directory pruning: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-eb258832340c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-762775d921aa.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow&quot;,
-    &quot;backlog_instructions&quot;: &quot;Wire the pure-documentation test bypass workflow from skills/pure-documentation-changes-test-bypass-workflow/SKILL.md into scripts/verify_and_proof.py to detect markdown/doc changes and bypass execution.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add chained Python verification runner to scripts/verify_and_proof.py consuming chained-python-execution skill&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves the idle skill defect for skills/chained-python-execution/SKILL.md by consuming its chained execution pattern inside existing scripts/verify_and_proof.py for multi-step verification checks, avoiding one-shot file creation while adhering to the code-bearing steering notice.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow (target: scripts/verify_and_proof.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add chained Python verification runner to scripts/verify_and_proof.py consuming chained-python-execution skill (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Check the exact return schema and behavior of dependent helper functions under edge conditions (e.g. non-existent directories) when writing self-test assertions.
-- Consolidate schema exploration of state artifact directories into a single multi-metric probe script rather than issuing multiple sequential python3 -c one-liners across separate turns.
 - Consolidate multiple related changes across a single file into fewer edit_file calls to reduce turn latency and verification round-trips.
+- Use git stash or inspect the base file in a separate temporary directory rather than overwriting working tree files with base copies during regression baseline checks.
+- Avoid bashisms such as &#x27;${PIPESTATUS}&#x27; when constructing commands for the standard shell execution tool, which defaults to POSIX &#x27;/bin/sh&#x27;.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 20:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
-- Attempt 2 (2026-09-08 20:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: memory/HISTORY.md, scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py.…
+- Attempt 1 (2026-09-08 22:38 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow
+Title: Add chained Python verification runner to scripts/verify_and_proof.py consuming chained-python-execution skill
 
 
-Wire the pure-documentation test bypass workflow from skills/pure-documentation-changes-test-bypass-workflow/SKILL.md into scripts/verify_and_proof.py to detect markdown/doc changes and bypass execution.
+Resolves the idle skill defect for skills/chained-python-execution/SKILL.md by consuming its chained execution pattern inside existing scripts/verify_and_proof.py for multi-step verification checks, avoiding one-shot file creation while adhering to the code-bearing steering notice.
 
 Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow (target: scripts/verify_and_proof.py)
+Implement and commit: Add chained Python verification runner to scripts/verify_and_proof.py consuming chained-python-execution skill (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1966,8 +1961,8 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="">
                       <td class="skill-name">chained-python-execution</td>
-                      <td class="skill-reads">2</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
@@ -2030,7 +2025,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 22:52:35 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 01:42:30 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 23:36:23 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 01:42:30 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
