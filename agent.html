@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">226</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 16:35:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 13:40 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 13:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-9806da88b66e</span>
+      <span class="cycle-pill">cycle-804514729b43</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 12:59:37.502870 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 13:43:53.351570 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,763c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,417c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,763 chars &bull; ~2,190 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Support staged test execution with focused selectors in scripts/verify_and_proof.py
-Request ID: llm-proposer-cycle-9806da88b66e
-Cycle ID: cycle-9806da88b66e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,417 chars &bull; ~2,104 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Deprecate dormant scripts/archive_old_reports.py with archival header and exit notice
+Request ID: llm-proposer-cycle-804514729b43
+Cycle ID: cycle-804514729b43
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,70 +1727,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 10bc8815 merge: integrate selfevo/cycle-cycle-9806da88b66e
+- 9d48bf3a feat(verify_and_proof): add staged test execution with focused selectors
 - f8decd0e merge: integrate selfevo/cycle-cycle-329e9b8316f2
 - 9e1be103 feat(search_subagent_archive): add exact result ID lookup (--result-id) with error status extraction
 - fcd02f19 merge: integrate selfevo/cycle-cycle-ef4dc177d634
 - 7e9491bb feat(check_feed_freshness): add --test alias for --self-test with validation tests
 - b107af04 merge: integrate selfevo/cycle-cycle-cb0d30fef40a
 - 000eb56f selfevo: auto-commit uncommitted subagent work — Identify futile target surfaces with high rejection rates in scripts/analyze_rep
-- c2f97b82 feat(analyze_repeat_failures): identify futile target surfaces with high rejection rates
-- e458ea58 merge: integrate selfevo/cycle-cycle-a4f7bc7ed688
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-9806da88b66e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-804514729b43.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Support staged test execution with focused selectors in scripts/verify_and_proof.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements a staged test execution option in scripts/verify_and_proof.py that runs targeted test selectors first for fast feedback, early-exiting on failure before running full regression suites as highlighted in cycle-6a829a65fe67.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Deprecate dormant scripts/archive_old_reports.py with archival header and exit notice&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/archive_old_reports.py has seen no use in over 14 days; add the standard deprecated archive header and deprecation exit notice to resolve the decay demand.\n\nTarget path: scripts/archive_old_reports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Support staged test execution with focused selectors in scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_and_proof.py supports executing focused test selectors first before executing full-suite test checks&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Deprecate dormant scripts/archive_old_reports.py with archival header and exit notice (target: scripts/archive_old_reports.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
+ID: LESS-20260825-ab342a5e  Title: Implementing &quot;Add configurable source directory and archive destination arguments to scripts/archive_old_reports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/archive_old_reports.py, tests/test_archive_old_reports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ab342a5e] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid executing repo-wide test runners (e.g. scripts/run_all_tests.py or broad unittest discovery) during initial task exploration prior to creating or modifying code.
-- Keep task execution focused on the assigned defect scope (filtering try-except imports in verify_imports.py) rather than fixing broader codebase issues uncovered by running the tool.
-- When writing unit tests for functions with rich structured output dictionaries, inspect the actual returned dictionary shape with an inline probe to prevent assertion mismatch cycles.
+- When an internal validation or consistency check fails on newly added conforming code, test the validator against existing reference files first to check for baseline defects before deep-diving into v
+- When deprecating existing utility scripts, verify whether companion test suites execute the CLI via subprocess before deciding whether to disable script execution or emit a runtime warning.
+- When a grep or find query returns an empty result (exit code 1), accept the negative result immediately rather than repeating the same search with minor syntax variations.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 12:24 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
-- Attempt 2 (2026-09-08 11:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_feed_freshness.py, tests/test_check_feed_freshness.py. Reward signal will be…
-- Attempt 3 (2026-09-08 10:42 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py.…
+- Attempt 1 (2026-09-08 13:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-08 12:24 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
+- Attempt 3 (2026-09-08 11:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_feed_freshness.py, tests/test_check_feed_freshness.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Support staged test execution with focused selectors in scripts/verify_and_proof.py
+Title: Deprecate dormant scripts/archive_old_reports.py with archival header and exit notice
 
 
-Implements a staged test execution option in scripts/verify_and_proof.py that runs targeted test selectors first for fast feedback, early-exiting on failure before running full regression suites as highlighted in cycle-6a829a65fe67.
+scripts/archive_old_reports.py has seen no use in over 14 days; add the standard deprecated archive header and deprecation exit notice to resolve the decay demand.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/archive_old_reports.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_and_proof.py supports executing focused test selectors first before executing full-suite test checks
+## Concrete task to implement
+Implement and commit: Deprecate dormant scripts/archive_old_reports.py with archival header and exit notice (target: scripts/archive_old_reports.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2029,7 +2022,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 13:40:16 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 16:35:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 13:50:11 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 16:35:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
