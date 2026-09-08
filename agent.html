@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 08:30:38 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 05:53 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 06:15 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-1d95dc3efa86</span>
+      <span class="cycle-pill">cycle-38da07491e6d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 04:37:51.049561 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 05:57:03.583787 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,777c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,123c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,777 chars &bull; ~1,944 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add execution timeout handling and output stream capture to scripts/verify_and_proof.py
-Request ID: llm-proposer-cycle-1d95dc3efa86
-Cycle ID: cycle-1d95dc3efa86
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,123 chars &bull; ~2,030 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests for line slicing and pattern context in tests/test_targeted_file_slice.py
+Request ID: llm-proposer-cycle-38da07491e6d
+Cycle ID: cycle-38da07491e6d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,72 +1727,65 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0a37ae50 merge: integrate selfevo/cycle-cycle-1d95dc3efa86
+- 7b191a9e feat(verify_and_proof): capture partial stdout/stderr on subprocess timeouts
 - 587b619b merge: integrate selfevo/cycle-cycle-1b4b112d4347
 - 9a6f612f feat(cleanup_subagent_queue): archive failed subagent result files
 - d8b0b327 merge: integrate selfevo/cycle-cycle-3ba0777cf959
 - 55487d95 feat(loop_health_report): extract error details from summary/result/stop_reason fields
 - 4a777410 merge: integrate selfevo/cycle-cycle-c72cd8a9409a
 - fac083f4 fix(scaffold_script_entrypoint): normalize hyphenated names to valid Python identifiers
-- 3b3fdb39 chore: record structured error for [cycle-c72cd8]
-- 8e6e1095 merge: integrate selfevo/cycle-cycle-94e396f40572
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests for staging status edge cases in tests/test_verify_and_proof_staging.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1d95dc3efa86.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-38da07491e6d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add execution timeout handling and output stream capture to scripts/verify_and_proof.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds bounded command timeouts and inspects captured stdout/stderr streams upon timeout in scripts/verify_and_proof.py, preventing rc=124 stalls during verification checks.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests for line slicing and pattern context in tests/test_targeted_file_slice.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Exercises unconfirmed scripts/targeted_file_slice.py through test harness coverage for line range and pattern extraction, supporting confirmed integration ratio and script verification.\n\nTarget path: tests/test_targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add execution timeout handling and output stream capture to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_and_proof.py executes CLI help without errors and handles test execution timeouts&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests for line slicing and pattern context in tests/test_targeted_file_slice.py (target: tests/test_targeted_file_slice.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-003  Title: Subagent-Coordinator Desync due to Missing Execution Timeouts
-Root cause: Subagents were bounded by a 15-iteration limit, which could easily exceed 1 hour under high LLM latency
-or slow target hardware. There were no execution limits at the bridge or systemd level.
-
-Prevention: Always match execution limits across components: the runner timeout (50m) must be strictly less than the orchestrator stale threshold (1h).
-
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
+ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
+Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- Execute new tests via `-k &lt;pattern&gt;` or exact node IDs for immediate verification before invoking entire companion test files that take several minutes to run on constrained hardware.
+- Avoid executing repo-wide test runners (e.g. scripts/run_all_tests.py or broad unittest discovery) during initial task exploration prior to creating or modifying code.
 - Treat reflection artifact IDs mentioned in prompt metadata as context identifiers rather than files to locate on disk, avoiding exploratory find/ls invocations in state/.
-- Execute the Immediate Skip Protocol and return outcome: skipped as soon as git log and test runs verify that the requested functionality and test coverage already exist on the branch.
-- Treat loop_breaker safety interrupts as an absolute stop instruction; never resubmit identical tool calls after receiving a loop warning, and instead synthesize findings into a final response.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 03:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/cleanup_subagent_queue.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-08 02:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/loop_health_report.py, tests/test_loop_health_report.py. Reward signal will be…
+- Attempt 1 (2026-09-08 05:18 UTC): no commits (blocked). Task &quot;Add unit tests for staging status edge cases in tests/test_v&quot; matched an existing artifact…
+- Attempt 2 (2026-09-08 04:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_inline_snippets.py. Reward signal…
 
 ## Concrete task to implement
 
-Title: Add execution timeout handling and output stream capture to scripts/verify_and_proof.py
+Title: Add unit tests for line slicing and pattern context in tests/test_targeted_file_slice.py
 
 
-Adds bounded command timeouts and inspects captured stdout/stderr streams upon timeout in scripts/verify_and_proof.py, preventing rc=124 stalls during verification checks.
+Exercises unconfirmed scripts/targeted_file_slice.py through test harness coverage for line range and pattern extraction, supporting confirmed integration ratio and script verification.
 
-Target path: scripts/verify_and_proof.py
+Target path: tests/test_targeted_file_slice.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_and_proof.py executes CLI help without errors and handles test execution timeouts
+## Concrete task to implement
+Implement and commit: Add unit tests for line slicing and pattern context in tests/test_targeted_file_slice.py (target: tests/test_targeted_file_slice.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2031,7 +2024,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 05:53:26 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 08:30:38 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 06:15:44 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 08:30:38 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
