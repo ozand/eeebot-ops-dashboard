@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import html
 import json
-import os
 from datetime import timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -38,9 +37,36 @@ def estimate_tokens(chars: int) -> int:
 
 
 def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None = None) -> dict[str, Any]:
-    """Read agent context data locally from state_root and instance_repo."""
+    """Read context telemetry and Tier 2 corpus from the instance workspace.
+
+    ``state_root`` contains runtime telemetry; the corpus writer is the
+    instance repository.  Never fall back to the runtime/release tree: a
+    missing or failed corpus read must stay visible as a state, not become a
+    fabricated empty count.
+    """
     state_root = Path(state_root)
     inst_path = Path(instance_repo) if instance_repo else None
+
+    def corpus_status(path: Path, *, read_error: bool = False) -> str:
+        if read_error:
+            return "unavailable"
+        if not path.exists():
+            return "missing"
+        return "present"
+
+    def read_dir_files(root: Path, matcher: Any) -> tuple[list[dict[str, Any]], str]:
+        if not root.exists():
+            return [], "missing"
+        if not root.is_dir():
+            return [], "unavailable"
+        try:
+            files = []
+            for path in sorted(root.rglob("*")):
+                if path.is_file() and matcher(path):
+                    files.append(path)
+            return files, "present"
+        except (OSError, UnicodeError):
+            return [], "unavailable"
 
     # 1. Scan ledger/cycles.jsonl for latest system_prompt row
     lpath = state_root / "ledger" / "cycles.jsonl"
@@ -95,90 +121,76 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
                 pass
 
     # 2. Tier 2: Skills
+    # Tier 2 is written by the instance workspace, not the runtime release tree.
     skills_list: list[dict[str, Any]] = []
-    if inst_path and inst_path.is_dir():
-        skills_dir = inst_path / "skills"
-        if skills_dir.is_dir():
-            try:
-                for sdir in sorted(skills_dir.iterdir()):
-                    s_file = sdir / "SKILL.md"
-                    if s_file.is_file():
-                        size = s_file.stat().st_size
-                        content = ""
-                        desc = ""
-                        try:
-                            content = s_file.read_text(encoding="utf-8", errors="replace")[:15000]
-                            lines = [line_str.strip() for line_str in content.splitlines() if line_str.strip()]
-                            for line_str in lines:
-                                if not line_str.startswith("#") and len(line_str) > 10:
-                                    desc = line_str
-                                    break
-                        except Exception:
-                            pass
-                        skills_list.append({
-                            "name": sdir.name,
-                            "size_bytes": size,
-                            "desc": desc[:200],
-                            "content": content,
-                            "path": f"skills/{sdir.name}/SKILL.md",
-                        })
-            except Exception:
-                pass
+    skills_files, skills_status = read_dir_files(
+        inst_path / "skills" if inst_path else Path("__missing_instance_repo__/skills"),
+        lambda path: path.name == "SKILL.md",
+    )
+    for s_file in skills_files:
+        try:
+            content = s_file.read_text(encoding="utf-8", errors="replace")[:15000]
+            lines = [line.strip() for line in content.splitlines() if line.strip()]
+            desc = next((line for line in lines if not line.startswith("#") and len(line) > 10), "")
+            rel = s_file.relative_to(inst_path).as_posix()
+            skills_list.append({
+                "name": s_file.parent.name,
+                "size_bytes": s_file.stat().st_size,
+                "desc": desc[:200],
+                "content": content,
+                "path": rel,
+            })
+        except (OSError, UnicodeError, ValueError):
+            skills_status = "unavailable"
 
-    # 3. Tier 2: Lessons
-    lessons_index_status = "missing"
+    lessons_dir = inst_path / "lessons" if inst_path else Path("__missing_instance_repo__/lessons")
+    lesson_files, lessons_status = read_dir_files(
+        lessons_dir,
+        lambda path: path.suffix == ".md" and path.name != "index.md",
+    )
+    lessons_index_path = lessons_dir / "index.md"
+    lessons_index_status = corpus_status(lessons_index_path)
     lessons_files: list[dict[str, Any]] = []
     total_lessons_size = 0
-    if inst_path and inst_path.is_dir():
-        lessons_dir = inst_path / "lessons"
-        lessons_index_path = lessons_dir / "index.md"
-        lessons_index_status = "present" if lessons_index_path.is_file() else "missing"
-        if lessons_dir.is_dir():
-            try:
-                for f in sorted(lessons_dir.iterdir()):
-                    if f.name.endswith(".md") and f.name != "index.md":
-                        sz = f.stat().st_size
-                        total_lessons_size += sz
-                        lessons_files.append({"name": f.name, "size_bytes": sz})
-            except Exception:
-                pass
+    for path in lesson_files:
+        try:
+            size = path.stat().st_size
+            total_lessons_size += size
+            lessons_files.append({"name": path.relative_to(inst_path).as_posix(), "size_bytes": size})
+        except (OSError, ValueError):
+            lessons_status = "unavailable"
 
-    # 4. Tier 2: Memory
-    memory_index_status = "missing"
+    memory_dir = inst_path / "memory" if inst_path else Path("__missing_instance_repo__/memory")
+    memory_paths, memory_status = read_dir_files(memory_dir, lambda path: True)
+    memory_index_path = memory_dir / "index.md"
+    memory_index_status = corpus_status(memory_index_path)
     memory_files: list[dict[str, Any]] = []
     total_memory_size = 0
-    if inst_path and inst_path.is_dir():
-        memory_dir = inst_path / "memory"
-        memory_index_path = memory_dir / "index.md"
-        memory_index_status = "present" if memory_index_path.is_file() else "missing"
-        if memory_dir.is_dir():
-            try:
-                for root_m, _, files_m in os.walk(memory_dir):
-                    for fm in files_m:
-                        fpath = Path(root_m) / fm
-                        try:
-                            rel = str(fpath.relative_to(inst_path)).replace("\\", "/")
-                            sz = fpath.stat().st_size
-                            total_memory_size += sz
-                            memory_files.append({"name": rel, "size_bytes": sz})
-                        except Exception:
-                            pass
-            except Exception:
-                pass
+    for path in memory_paths:
+        try:
+            rel = path.relative_to(inst_path).as_posix()
+            size = path.stat().st_size
+            total_memory_size += size
+            memory_files.append({"name": rel, "size_bytes": size})
+        except (OSError, ValueError):
+            memory_status = "unavailable"
 
     return {
         "system_prompt": sys_prompt_row,
         "prompt_text": prompt_text,
         "task_text": task_text,
         "tier2_skills": skills_list,
+        "tier2_skills_status": skills_status,
         "tier2_lessons": {
             "index_status": lessons_index_status,
+            "corpus_status": lessons_status,
             "corpus_count": len(lessons_files),
             "total_size_bytes": total_lessons_size,
             "files": lessons_files[:50],
         },
         "tier2_memory": {
             "index_status": memory_index_status,
+            "corpus_status": memory_status,
             "total_files": len(memory_files),
             "total_size_bytes": total_memory_size,
             "files": memory_files[:50],
@@ -202,6 +214,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     prompt_text = agent_context.get("prompt_text")
     task_text = agent_context.get("task_text")
     skills = agent_context.get("tier2_skills") or []
+    skills_status = agent_context.get("tier2_skills_status", "missing")
     lessons = agent_context.get("tier2_lessons") or {}
     memory = agent_context.get("tier2_memory") or {}
 
@@ -273,13 +286,18 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
 
     skills_kb = sum(s.get("size_bytes", 0) for s in skills) / 1024
     lessons_st = lessons.get("index_status", "unknown")
+    lessons_corpus_status = lessons.get("corpus_status", "present" if "corpus_count" in lessons else "missing")
     lessons_cnt = lessons.get("corpus_count", 0)
     lessons_kb = lessons.get("total_size_bytes", 0) / 1024
     mem_st = memory.get("index_status", "unknown")
+    mem_corpus_status = memory.get("corpus_status", "present" if "total_files" in memory else "missing")
     mem_cnt = memory.get("total_files", 0)
     mem_kb = memory.get("total_size_bytes", 0) / 1024
     t2_kb = skills_kb + lessons_kb + mem_kb
     t2_files = len(skills) + lessons_cnt + mem_cnt
+
+    def corpus_count(status: str, count: int) -> str:
+        return str(count) if status == "present" else status
 
     cat_sz = sections.get("skills_catalogue", 0) if sections else len(raw_sections_text.get("skills_catalogue", ""))
     mem_sz = sections.get("memory", 0) if sections else len(raw_sections_text.get("memory", ""))
@@ -359,9 +377,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="tier-col tier2-col">')
     out.append('      <div class="tier-col-header"><span class="tier-tag tag-t2">TIER 2</span><div><h3>Reachable on Disk (Zero Base Context)</h3><p>Full instructions, lessons, and memory records.</p></div></div>')
     out.append('      <div class="tier2-targets-list">')
-    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: {len(skills)} skills</strong><span class="t2-size">{skills_kb:.1f} KB</span></div><p>Full SKILL.md specs.</p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>')
-    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: {lessons_cnt} lessons</strong><span class="t2-size">{lessons_kb:.1f} KB</span></div><p>Index status: <span class="status-badge status-{lessons_st}">{lessons_st}</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>')
-    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: {mem_cnt} files</strong><span class="t2-size">{mem_kb:.1f} KB</span></div><p>Index status: <span class="status-badge status-{mem_st}">{mem_st}</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>')
+    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: {corpus_count(skills_status, len(skills))} skills</strong><span class="t2-size">{skills_kb:.1f} KB</span></div><p>Corpus status: <span class="status-badge status-{skills_status}">{skills_status}</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>')
+    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: {corpus_count(lessons_corpus_status, lessons_cnt)} lessons</strong><span class="t2-size">{lessons_kb:.1f} KB</span></div><p>Corpus status: <span class="status-badge status-{lessons_corpus_status}">{lessons_corpus_status}</span>; index: <span class="status-badge status-{lessons_st}">{lessons_st}</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>')
+    out.append(f'        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: {corpus_count(mem_corpus_status, mem_cnt)} files</strong><span class="t2-size">{mem_kb:.1f} KB</span></div><p>Corpus status: <span class="status-badge status-{mem_corpus_status}">{mem_corpus_status}</span>; index: <span class="status-badge status-{mem_st}">{mem_st}</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>')
     out.append('      </div>')
     out.append('    </div>')
     out.append('  </div>')
@@ -435,7 +453,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~{t2_kb:.1f} KB</strong> across <strong>{t2_files}</strong> files.</p>')
 
     out.append('    <div class="t2-group" id="tier2-skills-section">')
-    out.append(f'      <div class="t2-group-header"><h4>Skills Store ({len(skills)} skills &bull; ~{skills_kb:.1f} KB)</h4><span class="t2-group-note">Indexed in Tier 1 via <code>skills_catalogue</code> ({cat_sz:,} chars)</span></div>')
+    out.append(f'      <div class="t2-group-header"><h4>Skills Store ({corpus_count(skills_status, len(skills))} skills &bull; ~{skills_kb:.1f} KB)</h4><span class="t2-group-note">Corpus: {skills_status}; indexed in Tier 1 via <code>skills_catalogue</code> ({cat_sz:,} chars)</span></div>')
     out.append('      <div class="skills-card-grid">')
     for s in skills:
         s_name = s.get("name", "")
@@ -447,10 +465,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
 
     out.append('    <div class="t2-group" id="tier2-lessons-section">')
-    out.append(f'      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-{lessons_st}">lessons/index.md: {lessons_st.upper()}</span></div>')
+    out.append(f'      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-{lessons_corpus_status}">corpus: {lessons_corpus_status.upper()}</span> <span class="status-badge status-{lessons_st}">lessons/index.md: {lessons_st.upper()}</span></div>')
     if lessons_st == "missing":
         out.append(f'      <div class="missing-artifact-callout"><span class="callout-icon">&#8505;</span><div><strong>lessons/index.md is MISSING</strong><p>The lessons index is generated once daily and cleared between cycles by <code>git clean -fd</code>. The underlying corpus of <strong>{lessons_cnt} lesson files</strong> (~{lessons_kb:.1f} KB) remains intact on disk.</p></div></div>')
-    out.append(f'      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> {lessons_cnt} lesson records on disk (~{lessons_kb:.1f} KB total):</p><div class="lessons-pills">')
+    out.append(f'      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> {corpus_count(lessons_corpus_status, lessons_cnt)} lesson records on disk (~{lessons_kb:.1f} KB total):</p><div class="lessons-pills">')
     for lf in lessons.get("files", [])[:30]:
         out.append(f'<span class="lesson-pill">{esc(lf.get("name", ""))} ({lf.get("size_bytes", 0):,} B)</span> ')
     if lessons_cnt > 30:
@@ -459,8 +477,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
 
     out.append('    <div class="t2-group" id="tier2-memory-section">')
-    out.append(f'      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-{mem_st}">memory/index.md: {mem_st.upper()}</span></div>')
-    out.append(f'      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>{mem_cnt} files</strong> on disk (~{mem_kb:.1f} KB total):</p><div class="memory-pills">')
+    out.append(f'      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-{mem_corpus_status}">corpus: {mem_corpus_status.upper()}</span> <span class="status-badge status-{mem_st}">memory/index.md: {mem_st.upper()}</span></div>')
+    out.append(f'      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>{corpus_count(mem_corpus_status, mem_cnt)} files</strong> on disk (~{mem_kb:.1f} KB total):</p><div class="memory-pills">')
     for mf in memory.get("files", [])[:30]:
         out.append(f'<span class="memory-pill">{esc(mf.get("name", ""))} ({mf.get("size_bytes", 0):,} B)</span> ')
     if mem_cnt > 30:

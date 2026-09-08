@@ -208,6 +208,40 @@ def test_agent_page_handles_unavailable_context_gracefully():
     assert 'host-identity' in html
 
 
+def test_agent_context_tier2_corpus_states_are_explicit(tmp_path):
+    """Missing, genuinely empty, and reader-failure corpus states cannot render as fabricated zero."""
+    from scripts.agent_context import read_agent_context_dict
+
+    state = tmp_path / "state"
+    repo = tmp_path / "instance"
+    state.mkdir()
+    repo.mkdir()
+
+    missing = read_agent_context_dict(state, repo)
+    assert missing["tier2_skills_status"] == "missing"
+    assert missing["tier2_lessons"]["corpus_status"] == "missing"
+    assert missing["tier2_memory"]["corpus_status"] == "missing"
+    assert "Skills Store: missing skills" in tv.build_two_tier_context_html(missing)
+
+    for directory in ("skills", "lessons", "memory"):
+        (repo / directory).mkdir()
+    empty = read_agent_context_dict(state, repo)
+    assert empty["tier2_skills_status"] == "present"
+    assert empty["tier2_lessons"]["corpus_status"] == "present"
+    assert empty["tier2_memory"]["corpus_status"] == "present"
+    assert "Skills Store: 0 skills" in tv.build_two_tier_context_html(empty)
+    assert "Lessons Corpus: 0 lessons" in tv.build_two_tier_context_html(empty)
+    assert "Memory Store: 0 files" in tv.build_two_tier_context_html(empty)
+
+    (repo / "skills").rmdir()
+    (repo / "skills").write_text("not a directory", encoding="utf-8")
+    failed = read_agent_context_dict(state, repo)
+    assert failed["tier2_skills_status"] == "unavailable"
+    html = tv.build_two_tier_context_html(failed)
+    assert "Skills Store: unavailable skills" in html
+    assert "Skills Store: unavailable skills" in html
+
+
 def test_agent_page_weight_under_budget():
     """Issue #227: Total agent.html byte length must be under 500 KB."""
     fixture = _base_fixture()
