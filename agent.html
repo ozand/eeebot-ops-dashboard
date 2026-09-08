@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">223</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 12:33:19 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 09:43 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 09:51 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1256,9 +1256,9 @@
     <div class="tier-col tier2-col">
       <div class="tier-col-header"><span class="tier-tag tag-t2">TIER 2</span><div><h3>Reachable on Disk (Zero Base Context)</h3><p>Full instructions, lessons, and memory records.</p></div></div>
       <div class="tier2-targets-list">
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 0 skills</strong><span class="t2-size">0.0 KB</span></div><p>Full SKILL.md specs.</p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 0 lessons</strong><span class="t2-size">0.0 KB</span></div><p>Index status: <span class="status-badge status-missing">missing</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 0 files</strong><span class="t2-size">0.0 KB</span></div><p>Index status: <span class="status-badge status-missing">missing</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: missing skills</strong><span class="t2-size">0.0 KB</span></div><p>Corpus status: <span class="status-badge status-missing">missing</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: missing lessons</strong><span class="t2-size">0.0 KB</span></div><p>Corpus status: <span class="status-badge status-missing">missing</span>; index: <span class="status-badge status-missing">missing</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: missing files</strong><span class="t2-size">0.0 KB</span></div><p>Corpus status: <span class="status-badge status-missing">missing</span>; index: <span class="status-badge status-missing">missing</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
       </div>
     </div>
   </div>
@@ -1841,19 +1841,19 @@ Do NOT modify: state/, goals.md, IDENTITY.md, secrets, or systemd units.
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
     <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~0.0 KB</strong> across <strong>0</strong> files.</p>
     <div class="t2-group" id="tier2-skills-section">
-      <div class="t2-group-header"><h4>Skills Store (0 skills &bull; ~0.0 KB)</h4><span class="t2-group-note">Indexed in Tier 1 via <code>skills_catalogue</code> (8,695 chars)</span></div>
+      <div class="t2-group-header"><h4>Skills Store (missing skills &bull; ~0.0 KB)</h4><span class="t2-group-note">Corpus: missing; indexed in Tier 1 via <code>skills_catalogue</code> (8,695 chars)</span></div>
       <div class="skills-card-grid">
       </div>
     </div>
     <div class="t2-group" id="tier2-lessons-section">
-      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-missing">lessons/index.md: MISSING</span></div>
+      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-missing">corpus: MISSING</span> <span class="status-badge status-missing">lessons/index.md: MISSING</span></div>
       <div class="missing-artifact-callout"><span class="callout-icon">&#8505;</span><div><strong>lessons/index.md is MISSING</strong><p>The lessons index is generated once daily and cleared between cycles by <code>git clean -fd</code>. The underlying corpus of <strong>0 lesson files</strong> (~0.0 KB) remains intact on disk.</p></div></div>
-      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> 0 lesson records on disk (~0.0 KB total):</p><div class="lessons-pills">
+      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> missing lesson records on disk (~0.0 KB total):</p><div class="lessons-pills">
       </div></div>
     </div>
     <div class="t2-group" id="tier2-memory-section">
-      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-missing">memory/index.md: MISSING</span></div>
-      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>0 files</strong> on disk (~0.0 KB total):</p><div class="memory-pills">
+      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-missing">corpus: MISSING</span> <span class="status-badge status-missing">memory/index.md: MISSING</span></div>
+      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>missing files</strong> on disk (~0.0 KB total):</p><div class="memory-pills">
       </div></div>
     </div>
   </div>
@@ -2026,12 +2026,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (futile_surface)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1054 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-08</td><td class="skill-reads">81</td><td>823.8K</td><td>23s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr><tr><td>2026-09-02</td><td class="skill-reads">166</td><td>949.4K</td><td>16s</td></tr></tbody></table>
+        <p class="proposer-decision">last decision: <strong>skipped (futile_surface)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1057 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-08</td><td class="skill-reads">84</td><td>852.3K</td><td>23s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr><tr><td>2026-09-02</td><td class="skill-reads">166</td><td>949.4K</td><td>16s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 09:43:55 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 12:33:19 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 09:51:05 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 12:33:19 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
