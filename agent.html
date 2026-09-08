@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 21:12:00 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 18:33 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 18:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-54e8052a347a</span>
+      <span class="cycle-pill">cycle-b69a33d8b4bb</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 18:18:59.277996 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 18:36:57.636554 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,900c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,081c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,900 chars &bull; ~2,225 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document lesson on verifying existing test files and commits before queuing unit test proposals
-Request ID: llm-proposer-cycle-54e8052a347a
-Cycle ID: cycle-54e8052a347a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,081 chars &bull; ~2,020 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add targeted fixture and error-handling unit tests for timezone-aware datetime validator
+Request ID: llm-proposer-cycle-b69a33d8b4bb
+Cycle ID: cycle-b69a33d8b4bb
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,33 +1726,33 @@ Completed (do not repeat): Check stale feed files (V1); Audit feed staleness (V1
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 4f53837b merge: integrate selfevo/cycle-cycle-54e8052a347a
+- a9b4486b docs(lessons): add lesson on verifying existing test files and commits before queuing unit test proposals
 - 082521e5 merge: integrate selfevo/cycle-cycle-0f264b3c5411
 - aed9856b docs(lessons): add lesson on persisting refactored code and verifying changes before ending cycle
 - 03a733e8 merge: integrate selfevo/cycle-cycle-de6bce7571d7
 - 5ad931fd docs(lessons): add lesson on inspecting script CLI flags before invoking validation scripts
 - 7f926145 merge: integrate selfevo/cycle-cycle-7041912a3038
 - 31f215ef selfevo: auto-commit uncommitted subagent work — Document lesson on capturing edge-case test anomalies and remediation handoffs
-- 6ffd506e merge: integrate selfevo/cycle-cycle-625bdf196ac2
-- a29e9a5d feat(filter_futile_fallbacks): add filter_futile_fallbacks to exclude proposals targeting futile surfaces
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-54e8052a347a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b69a33d8b4bb.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document lesson on verifying existing test files and commits before queuing unit test proposals&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle cycle-c5cda1fa80ed, a proposal for summarize_failure_reasons tests was queued despite commit d53c476a already having added tests/test_summarize_failure_reasons.py, causing an executor_reported_skipped failure. Documenting this lesson establishes pre-check rules for git commit history and file existence before test proposal creation.\n\nTarget path: lessons/check_existing_tests_before_proposals.md&quot;,
+    &quot;title&quot;: &quot;Add targeted fixture and error-handling unit tests for timezone-aware datetime validator&quot;,
+    &quot;backlog_instructions&quot;: &quot;Adds isolated unit tests for scripts/validate_timezone_aware_datetime.py using targeted mock fixtures and error-handling edge cases in tests/test_validate_timezone_aware_datetime.py to eliminate debugging against full workspace scans.\n\nTarget path: tests/test_validate_timezone_aware_datetime.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document lesson on verifying existing test files and commits before queuing unit test proposals (target: lessons/check_existing_tests_before_proposals.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add targeted fixture and error-handling unit tests for timezone-aware datetime validator (target: tests/test_validate_timezone_aware_datetime.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_lessons.py passes without duplicate or section errors on the new lesson&quot;,
+    &quot;claim&quot;: &quot;pytest tests/test_validate_timezone_aware_datetime.py passes targeted fixture tests for timezone-aware datetime validation&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_lessons.py&quot;
+      &quot;command&quot;: &quot;pytest tests/test_validate_timezone_aware_datetime.py&quot;
     }
   }
 }
@@ -1764,33 +1764,30 @@ Root cause: unittest discovery only collects test methods inside unittest.TestCa
 Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-3c711db47ed9-d63a  Title: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
-Problem: The agent deferred the heading case fix for `lessons/out_of_band_main_detected.md` to keep `files_changed` restricted strictly to `lessons/early_edit_turn_discipline.md`.
-Solution: When encountering pre-existing test failures outside the target scope during verification, document the exact defect and fix in `concrete_next_action` rather than modifying out-of-scope files.
-If you apply this lesson, cite [Lesson LESS-REF-3c711db47ed9-d63a] in your proposal/response.
-Related: LESS-20260827-3c711db4
+ID: LESS-20260825-7f531797  Title: Implementing &quot;Add target path filtering and structured JSON reporting to scripts/validate_timezone_aware_datetime.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-7f531797] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate additions across functions, CLI argument definitions, dispatch handlers, and embedded self-tests into fewer `edit_file` calls to minimize sequential tool roundtrips in massive scripts.
-- When creating nested test fixture directories using pathlib, use `mkdir(parents=True, exist_ok=True)` or explicitly create intermediate parents to avoid FileNotFoundError.
-- In `tests/test_prune_stale_feeds.py`, `test_subdirectories_ignored` called `sub.mkdir()` on a nested path before `d.mkdir()` had been invoked, causing an initial `FileNotFoundError` failure.
+- Consolidate multiple related changes across a single file into fewer edit_file calls to reduce turn latency and verification round-trips.
+- When writing unit tests for functions with rich structured output dictionaries, inspect the actual returned dictionary shape with an inline probe to prevent assertion mismatch cycles.
+- Maintain use of pytest `-k` or direct test method targeting when modifying large, slow test suites (&gt;2,000 lines or &gt;50s run time) to keep feedback loops fast.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 18:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/persist_refactored_code_before_cycle_end.md. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-08 17:50 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/inspect_script_cli_flags.md. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-08 17:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/test_scope_anomaly_handoffs.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-08 18:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/check_existing_tests_before_proposals.md. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Document lesson on verifying existing test files and commits before queuing unit test proposals
+Title: Add targeted fixture and error-handling unit tests for timezone-aware datetime validator
 
 
-In cycle cycle-c5cda1fa80ed, a proposal for summarize_failure_reasons tests was queued despite commit d53c476a already having added tests/test_summarize_failure_reasons.py, causing an executor_reported_skipped failure. Documenting this lesson establishes pre-check rules for git commit history and file existence before test proposal creation.
+Adds isolated unit tests for scripts/validate_timezone_aware_datetime.py using targeted mock fixtures and error-handling edge cases in tests/test_validate_timezone_aware_datetime.py to eliminate debugging against full workspace scans.
 
-Target path: lessons/check_existing_tests_before_proposals.md
+Target path: tests/test_validate_timezone_aware_datetime.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_lessons.py passes without duplicate or section errors on the new lesson
+pytest tests/test_validate_timezone_aware_datetime.py passes targeted fixture tests for timezone-aware datetime validation
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2029,7 +2026,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 18:33:08 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 21:12:00 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 18:57:55 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 21:12:00 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
