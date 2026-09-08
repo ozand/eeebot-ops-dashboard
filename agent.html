@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 06:51:13 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 04:07 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 28s old &middot; generated 04:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-1b4b112d4347</span>
+      <span class="cycle-pill">cycle-eada1190a4fa</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 03:25:15.217558 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 04:10:47.179332 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,808c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,178c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,808 chars &bull; ~1,952 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add archiving of failed subagent result files to scripts/cleanup_subagent_queue.py
-Request ID: llm-proposer-cycle-1b4b112d4347
-Cycle ID: cycle-1b4b112d4347
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,178 chars &bull; ~2,044 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Handle malformed JSON and missing fields when archiving error results in scripts/cleanup_subagent_queue.py
+Request ID: llm-proposer-cycle-eada1190a4fa
+Cycle ID: cycle-eada1190a4fa
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,65 +1727,67 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 587b619b merge: integrate selfevo/cycle-cycle-1b4b112d4347
+- 9a6f612f feat(cleanup_subagent_queue): archive failed subagent result files
 - d8b0b327 merge: integrate selfevo/cycle-cycle-3ba0777cf959
 - 55487d95 feat(loop_health_report): extract error details from summary/result/stop_reason fields
 - 4a777410 merge: integrate selfevo/cycle-cycle-c72cd8a9409a
 - fac083f4 fix(scaffold_script_entrypoint): normalize hyphenated names to valid Python identifiers
 - 3b3fdb39 chore: record structured error for [cycle-c72cd8]
 - 8e6e1095 merge: integrate selfevo/cycle-cycle-94e396f40572
-- b63af7a0 feat(model_fallback_routing): add fallback model group resolver for un/qwen3.8-27b-gguf
-- ca8b4e8c merge: integrate selfevo/cycle-cycle-ec6e7fca30e7
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1b4b112d4347.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-eada1190a4fa.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add archiving of failed subagent result files to scripts/cleanup_subagent_queue.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves subagent result errors like 333f68da by extending cleanup_subagent_queue.py to detect and archive subagent result files with error status.\n\nTarget path: scripts/cleanup_subagent_queue.py&quot;,
+    &quot;title&quot;: &quot;Handle malformed JSON and missing fields when archiving error results in scripts/cleanup_subagent_queue.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses defect-9e0dd7a28fbe where error result files such as fc483620.json can have malformed JSON or missing fields; adds robust exception handling and fallback quarantine in scripts/cleanup_subagent_queue.py so corrupt or incomplete error results are handled without aborting the queue cleanup process.\n\nTarget path: scripts/cleanup_subagent_queue.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add archiving of failed subagent result files to scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Handle malformed JSON and missing fields when archiving error results in scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-004  Title: Direct SCP Permission Denied on opencode-owned subagent repository files
-Root cause: The files inside the subagent repository are owned by the system user &#x27;opencode&#x27; and group-writeable, but the ssh session runs under user &#x27;ozand&#x27;, which does not have read permissions to parts of the home directory structure of &#x27;opencode&#x27;.
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
 
-Prevention: Always access research repository files on the host using &#x27;sudo -u opencode&#x27; commands instead of direct scp under normal user accounts.
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/git_checkout_recovery.md  Title: Resolving checkout_main_failed and Git Lock Issues on Constrained Hosts
-Problem: Read lessons/git_checkout_recovery.md: **Automated Lock Cleanup**: Implement pre-flight checks in coordinator and subagent scripts to detect and automatically remove `index.lock` if it is older than a threshold (e.g., 5 minutes) and no git process is running.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/git_checkout_recovery.md] in your proposal/response.
+ID: LESS-20260826-dd865bde  Title: Implementing &quot;Add error location tracking and structured summary output to scripts/validate_json_syntax.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_json_syntax.py, tests/test_validate_json_syntax.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260826-dd865bde] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate schema exploration of state artifact directories into a single multi-metric probe script rather than issuing multiple sequential python3 -c one-liners across separate turns.
 - When enhancing an extraction function to recognize previously unhandled fields, check companion test suites for assertions that explicitly test the unhandled behavior before running pytest.
-- When a grep or find query returns an empty result (exit code 1), accept the negative result immediately rather than repeating the same search with minor syntax variations.
+- When designing multi-stage file processing pipelines where earlier stages delete or move files, ensure subsequent passes verify file existence before accessing metadata.
+- Consolidate schema exploration of state artifact directories into a single multi-metric probe script rather than issuing multiple sequential python3 -c one-liners across separate turns.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 03:14 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-08 02:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/loop_health_report.py, tests/test_loop_health_report.py. Reward signal will be…
-- Attempt 3 (2026-09-08 02:26 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-08 03:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/cleanup_subagent_queue.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-08 03:14 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-08 02:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/loop_health_report.py, tests/test_loop_health_report.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add archiving of failed subagent result files to scripts/cleanup_subagent_queue.py
+Title: Handle malformed JSON and missing fields when archiving error results in scripts/cleanup_subagent_queue.py
 
 
-Resolves subagent result errors like 333f68da by extending cleanup_subagent_queue.py to detect and archive subagent result files with error status.
+Addresses defect-9e0dd7a28fbe where error result files such as fc483620.json can have malformed JSON or missing fields; adds robust exception handling and fallback quarantine in scripts/cleanup_subagent_queue.py so corrupt or incomplete error results are handled without aborting the queue cleanup process.
 
 Target path: scripts/cleanup_subagent_queue.py
 
 ## Concrete task to implement
-Implement and commit: Add archiving of failed subagent result files to scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)
+Implement and commit: Handle malformed JSON and missing fields when archiving error results in scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2024,7 +2026,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 04:07:06 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 06:51:13 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 04:21:55 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 06:51:13 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
