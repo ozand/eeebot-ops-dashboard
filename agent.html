@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 00:23:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 21:46 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 22:38 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-641683b7f31a</span>
+      <span class="cycle-pill">cycle-eb258832340c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 21:00:50.047834 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 21:59:50.340871 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,343c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,972c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1641,12 +1641,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260908T154641Z-canonical-6ef509de/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260908T215817Z-canonical-28629dbf/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260908T154641Z-canonical-6ef509de/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260908T215817Z-canonical-28629dbf/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">4,030 chars &bull; ~1,007 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1711,88 +1711,87 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,343 chars &bull; ~2,085 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests for validate_open_encoding AST argument parsing of positional and keyword modes
-Request ID: llm-proposer-cycle-641683b7f31a
-Cycle ID: cycle-641683b7f31a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,972 chars &bull; ~1,993 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow
+Request ID: llm-proposer-cycle-eb258832340c
+Cycle ID: cycle-eb258832340c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(G) Priority 34 — Purge stale feed files (V1): Write scripts/purge_stale_feeds.py with a single function purge_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines. The function scans feed_dir, deletes any file whose modification time is older than max_age_hours, and returns the count of deleted files. It must handle missing directories gracefully by returning 0.
+(K) Priority 34 — Purge stale feed files (V1): Write scripts/purge_stale_feeds.py with a single function purge_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines. The function scans feed_dir, deletes any file whose modification time is older than max_age_hours, and returns the count of deleted files. It must handle missing directories gracefully by returning 0.
 
-Completed (do not repeat): Check stale feed files (V1); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1).
+Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Check stale feed files (V1); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 1a3dd5e9 merge: integrate selfevo/cycle-cycle-641683b7f31a
+- 2cc1a9ea test: add unit tests for validate_open_encoding AST mode argument parsing
 - 04f426c1 chore: archive 1 week(s) to MEMORY_ARCHIVE.md
 - b9ca675f merge: integrate selfevo/cycle-cycle-7dc01159cf68
 - 842f456d feat: add check_cycle_budget script to track turn and token limits during validation phases
 - fb528d5e chore: archive 0 week(s) to MEMORY_ARCHIVE.md
 - 388ffabc merge: integrate selfevo/cycle-cycle-92551e6391c0
 - 0ceffeca selfevo: auto-commit uncommitted subagent work — Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py
-- 9e01011f merge: integrate selfevo/cycle-cycle-b69a33d8b4bb
-- f73bea8a test: add targeted fixture and error-handling unit tests for timezone-aware datetime validator
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests exercising path existence and structure from demand-and-reflection lookup skill: existence_index_duplicate
+- Add unit tests exercising command output bounding rules in tests/test_command_output_bounding.py: existence_index_duplicate
+- Add unit tests exercising bounded-reading skill validation in tests/test_validate_skill_format.py: existence_index_duplicate
 - Add regression tests for existence_index directory pruning: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-641683b7f31a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-eb258832340c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add unit tests for validate_open_encoding AST argument parsing of positional and keyword modes&quot;,
-    &quot;backlog_instructions&quot;: &quot;Add unit tests in tests/test_validate_open_encoding.py verifying that open() call AST inspection accurately recognizes binary and text modes specified via positional arguments or keyword arguments.\n\nTarget path: tests/test_validate_open_encoding.py&quot;,
+    &quot;title&quot;: &quot;Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow&quot;,
+    &quot;backlog_instructions&quot;: &quot;Wire the pure-documentation test bypass workflow from skills/pure-documentation-changes-test-bypass-workflow/SKILL.md into scripts/verify_and_proof.py to detect markdown/doc changes and bypass execution.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests for validate_open_encoding AST argument parsing of positional and keyword modes (target: tests/test_validate_open_encoding.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Unit tests pass verifying open() AST call handling of positional and keyword arguments.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_validate_open_encoding.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e301a8a7  Title: Implementing &quot;Add Path read_text and write_text encoding check to scripts/validate_open_encoding.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_open_encoding.py
+ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e301a8a7] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate docstring, usage text, argument parsing, and test edits into a single edit_file invocation per target file to minimize sequential tool turnaround latency.
-- Consolidate additions across functions, CLI argument definitions, dispatch handlers, and embedded self-tests into fewer `edit_file` calls to minimize sequential tool roundtrips in massive scripts.
-- When writing CLI boundary tests for flag arguments, verify whether argument validation is enforced by argparse (which produces exit code 2) or script logic (often exit code 1 or custom exceptions).
+- Check the exact return schema and behavior of dependent helper functions under edge conditions (e.g. non-existent directories) when writing self-test assertions.
+- Consolidate schema exploration of state artifact directories into a single multi-metric probe script rather than issuing multiple sequential python3 -c one-liners across separate turns.
+- Consolidate multiple related changes across a single file into fewer edit_file calls to reduce turn latency and verification round-trips.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-08 20:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 - Attempt 2 (2026-09-08 20:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: memory/HISTORY.md, scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py.…
-- Attempt 3 (2026-09-08 18:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_validate_timezone_aware_datetime.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add unit tests for validate_open_encoding AST argument parsing of positional and keyword modes
+Title: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow
 
 
-Add unit tests in tests/test_validate_open_encoding.py verifying that open() call AST inspection accurately recognizes binary and text modes specified via positional arguments or keyword arguments.
+Wire the pure-documentation test bypass workflow from skills/pure-documentation-changes-test-bypass-workflow/SKILL.md into scripts/verify_and_proof.py to detect markdown/doc changes and bypass execution.
 
-Target path: tests/test_validate_open_encoding.py
+Target path: scripts/verify_and_proof.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-Unit tests pass verifying open() AST call handling of positional and keyword arguments.
+## Concrete task to implement
+Implement and commit: Add doc-only bypass check to scripts/verify_and_proof.py following pure-documentation workflow (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1930,9 +1929,9 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="skill-high-ratio">
-                      <td class="skill-name">fast_path_redundancy_skip</td>
-                      <td class="skill-reads">9</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">7 confirmed</span></td>
+                      <td class="skill-name">fast-path-redundancy-skip</td>
+                      <td class="skill-reads">10</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">8 confirmed</span></td>
                     </tr>
                     
                     <tr class="skill-high-ratio">
@@ -1948,9 +1947,9 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="skill-high-ratio">
-                      <td class="skill-name">batch_grep</td>
+                      <td class="skill-name">batch-grep</td>
                       <td class="skill-reads">5</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span> <span class="skill-eval-delta">eval delta: +2</span></td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
                     </tr>
                     
                     <tr class="skill-high-ratio">
@@ -1966,7 +1965,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
-                      <td class="skill-name">chained_python_execution</td>
+                      <td class="skill-name">chained-python-execution</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
@@ -1984,7 +1983,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
-                      <td class="skill-name">incremental_script_refactoring_under_step_limits</td>
+                      <td class="skill-name">incremental-script-refactoring-under-step-limits</td>
                       <td class="skill-reads">1</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
                     </tr>
@@ -2002,12 +2001,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
-                      <td class="skill-name">fast-path-redundancy-skip</td>
-                      <td class="skill-reads">1</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
                       <td class="skill-name">early-implementation-transition</td>
                       <td class="skill-reads">1</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
@@ -2015,6 +2008,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="">
                       <td class="skill-name">handle-loop-breaker</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
                       <td class="skill-reads">1</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
@@ -2031,7 +2030,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 21:46:02 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 00:23:16 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 22:38:48 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 00:23:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
