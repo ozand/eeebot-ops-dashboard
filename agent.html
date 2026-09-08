@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 05:30:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 02:38 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 02:54 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-68ba32da80a6</span>
+      <span class="cycle-pill">cycle-3ba0777cf959</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 02:11:04.300163 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 02:42:01.922669 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,242c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,782c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,242 chars &bull; ~1,810 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add validate_skill_format validator check to scripts/run_all_tests.py
-Request ID: llm-proposer-cycle-68ba32da80a6
-Cycle ID: cycle-68ba32da80a6
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,782 chars &bull; ~1,945 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error message extraction for failed results in scripts/loop_health_report.py
+Request ID: llm-proposer-cycle-3ba0777cf959
+Cycle ID: cycle-3ba0777cf959
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,31 +1740,36 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests for un/qwen3.8-27b-gguf fallback resolution in tests/test_model_fallback_routing.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-68ba32da80a6.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3ba0777cf959.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add validate_skill_format validator check to scripts/run_all_tests.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extends scripts/run_all_tests.py to execute scripts/validate_skill_format.py during harness runs, directly exercising the unconfirmed validator to improve confirmed integrations and ratio.\n\nTarget path: scripts/run_all_tests.py&quot;,
+    &quot;title&quot;: &quot;Add error message extraction for failed results in scripts/loop_health_report.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extracts and formats error fields from failed subagent result files such as cdc1ef9c to surface failure causes in loop health reports.\n\nTarget path: scripts/loop_health_report.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add validate_skill_format validator check to scripts/run_all_tests.py (target: scripts/run_all_tests.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error message extraction for failed results in scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
+Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
+ID: LESS-20260826-87a1594c  Title: Implementing &quot;Add failure classification and detailed error context extraction to scripts/extract_last_failure.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/extract_last_failure.py, tests/test_extract_last_failure.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-87a1594c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When an internal validation or consistency check fails on newly added conforming code, test the validator against existing reference files first to check for baseline defects before deep-diving into v
-- Treat loop_breaker safety interrupt responses as an absolute stop: never resubmit the identical command or parameters; immediately change the tool call, switch to editing code, or synthesize progress.
-- Confine inspection queries to files directly relevant to Python AST processing, avoiding exploratory searches over non-Python syntax validators (YAML, JSON, Markdown) when working on AST optimization.
+- Prefer Python tempfile.TemporaryDirectory contexts over shell &#x27;mktemp&#x27; and &#x27;rm -rf&#x27; commands when creating temporary fixtures in exec tool calls to avoid tripping safety guard regexes.
+- When validating skip conditions, run the existing target self-test (--test) or companion suite first before writing standalone inline test fixtures to confirm behavior in fewer turns.
+- When encountering a failing parameterized test case on an unrelated file, immediately inspect origin/main using git show to confirm pre-existing baseline status before deciding whether the cycle&#x27;s cha
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-08 01:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
@@ -1772,15 +1777,15 @@ If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/
 
 ## Concrete task to implement
 
-Title: Add validate_skill_format validator check to scripts/run_all_tests.py
+Title: Add error message extraction for failed results in scripts/loop_health_report.py
 
 
-Extends scripts/run_all_tests.py to execute scripts/validate_skill_format.py during harness runs, directly exercising the unconfirmed validator to improve confirmed integrations and ratio.
+Extracts and formats error fields from failed subagent result files such as cdc1ef9c to surface failure causes in loop health reports.
 
-Target path: scripts/run_all_tests.py
+Target path: scripts/loop_health_report.py
 
 ## Concrete task to implement
-Implement and commit: Add validate_skill_format validator check to scripts/run_all_tests.py (target: scripts/run_all_tests.py)
+Implement and commit: Add error message extraction for failed results in scripts/loop_health_report.py (target: scripts/loop_health_report.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2019,7 +2024,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 02:38:34 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 05:30:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 02:54:22 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 05:30:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
