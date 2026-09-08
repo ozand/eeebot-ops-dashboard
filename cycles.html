@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 03:47:30 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 01:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 01:54 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1193,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-08 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c72cd8a9409a">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c72cd8a9409a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-c72cd8a9409a</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">fix(scaffold_script_entrypoint): normalize hyphenated names to valid Python identifiers</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c72cd8a9409a)</span>
             
-            
+            <a href="#node-4a77741" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-08T01:01:34.850389Z">04:01 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-82a27ab0bc38</span></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 27.44K tok &middot; dur 59s</div>
+          <div class="feed-files">&#128193; scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py</div>
+          <div class="feed-cost">&#9889; 22 calls &middot; 615.5K tok &middot; dur 44m54s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-9701853d3b9d">
@@ -1676,7 +1676,7 @@
             <strong class="feed-title">feat(control_plane_summary): wire --json CLI output verification into --test smoke check</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3c83e7c36646)</span>
             
-            <a href="#node-d5d6968" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-07T18:37:53.462733Z">Sep 7 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-38d44ef8e166</span></div>
@@ -3340,14 +3340,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c5a3aa7f0136">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">test(verify_imports): assert --json emits valid JSON and exit codes match report success</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c5a3aa7f0136)</span>
             
             <a href="#node-b8c8e99" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-06T14:09:00.451692Z">Sep 6 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0c8f16fbde14</span></div>
-          <div class="feed-files">&#128193; tests/test_verify_imports.py</div>
+          
           <div class="feed-cost">&#9889; 16 calls &middot; 600.3K tok &middot; dur 2m46s</div>
         </li>
         
@@ -3382,14 +3382,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-24ff336c45ea">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">docs(lessons): add lesson card for handling loop breaker warnings and repetitive test execution</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-24ff336c45ea)</span>
             
             <a href="#node-9b8ec9d" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-06T13:36:45.127830Z">Sep 6 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9aba1f7318d3</span></div>
-          <div class="feed-files">&#128193; lessons/errors.yaml, lessons/errors/ERR-2026-09-06-001.md</div>
+          
           <div class="feed-cost">&#9889; 29 calls &middot; 888.1K tok &middot; dur 5m26s</div>
         </li>
         
@@ -30999,7 +30999,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 01:01:55 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 03:47:30 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 01:54:47 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 03:47:30 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

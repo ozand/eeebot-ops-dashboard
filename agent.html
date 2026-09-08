@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 03:47:30 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 01:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 01:54 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-94e396f40572</span>
+      <span class="cycle-pill">cycle-c72cd8a9409a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 00:28:09.672770 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 01:17:17.648323 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,568c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,702c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,568 chars &bull; ~1,892 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement model group fallback resolver in scripts/model_fallback_routing.py
-Request ID: llm-proposer-cycle-94e396f40572
-Cycle ID: cycle-94e396f40572
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,702 chars &bull; ~1,925 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py
+Request ID: llm-proposer-cycle-c72cd8a9409a
+Cycle ID: cycle-c72cd8a9409a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1727,64 +1727,61 @@ Completed (do not repeat): Check stale feed cache files (V1); Check stale feed f
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 3b3fdb39 chore: record structured error for [cycle-c72cd8]
+- 8e6e1095 merge: integrate selfevo/cycle-cycle-94e396f40572
+- b63af7a0 feat(model_fallback_routing): add fallback model group resolver for un/qwen3.8-27b-gguf
 - ca8b4e8c merge: integrate selfevo/cycle-cycle-ec6e7fca30e7
 - 9f0c6788 docs(model_routing): document fallback targets and 502 recovery for un/qwen3.8-27b-gguf
 - d2b45898 merge: integrate selfevo/cycle-cycle-93fdabbc3c2b
 - 698b4ca6 chore(backlog_seeder): mark scripts/backlog_seeder.py deprecated and archived
 - ddf57b8e curator: promote 0 fact(s), 6 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
-- 58d19d49 merge: integrate selfevo/cycle-cycle-4d3c1900fdec
-- 6cc52dcc selfevo: auto-commit uncommitted subagent work — Add token normalization and stemming to scripts/validate_curator_facts.py
-- be1e6994 feat(validate_curator_facts): add token normalization and stemming for morphological keyword overlap
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py: executor_llm_error
+- Add unit tests for un/qwen3.8-27b-gguf fallback resolution in tests/test_model_fallback_routing.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-94e396f40572.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c72cd8a9409a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement model group fallback resolver in scripts/model_fallback_routing.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves the missing fallback error for un/qwen3.8-27b-gguf after 502 Bad Gateway by implementing a fallback model group lookup table and resolver function.\n\nTarget path: scripts/model_fallback_routing.py&quot;,
+    &quot;title&quot;: &quot;Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves idle skill defect-82a27ab0bc38 by repairing scaffold_script_entrypoint.py to normalize hyphenated script names into valid Python identifiers for generated module imports and test functions.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement model group fallback resolver in scripts/model_fallback_routing.py (target: scripts/model_fallback_routing.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/model_fallback_routing.py resolves fallback for un/qwen3.8-27b-gguf and exits zero&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/model_fallback_routing.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2d11715787ba-b525  Title: Define a fallback model group for &#x27;un/qwen3.8-27b-gguf&#x27; in the LiteLLM/bridge configuration to automatically handle model server crashes or disconnects during cycle execution.
-Problem: In cycle-2d11715787ba, LiteLLM retried 3 times against &#x27;un/qwen3.8-27b-gguf&#x27; and failed with 502 Bad Gateway, noting &#x27;No fallback model group found for original model_group=un/qwen3.8-27b-gguf&#x27;, causing immediate cycle termination.
-Solution: Define a fallback model group for &#x27;un/qwen3.8-27b-gguf&#x27; in the LiteLLM/bridge configuration to automatically handle model server crashes or disconnects during cycle execution.
-If you apply this lesson, cite [Lesson LESS-REF-2d11715787ba-b525] in your proposal/response.
+ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Treat loop_breaker safety warnings as mandatory stop instructions to immediately halt repetitive probing, synthesize findings, and begin editing or creating target files.
-- Deduplicate parallel tool invocations within a single turn to avoid running identical shell commands simultaneously.
-- Transition to drafting documentation as soon as the core reference facts (such as endpoint definitions and escalation env vars) are located, rather than conducting open-ended searches across out-of-tr
+- When introducing new standalone utility scripts, consider pairing them with a dedicated companion unit test file in tests/ (e.g. tests/test_model_fallback_routing.py) during the same cycle when scope 
+- When a loop_breaker safety interrupt response is returned, treat it as a hard block: immediately change the command, switch to file editing, or synthesize findings rather than resubmitting the identic
+- Once the target function and its existing self-tests are located in a monolithic script, transition directly to reproducing the failing test assertion instead of querying line numbers of surrounding h
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-07 23:58 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: docs/index.md, docs/model_routing.md. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-07 23:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/backlog_seeder.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-08 01:12 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-08 00:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Implement model group fallback resolver in scripts/model_fallback_routing.py
+Title: Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py
 
 
-Resolves the missing fallback error for un/qwen3.8-27b-gguf after 502 Bad Gateway by implementing a fallback model group lookup table and resolver function.
+Resolves idle skill defect-82a27ab0bc38 by repairing scaffold_script_entrypoint.py to normalize hyphenated script names into valid Python identifiers for generated module imports and test functions.
 
-Target path: scripts/model_fallback_routing.py
+Target path: scripts/scaffold_script_entrypoint.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/model_fallback_routing.py resolves fallback for un/qwen3.8-27b-gguf and exits zero
+## Concrete task to implement
+Implement and commit: Fix invalid identifier generation for hyphenated script names in scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2023,7 +2020,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 01:01:55 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 03:47:30 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 01:54:47 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 03:47:30 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
