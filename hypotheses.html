@@ -1178,9 +1178,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 02:22:19 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 03:02:31 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 23:58 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 00:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -1190,13 +1190,40 @@
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
       <div class="hypo-futility-section"><h3 class="hypo-futility-title">Goal Gap Futility Tracking</h3><ul class="futility-list"><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-2d9ab3aa9d09</span> <strong class="futility-attempts">8/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-5d4d5a9dc822</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-a820ca0c8bb3</span> <strong class="futility-attempts">10/10 attempts [lever_surface] (surface: host_metrics, stale_feed) <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-acb65b1911ab</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li><li class="futility-item futility-resolved"><span class="badge badge-dim">goal-gap-c09521b7459a</span> <strong class="futility-attempts">0/10 attempts [demand_id] <span class="gap-status-note">(resolved)</span></strong></li></ul></div>
       <div class="hypo-split">
-        <div class="hypo-group"><h3>Active (125)</h3><ul class="hypo-list">
+        <div class="hypo-group"><h3>Active (128)</h3><ul class="hypo-list">
             <li class="hypo-row active" id="q-hyp-a1d109619cbf54a7">
               <span class="badge badge-researching">ACTIVE</span>
               <strong class="hypo-title">exercise-unconfirmed-scripts-via-test-harness</strong>
               <div class="hypo-meta">
                 <span class="hypo-ts" title="2026-09-06T00:03:01.498599Z">seen Sep 6 MSK</span>
-                <span class="hypo-ts" title="2026-09-07T23:46:04.077892Z">touched 02:46 MSK</span>
+                <span class="hypo-ts" title="2026-09-08T00:04:38.125993Z">touched 03:04 MSK</span>
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-de12eb284e84b2a3">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Futile-surface filtering in fallback proposal selection</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-08T00:03:56.229954Z">seen 03:03 MSK</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-8e89d0fcf86c9f54">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Demand retry cooldown on consecutive proposer skips and duplicate failures</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-08T00:03:56.229954Z">seen 03:03 MSK</span>
+                
+              </div>
+            </li>
+        
+            <li class="hypo-row active" id="q-hyp-ad56befba8d6f2c3">
+              <span class="badge badge-researching">ACTIVE</span>
+              <strong class="hypo-title">Dynamic prompt catalogue pruning for doc-only and metadata proposals</strong>
+              <div class="hypo-meta">
+                <span class="hypo-ts" title="2026-09-08T00:03:56.229954Z">seen 03:03 MSK</span>
+                
               </div>
             </li>
         
@@ -2349,27 +2376,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Harness Execution Coupling for Script Confirmations</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling new script creations directly with invocation hooks or harness execution traces in the same integration will dissolve the contradiction between script inventory growth and low confirmed_ratio, raising confirmed_ratio above 0.50 within 15 integrations.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Prioritize proposals that link newly generated scripts/*.py entrypoints directly into harness validation passes or existing pipeline imports rather than standalone utility additions.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if value.confirmed_ratio &gt;= 0.50 within 15 code-bearing integrations without compile_clean_ratio dropping below 1.0; refuted if confirmed_ratio remains &lt;= 0.46.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-30T00:00:52.716560Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Pre-Proposer Existence Gating to Dissolve Self-Dedup Churn</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enabling demand-level existence index checks prior to LLM proposer dispatch will reduce the wasted attempt rate from 0.5314 to below 0.3500 by preventing duplicate proposals against already satisfied demands (e.g., goal-gap-5d4d5a9dc822).</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Enable SELFEVO_EXISTENCE_INDEX_ENABLED=1 and SELFEVO_DEMAND_DRIVEN_ENABLED=1 to filter satisfied reflection and defect demand IDs before spawning LLM generation.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if wasted_attempt_rate drops below 0.3500 and proposer_rejects per 50 proposals drops by &gt;= 40%; refuted if wasted_attempt_rate remains &gt;= 0.4800.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-30T00:00:52.716659Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Runner Heartbeat Telemetry Touch for Host Metrics Feed</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Updating the host_metrics feed touchpoint during the cycle heartbeat phase will eliminate the sole stale feed gap (V1) permanently without increasing token consumption or cycle duration by more than 1%.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Propose a bounded patch to touch/emit host_metrics during cycle finalization in the runner harness.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if feeds.feeds.host_metrics.status becomes &#x27;fresh&#x27; and feeds.stale reaches 0; refuted if host_metrics age_seconds exceeds 86400 after 3 completed cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-30T00:00:52.716719Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Harness Auto-Execution Coupling for Standalone Helpers</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling newly integrated standalone validation scripts directly into post-cycle harness verification runs generates required pycache and execution traces, dissolving the contradiction where creating new scripts dilutes confirmed_ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Register newly created validation helper modules (such as workspace_validation_helpers.py and validate_lessons.py) into the automated harness test pass so they are exercised on every cycle.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if value.confirmed_ratio rises from 0.4457 to &gt;= 0.5000 across the next 10 cycles; refuted if completed_declared increases while confirmed_ratio remains &lt; 0.46.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-31T00:01:22.694716Z</div>
@@ -2486,11 +2492,32 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Retiring the 108 orphaned hypotheses and enforcing strict ID-keying will dissolve the state clutter contradiction where tracking active hypotheses generates claim collisions (10) and prompt overhead, dropping claim_collisions to 0 and reducing coordinator cycle token usage by &gt;= 10% without degrading knowledge_lift.net_benefit.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Execute a bounded cleanup sweep in the hypothesis manager to transition all hypotheses marked orphaned or inactive for &gt;7 days to inconclusive_archived and enforce unique canonical ID lookups.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if hypothesis_loop.orphaned falls below 10 and hypothesis_loop.claim_collisions reaches 0 with no regression in knowledge_lift.net_benefit; refuted if claim collisions persist &gt; 0 after the cleanup sweep.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-07T00:00:38.655237Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Futile-surface filtering in fallback proposal selection</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Filtering fallback proposal candidates against active futile surfaces before dispatch will eliminate auto-rejected fallback cycles targeting stale feed scripts, reducing wasted_attempt_rate from 0.4064 to below 0.25 within 24 hours without diminishing confirmed integrations.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> In nanobot/runtime/llm_proposer.py fallback proposal generation, add a preflight blacklist check against futile_gap_ids and their associated surface paths (e.g. scripts/purge_stale_feeds.py) to select an unblocked backlog task instead of a futile target.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if proposer_rejects on fallback cycles drop to zero and wasted_attempt_rate declines by &gt;= 10 percentage points over 24 hours; refuted if fallback rejections continue or skipping futile fallbacks causes loop.idle_share to rise above 0.05.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-08T00:00:54.439084Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Demand retry cooldown on consecutive proposer skips and duplicate failures</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Applying a 3-cycle scheduling cooldown to demands that produce proposer_skips or duplicate failure skips will dissolve repeated selector churn on unresolvable defects, reducing repeat_failure_rate from 0.1616 to under 0.12 while raising confirmed_integration_ratio above 0.72.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> In nanobot/runtime/demand.py, introduce an exponential backoff cooldown counter for demand IDs that fail deduplication or trigger environmental proposer skips, yielding priority to actionable backlog demands.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if repeat_failure_rate drops below 0.12 within 48 hours without decreasing the 24-hour total integration count; refuted if cooldown results in demand queue starvation or increased cycleish_rows.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-08T00:00:54.439179Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Dynamic prompt catalogue pruning for doc-only and metadata proposals</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Omitting the 8.7k character active skills catalogue from the system prompt on tasks classified as doc-only or memory updates will decrease tokens_per_integration by &gt;= 15% (from 1.28M to &lt;1.10M tokens) without degrading compile_clean_ratio or gate acceptance.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> In nanobot/runtime prompt assembly, detect when the targeted path lies entirely within docs/ or memory/ and strip out execution skill syntax templates to fit within a bounded ~14k character envelope.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if mean tokens_per_integration falls by &gt;= 150,000 tokens over 48 hours with compile_clean_ratio remaining 1.0; refuted if stripped prompts trigger structural gate or format failures.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-08T00:00:54.439235Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-07 23:58:54 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 02:22:19 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 00:05:13 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 03:02:31 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
