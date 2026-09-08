@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 23:12:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 20:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 20:36 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-92551e6391c0</span>
+      <span class="cycle-pill">cycle-7dc01159cf68</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 19:17:48.175203 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 20:19:44.054157 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,600c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,188c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,600 chars &bull; ~1,900 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py
-Request ID: llm-proposer-cycle-92551e6391c0
-Cycle ID: cycle-92551e6391c0
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,188 chars &bull; ~2,047 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement check_cycle_budget script to track turn and token limits during validation phases
+Request ID: llm-proposer-cycle-7dc01159cf68
+Cycle ID: cycle-7dc01159cf68
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,62 +1726,71 @@ Completed (do not repeat): Check stale feed files (V1); Audit feed staleness (V1
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- fb528d5e chore: archive 0 week(s) to MEMORY_ARCHIVE.md
+- 388ffabc merge: integrate selfevo/cycle-cycle-92551e6391c0
+- 0ceffeca selfevo: auto-commit uncommitted subagent work — Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py
 - 9e01011f merge: integrate selfevo/cycle-cycle-b69a33d8b4bb
 - f73bea8a test: add targeted fixture and error-handling unit tests for timezone-aware datetime validator
 - 4f53837b merge: integrate selfevo/cycle-cycle-54e8052a347a
 - a9b4486b docs(lessons): add lesson on verifying existing test files and commits before queuing unit test proposals
 - 082521e5 merge: integrate selfevo/cycle-cycle-0f264b3c5411
-- aed9856b docs(lessons): add lesson on persisting refactored code and verifying changes before ending cycle
-- 03a733e8 merge: integrate selfevo/cycle-cycle-de6bce7571d7
-- 5ad931fd docs(lessons): add lesson on inspecting script CLI flags before invoking validation scripts
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-92551e6391c0.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7dc01159cf68.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds a --max-tests bound and --fail-fast option to scripts/verify_and_proof.py to halt execution when test suites exceed incremental thresholds, mitigating turn exhaustion from multi-case mock runs.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Implement check_cycle_budget script to track turn and token limits during validation phases&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycle cycle-a4a6456aacc8 timed out at sequence 80 with prompt token count reaching 67,897 before committing changes. Creating scripts/check_cycle_budget.py allows validation phases to evaluate turn and token usage against reserve thresholds, signaling when to conclude validation so turns remain for commits.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement check_cycle_budget script to track turn and token limits during validation phases (target: scripts/check_cycle_budget.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/check_cycle_budget.py evaluates turn and token consumption against reserve thresholds and exits zero when within budget&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/check_cycle_budget.py --turn 10 --tokens 5000&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-003  Title: Adding --fast flags did not resolve caller harness timeouts because caller defaults stayed slow
-Root cause: The optimization was added as an opt-in flag rather than as the default. The slow path remained the default, and no caller was updated to pass the flag, so the default configuration that the harness actually exercised stayed slow. A flag that no caller sets has no effect on the runtime the harness measures.
-Prevention: When adding a fast/optimized execution path, make it the default rather than an opt-in flag, and verify the caller defaults (grep every caller, wrapper script, and default configuration) to confirm the fast path is the one actually invoked end-to-end. A performance fix that no caller exercises does not change the runtime the harness measures, so measure the full call chain (not just the script in 
+ID: ERR-2026-06-20-002  Title: Outdated Subagent Bridge Script Overwritten During Deployment
+Root cause: The file host/eeepc/libexec/eeepc-self-evolving-subagent-bridge.py in the repository was an outdated copy that hardcoded mutation prevention. During every run of deploy_release.sh, this outdated file was copied to /usr/local/libexec/eeepc-self-evolving-subagent-bridge.py, overwriting the dynamic canonical version and blocking active code writing.
+
+Prevention: Never keep outdated or static script templates in deployment directories. Sync libexec wrappers with the verified canonical script versions.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-62ffebdb  Title: Implementing &quot;Add JSON summary output and fail-fast execution flag to scripts/run_all_tests.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/run_all_tests.py, tests/test_run_all_tests.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-62ffebdb] in your proposal/response.
+ID: LESS-REF-6dfc256614f3-ed23  Title: Execute targeted code modifications and local validation checks early in the turn budget to ensure fixes can be verified and committed before sequence limits are reached.
+Problem: In cycle-6dfc256614f3, the agent reached turn 45 working on scripts/verify_imports.py but produced 0 committed file changes and ended in a partial outcome.
+Solution: Execute targeted code modifications and local validation checks early in the turn budget to ensure fixes can be verified and committed before sequence limits are reached.
+If you apply this lesson, cite [Lesson LESS-REF-6dfc256614f3-ed23] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate multiple related changes across a single file into fewer edit_file calls to reduce turn latency and verification round-trips.
-- When writing unit tests for functions with rich structured output dictionaries, inspect the actual returned dictionary shape with an inline probe to prevent assertion mismatch cycles.
-- Consolidate docstring, usage text, argument parsing, and test edits into a single edit_file invocation per target file to minimize sequential tool turnaround latency.
+- Avoid executing broad repo-wide test suites like scripts/run_all_tests.py during early exploration; use targeted script self-tests or specific unit test files instead.
+- When a loop breaker safety stop warning is received, immediately halt the repeated command pattern, analyze why the tool call is looping, and change strategy or proceed to code editing.
+- Use Python inline timers or `/usr/bin/time` instead of invoking the shell keyword `time` under POSIX `/bin/sh`.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-08 18:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_validate_timezone_aware_datetime.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-08 20:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: memory/HISTORY.md, scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py.…
 - Attempt 2 (2026-09-08 18:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/check_existing_tests_before_proposals.md. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py
+Title: Implement check_cycle_budget script to track turn and token limits during validation phases
 
 
-Adds a --max-tests bound and --fail-fast option to scripts/verify_and_proof.py to halt execution when test suites exceed incremental thresholds, mitigating turn exhaustion from multi-case mock runs.
+Cycle cycle-a4a6456aacc8 timed out at sequence 80 with prompt token count reaching 67,897 before committing changes. Creating scripts/check_cycle_budget.py allows validation phases to evaluate turn and token usage against reserve thresholds, signaling when to conclude validation so turns remain for commits.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/check_cycle_budget.py
 
-## Concrete task to implement
-Implement and commit: Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/check_cycle_budget.py evaluates turn and token consumption against reserve thresholds and exits zero when within budget
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2020,7 +2029,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 20:16:03 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 23:12:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 20:36:19 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 23:12:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

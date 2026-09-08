@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 23:12:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 20:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 20:36 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1191,7 +1191,7 @@
       <div class="now-content">
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">futile-surface-filtering-in-fallback-pro</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em></span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Add max-tests limit and fail-fast flag to scripts/verify_and_proof.py</strong> <span class="now-sub">(cycle-92551e6391c0 [388ffabc])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat: add check_cycle_budget script to track turn and token limits during validation phases</strong> <span class="now-sub">(cycle-7dc01159cf68 [b9ca675f])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 3.9h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 5m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 41s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 5.4h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-available">cap reached (5/5 24h, 0 pending doc proposals of 7)</span></div>
@@ -1229,18 +1229,18 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-7dc01159cf68">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7dc01159cf68">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-7dc01159cf68</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat: add check_cycle_budget script to track turn and token limits during validation phases</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7dc01159cf68)</span>
             
-            
+            <a href="#node-b9ca675" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-08T20:15:44.444805Z">23:15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-aa453398895e</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-20-002">error:ERR-2026-06-20-002</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-6dfc256614f3-ed23">lesson:LESS-REF-6dfc256614f3-ed23</a></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 12.76K tok &middot; dur 32s</div>
+          <div class="feed-files">&#128193; scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py</div>
+          <div class="feed-cost">&#9889; 13 calls &middot; 249.9K tok &middot; dur 13m24s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-92551e6391c0">
@@ -1254,7 +1254,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a18637e26c75</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-003">error:ERR-2026-09-06-003</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-62ffebdb">lesson:LESS-20260825-62ffebdb</a></div>
           <div class="feed-files">&#128193; memory/HISTORY.md, scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
-          <div class="feed-cost">&#9889; 58 calls &middot; 2.02M tok &middot; dur 41m39s</div>
+          <div class="feed-cost">&#9889; 59 calls &middot; 2.05M tok &middot; dur 42m32s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-ff6abb27e841">
@@ -1275,7 +1275,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 20:16:03 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 23:12:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 20:36:19 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 23:12:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
