@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-08 19:32:11 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 16:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 16:45 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-5a12febb3dd2</span>
+      <span class="cycle-pill">cycle-625bdf196ac2</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 16:00:52.759954 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-08 16:39:01.969303 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,303c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,906c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,62 +1711,53 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,303 chars &bull; ~2,075 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py
-Request ID: llm-proposer-cycle-5a12febb3dd2
-Cycle ID: cycle-5a12febb3dd2
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,906 chars &bull; ~1,726 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement filter_futile_fallbacks to filter proposals by futile surfaces
+Request ID: llm-proposer-cycle-625bdf196ac2
+Cycle ID: cycle-625bdf196ac2
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(L) Priority 34 — Purge stale feed files (V1): Write scripts/purge_stale_feeds.py with a single function purge_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines. The function scans feed_dir, deletes any file whose modification time is older than max_age_hours, and returns the count of deleted files. It must handle missing directories gracefully by returning 0.
-(M) Priority 35 — Prune stale feed cache files (V1): Write scripts/prune_stale_feeds.py with a single function prune_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines. The function scans feed_dir, deletes any cache files whose last modified time is older than max_age_hours, and returns the count of deleted files. Returns 0 if feed_dir does not exist.
+(G) Priority 34 — Purge stale feed files (V1): Write scripts/purge_stale_feeds.py with a single function purge_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines. The function scans feed_dir, deletes any file whose modification time is older than max_age_hours, and returns the count of deleted files. It must handle missing directories gracefully by returning 0.
+(J) Priority 37 — Filter futile fallback proposals (V1): Write scripts/filter_futile_fallbacks.py containing a single function filter_futile_fallbacks(proposals, futile_surfaces) under 40 lines. The function takes a list of candidate proposal dictionaries and a set of futile surface identifiers, returning only proposals whose target surface is not in futile_surfaces. If proposals is empty or invalid, return an empty list.
 
-Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Check stale feed cache files (V1); Check stale feed files (V1); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Add lesson keyword search function (V2).
+Completed (do not repeat): Check stale feed files (V1); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- a68a1896 merge: integrate selfevo/cycle-cycle-5a12febb3dd2
+- d5e18641 feat(prune_stale_feeds): add prune_stale_feeds to delete expired feed cache files
 - 0f7b6154 merge: integrate selfevo/cycle-cycle-00b985c0eeb4
 - 3ddea60a test(targeted_file_slice): add definition extraction boundary tests
 - 82138d9d merge: integrate selfevo/cycle-cycle-d54835cb661e
 - 6da6cc7e feat(verify_and_proof): default test execution to pytest unless target subclasses TestCase
 - ca2bd1be merge: integrate selfevo/cycle-cycle-804514729b43
 - 41208eed chore: deprecate dormant scripts/archive_old_reports.py with archival header and exit notice
-- 10bc8815 merge: integrate selfevo/cycle-cycle-9806da88b66e
-- 9d48bf3a feat(verify_and_proof): add staged test execution with focused selectors
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5a12febb3dd2.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-625bdf196ac2.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements prune_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines to scan feed_dir, delete cache files older than max_age_hours, and return deleted file count (returning 0 if feed_dir is missing) as required by Priority 35.\n\nTarget path: scripts/prune_stale_feeds.py&quot;,
+    &quot;title&quot;: &quot;Implement filter_futile_fallbacks to filter proposals by futile surfaces&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implement filter_futile_fallbacks(proposals, futile_surfaces) in scripts/filter_futile_fallbacks.py to exclude proposals targeting futile surfaces and safely handle invalid inputs.\n\nTarget path: scripts/filter_futile_fallbacks.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py (target: scripts/prune_stale_feeds.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement filter_futile_fallbacks to filter proposals by futile surfaces (target: scripts/filter_futile_fallbacks.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/prune_stale_feeds exports prune_stale_feeds returning 0 for missing directory&quot;,
+    &quot;claim&quot;: &quot;scripts/filter_futile_fallbacks.py defines filter_futile_fallbacks and handles invalid proposals gracefully&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.prune_stale_feeds import prune_stale_feeds; assert prune_stale_feeds(&#x27;nonexistent&#x27;) == 0\&quot;&quot;
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;scripts/filter_futile_fallbacks.py&quot;
     }
   }
 }
 ```
-
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
 
 ## Proven approach for this task (from lessons/lessons.yaml)
 ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
@@ -1775,26 +1766,21 @@ Solution: Short utility scripts implementable in single bridge session (0 tool c
 If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- When drafting test fixtures for repeat-failure or rejection tracking with resolution status, ensure surfaces intended to remain active have a failing terminal cycle.
+- Drafted unit test fixtures with a successful terminal cycle for a test case intended to assert futile surface inclusion, causing the function&#x27;s resolution-detection filter to omit the surface and fail
 - Halt repetitive tool executions immediately upon receiving a loop_breaker safety stop notice and pivot to modifying code or evaluating next steps.
-- Keep task execution focused on the assigned defect scope (filtering try-except imports in verify_imports.py) rather than fixing broader codebase issues uncovered by running the tool.
-- The agent repeated the exact same inline python execution command five consecutive times, failing to change strategy even after the harness issued an explicit loop_breaker safety stop alert.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-08 14:58 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-08 13:49 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/archive_old_reports.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-08 13:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Implement prune_stale_feeds to remove expired cache files in scripts/prune_stale_feeds.py
+Title: Implement filter_futile_fallbacks to filter proposals by futile surfaces
 
 
-Implements prune_stale_feeds(feed_dir=&#x27;state/feeds&#x27;, max_age_hours=24) under 40 lines to scan feed_dir, delete cache files older than max_age_hours, and return deleted file count (returning 0 if feed_dir is missing) as required by Priority 35.
+Implement filter_futile_fallbacks(proposals, futile_surfaces) in scripts/filter_futile_fallbacks.py to exclude proposals targeting futile surfaces and safely handle invalid inputs.
 
-Target path: scripts/prune_stale_feeds.py
+Target path: scripts/filter_futile_fallbacks.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/prune_stale_feeds exports prune_stale_feeds returning 0 for missing directory
+scripts/filter_futile_fallbacks.py defines filter_futile_fallbacks and handles invalid proposals gracefully
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2033,7 +2019,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-08 16:35:25 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 19:32:11 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-08 16:45:40 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-08 19:32:11 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
