@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 21:37:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 18:40 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 19:03 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-6083f7195c8d</span>
+      <span class="cycle-pill">cycle-36a39928e1c6</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 18:14:24.268244 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 18:43:46.460184 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,677c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,977c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,677 chars &bull; ~1,919 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill
-Request ID: llm-proposer-cycle-6083f7195c8d
-Cycle ID: cycle-6083f7195c8d
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,977 chars &bull; ~1,994 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Normalize discovered test paths using os.path.relpath in scripts/verify_and_proof.py
+Request ID: llm-proposer-cycle-36a39928e1c6
+Cycle ID: cycle-36a39928e1c6
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,33 +1739,34 @@ Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1);
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 78df8c7f merge: integrate selfevo/cycle-cycle-6083f7195c8d
+- 6467120d feat(verify_and_proof): add legacy glob suite discovery per targeted-test-validation skill
 - d3f19a4a merge: integrate selfevo/cycle-cycle-7ec04b7609a3
 - 36554899 selfevo: auto-commit uncommitted subagent work — Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-b
 - 13b1b066 feat(search_subagent_archive): wire jsonl-stream-filter skill for memory-bounded JSONL record matching
 - 591c8815 merge: integrate selfevo/cycle-fallback-b9b1114386dd
 - 2786f260 feat(filter_futile_targets): add batch JSON input and path prefix normalization
 - 1a88f232 merge: integrate selfevo/cycle-cycle-3d4987e46438
-- dcd896f6 feat(filter_futile_targets): add filter_futile_targets to filter candidate filepaths against futile surfaces
-- d418371c merge: integrate selfevo/cycle-cycle-7fcc7b2b67ac
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add modular unit tests for legacy glob suite discovery to tests/test_verify_and_proof_fast_check.py: existence_index_duplicate
 - Add test suite to exercise jsonl stream filter skill patterns and streaming filtering logic: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6083f7195c8d.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-36a39928e1c6.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill&quot;,
-    &quot;backlog_instructions&quot;: &quot;Exercises the never-read targeted-test-validation-legacy-glob-suites skill by implementing glob pattern discovery for legacy test suites in verify_and_proof.py.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Normalize discovered test paths using os.path.relpath in scripts/verify_and_proof.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Discovered paths may be absolute when returned by tools, causing prefix checks to fail and print false positive warnings; normalizing with os.path.relpath resolves this.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill (target: scripts/verify_and_proof.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Normalize discovered test paths using os.path.relpath in scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;verify_and_proof.py supports discovering legacy test suites using glob pattern matching&quot;,
+    &quot;claim&quot;: &quot;scripts/verify_and_proof.py normalizes absolute test paths to repo-relative paths to prevent false positive warnings&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
       &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
@@ -1775,9 +1776,9 @@ Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-c
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
 ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
@@ -1786,26 +1787,26 @@ Solution: Short utility scripts implementable in single bridge session (0 tool c
 If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Wire the newly introduced flatten_test_suite and count_tests_by_module helpers into the active discovery and test runner dispatch functions in scripts/verify_and_proof.py so they are actively consumed
-- Continue using sibling skill test suites (such as test_bounded_reading_skill.py) as templates for structural validation constraints like line count limits and frontmatter regex checks.
-- Avoid executing the monolithic repo test runner multiple consecutive times merely to re-filter stdout; run scoped test commands (pytest &lt;target_file&gt;) for new additions or pipe comprehensive test runn
+- Audit module imports during the initial implementation turn to avoid secondary edit turns solely for adding missing standard library imports.
+- Maintain targeted grep searches and bounded offset reads when navigating monolithic files (5,000+ lines) to keep pre-edit exploration within ≤5 turns.
+- Continue chaining py_compile with scoped pytest flags (-q) and an inline sanity check probe for fast verification on resource-constrained hosts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 18:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/search_subagent_archive.py,…
-- Attempt 2 (2026-09-09 17:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
-- Attempt 3 (2026-09-09 17:11 UTC): no commits (blocked). Task &quot;Add test suite to exercise jsonl stream filter skill pattern&quot; matched an existing artifact…
+- Attempt 1 (2026-09-09 18:37 UTC): no commits (blocked). Task &quot;Add modular unit tests for legacy glob suite discovery to te&quot; matched an existing artifact…
+- Attempt 2 (2026-09-09 18:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 3 (2026-09-09 18:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/search_subagent_archive.py,…
 
 ## Concrete task to implement
 
-Title: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill
+Title: Normalize discovered test paths using os.path.relpath in scripts/verify_and_proof.py
 
 
-Exercises the never-read targeted-test-validation-legacy-glob-suites skill by implementing glob pattern discovery for legacy test suites in verify_and_proof.py.
+Discovered paths may be absolute when returned by tools, causing prefix checks to fail and print false positive warnings; normalizing with os.path.relpath resolves this.
 
 Target path: scripts/verify_and_proof.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-verify_and_proof.py supports discovering legacy test suites using glob pattern matching
+scripts/verify_and_proof.py normalizes absolute test paths to repo-relative paths to prevent false positive warnings
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2110,7 +2111,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 18:40:20 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 21:37:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 19:03:17 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 21:37:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
