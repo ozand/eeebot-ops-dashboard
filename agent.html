@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 21:07:37 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 18:10 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 18:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-7ec04b7609a3</span>
+      <span class="cycle-pill">cycle-6083f7195c8d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 17:36:25.648828 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 18:14:24.268244 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,473c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,677c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,473 chars &bull; ~1,868 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-bounded record matching
-Request ID: llm-proposer-cycle-7ec04b7609a3
-Cycle ID: cycle-7ec04b7609a3
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,677 chars &bull; ~1,919 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill
+Request ID: llm-proposer-cycle-6083f7195c8d
+Cycle ID: cycle-6083f7195c8d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,76 +1739,73 @@ Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1);
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- d3f19a4a merge: integrate selfevo/cycle-cycle-7ec04b7609a3
+- 36554899 selfevo: auto-commit uncommitted subagent work — Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-b
+- 13b1b066 feat(search_subagent_archive): wire jsonl-stream-filter skill for memory-bounded JSONL record matching
 - 591c8815 merge: integrate selfevo/cycle-fallback-b9b1114386dd
 - 2786f260 feat(filter_futile_targets): add batch JSON input and path prefix normalization
 - 1a88f232 merge: integrate selfevo/cycle-cycle-3d4987e46438
 - dcd896f6 feat(filter_futile_targets): add filter_futile_targets to filter candidate filepaths against futile surfaces
 - d418371c merge: integrate selfevo/cycle-cycle-7fcc7b2b67ac
-- d31f78b4 test(fast-path-redundancy-skip): add suite exercising skill patterns and dedup rules
-- 9f3dea78 merge: integrate selfevo/cycle-cycle-579856e52358
-- 4a4a268c test(early-skip-evaluation): add suite exercising skill rules and short-circuit heuristics
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add test suite to exercise jsonl stream filter skill patterns and streaming filtering logic: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7ec04b7609a3.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6083f7195c8d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-bounded record matching&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses defect-fc4ef8fbe09b by wiring jsonl-stream-filter patterns into scripts/search_subagent_archive.py for line-by-line streaming archive filtering.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
+    &quot;title&quot;: &quot;Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill&quot;,
+    &quot;backlog_instructions&quot;: &quot;Exercises the never-read targeted-test-validation-legacy-glob-suites skill by implementing glob pattern discovery for legacy test suites in verify_and_proof.py.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-bounded record matching (target: scripts/search_subagent_archive.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill (target: scripts/verify_and_proof.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/search_subagent_archive.py supports streaming JSONL filtering and exits 0 on --help&quot;,
+    &quot;claim&quot;: &quot;verify_and_proof.py supports discovering legacy test suites using glob pattern matching&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/search_subagent_archive.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-003  Title: Subagent-Coordinator Desync due to Missing Execution Timeouts
-Root cause: Subagents were bounded by a 15-iteration limit, which could easily exceed 1 hour under high LLM latency
-or slow target hardware. There were no execution limits at the bridge or systemd level.
-
-Prevention: Always match execution limits across components: the runner timeout (50m) must be strictly less than the orchestrator stale threshold (1h).
-
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-b2b66d48  Title: Implementing &quot;Wire scripts/validate_mutable_defaults.py into scripts/run_all_tests.py suite&quot; improves operator value.
-Problem: Committed 1 commit(s): memory/confirmation_status.json
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260825-b2b66d48] in your proposal/response.
+ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When importing and wrapping an existing utility function, inspect its signature and return schema (via inspect or by reading its definition) before writing consumer code and unit tests.
-- Continue adhering to targeted test scoping by executing pytest only on the modified test module accompanied by py_compile for fast syntax validation.
-- When addressing defects to exercise an unused skill, prefer wiring the skill into existing consumer scripts or extending existing test modules rather than proposing new companion test files.
+- Wire the newly introduced flatten_test_suite and count_tests_by_module helpers into the active discovery and test runner dispatch functions in scripts/verify_and_proof.py so they are actively consumed
+- Continue using sibling skill test suites (such as test_bounded_reading_skill.py) as templates for structural validation constraints like line count limits and frontmatter regex checks.
+- Avoid executing the monolithic repo test runner multiple consecutive times merely to re-filter stdout; run scoped test commands (pytest &lt;target_file&gt;) for new additions or pipe comprehensive test runn
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 17:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
-- Attempt 2 (2026-09-09 17:11 UTC): no commits (blocked). Task &quot;Add test suite to exercise jsonl stream filter skill pattern&quot; matched an existing artifact…
-- Attempt 3 (2026-09-09 17:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
+- Attempt 1 (2026-09-09 18:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/search_subagent_archive.py,…
+- Attempt 2 (2026-09-09 17:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
+- Attempt 3 (2026-09-09 17:11 UTC): no commits (blocked). Task &quot;Add test suite to exercise jsonl stream filter skill pattern&quot; matched an existing artifact…
 
 ## Concrete task to implement
 
-Title: Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-bounded record matching
+Title: Wire legacy glob suite discovery into scripts/verify_and_proof.py per targeted test validation skill
 
 
-Addresses defect-fc4ef8fbe09b by wiring jsonl-stream-filter patterns into scripts/search_subagent_archive.py for line-by-line streaming archive filtering.
+Exercises the never-read targeted-test-validation-legacy-glob-suites skill by implementing glob pattern discovery for legacy test suites in verify_and_proof.py.
 
-Target path: scripts/search_subagent_archive.py
+Target path: scripts/verify_and_proof.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/search_subagent_archive.py supports streaming JSONL filtering and exits 0 on --help
+verify_and_proof.py supports discovering legacy test suites using glob pattern matching
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2095,6 +2092,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
+                    <tr class="">
+                      <td class="skill-name">targeted-test-validation-legacy-glob-suites</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
                   </tbody>
                 </table></div>
                 
@@ -2107,7 +2110,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 18:10:20 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 21:07:37 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 18:27:26 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 21:07:37 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
