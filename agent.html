@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 13:30:42 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 10:53 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 11:24 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-d082d09e02cc</span>
+      <span class="cycle-pill">cycle-bbdf4e44320d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 10:37:49.924406 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 10:57:09.058007 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,011c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,906c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,011 chars &bull; ~2,252 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit test suite to exercise pair-agents-instructions-with-tests skill and verify companion test pairing
-Request ID: llm-proposer-cycle-d082d09e02cc
-Cycle ID: cycle-d082d09e02cc
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,906 chars &bull; ~1,976 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite to exercise posix background execution skill patterns and process lifecycle
+Request ID: llm-proposer-cycle-bbdf4e44320d
+Cycle ID: cycle-bbdf4e44320d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,38 +1739,31 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 8087e519 merge: integrate selfevo/cycle-cycle-d082d09e02cc
+- 0fa1e844 test(pair-agents-skill): add suite validating skill structure and companion test pairing rules
 - 244c69df merge: integrate selfevo/cycle-cycle-b17092b3f062
 - 303a3c63 feat(verify_and_proof): add head/tail output bounding to prevent token exhaustion
 - 14bf0e61 merge: integrate selfevo/cycle-cycle-ecba7909df8e
 - 1520ee62 test(bounded-reading): add suite validating skill frontmatter and file slicing constraints
 - 9ce06001 merge: integrate selfevo/cycle-cycle-f995c7bb40d5
 - fe076e89 feat(purge_stale_feeds): add purge_stale_feeds to delete stale feed files
-- cd67b1d9 merge: integrate selfevo/cycle-cycle-0ada6a08974f
-- fce01ad2 feat(verify_and_proof): add execution failure classifier for tool crashes vs lint findings
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add test suite to exercise and validate jsonl stream filter skill patterns and code examples: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d082d09e02cc.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bbdf4e44320d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add unit test suite to exercise pair-agents-instructions-with-tests skill and verify companion test pairing&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves defect-45388d1ac723 by introducing a dedicated test suite under tests/ that reads skills/pair-agents-instructions-with-tests/SKILL.md, validating its structure and exercising companion test pairing rules.\n\nTarget path: tests/test_pair_agents_instructions_skill.py&quot;,
+    &quot;title&quot;: &quot;Add test suite to exercise posix background execution skill patterns and process lifecycle&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves defect-77b30f4cfe2c under doc-budget limits by adding a code-bearing test suite in tests/ that exercises posix-background-execution-in-sh patterns including pid capture, liveness checks, and termination.\n\nTarget path: tests/test_posix_background_execution_skill.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit test suite to exercise pair-agents-instructions-with-tests skill and verify companion test pairing (target: tests/test_pair_agents_instructions_skill.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Test suite exercises and validates pair-agents-instructions-with-tests skill format and test pairing rules.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_pair_agents_instructions_skill.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test suite to exercise posix background execution skill patterns and process lifecycle (target: tests/test_posix_background_execution_skill.py)&quot;
 }
 ```
 
@@ -1780,33 +1773,32 @@ Root cause: unittest discovery only collects test methods inside unittest.TestCa
 Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260905-521b6562  Title: Pair every new required AGENTS.md section with a REQUIRED_SECTIONS entry in tests/test_agents_structure.py in the same cycle so the standing instruction is permanently enforced against accidental remo
-Problem: In reflection-521b6562e356, a cycle added a new required section to AGENTS.md but left REQUIRED_SECTIONS in tests/test_agents_structure.py untouched, so the new standing instruction had no structural test guarding it and could be dropped in a later cycle without any gate failure. The omission was only caught by manual review, not by the test suite.
-Solution: Whenever a new required section is introduced in AGENTS.md, add its exact heading to REQUIRED_SECTIONS in tests/test_agents_structure.py in the same commit, then run python3 -m pytest tests/test_agents_structure.py to confirm the new entry resolves to a present heading. Treat the AGENTS.md edit and the test registration as one atomic change: a section that is not registered is not yet standing pol
-If you apply this lesson, cite [Lesson LESS-20260905-521b6562] in your proposal/response.
-Related: LESS-REF-5b349fbfddd0
+ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
+Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - When addressing defects to exercise an unused skill, prefer wiring the skill into existing consumer scripts or extending existing test modules rather than proposing new companion test files.
-- When writing CLI text output assertions, reference the canonical string constants defined in the module or verify formatting directly against the script&#x27;s output template to prevent casing mismatches.
-- When writing test suites to validate skill specifications, pair structural frontmatter checks with functional unit tests that exercise the behavioral mechanics prescribed by the skill.
+- Audit secondary subprocess execution sites across monolithic orchestration scripts to ensure all process outputs share bounded truncation standards.
+- When resolving &#x27;exercise never-read skill&#x27; demands under doc-only limits, integrate the skill&#x27;s procedures into existing consumer scripts (such as lookup utilities or verification tools) rather than c
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 10:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
-- Attempt 2 (2026-09-09 09:52 UTC): no commits (blocked). Task &quot;Add test suite to exercise and validate jsonl stream filter &quot; matched an existing artifact…
-- Attempt 3 (2026-09-09 09:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_bounded_reading_skill.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-09 10:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_pair_agents_instructions_skill.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-09 10:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 3 (2026-09-09 09:52 UTC): no commits (blocked). Task &quot;Add test suite to exercise and validate jsonl stream filter &quot; matched an existing artifact…
 
 ## Concrete task to implement
 
-Title: Add unit test suite to exercise pair-agents-instructions-with-tests skill and verify companion test pairing
+Title: Add test suite to exercise posix background execution skill patterns and process lifecycle
 
 
-Resolves defect-45388d1ac723 by introducing a dedicated test suite under tests/ that reads skills/pair-agents-instructions-with-tests/SKILL.md, validating its structure and exercising companion test pairing rules.
+Resolves defect-77b30f4cfe2c under doc-budget limits by adding a code-bearing test suite in tests/ that exercises posix-background-execution-in-sh patterns including pid capture, liveness checks, and termination.
 
-Target path: tests/test_pair_agents_instructions_skill.py
+Target path: tests/test_posix_background_execution_skill.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-Test suite exercises and validates pair-agents-instructions-with-tests skill format and test pairing rules.
+## Concrete task to implement
+Implement and commit: Add test suite to exercise posix background execution skill patterns and process lifecycle (target: tests/test_posix_background_execution_skill.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2069,6 +2061,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
+                    <tr class="">
+                      <td class="skill-name">posix-background-execution-in-sh</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
                   </tbody>
                 </table></div>
                 
@@ -2081,7 +2079,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 10:53:29 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 13:30:42 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 11:24:50 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 13:30:42 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
