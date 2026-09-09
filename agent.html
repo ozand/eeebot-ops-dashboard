@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 05:27:27 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="17">data: 17s old &middot; generated 02:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 02:46 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-de39827fb61f</span>
+      <span class="cycle-pill">cycle-21767066b5fd</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 02:03:27.278870 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 02:39:49.663469 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,391c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,098c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,391 chars &bull; ~1,847 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py
-Request ID: llm-proposer-cycle-de39827fb61f
-Cycle ID: cycle-de39827fb61f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,098 chars &bull; ~1,774 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add early-turn budget check to scripts/check_cycle_budget.py consuming turns 1-4 inspection skill
+Request ID: llm-proposer-cycle-21767066b5fd
+Cycle ID: cycle-21767066b5fd
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,65 +1726,58 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- fd8194b4 merge: integrate selfevo/cycle-cycle-de39827fb61f
+- 7bb42b2f selfevo: auto-commit uncommitted subagent work — Implement identifier decomposition and lexical normalization helper in scripts/l
+- b317e21b feat(lexical_normalization): add identifier decomposition and lexical token helper
 - be9660c7 merge: integrate selfevo/cycle-cycle-81657ddf72e7
 - dc568bf6 feat(check_cycle_budget): add 80-iteration checkpoint threshold evaluation
 - f43b5a6f merge: integrate selfevo/cycle-cycle-f59ebb9eb9f2
 - 448b820f selfevo: auto-commit uncommitted subagent work — Add single-file git log history inspection to scripts/preflight_failure_check.py
 - df0d7f0a chore: record structured error for [cycle-f59ebb]
-- 59f8ac08 merge: integrate selfevo/cycle-cycle-762775d921aa
-- 1480ebb5 feat(verify_and_proof): add chained subprocess verification runner consuming chained-python-execution skill
-- b1e6d71e merge: integrate selfevo/cycle-cycle-eb258832340c
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-de39827fb61f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-21767066b5fd.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves reflection-3a8702202674 by providing a shared utility module to split snake_case, camelCase, and file paths into normalized lexical tokens for prose matching across validation scripts.\n\nTarget path: scripts/lexical_normalization.py&quot;,
+    &quot;title&quot;: &quot;Add early-turn budget check to scripts/check_cycle_budget.py consuming turns 1-4 inspection skill&quot;,
+    &quot;backlog_instructions&quot;: &quot;Consumes idle skill skills/early-turn-direct-file-inspection-and-editing-turns-1-4/SKILL.md by adding an early-turn phase check in scripts/check_cycle_budget.py to validate turn count thresholds for turns 1 to 4.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py (target: scripts/lexical_normalization.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/lexical_normalization.py decomposes file paths and code identifiers into normalized token sets with CLI self-test exit 0&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/lexical_normalization.py --test&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add early-turn budget check to scripts/check_cycle_budget.py consuming turns 1-4 inspection skill (target: scripts/check_cycle_budget.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/check_stale_feeds.py, tests/test_check_stale_feeds.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
+ID: LESS-20260827-3c711db4  Title: Implementing &quot;Document early-turn edit budget discipline and inspection limits in lessons&quot; improves operator value.
+Problem: Committed 1 commit(s): lessons/early_edit_turn_discipline.md
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260827-3c711db4] in your proposal/response.
+Related: LESS-REF-3c711db47ed9-d63a
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When discovering that requested functionality already exists under an alternate name, implement a non-breaking alias to satisfy the frozen claim while preserving backward compatibility.
-- When a loop breaker safety stop is triggered, immediately halt the repetitive command sequence and transition directly to drafting code changes or reproduction tests.
-- Cap exploratory profiling and diagnostics to at most 3 to 5 targeted steps before proceeding to code implementation.
+- When tasked with consuming or re-wiring an idle skill, check existing scripts and test suites for related tooling (e.g. tests/test_batch_grep.py or search utilities) and extend them directly rather th
+- Maintain this cycle&#x27;s compact operational pattern (inspection completed in ≤3 calls, first edit by turn 4, full test verification and commit in ≤15 turns) across future single-script enhancements.
+- When smoke-testing CLI flags that accept compound command strings (like --chained-cmd), use simple shell-safe invocations (e.g., &#x27;python3 -V&#x27; or script subcommands) rather than inline &#x27;python3 -c&#x27; sni
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 01:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
-- Attempt 2 (2026-09-09 00:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-08 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 1 (2026-09-09 02:15 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/lexical_normalization.py.…
+- Attempt 2 (2026-09-09 01:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py
+Title: Add early-turn budget check to scripts/check_cycle_budget.py consuming turns 1-4 inspection skill
 
 
-Resolves reflection-3a8702202674 by providing a shared utility module to split snake_case, camelCase, and file paths into normalized lexical tokens for prose matching across validation scripts.
+Consumes idle skill skills/early-turn-direct-file-inspection-and-editing-turns-1-4/SKILL.md by adding an early-turn phase check in scripts/check_cycle_budget.py to validate turn count thresholds for turns 1 to 4.
 
-Target path: scripts/lexical_normalization.py
+Target path: scripts/check_cycle_budget.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/lexical_normalization.py decomposes file paths and code identifiers into normalized token sets with CLI self-test exit 0
+## Concrete task to implement
+Implement and commit: Add early-turn budget check to scripts/check_cycle_budget.py consuming turns 1-4 inspection skill (target: scripts/check_cycle_budget.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1970,6 +1963,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
+                      <td class="skill-name">early-turn-direct-file-inspection-and-editing-turns-1-4</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
                       <td class="skill-name">standard-test-runner-unittest-over-pytest</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
@@ -1979,12 +1978,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-name">incremental-script-refactoring-under-step-limits</td>
                       <td class="skill-reads">1</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
-                      <td class="skill-name">early-turn-direct-file-inspection-and-editing-turns-1-4</td>
-                      <td class="skill-reads">1</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
@@ -2035,7 +2028,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 02:35:59 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 05:27:27 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 02:46:42 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 05:27:27 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
