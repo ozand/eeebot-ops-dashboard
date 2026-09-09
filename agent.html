@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">213</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 20:05:59 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 17:08 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 17:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-3d4987e46438</span>
+      <span class="cycle-pill">fallback-b9b1114386dd</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 16:41:00.330103 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 17:17:00.980909 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,824c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,348c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,75 +1725,87 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,824 chars &bull; ~1,706 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces
-Request ID: llm-proposer-cycle-3d4987e46438
-Cycle ID: cycle-3d4987e46438
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,348 chars &bull; ~1,837 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add batch JSON input and path prefix normalization to scripts/filter_futile_targets.py
+Request ID: llm-proposer-fallback-b9b1114386dd
+Cycle ID: fallback-b9b1114386dd
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(J) Priority 38 — Filter futile fallback targets (V1): Write scripts/filter_futile_targets.py containing a single function filter_futile_targets(candidates, futile_surfaces) under 40 lines. The function takes an iterable of candidate target filepaths and a collection of futile surface paths, returning a list of candidate paths that are not in futile_surfaces while preserving order. Return an empty list if candidates is empty or None.
 
-Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1).
+Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 1a88f232 merge: integrate selfevo/cycle-cycle-3d4987e46438
+- dcd896f6 feat(filter_futile_targets): add filter_futile_targets to filter candidate filepaths against futile surfaces
 - d418371c merge: integrate selfevo/cycle-cycle-7fcc7b2b67ac
 - d31f78b4 test(fast-path-redundancy-skip): add suite exercising skill patterns and dedup rules
 - 9f3dea78 merge: integrate selfevo/cycle-cycle-579856e52358
 - 4a4a268c test(early-skip-evaluation): add suite exercising skill rules and short-circuit heuristics
 - fff36bf0 merge: integrate selfevo/cycle-cycle-0d9887a8bb18
 - e5b77da5 selfevo: auto-commit uncommitted subagent work — Detect repetitive tool invocations and loop_breaker warnings in scripts/analyze_
-- 581049c1 feat(analyze_repeat_failures): surface loop_breaker and repeated-tool findings in report
-- 44189de3 merge: integrate selfevo/cycle-cycle-9cf853d5eae0
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3d4987e46438.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-b9b1114386dd.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement filter_futile_targets to filter candidate target filepaths against futile surfaces&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements scripts/filter_futile_targets.py with filter_futile_targets(candidates, futile_surfaces) under 40 lines to exclude futile surface paths while preserving order and handling empty or None candidates as requested by Priority 38.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
+    &quot;title&quot;: &quot;Add batch JSON input and path prefix normalization to scripts/filter_futile_targets.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Enhance filter_futile_targets to normalize path prefixes (such as leading ./ and redundant slashes) and support batch JSON input, enabling efficient preflight proposal validation.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces (target: scripts/filter_futile_targets.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add batch JSON input and path prefix normalization to scripts/filter_futile_targets.py (target: scripts/filter_futile_targets.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/filter_futile_targets.py exists and defines filter_futile_targets under 40 lines&quot;,
+    &quot;claim&quot;: &quot;filter_futile_targets accepts batch JSON inputs and normalizes relative path prefixes&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;scripts/filter_futile_targets.py&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/filter_futile_targets.py --help&quot;
     }
   }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/check_stale_feeds.py, tests/test_check_stale_feeds.py
+ID: LESS-20260825-7f531797  Title: Implementing &quot;Add target path filtering and structured JSON reporting to scripts/validate_timezone_aware_datetime.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-7f531797] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- When tasks mandate strict structural constraints (e.g. line count limits or AST-level signatures), verify them programmatically via ast.parse prior to committing.
+- Provide a standard JSON stdin/stdout main() entrypoint when authoring standalone utility scripts to facilitate modular composition and CLI pipeline verification.
 - When isolating pytest failures, rely on pytest&#x27;s native formatting options (`--tb=short`, `--tb=line`, or `-v`) rather than ad-hoc shell pipe filters like grep or sed.
-- When authoring negative test assertions for token-matching utilities, ensure negative fixture commits do not share secondary tokens (such as common verbs or nouns) with the search title.
-- When preflight inspection identifies that a related feature already exists, immediately verify whether the task requirements are already satisfied (to execute the immediate skip protocol) or specify t
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-09 17:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
+- Attempt 2 (2026-09-09 16:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_fast_path_redundancy_skip_skill.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces
+Title: Add batch JSON input and path prefix normalization to scripts/filter_futile_targets.py
 
 
-Implements scripts/filter_futile_targets.py with filter_futile_targets(candidates, futile_surfaces) under 40 lines to exclude futile surface paths while preserving order and handling empty or None candidates as requested by Priority 38.
+Enhance filter_futile_targets to normalize path prefixes (such as leading ./ and redundant slashes) and support batch JSON input, enabling efficient preflight proposal validation.
 
 Target path: scripts/filter_futile_targets.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/filter_futile_targets.py exists and defines filter_futile_targets under 40 lines
+filter_futile_targets accepts batch JSON inputs and normalizes relative path prefixes
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2081,12 +2093,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add test suite to exercise jsonl stream filter skill patterns and streaming filtering logic</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1027 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-09</td><td class="skill-reads">58</td><td>487.9K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add batch JSON input and path prefix normalization to scripts/filter_futile_targets.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1030 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-09</td><td class="skill-reads">61</td><td>522.2K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 17:08:28 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 20:05:59 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 17:26:14 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 20:05:59 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
