@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 11:45:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 08:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 09:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1189,7 +1189,7 @@
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
+        <section class="health-verdict health-investigate" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>INVESTIGATE</strong> <span class="health-verdict-reason">3 consecutive failed or partial cycles</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">futile-surface-filtering-in-fallback-pro</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em></span></div>
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(verify_and_proof): add execution failure classifier for tool crashes vs lint findings</strong> <span class="now-sub">(cycle-0ada6a08974f [cd67b1d9])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
@@ -1229,10 +1229,10 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-7d38592b8b36">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-7d38592b8b36">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-7d38592b8b36</strong>
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7d38592b8b36)</span>
             
             
@@ -1240,7 +1240,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-1947af1f0112</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-80dc08de">lesson:LESS-20260827-80dc08de</a></div>
           
-          <div class="feed-cost">&#9889; 1 calls &middot; 5.88K tok &middot; dur 11s</div>
+          <div class="feed-cost">&#9889; 15 calls &middot; 568.0K tok &middot; dur 5m3s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-b2d18e7589f0">
@@ -1254,7 +1254,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a95b6427ea2a</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ad42b06f">lesson:LESS-20260825-ad42b06f</a></div>
           
-          <div class="feed-cost">&#9889; 9 calls &middot; 175.2K tok &middot; dur 4m56s</div>
+          <div class="feed-cost">&#9889; 10 calls &middot; 197.5K tok &middot; dur 5m44s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-1df2631c3bc5">
@@ -1275,7 +1275,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 08:48:02 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 11:45:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 09:09:35 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 11:45:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
