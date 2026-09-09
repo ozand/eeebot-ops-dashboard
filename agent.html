@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 16:01:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 13:03 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 28s old &middot; generated 13:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-b9fb4ee00d17</span>
+      <span class="cycle-pill">cycle-11e874149540</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 12:45:25.823045 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 13:07:32.274715 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,937c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,311c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,937 chars &bull; ~1,734 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add default model fallback for unresolvable escalated endpoints in scripts/model_fallback_routing.py
-Request ID: llm-proposer-cycle-b9fb4ee00d17
-Cycle ID: cycle-b9fb4ee00d17
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,311 chars &bull; ~1,827 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement timed_exec.py to measure command execution elapsed time using python perf_counter
+Request ID: llm-proposer-cycle-11e874149540
+Cycle ID: cycle-11e874149540
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,51 +1749,51 @@ Recently completed (recent commits):
 - 8087e519 merge: integrate selfevo/cycle-cycle-d082d09e02cc
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b9fb4ee00d17.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-11e874149540.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add default model fallback for unresolvable escalated endpoints in scripts/model_fallback_routing.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses NotFoundError on model &#x27;an/gemini-3.7-flash-high&#x27; by updating model_fallback_routing.py to detect unresolvable escalated model identifiers and route them to an active default fallback model.\n\nTarget path: scripts/model_fallback_routing.py&quot;,
+    &quot;title&quot;: &quot;Implement timed_exec.py to measure command execution elapsed time using python perf_counter&quot;,
+    &quot;backlog_instructions&quot;: &quot;Provides a reusable CLI utility using Python&#x27;s time.perf_counter to time command execution and avoid &#x27;/bin/sh: 1: time: not found&#x27; failures.\n\nTarget path: scripts/timed_exec.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add default model fallback for unresolvable escalated endpoints in scripts/model_fallback_routing.py (target: scripts/model_fallback_routing.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;model_fallback_routing.py falls back unresolvable model identifiers like an/gemini-3.7-flash-high to the active default model&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement timed_exec.py to measure command execution elapsed time using python perf_counter (target: scripts/timed_exec.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2d11715787ba-b525  Title: Define a fallback model group for &#x27;un/qwen3.8-27b-gguf&#x27; in the LiteLLM/bridge configuration to automatically handle model server crashes or disconnects during cycle execution.
-Problem: In cycle-2d11715787ba, LiteLLM retried 3 times against &#x27;un/qwen3.8-27b-gguf&#x27; and failed with 502 Bad Gateway, noting &#x27;No fallback model group found for original model_group=un/qwen3.8-27b-gguf&#x27;, causing immediate cycle termination.
-Solution: Define a fallback model group for &#x27;un/qwen3.8-27b-gguf&#x27; in the LiteLLM/bridge configuration to automatically handle model server crashes or disconnects during cycle execution.
-If you apply this lesson, cite [Lesson LESS-REF-2d11715787ba-b525] in your proposal/response.
+ID: LESS-20260825-531cd89c  Title: Implementing &quot;Add structured JSON output mode and directory scanning to scripts/validate_no_eval_exec.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_no_eval_exec.py, tests/test_validate_no_eval_exec.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-531cd89c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When preflight inspection identifies that a related feature already exists, immediately verify whether the task requirements are already satisfied (to execute the immediate skip protocol) or specify t
-- Fell into an infinite tool-calling loop: starting around seq 50 and continuing through seq 80, the model repeatedly executed an identical cycle of three shell grep commands (inspecting `dedup_loop`, `
+- When building edge-case test suites for parsing or normalization utilities, use an inline interpreter probe (python3 -c) to catalog actual behavior across edge cases before authoring assertions.
+- Consider scheduling a follow-up cycle to refine _WORD_RE in scripts/lexical_normalization.py to address the three pinned KNOWN DEFECT edge cases (consecutive acronyms, acronyms before lowercase digits
+- Treat synthetic loop_breaker alerts as hard stops that require an immediate switch of tool or transition to code editing rather than re-submitting variations of the same command.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 11:51 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 1 (2026-09-09 11:24 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, tests/test_posix_background_execution_skill.py. Reward…
 
 ## Concrete task to implement
 
-Title: Add default model fallback for unresolvable escalated endpoints in scripts/model_fallback_routing.py
+Title: Implement timed_exec.py to measure command execution elapsed time using python perf_counter
 
 
-Addresses NotFoundError on model &#x27;an/gemini-3.7-flash-high&#x27; by updating model_fallback_routing.py to detect unresolvable escalated model identifiers and route them to an active default fallback model.
+Provides a reusable CLI utility using Python&#x27;s time.perf_counter to time command execution and avoid &#x27;/bin/sh: 1: time: not found&#x27; failures.
 
-Target path: scripts/model_fallback_routing.py
+Target path: scripts/timed_exec.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-model_fallback_routing.py falls back unresolvable model identifiers like an/gemini-3.7-flash-high to the active default model
+## Concrete task to implement
+Implement and commit: Implement timed_exec.py to measure command execution elapsed time using python perf_counter (target: scripts/timed_exec.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2086,7 +2086,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 13:03:55 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 16:01:16 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 13:27:12 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 16:01:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
