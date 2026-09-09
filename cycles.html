@@ -1178,19 +1178,34 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 23:25:17 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 00:03:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 20:59 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 21:08 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2265 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2266 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
+        
+        <li class="feed-day-header">2026-09-10 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-b0516aa00acd">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-b0516aa00acd)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-09T21:07:59.967865Z">00:07 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 13.29K tok &middot; dur 59s</div>
+        </li>
         
         <li class="feed-day-header">2026-09-09 MSK</li>
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-cc63ceb8d912">
@@ -1200,11 +1215,11 @@
             <span class="feed-cid copyable" translate="no">(cycle-cc63ceb8d912)</span>
             
             <a href="#node-987dae0" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T20:48:04.631260Z">23:48 MSK</span>
+            <span class="feed-ts" title="2026-09-09T20:48:04.631260Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-549c5e3683c0</span></div>
           <div class="feed-files">&#128193; lessons/skill-subdirectory-structure.md</div>
-          <div class="feed-cost">&#9889; 13 calls &middot; 302.1K tok &middot; dur 4m11s</div>
+          <div class="feed-cost">&#9889; 14 calls &middot; 324.4K tok &middot; dur 4m23s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ba6e7f7f5c94">
@@ -1214,11 +1229,11 @@
             <span class="feed-cid copyable" translate="no">(cycle-ba6e7f7f5c94)</span>
             
             <a href="#node-99ff315" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T20:28:06.208352Z">23:28 MSK</span>
+            <span class="feed-ts" title="2026-09-09T20:28:06.208352Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6bb3250eddc1</span></div>
           <div class="feed-files">&#128193; lessons/inspect-stdlib-attributes.md</div>
-          <div class="feed-cost">&#9889; 17 calls &middot; 205.2K tok &middot; dur 4m31s</div>
+          <div class="feed-cost">&#9889; 18 calls &middot; 226.6K tok &middot; dur 4m49s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-5ad1ea6bb0eb">
@@ -1228,7 +1243,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5ad1ea6bb0eb)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T19:56:39.086903Z">22:56 MSK</span>
+            <span class="feed-ts" title="2026-09-09T19:56:39.086903Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-72d9c6cff36a</span></div>
           
@@ -1242,7 +1257,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-36fbb7080afb)</span>
             
             <a href="#node-62553b8" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T19:31:57.201524Z">22:31 MSK</span>
+            <span class="feed-ts" title="2026-09-09T19:31:57.201524Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-80b5d10fad21</span></div>
           <div class="feed-files">&#128193; scripts/check_style.py, tests/test_check_style.py</div>
@@ -1256,7 +1271,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2cd90e1ead6e)</span>
             
             <a href="#node-6b0d4bc" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T19:09:24.826346Z">22:09 MSK</span>
+            <span class="feed-ts" title="2026-09-09T19:09:24.826346Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-82fb4bbf93d3</span></div>
           <div class="feed-files">&#128193; lessons/batch-consecutive-file-edits.md</div>
@@ -1270,7 +1285,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-36a39928e1c6)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T18:39:58.571856Z">21:39 MSK</span>
+            <span class="feed-ts" title="2026-09-09T18:39:58.571856Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-d31009c636d5</span></div>
           
@@ -1284,7 +1299,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a8a64fdb03e1)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T18:33:55.547974Z">21:33 MSK</span>
+            <span class="feed-ts" title="2026-09-09T18:33:55.547974Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f74a776ae67a</span></div>
           
@@ -1298,7 +1313,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6083f7195c8d)</span>
             
             <a href="#node-78df8c7" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T18:10:02.242263Z">21:10 MSK</span>
+            <span class="feed-ts" title="2026-09-09T18:10:02.242263Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-aaa7c361e9f8</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1312,7 +1327,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7ec04b7609a3)</span>
             
             <a href="#node-d3f19a4" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-09T17:32:33.624020Z">20:32 MSK</span>
+            <span class="feed-ts" title="2026-09-09T17:32:33.624020Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-fc4ef8fbe09b</span></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py</div>
@@ -1326,7 +1341,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b9b1114386dd)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T17:16:27.228774Z">20:16 MSK</span>
+            <span class="feed-ts" title="2026-09-09T17:16:27.228774Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1340,7 +1355,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8417a27f5b38)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T17:14:50.185053Z">20:14 MSK</span>
+            <span class="feed-ts" title="2026-09-09T17:14:50.185053Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-48553bab77ea</span></div>
           
@@ -1354,7 +1369,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d4d07621851f)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T17:08:07.278125Z">20:08 MSK</span>
+            <span class="feed-ts" title="2026-09-09T17:08:07.278125Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-fc4ef8fbe09b</span></div>
           
@@ -1368,7 +1383,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3d4987e46438)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T16:36:57.182086Z">19:36 MSK</span>
+            <span class="feed-ts" title="2026-09-09T16:36:57.182086Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-94497d9a4004</span></div>
           <div class="feed-files">&#128193; scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py</div>
@@ -1382,7 +1397,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7fcc7b2b67ac)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T15:50:15.440850Z">18:50 MSK</span>
+            <span class="feed-ts" title="2026-09-09T15:50:15.440850Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6d3d232da923</span></div>
           <div class="feed-files">&#128193; tests/test_fast_path_redundancy_skip_skill.py</div>
@@ -1396,7 +1411,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-579856e52358)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T15:25:53.878536Z">18:25 MSK</span>
+            <span class="feed-ts" title="2026-09-09T15:25:53.878536Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-068c8e439541</span></div>
           <div class="feed-files">&#128193; tests/test_early_skip_evaluation_skill.py</div>
@@ -1410,7 +1425,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-883cb1c8f780)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T14:58:12.637862Z">17:58 MSK</span>
+            <span class="feed-ts" title="2026-09-09T14:58:12.637862Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1424,7 +1439,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0d9887a8bb18)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T14:24:53.201694Z">17:24 MSK</span>
+            <span class="feed-ts" title="2026-09-09T14:24:53.201694Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-960dbdb5159e</span></div>
           <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py</div>
@@ -1438,7 +1453,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9cf853d5eae0)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T14:05:23.408892Z">17:05 MSK</span>
+            <span class="feed-ts" title="2026-09-09T14:05:23.408892Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5eba24e6baf5</span></div>
           <div class="feed-files">&#128193; tests/test_check_style.py</div>
@@ -1452,7 +1467,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f9d8cc5c4b03)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T13:34:04.237961Z">16:34 MSK</span>
+            <span class="feed-ts" title="2026-09-09T13:34:04.237961Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f77bdcc039a5</span></div>
           <div class="feed-files">&#128193; scripts/check_style.py, tests/test_check_style.py</div>
@@ -1466,7 +1481,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-11e874149540)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T13:03:36.626960Z">16:03 MSK</span>
+            <span class="feed-ts" title="2026-09-09T13:03:36.626960Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-51873f113364</span></div>
           <div class="feed-files">&#128193; scripts/timed_exec.py, tests/test_timed_exec.py</div>
@@ -1480,7 +1495,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b9fb4ee00d17)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T12:41:09.330811Z">15:41 MSK</span>
+            <span class="feed-ts" title="2026-09-09T12:41:09.330811Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0e1906c30bb4</span></div>
           
@@ -1494,7 +1509,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ac8719257fa1)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T12:30:34.011168Z">15:30 MSK</span>
+            <span class="feed-ts" title="2026-09-09T12:30:34.011168Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1508,7 +1523,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9748d1373e42)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T11:58:41.324855Z">14:58 MSK</span>
+            <span class="feed-ts" title="2026-09-09T11:58:41.324855Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-4d74a941524c</span></div>
           <div class="feed-files">&#128193; tests/test_secret_verification_scoping_skill.py</div>
@@ -1522,7 +1537,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-de786b893b75)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T11:32:02.985906Z">14:32 MSK</span>
+            <span class="feed-ts" title="2026-09-09T11:32:02.985906Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-92b067215620</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1536,7 +1551,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-bbdf4e44320d)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T10:53:07.821239Z">13:53 MSK</span>
+            <span class="feed-ts" title="2026-09-09T10:53:07.821239Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-77b30f4cfe2c</span></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, tests/test_posix_background_execution_skill.py</div>
@@ -1550,7 +1565,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d082d09e02cc)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T10:33:27.723376Z">13:33 MSK</span>
+            <span class="feed-ts" title="2026-09-09T10:33:27.723376Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-45388d1ac723</span></div>
           <div class="feed-files">&#128193; tests/test_pair_agents_instructions_skill.py</div>
@@ -1564,7 +1579,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b17092b3f062)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T09:55:25.227300Z">12:55 MSK</span>
+            <span class="feed-ts" title="2026-09-09T09:55:25.227300Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-8b5fcdf4dd55</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1578,7 +1593,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3733d8ebbd47)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T09:49:09.073214Z">12:49 MSK</span>
+            <span class="feed-ts" title="2026-09-09T09:49:09.073214Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-fc4ef8fbe09b</span></div>
           
@@ -1592,7 +1607,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-ecba7909df8e)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T09:34:26.864671Z">12:34 MSK</span>
+            <span class="feed-ts" title="2026-09-09T09:34:26.864671Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-3ac4848a5f19</span></div>
           <div class="feed-files">&#128193; tests/test_bounded_reading_skill.py</div>
@@ -1606,7 +1621,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f995c7bb40d5)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T09:15:57.813215Z">12:15 MSK</span>
+            <span class="feed-ts" title="2026-09-09T09:15:57.813215Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-4ed3cb3a5b87</span></div>
           <div class="feed-files">&#128193; scripts/purge_stale_feeds.py, tests/test_purge_stale_feeds.py</div>
@@ -1620,7 +1635,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7d38592b8b36)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T08:47:39.791804Z">11:47 MSK</span>
+            <span class="feed-ts" title="2026-09-09T08:47:39.791804Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-1947af1f0112</span></div>
           
@@ -1634,7 +1649,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b2d18e7589f0)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T08:31:03.621042Z">11:31 MSK</span>
+            <span class="feed-ts" title="2026-09-09T08:31:03.621042Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a95b6427ea2a</span></div>
           
@@ -1648,7 +1663,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-1df2631c3bc5)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T08:05:08.687962Z">11:05 MSK</span>
+            <span class="feed-ts" title="2026-09-09T08:05:08.687962Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-57c67ac0c5cc</span></div>
           
@@ -1662,7 +1677,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0ada6a08974f)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T07:44:08.741268Z">10:44 MSK</span>
+            <span class="feed-ts" title="2026-09-09T07:44:08.741268Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-32d4684d91a4</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1676,7 +1691,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-4996026d6b77)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T07:28:02.982713Z">10:28 MSK</span>
+            <span class="feed-ts" title="2026-09-09T07:28:02.982713Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0ffe97a5a931</span></div>
           <div class="feed-files">&#128193; lessons/inspect_cli_signatures_before_invocation.md</div>
@@ -1690,7 +1705,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-71191fac49ec)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T07:15:21.588460Z">10:15 MSK</span>
+            <span class="feed-ts" title="2026-09-09T07:15:21.588460Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2967128db7b6</span></div>
           
@@ -1704,7 +1719,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-91f9892568af)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T06:35:32.615284Z">09:35 MSK</span>
+            <span class="feed-ts" title="2026-09-09T06:35:32.615284Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-19d533719904</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1718,7 +1733,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-82ebefecdbac)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T06:15:12.949369Z">09:15 MSK</span>
+            <span class="feed-ts" title="2026-09-09T06:15:12.949369Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-acf44680229e</span></div>
           <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
@@ -1732,7 +1747,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8c2b215d7a81)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T05:50:09.939466Z">08:50 MSK</span>
+            <span class="feed-ts" title="2026-09-09T05:50:09.939466Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-d857d812186e</span></div>
           <div class="feed-files">&#128193; scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py</div>
@@ -1746,7 +1761,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0fad31bd9345)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T05:29:11.402822Z">08:29 MSK</span>
+            <span class="feed-ts" title="2026-09-09T05:29:11.402822Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a18537a094c2</span></div>
           
@@ -1760,7 +1775,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-36257e6e75d8)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T05:01:41.637419Z">08:01 MSK</span>
+            <span class="feed-ts" title="2026-09-09T05:01:41.637419Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-73d4a1d06514</span></div>
           
@@ -1774,7 +1789,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-186490a02dbe)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T04:42:22.347716Z">07:42 MSK</span>
+            <span class="feed-ts" title="2026-09-09T04:42:22.347716Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-26a25907ca0c</span></div>
           <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
@@ -1788,7 +1803,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-2f3058561b7c)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T04:35:53.705503Z">07:35 MSK</span>
+            <span class="feed-ts" title="2026-09-09T04:35:53.705503Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1802,7 +1817,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d20fb4d5d97b)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T04:15:54.115131Z">07:15 MSK</span>
+            <span class="feed-ts" title="2026-09-09T04:15:54.115131Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6b7b5ebf40c1</span></div>
           <div class="feed-files">&#128193; skills/incremental-script-refactoring-under-step-limits/SKILL.md</div>
@@ -1816,7 +1831,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f3b17da85210)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T04:09:25.734431Z">07:09 MSK</span>
+            <span class="feed-ts" title="2026-09-09T04:09:25.734431Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1830,7 +1845,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-feb9b10251c2)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T03:49:18.629068Z">06:49 MSK</span>
+            <span class="feed-ts" title="2026-09-09T03:49:18.629068Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-aacf013f352c</span></div>
           <div class="feed-files">&#128193; skills/early-validation-and-commit-budgeting/SKILL.md</div>
@@ -1844,7 +1859,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f19b0cb6f1a0)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T03:11:43.493043Z">06:11 MSK</span>
+            <span class="feed-ts" title="2026-09-09T03:11:43.493043Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a5d82b0e91a7</span></div>
           
@@ -1858,7 +1873,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b0908209a3ae)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T02:52:47.878599Z">05:52 MSK</span>
+            <span class="feed-ts" title="2026-09-09T02:52:47.878599Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-4f26fd0e8c3e</span></div>
           <div class="feed-files">&#128193; tests/test_lexical_normalization.py</div>
@@ -1872,21 +1887,21 @@
             <span class="feed-cid copyable" translate="no">(cycle-21767066b5fd)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T02:35:42.369654Z">05:35 MSK</span>
+            <span class="feed-ts" title="2026-09-09T02:35:42.369654Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-898f834809ce</span></div>
           <div class="feed-files">&#128193; scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py</div>
           <div class="feed-cost">&#9889; 13 calls &middot; 251.0K tok &middot; dur 6m4s</div>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-69a37141d73c">
+        <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-69a37141d73c">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: self_dedup</span>
             <strong class="feed-title">rejected: self_dedup</strong>
             <span class="feed-cid copyable" translate="no">(fallback-69a37141d73c)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T02:29:55.318397Z">05:29 MSK</span>
+            <span class="feed-ts" title="2026-09-09T02:29:55.318397Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1900,7 +1915,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f75e2b82bd7c)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T02:22:57.924671Z">05:22 MSK</span>
+            <span class="feed-ts" title="2026-09-09T02:22:57.924671Z">Sep 9 MSK</span>
           </div>
           
           
@@ -1914,7 +1929,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-de39827fb61f)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T01:59:34.304467Z">04:59 MSK</span>
+            <span class="feed-ts" title="2026-09-09T01:59:34.304467Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-3a8702202674</span></div>
           <div class="feed-files">&#128193; memory/prevent_repeats.json, memory/repeat_failures.json, scripts/lexical_normalization.py</div>
@@ -1928,7 +1943,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-81657ddf72e7)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T01:27:43.247488Z">04:27 MSK</span>
+            <span class="feed-ts" title="2026-09-09T01:27:43.247488Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-4cb5f7d86adb</span></div>
           <div class="feed-files">&#128193; scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py</div>
@@ -1942,7 +1957,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6d932aaae1e3)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T00:59:29.906259Z">03:59 MSK</span>
+            <span class="feed-ts" title="2026-09-09T00:59:29.906259Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-aaa7c361e9f8</span></div>
           
@@ -1956,7 +1971,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f59ebb9eb9f2)</span>
             
             
-            <span class="feed-ts" title="2026-09-09T00:14:18.270375Z">03:14 MSK</span>
+            <span class="feed-ts" title="2026-09-09T00:14:18.270375Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-675243a9116a</span></div>
           <div class="feed-files">&#128193; scripts/preflight_failure_check.py</div>
@@ -1970,7 +1985,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-762775d921aa)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T22:52:17.196872Z">01:52 MSK</span>
+            <span class="feed-ts" title="2026-09-08T22:52:17.196872Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-356ac55f15e5</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -1984,7 +1999,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0c2877f90ef5)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T22:45:26.625392Z">01:45 MSK</span>
+            <span class="feed-ts" title="2026-09-08T22:45:26.625392Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6dd9b3cf22e2</span></div>
           
@@ -1998,7 +2013,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-eb258832340c)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T21:45:36.553186Z">00:45 MSK</span>
+            <span class="feed-ts" title="2026-09-08T21:45:36.553186Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-39854622ac58</span></div>
           <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
@@ -2012,7 +2027,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5c71b19ece15)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T21:38:15.077070Z">00:38 MSK</span>
+            <span class="feed-ts" title="2026-09-08T21:38:15.077070Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-4c5890e705bc</span></div>
           
@@ -2026,7 +2041,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a48e633eae29)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T21:31:44.851913Z">00:31 MSK</span>
+            <span class="feed-ts" title="2026-09-08T21:31:44.851913Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-8b5fcdf4dd55</span></div>
           
@@ -2040,7 +2055,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-57f5b639fdd2)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T21:25:42.705930Z">00:25 MSK</span>
+            <span class="feed-ts" title="2026-09-08T21:25:42.705930Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-3ac4848a5f19</span></div>
           
@@ -2054,7 +2069,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f2c3ab0c00b5)</span>
             
             
-            <span class="feed-ts" title="2026-09-08T21:19:00.593029Z">00:19 MSK</span>
+            <span class="feed-ts" title="2026-09-08T21:19:00.593029Z">Sep 9 MSK</span>
           </div>
           
           
@@ -32960,7 +32975,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 20:59:03 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 23:25:17 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 21:08:21 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 00:03:20 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
