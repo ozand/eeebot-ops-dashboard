@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">215</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 09:12:28 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 06:15 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 06:29 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-8c2b215d7a81</span>
+      <span class="cycle-pill">cycle-82ebefecdbac</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 05:54:05.160049 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 06:19:20.486906 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,339c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,292c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,339 chars &bull; ~1,834 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Import and display structured failure reasons in eeebot dashboard using extract_failure_reasons
-Request ID: llm-proposer-cycle-8c2b215d7a81
-Cycle ID: cycle-8c2b215d7a81
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,292 chars &bull; ~2,073 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add target-path commit subject matching to scripts/check_target_completion.py to flag integrated tasks
+Request ID: llm-proposer-cycle-82ebefecdbac
+Cycle ID: cycle-82ebefecdbac
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,62 +1740,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 23e27dcc merge: integrate selfevo/cycle-cycle-8c2b215d7a81
+- f86a8918 feat(dashboard): import and display structured failure reasons via extract_failure_reasons
 - bd7bc4b9 merge: integrate selfevo/cycle-cycle-186490a02dbe
 - 41c702f4 feat(check_target_completion): add AST inspection of existing symbols in target files
 - 4d11f7bd merge: integrate selfevo/cycle-cycle-d20fb4d5d97b
 - 4966809a skills(incremental-refactoring): add turn-reserve thresholds, atomic slicing rules, and rollback protocol
 - ba8b2cd7 merge: integrate selfevo/cycle-cycle-feb9b10251c2
 - df23c0c7 skills: add turn reserve thresholds, phased validation checklist, and abort protocol to early-validation-and-commit-budgeting
-- 3403d841 merge: integrate selfevo/cycle-cycle-b0908209a3ae
-- b9486b9b test(lexical_normalization): add compound acronym and camelCase edge case tests
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8c2b215d7a81.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-82ebefecdbac.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Import and display structured failure reasons in eeebot dashboard using extract_failure_reasons&quot;,
-    &quot;backlog_instructions&quot;: &quot;Connects scripts/eeebot_dashboard.py to import extract_failure_reasons from scripts.summarize_failure_reasons, rendering top structured failure records in the dashboard to resolve reflection-d857d812186e.\n\nTarget path: scripts/eeebot_dashboard.py&quot;,
+    &quot;title&quot;: &quot;Add target-path commit subject matching to scripts/check_target_completion.py to flag integrated tasks&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extends check_target_completion.py to inspect recent git commit subjects on target paths for keyword overlap with task titles, preventing scheduling tasks already integrated at HEAD.\n\nTarget path: scripts/check_target_completion.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Import and display structured failure reasons in eeebot dashboard using extract_failure_reasons (target: scripts/eeebot_dashboard.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add target-path commit subject matching to scripts/check_target_completion.py to flag integrated tasks (target: scripts/check_target_completion.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
+ID: ERR-2026-09-06-003  Title: Adding --fast flags did not resolve caller harness timeouts because caller defaults stayed slow
+Root cause: The optimization was added as an opt-in flag rather than as the default. The slow path remained the default, and no caller was updated to pass the flag, so the default configuration that the harness actually exercised stayed slow. A flag that no caller sets has no effect on the runtime the harness measures.
+Prevention: When adding a fast/optimized execution path, make it the default rather than an opt-in flag, and verify the caller defaults (grep every caller, wrapper script, and default configuration) to confirm the fast path is the one actually invoked end-to-end. A performance fix that no caller exercises does not change the runtime the harness measures, so measure the full call chain (not just the script in 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-36d7315f  Title: Implementing &quot;Add structured JSON output and stage filtering to scripts/extract_last_failure.py&quot; improves operator value.
-Problem: Committed 1 commit(s): memory/confirmation_status.json, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/extract_last_failure.py, tests/test_extract_last_failure.py
+ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-36d7315f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bundle imports and their dependent implementation logic into cohesive edits rather than staging isolated import edits across turns, reducing the risk of committing dead or unused imports if an upstrea
 - When auditing or addressing follow-up demands for tasks terminated by executor errors, verify whether the core functional changes exist in the target script rather than relying on a passing smoke gate
-- Upstream LLM backend connection failure (litellm.InternalServerError: OpenAIException - Connection error) terminated the worker session after the first file edit.
+- Standardize single-script enhancement tasks on this cycle&#x27;s compact template: read target and skill in turn 1, read test file in turn 2, begin edits in turn 3, and run scoped tests before committing.
+- When testing git change detection utilities like `_git_changed_paths`, place temporary artifacts outside the mock git directory or ensure they are committed or gitignored so fallback directory scans d
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-09 06:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py. Reward signal will be upgraded…
+- Attempt 2 (2026-09-09 05:43 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-09 05:23 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Import and display structured failure reasons in eeebot dashboard using extract_failure_reasons
+Title: Add target-path commit subject matching to scripts/check_target_completion.py to flag integrated tasks
 
 
-Connects scripts/eeebot_dashboard.py to import extract_failure_reasons from scripts.summarize_failure_reasons, rendering top structured failure records in the dashboard to resolve reflection-d857d812186e.
+Extends check_target_completion.py to inspect recent git commit subjects on target paths for keyword overlap with task titles, preventing scheduling tasks already integrated at HEAD.
 
-Target path: scripts/eeebot_dashboard.py
+Target path: scripts/check_target_completion.py
 
 ## Concrete task to implement
-Implement and commit: Import and display structured failure reasons in eeebot dashboard using extract_failure_reasons (target: scripts/eeebot_dashboard.py)
+Implement and commit: Add target-path commit subject matching to scripts/check_target_completion.py to flag integrated tasks (target: scripts/check_target_completion.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2052,7 +2053,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 06:15:35 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 09:12:28 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 06:29:38 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 09:12:28 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
