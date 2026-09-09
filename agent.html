@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 12:30:55 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 09:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 10:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-ecba7909df8e</span>
+      <span class="cycle-pill">cycle-b17092b3f062</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 09:38:24.344106 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 09:59:20.570749 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,470c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,428c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,470 chars &bull; ~1,867 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite to exercise and validate bounded reading skill against file slicing constraints
-Request ID: llm-proposer-cycle-ecba7909df8e
-Cycle ID: cycle-ecba7909df8e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,428 chars &bull; ~1,857 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add command output bounding to verify_and_proof.py to prevent token exhaustion
+Request ID: llm-proposer-cycle-b17092b3f062
+Cycle ID: cycle-b17092b3f062
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,61 +1739,61 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 14bf0e61 merge: integrate selfevo/cycle-cycle-ecba7909df8e
+- 1520ee62 test(bounded-reading): add suite validating skill frontmatter and file slicing constraints
 - 9ce06001 merge: integrate selfevo/cycle-cycle-f995c7bb40d5
 - fe076e89 feat(purge_stale_feeds): add purge_stale_feeds to delete stale feed files
 - cd67b1d9 merge: integrate selfevo/cycle-cycle-0ada6a08974f
 - fce01ad2 feat(verify_and_proof): add execution failure classifier for tool crashes vs lint findings
 - 010756d1 merge: integrate selfevo/cycle-cycle-4996026d6b77
 - ea8da105 docs(lessons): add lesson on inspecting CLI parser signatures before script invocation
-- e64724d7 merge: integrate selfevo/cycle-cycle-91f9892568af
-- 575c7b3a feat(verify_and_proof): add per-test-file execution cache to skip redundant test runs
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add test suite to exercise and validate jsonl stream filter skill patterns and code examples: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ecba7909df8e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b17092b3f062.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add test suite to exercise and validate bounded reading skill against file slicing constraints&quot;,
-    &quot;backlog_instructions&quot;: &quot;Exercises skills/bounded-reading-search-prevent-context-bloat/SKILL.md via a code-bearing test suite in tests/test_bounded_reading_skill.py under the doc-only budget constraint, validating skill frontmatter and bounded slicing behavior.\n\nTarget path: tests/test_bounded_reading_skill.py&quot;,
+    &quot;title&quot;: &quot;Add command output bounding to verify_and_proof.py to prevent token exhaustion&quot;,
+    &quot;backlog_instructions&quot;: &quot;Wires the unread skill skills/command-output-bounding-prevent-token-exhaustion/SKILL.md into scripts/verify_and_proof.py by bounding test execution stdout and stderr capture with head/tail truncation, preventing token exhaustion during verification.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test suite to exercise and validate bounded reading skill against file slicing constraints (target: tests/test_bounded_reading_skill.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add command output bounding to verify_and_proof.py to prevent token exhaustion (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
-Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
+ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When addressing a &#x27;repair: exercise never-read skill&#x27; demand under doc-only budget restrictions, look for code-bearing integrations that wire skill discovery or execution in tooling/runtime rather tha
-- When resolving &#x27;exercise never-read skill&#x27; demands under doc-only limits, integrate the skill&#x27;s procedures into existing consumer scripts (such as lookup utilities or verification tools) rather than c
-- For the third consecutive cycle, when assigned an unused skill repair defect under doc-only budget constraints, the proposer attempted to create a new standalone test file for the skill rather than wi
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-09 09:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/purge_stale_feeds.py, tests/test_purge_stale_feeds.py. Reward signal will be upgraded…
+- Limit baseline latency profiling to a single measurement run; once the baseline runtime (~50–60s) and component breakdown are established, transition immediately to implementing the proposed cache.
+- Impose an inspection-to-implementation pivot ceiling: if bottleneck identification is complete or turn count exceeds 10 without edits, stop running diagnostic probes and formulate the first file edit.
+- Degenerate repetition of identical profiling commands: repeated the exact same inline Python benchmarking script across turns 11, 12, 13, 14, and 15 without altering code, parameters, or intent.
 
 ## Concrete task to implement
 
-Title: Add test suite to exercise and validate bounded reading skill against file slicing constraints
+Title: Add command output bounding to verify_and_proof.py to prevent token exhaustion
 
 
-Exercises skills/bounded-reading-search-prevent-context-bloat/SKILL.md via a code-bearing test suite in tests/test_bounded_reading_skill.py under the doc-only budget constraint, validating skill frontmatter and bounded slicing behavior.
+Wires the unread skill skills/command-output-bounding-prevent-token-exhaustion/SKILL.md into scripts/verify_and_proof.py by bounding test execution stdout and stderr capture with head/tail truncation, preventing token exhaustion during verification.
 
-Target path: tests/test_bounded_reading_skill.py
+Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Add test suite to exercise and validate bounded reading skill against file slicing constraints (target: tests/test_bounded_reading_skill.py)
+Implement and commit: Add command output bounding to verify_and_proof.py to prevent token exhaustion (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2044,6 +2044,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
+                    <tr class="">
+                      <td class="skill-name">command-output-bounding-prevent-token-exhaustion</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
                   </tbody>
                 </table></div>
                 
@@ -2056,7 +2062,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 09:55:46 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 12:30:55 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 10:27:00 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 12:30:55 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
