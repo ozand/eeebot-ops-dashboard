@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 22:29:24 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 27s old &middot; generated 19:32 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 19:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-2cd90e1ead6e</span>
+      <span class="cycle-pill">cycle-36fbb7080afb</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 19:13:39.949563 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 19:37:33.001272 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,857c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,917c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1641,12 +1641,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T150550Z-canonical-8092848c/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T193515Z-canonical-660d18c5/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T150550Z-canonical-8092848c/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T193515Z-canonical-660d18c5/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">3,995 chars &bull; ~998 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,857 chars &bull; ~1,964 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document lesson on batching consecutive file edits to minimize round trips and verification cycles
-Request ID: llm-proposer-cycle-2cd90e1ead6e
-Cycle ID: cycle-2cd90e1ead6e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,917 chars &bull; ~1,729 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --max-file-size CLI option to scripts/check_style.py to configure inspection threshold
+Request ID: llm-proposer-cycle-36fbb7080afb
+Cycle ID: cycle-36fbb7080afb
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1735,81 +1735,71 @@ Full operator charter: see system context (already loaded above).
 
 Current priority targets:
 
-Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1).
+Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 6b0d4bc4 merge: integrate selfevo/cycle-cycle-2cd90e1ead6e
+- 25d1445a docs(lessons): add lesson on batching consecutive file edits to minimize round trips
 - 78df8c7f merge: integrate selfevo/cycle-cycle-6083f7195c8d
 - 6467120d feat(verify_and_proof): add legacy glob suite discovery per targeted-test-validation skill
 - d3f19a4a merge: integrate selfevo/cycle-cycle-7ec04b7609a3
 - 36554899 selfevo: auto-commit uncommitted subagent work — Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-b
 - 13b1b066 feat(search_subagent_archive): wire jsonl-stream-filter skill for memory-bounded JSONL record matching
 - 591c8815 merge: integrate selfevo/cycle-fallback-b9b1114386dd
-- 2786f260 feat(filter_futile_targets): add batch JSON input and path prefix normalization
-- 1a88f232 merge: integrate selfevo/cycle-cycle-3d4987e46438
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add modular unit tests for legacy glob suite discovery to tests/test_verify_and_proof_fast_check.py: existence_index_duplicate
-- Add test suite to exercise jsonl stream filter skill patterns and streaming filtering logic: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2cd90e1ead6e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-36fbb7080afb.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document lesson on batching consecutive file edits to minimize round trips and verification cycles&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-82fb4bbf93d3 where cycle-d14058d7d983 wasted turns applying three separate consecutive edit_file calls to scripts/check_style.py. Adding a documented lesson establishes best practices for batching multi-hunk edits into a single tool invocation to conserve turn budget and avoid redundant verification cycles.\n\nTarget path: lessons/batch-consecutive-file-edits.md&quot;,
+    &quot;title&quot;: &quot;Add --max-file-size CLI option to scripts/check_style.py to configure inspection threshold&quot;,
+    &quot;backlog_instructions&quot;: &quot;Add a --max-file-size command-line argument to scripts/check_style.py defaulting to 1 MiB so repositories with larger files can override the skip threshold.\n\nTarget path: scripts/check_style.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document lesson on batching consecutive file edits to minimize round trips and verification cycles (target: lessons/batch-consecutive-file-edits.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --max-file-size CLI option to scripts/check_style.py to configure inspection threshold (target: scripts/check_style.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file on batching consecutive file edits is created in lessons/ and conforms to lesson validation&quot;,
+    &quot;claim&quot;: &quot;scripts/check_style.py supports --max-file-size CLI override flag&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/batch-consecutive-file-edits.md&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/check_style.py --help&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/cli_verification_state_isolation.md  Title: Isolate CLI Verification State to Prevent Repo File Mutation
-Problem: Read lessons/cli_verification_state_isolation.md: **Treat every script execution as potentially mutating.** Assume a run writes something until you have confirmed otherwise (dry-run flag, `--help` output, or a post-run `git status` check).
-Solution: 
-If you apply this lesson, cite [Lesson lessons/cli_verification_state_isolation.md] in your proposal/response.
+ID: LESS-20260823-ef380e88  Title: Implementing &quot;Optimize scripts/check_style.py file traversal and AST checking to finish within timeout&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/check_style.py, scripts/validate_deprecation_status.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260823-ef380e88] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Maintain fast skip-evaluation discipline by batching target file inspection and git log history in turn 1, confirming operational status in turns 2–3, and terminating cleanly if work is complete.
-- Impose an inspection-to-implementation pivot ceiling: if bottleneck identification is complete or turn count exceeds 10 without edits, stop running diagnostic probes and formulate the first file edit.
-- Maintain strict out-of-scope defect handoff discipline when inspecting sibling tests or related test suites: record pre-existing failures for future cycles rather than attempting in-flight fixes.
+- Maintain targeted grep searches and bounded offset reads when navigating monolithic files (5,000+ lines) to keep pre-edit exploration within ≤5 turns.
+- Continue chaining py_compile with scoped pytest flags (-q) and an inline sanity check probe for fast verification on resource-constrained hosts.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-09 19:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/batch-consecutive-file-edits.md. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-09 18:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Document lesson on batching consecutive file edits to minimize round trips and verification cycles
+Title: Add --max-file-size CLI option to scripts/check_style.py to configure inspection threshold
 
 
-Addresses reflection-82fb4bbf93d3 where cycle-d14058d7d983 wasted turns applying three separate consecutive edit_file calls to scripts/check_style.py. Adding a documented lesson establishes best practices for batching multi-hunk edits into a single tool invocation to conserve turn budget and avoid redundant verification cycles.
+Add a --max-file-size command-line argument to scripts/check_style.py defaulting to 1 MiB so repositories with larger files can override the skip threshold.
 
-Target path: lessons/batch-consecutive-file-edits.md
+Target path: scripts/check_style.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Lesson file on batching consecutive file edits is created in lessons/ and conforms to lesson validation
+scripts/check_style.py supports --max-file-size CLI override flag
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2114,7 +2104,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 19:32:24 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 22:29:24 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 19:50:05 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 22:29:24 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
