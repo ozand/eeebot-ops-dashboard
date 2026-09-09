@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 10:13:15 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 07:15 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 07:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-91f9892568af</span>
+      <span class="cycle-pill">cycle-71191fac49ec</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 06:40:05.865091 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 07:19:17.798196 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,906c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,269c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,906 chars &bull; ~1,976 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add redundant test execution skip check to scripts/verify_and_proof.py when verification has already succeeded
-Request ID: llm-proposer-cycle-91f9892568af
-Cycle ID: cycle-91f9892568af
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,269 chars &bull; ~1,817 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add optional positional skill path argument to scripts/validate_skill_format.py
+Request ID: llm-proposer-cycle-71191fac49ec
+Cycle ID: cycle-71191fac49ec
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,62 +1740,58 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- e64724d7 merge: integrate selfevo/cycle-cycle-91f9892568af
+- 575c7b3a feat(verify_and_proof): add per-test-file execution cache to skip redundant test runs
 - 2a0b51ce merge: integrate selfevo/cycle-cycle-82ebefecdbac
 - bfab4311 feat(check_target_completion): add target-path commit subject matching to flag integrated tasks
 - 23e27dcc merge: integrate selfevo/cycle-cycle-8c2b215d7a81
 - f86a8918 feat(dashboard): import and display structured failure reasons via extract_failure_reasons
 - bd7bc4b9 merge: integrate selfevo/cycle-cycle-186490a02dbe
 - 41c702f4 feat(check_target_completion): add AST inspection of existing symbols in target files
-- 4d11f7bd merge: integrate selfevo/cycle-cycle-d20fb4d5d97b
-- 4966809a skills(incremental-refactoring): add turn-reserve thresholds, atomic slicing rules, and rollback protocol
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-91f9892568af.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-71191fac49ec.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add redundant test execution skip check to scripts/verify_and_proof.py when verification has already succeeded&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle cycle-5774fcfc2712 pytest was rerun on tests/test_verify_imports.py without intervening edits before exiting. Adding a verification cache and redundancy check to scripts/verify_and_proof.py prevents repeated test runs when prior verification succeeded and files are unchanged.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add optional positional skill path argument to scripts/validate_skill_format.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;validate_skill_format.py currently errors with unrecognized arguments (exit code 2) when invoked with a positional path; adding an optional positional argument allows validating individual skill markdown files directly alongside --skills-dir.\n\nTarget path: scripts/validate_skill_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add redundant test execution skip check to scripts/verify_and_proof.py when verification has already succeeded (target: scripts/verify_and_proof.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add optional positional skill path argument to scripts/validate_skill_format.py (target: scripts/validate_skill_format.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
+ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Omit `--timeout` flags when executing `pytest` commands unless `pytest-timeout` is confirmed present in the environment; rely on the runner tool&#x27;s execution timeout parameter instead.
-- When threading parameters into slice or task execution pipelines, trace the parameter down into builder/factory functions (such as `_build_slices`) to ensure lambdas and closures receive the required 
-- When testing git change detection utilities like `_git_changed_paths`, place temporary artifacts outside the mock git directory or ensure they are committed or gitignored so fallback directory scans d
+- When writing characterization tests for AST parsing routines, check the visitor&#x27;s positional argument indexing logic before authoring assertions, as validator heuristics often diverge from Python stdl
+- When test additions expose existing heuristic limitations in tooling scripts, retain characterization tests that document the current behavior and log concrete follow-up tasks in cycle findings.
+- Authored test assertions assuming standard Python stdlib `open(file, mode, buffering)` and `open(file, encoding)` semantics without checking the validator&#x27;s internal heuristic branching, leading to tw
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 06:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 2 (2026-09-09 06:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py. Reward signal will be upgraded…
+- Attempt 1 (2026-09-09 07:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 2 (2026-09-09 06:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 3 (2026-09-09 06:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py. Reward signal will be upgraded…
 
 ## Concrete task to implement
 
-Title: Add redundant test execution skip check to scripts/verify_and_proof.py when verification has already succeeded
+Title: Add optional positional skill path argument to scripts/validate_skill_format.py
 
 
-In cycle cycle-5774fcfc2712 pytest was rerun on tests/test_verify_imports.py without intervening edits before exiting. Adding a verification cache and redundancy check to scripts/verify_and_proof.py prevents repeated test runs when prior verification succeeded and files are unchanged.
+validate_skill_format.py currently errors with unrecognized arguments (exit code 2) when invoked with a positional path; adding an optional positional argument allows validating individual skill markdown files directly alongside --skills-dir.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/validate_skill_format.py
 
 ## Concrete task to implement
-Implement and commit: Add redundant test execution skip check to scripts/verify_and_proof.py when verification has already succeeded (target: scripts/verify_and_proof.py)
+Implement and commit: Add optional positional skill path argument to scripts/validate_skill_format.py (target: scripts/validate_skill_format.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2052,7 +2048,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 07:15:39 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 10:13:15 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 07:21:58 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 10:13:15 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
