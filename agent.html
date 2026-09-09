@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 04:57:19 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 01:59 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 02:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-81657ddf72e7</span>
+      <span class="cycle-pill">cycle-de39827fb61f</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 01:40:00.452223 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 02:03:27.278870 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,895c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,391c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,895 chars &bull; ~1,723 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add 80-iteration checkpoint threshold evaluation to scripts/check_cycle_budget.py
-Request ID: llm-proposer-cycle-81657ddf72e7
-Cycle ID: cycle-81657ddf72e7
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,391 chars &bull; ~1,847 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py
+Request ID: llm-proposer-cycle-de39827fb61f
+Cycle ID: cycle-de39827fb61f
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,57 +1726,65 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- be9660c7 merge: integrate selfevo/cycle-cycle-81657ddf72e7
+- dc568bf6 feat(check_cycle_budget): add 80-iteration checkpoint threshold evaluation
 - f43b5a6f merge: integrate selfevo/cycle-cycle-f59ebb9eb9f2
 - 448b820f selfevo: auto-commit uncommitted subagent work — Add single-file git log history inspection to scripts/preflight_failure_check.py
 - df0d7f0a chore: record structured error for [cycle-f59ebb]
 - 59f8ac08 merge: integrate selfevo/cycle-cycle-762775d921aa
 - 1480ebb5 feat(verify_and_proof): add chained subprocess verification runner consuming chained-python-execution skill
 - b1e6d71e merge: integrate selfevo/cycle-cycle-eb258832340c
-- c6f8cb6f feat(verify_and_proof): add doc-only bypass check for pure-documentation cycles
-- 1a3dd5e9 merge: integrate selfevo/cycle-cycle-641683b7f31a
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-81657ddf72e7.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-de39827fb61f.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add 80-iteration checkpoint threshold evaluation to scripts/check_cycle_budget.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Wire checkpoint thresholds from skills/turn-budget-checkpoints-80-iteration-cycles/SKILL.md into scripts/check_cycle_budget.py to track warning stages across 80-iteration budget cycles.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves reflection-3a8702202674 by providing a shared utility module to split snake_case, camelCase, and file paths into normalized lexical tokens for prose matching across validation scripts.\n\nTarget path: scripts/lexical_normalization.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add 80-iteration checkpoint threshold evaluation to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py (target: scripts/lexical_normalization.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/lexical_normalization.py decomposes file paths and code identifiers into normalized token sets with CLI self-test exit 0&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/lexical_normalization.py --test&quot;
+    }
+  }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-71a9cd75  Title: Implementing &quot;Add threshold evaluation and JSON summary output to scripts/check_confirmation_ratio.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py
+ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/check_stale_feeds.py, tests/test_check_stale_feeds.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-71a9cd75] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When creating nested test fixture directories using pathlib, use `mkdir(parents=True, exist_ok=True)` or explicitly create intermediate parents to avoid FileNotFoundError.
-- In `tests/test_prune_stale_feeds.py`, `test_subdirectories_ignored` called `sub.mkdir()` on a nested path before `d.mkdir()` had been invoked, causing an initial `FileNotFoundError` failure.
-- Use Python&#x27;s `ast` module to deterministically verify function line limits and structural constraints during self-validation steps.
+- When discovering that requested functionality already exists under an alternate name, implement a non-breaking alias to satisfy the frozen claim while preserving backward compatibility.
+- When a loop breaker safety stop is triggered, immediately halt the repetitive command sequence and transition directly to drafting code changes or reproduction tests.
+- Cap exploratory profiling and diagnostics to at most 3 to 5 targeted steps before proceeding to code implementation.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 00:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-08 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 1 (2026-09-09 01:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 2 (2026-09-09 00:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py. Reward signal will be upgraded by coordinator.
+- Attempt 3 (2026-09-08 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add 80-iteration checkpoint threshold evaluation to scripts/check_cycle_budget.py
+Title: Implement identifier decomposition and lexical normalization helper in scripts/lexical_normalization.py
 
 
-Wire checkpoint thresholds from skills/turn-budget-checkpoints-80-iteration-cycles/SKILL.md into scripts/check_cycle_budget.py to track warning stages across 80-iteration budget cycles.
+Resolves reflection-3a8702202674 by providing a shared utility module to split snake_case, camelCase, and file paths into normalized lexical tokens for prose matching across validation scripts.
 
-Target path: scripts/check_cycle_budget.py
+Target path: scripts/lexical_normalization.py
 
-## Concrete task to implement
-Implement and commit: Add 80-iteration checkpoint threshold evaluation to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/lexical_normalization.py decomposes file paths and code identifiers into normalized token sets with CLI self-test exit 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2027,7 +2035,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 01:59:52 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 04:57:19 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 02:16:09 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 04:57:19 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
