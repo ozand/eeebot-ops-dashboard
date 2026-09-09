@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 01:54:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 23:07 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 23:48 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-99ca557cd2a6</span>
+      <span class="cycle-pill">fallback-ecf90dae8e38</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 22:33:04.482568 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 23:14:54.986133 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,137c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,636c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,137 chars &bull; ~1,784 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --exclude-dir CLI option to scripts/check_style.py to prune custom directories during traversal
-Request ID: llm-proposer-cycle-99ca557cd2a6
-Cycle ID: cycle-99ca557cd2a6
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,636 chars &bull; ~1,909 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection
+Request ID: llm-proposer-fallback-ecf90dae8e38
+Cycle ID: fallback-ecf90dae8e38
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,67 +1739,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- bc70e7b0 merge: integrate selfevo/cycle-cycle-99ca557cd2a6
+- c47dde74 feat(check_style): add --exclude-dir CLI option to prune custom directories during traversal
 - 993dc891 merge: integrate selfevo/cycle-cycle-3b2444a050a6
 - 25333a16 feat(validate_skill_format): enforce frontmatter description &lt;= 120 chars
 - 831e6f3e merge: integrate selfevo/cycle-cycle-c077b68b69c0
 - dbf52ba0 feat(verify_and_proof): add --preview-tests flag to preview discovered test targets without execution
 - 27705eaa curator: promote 0 fact(s), 2 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 - 987dae0b merge: integrate selfevo/cycle-cycle-cc63ceb8d912
-- 8a6c6287 docs(lessons): add lesson on structuring skills in subdirectories as skills/&lt;skill_name&gt;/SKILL.md
-- 99ff315f merge: integrate selfevo/cycle-cycle-ba6e7f7f5c94
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add test suite to exercise verify_and_proof inspection skill patterns and regex grep extraction: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-99ca557cd2a6.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-ecf90dae8e38.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add --exclude-dir CLI option to scripts/check_style.py to prune custom directories during traversal&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves reflection-170eea72525f by making directory pruning in scripts/check_style.py configurable via --exclude-dir, extending _NON_SOURCE_DIRS during _iter_python_files traversal.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection&quot;,
+    &quot;backlog_instructions&quot;: &quot;Adding an optional line-numbering flag to targeted_file_slice.py enables precise indexing of extracted code slices, preventing line offset errors during agent refactoring.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --exclude-dir CLI option to scripts/check_style.py to prune custom directories during traversal (target: scripts/check_style.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_style.py accepts --exclude-dir and prunes matching directories during _iter_python_files traversal.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_style.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection (target: scripts/targeted_file_slice.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-20-002  Title: Outdated Subagent Bridge Script Overwritten During Deployment
+Root cause: The file host/eeepc/libexec/eeepc-self-evolving-subagent-bridge.py in the repository was an outdated copy that hardcoded mutation prevention. During every run of deploy_release.sh, this outdated file was copied to /usr/local/libexec/eeepc-self-evolving-subagent-bridge.py, overwriting the dynamic canonical version and blocking active code writing.
+
+Prevention: Never keep outdated or static script templates in deployment directories. Sync libexec wrappers with the verified canonical script versions.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-ef380e88  Title: Implementing &quot;Optimize scripts/check_style.py file traversal and AST checking to finish within timeout&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/check_style.py, scripts/validate_deprecation_status.py
+ID: LESS-20260825-8871470d  Title: Implementing &quot;Add structured JSON reporting and line offset tracking to scripts/validate_documentation_code_blocks.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_documentation_code_blocks.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-ef380e88] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-8871470d] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Wire the newly introduced flatten_test_suite and count_tests_by_module helpers into the active discovery and test runner dispatch functions in scripts/verify_and_proof.py so they are actively consumed
-- When implementing or testing ProcessPoolExecutor concurrency, verify that all target callables and arguments are module-level functions or picklable objects rather than nested lambdas or closures.
-- Continue pairing scoped test suite runs with explicit multi-target CLI smoke checks to ensure pool scheduling and result collection operate correctly on multiple inputs.
+- Enforce a strict inspection budget (e.g., maximum 5–8 discovery turns) before making the first edit; when adding CLI options, immediately jump from locating argparse in main() to registering the flag 
+- When asserting that a markdown document prescribes a specific regex pattern or code snippet, match the pattern as a literal substring (`assert pattern in text`) or use `re.escape()` rather than nestin
+- Continue using targeted grep searches and line-bounded reads (read_file offset/limit) when inspecting helper definitions in large files to complete implementations within single-digit turns.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 21:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_skill_format.py, tests/test_validate_skill_format.py. Reward signal will be…
-- Attempt 2 (2026-09-09 21:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 1 (2026-09-09 22:49 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-09 21:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_skill_format.py, tests/test_validate_skill_format.py. Reward signal will be…
+- Attempt 3 (2026-09-09 21:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add --exclude-dir CLI option to scripts/check_style.py to prune custom directories during traversal
+Title: Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection
 
 
-Resolves reflection-170eea72525f by making directory pruning in scripts/check_style.py configurable via --exclude-dir, extending _NON_SOURCE_DIRS during _iter_python_files traversal.
+Adding an optional line-numbering flag to targeted_file_slice.py enables precise indexing of extracted code slices, preventing line offset errors during agent refactoring.
 
-Target path: scripts/check_style.py
+Target path: scripts/targeted_file_slice.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_style.py accepts --exclude-dir and prunes matching directories during _iter_python_files traversal.
+## Concrete task to implement
+Implement and commit: Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection (target: scripts/targeted_file_slice.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2099,12 +2100,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (enhancement_without_caller)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1057 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-09</td><td class="skill-reads">88</td><td>772.1K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add line numbering flag to scripts/targeted_file_slice.py for indexed code inspection</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1059 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-09</td><td class="skill-reads">90</td><td>787.5K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr><tr><td>2026-09-03</td><td class="skill-reads">120</td><td>702.8K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 23:07:04 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 01:54:20 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 23:48:07 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 01:54:20 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
