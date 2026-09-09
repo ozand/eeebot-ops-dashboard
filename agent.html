@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 07:32:44 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 05:02 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 05:23 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-186490a02dbe</span>
+      <span class="cycle-pill">cycle-36257e6e75d8</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 04:46:16.416870 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 05:05:31.389208 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,170c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">5,890c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,170 chars &bull; ~1,792 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add AST symbol inspection to check_target_completion.py to audit existing functions and mappings
-Request ID: llm-proposer-cycle-186490a02dbe
-Cycle ID: cycle-186490a02dbe
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">5,890 chars &bull; ~1,472 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add map and resolver extension guidelines to docs/task_instructions.md
+Request ID: llm-proposer-cycle-36257e6e75d8
+Cycle ID: cycle-36257e6e75d8
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,63 +1740,52 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- bd7bc4b9 merge: integrate selfevo/cycle-cycle-186490a02dbe
+- 41c702f4 feat(check_target_completion): add AST inspection of existing symbols in target files
 - 4d11f7bd merge: integrate selfevo/cycle-cycle-d20fb4d5d97b
 - 4966809a skills(incremental-refactoring): add turn-reserve thresholds, atomic slicing rules, and rollback protocol
 - ba8b2cd7 merge: integrate selfevo/cycle-cycle-feb9b10251c2
 - df23c0c7 skills: add turn reserve thresholds, phased validation checklist, and abort protocol to early-validation-and-commit-budgeting
 - 3403d841 merge: integrate selfevo/cycle-cycle-b0908209a3ae
 - b9486b9b test(lexical_normalization): add compound acronym and camelCase edge case tests
-- 1d9bfd25 merge: integrate selfevo/cycle-cycle-21767066b5fd
-- ab2750b5 feat(check_cycle_budget): add turns 1-4 early-turn phase check consuming early-turn inspection skill
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-186490a02dbe.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-36257e6e75d8.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add AST symbol inspection to check_target_completion.py to audit existing functions and mappings&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses cycle-04716c75c669 by adding AST symbol extraction to check_target_completion.py, flagging existing functions and mappings in target files to prevent redundant proposals.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add map and resolver extension guidelines to docs/task_instructions.md&quot;,
+    &quot;backlog_instructions&quot;: &quot;Defines explicit instructions on extending pre-existing mappings and resolvers such as SCRIPT_TEST_MAP rather than re-implementing core resolver functionality when the base feature is already present.\n\nTarget path: docs/task_instructions.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add AST symbol inspection to check_target_completion.py to audit existing functions and mappings (target: scripts/check_target_completion.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add map and resolver extension guidelines to docs/task_instructions.md (target: docs/task_instructions.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;check_target_completion.py audits target scripts for existing symbols using AST parsing&quot;,
+    &quot;claim&quot;: &quot;docs/task_instructions.md defines explicit guidance on extending existing maps and resolvers&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m py_compile scripts/check_target_completion.py&quot;
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;docs/task_instructions.md&quot;
     }
   }
 }
 ```
 
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
-
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid sequentially paging large script files using repeated sed commands; inspect the module docstring, CLI `--help`, or specific function signatures via grep or AST inspection.
-- When testing defensive exception-handling paths in `ast.NodeVisitor` subclasses, use `unittest.mock.patch.object(VisitorClass, &#x27;visit&#x27;, side_effect=...)` rather than constructing synthetic AST nodes w
-- Verify exception classification in parser routines before asserting output issue types: syntax errors often return empty lists while runtime parse errors generate structured error objects.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-09 02:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- When authoring a standalone lesson card, use `scripts/check_lesson_markdown_sections.py` as the primary preflight check rather than running `tests/test_lessons_integrity.py`, which validates repositor
 
 ## Concrete task to implement
 
-Title: Add AST symbol inspection to check_target_completion.py to audit existing functions and mappings
+Title: Add map and resolver extension guidelines to docs/task_instructions.md
 
 
-Addresses cycle-04716c75c669 by adding AST symbol extraction to check_target_completion.py, flagging existing functions and mappings in target files to prevent redundant proposals.
+Defines explicit instructions on extending pre-existing mappings and resolvers such as SCRIPT_TEST_MAP rather than re-implementing core resolver functionality when the base feature is already present.
 
-Target path: scripts/check_target_completion.py
+Target path: docs/task_instructions.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-check_target_completion.py audits target scripts for existing symbols using AST parsing
+docs/task_instructions.md defines explicit guidance on extending existing maps and resolvers
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2053,7 +2042,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 05:02:03 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 07:32:44 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 05:23:36 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 07:32:44 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
