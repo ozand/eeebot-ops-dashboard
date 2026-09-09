@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 23:25:17 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 20:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 20:59 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-ba6e7f7f5c94</span>
+      <span class="cycle-pill">cycle-cc63ceb8d912</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 20:32:34.594111 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 20:51:56.083189 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,264c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,640c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,264 chars &bull; ~2,066 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document lesson on inspecting standard library class attributes and return types prior to code edits
-Request ID: llm-proposer-cycle-ba6e7f7f5c94
-Cycle ID: cycle-ba6e7f7f5c94
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,640 chars &bull; ~1,910 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document lesson on structuring skills in subdirectories as skills/&lt;skill_name&gt;/SKILL.md
+Request ID: llm-proposer-cycle-cc63ceb8d912
+Cycle ID: cycle-cc63ceb8d912
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,68 +1739,77 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 99ff315f merge: integrate selfevo/cycle-cycle-ba6e7f7f5c94
+- 2ed6d7e5 docs(lessons): add lesson on inspecting stdlib class attributes and return types before edits
 - 62553b8f merge: integrate selfevo/cycle-cycle-36fbb7080afb
 - 7dfa9c78 feat(check_style): add --max-file-size CLI option to configure skip threshold
 - 6b0d4bc4 merge: integrate selfevo/cycle-cycle-2cd90e1ead6e
 - 25d1445a docs(lessons): add lesson on batching consecutive file edits to minimize round trips
 - 78df8c7f merge: integrate selfevo/cycle-cycle-6083f7195c8d
 - 6467120d feat(verify_and_proof): add legacy glob suite discovery per targeted-test-validation skill
-- d3f19a4a merge: integrate selfevo/cycle-cycle-7ec04b7609a3
-- 36554899 selfevo: auto-commit uncommitted subagent work — Wire streaming JSONL filter into scripts/search_subagent_archive.py for memory-b
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ba6e7f7f5c94.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-cc63ceb8d912.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document lesson on inspecting standard library class attributes and return types prior to code edits&quot;,
-    &quot;backlog_instructions&quot;: &quot;Documents best practices and quick one-liner CLI inspection techniques (e.g. python3 -c &#x27;help(...)&#x27;) before editing code to prevent TypeErrors and AttributeErrors caused by incorrect API assumptions like DocTestRunner.run and DocTestRunner.failed.\n\nTarget path: lessons/inspect-stdlib-attributes.md&quot;,
+    &quot;title&quot;: &quot;Document lesson on structuring skills in subdirectories as skills/&lt;skill_name&gt;/SKILL.md&quot;,
+    &quot;backlog_instructions&quot;: &quot;Documents the repository layout standard requiring skill files to be placed in subdirectories as skills/&lt;skill_name&gt;/SKILL.md rather than flat markdown files in skills/, directly addressing the reflection from cycle-86e4db4b49d8.\n\nTarget path: lessons/skill-subdirectory-structure.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document lesson on inspecting standard library class attributes and return types prior to code edits (target: lessons/inspect-stdlib-attributes.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document lesson on structuring skills in subdirectories as skills/&lt;skill_name&gt;/SKILL.md (target: lessons/skill-subdirectory-structure.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file documenting standard library class attribute inspection exists with actionable CLI examples and guidance&quot;,
+    &quot;claim&quot;: &quot;New lesson on skill subdirectory structure is created and passes validate_lessons.py&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/inspect-stdlib-attributes.md&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_lessons.py&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
-Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
-Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
+ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
+Root cause: The deployment script copies Python source files but does not create the lessons/ directory
+or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
+was invisible — no log, no error, just silent no-op.
+
+Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
+   as part of every release activation step.
+2. After deploying lessons integration, verify with:
+   sudo ls -la /opt/.../current/lessons
+   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-4f03664182da-0d35  Title: Inspect standard library class attributes and return types using a quick one-liner (e.g., python3 -c &#x27;import doctest; help(doctest.DocTestRunner.run)&#x27;) before writing custom runner glue to avoid repet
-Problem: Tool execution after write_file 8v84c3XW6 produced TypeError: &#x27;int&#x27; object is not iterable, and the subsequent edit ZviSMouxK failed with AttributeError: &#x27;DocTestRunner&#x27; object has no attribute &#x27;failed&#x27;.
-Solution: Inspect standard library class attributes and return types using a quick one-liner (e.g., python3 -c &#x27;import doctest; help(doctest.DocTestRunner.run)&#x27;) before writing custom runner glue to avoid repetitive trial-and-error attribute failures.
-If you apply this lesson, cite [Lesson LESS-REF-4f03664182da-0d35] in your proposal/response.
+ID: LESS-20260828-acf736a5  Title: Implementing &quot;Document short-circuit rule for auxiliary git and test scans upon redundancy proof in lessons&quot; improves operator value.
+Problem: Committed 2 commit(s): lessons/early_edit_turn_discipline.md, memory/repeat_failures.json
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-acf736a5] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Enforce an early-edit ceiling: if no code edits have been made by turn 10, halt exploratory inspection, formulate the minimum required function/alert definition, and begin editing the target file.
 - When asserting that a markdown document prescribes a specific regex pattern or code snippet, match the pattern as a literal substring (`assert pattern in text`) or use `re.escape()` rather than nestin
-- Declare outcome: skipped immediately once live script execution proves the requested functionality is already present, rather than endlessly repeating exploratory probes.
+- When testing markdown-only skill guidelines without accompanying Python modules, combine frontmatter structural checks, literal string assertions of prescriptive text, and synthetic behavioral models 
+- When asserting keyword lists (such as banned tool families) in skill unit tests, verify exact literal presence against the target SKILL.md before creating the test to prevent assertion failures carrie
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 19:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/batch-consecutive-file-edits.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-09 20:40 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/inspect-stdlib-attributes.md. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-09 19:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/batch-consecutive-file-edits.md. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Document lesson on inspecting standard library class attributes and return types prior to code edits
+Title: Document lesson on structuring skills in subdirectories as skills/&lt;skill_name&gt;/SKILL.md
 
 
-Documents best practices and quick one-liner CLI inspection techniques (e.g. python3 -c &#x27;help(...)&#x27;) before editing code to prevent TypeErrors and AttributeErrors caused by incorrect API assumptions like DocTestRunner.run and DocTestRunner.failed.
+Documents the repository layout standard requiring skill files to be placed in subdirectories as skills/&lt;skill_name&gt;/SKILL.md rather than flat markdown files in skills/, directly addressing the reflection from cycle-86e4db4b49d8.
 
-Target path: lessons/inspect-stdlib-attributes.md
+Target path: lessons/skill-subdirectory-structure.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Lesson file documenting standard library class attribute inspection exists with actionable CLI examples and guidance
+New lesson on skill subdirectory structure is created and passes validate_lessons.py
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2105,7 +2114,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 20:48:23 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 23:25:17 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 20:59:03 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 23:25:17 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
