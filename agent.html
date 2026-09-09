@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 03:57:33 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 00:59 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 01:22 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+461 chars spare)</span>
-      <span class="cycle-pill">cycle-f59ebb9eb9f2</span>
+      <span class="cycle-pill">cycle-6d932aaae1e3</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 00:18:48.156778 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>98%</strong> (23,539 / 24,000 chars)</span><span>2026-09-09 01:03:28.924513 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:98%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,404c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,906c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1711,9 +1711,9 @@ SON output must route logs to stderr
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,518c) + 3 separators &times; 7c (21c) = 23,539 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,404 chars &bull; ~1,851 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add single-file git log history inspection to scripts/preflight_failure_check.py
-Request ID: llm-proposer-cycle-f59ebb9eb9f2
-Cycle ID: cycle-f59ebb9eb9f2
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,906 chars &bull; ~1,976 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add legacy glob suite test discovery and validation runner to scripts/verify_and_proof.py
+Request ID: llm-proposer-cycle-6d932aaae1e3
+Cycle ID: cycle-6d932aaae1e3
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1726,62 +1726,66 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- f43b5a6f merge: integrate selfevo/cycle-cycle-f59ebb9eb9f2
+- 448b820f selfevo: auto-commit uncommitted subagent work — Add single-file git log history inspection to scripts/preflight_failure_check.py
 - df0d7f0a chore: record structured error for [cycle-f59ebb]
 - 59f8ac08 merge: integrate selfevo/cycle-cycle-762775d921aa
 - 1480ebb5 feat(verify_and_proof): add chained subprocess verification runner consuming chained-python-execution skill
 - b1e6d71e merge: integrate selfevo/cycle-cycle-eb258832340c
 - c6f8cb6f feat(verify_and_proof): add doc-only bypass check for pure-documentation cycles
 - 1a3dd5e9 merge: integrate selfevo/cycle-cycle-641683b7f31a
-- 2cc1a9ea test: add unit tests for validate_open_encoding AST mode argument parsing
-- 04f426c1 chore: archive 1 week(s) to MEMORY_ARCHIVE.md
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add single-file git log history inspection to scripts/preflight_failure_check.py: executor_llm_error
 - Add unit tests verifying structure and pattern execution contract for batch-grep skill: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f59ebb9eb9f2.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6d932aaae1e3.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add single-file git log history inspection to scripts/preflight_failure_check.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Exercises and wires the target-git-log-history-inspection-single-file-fixes skill into preflight checks by inspecting git log history on targeted single files to detect past failure or revert patterns before proposing edits.\n\nTarget path: scripts/preflight_failure_check.py&quot;,
+    &quot;title&quot;: &quot;Add legacy glob suite test discovery and validation runner to scripts/verify_and_proof.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Exercises skills/targeted-test-validation-legacy-glob-suites/SKILL.md by implementing legacy test glob suite expansion and execution in scripts/verify_and_proof.py to resolve defect-aaa7c361e9f8.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add single-file git log history inspection to scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add legacy glob suite test discovery and validation runner to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
-Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
+ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When codebase inspection (grep and git log) conclusively establishes that a requested change is already present or not applicable, exit immediately under the skip protocol without running secondary te
-- Avoid sequentially paging large script files using repeated sed commands; inspect the module docstring, CLI `--help`, or specific function signatures via grep or AST inspection.
-- Cap exploratory script reads and git log searches to a strict budget of turns (e.g., &lt;=10 turns) and transition promptly to modifying code or writing reproduction tests.
+- Continue addressing unused skill repair demands by integrating skill procedures into existing operational scripts and test suites rather than generating new standalone test files.
+- When implementing standalone monitoring or budget scripts, coordinate follow-up proposals to integrate the script into caller validation entrypoints (such as `scripts/verify_and_proof.py`).
+- When testing git change detection utilities like `_git_changed_paths`, place temporary artifacts outside the mock git directory or ensure they are committed or gitignored so fallback directory scans d
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-09 00:14 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-09 00:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py. Reward signal will be upgraded by coordinator.
 - Attempt 2 (2026-09-08 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 - Attempt 3 (2026-09-08 22:38 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add single-file git log history inspection to scripts/preflight_failure_check.py
+Title: Add legacy glob suite test discovery and validation runner to scripts/verify_and_proof.py
 
 
-Exercises and wires the target-git-log-history-inspection-single-file-fixes skill into preflight checks by inspecting git log history on targeted single files to detect past failure or revert patterns before proposing edits.
+Exercises skills/targeted-test-validation-legacy-glob-suites/SKILL.md by implementing legacy test glob suite expansion and execution in scripts/verify_and_proof.py to resolve defect-aaa7c361e9f8.
 
-Target path: scripts/preflight_failure_check.py
+Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Add single-file git log history inspection to scripts/preflight_failure_check.py (target: scripts/preflight_failure_check.py)
+Implement and commit: Add legacy glob suite test discovery and validation runner to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2026,7 +2030,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 00:59:50 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 03:57:33 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 01:22:25 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 03:57:33 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
