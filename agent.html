@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 10:13:15 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 07:44 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 07:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-4996026d6b77</span>
+      <span class="cycle-pill">cycle-0ada6a08974f</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 07:31:55.564565 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 07:47:59.149318 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,094c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,490c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,094 chars &bull; ~2,023 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add lesson on inspecting CLI parser signatures before script invocation
-Request ID: llm-proposer-cycle-4996026d6b77
-Cycle ID: cycle-4996026d6b77
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,490 chars &bull; ~1,872 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add execution failure classifier for tool crashes versus lint violations to scripts/verify_and_proof.py
+Request ID: llm-proposer-cycle-0ada6a08974f
+Cycle ID: cycle-0ada6a08974f
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1740,54 +1740,41 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 010756d1 merge: integrate selfevo/cycle-cycle-4996026d6b77
+- ea8da105 docs(lessons): add lesson on inspecting CLI parser signatures before script invocation
 - e64724d7 merge: integrate selfevo/cycle-cycle-91f9892568af
 - 575c7b3a feat(verify_and_proof): add per-test-file execution cache to skip redundant test runs
 - 2a0b51ce merge: integrate selfevo/cycle-cycle-82ebefecdbac
 - bfab4311 feat(check_target_completion): add target-path commit subject matching to flag integrated tasks
 - 23e27dcc merge: integrate selfevo/cycle-cycle-8c2b215d7a81
 - f86a8918 feat(dashboard): import and display structured failure reasons via extract_failure_reasons
-- bd7bc4b9 merge: integrate selfevo/cycle-cycle-186490a02dbe
-- 41c702f4 feat(check_target_completion): add AST inspection of existing symbols in target files
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4996026d6b77.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0ada6a08974f.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add lesson on inspecting CLI parser signatures before script invocation&quot;,
-    &quot;backlog_instructions&quot;: &quot;Documents a steering lesson instructing agents to inspect CLI parser definitions or help signatures before invoking workspace scripts to avoid passing positional arguments to scripts requiring named flags, directly resolving the failure in cycle-20462f6dc1f2.\n\nTarget path: lessons/inspect_cli_signatures_before_invocation.md&quot;,
+    &quot;title&quot;: &quot;Add execution failure classifier for tool crashes versus lint violations to scripts/verify_and_proof.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-32d4684d91a4 by adding a failure classification helper to scripts/verify_and_proof.py that analyzes non-zero command outputs to distinguish unhandled tool crashes (such as Traceback or SyntaxError) from legitimate linting/validation findings, surfacing the distinction directly in verification proof reports.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add lesson on inspecting CLI parser signatures before script invocation (target: lessons/inspect_cli_signatures_before_invocation.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add execution failure classifier for tool crashes versus lint violations to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/inspect_script_cli_flags.md  Title: Inspect Script CLI Flags Before Invoking Validation Scripts
-Problem: Read lessons/inspect_script_cli_flags.md: **Default to a one-shot interface probe for any script not invoked earlier in the same session.** `--help` is the canonical probe; a bounded `grep -n &quot;add_argument&quot; &lt;script&gt;` is the fallback when the script has no help text or the output
-Solution: 
-If you apply this lesson, cite [Lesson lessons/inspect_script_cli_flags.md] in your proposal/response.
+ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When writing characterization tests for AST parsing routines, check the visitor&#x27;s positional argument indexing logic before authoring assertions, as validator heuristics often diverge from Python stdl
-- When authoring a standalone lesson card, use `scripts/check_lesson_markdown_sections.py` as the primary preflight check rather than running `tests/test_lessons_integrity.py`, which validates repositor
-- Avoid sequentially paging large script files using repeated sed commands; inspect the module docstring, CLI `--help`, or specific function signatures via grep or AST inspection.
+- Omit `--timeout` flags when executing `pytest` commands unless `pytest-timeout` is confirmed present in the environment; rely on the runner tool&#x27;s execution timeout parameter instead.
+- Treat synthetic loop_breaker alerts as hard stops that require an immediate switch of tool or transition to code editing rather than re-submitting variations of the same command.
+- Entered a repetitive execution loop running the identical inline Python snippet to probe check_file behavior, re-executing it repeatedly despite receiving multiple safety stop loop_breaker tool result
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-09 07:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
@@ -1796,15 +1783,15 @@ If you apply this lesson, cite [Lesson lessons/inspect_script_cli_flags.md] in y
 
 ## Concrete task to implement
 
-Title: Add lesson on inspecting CLI parser signatures before script invocation
+Title: Add execution failure classifier for tool crashes versus lint violations to scripts/verify_and_proof.py
 
 
-Documents a steering lesson instructing agents to inspect CLI parser definitions or help signatures before invoking workspace scripts to avoid passing positional arguments to scripts requiring named flags, directly resolving the failure in cycle-20462f6dc1f2.
+Addresses reflection-32d4684d91a4 by adding a failure classification helper to scripts/verify_and_proof.py that analyzes non-zero command outputs to distinguish unhandled tool crashes (such as Traceback or SyntaxError) from legitimate linting/validation findings, surfacing the distinction directly in verification proof reports.
 
-Target path: lessons/inspect_cli_signatures_before_invocation.md
+Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Add lesson on inspecting CLI parser signatures before script invocation (target: lessons/inspect_cli_signatures_before_invocation.md)
+Implement and commit: Add execution failure classifier for tool crashes versus lint violations to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2061,7 +2048,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 07:44:30 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 10:13:15 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 07:57:49 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 10:13:15 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
