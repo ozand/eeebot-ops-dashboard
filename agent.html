@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">214</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-09 19:33:46 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 16:37 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="35">data: 34s old &middot; generated 17:02 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-7fcc7b2b67ac</span>
+      <span class="cycle-pill">cycle-3d4987e46438</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 15:54:05.334501 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-09 16:41:00.330103 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,001c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,824c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,84 +1725,75 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,001 chars &bull; ~2,000 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite to exercise fast path redundancy skip skill patterns and deduplication rules
-Request ID: llm-proposer-cycle-7fcc7b2b67ac
-Cycle ID: cycle-7fcc7b2b67ac
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,824 chars &bull; ~1,706 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces
+Request ID: llm-proposer-cycle-3d4987e46438
+Cycle ID: cycle-3d4987e46438
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
+(J) Priority 38 — Filter futile fallback targets (V1): Write scripts/filter_futile_targets.py containing a single function filter_futile_targets(candidates, futile_surfaces) under 40 lines. The function takes an iterable of candidate target filepaths and a collection of futile surface paths, returning a list of candidate paths that are not in futile_surfaces while preserving order. Return an empty list if candidates is empty or None.
 
-Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Check stale feed files (V1); Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1).
+Completed (do not repeat): Audit feed staleness (V1); Check feed freshness (V1); Check feed staleness (V1); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- d418371c merge: integrate selfevo/cycle-cycle-7fcc7b2b67ac
+- d31f78b4 test(fast-path-redundancy-skip): add suite exercising skill patterns and dedup rules
 - 9f3dea78 merge: integrate selfevo/cycle-cycle-579856e52358
 - 4a4a268c test(early-skip-evaluation): add suite exercising skill rules and short-circuit heuristics
 - fff36bf0 merge: integrate selfevo/cycle-cycle-0d9887a8bb18
 - e5b77da5 selfevo: auto-commit uncommitted subagent work — Detect repetitive tool invocations and loop_breaker warnings in scripts/analyze_
 - 581049c1 feat(analyze_repeat_failures): surface loop_breaker and repeated-tool findings in report
 - 44189de3 merge: integrate selfevo/cycle-cycle-9cf853d5eae0
-- e69aa22a test(check_style): add cache key isolation tests across execution modes
-- 4d6bbc05 merge: integrate selfevo/cycle-cycle-f9d8cc5c4b03
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7fcc7b2b67ac.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3d4987e46438.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add test suite to exercise fast path redundancy skip skill patterns and deduplication rules&quot;,
-    &quot;backlog_instructions&quot;: &quot;Consumes and exercises the idle fast-path-redundancy-skip skill by implementing a companion unit test suite validating redundancy check patterns and skip criteria under the code-bearing budget requirement.\n\nTarget path: tests/test_fast_path_redundancy_skip_skill.py&quot;,
+    &quot;title&quot;: &quot;Implement filter_futile_targets to filter candidate target filepaths against futile surfaces&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements scripts/filter_futile_targets.py with filter_futile_targets(candidates, futile_surfaces) under 40 lines to exclude futile surface paths while preserving order and handling empty or None candidates as requested by Priority 38.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test suite to exercise fast path redundancy skip skill patterns and deduplication rules (target: tests/test_fast_path_redundancy_skip_skill.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces (target: scripts/filter_futile_targets.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Test suite runs and passes cleanly, validating fast-path redundancy skip evaluation logic.&quot;,
+    &quot;claim&quot;: &quot;scripts/filter_futile_targets.py exists and defines filter_futile_targets under 40 lines&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_fast_path_redundancy_skip_skill.py&quot;
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;scripts/filter_futile_targets.py&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-5fcf9a49  Title: Implementing &quot;Add fast-path redundancy skip skill guide for immediate emission of skipped cycle outcome&quot; improves operator value.
-Problem: Committed 1 commit(s): skills/fast_path_redundancy_skip/SKILL.md
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-5fcf9a49] in your proposal/response.
+ID: LESS-20260827-73ef54be  Title: Implementing &quot;Implement check_stale_feeds in scripts/check_stale_feeds.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/check_stale_feeds.py, tests/test_check_stale_feeds.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260827-73ef54be] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When addressing defects to exercise an unused skill, prefer wiring the skill into existing consumer scripts or extending existing test modules rather than proposing new companion test files.
-- Maintain fast skip-evaluation discipline by batching target file inspection and git log history in turn 1, confirming operational status in turns 2–3, and terminating cleanly if work is complete.
-- Proposer selected target path &#x27;tests/test_jsonl_stream_filter_skill.py&#x27; which collided with existing &#x27;tests/test_jsonl_stream_filter.py&#x27; in the existence index, resulting in an immediate duplicate rej
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-09 15:43 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_early_skip_evaluation_skill.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-09 14:49 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
-- Attempt 3 (2026-09-09 14:17 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_style.py. Reward signal will be upgraded by coordinator.
+- When isolating pytest failures, rely on pytest&#x27;s native formatting options (`--tb=short`, `--tb=line`, or `-v`) rather than ad-hoc shell pipe filters like grep or sed.
+- When authoring negative test assertions for token-matching utilities, ensure negative fixture commits do not share secondary tokens (such as common verbs or nouns) with the search title.
+- When preflight inspection identifies that a related feature already exists, immediately verify whether the task requirements are already satisfied (to execute the immediate skip protocol) or specify t
 
 ## Concrete task to implement
 
-Title: Add test suite to exercise fast path redundancy skip skill patterns and deduplication rules
+Title: Implement filter_futile_targets to filter candidate target filepaths against futile surfaces
 
 
-Consumes and exercises the idle fast-path-redundancy-skip skill by implementing a companion unit test suite validating redundancy check patterns and skip criteria under the code-bearing budget requirement.
+Implements scripts/filter_futile_targets.py with filter_futile_targets(candidates, futile_surfaces) under 40 lines to exclude futile surface paths while preserving order and handling empty or None candidates as requested by Priority 38.
 
-Target path: tests/test_fast_path_redundancy_skip_skill.py
+Target path: scripts/filter_futile_targets.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Test suite runs and passes cleanly, validating fast-path redundancy skip evaluation logic.
+scripts/filter_futile_targets.py exists and defines filter_futile_targets under 40 lines
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2095,7 +2086,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 16:37:18 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 19:33:46 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-09 17:02:12 UTC &middot; host eeepc &middot; newest source 34s old &middot; <span class="footer-computed">scorecard computed 2026-09-09 19:33:46 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
