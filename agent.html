@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 05:50:38 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 02:53 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 03:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">fallback-9c2f9f6c4402</span>
+      <span class="cycle-pill">cycle-794717dec193</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 02:32:51.354494 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 02:57:40.970961 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,881c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,460c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,881 chars &bull; ~1,970 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add Python AST syntax verification to scripts/smoke_test_loop.py for inspected runtime files
-Request ID: llm-proposer-fallback-9c2f9f6c4402
-Cycle ID: fallback-9c2f9f6c4402
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,460 chars &bull; ~1,865 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests verifying assertion delta detection in tests/test_preflight_failure_check.py
+Request ID: llm-proposer-cycle-794717dec193
+Cycle ID: cycle-794717dec193
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,25 +1749,18 @@ Recently completed (recent commits):
 - d6ab645a merge: integrate selfevo/cycle-cycle-610f32f3ebe3
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-9c2f9f6c4402.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-794717dec193.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add Python AST syntax verification to scripts/smoke_test_loop.py for inspected runtime files&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend smoke_test_loop.py to parse AST syntax on Python files so that syntactically corrupted scripts fail preflight sanity checks rather than only testing for non-empty file existence.\n\nTarget path: scripts/smoke_test_loop.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests verifying assertion delta detection in tests/test_preflight_failure_check.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Verifies that preflight_failure_check correctly detects net assertion loss when refactoring test suites to unittest.TestCase, preventing cycles from violating gate assertions.\n\nTarget path: tests/test_preflight_failure_check.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add Python AST syntax verification to scripts/smoke_test_loop.py for inspected runtime files (target: scripts/smoke_test_loop.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/smoke_test_loop.py validates Python AST syntax for target scripts and exits zero on valid files&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/smoke_test_loop.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests verifying assertion delta detection in tests/test_preflight_failure_check.py (target: tests/test_preflight_failure_check.py)&quot;
 }
 ```
 
@@ -1777,31 +1770,30 @@ Root cause: unittest discovery only collects test methods inside unittest.TestCa
 Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-dd865bde  Title: Implementing &quot;Add error location tracking and structured summary output to scripts/validate_json_syntax.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_json_syntax.py, tests/test_validate_json_syntax.py
+ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
+Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-dd865bde] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Pair internal self-tests (--test flag) with companion pytest files when adding streaming modes to CLI tools to ensure both embedded verification and standard test runner workflows remain green.
-- Bound exploratory inspection turns when modifying large scripts; transition immediately to implementation and test authoring once candidate functions or call sites are identified.
-- Scope codebase searches using targeted grep queries on specific symbols rather than systematically traversing all function definitions in 5,000+ line orchestration scripts.
+- Do not pass --timeout directly to pytest commands unless verifying that pytest-timeout is installed; rely instead on the tool execution timeout parameter or shell timeout wrapper.
+- Always scope pytest execution with -k filters or specific test node IDs on suites containing subprocess-heavy CLI tests rather than executing the entire file.
+- Assuming pytest-timeout plugin availability: In turn 17, attempting to resolve the test timeout by passing --timeout=30 directly to python3 -m pytest caused a failure because the pytest-timeout plugin
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 01:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
-- Attempt 2 (2026-09-10 01:24 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_heredoc_urls.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add Python AST syntax verification to scripts/smoke_test_loop.py for inspected runtime files
+Title: Add unit tests verifying assertion delta detection in tests/test_preflight_failure_check.py
 
 
-Extend smoke_test_loop.py to parse AST syntax on Python files so that syntactically corrupted scripts fail preflight sanity checks rather than only testing for non-empty file existence.
+Verifies that preflight_failure_check correctly detects net assertion loss when refactoring test suites to unittest.TestCase, preventing cycles from violating gate assertions.
 
-Target path: scripts/smoke_test_loop.py
+Target path: tests/test_preflight_failure_check.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/smoke_test_loop.py validates Python AST syntax for target scripts and exits zero on valid files
+## Concrete task to implement
+Implement and commit: Add unit tests verifying assertion delta detection in tests/test_preflight_failure_check.py (target: tests/test_preflight_failure_check.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2106,7 +2098,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 02:53:50 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 05:50:38 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 03:21:26 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 05:50:38 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
