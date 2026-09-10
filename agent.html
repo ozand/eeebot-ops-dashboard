@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">203</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 14:46:44 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 30s old &middot; generated 12:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 12:48 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-e5fc91324101</span>
+      <span class="cycle-pill">fallback-89555098c452</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 11:54:05.104235 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 12:12:54.621325 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,453c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,523c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,453 chars &bull; ~2,113 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix git diff mock routing in tests/test_check_target_completion.py to distinguish base ref from HEAD
-Request ID: llm-proposer-cycle-e5fc91324101
-Cycle ID: cycle-e5fc91324101
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,523 chars &bull; ~1,880 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings
+Request ID: llm-proposer-fallback-89555098c452
+Cycle ID: fallback-89555098c452
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,59 +1749,48 @@ Recently completed (recent commits):
 - ff6b466c feat(check_target_completion): add AST exception handler check for proposed error handling tasks
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e5fc91324101.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-89555098c452.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Fix git diff mock routing in tests/test_check_target_completion.py to distinguish base ref from HEAD&quot;,
-    &quot;backlog_instructions&quot;: &quot;Evidence shows git diff mock routing incorrectly matched on --name-only instead of specific ref arguments, causing collisions between HEAD and base-ref diff mocks. Updating tests/test_check_target_completion.py to route git diff mocks by discriminating ref arguments resolves this collision.\n\nTarget path: tests/test_check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings&quot;,
+    &quot;backlog_instructions&quot;: &quot;Dynamic tokens like timestamps, hex addresses, and line numbers cause identical failures to be treated as distinct. Adding normalization to strip transient patterns in scripts/analyze_repeat_failures.py enables accurate recurring failure detection.\n\nTarget path: scripts/analyze_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix git diff mock routing in tests/test_check_target_completion.py to distinguish base ref from HEAD (target: tests/test_check_target_completion.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Tests in tests/test_check_target_completion.py distinguish git diff calls for base refs and HEAD and exit zero&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_check_target_completion.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings (target: scripts/analyze_repeat_failures.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-20260824-5c2f9e95  Title: Implementing &quot;Add failure pattern clustering and recurring error threshold detection to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260824-5c2f9e95] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When designing unit test fixtures asserting threshold boundaries (like min_shared_tokens), check the tokenization helper or use synthetic non-dictionary words to avoid unintended token overlap across 
-- Continue isolating failing test node IDs directly via &#x27;pytest path/to/file.py::test_name&#x27; when diagnosing assertion errors to obtain clear diffs without re-running entire test suites.
-- Misjudged tokenization overlap in test fixtures: The agent wrote tests assuming the commit subject &#x27;feat(alpha): add alpha parser with token cache&#x27; shared only 2 tokens with the query, unaware that &#x27;p
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-10 10:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_model_fallback_routing.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-10 10:40 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Consolidate related modifications within a single file (such as docstrings, constant tables, helper functions, and test cases) into one or two batch edits instead of issuing multiple sequential edit_f
+- Avoid searching historical state directories (e.g. state/demand/exhausted.json) when verifying model configurations; rely directly on host/eeepc/etc/models.yaml or relevant routing documentation.
+- When adding features to scripts that lack standalone unit test suites, consider adding companion tests in tests/ (e.g. tests/test_model_fallback_routing.py) to prevent downstream test existence audit 
 
 ## Concrete task to implement
 
-Title: Fix git diff mock routing in tests/test_check_target_completion.py to distinguish base ref from HEAD
+Title: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings
 
 
-Evidence shows git diff mock routing incorrectly matched on --name-only instead of specific ref arguments, causing collisions between HEAD and base-ref diff mocks. Updating tests/test_check_target_completion.py to route git diff mocks by discriminating ref arguments resolves this collision.
+Dynamic tokens like timestamps, hex addresses, and line numbers cause identical failures to be treated as distinct. Adding normalization to strip transient patterns in scripts/analyze_repeat_failures.py enables accurate recurring failure detection.
 
-Target path: tests/test_check_target_completion.py
+Target path: scripts/analyze_repeat_failures.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-Tests in tests/test_check_target_completion.py distinguish git diff calls for base refs and HEAD and exit zero
+## Concrete task to implement
+Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings (target: scripts/analyze_repeat_failures.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2107,12 +2096,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add unit tests in tests/test_check_style.py for path exclusion and file filtering logic</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 994 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">54</td><td>501.7K</td><td>28s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 997 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">57</td><td>537.4K</td><td>27s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 12:04:39 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 14:46:44 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 12:48:19 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 14:46:44 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
