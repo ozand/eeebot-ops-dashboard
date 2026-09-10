@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 08:46:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 06:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 06:42 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-b54623aa743a</span>
+      <span class="cycle-pill">cycle-19d421b3c8ab</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 05:52:59.298302 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 06:36:39.904258 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,847c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,974c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1641,12 +1641,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T193515Z-canonical-660d18c5/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T063531Z-canonical-c8478d49/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260909T193515Z-canonical-660d18c5/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T063531Z-canonical-c8478d49/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">3,995 chars &bull; ~998 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,847 chars &bull; ~1,961 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add CLI argument detection to scripts/check_target_completion.py to inspect defined options in target scripts
-Request ID: llm-proposer-cycle-b54623aa743a
-Cycle ID: cycle-b54623aa743a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,974 chars &bull; ~1,993 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience
+Request ID: llm-proposer-cycle-19d421b3c8ab
+Cycle ID: cycle-19d421b3c8ab
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,68 +1739,69 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 17c194bc merge: integrate selfevo/cycle-cycle-b54623aa743a
+- ec4e56f9 feat(check_target_completion): add CLI argument detection to inspect defined argparse options in target scripts
 - fbd6d401 merge: integrate selfevo/cycle-cycle-fe0eca121e07
 - 489c3e6f feat(check_cycle_budget): add exploration stall check flagging turns exceeding threshold without edits
 - fed9b25e merge: integrate selfevo/cycle-cycle-64f73e207140
 - 7ac13c05 selfevo: auto-commit uncommitted subagent work — Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing
 - 3041630e merge: integrate selfevo/cycle-cycle-e902eeb764bb
 - b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
-- 2f1ca7e5 merge: integrate selfevo/cycle-cycle-30a037f3a7ee
-- af9cb2ea test(check_target_completion): add unit tests for git commit log and target matching
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add unit tests for AST context filtering and URL detection in tests/test_validate_heredoc_urls.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b54623aa743a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-19d421b3c8ab.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add CLI argument detection to scripts/check_target_completion.py to inspect defined options in target scripts&quot;,
-    &quot;backlog_instructions&quot;: &quot;Parses target script ASTs to detect defined argparse CLI flags, preventing redundant task proposals for arguments that already exist.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience&quot;,
+    &quot;backlog_instructions&quot;: &quot;Validates the reflection evidence from cycle-0fe5b0f20c23 by testing that analyze_repeat_failures.export_report handles simulated OSErrors gracefully and returns False in read-only environments.\n\nTarget path: tests/test_analyze_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add CLI argument detection to scripts/check_target_completion.py to inspect defined options in target scripts (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience (target: tests/test_analyze_repeat_failures.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;tests/test_analyze_repeat_failures.py verifies that export_report returns False when an OSError is encountered&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -m unittest tests/test_analyze_repeat_failures.py&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-20-001  Title: Systemd services failed with 226/NAMESPACE after opencode user deletion
-Root cause: Multiple systemd unit files, drop-in overrides, and instance configuration files (.env) contained hardcoded paths referencing /home/opencode/ (for repositories, PYTHONPATH, virtual environments, and target workspaces). Once the user was deleted, systemd namespace mount options (like ReadWritePaths=) failed to mount the missing directory structure, preventing service execution.
-
-Prevention: 1. Avoid using personal developer home directories (such as /home/opencode) for daemon workspaces, virtual environments, or scripts.
-2. Maintain all runtime resources (venvs, workspaces, logs) inside dedicated application directories (like /opt/eeepc-agent or /var/lib/eeepc-agent) owned by the application service account.
-
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
+ID: LESS-20260827-cb400fe3  Title: Implementing &quot;Add dedup cycle loop detection and circuit breaker flag to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-cb400fe3] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When adding or modifying standalone utility scripts that consume stdin, configure argparse before reading sys.stdin so that `--help` and CLI flag checks exit cleanly without waiting for or choking on 
-- Avoid executing scripts/run_all_tests.py for isolated utility updates; full test runs have high execution latency, fail on pre-existing deprecated scripts, and mutate runtime state files that disrupt 
-- Enforce a strict inspection budget (e.g., maximum 5–8 discovery turns) before making the first edit; when adding CLI options, immediately jump from locating argparse in main() to registering the flag 
+- Restrict pre-commit verification to the target unit test suite rather than bundling unrelated historical test suites that risk hitting default 60-second command timeouts.
+- Audit module imports during the initial implementation turn to avoid secondary edit turns solely for adding missing standard library imports.
+- When implementing requested discovery features in orchestration scripts, wire a minimal CLI flag or dispatcher hook in the same cycle so the new utility is immediately consumable end-to-end.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 05:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
-- Attempt 2 (2026-09-10 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-10 06:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 2 (2026-09-10 05:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add CLI argument detection to scripts/check_target_completion.py to inspect defined options in target scripts
+Title: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience
 
 
-Parses target script ASTs to detect defined argparse CLI flags, preventing redundant task proposals for arguments that already exist.
+Validates the reflection evidence from cycle-0fe5b0f20c23 by testing that analyze_repeat_failures.export_report handles simulated OSErrors gracefully and returns False in read-only environments.
 
-Target path: scripts/check_target_completion.py
+Target path: tests/test_analyze_repeat_failures.py
 
-## Concrete task to implement
-Implement and commit: Add CLI argument detection to scripts/check_target_completion.py to inspect defined options in target scripts (target: scripts/check_target_completion.py)
+## Expected outcome (frozen claim from the proposal — informational)
+tests/test_analyze_repeat_failures.py verifies that export_report returns False when an OSError is encountered
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2111,7 +2112,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 06:18:16 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:46:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 06:42:03 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:46:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
