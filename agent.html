@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 06:57:34 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 04:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 04:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-30a037f3a7ee</span>
+      <span class="cycle-pill">cycle-e902eeb764bb</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 03:44:08.014827 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 04:20:30.349698 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,087c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,451c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,087 chars &bull; ~2,021 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests verifying git commit log and target matching in tests/test_check_target_completion.py
-Request ID: llm-proposer-cycle-30a037f3a7ee
-Cycle ID: cycle-30a037f3a7ee
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,451 chars &bull; ~2,112 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_validate_skill_format.py to validate and exercise demand-and-reflection-lookup-paths skill
+Request ID: llm-proposer-cycle-e902eeb764bb
+Cycle ID: cycle-e902eeb764bb
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,32 +1739,37 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 2f1ca7e5 merge: integrate selfevo/cycle-cycle-30a037f3a7ee
+- af9cb2ea test(check_target_completion): add unit tests for git commit log and target matching
 - 6746382a merge: integrate selfevo/cycle-cycle-794717dec193
 - 09f4b5d7 test(preflight_failure_check): add unit tests for assertion delta detection in unittest.TestCase refactoring
 - 94181786 merge: integrate selfevo/cycle-cycle-26a751f39f50
 - 3bb3f2a6 feat(preflight_failure_check): add test assertion delta check to detect net loss of assert statements
 - a28eefb7 merge: integrate selfevo/cycle-cycle-b4c830316de6
 - 484ad209 selfevo: auto-commit uncommitted subagent work — Add AST context filtering in validate_heredoc_urls.py to skip Python docstrings
-- 03074a37 merge: integrate selfevo/cycle-cycle-4bcd698fec0b
-- a2f5b140 selfevo: auto-commit uncommitted subagent work — Implement compact memory indexer in scripts/compact_memory_index.py to prevent p
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests for AST context filtering and URL detection in tests/test_validate_heredoc_urls.py: existence_index_duplicate
+- Add unit tests verifying memory condensation and formatting in tests/test_compact_memory_index.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-30a037f3a7ee.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e902eeb764bb.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add unit tests verifying git commit log and target matching in tests/test_check_target_completion.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds unit test coverage to verify that check_target_completion correctly detects already merged optimizations from git commit messages and target files, preventing executor skips like cycle-8f32162b7178.\n\nTarget path: tests/test_check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests in tests/test_validate_skill_format.py to validate and exercise demand-and-reflection-lookup-paths skill&quot;,
+    &quot;backlog_instructions&quot;: &quot;With doc-only daily budget exhausted, wire and exercise skills/demand-and-reflection-lookup-paths/SKILL.md via code-bearing unit tests in tests/test_validate_skill_format.py verifying frontmatter and formatting.\n\nTarget path: tests/test_validate_skill_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests verifying git commit log and target matching in tests/test_check_target_completion.py (target: tests/test_check_target_completion.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_validate_skill_format.py to validate and exercise demand-and-reflection-lookup-paths skill (target: tests/test_validate_skill_format.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Unit tests in tests/test_check_target_completion.py pass and verify git commit message and target matching logic&quot;,
+    &quot;claim&quot;: &quot;pytest runs tests/test_validate_skill_format.py to verify skill format and exercise demand-and-reflection-lookup-paths&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;test_count_increase&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -m pytest tests/test_validate_skill_format.py&quot;
     }
   }
 }
@@ -1776,32 +1781,32 @@ Root cause: unittest discovery only collects test methods inside unittest.TestCa
 Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
-Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
+ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
+Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When tasks mandate strict structural constraints (e.g. line count limits or AST-level signatures), verify them programmatically via ast.parse prior to committing.
-- Provide a standard JSON stdin/stdout main() entrypoint when authoring standalone utility scripts to facilitate modular composition and CLI pipeline verification.
-- Do not pass --timeout directly to pytest commands unless verifying that pytest-timeout is installed; rely instead on the tool execution timeout parameter or shell timeout wrapper.
+- Check whether test files define unittest.TestCase classes or standalone test_* functions before choosing between &#x27;python3 -m unittest&#x27; and &#x27;python3 -m pytest&#x27; to prevent 0-test executions.
+- When asserting keyword lists (such as banned tool families) in skill unit tests, verify exact literal presence against the target SKILL.md before creating the test to prevent assertion failures carrie
+- Audit module imports during the initial implementation turn to avoid secondary edit turns solely for adding missing standard library imports.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 03:34 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-10 03:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_preflight_failure_check.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-10 02:46 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-10 04:12 UTC): no commits (blocked). Task &quot;Add unit tests for AST context filtering and URL detection i&quot; matched an existing artifact…
+- Attempt 2 (2026-09-10 04:02 UTC): no commits (blocked). Task &quot;Add unit tests verifying memory condensation and formatting &quot; matched an existing artifact…
+- Attempt 3 (2026-09-10 03:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_target_completion.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add unit tests verifying git commit log and target matching in tests/test_check_target_completion.py
+Title: Add unit tests in tests/test_validate_skill_format.py to validate and exercise demand-and-reflection-lookup-paths skill
 
 
-Adds unit test coverage to verify that check_target_completion correctly detects already merged optimizations from git commit messages and target files, preventing executor skips like cycle-8f32162b7178.
+With doc-only daily budget exhausted, wire and exercise skills/demand-and-reflection-lookup-paths/SKILL.md via code-bearing unit tests in tests/test_validate_skill_format.py verifying frontmatter and formatting.
 
-Target path: tests/test_check_target_completion.py
+Target path: tests/test_validate_skill_format.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Unit tests in tests/test_check_target_completion.py pass and verify git commit message and target matching logic
+pytest runs tests/test_validate_skill_format.py to verify skill format and exercise demand-and-reflection-lookup-paths
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2094,6 +2099,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
+                    <tr class="">
+                      <td class="skill-name">demand-and-reflection-lookup-paths</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
                   </tbody>
                 </table></div>
                 
@@ -2106,7 +2117,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 04:16:04 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 06:57:34 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 04:26:12 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 06:57:34 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
