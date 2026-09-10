@@ -1178,9 +1178,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 22:11:28 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">196</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 23:13:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 26s old &middot; generated 20:09 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 20:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-3cf8bbe8b44c</span>
+      <span class="cycle-pill">fallback-f45254c1f394</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 19:37:24.254236 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 20:18:51.194821 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,627c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,873c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,627 chars &bull; ~1,906 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports
-Request ID: llm-proposer-cycle-3cf8bbe8b44c
-Cycle ID: cycle-3cf8bbe8b44c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,873 chars &bull; ~1,718 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add structured JSON output flag to scripts/check_ast_line_count.py
+Request ID: llm-proposer-fallback-f45254c1f394
+Cycle ID: fallback-f45254c1f394
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,52 +1749,55 @@ Recently completed (recent commits):
 - 065795a4 feat(validate_skill_format): add git mv remediation hints to layout violation issues
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3cf8bbe8b44c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-f45254c1f394.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-26540052f606 by adding test coverage to verify that sibling directory fallback resolution is strictly isolated to explicit file_path targets and does not leak into directory-wide scans in verify_imports.py.\n\nTarget path: tests/test_verify_imports.py&quot;,
+    &quot;title&quot;: &quot;Add structured JSON output flag to scripts/check_ast_line_count.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Adding a --json flag to scripts/check_ast_line_count.py allows downstream preflight tools and automated verification steps to parse function line counts and constraint violations programmatically.\n\nTarget path: scripts/check_ast_line_count.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports (target: tests/test_verify_imports.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add structured JSON output flag to scripts/check_ast_line_count.py (target: scripts/check_ast_line_count.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
+ID: LESS-20260826-177da27a  Title: Implementing &quot;Add failure reason pattern matching and structured JSON output to scripts/check_last_cycle_repeat.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-177da27a] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Skip inspecting pyproject.toml and project configuration files when pytest conventions and runner invocation patterns are already confirmed from inspecting tests/.
-- Distinguish between lookup keys and leaf fallback targets when designing table verification assertions to prevent asserting lookup-key presence on terminal target identifiers.
-- Use lightweight inline Python snippets with temporary directories to quickly inspect report formatting without requiring changes to persistent files or mock harness suites.
+- Focus implementation directly on the target script using standard library patterns rather than conducting extensive repo searches for reference implementations.
+- Consolidate multi-part implementation additions (core logic, CLI wiring, output formatters, self-tests) into fewer composite edit calls to conserve turn budget and reduce round-trip overhead.
+- Enforce the guideline to begin code editing within 5-8 turns of identifying the target task scope rather than continuing unbounded inspection.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 19:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/conftest.py, tests/test_conftest_fixtures.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-10 18:26 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 1 (2026-09-10 19:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports
+Title: Add structured JSON output flag to scripts/check_ast_line_count.py
 
 
-Addresses reflection-26540052f606 by adding test coverage to verify that sibling directory fallback resolution is strictly isolated to explicit file_path targets and does not leak into directory-wide scans in verify_imports.py.
+Adding a --json flag to scripts/check_ast_line_count.py allows downstream preflight tools and automated verification steps to parse function line counts and constraint violations programmatically.
 
-Target path: tests/test_verify_imports.py
+Target path: scripts/check_ast_line_count.py
 
 ## Concrete task to implement
-Implement and commit: Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports (target: tests/test_verify_imports.py)
+Implement and commit: Add structured JSON output flag to scripts/check_ast_line_count.py (target: scripts/check_ast_line_count.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2100,12 +2103,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add test coverage for file-relative fallback import resolution and directory scan isolation in verify_imports</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1029 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">89</td><td>849.4K</td><td>26s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add structured JSON output flag to scripts/check_ast_line_count.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1032 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">92</td><td>881.4K</td><td>26s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 20:09:43 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 22:11:28 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 20:21:39 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 23:13:20 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
