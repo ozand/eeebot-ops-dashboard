@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 08:00:22 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 05:10 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 05:20 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-64f73e207140</span>
+      <span class="cycle-pill">cycle-2c6fa0bdc6ff</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 04:36:33.390267 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 05:13:38.678867 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,261c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,405c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,261 chars &bull; ~1,815 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing test failures on base branch
-Request ID: llm-proposer-cycle-64f73e207140
-Cycle ID: cycle-64f73e207140
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,405 chars &bull; ~2,101 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add Python AST symbol outline option to scripts/targeted_file_slice.py for locating execution blocks
+Request ID: llm-proposer-cycle-2c6fa0bdc6ff
+Cycle ID: cycle-2c6fa0bdc6ff
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,68 +1739,73 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- fed9b25e merge: integrate selfevo/cycle-cycle-64f73e207140
+- 7ac13c05 selfevo: auto-commit uncommitted subagent work — Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing
 - 3041630e merge: integrate selfevo/cycle-cycle-e902eeb764bb
 - b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
 - 2f1ca7e5 merge: integrate selfevo/cycle-cycle-30a037f3a7ee
 - af9cb2ea test(check_target_completion): add unit tests for git commit log and target matching
 - 6746382a merge: integrate selfevo/cycle-cycle-794717dec193
 - 09f4b5d7 test(preflight_failure_check): add unit tests for assertion delta detection in unittest.TestCase refactoring
-- 94181786 merge: integrate selfevo/cycle-cycle-26a751f39f50
-- 3bb3f2a6 feat(preflight_failure_check): add test assertion delta check to detect net loss of assert statements
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests for AST context filtering and URL detection in tests/test_validate_heredoc_urls.py: existence_index_duplicate
 - Add unit tests verifying memory condensation and formatting in tests/test_compact_memory_index.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-64f73e207140.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2c6fa0bdc6ff.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing test failures on base branch&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds baseline failure verification to scripts/verify_and_proof.py using git stash/diff to isolate and determine if a secondary test failure pre-existed on the base commit.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add Python AST symbol outline option to scripts/targeted_file_slice.py for locating execution blocks&quot;,
+    &quot;backlog_instructions&quot;: &quot;Allows agents inspecting large scripts to list function and class definition line ranges via an AST symbol outline mode, preventing iterative turn-consuming paging.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing test failures on base branch (target: scripts/verify_and_proof.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add Python AST symbol outline option to scripts/targeted_file_slice.py for locating execution blocks (target: scripts/targeted_file_slice.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_and_proof.py supports --check-baseline to verify whether test failures are pre-existing on git base state&quot;,
+    &quot;claim&quot;: &quot;Running targeted_file_slice.py with --symbols outputs function and class line ranges and exits 0&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/targeted_file_slice.py --symbols scripts/verify_and_proof.py&quot;
     }
   }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+ID: LESS-REF-e13f1cd0f155  Title: When repo-wide test suites time out on the constrained eeepc host, fall back to targeted test execution (the paired test module for the changed file, or the script&#x27;s own --test flag) to validate scope
+Problem: In reflection-e13f1cd0f155, a full repo-wide pytest sweep exceeded the available time on the slow i386 host, leaving the scoped change unverified before the cycle budget ran out.
+Solution: When repo-wide test suites time out, validate scoped changes via targeted pytest on the paired test module (e.g. python3 -m pytest tests/test_&lt;changed&gt;.py) or the script&#x27;s own --test flag, and record the full-suite timeout in concrete_next_action rather than re-running the sweep.
+If you apply this lesson, cite [Lesson LESS-REF-e13f1cd0f155] in your proposal/response.
+Related: LESS-REF-c2ab8feea257-4dc0
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When encountering unexpected sibling test failures during verification, test against a stashed index or branch base before committing to confirm defects are pre-existing and out of scope.
-- Check whether test files define unittest.TestCase classes or standalone test_* functions before choosing between &#x27;python3 -m unittest&#x27; and &#x27;python3 -m pytest&#x27; to prevent 0-test executions.
-- When testing markdown-only skill guidelines without accompanying Python modules, combine frontmatter structural checks, literal string assertions of prescriptive text, and synthetic behavioral models 
+- Enforce a strict inspection budget (e.g., maximum 5–8 discovery turns) before making the first edit; when adding CLI options, immediately jump from locating argparse in main() to registering the flag 
+- When editing deeply nested or CLI argument blocks in large Python scripts, capture full outer indentation blocks in old_text/new_text to prevent indentation mismatch errors.
+- When a requested CLI option name collides with an existing registered option, introduce a dedicated flag (e.g. --preview-tests) while ensuring both flags function properly and exit 0.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 04:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_validate_skill_format.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-10 03:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_target_completion.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-10 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing test failures on base branch
+Title: Add Python AST symbol outline option to scripts/targeted_file_slice.py for locating execution blocks
 
 
-Adds baseline failure verification to scripts/verify_and_proof.py using git stash/diff to isolate and determine if a secondary test failure pre-existed on the base commit.
+Allows agents inspecting large scripts to list function and class definition line ranges via an AST symbol outline mode, preventing iterative turn-consuming paging.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/targeted_file_slice.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_and_proof.py supports --check-baseline to verify whether test failures are pre-existing on git base state
+Running targeted_file_slice.py with --symbols outputs function and class line ranges and exits 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2111,7 +2116,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 05:10:06 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:00:22 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 05:20:51 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:00:22 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
