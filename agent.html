@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">201</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 18:08:18 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 15:19 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="38">data: 37s old &middot; generated 16:13 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-d6423dba884f</span>
+      <span class="cycle-pill">cycle-fd69888d4eba</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 14:49:37.192037 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 15:22:45.314523 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,851c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,744c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,851 chars &bull; ~1,712 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py
-Request ID: llm-proposer-cycle-d6423dba884f
-Cycle ID: cycle-d6423dba884f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,744 chars &bull; ~1,936 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize directory pruning and AST traversal in scripts/validate_unused_imports.py to avoid timeout
+Request ID: llm-proposer-cycle-fd69888d4eba
+Cycle ID: cycle-fd69888d4eba
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,61 +1739,74 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- dd98f954 merge: integrate selfevo/cycle-cycle-d6423dba884f
+- c572983a fix: repair failing test_cli_inspect_siblings_human_output assertion
+- e790fbe6 selfevo: auto-commit uncommitted subagent work — Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py
 - c9baede6 merge: integrate selfevo/cycle-cycle-31bdfaaad40e
 - 126631e7 selfevo: auto-commit uncommitted subagent work — Add AST function line-count verification utility script in scripts/check_ast_lin
 - d4f5e4ee feat(scripts): add AST function line-count verification utility
 - ceef49aa merge: integrate selfevo/cycle-cycle-dc33d951327c
 - 94867fbf feat(scripts): add goal-gap to external feed mapping utility
-- a6dab10c merge: integrate selfevo/cycle-cycle-8597bb309382
-- 2a33e7a6 test(find_test_references): add unit tests for heuristic precedence order in deduplication
-- 8bc8409a merge: integrate selfevo/cycle-fallback-89555098c452
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add CLI test in tests/test_verify_and_proof.py validating failure JSON schema and disk side-effects: existence_index_duplicate
-- Add unit test fixtures in tests/test_validate_history_format.py for cycle ID verification patterns: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d6423dba884f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-fd69888d4eba.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend scaffold_script_entrypoint.py to inspect sibling scripts in the target directory for common CLI flags and output formatting to ensure consistency across utility tools.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;title&quot;: &quot;Optimize directory pruning and AST traversal in scripts/validate_unused_imports.py to avoid timeout&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/validate_unused_imports.py times out after 60s in the validator harness. Adding directory exclusion for untracked and cache directories and optimizing the AST visitor walk will allow it to complete validation within the per-script time budget.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize directory pruning and AST traversal in scripts/validate_unused_imports.py to avoid timeout (target: scripts/validate_unused_imports.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_unused_imports.py completes execution within the 60-second limit and exits 0&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_unused_imports.py&quot;
+    }
+  }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
+ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Focus implementation directly on the target script using standard library patterns rather than conducting extensive repo searches for reference implementations.
-- Enforce the guideline to begin code editing within 5-8 turns of identifying the target task scope rather than continuing unbounded inspection.
-- Cyclic multi-command repetition loop: The agent entered a repetitive multi-step loop between turns 30 and 80, executing the exact same block of ~18 shell commands to inspect sections of validate_test_
+- Avoid compound commands that chain large, slow test suite executions with git staging or committing; keep verification and git operations decoupled.
+- Maintain the rapid 4-turn verification sequence (read + git log -&gt; locate test -&gt; run pytest -&gt; inspect test coverage -&gt; skip response) when encountering already completed tasks.
+- Immediately halt repeated tool execution and switch strategy or terminate cleanly upon receiving a loop_breaker safety stop warning; re-running the flagged command leads directly to cycle failure.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 14:37 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_ast_line_count.py,…
-- Attempt 2 (2026-09-10 14:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/map_goal_gap_feeds.py, tests/test_map_goal_gap_feeds.py. Reward signal will be…
+- Attempt 1 (2026-09-10 15:03 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
+- Attempt 2 (2026-09-10 14:37 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_ast_line_count.py,…
+- Attempt 3 (2026-09-10 14:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/map_goal_gap_feeds.py, tests/test_map_goal_gap_feeds.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py
+Title: Optimize directory pruning and AST traversal in scripts/validate_unused_imports.py to avoid timeout
 
 
-Extend scaffold_script_entrypoint.py to inspect sibling scripts in the target directory for common CLI flags and output formatting to ensure consistency across utility tools.
+scripts/validate_unused_imports.py times out after 60s in the validator harness. Adding directory exclusion for untracked and cache directories and optimizing the AST visitor walk will allow it to complete validation within the per-script time budget.
 
-Target path: scripts/scaffold_script_entrypoint.py
+Target path: scripts/validate_unused_imports.py
 
-## Concrete task to implement
-Implement and commit: Add sibling script flag inspection to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_unused_imports.py completes execution within the 60-second limit and exits 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2104,7 +2117,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 15:19:16 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 18:08:18 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 16:13:26 UTC &middot; host eeepc &middot; newest source 37s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 18:08:18 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
