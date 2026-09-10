@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">196</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 00:41:37 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 21:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 22:20 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+208 chars spare)</span>
-      <span class="cycle-pill">cycle-b4b16d827858</span>
+      <span class="cycle-pill">fallback-9eb394ad411c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,792 / 24,000 chars)</span><span>2026-09-10 21:49:05.321343 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,792 / 24,000 chars)</span><span>2026-09-10 22:04:32.357509 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,788c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,845c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1730,9 +1730,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,771c) + 3 separators &times; 7c (21c) = 23,792 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,788 chars &bull; ~1,697 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md
-Request ID: llm-proposer-cycle-b4b16d827858
-Cycle ID: cycle-b4b16d827858
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,845 chars &bull; ~1,711 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py
+Request ID: llm-proposer-fallback-9eb394ad411c
+Cycle ID: fallback-9eb394ad411c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1744,6 +1744,7 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- fc0a51fc chore: record structured error for [cycle-b4b16d]
 - 8e072862 merge: integrate selfevo/cycle-cycle-5fda208fb403
 - ad27a7bc docs(skills): package target completion audit procedure into skills/check-target-completion/SKILL.md
 - 278833bb curator: promote 0 fact(s), 5 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
@@ -1751,56 +1752,51 @@ Recently completed (recent commits):
 - bb0ee5ff selfevo: auto-commit uncommitted subagent work — Add path prefix normalization to scripts/check_target_completion.py
 - 04deb59c feat(check_target_completion): add path prefix normalization for dot-slash and repo-root prefixes
 - 00b8a0a7 merge: integrate selfevo/cycle-cycle-e61c5fcb886a
-- 8018bfa8 test(conftest): add corrupt_git_repo fixture for git CLI error simulation
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md: mutation_surface_violation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b4b16d827858.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-9eb394ad411c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Captures the recurring 9-cycle procedure of inspecting verify_and_proof.py and its revision history into a standardized skill document, eliminating redundant tool exploration across future verification workflows.\n\nTarget path: skills/verify-and-proof/SKILL.md&quot;,
+    &quot;title&quot;: &quot;Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Proposal task titles often vary by markdown backticks around file paths or flags. Normalizing backticks and whitespace before comparing against failure history and commit logs prevents formatting differences from bypassing repeat failure guards.\n\nTarget path: scripts/prevent_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md (target: skills/verify-and-proof/SKILL.md)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;skills/verify-and-proof/SKILL.md exists and documents the recurring verify-and-proof workflow&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;skills/verify-and-proof/SKILL.md&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
+ID: LESS-20260827-cb400fe3  Title: Implementing &quot;Add dedup cycle loop detection and circuit breaker flag to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-cb400fe3] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Invoke the immediate skip protocol promptly when file inspection reveals the premise of a proposed task is inapplicable, rather than searching across the repository for matching patterns in unrelated 
-- Identical tool repetition loop persisting through safety stop: The agent repeated an identical shell grep command five consecutive times across turns 12–16. Even after the harness injected an explicit
-- Maintain decoupled verification and git operations, and continue using `-q --tb=short` on targeted test files to preserve host memory and execution budgets.
+- Include explicit differentiating keywords in companion test proposal titles to minimize lexical collision with existing indexed test suites.
+- Ensure fallback proposals on recently added utility scripts incorporate specific feature aspects or novel scenarios to avoid collision with prior cycle attempts targeting the same test file.
+- Differentiate companion test proposal titles by highlighting unique domain behaviors rather than generic test fixture phrasing to reduce similarity scores against other test proposals in the existence
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 21:37 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: skills/check-target-completion/SKILL.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-10 20:50 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_target_completion.py,…
 
 ## Concrete task to implement
 
-Title: Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md
+Title: Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py
 
 
-Captures the recurring 9-cycle procedure of inspecting verify_and_proof.py and its revision history into a standardized skill document, eliminating redundant tool exploration across future verification workflows.
+Proposal task titles often vary by markdown backticks around file paths or flags. Normalizing backticks and whitespace before comparing against failure history and commit logs prevents formatting differences from bypassing repeat failure guards.
 
-Target path: skills/verify-and-proof/SKILL.md
+Target path: scripts/prevent_repeat_failures.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-skills/verify-and-proof/SKILL.md exists and documents the recurring verify-and-proof workflow
+## Concrete task to implement
+Implement and commit: Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2106,12 +2102,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1038 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">98</td><td>927.5K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add markdown normalization to task title comparisons in scripts/prevent_repeat_failures.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1041 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">101</td><td>958.3K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 21:55:02 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 00:41:37 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 22:20:32 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 00:41:37 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
