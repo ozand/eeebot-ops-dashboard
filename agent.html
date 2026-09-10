@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">203</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 14:04:44 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="2">data: 1s old &middot; generated 11:33 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 11:42 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-16004180ba43</span>
+      <span class="cycle-pill">cycle-7a8402b98bfd</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 11:23:38.786622 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 11:37:35.556977 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,409c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,513c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,409 chars &bull; ~1,602 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document splitlines trailing newline behavior for line normalizers in lessons/splitlines_trailing_newline.md
-Request ID: llm-proposer-cycle-16004180ba43
-Cycle ID: cycle-16004180ba43
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,513 chars &bull; ~1,628 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document avoiding rm -rf in shell commands in favor of tempfile in lessons/safe_temp_artifacts.md
+Request ID: llm-proposer-cycle-7a8402b98bfd
+Cycle ID: cycle-7a8402b98bfd
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,33 +1739,33 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0802ae33 merge: integrate selfevo/cycle-cycle-16004180ba43
+- 463d5b6d docs(lessons): document splitlines trailing newline pitfall for line normalizers
 - f9c4daba merge: integrate selfevo/cycle-fallback-38e527a43785
 - 98b9208e test(model_fallback_routing): add unit tests for gemini-3.7 alias and fallback resolution
 - fee17801 merge: integrate selfevo/cycle-cycle-9237c8ea03d1
 - ff6b466c feat(check_target_completion): add AST exception handler check for proposed error handling tasks
 - bdf72457 merge: integrate selfevo/cycle-cycle-8e37c86e0abf
 - f73d8e1a feat(model_fallback_routing): add alias mapping and 404 fallback for an/gemini-3.7-flash-high
-- 72c3c823 merge: integrate selfevo/cycle-cycle-23a3a8e9bfe0
-- 74fbb601 docs(targeted_file_slice): document context window adjacency and ellipsis delimiter rules
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-16004180ba43.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7a8402b98bfd.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document splitlines trailing newline behavior for line normalizers in lessons/splitlines_trailing_newline.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Documents the pitfall where str.splitlines() strips trailing newlines and causes test assertion failures in line normalizers, providing patterns to preserve trailing newlines or adjust string expectations.\n\nTarget path: lessons/splitlines_trailing_newline.md&quot;,
+    &quot;title&quot;: &quot;Document avoiding rm -rf in shell commands in favor of tempfile in lessons/safe_temp_artifacts.md&quot;,
+    &quot;backlog_instructions&quot;: &quot;Captures lessons from blocked rm -rf shell invocations by documenting safety guard constraints and Python tempfile best practices for temporary test artifacts.\n\nTarget path: lessons/safe_temp_artifacts.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document splitlines trailing newline behavior for line normalizers in lessons/splitlines_trailing_newline.md (target: lessons/splitlines_trailing_newline.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document avoiding rm -rf in shell commands in favor of tempfile in lessons/safe_temp_artifacts.md (target: lessons/safe_temp_artifacts.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file exists documenting str.splitlines trailing newline pitfall and test assertion guidelines&quot;,
+    &quot;claim&quot;: &quot;Lesson file exists and documents avoiding rm -rf commands in favor of tempfile&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/splitlines_trailing_newline.md&quot;
+      &quot;path&quot;: &quot;lessons/safe_temp_artifacts.md&quot;
     }
   }
 }
@@ -1778,21 +1778,24 @@ Solution: Task completed with 0 tool calls in 0s.
 If you apply this lesson, cite [Lesson LESS-20260828-acf736a5] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- Do not pass --timeout directly to pytest commands unless verifying that pytest-timeout is installed; rely instead on the tool execution timeout parameter or shell timeout wrapper.
 - Cease inspection and begin code implementation within 5-8 turns once the target file and existing behavior are confirmed.
-- Terminate reference search immediately once a suitable pattern is found; do not systematically audit unrelated functions in reference files.
-- Enforce a strict boundary of at most 5 to 8 turns of exploratory queries before making the first edit to the target file.
+- Cyclic multi-command repetition loop: The agent entered a repetitive multi-step loop between turns 30 and 80, executing the exact same block of ~18 shell commands to inspect sections of validate_test_
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-10 11:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/splitlines_trailing_newline.md. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Document splitlines trailing newline behavior for line normalizers in lessons/splitlines_trailing_newline.md
+Title: Document avoiding rm -rf in shell commands in favor of tempfile in lessons/safe_temp_artifacts.md
 
 
-Documents the pitfall where str.splitlines() strips trailing newlines and causes test assertion failures in line normalizers, providing patterns to preserve trailing newlines or adjust string expectations.
+Captures lessons from blocked rm -rf shell invocations by documenting safety guard constraints and Python tempfile best practices for temporary test artifacts.
 
-Target path: lessons/splitlines_trailing_newline.md
+Target path: lessons/safe_temp_artifacts.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Lesson file exists documenting str.splitlines trailing newline pitfall and test assertion guidelines
+Lesson file exists and documents avoiding rm -rf commands in favor of tempfile
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2103,7 +2106,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 11:33:56 UTC &middot; host eeepc &middot; newest source 1s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 14:04:44 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 11:42:50 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 14:04:44 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
