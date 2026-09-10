@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">197</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 02:01:47 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 23:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 23:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+208 chars spare)</span>
-      <span class="cycle-pill">cycle-998efddc6d84</span>
+      <span class="cycle-pill">cycle-5ca12e90d91c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,792 / 24,000 chars)</span><span>2026-09-10 22:31:53.883248 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,792 / 24,000 chars)</span><span>2026-09-10 23:10:08.846064 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,617c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,853c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1730,9 +1730,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,771c) + 3 separators &times; 7c (21c) = 23,792 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,617 chars &bull; ~1,904 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add broad test pattern validation to scripts/verify_and_proof.py to reject imprecise discovery globs
-Request ID: llm-proposer-cycle-998efddc6d84
-Cycle ID: cycle-998efddc6d84
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,853 chars &bull; ~1,713 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add actionable remediation hints alongside matching tokens in scripts/prevent_repeat_failures.py
+Request ID: llm-proposer-cycle-5ca12e90d91c
+Cycle ID: cycle-5ca12e90d91c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1757,58 +1757,46 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Package verification and proof inspection procedure into skills/verify-and-proof/SKILL.md: mutation_surface_violation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-998efddc6d84.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5ca12e90d91c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add broad test pattern validation to scripts/verify_and_proof.py to reject imprecise discovery globs&quot;,
-    &quot;backlog_instructions&quot;: &quot;Validates test target arguments in scripts/verify_and_proof.py to detect and reject loose wildcard patterns like &#x27;*ast*&#x27; that trigger accidental execution of unrelated suites like test_verify_and_proof_fast_check.py.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add actionable remediation hints alongside matching tokens in scripts/prevent_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Following the actionable hint pattern validated in cycle-1a6f1d4596c4, this task adds resolution guidance citing conflicting tokens and rephrasing suggestions when task proposals match failure patterns in scripts/prevent_repeat_failures.py.\n\nTarget path: scripts/prevent_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add broad test pattern validation to scripts/verify_and_proof.py to reject imprecise discovery globs (target: scripts/verify_and_proof.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_and_proof.py flags broad test patterns like &#x27;*ast*&#x27; and passes fast check tests&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_verify_and_proof_fast_check.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add actionable remediation hints alongside matching tokens in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+ID: LESS-20260827-cb400fe3  Title: Implementing &quot;Add dedup cycle loop detection and circuit breaker flag to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-cb400fe3] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Differentiate companion test proposal titles by highlighting unique domain behaviors rather than generic test fixture phrasing to reduce similarity scores against other test proposals in the existence
-- Existence-index false-positive deduplication match: The preflight deduplication gate matched the proposal targeting tests/test_validate_history_format.py against tests/test_validate_skill_format.py, a
-- Preflight existence-index deduplication collision on file stem overlap: The deduplication gate flagged a proposal targeting tests/test_verify_and_proof.py as an existence_index_duplicate against exist
+- Continue consolidating implementation, self-test additions, and companion unit test assertions into consecutive edits before triggering test executions to maximize efficiency on constrained hosts.
+- Use lightweight inline Python snippets with temporary directories to quickly inspect report formatting without requiring changes to persistent files or mock harness suites.
+- Apply markdown title normalization to the ledger failure signature generator (_ledger_failure_signature) to align signature grouping with title comparison logic.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 22:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/prevent_repeat_failures.py,…
 
 ## Concrete task to implement
 
-Title: Add broad test pattern validation to scripts/verify_and_proof.py to reject imprecise discovery globs
+Title: Add actionable remediation hints alongside matching tokens in scripts/prevent_repeat_failures.py
 
 
-Validates test target arguments in scripts/verify_and_proof.py to detect and reject loose wildcard patterns like &#x27;*ast*&#x27; that trigger accidental execution of unrelated suites like test_verify_and_proof_fast_check.py.
+Following the actionable hint pattern validated in cycle-1a6f1d4596c4, this task adds resolution guidance citing conflicting tokens and rephrasing suggestions when task proposals match failure patterns in scripts/prevent_repeat_failures.py.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/prevent_repeat_failures.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_and_proof.py flags broad test patterns like &#x27;*ast*&#x27; and passes fast check tests
+## Concrete task to implement
+Implement and commit: Add actionable remediation hints alongside matching tokens in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1941,8 +1929,8 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="skill-high-ratio">
                       <td class="skill-name">run-tests</td>
-                      <td class="skill-reads">32</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">27 confirmed</span></td>
+                      <td class="skill-reads">33</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">28 confirmed</span></td>
                     </tr>
                     
                     <tr class="skill-high-ratio">
@@ -2119,7 +2107,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 23:06:23 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 02:01:47 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 23:27:55 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 02:01:47 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
