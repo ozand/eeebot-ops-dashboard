@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 10:21:39 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 07:38 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 07:51 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">fallback-616688d6b63e</span>
+      <span class="cycle-pill">cycle-51e7ef398bb4</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:26:33.704693 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:43:06.482778 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,042c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,815c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,042 chars &bull; ~1,760 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking
-Request ID: llm-proposer-fallback-616688d6b63e
-Cycle ID: fallback-616688d6b63e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,815 chars &bull; ~1,703 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py
+Request ID: llm-proposer-cycle-51e7ef398bb4
+Cycle ID: cycle-51e7ef398bb4
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,61 +1739,56 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 7aa1f241 merge: integrate selfevo/cycle-fallback-616688d6b63e
+- d96702b8 test(check_cycle_budget): add unit tests for token-only warn, CLI warn exit, negative reserves, and stall escalation boundary
 - 17c194bc merge: integrate selfevo/cycle-cycle-b54623aa743a
 - ec4e56f9 feat(check_target_completion): add CLI argument detection to inspect defined argparse options in target scripts
 - fbd6d401 merge: integrate selfevo/cycle-cycle-fe0eca121e07
 - 489c3e6f feat(check_cycle_budget): add exploration stall check flagging turns exceeding threshold without edits
 - fed9b25e merge: integrate selfevo/cycle-cycle-64f73e207140
 - 7ac13c05 selfevo: auto-commit uncommitted subagent work — Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing
-- 3041630e merge: integrate selfevo/cycle-cycle-e902eeb764bb
-- b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-616688d6b63e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-51e7ef398bb4.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking&quot;,
-    &quot;backlog_instructions&quot;: &quot;Provide unit test coverage for check_cycle_budget.py to verify token consumption calculations, threshold warnings, and stall detection logic.\n\nTarget path: tests/test_check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Add test file existence and passing status check to scripts/check_target_completion.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-b3a465081bc7 where test creation tasks are proposed for already implemented test files. Adds logic in scripts/check_target_completion.py to check if target test files exist and currently pass tests, flagging them as already completed to prevent duplicate proposals.\n\nTarget path: scripts/check_target_completion.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking (target: tests/test_check_cycle_budget.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
-Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
+ID: LESS-20260825-b957628f  Title: Implementing &quot;Update script exclusion filters and exit status handling in scripts/validate_test_existence.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-b957628f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- When designing unit test fixtures asserting threshold boundaries (like min_shared_tokens), check the tokenization helper or use synthetic non-dictionary words to avoid unintended token overlap across 
+- When authoring markdown lessons whose acceptance check specifies scripts/validate_lessons.py, rely on that validator rather than invoking tests/test_lessons_integrity.py, saving turns on known pre-exi
 - Check whether test files define unittest.TestCase classes or standalone test_* functions before choosing between &#x27;python3 -m unittest&#x27; and &#x27;python3 -m pytest&#x27; to prevent 0-test executions.
-- Do not add bare module imports to test suites to satisfy AST pairing linters when the repo&#x27;s root is not on PYTHONPATH; retain package-qualified imports (from scripts.X import Y) to keep pytest collec
-- Restrict pre-commit verification to the target unit test suite rather than bundling unrelated historical test suites that risk hitting default 60-second command timeouts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 06:41 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-10 07:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_cycle_budget.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking
+Title: Add test file existence and passing status check to scripts/check_target_completion.py
 
 
-Provide unit test coverage for check_cycle_budget.py to verify token consumption calculations, threshold warnings, and stall detection logic.
+Addresses reflection-b3a465081bc7 where test creation tasks are proposed for already implemented test files. Adds logic in scripts/check_target_completion.py to check if target test files exist and currently pass tests, flagging them as already completed to prevent duplicate proposals.
 
-Target path: tests/test_check_cycle_budget.py
+Target path: scripts/check_target_completion.py
 
 ## Concrete task to implement
-Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking (target: tests/test_check_cycle_budget.py)
+Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py (target: scripts/check_target_completion.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2104,7 +2099,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 07:38:41 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 10:21:39 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 07:51:16 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 10:21:39 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
