@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">201</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 15:52:37 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 12:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 13:06 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">fallback-89555098c452</span>
+      <span class="cycle-pill">cycle-ec80790b288c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 12:12:54.621325 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 13:00:00.077398 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,523c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,220c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,523 chars &bull; ~1,880 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings
-Request ID: llm-proposer-fallback-89555098c452
-Cycle ID: fallback-89555098c452
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,220 chars &bull; ~1,805 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test framework selector logic in scripts/run_all_tests.py
+Request ID: llm-proposer-cycle-ec80790b288c
+Cycle ID: cycle-ec80790b288c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,58 +1739,64 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 8bc8409a merge: integrate selfevo/cycle-fallback-89555098c452
+- 61616a5d selfevo: auto-commit uncommitted subagent work — Add failure message normalization to scripts/analyze_repeat_failures.py to clust
 - bbbea8af merge: integrate selfevo/cycle-cycle-7a8402b98bfd
 - 42f56c84 docs(lessons): document preferring tempfile over recursive shell deletes for temp artifacts
 - 0802ae33 merge: integrate selfevo/cycle-cycle-16004180ba43
 - 463d5b6d docs(lessons): document splitlines trailing newline pitfall for line normalizers
 - f9c4daba merge: integrate selfevo/cycle-fallback-38e527a43785
 - 98b9208e test(model_fallback_routing): add unit tests for gemini-3.7 alias and fallback resolution
-- fee17801 merge: integrate selfevo/cycle-cycle-9237c8ea03d1
-- ff6b466c feat(check_target_completion): add AST exception handler check for proposed error handling tasks
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests in tests/test_check_style.py for path exclusion and file filtering logic: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-89555098c452.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ec80790b288c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings&quot;,
-    &quot;backlog_instructions&quot;: &quot;Dynamic tokens like timestamps, hex addresses, and line numbers cause identical failures to be treated as distinct. Adding normalization to strip transient patterns in scripts/analyze_repeat_failures.py enables accurate recurring failure detection.\n\nTarget path: scripts/analyze_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Add test framework selector logic in scripts/run_all_tests.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves cycle-2790fd51bfdb evidence by implementing the test framework selector in scripts/run_all_tests.py without exploratory detours.\n\nTarget path: scripts/run_all_tests.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings (target: scripts/analyze_repeat_failures.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test framework selector logic in scripts/run_all_tests.py (target: scripts/run_all_tests.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
-Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
-Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-5c2f9e95  Title: Implementing &quot;Add failure pattern clustering and recurring error threshold detection to scripts/analyze_repeat_failures.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
+ID: LESS-20260826-be745246  Title: Implementing &quot;Add test execution timing summary and pattern filtering to scripts/run_all_tests.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/run_all_tests.py, tests/test_run_all_tests.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-5c2f9e95] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-be745246] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Consolidate related modifications within a single file (such as docstrings, constant tables, helper functions, and test cases) into one or two batch edits instead of issuing multiple sequential edit_f
-- Avoid searching historical state directories (e.g. state/demand/exhausted.json) when verifying model configurations; rely directly on host/eeepc/etc/models.yaml or relevant routing documentation.
-- When adding features to scripts that lack standalone unit test suites, consider adding companion tests in tests/ (e.g. tests/test_model_fallback_routing.py) to prevent downstream test existence audit 
+- When a grep command for a specific identifier returns exit code 1 (no match), broaden search terms or inspect caller definitions rather than repeating identical grep queries.
+- Respond immediately to loop_breaker safety stop messages by pivoting to an alternate strategy or transitioning to the next verification step.
+- When editing deeply nested or CLI argument blocks in large Python scripts, capture full outer indentation blocks in old_text/new_text to prevent indentation mismatch errors.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-10 12:07 UTC): no commits (blocked). Task &quot;Add unit tests in tests/test_check_style.py for path exclusi&quot; matched an existing artifact…
 
 ## Concrete task to implement
 
-Title: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings
+Title: Add test framework selector logic in scripts/run_all_tests.py
 
 
-Dynamic tokens like timestamps, hex addresses, and line numbers cause identical failures to be treated as distinct. Adding normalization to strip transient patterns in scripts/analyze_repeat_failures.py enables accurate recurring failure detection.
+Resolves cycle-2790fd51bfdb evidence by implementing the test framework selector in scripts/run_all_tests.py without exploratory detours.
 
-Target path: scripts/analyze_repeat_failures.py
+Target path: scripts/run_all_tests.py
 
 ## Concrete task to implement
-Implement and commit: Add failure message normalization to scripts/analyze_repeat_failures.py to cluster dynamic error strings (target: scripts/analyze_repeat_failures.py)
+Implement and commit: Add test framework selector logic in scripts/run_all_tests.py (target: scripts/run_all_tests.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2101,7 +2107,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 12:55:59 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 15:52:37 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 13:06:02 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 15:52:37 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
