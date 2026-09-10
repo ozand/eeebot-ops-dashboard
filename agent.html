@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">206</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 11:33:23 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 08:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 09:19 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-23a3a8e9bfe0</span>
+      <span class="cycle-pill">cycle-0b9a1b797138</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 08:39:57.790036 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 08:58:59.993406 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,365c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,164c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,365 chars &bull; ~1,591 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document context window adjacency and ellipsis delimiter rules in scripts/targeted_file_slice.py
-Request ID: llm-proposer-cycle-23a3a8e9bfe0
-Cycle ID: cycle-23a3a8e9bfe0
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,164 chars &bull; ~2,041 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix test existence validation in scripts/validate_test_existence.py to resolve exit code 1 failure
+Request ID: llm-proposer-cycle-0b9a1b797138
+Cycle ID: cycle-0b9a1b797138
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1739,56 +1739,66 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 72c3c823 merge: integrate selfevo/cycle-cycle-23a3a8e9bfe0
+- 74fbb601 docs(targeted_file_slice): document context window adjacency and ellipsis delimiter rules
 - 7aa1f241 merge: integrate selfevo/cycle-fallback-616688d6b63e
 - d96702b8 test(check_cycle_budget): add unit tests for token-only warn, CLI warn exit, negative reserves, and stall escalation boundary
 - 17c194bc merge: integrate selfevo/cycle-cycle-b54623aa743a
 - ec4e56f9 feat(check_target_completion): add CLI argument detection to inspect defined argparse options in target scripts
 - fbd6d401 merge: integrate selfevo/cycle-cycle-fe0eca121e07
 - 489c3e6f feat(check_cycle_budget): add exploration stall check flagging turns exceeding threshold without edits
-- fed9b25e merge: integrate selfevo/cycle-cycle-64f73e207140
-- 7ac13c05 selfevo: auto-commit uncommitted subagent work — Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests in tests/test_search_subagent_archive.py for multi-field matching and unicode queries: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-23a3a8e9bfe0.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0b9a1b797138.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document context window adjacency and ellipsis delimiter rules in scripts/targeted_file_slice.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Clarify in scripts/targeted_file_slice.py docstrings how overlapping or adjacent context windows merge without inserting ellipsis delimiters.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
+    &quot;title&quot;: &quot;Fix test existence validation in scripts/validate_test_existence.py to resolve exit code 1 failure&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/validate_test_existence.py fails with exit code 1 during validator runs; updating test discovery and exempting deprecated or non-standalone scripts ensures the validation passes reliably.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document context window adjacency and ellipsis delimiter rules in scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix test existence validation in scripts/validate_test_existence.py to resolve exit code 1 failure (target: scripts/validate_test_existence.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-7c7719d7  Title: Implementing &quot;Add bounded file reading and targeted search guidelines in AGENTS.md to prevent context bloat&quot; improves operator value.
-Problem: Committed 1 commit(s): AGENTS.md
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-7c7719d7] in your proposal/response.
+ID: LESS-20260825-649a0480  Title: Implementing &quot;Add test module mapping and non-zero exit code reporting to scripts/validate_test_existence.py&quot; improves operator value.
+Problem: Committed 2 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-649a0480] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Target specific test methods or use -k filters before running an entire monolithic test suite on resource-constrained hosts to avoid hitting default 60-second command timeouts.
-- When appending test cases to long procedural self-test functions, inspect the definition lines of local fixtures and late imports to avoid UnboundLocalError.
-- Adding self-tests prior to local variable definitions in _run_self_tests: In turns 27-30, placing new self-test assertions at line 1780 caused two consecutive UnboundLocalError failures due to slice_p
+- Begin editing the target script and companion tests within 5 turns once the relevant files have been inspected, rather than exploring unrelated codebase validators or test runner implementations.
+- Immediately halt repeated tool execution and switch strategy or terminate cleanly upon receiving a loop_breaker safety stop warning; re-running the flagged command leads directly to cycle failure.
+- Assuming pytest-timeout plugin availability: In turn 17, attempting to resolve the test timeout by passing --timeout=30 directly to python3 -m pytest caused a failure because the pytest-timeout plugin
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-10 08:48 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-10 08:29 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-10 07:50 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Document context window adjacency and ellipsis delimiter rules in scripts/targeted_file_slice.py
+Title: Fix test existence validation in scripts/validate_test_existence.py to resolve exit code 1 failure
 
 
-Clarify in scripts/targeted_file_slice.py docstrings how overlapping or adjacent context windows merge without inserting ellipsis delimiters.
+scripts/validate_test_existence.py fails with exit code 1 during validator runs; updating test discovery and exempting deprecated or non-standalone scripts ensures the validation passes reliably.
 
-Target path: scripts/targeted_file_slice.py
+Target path: scripts/validate_test_existence.py
 
 ## Concrete task to implement
-Implement and commit: Document context window adjacency and ellipsis delimiter rules in scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)
+Implement and commit: Fix test existence validation in scripts/validate_test_existence.py to resolve exit code 1 failure (target: scripts/validate_test_existence.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2099,7 +2109,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 08:55:22 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 11:33:23 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 09:19:59 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 11:33:23 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
