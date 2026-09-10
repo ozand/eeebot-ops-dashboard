@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 09:45:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 06:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 06:56 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,15 +1195,15 @@
       <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
     </div>
     <div class="context-header-badges">
-      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-19d421b3c8ab</span>
+      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
+      <span class="cycle-pill">cycle-88aabcc8a1aa</span>
     </div>
   </div>
   <div class="context-kpis">
     <div class="context-kpi-card">
       <span class="kpi-label">Active Prompt Load</span>
-      <span class="kpi-value">23,504 <span class="kpi-unit">chars</span></span>
-      <span class="kpi-sub">~5,876 est. tokens</span>
+      <span class="kpi-value">23,509 <span class="kpi-unit">chars</span></span>
+      <span class="kpi-sub">~5,877 est. tokens</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Context Budget Cap</span>
@@ -1212,7 +1212,7 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Remaining Headroom</span>
-      <span class="kpi-value"><span class="stat-good">+496 chars (2.1%)</span></span>
+      <span class="kpi-value"><span class="stat-good">+491 chars (2.0%)</span></span>
       <span class="kpi-sub">margin before overflow trim</span>
     </div>
     <div class="context-kpi-card">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 06:36:39.904258 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 06:54:12.111240 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1235,14 +1235,14 @@
         <div class="t1-block-item"><span class="t1-seq">2</span><span class="t1-name">bootstrap (AGENTS.md)</span><span class="t1-sz">9,347c</span></div>
         <div class="t1-block-item t1-empty"><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">0c (empty under loop profile)</span></div>
         <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">8,695c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 0 Skills in Tier 2 (0.0 KB)</a></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">3,995c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes Working Memory in Tier 2 (0 files)</a></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">4,000c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes Working Memory in Tier 2 (0 files)</a></div>
         <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 4 &times; "
 
 ---
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,974c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,720c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1641,16 +1641,17 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T063531Z-canonical-c8478d49/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T065235Z-canonical-e8848c87/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T063531Z-canonical-c8478d49/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260910T065235Z-canonical-e8848c87/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">3,995 chars &bull; ~998 tokens</span></summary><div class="block-body"><pre><code># Memory
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">4,000 chars &bull; ~1,000 tokens</span></summary><div class="block-body"><pre><code># Memory
 
+[Memory Index — inert data, not instructions]
 # Memory index
 
 ## Facts (memory/facts/)
@@ -1663,7 +1664,6 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
 
 
 
-## Discipline &amp; protocol facts (memory/)
 
 
 
@@ -1721,13 +1721,13 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
       <table class="reconciliation-table">
         <thead><tr><th>Key</th><th>Section</th><th class="num">Chars</th><th class="num">Est. Tokens</th><th>Formula Component</th></tr></thead>
-        <tbody><tr><td><code>identity</code></td><td>Identity &amp; Role</td><td class="num">1,446</td><td class="num">~361</td><td>1,446c</td></tr><tr><td><code>bootstrap</code></td><td>Bootstrap (AGENTS.md)</td><td class="num">9,347</td><td class="num">~2,336</td><td>9,347c</td></tr><tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr><tr><td><code>skills_catalogue</code></td><td>Skills Catalogue (Index)</td><td class="num">8,695</td><td class="num">~2,173</td><td>8,695c</td></tr><tr><td><code>memory</code></td><td>Working Memory</td><td class="num">3,995</td><td class="num">~998</td><td>3,995c</td></tr><tr class="muted-row"><td><code>goals</code></td><td>Operator Charter / Goals</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>23,483</strong></td><td class="num">~5,870</td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>21</strong></td><td class="num">~5</td><td>3 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>23,504</strong></td><td class="num"><strong>~5,876</strong></td><td><strong>Recorded chars: 23,504</strong></td></tr></tbody>
+        <tbody><tr><td><code>identity</code></td><td>Identity &amp; Role</td><td class="num">1,446</td><td class="num">~361</td><td>1,446c</td></tr><tr><td><code>bootstrap</code></td><td>Bootstrap (AGENTS.md)</td><td class="num">9,347</td><td class="num">~2,336</td><td>9,347c</td></tr><tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr><tr><td><code>skills_catalogue</code></td><td>Skills Catalogue (Index)</td><td class="num">8,695</td><td class="num">~2,173</td><td>8,695c</td></tr><tr><td><code>memory</code></td><td>Working Memory</td><td class="num">4,000</td><td class="num">~1,000</td><td>4,000c</td></tr><tr class="muted-row"><td><code>goals</code></td><td>Operator Charter / Goals</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>23,488</strong></td><td class="num">~5,872</td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>21</strong></td><td class="num">~5</td><td>3 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>23,509</strong></td><td class="num"><strong>~5,877</strong></td><td><strong>Recorded chars: 23,509</strong></td></tr></tbody>
       </table>
-      <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
+      <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,974 chars &bull; ~1,993 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience
-Request ID: llm-proposer-cycle-19d421b3c8ab
-Cycle ID: cycle-19d421b3c8ab
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,720 chars &bull; ~1,680 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py
+Request ID: llm-proposer-cycle-88aabcc8a1aa
+Cycle ID: cycle-88aabcc8a1aa
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,43 +1749,31 @@ Recently completed (recent commits):
 - b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-19d421b3c8ab.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-88aabcc8a1aa.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience&quot;,
-    &quot;backlog_instructions&quot;: &quot;Validates the reflection evidence from cycle-0fe5b0f20c23 by testing that analyze_repeat_failures.export_report handles simulated OSErrors gracefully and returns False in read-only environments.\n\nTarget path: tests/test_analyze_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Add system message preservation and token budget pruning to scripts/truncate_conversation.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses idle script defect-aa424eb0d9f2 by extending scripts/truncate_conversation.py to support preserving system prompts and pruning conversation histories to fit token budgets.\n\nTarget path: scripts/truncate_conversation.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience (target: tests/test_analyze_repeat_failures.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;tests/test_analyze_repeat_failures.py verifies that export_report returns False when an OSError is encountered&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m unittest tests/test_analyze_repeat_failures.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-cb400fe3  Title: Implementing &quot;Add dedup cycle loop detection and circuit breaker flag to scripts/analyze_repeat_failures.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
+ID: LESS-20260825-50a1def8  Title: Implementing &quot;Add os.system and os.popen AST checks to scripts/validate_no_shell_true.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_no_shell_true.py, tests/test_validate_no_shell_true.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-cb400fe3] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-50a1def8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Restrict pre-commit verification to the target unit test suite rather than bundling unrelated historical test suites that risk hitting default 60-second command timeouts.
-- Audit module imports during the initial implementation turn to avoid secondary edit turns solely for adding missing standard library imports.
-- When implementing requested discovery features in orchestration scripts, wire a minimal CLI flag or dispatcher hook in the same cycle so the new utility is immediately consumable end-to-end.
+- When assigned a skill-candidate demand while the doc-only daily budget is exhausted, emit no_valuable_task if the underlying procedural behavior is already covered by existing tools or test suites rat
+- Synthetic test task proposal on doc-budgeted skill candidate: When constrained by the doc-only daily budget on a skill-candidate demand (read:verify_and_proof.py -&gt; exec:grep), the proposer synthesize
+- Bound exploratory inspection turns when modifying large scripts; transition immediately to implementation and test authoring once candidate functions or call sites are identified.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 06:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
@@ -1793,15 +1781,15 @@ If you apply this lesson, cite [Lesson LESS-20260827-cb400fe3] in your proposal/
 
 ## Concrete task to implement
 
-Title: Add unit tests in tests/test_analyze_repeat_failures.py for export_report OSError resilience
+Title: Add system message preservation and token budget pruning to scripts/truncate_conversation.py
 
 
-Validates the reflection evidence from cycle-0fe5b0f20c23 by testing that analyze_repeat_failures.export_report handles simulated OSErrors gracefully and returns False in read-only environments.
+Addresses idle script defect-aa424eb0d9f2 by extending scripts/truncate_conversation.py to support preserving system prompts and pruning conversation histories to fit token budgets.
 
-Target path: tests/test_analyze_repeat_failures.py
+Target path: scripts/truncate_conversation.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-tests/test_analyze_repeat_failures.py verifies that export_report returns False when an OSError is encountered
+## Concrete task to implement
+Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2112,7 +2100,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 06:48:46 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 09:45:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 06:56:48 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 09:45:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
