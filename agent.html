@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 10:54:40 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 08:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 19s old &middot; generated 08:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-51e7ef398bb4</span>
+      <span class="cycle-pill">cycle-f90a47b213f7</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:43:06.482778 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 08:08:01.808881 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,815c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,733c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,815 chars &bull; ~1,703 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py
-Request ID: llm-proposer-cycle-51e7ef398bb4
-Cycle ID: cycle-51e7ef398bb4
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,733 chars &bull; ~1,933 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Refactor subprocess CLI calls to in-process function invocations in tests/test_preflight_failure_check.py
+Request ID: llm-proposer-cycle-f90a47b213f7
+Cycle ID: cycle-f90a47b213f7
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1748,47 +1748,55 @@ Recently completed (recent commits):
 - fed9b25e merge: integrate selfevo/cycle-cycle-64f73e207140
 - 7ac13c05 selfevo: auto-commit uncommitted subagent work — Add baseline failure check to scripts/verify_and_proof.py to detect pre-existing
 
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add unit tests in tests/test_search_subagent_archive.py for multi-field matching and unicode queries: existence_index_duplicate
+
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-51e7ef398bb4.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f90a47b213f7.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add test file existence and passing status check to scripts/check_target_completion.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-b3a465081bc7 where test creation tasks are proposed for already implemented test files. Adds logic in scripts/check_target_completion.py to check if target test files exist and currently pass tests, flagging them as already completed to prevent duplicate proposals.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Refactor subprocess CLI calls to in-process function invocations in tests/test_preflight_failure_check.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-f9cad4a7297b by replacing slow CLI subprocess executions and disk state access in tests/test_preflight_failure_check.py with direct function calls and mocks.\n\nTarget path: tests/test_preflight_failure_check.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Refactor subprocess CLI calls to in-process function invocations in tests/test_preflight_failure_check.py (target: tests/test_preflight_failure_check.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-b957628f  Title: Implementing &quot;Update script exclusion filters and exit status handling in scripts/validate_test_existence.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_test_existence.py, tests/test_validate_test_existence.py
+ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
+Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-b957628f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When designing unit test fixtures asserting threshold boundaries (like min_shared_tokens), check the tokenization helper or use synthetic non-dictionary words to avoid unintended token overlap across 
-- When authoring markdown lessons whose acceptance check specifies scripts/validate_lessons.py, rely on that validator rather than invoking tests/test_lessons_integrity.py, saving turns on known pre-exi
-- Check whether test files define unittest.TestCase classes or standalone test_* functions before choosing between &#x27;python3 -m unittest&#x27; and &#x27;python3 -m pytest&#x27; to prevent 0-test executions.
+- Always scope pytest execution with -k filters or specific test node IDs on suites containing subprocess-heavy CLI tests rather than executing the entire file.
+- Do not pass --timeout directly to pytest commands unless verifying that pytest-timeout is installed; rely instead on the tool execution timeout parameter or shell timeout wrapper.
+- Assuming pytest-timeout plugin availability: In turn 17, attempting to resolve the test timeout by passing --timeout=30 directly to python3 -m pytest caused a failure because the pytest-timeout plugin
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 07:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_cycle_budget.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add test file existence and passing status check to scripts/check_target_completion.py
+Title: Refactor subprocess CLI calls to in-process function invocations in tests/test_preflight_failure_check.py
 
 
-Addresses reflection-b3a465081bc7 where test creation tasks are proposed for already implemented test files. Adds logic in scripts/check_target_completion.py to check if target test files exist and currently pass tests, flagging them as already completed to prevent duplicate proposals.
+Addresses reflection-f9cad4a7297b by replacing slow CLI subprocess executions and disk state access in tests/test_preflight_failure_check.py with direct function calls and mocks.
 
-Target path: scripts/check_target_completion.py
+Target path: tests/test_preflight_failure_check.py
 
 ## Concrete task to implement
-Implement and commit: Add test file existence and passing status check to scripts/check_target_completion.py (target: scripts/check_target_completion.py)
+Implement and commit: Refactor subprocess CLI calls to in-process function invocations in tests/test_preflight_failure_check.py (target: tests/test_preflight_failure_check.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2099,7 +2107,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 08:04:34 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 10:54:40 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 08:30:01 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 10:54:40 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
