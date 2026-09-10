@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 03:37:38 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 28s old &middot; generated 01:02 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 01:25 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+496 chars spare)</span>
-      <span class="cycle-pill">cycle-f212dcb53f88</span>
+      <span class="cycle-pill">cycle-b4c830316de6</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 00:44:57.586413 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,504 / 24,000 chars)</span><span>2026-09-10 01:06:25.852593 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,077c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,746c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,483c) + 3 separators &times; 7c (21c) = 23,504 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,077 chars &bull; ~1,769 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add retired skill and immutable prefix filtering to scripts/filter_futile_targets.py for fallback candidates
-Request ID: llm-proposer-cycle-f212dcb53f88
-Cycle ID: cycle-f212dcb53f88
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,746 chars &bull; ~1,686 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add AST context filtering in validate_heredoc_urls.py to skip Python docstrings and string literals
+Request ID: llm-proposer-cycle-b4c830316de6
+Cycle ID: cycle-b4c830316de6
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,48 +1749,50 @@ Recently completed (recent commits):
 - bc70e7b0 merge: integrate selfevo/cycle-cycle-99ca557cd2a6
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f212dcb53f88.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b4c830316de6.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add retired skill and immutable prefix filtering to scripts/filter_futile_targets.py for fallback candidates&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extending scripts/filter_futile_targets.py to detect and reject retired skill paths and immutable prefixes enables upstream pre-filtering in fallback target generation, resolving loop.fallback_rejects_by_reason.futile_surface and lowering the wasted attempt rate.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
+    &quot;title&quot;: &quot;Add AST context filtering in validate_heredoc_urls.py to skip Python docstrings and string literals&quot;,
+    &quot;backlog_instructions&quot;: &quot;Inspect Python files with the ast module in scripts/validate_heredoc_urls.py to skip docstrings, string literals, and comments, eliminating heredoc false positives identified in cycle-c8b086bf20de.\n\nTarget path: scripts/validate_heredoc_urls.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add retired skill and immutable prefix filtering to scripts/filter_futile_targets.py for fallback candidates (target: scripts/filter_futile_targets.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add AST context filtering in validate_heredoc_urls.py to skip Python docstrings and string literals (target: scripts/validate_heredoc_urls.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_heredoc_urls.py parses Python source files with AST to ignore string literals and docstrings during validation&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -m py_compile scripts/validate_heredoc_urls.py&quot;
+    }
+  }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-15f1a566  Title: Implementing &quot;Add rolling window filtering and pattern clustering to scripts/analyze_repeat_failures.py&quot; improves operator value.
-Problem: Committed 1 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
+ID: LESS-20260825-7f531797  Title: Implementing &quot;Add target path filtering and structured JSON reporting to scripts/validate_timezone_aware_datetime.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-15f1a566] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-7f531797] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Chain verification of CLI help output and stdin streaming in a single compound command to validate both code paths in one round trip.
-- When adding or modifying standalone utility scripts that consume stdin, configure argparse before reading sys.stdin so that `--help` and CLI flag checks exit cleanly without waiting for or choking on 
-- Wire the newly introduced flatten_test_suite and count_tests_by_module helpers into the active discovery and test runner dispatch functions in scripts/verify_and_proof.py so they are actively consumed
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-10 00:33 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/compact_memory_index.py,…
-- Attempt 2 (2026-09-09 23:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
-- Attempt 3 (2026-09-09 22:49 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
+- When testing markdown-only skill guidelines without accompanying Python modules, combine frontmatter structural checks, literal string assertions of prescriptive text, and synthetic behavioral models 
+- When asserting that a markdown document prescribes a specific regex pattern or code snippet, match the pattern as a literal substring (`assert pattern in text`) or use `re.escape()` rather than nestin
+- When checking baseline test behavior by stashing uncommitted changes, use `git stash -u` if newly created files are untracked, or run scoped tests against pre-existing files directly without stashing.
 
 ## Concrete task to implement
 
-Title: Add retired skill and immutable prefix filtering to scripts/filter_futile_targets.py for fallback candidates
+Title: Add AST context filtering in validate_heredoc_urls.py to skip Python docstrings and string literals
 
 
-Extending scripts/filter_futile_targets.py to detect and reject retired skill paths and immutable prefixes enables upstream pre-filtering in fallback target generation, resolving loop.fallback_rejects_by_reason.futile_surface and lowering the wasted attempt rate.
+Inspect Python files with the ast module in scripts/validate_heredoc_urls.py to skip docstrings, string literals, and comments, eliminating heredoc false positives identified in cycle-c8b086bf20de.
 
-Target path: scripts/filter_futile_targets.py
+Target path: scripts/validate_heredoc_urls.py
 
-## Concrete task to implement
-Implement and commit: Add retired skill and immutable prefix filtering to scripts/filter_futile_targets.py for fallback candidates (target: scripts/filter_futile_targets.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_heredoc_urls.py parses Python source files with AST to ignore string literals and docstrings during validation
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2095,7 +2097,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 01:02:56 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 03:37:38 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 01:25:16 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 03:37:38 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
