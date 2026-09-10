@@ -1178,9 +1178,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 09:45:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 10:21:39 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 07:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 07:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-23502cd0c3bb</span>
+      <span class="cycle-pill">fallback-616688d6b63e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:07:02.076727 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:26:33.704693 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,459c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,042c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,459 chars &bull; ~1,614 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py
-Request ID: llm-proposer-cycle-23502cd0c3bb
-Cycle ID: cycle-23502cd0c3bb
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,042 chars &bull; ~1,760 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking
+Request ID: llm-proposer-fallback-616688d6b63e
+Cycle ID: fallback-616688d6b63e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,49 +1749,51 @@ Recently completed (recent commits):
 - b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-23502cd0c3bb.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-616688d6b63e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Applies reflection-aa6507d27689 to scripts/scaffold_script_entrypoint.py by outputting user guidance and returning 0 when run without arguments, and embedding zero-arg guidance and TestNoArgs scaffolding in generated entrypoint templates.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking&quot;,
+    &quot;backlog_instructions&quot;: &quot;Provide unit test coverage for check_cycle_budget.py to verify token consumption calculations, threshold warnings, and stall detection logic.\n\nTarget path: tests/test_check_cycle_budget.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/scaffold_script_entrypoint.py prints guidance and exits 0 when invoked without arguments&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/scaffold_script_entrypoint.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking (target: tests/test_check_cycle_budget.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
+ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
+Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
+
+## Recent reflections (how past cycles worked — steering hints)
+- Check whether test files define unittest.TestCase classes or standalone test_* functions before choosing between &#x27;python3 -m unittest&#x27; and &#x27;python3 -m pytest&#x27; to prevent 0-test executions.
+- Do not add bare module imports to test suites to satisfy AST pairing linters when the repo&#x27;s root is not on PYTHONPATH; retain package-qualified imports (from scripts.X import Y) to keep pytest collec
+- Restrict pre-commit verification to the target unit test suite rather than bundling unrelated historical test suites that risk hitting default 60-second command timeouts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 06:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 2 (2026-09-10 05:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 1 (2026-09-10 06:41 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py
+Title: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking
 
 
-Applies reflection-aa6507d27689 to scripts/scaffold_script_entrypoint.py by outputting user guidance and returning 0 when run without arguments, and embedding zero-arg guidance and TestNoArgs scaffolding in generated entrypoint templates.
+Provide unit test coverage for check_cycle_budget.py to verify token consumption calculations, threshold warnings, and stall detection logic.
 
-Target path: scripts/scaffold_script_entrypoint.py
+Target path: tests/test_check_cycle_budget.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/scaffold_script_entrypoint.py prints guidance and exits 0 when invoked without arguments
+## Concrete task to implement
+Implement and commit: Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking (target: tests/test_check_cycle_budget.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2097,12 +2099,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 970 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">30</td><td>290.9K</td><td>29s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add unit tests in tests/test_check_cycle_budget.py for budget threshold warnings and turn tracking</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 972 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">32</td><td>322.4K</td><td>29s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 07:18:15 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 09:45:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 07:32:07 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 10:21:39 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
