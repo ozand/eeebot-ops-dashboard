@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">197</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 23:54:37 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 21:25 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 21:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-c5901bbe0507</span>
+      <span class="cycle-pill">cycle-5fda208fb403</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 21:01:33.811677 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 21:29:24.572602 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,073c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,653c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,073 chars &bull; ~2,018 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add directory pruning and file filtering to scripts/validate_heredoc_urls.py to resolve harness timeout
-Request ID: llm-proposer-cycle-c5901bbe0507
-Cycle ID: cycle-c5901bbe0507
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,653 chars &bull; ~1,663 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Package target completion audit procedure into skills/check-target-completion/SKILL.md
+Request ID: llm-proposer-cycle-5fda208fb403
+Cycle ID: cycle-5fda208fb403
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,59 +1749,53 @@ Recently completed (recent commits):
 - c8a94504 feat(prevent_repeat_failures): add git commit log verification to flag already-implemented tasks
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c5901bbe0507.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5fda208fb403.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add directory pruning and file filtering to scripts/validate_heredoc_urls.py to resolve harness timeout&quot;,
-    &quot;backlog_instructions&quot;: &quot;scripts/validate_heredoc_urls.py times out after 60 seconds because it traverses unpruned directories such as .git, caches, and build artifacts. Adding directory pruning and targeting relevant text/code files allows the validator to finish well within the per-script time budget.\n\nTarget path: scripts/validate_heredoc_urls.py&quot;,
+    &quot;title&quot;: &quot;Package target completion audit procedure into skills/check-target-completion/SKILL.md&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses recurring pattern across 11 cycles by packaging the procedure of reading check_target_completion.py and checking git log into a validated skill document.\n\nTarget path: skills/check-target-completion/SKILL.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add directory pruning and file filtering to scripts/validate_heredoc_urls.py to resolve harness timeout (target: scripts/validate_heredoc_urls.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Package target completion audit procedure into skills/check-target-completion/SKILL.md (target: skills/check-target-completion/SKILL.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_heredoc_urls.py completes execution successfully within the per-script budget&quot;,
+    &quot;claim&quot;: &quot;skills/check-target-completion/SKILL.md exists and passes validate_skill_format.py&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_heredoc_urls.py&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_skill_format.py&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-003  Title: Adding --fast flags did not resolve caller harness timeouts because caller defaults stayed slow
-Root cause: The optimization was added as an opt-in flag rather than as the default. The slow path remained the default, and no caller was updated to pass the flag, so the default configuration that the harness actually exercised stayed slow. A flag that no caller sets has no effect on the runtime the harness measures.
-Prevention: When adding a fast/optimized execution path, make it the default rather than an opt-in flag, and verify the caller defaults (grep every caller, wrapper script, and default configuration) to confirm the fast path is the one actually invoked end-to-end. A performance fix that no caller exercises does not change the runtime the harness measures, so measure the full call chain (not just the script in 
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-7f531797  Title: Implementing &quot;Add target path filtering and structured JSON reporting to scripts/validate_timezone_aware_datetime.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-7f531797] in your proposal/response.
+ID: lessons/skill-subdirectory-structure.md  Title: Structuring Skills in Subdirectories as skills/&lt;skill_name&gt;/SKILL.md
+Problem: Read lessons/skill-subdirectory-structure.md: Before writing or editing any skill file, resolve the target to the canonical form `skills/&lt;name&gt;/SKILL.md` and confirm the directory exists (create it if needed).
+Solution: 
+If you apply this lesson, cite [Lesson lessons/skill-subdirectory-structure.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Use inline Python timestamps (`python3 -c &#x27;import time; ...&#x27;`) or `/usr/bin/time` instead of bare `time` to measure command durations in `/bin/sh` environments.
-- Include explicit differentiating keywords in companion test proposal titles to minimize lexical collision with existing indexed test suites.
-- False-positive existence index deduplication match: The preflight dedup gate classified the proposal targeting tests/test_check_style.py as an existence_index_duplicate against tests/test_onboard_logi
+- Treat loop_breaker safety alerts as a hard halt: when a loop breaker tool response is received, never repeat the previous command; immediately switch strategy to editing the target file or running a c
+- Cease repo-wide caller grepping once the target implementation file and test file are located; proceed directly to authoring functions on the designated target path.
+- Cap exploratory profiling and benchmarking to 3-5 iterations; once execution bottlenecks are isolated, transition immediately to modifying the target code.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 20:50 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_target_completion.py,…
-- Attempt 2 (2026-09-10 19:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add directory pruning and file filtering to scripts/validate_heredoc_urls.py to resolve harness timeout
+Title: Package target completion audit procedure into skills/check-target-completion/SKILL.md
 
 
-scripts/validate_heredoc_urls.py times out after 60 seconds because it traverses unpruned directories such as .git, caches, and build artifacts. Adding directory pruning and targeting relevant text/code files allows the validator to finish well within the per-script time budget.
+Addresses recurring pattern across 11 cycles by packaging the procedure of reading check_target_completion.py and checking git log into a validated skill document.
 
-Target path: scripts/validate_heredoc_urls.py
+Target path: skills/check-target-completion/SKILL.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_heredoc_urls.py completes execution successfully within the per-script budget
+skills/check-target-completion/SKILL.md exists and passes validate_skill_format.py
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1981,6 +1975,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
+                      <td class="skill-name">early-skip-evaluation</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
                       <td class="skill-name">targeted-test-discovery</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
@@ -1999,12 +1999,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
-                      <td class="skill-name">early-skip-evaluation</td>
-                      <td class="skill-reads">2</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
                       <td class="skill-name">standard-test-runner-unittest-over-pytest</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
@@ -2012,8 +2006,14 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="">
                       <td class="skill-name">early-implementation-transition</td>
-                      <td class="skill-reads">1</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
@@ -2024,12 +2024,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="">
                       <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
-                      <td class="skill-reads">1</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
-                      <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
                       <td class="skill-reads">1</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
@@ -2112,7 +2106,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 21:25:42 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 23:54:37 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 21:37:52 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 23:54:37 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
