@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 09:45:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 07:03 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 07:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-88aabcc8a1aa</span>
+      <span class="cycle-pill">cycle-23502cd0c3bb</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 06:54:12.111240 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 07:07:02.076727 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,720c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,459c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,720 chars &bull; ~1,680 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py
-Request ID: llm-proposer-cycle-88aabcc8a1aa
-Cycle ID: cycle-88aabcc8a1aa
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,459 chars &bull; ~1,614 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py
+Request ID: llm-proposer-cycle-23502cd0c3bb
+Cycle ID: cycle-23502cd0c3bb
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,31 +1749,33 @@ Recently completed (recent commits):
 - b121217a test(validate_skill_format): add unit tests exercising demand-and-reflection-lookup-paths skill
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-88aabcc8a1aa.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-23502cd0c3bb.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add system message preservation and token budget pruning to scripts/truncate_conversation.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses idle script defect-aa424eb0d9f2 by extending scripts/truncate_conversation.py to support preserving system prompts and pruning conversation histories to fit token budgets.\n\nTarget path: scripts/truncate_conversation.py&quot;,
+    &quot;title&quot;: &quot;Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Applies reflection-aa6507d27689 to scripts/scaffold_script_entrypoint.py by outputting user guidance and returning 0 when run without arguments, and embedding zero-arg guidance and TestNoArgs scaffolding in generated entrypoint templates.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/scaffold_script_entrypoint.py prints guidance and exits 0 when invoked without arguments&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/scaffold_script_entrypoint.py&quot;
+    }
+  }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-50a1def8  Title: Implementing &quot;Add os.system and os.popen AST checks to scripts/validate_no_shell_true.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_no_shell_true.py, tests/test_validate_no_shell_true.py
+ID: LESS-20260823-c40c135f  Title: Implementing &quot;Update AST entrypoint rules to recognize standard script termination idioms in scripts/validate_script_entrypoints.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_script_entrypoints.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-50a1def8] in your proposal/response.
-
-## Recent reflections (how past cycles worked — steering hints)
-- When assigned a skill-candidate demand while the doc-only daily budget is exhausted, emit no_valuable_task if the underlying procedural behavior is already covered by existing tools or test suites rat
-- Synthetic test task proposal on doc-budgeted skill candidate: When constrained by the doc-only daily budget on a skill-candidate demand (read:verify_and_proof.py -&gt; exec:grep), the proposer synthesize
-- Bound exploratory inspection turns when modifying large scripts; transition immediately to implementation and test authoring once candidate functions or call sites are identified.
+If you apply this lesson, cite [Lesson LESS-20260823-c40c135f] in your proposal/response.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 06:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
@@ -1781,15 +1783,15 @@ If you apply this lesson, cite [Lesson LESS-20260825-50a1def8] in your proposal/
 
 ## Concrete task to implement
 
-Title: Add system message preservation and token budget pruning to scripts/truncate_conversation.py
+Title: Add zero-argument guidance handling to scripts/scaffold_script_entrypoint.py
 
 
-Addresses idle script defect-aa424eb0d9f2 by extending scripts/truncate_conversation.py to support preserving system prompts and pruning conversation histories to fit token budgets.
+Applies reflection-aa6507d27689 to scripts/scaffold_script_entrypoint.py by outputting user guidance and returning 0 when run without arguments, and embedding zero-arg guidance and TestNoArgs scaffolding in generated entrypoint templates.
 
-Target path: scripts/truncate_conversation.py
+Target path: scripts/scaffold_script_entrypoint.py
 
-## Concrete task to implement
-Implement and commit: Add system message preservation and token budget pruning to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/scaffold_script_entrypoint.py prints guidance and exits 0 when invoked without arguments
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2100,7 +2102,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 07:03:32 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 09:45:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 07:18:15 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 09:45:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
