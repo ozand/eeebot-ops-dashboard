@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 08:46:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 05:49 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 06:03 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1193,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-10 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-b54623aa743a">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b54623aa743a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-b54623aa743a</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_target_completion): add CLI argument detection to inspect defined argparse options in target scripts</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b54623aa743a)</span>
             
-            
+            <a href="#node-17c194b" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-10T05:48:49.203149Z">08:48 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0a6e43c1daaa</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 7.91K tok &middot; dur 16s</div>
+          <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
+          <div class="feed-cost">&#9889; 18 calls &middot; 590.3K tok &middot; dur 7m22s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fe0eca121e07">
@@ -1218,7 +1218,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e09a8bd79cbf</span></div>
           <div class="feed-files">&#128193; scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py</div>
-          <div class="feed-cost">&#9889; 23 calls &middot; 537.4K tok &middot; dur 8m49s</div>
+          <div class="feed-cost">&#9889; 24 calls &middot; 561.1K tok &middot; dur 9m10s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-2c6fa0bdc6ff">
@@ -1620,7 +1620,7 @@
             <strong class="feed-title">docs(lessons): add lesson on inspecting stdlib class attributes and return types before edits</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ba6e7f7f5c94)</span>
             
-            <a href="#node-99ff315" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-09T20:28:06.208352Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6bb3250eddc1</span></div>
@@ -2612,14 +2612,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-de6bce7571d7">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">docs(lessons): add lesson on inspecting script CLI flags before invoking validation scripts</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-de6bce7571d7)</span>
             
             
             <span class="feed-ts" title="2026-09-08T17:35:38.363071Z">Sep 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b4dc9b3f2615</span></div>
-          <div class="feed-files">&#128193; lessons/inspect_script_cli_flags.md</div>
+          
           <div class="feed-cost">&#9889; 19 calls &middot; 321.3K tok &middot; dur 8m8s</div>
         </li>
         
@@ -33367,7 +33367,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 05:49:07 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:46:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 06:03:57 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 08:46:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
