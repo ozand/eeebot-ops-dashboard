@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 02:52:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 23:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 00:07 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a></nav>
@@ -2376,20 +2376,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Harness Auto-Execution Coupling for Standalone Helpers</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Coupling newly integrated standalone validation scripts directly into post-cycle harness verification runs generates required pycache and execution traces, dissolving the contradiction where creating new scripts dilutes confirmed_ratio.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Register newly created validation helper modules (such as workspace_validation_helpers.py and validate_lessons.py) into the automated harness test pass so they are exercised on every cycle.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if value.confirmed_ratio rises from 0.4457 to &gt;= 0.5000 across the next 10 cycles; refuted if completed_declared increases while confirmed_ratio remains &lt; 0.46.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-31T00:01:22.694716Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Saturation Gating for High-Deduplication Demand IDs</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Applying a saturation cool-off filter to demand IDs with high self-deduplication counts (e.g., goal-gap-5d4d5a9dc822 and goal-gap-2d9ab3aa9d09) will reduce wasted attempt rate without degrading integration velocity.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a demand cool-down threshold in pre-proposer demand selection that temporarily deprioritizes demands exhibiting a self-deduplication ratio exceeding 1:1 against completed integrations.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.wasted_attempt_rate drops below 0.2500 over 20 cycles while cost.tokens_per_integration falls below 1.8M; refuted if wasted_attempt_rate remains &gt;= 0.3500.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-08-31T00:01:22.694810Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Atomic self-testing script tasks restore executor commit yield</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Restricting code proposals to self-contained script edits with inline self-tests (dissolving the contradiction between test coverage and turn-budget exhaustion) will convert zero-diff partial outcomes into completed integrations and raise confirmed_ratio above 0.50.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Prioritize proposals targeting standalone single-file scripts with direct verification entrypoints and reject compound multi-file verification refactors.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if at least 3 of the next 5 code-bearing cycles produce non-empty commits and confirmed_ratio rises above 0.50; refuted if cycles continue ending in partial outcomes with zero files changed.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-01T00:01:06.139190Z</div>
@@ -2513,11 +2499,25 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Omitting the 8.7k character active skills catalogue from the system prompt on tasks classified as doc-only or memory updates will decrease tokens_per_integration by &gt;= 15% (from 1.28M to &lt;1.10M tokens) without degrading compile_clean_ratio or gate acceptance.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> In nanobot/runtime prompt assembly, detect when the targeted path lies entirely within docs/ or memory/ and strip out execution skill syntax templates to fit within a bounded ~14k character envelope.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if mean tokens_per_integration falls by &gt;= 150,000 tokens over 48 hours with compile_clean_ratio remaining 1.0; refuted if stripped prompts trigger structural gate or format failures.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-08T00:00:54.439235Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Compact memory indexing to resolve prompt cap eviction and repeat failures</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> The system&#x27;s effort to preserve behavioral memory has pushed prompt occupancy to 23,504 / 24,000 characters, forcing arbitrary eviction of 28 memory index entries (4,695 chars dropped); condensing index entry summaries will fit all resident memories under the 24k ceiling and drop repeat failure rate below 0.13.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a character-budgeted summary compaction in the memory index compiler that truncates or condenses long index entries so total resident memory remains under 3,000 chars without dropping entries.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if dropped_entries decreases from 28 to 0 and loop.repeat_failure_rate falls from 0.157 to &lt;= 0.130. Refuted if memory entries continue to be dropped or repeat failure rate does not decrease.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-10T00:01:22.310430Z</div>
+            </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Upstream futile surface pre-filtering in fallback target proposer</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Expanding fallback candidate paths to overcome primary stalled demands inadvertently generated 76 futile surface rejections (out of 93 total fallback rejects); pre-filtering candidate paths against the known futile surface index before prompt construction will eliminate futile surface rejects and drop wasted attempt rate below 0.42.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an upstream set-membership check in the fallback proposer against the recorded futile surfaces register, skipping unviable target paths before generating LLM proposal requests.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if fallback_rejects_by_reason.futile_surface increases by 0 across 5 consecutive fallback cycles and loop.wasted_attempt_rate decreases from 0.4757 to &lt;= 0.42. Refuted if futile surface rejections continue to rise.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-10T00:01:22.310508Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-09 23:55:21 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 02:52:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 00:07:27 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 02:52:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
