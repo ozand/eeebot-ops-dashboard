@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">205</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 12:56:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 10:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 10:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-4ee2cc2239b7</span>
+      <span class="cycle-pill">fallback-0f53a6fd411e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 10:02:13.294678 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 10:15:01.487717 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,969c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,287c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,969 chars &bull; ~1,742 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix default file inspection and exit status handling in scripts/check_style.py
-Request ID: llm-proposer-cycle-4ee2cc2239b7
-Cycle ID: cycle-4ee2cc2239b7
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,287 chars &bull; ~2,071 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add JSON output format option to scripts/smoke_test_loop.py for structured health reporting
+Request ID: llm-proposer-fallback-0f53a6fd411e
+Cycle ID: fallback-0f53a6fd411e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1752,31 +1752,43 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests in tests/test_search_subagent_archive.py for multi-field matching and unicode queries: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4ee2cc2239b7.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-0f53a6fd411e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Fix default file inspection and exit status handling in scripts/check_style.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;scripts/check_style.py fails with exit code 1 when invoked by validators; fixing default path resolution and violation handling ensures it executes cleanly without spurious failures.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Add JSON output format option to scripts/smoke_test_loop.py for structured health reporting&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/smoke_test_loop.py currently only prints unstructured text. Adding a --json flag allows automated cycle health verification and dashboard callers to parse file check statuses directly.\n\nTarget path: scripts/smoke_test_loop.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix default file inspection and exit status handling in scripts/check_style.py (target: scripts/check_style.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add JSON output format option to scripts/smoke_test_loop.py for structured health reporting (target: scripts/smoke_test_loop.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;Running smoke_test_loop.py with --help displays the --json option and exits with zero&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/smoke_test_loop.py --help&quot;
+    }
+  }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
+Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
+Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-f4612702  Title: Implementing &quot;Fix exception handler inspection and exit status in scripts/validate_exception_handling.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/confirmation_status.json, scripts/validate_exception_handling.py, tests/test_validate_exception_handling.py
+ID: LESS-20260827-044af45f  Title: Implementing &quot;Extend scripts/validate_test_existence.py with missing test pair reporting and structured JSON output&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-f4612702] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-044af45f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Confine codebase inspection and grep searches to the local workspace (scripts/ and tests/) rather than scanning external host directories (/opt/eeepc-agent/runtimes/) or historical state files (state/
-- JSON schema misconception in test assertion: The agent wrote an end-to-end test asserting that a clean source file was present in payload[&#x27;issues&#x27;].keys(), causing a test failure because check_style o
-- Cease inspection and begin code implementation within 5-8 turns once the target file and existing behavior are confirmed.
+- Do not add bare module imports to test suites to satisfy AST pairing linters when the repo&#x27;s root is not on PYTHONPATH; retain package-qualified imports (from scripts.X import Y) to keep pytest collec
+- Restrict pre-commit verification to the target unit test suite rather than bundling unrelated historical test suites that risk hitting default 60-second command timeouts.
+- Commit to beginning code modifications within 5-8 turns after inspecting target files; avoid chasing peripheral repo history or backlog items when the task objective and codebase targets are already l
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-10 09:51 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
@@ -1785,15 +1797,15 @@ If you apply this lesson, cite [Lesson LESS-20260823-f4612702] in your proposal/
 
 ## Concrete task to implement
 
-Title: Fix default file inspection and exit status handling in scripts/check_style.py
+Title: Add JSON output format option to scripts/smoke_test_loop.py for structured health reporting
 
 
-scripts/check_style.py fails with exit code 1 when invoked by validators; fixing default path resolution and violation handling ensures it executes cleanly without spurious failures.
+scripts/smoke_test_loop.py currently only prints unstructured text. Adding a --json flag allows automated cycle health verification and dashboard callers to parse file check statuses directly.
 
-Target path: scripts/check_style.py
+Target path: scripts/smoke_test_loop.py
 
-## Concrete task to implement
-Implement and commit: Fix default file inspection and exit status handling in scripts/check_style.py (target: scripts/check_style.py)
+## Expected outcome (frozen claim from the proposal — informational)
+Running smoke_test_loop.py with --help displays the --json option and exits with zero
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2099,12 +2111,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Fix default file inspection and exit status handling in scripts/check_style.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 980 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">40</td><td>373.1K</td><td>28s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add JSON output format option to scripts/smoke_test_loop.py for structured health reporting</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 983 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">43</td><td>400.0K</td><td>28s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 10:06:35 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 12:56:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 10:26:05 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 12:56:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
