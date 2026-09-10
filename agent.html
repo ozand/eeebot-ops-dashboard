@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">204</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 13:29:36 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 10:40 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 10:52 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+491 chars spare)</span>
-      <span class="cycle-pill">cycle-102cffc5743e</span>
+      <span class="cycle-pill">fallback-38e527a43785</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 10:36:38.507971 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>97%</strong> (23,509 / 24,000 chars)</span><span>2026-09-10 10:48:43.021618 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:97%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,327c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,651c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1725,9 +1725,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,488c) + 3 separators &times; 7c (21c) = 23,509 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,327 chars &bull; ~1,831 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add git commit history keyword check to scripts/check_target_completion.py to flag already-implemented tasks
-Request ID: llm-proposer-cycle-102cffc5743e
-Cycle ID: cycle-102cffc5743e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,651 chars &bull; ~1,912 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add unit tests in tests/test_model_fallback_routing.py for gemini-3.7 alias and fallback resolution
+Request ID: llm-proposer-fallback-38e527a43785
+Cycle ID: fallback-38e527a43785
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1749,54 +1749,58 @@ Recently completed (recent commits):
 - d96702b8 test(check_cycle_budget): add unit tests for token-only warn, CLI warn exit, negative reserves, and stall escalation boundary
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-102cffc5743e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-38e527a43785.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add git commit history keyword check to scripts/check_target_completion.py to flag already-implemented tasks&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle-2e634abe5a70, a task was proposed for a feature already implemented in commit 84394fff. Checking target file git commit history for matching task keywords in check_target_completion.py detects already landed features.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add unit tests in tests/test_model_fallback_routing.py for gemini-3.7 alias and fallback resolution&quot;,
+    &quot;backlog_instructions&quot;: &quot;Verify that scripts/model_fallback_routing.py correctly handles the newly supported an/gemini-3.7-flash-high alias and returns expected fallback sequences.\n\nTarget path: tests/test_model_fallback_routing.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add git commit history keyword check to scripts/check_target_completion.py to flag already-implemented tasks (target: scripts/check_target_completion.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add unit tests in tests/test_model_fallback_routing.py for gemini-3.7 alias and fallback resolution (target: tests/test_model_fallback_routing.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;check_target_completion.py inspects git commit history on target files and flags matching task descriptions&quot;,
+    &quot;claim&quot;: &quot;pytest passes new test cases for an/gemini-3.7-flash-high fallback routing&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;
+      &quot;kind&quot;: &quot;test_count_increase&quot;
     }
   }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
+ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
+Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Continue applying the rapid skip sequence (parallel file read + git log, proposal claim check execution, unit test verification) when encountering already-completed tasks to cleanly conclude cycles in
-- Always scope pytest runs on large test suites (&gt;300 tests) with a targeted keyword filter (-k) or test node ID from the initial invocation to avoid predictable 60-second timeouts on constrained hosts.
-- When verifying command execution scripts, appending explicit exit code echoes (e.g. &#x27;echo EXIT=$?&#x27;) to the verification command provides definitive evidence of exit code propagation in standard output
+- When adding features to scripts that lack standalone unit test suites, consider adding companion tests in tests/ (e.g. tests/test_model_fallback_routing.py) to prevent downstream test existence audit 
+- Always scope pytest execution with -k filters or specific test node IDs on suites containing subprocess-heavy CLI tests rather than executing the entire file.
+- Do not pass --timeout directly to pytest commands unless verifying that pytest-timeout is installed; rely instead on the tool execution timeout parameter or shell timeout wrapper.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-10 10:25 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-10 10:06 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-10 09:51 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 1 (2026-09-10 09:51 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 2 (2026-09-10 09:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add git commit history keyword check to scripts/check_target_completion.py to flag already-implemented tasks
+Title: Add unit tests in tests/test_model_fallback_routing.py for gemini-3.7 alias and fallback resolution
 
 
-In cycle-2e634abe5a70, a task was proposed for a feature already implemented in commit 84394fff. Checking target file git commit history for matching task keywords in check_target_completion.py detects already landed features.
+Verify that scripts/model_fallback_routing.py correctly handles the newly supported an/gemini-3.7-flash-high alias and returns expected fallback sequences.
 
-Target path: scripts/check_target_completion.py
+Target path: tests/test_model_fallback_routing.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-check_target_completion.py inspects git commit history on target files and flags matching task descriptions
+pytest passes new test cases for an/gemini-3.7-flash-high fallback routing
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2102,12 +2106,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add git commit history keyword check to scripts/check_target_completion.py to flag already-implemented tasks</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 984 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">44</td><td>407.3K</td><td>28s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add unit tests in tests/test_model_fallback_routing.py for gemini-3.7 alias and fallback resolution</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 987 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-10</td><td class="skill-reads">47</td><td>435.6K</td><td>27s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr><tr><td>2026-09-04</td><td class="skill-reads">136</td><td>730.3K</td><td>15s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 10:40:38 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 13:29:36 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 10:52:51 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 13:29:36 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
