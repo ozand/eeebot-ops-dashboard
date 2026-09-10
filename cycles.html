@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">197</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-10 20:08:03 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 17:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 17:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1193,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-10 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-50a0eab97bb6">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-50a0eab97bb6">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-50a0eab97bb6</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(check_target_completion): wire --isolation CLI flag to bypass live VCS calls</strong>
             <span class="feed-cid copyable" translate="no">(cycle-50a0eab97bb6)</span>
             
-            
+            <a href="#node-c4b25c4" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-10T17:12:04.133576Z">20:12 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-3eacd9fc16e2</span></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.77K tok &middot; dur 50s</div>
+          <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
+          <div class="feed-cost">&#9889; 27 calls &middot; 1.07M tok &middot; dur 4m42s</div>
         </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-fallback-c8057e396b07">
@@ -1395,7 +1395,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-89555098c452)</span>
             
-            <a href="#node-8bc8409" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-10T12:12:24.763067Z">15:12 MSK</span>
           </div>
           
@@ -2835,14 +2835,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-de39827fb61f">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Implement identifier decomposition and lexical normalization helper in scripts/l</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-de39827fb61f)</span>
             
             
             <span class="feed-ts" title="2026-09-09T01:59:34.304467Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-3a8702202674</span></div>
-          <div class="feed-files">&#128193; memory/prevent_repeats.json, memory/repeat_failures.json, scripts/lexical_normalization.py</div>
+          
           <div class="feed-cost">&#9889; 21 calls &middot; 316.6K tok &middot; dur 7m45s</div>
         </li>
         
@@ -33885,7 +33885,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-10 17:12:27 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 20:08:03 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-10 17:26:39 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-10 20:08:03 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
