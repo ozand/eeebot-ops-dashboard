@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">201</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 05:23:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 02:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 02:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
-      <span class="cycle-pill">fallback-f206dbc62bc0</span>
+      <span class="cycle-pill">fallback-4f2af065d371</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 02:13:57.507733 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 02:33:14.916593 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,455c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,843c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1730,9 +1730,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,455 chars &bull; ~1,863 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add mutable surface path validator to scripts/workspace_validation_helpers.py
-Request ID: llm-proposer-fallback-f206dbc62bc0
-Cycle ID: fallback-f206dbc62bc0
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,843 chars &bull; ~1,960 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add threshold-based warning exit code to scripts/check_cycle_budget.py
+Request ID: llm-proposer-fallback-4f2af065d371
+Cycle ID: fallback-4f2af065d371
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1744,68 +1744,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 454300bd merge: integrate selfevo/cycle-fallback-f206dbc62bc0
+- 80d757ef feat(workspace_validation_helpers): add is_valid_mutable_surface path validator
 - 98f1a71b merge: integrate selfevo/cycle-cycle-b2d758356a12
 - bcf0ea2c selfevo: auto-commit uncommitted subagent work — Add chained CLI invocation, self-test, and bytecode compilation helper in script
 - 0311d07b merge: integrate selfevo/cycle-cycle-0c449e1b6eb9
 - 5f8056ea docs(lessons): add lesson on defining contracts for mixed valid/invalid diagnostic inputs
 - bcf560d8 merge: integrate selfevo/cycle-cycle-f2874ef0bbc1
 - 46ce8eb1 docs(lessons): add lesson on verifying docstring exit code tables for CLI subprocess assertions
-- 761b4935 merge: integrate selfevo/cycle-cycle-031c566fabce
-- e187c4e5 docs(skills): extend handle-loop-breaker with trigger thresholds, tool diversion, and recovery validation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-f206dbc62bc0.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-4f2af065d371.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add mutable surface path validator to scripts/workspace_validation_helpers.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend workspace validation helpers with a function to verify whether candidate file paths reside within approved mutable surfaces and reject out-of-bounds or protected paths.\n\nTarget path: scripts/workspace_validation_helpers.py&quot;,
+    &quot;title&quot;: &quot;Add threshold-based warning exit code to scripts/check_cycle_budget.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/check_cycle_budget.py tracks turn and token consumption but lacks threshold evaluation. Adding a configurable reserve threshold check and warning exit code enables callers to detect budget exhaustion and prevent runaway cycles.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add mutable surface path validator to scripts/workspace_validation_helpers.py (target: scripts/workspace_validation_helpers.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;is_valid_mutable_surface accepts permitted mutable paths and rejects protected or external targets&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.workspace_validation_helpers import is_valid_mutable_surface; assert is_valid_mutable_surface(&#x27;scripts/test.py&#x27;) and not is_valid_mutable_surface(&#x27;goals.md&#x27;)\&quot;&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add threshold-based warning exit code to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260831-6554c7fc  Title: Cycle cycle-6554c7fc697d failed: mutation_surface_violation
-Root cause: The cycle gate verification or execution failed with mutation_surface_violation. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-20e9962c  Title: Implementing &quot;Extend workspace_validation_helpers.py with CLI entrypoint and unified workspace integrity check&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py
+ID: LESS-20260825-ea545ca8  Title: Implementing &quot;Add min-ratio threshold validation and non-zero exit code to scripts/check_confirmation_ratio.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/check_confirmation_ratio.py, tests/test_check_confirmation_ratio.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-20e9962c] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ea545ca8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Run python3 scripts/check_mutation_surface.py as a pre-commit verification check whenever adding or modifying skills or docs to detect gate violations prior to committing.
-- Focus implementation on the designated target path; do not audit upstream caller implementations across the repository when implementing localized CLI flags.
-- Use lightweight inline Python snippets with temporary directories to quickly inspect report formatting without requiring changes to persistent files or mock harness suites.
+- When scaffolding CLI companion tests by cloning existing test cases, verify that stderr and stdout assertions match the expected exit code status (success vs. failure) to prevent copy-paste assertion 
+- Treat loop_breaker safety alerts as a hard halt: when a loop breaker tool response is received, never repeat the previous command; immediately switch strategy to editing the target file or running a c
+- Cease repo-wide caller grepping once the target implementation file and test file are located; proceed directly to authoring functions on the designated target path.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 02:05 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
+- Attempt 1 (2026-09-11 02:17 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
+- Attempt 2 (2026-09-11 02:05 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
+- Attempt 3 (2026-09-11 01:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/cli_subprocess_exit_codes.md. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add mutable surface path validator to scripts/workspace_validation_helpers.py
+Title: Add threshold-based warning exit code to scripts/check_cycle_budget.py
 
 
-Extend workspace validation helpers with a function to verify whether candidate file paths reside within approved mutable surfaces and reject out-of-bounds or protected paths.
+scripts/check_cycle_budget.py tracks turn and token consumption but lacks threshold evaluation. Adding a configurable reserve threshold check and warning exit code enables callers to detect budget exhaustion and prevent runaway cycles.
 
-Target path: scripts/workspace_validation_helpers.py
+Target path: scripts/check_cycle_budget.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-is_valid_mutable_surface accepts permitted mutable paths and rejects protected or external targets
+## Concrete task to implement
+Implement and commit: Add threshold-based warning exit code to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2117,12 +2112,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add companion unit tests for search_subagent_archive.py archive parsing and filtering</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 926 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-11</td><td class="skill-reads">18</td><td>195.0K</td><td>23s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add threshold-based warning exit code to scripts/check_cycle_budget.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 928 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-11</td><td class="skill-reads">20</td><td>232.5K</td><td>25s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 02:24:56 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 05:23:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 02:37:09 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 05:23:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
