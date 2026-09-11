@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 17:33:21 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 14:36 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 14:58 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1189,7 +1189,7 @@
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
+        <section class="health-verdict health-investigate" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>INVESTIGATE</strong> <span class="health-verdict-reason">3 consecutive failed or partial cycles</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">futile-surface-filtering-in-fallback-pro</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em></span></div>
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>fallback-34bcd88f8dcb</strong> <span class="now-sub">(fallback-34bcd88f8dcb [d1e9d95c])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
@@ -1198,9 +1198,9 @@
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-11T00:00:01 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
         
         <details class="failed-exits-details" open>
-          <summary><strong class="health-alert-text">Recent Failed Bridge Exits (22)</strong></summary>
+          <summary><strong class="health-alert-text">Recent Failed Bridge Exits (25)</strong></summary>
           <ul class="failed-exits-list">
-            <li><span class="fail-ts">2026-09-09T00:14:25.428081Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-08T01:13:06.659367Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:25:22.237022Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:20:50.176057Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:16:10.227303Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:49:05.209544Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:07:11.917600Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T23:47:42.938978Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T22:19:49.439536Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-05T19:16:43.550047Z</span> [status 3]: <code></code><span class="now-sub"></span></li>
+            <li><span class="fail-ts">2026-09-11T14:52:00.959266Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-11T14:46:55.639905Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-11T14:41:37.567804Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-09T00:14:25.428081Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-08T01:13:06.659367Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:25:22.237022Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:20:50.176057Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T13:16:10.227303Z</span> [status 3]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:49:05.209544Z</span> [status 4]: <code></code><span class="now-sub"></span></li><li><span class="fail-ts">2026-09-06T00:07:11.917600Z</span> [status 4]: <code></code><span class="now-sub"></span></li>
           </ul>
         </details>
     
@@ -1214,7 +1214,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 43 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 44 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="tokens.html">tokens</a> &mdash; 1.90B across 54 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 130 active / 7 answered + 20 strategist durable</li>
@@ -1229,10 +1229,24 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-d4624f07ba56">
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-af2a878efdb0">
           <div class="feed-header">
             <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-d4624f07ba56</strong>
+            <strong class="feed-title">cycle-af2a878efdb0</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-af2a878efdb0)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-11T14:58:30.216210Z">17:58 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-0d31c4d29d2e</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-002">error:ERR-2026-09-06-002</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ea545ca8">lesson:LESS-20260825-ea545ca8</a></div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 5.68K tok &middot; dur 12s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-d4624f07ba56">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: executor_llm_error</span>
+            <strong class="feed-title">failed: executor_llm_error</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d4624f07ba56)</span>
             
             
@@ -1240,7 +1254,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-7c53659b11b0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-002">error:ERR-2026-09-06-002</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ea545ca8">lesson:LESS-20260825-ea545ca8</a></div>
           
-          <div class="feed-cost">&#9889; 1 calls &middot; 5.41K tok &middot; dur 41s</div>
+          <div class="feed-cost">&#9889; 4 calls &middot; 5.41K tok &middot; dur 2m27s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-34bcd88f8dcb">
@@ -1257,25 +1271,11 @@
           <div class="feed-cost">&#9889; 16 calls &middot; 523.0K tok &middot; dur 5m46s</div>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-3678e190b5cf">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-3678e190b5cf)</span>
-            
-            
-            <span class="feed-ts" title="2026-09-11T13:54:02.146172Z">16:54 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-658535240a5c</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
-          
-          <div class="feed-cost">&#9889; 82 calls &middot; 2.74M tok &middot; dur 10m7s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 14:36:54 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 17:33:21 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 14:58:49 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 17:33:21 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
