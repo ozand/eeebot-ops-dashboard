@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 02:33:11 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="40">data: 40s old &middot; generated 23:36 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 23:45 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-eeb3c220d25b</span>
+      <span class="cycle-pill">cycle-baa09811bfee</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 22:58:59.980482 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 23:39:57.007116 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,024c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,392c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,024 chars &bull; ~2,006 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error diagnostic extraction and summary formatting to scripts/search_subagent_archive.py
-Request ID: llm-proposer-cycle-eeb3c220d25b
-Cycle ID: cycle-eeb3c220d25b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,392 chars &bull; ~1,848 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Exempt deprecated scripts and ignore patterns in scripts/validate_test_existence.py
+Request ID: llm-proposer-cycle-baa09811bfee
+Cycle ID: cycle-baa09811bfee
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,69 +1746,67 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 1eaf6c5d merge: integrate selfevo/cycle-cycle-eeb3c220d25b
+- 730f0d89 feat(search_subagent_archive): add error diagnostic extraction and summary formatting
 - f0fb4794 merge: integrate selfevo/cycle-cycle-f00344159c0a
 - adc72045 docs(lessons): append incident postmortem and recovery protocol for subagent run d98ee9a7
 - 0549f118 chore: record structured error for [cycle-32c17d]
 - 10c0143a merge: integrate selfevo/cycle-cycle-2b8b3eed73a3
 - 2dea21f0 docs(lessons): document subagent error triage and recovery for result 7bed43f0
 - 4c203e1c curator: promote 0 fact(s), 7 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
-- b51b012f merge: integrate selfevo/cycle-cycle-661ac5eb07c6
-- e38d559c docs(lessons): document uncooled script reflection handling policy
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Package recurring verify_and_proof inspection procedure into skill: mutation_surface_violation
-- Fix default target evaluation and exit status in scripts/check_style.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-eeb3c220d25b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-baa09811bfee.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add error diagnostic extraction and summary formatting to scripts/search_subagent_archive.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Subagent result 5367edd9 failed with status=error. With doc-only budgets reached, resolving this requires code-bearing tools to triage failures. Extending scripts/search_subagent_archive.py to extract and format error fields, stack traces, and exit codes from errored subagent result records enables automated diagnostics without repeating status-filter changes.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
+    &quot;title&quot;: &quot;Exempt deprecated scripts and ignore patterns in scripts/validate_test_existence.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;validate_test_existence.py exits with code 1 due to unexempted deprecated scripts and missing exclusions; adding deprecated script detection and ignore patterns allows the validator to pass cleanly.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error diagnostic extraction and summary formatting to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Exempt deprecated scripts and ignore patterns in scripts/validate_test_existence.py (target: scripts/validate_test_existence.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/search_subagent_archive.py compiles and formats error diagnostics from errored subagent result records&quot;,
+    &quot;claim&quot;: &quot;scripts/validate_test_existence.py exits with returncode 0 when run&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m py_compile scripts/search_subagent_archive.py&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_test_existence.py&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-87a1594c  Title: Implementing &quot;Add failure classification and detailed error context extraction to scripts/extract_last_failure.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/extract_last_failure.py, tests/test_extract_last_failure.py
+ID: LESS-20260827-044af45f  Title: Implementing &quot;Extend scripts/validate_test_existence.py with missing test pair reporting and structured JSON output&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-87a1594c] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-044af45f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Immediately halt tool execution and emit the final summary or skip declaration when a loop_breaker safety stop is triggered.
-- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Rely strictly on targeted companion unit tests for self-contained utility scripts instead of invoking full-suite runners (like `scripts/run_all_tests.py`) that trigger pre-existing failures and runtim
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 22:38 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-11 22:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/subagent_result_error_handling.md. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-11 21:31 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-11 23:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
+- Attempt 2 (2026-09-11 22:38 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add error diagnostic extraction and summary formatting to scripts/search_subagent_archive.py
+Title: Exempt deprecated scripts and ignore patterns in scripts/validate_test_existence.py
 
 
-Subagent result 5367edd9 failed with status=error. With doc-only budgets reached, resolving this requires code-bearing tools to triage failures. Extending scripts/search_subagent_archive.py to extract and format error fields, stack traces, and exit codes from errored subagent result records enables automated diagnostics without repeating status-filter changes.
+validate_test_existence.py exits with code 1 due to unexempted deprecated scripts and missing exclusions; adding deprecated script detection and ignore patterns allows the validator to pass cleanly.
 
-Target path: scripts/search_subagent_archive.py
+Target path: scripts/validate_test_existence.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/search_subagent_archive.py compiles and formats error diagnostics from errored subagent result records
+scripts/validate_test_existence.py exits with returncode 0 when run
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2125,7 +2123,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 23:36:27 UTC &middot; host eeepc &middot; newest source 40s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 02:33:11 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 23:45:10 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 02:33:11 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
