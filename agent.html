@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">208</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 16:16:09 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 13:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 13:48 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">fallback-751a239d07d3</span>
+      <span class="cycle-pill">cycle-6f58c358765e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 12:50:20.873151 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 13:21:52.170636 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,917c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,563c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,917 chars &bull; ~1,729 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add system prompt preservation and turn boundary snapping to scripts/truncate_conversation.py
-Request ID: llm-proposer-fallback-751a239d07d3
-Cycle ID: fallback-751a239d07d3
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,563 chars &bull; ~1,890 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize directory pruning and import resolution caching in scripts/verify_imports.py
+Request ID: llm-proposer-cycle-6f58c358765e
+Cycle ID: cycle-6f58c358765e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1745,58 +1745,74 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 10c16232 merge: integrate selfevo/cycle-fallback-751a239d07d3
+- 36d04028 selfevo: auto-commit uncommitted subagent work — Add system prompt preservation and turn boundary snapping to scripts/truncate_co
+- 25dfd7d8 feat(truncate_conversation): add turn boundary snapping to token-budget pruning
 - 1ebbaea4 merge: integrate selfevo/cycle-fallback-78d2c218c6b0
 - 206cb7f1 feat(check_target_completion): add fuzzy title similarity matching
 - 4e052009 merge: integrate selfevo/cycle-fallback-4a85fb4818ce
 - 8a82188e feat(filter_futile_fallbacks): add consecutive failure threshold masking
 - 6fbdac9c merge: integrate selfevo/cycle-cycle-a1f7ba0c7c1d
-- 77524659 feat(query_ast_symbols): add attribute call and imported symbol lookup
-- a30764a0 merge: integrate selfevo/cycle-cycle-fea7e6e78bf1
-- e4e3f19d feat(targeted_file_slice): add function signature and return envelope extraction modes
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-751a239d07d3.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6f58c358765e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add system prompt preservation and turn boundary snapping to scripts/truncate_conversation.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Truncating conversation histories arbitrarily can discard system instructions or orphan turn replies. Adding system prompt retention and turn boundary snapping ensures pruned conversation payloads remain valid for LLM calls on constrained hardware.\n\nTarget path: scripts/truncate_conversation.py&quot;,
+    &quot;title&quot;: &quot;Optimize directory pruning and import resolution caching in scripts/verify_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Validator harness timed out after 60s executing scripts/verify_imports.py; pruning skipped directories during traversal and caching module spec lookups will reduce runtime within the harness budget.\n\nTarget path: scripts/verify_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add system prompt preservation and turn boundary snapping to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize directory pruning and import resolution caching in scripts/verify_imports.py (target: scripts/verify_imports.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/verify_imports.py runs to completion and exits zero within the 60s harness timeout&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/verify_imports.py&quot;
+    }
+  }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-9e2ef2d1  Title: Implementing &quot;Add target surface boundary and git diff validation to scripts/validate_cycle_handoff.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_cycle_handoff.py, tests/test_validate_cycle_handoff.py
+ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-9e2ef2d1] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Continue using parallel tool calls during initial task reconnaissance (e.g., pairing target file reads with git log or companion test discovery) to minimize loop round trips.
-- Chain companion test execution with the exact claim command (e.g., pytest &amp;&amp; --help check) in a single shell command to verify both regression safety and claim satisfaction before committing.
-- Prepending conversational commentary prior to terminal JSON payload: In turn 4, the agent wrote an explanatory summary (&#x27;The task is already fully implemented. The `--json` flag exists in `scripts/che
+- When profiling long-running functions that emit verbose terminal output, redirect stdout or dump stats to a binary file (.prof) so profile metrics can be analyzed and paginated without re-running the 
+- Profile file-scanning and import-analysis tools against a single directory or limited subset of files first to identify hot functions within seconds before running against the entire workspace.
+- For static analysis linters and validators, implement raw-text or regex pre-checks to gate expensive AST parsing and full tokenization on files that do not contain target tokens.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 12:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 2 (2026-09-11 12:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_fallbacks.py, tests/test_filter_futile_fallbacks.py. Reward signal will…
-- Attempt 3 (2026-09-11 12:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/query_ast_symbols.py, tests/test_query_ast_symbols.py. Reward signal will be upgraded…
+- Attempt 1 (2026-09-11 13:10 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/truncate_conversation.py,…
+- Attempt 2 (2026-09-11 12:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 3 (2026-09-11 12:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_fallbacks.py, tests/test_filter_futile_fallbacks.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add system prompt preservation and turn boundary snapping to scripts/truncate_conversation.py
+Title: Optimize directory pruning and import resolution caching in scripts/verify_imports.py
 
 
-Truncating conversation histories arbitrarily can discard system instructions or orphan turn replies. Adding system prompt retention and turn boundary snapping ensures pruned conversation payloads remain valid for LLM calls on constrained hardware.
+Validator harness timed out after 60s executing scripts/verify_imports.py; pruning skipped directories during traversal and caching module spec lookups will reduce runtime within the harness budget.
 
-Target path: scripts/truncate_conversation.py
+Target path: scripts/verify_imports.py
 
-## Concrete task to implement
-Implement and commit: Add system prompt preservation and turn boundary snapping to scripts/truncate_conversation.py (target: scripts/truncate_conversation.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/verify_imports.py runs to completion and exits zero within the 60s harness timeout
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2113,7 +2129,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 13:18:00 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 16:16:09 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 13:48:02 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 16:16:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
