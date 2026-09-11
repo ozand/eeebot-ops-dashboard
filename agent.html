@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">79.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 18:51:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">15.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 16:08 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 16:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-51147d6c3412</span>
+      <span class="cycle-pill">fallback-3ad0b02cb832</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 15:58:17.317007 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 16:16:02.278279 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,419c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,953c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,419 chars &bull; ~1,854 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize AST traversal and directory pruning in scripts/validate_unused_imports.py to prevent harness timeout
-Request ID: llm-proposer-cycle-51147d6c3412
-Cycle ID: cycle-51147d6c3412
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,953 chars &bull; ~1,738 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add outcome status filtering to scripts/search_subagent_archive.py
+Request ID: llm-proposer-fallback-3ad0b02cb832
+Cycle ID: fallback-3ad0b02cb832
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1759,59 +1759,48 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Fix style validation rules and exit code handling in scripts/check_style.py: executor_llm_error
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-51147d6c3412.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-3ad0b02cb832.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Optimize AST traversal and directory pruning in scripts/validate_unused_imports.py to prevent harness timeout&quot;,
-    &quot;backlog_instructions&quot;: &quot;Prune ignored/archive directories and streamline AST symbol parsing in scripts/validate_unused_imports.py so file validation executes reliably within the 60-second harness budget.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
+    &quot;title&quot;: &quot;Add outcome status filtering to scripts/search_subagent_archive.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Enables subagent archive searches to filter by execution outcome such as failed or success, speeding up error pattern mining.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize AST traversal and directory pruning in scripts/validate_unused_imports.py to prevent harness timeout (target: scripts/validate_unused_imports.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/validate_unused_imports.py completes execution cleanly within the harness timeout&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/validate_unused_imports.py&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add outcome status filtering to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
+ID: LESS-20260823-cabd4170  Title: Implementing &quot;Add JSON output format and outcome status filtering to scripts/backlog_seeder.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/backlog_seeder.py, tests/test_backlog_seeder_outcomes.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260823-cabd4170] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- For static analysis linters and validators, implement raw-text or regex pre-checks to gate expensive AST parsing and full tokenization on files that do not contain target tokens.
-- Use Python inline timing (e.g. time.time() or time.perf_counter()) or shell built-ins rather than relying on non-guaranteed external binaries such as &#x27;bc&#x27; when benchmarking command runtimes.
-- Prepending conversational commentary before terminal JSON payload: In turn 36, the agent output conversational text (&#x27;Committed successfully. The cycle is complete.\n\n{...&#x27;) prior to emitting the JSO
+- When deriving tasks from recent cycle outcomes, prefer extending or optimizing active stepping stones or script features rather than reflexively proposing standard companion unit test files that may a
+- Reflexive companion unit-test proposal triggering duplicate rejection: The proposer saw &#x27;Add match relevance scoring heuristics and ranked output to scripts/search_subagent_archive.py&#x27; in recent cycle
+- Avoid bash-specific parameters like ${PIPESTATUS} in exec commands; use standard POSIX shell redirection or inspect $? directly to capture process status.
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-11 16:07 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-11 15:47 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-11 15:15 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Optimize AST traversal and directory pruning in scripts/validate_unused_imports.py to prevent harness timeout
+Title: Add outcome status filtering to scripts/search_subagent_archive.py
 
 
-Prune ignored/archive directories and streamline AST symbol parsing in scripts/validate_unused_imports.py so file validation executes reliably within the 60-second harness budget.
+Enables subagent archive searches to filter by execution outcome such as failed or success, speeding up error pattern mining.
 
-Target path: scripts/validate_unused_imports.py
+Target path: scripts/search_subagent_archive.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/validate_unused_imports.py completes execution cleanly within the harness timeout
+## Concrete task to implement
+Implement and commit: Add outcome status filtering to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2123,12 +2112,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Optimize AST traversal and directory pruning in scripts/validate_unused_imports.py to prevent harness timeout</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 980 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-11</td><td class="skill-reads">72</td><td>723.6K</td><td>25s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add outcome status filtering to scripts/search_subagent_archive.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 983 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-11</td><td class="skill-reads">75</td><td>746.2K</td><td>25s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr><tr><td>2026-09-05</td><td class="skill-reads">170</td><td>992.3K</td><td>14s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 16:08:00 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 18:51:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 16:18:46 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 18:51:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
