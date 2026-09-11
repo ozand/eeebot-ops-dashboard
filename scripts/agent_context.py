@@ -224,6 +224,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     over_by = sys_prompt.get("over_by", 0)
     sections = sys_prompt.get("sections")
     dropped = sys_prompt.get("dropped") or []
+    rung = sys_prompt.get("rung")
     cid = sys_prompt.get("cycle_id", "")
     ts_str = str(sys_prompt.get("ts") or "")
 
@@ -275,6 +276,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         bar_pct = 50
         bar_color = "var(--color-accent, #58a6ff)"
 
+    rung_html = ""
+    if rung and rung != "full":
+        rung_html = f'<div class="context-dropped-alert">&#9888; <strong>Prompt fit degradation:</strong> {esc(rung)}</div>'
+
     dropped_html = ""
     if dropped:
         pills = []
@@ -313,6 +318,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('    <div class="context-header-badges">')
     out.append(f'      {headroom_badge}')
+    if rung:
+        rung_badge_class = "badge-success" if rung == "full" else "badge-danger"
+        out.append(f'      <span class="context-badge {rung_badge_class}">Prompt fit: {esc(rung)}</span>')
     out.append(f'      <span class="cycle-pill">{esc(cid or "latest")}</span>')
     out.append('    </div>')
     out.append('  </div>')
@@ -347,6 +355,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('  </div>')
 
+    if rung_html:
+        out.append(f'  {rung_html}')
     if dropped_html:
         out.append(f'  {dropped_html}')
 
