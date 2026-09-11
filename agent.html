@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">205</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">79.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 22:42:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 20:14 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 20:23 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-57c9fca3f789</span>
+      <span class="cycle-pill">cycle-661ac5eb07c6</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 19:04:42.976757 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 20:18:33.082126 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,022c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,593c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,022 chars &bull; ~2,005 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Detect skipped-duplicate cycle statuses in scripts/prevent_repeat_failures.py
-Request ID: llm-proposer-cycle-57c9fca3f789
-Cycle ID: cycle-57c9fca3f789
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,593 chars &bull; ~1,898 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document uncooled script reflection policy in lessons
+Request ID: llm-proposer-cycle-661ac5eb07c6
+Cycle ID: cycle-661ac5eb07c6
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,66 +1746,71 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 32cee06c merge: integrate selfevo/cycle-cycle-57c9fca3f789
+- f9adcf1b fix(tests): use dynamic timestamps in prevent_repeat_failures fixtures
+- 380c6585 feat(prevent_repeat_failures): detect skipped-duplicate cycle statuses
 - cafcd2fc merge: integrate selfevo/cycle-cycle-4ac4325cb118
 - 2d87ef18 feat(verify_and_proof): add py_compile pre-check before pytest execution
 - 0ecb5032 merge: integrate selfevo/cycle-cycle-36dd109da168
 - 5ae9f222 selfevo: auto-commit uncommitted subagent work — Deprecate and archive scripts/extract_last_failure.py with deprecation notice
 - 3897a064 merge: integrate selfevo/cycle-fallback-9108820a09fe
-- 88ebd8b9 feat(check_last_cycle_repeat): add --window flag and target path repeat check
-- 408e81f0 chore: record structured error for [cycle-4b4bdc]
-- be1b5873 chore: record structured error for [cycle-af2a87]
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-57c9fca3f789.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-661ac5eb07c6.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Detect skipped-duplicate cycle statuses in scripts/prevent_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;scripts/prevent_repeat_failures.py validates proposed tasks against failure patterns but ignores targets marked skipped-duplicate in recent cycle outcomes. Adding detection for skipped-duplicate statuses prevents proposing tasks on files that dedup will immediately reject.\n\nTarget path: scripts/prevent_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Document uncooled script reflection policy in lessons&quot;,
+    &quot;backlog_instructions&quot;: &quot;Documents the steering policy in lessons to prevent proposing tasks on cooled scripts when assigned reflection demands.\n\nTarget path: lessons/uncooled_reflection_handling.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Detect skipped-duplicate cycle statuses in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document uncooled script reflection policy in lessons (target: lessons/uncooled_reflection_handling.md)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
+Root cause: The deployment script copies Python source files but does not create the lessons/ directory
+or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
+was invisible — no log, no error, just silent no-op.
 
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
+   as part of every release activation step.
+2. After deploying lessons integration, verify with:
+   sudo ls -la /opt/.../current/lessons
+   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-20260828-8b960e22  Title: Implementing &quot;Document rule against inspecting historical state reports when verifying script capabilities&quot; improves operator value.
+Problem: Committed 1 commit(s): lessons/avoid_state_report_inspection.md
+Solution: Task completed with 0 tool calls in 0s.
+If you apply this lesson, cite [Lesson LESS-20260828-8b960e22] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Avoid querying live runtime ledger files on the filesystem (/var/lib/eeepc-agent/...); use the repository codebase, documentation, and unit test fixtures as the source of truth for record schemas.
 - Do not detour into historical commit investigations or date drift when discovering existing self-test failures; focus strictly on implementing the requested feature within target_path.
-- Specify explicit `timeout` arguments (e.g. 120s) when invoking full pytest suites on slow or resource-constrained platforms to prevent default 60-second command timeouts.
+- Calculate exact token set intersections and unions when constructing assertions for Jaccard or token-overlap matching rather than assuming 1.0 identity when conventional prefixes or scopes are present
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 18:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
-- Attempt 2 (2026-09-11 18:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/extract_last_failure.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-11 19:38 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 2 (2026-09-11 18:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Attempt 3 (2026-09-11 18:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/extract_last_failure.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Detect skipped-duplicate cycle statuses in scripts/prevent_repeat_failures.py
+Title: Document uncooled script reflection policy in lessons
 
 
-scripts/prevent_repeat_failures.py validates proposed tasks against failure patterns but ignores targets marked skipped-duplicate in recent cycle outcomes. Adding detection for skipped-duplicate statuses prevents proposing tasks on files that dedup will immediately reject.
+Documents the steering policy in lessons to prevent proposing tasks on cooled scripts when assigned reflection demands.
 
-Target path: scripts/prevent_repeat_failures.py
+Target path: lessons/uncooled_reflection_handling.md
 
 ## Concrete task to implement
-Implement and commit: Detect skipped-duplicate cycle statuses in scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)
+Implement and commit: Document uncooled script reflection policy in lessons (target: lessons/uncooled_reflection_handling.md)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2122,7 +2127,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 20:14:43 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 22:42:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 20:23:47 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 22:42:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
