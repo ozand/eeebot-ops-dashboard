@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">207</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 13:50:48 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 10:54 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 11:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-53320d96aa33</span>
+      <span class="cycle-pill">cycle-fea7e6e78bf1</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 10:23:21.624071 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 10:57:42.221305 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,051c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,514c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,051 chars &bull; ~2,012 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add deduplication match string and skipped-duplicate handling to scripts/check_last_cycle_repeat.py
-Request ID: llm-proposer-cycle-53320d96aa33
-Cycle ID: cycle-53320d96aa33
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,514 chars &bull; ~1,878 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add function signature and return envelope extraction mode to scripts/targeted_file_slice.py
+Request ID: llm-proposer-cycle-fea7e6e78bf1
+Cycle ID: cycle-fea7e6e78bf1
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1745,76 +1745,72 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- e6c0a833 merge: integrate selfevo/cycle-cycle-53320d96aa33
+- e212be62 feat(check_last_cycle_repeat): add dedup match string parsing and skipped-duplicate candidate check
 - b9617bc6 merge: integrate selfevo/cycle-cycle-cabf62e4e500
 - f7974b92 feat(verify_and_proof): add --affected-tests discovery for target module references
 - 0fe0e3ce merge: integrate selfevo/cycle-cycle-c81da699c6b1
 - 8994ea9e feat(verify_and_proof): add --history option to inspect recent git history for script changes
 - a99e5806 merge: integrate selfevo/cycle-fallback-ac8a2f578d1e
 - ed95eef2 feat(smoke_test_loop): add AST syntax validation for Python files
-- a2665883 merge: integrate selfevo/cycle-cycle-561c7e859fad
-- 6edee100 perf(validate_heredoc_urls): prune ignored dirs and skip AST for URL-free files
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests for skill format validation and frontmatter schema parsing: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-53320d96aa33.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-fea7e6e78bf1.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add deduplication match string and skipped-duplicate handling to scripts/check_last_cycle_repeat.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;In cycle-723507ffbc94, a proposal repeated cycle-c3a4a72e7a6d&#x27;s deduplication rejection because deduplication match strings and skipped-duplicate outcomes were not checked against the candidate proposal. Extending scripts/check_last_cycle_repeat.py to parse deduplication rejection metadata from recent cycle records prevents repeating deduplicated proposals.\n\nTarget path: scripts/check_last_cycle_repeat.py&quot;,
+    &quot;title&quot;: &quot;Add function signature and return envelope extraction mode to scripts/targeted_file_slice.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves reflection-f281ab100683 by adding AST inspection to scripts/targeted_file_slice.py to extract sibling helper signatures and JSON envelope return structures without slicing full files.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add deduplication match string and skipped-duplicate handling to scripts/check_last_cycle_repeat.py (target: scripts/check_last_cycle_repeat.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_last_cycle_repeat.py parses deduplication match metadata and exits zero with --help&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_last_cycle_repeat.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add function signature and return envelope extraction mode to scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+ID: ERR-2026-06-15-001  Title: NameError — &#x27;completed&#x27; undefined in _subagent_lane_health() after O(1) refactor
+Root cause: During an O(1) optimization refactor, the variable &#x27;completed&#x27; (a list) was replaced by
+&#x27;completed_count&#x27; (an integer), but two downstream references — the ternary state expression
+and &#x27;len(completed)&#x27; in the return dict — were not updated. The refactor introduced two
+NameErrors simultaneously in the same function.
 
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+Prevention: When renaming a variable in a refactor, grep the entire function scope for all references
+before committing. Run &#x27;python3 -c &quot;import ast; ast.parse(open(file).read())&quot;&#x27; as minimum
+smoke test after any coordinator edit.
 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-177da27a  Title: Implementing &quot;Add failure reason pattern matching and structured JSON output to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
+ID: LESS-20260826-87a1594c  Title: Implementing &quot;Add failure classification and detailed error context extraction to scripts/extract_last_failure.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/extract_last_failure.py, tests/test_extract_last_failure.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-177da27a] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260826-87a1594c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Reflexive companion unit-test proposal triggering duplicate rejection: The proposer saw &#x27;Add match relevance scoring heuristics and ranked output to scripts/search_subagent_archive.py&#x27; in recent cycle
-- When assigned a demand item citing deduplication failure for a specific script, avoid simply redirecting to that script&#x27;s companion unit test file without checking if companion tests have already been
-- When sorting on mixed ascending and descending criteria with non-numeric fields (e.g. ISO-8601 strings and numeric scores), use Python&#x27;s stable multi-pass sort or explicit inverted keys from the start
+- Avoid running auxiliary AST/style checks (such as check_ast_line_count.py) unless they are part of the target suite or smoke gate, to avoid detours investigating pre-existing violations.
+- Prepending conversational narrative before terminal JSON payload: In turn 19, the agent prepended status sentences (&#x27;Committed. The implementation is complete...&#x27;) before outputting the final JSON obj
+- Use &#x27;git stash -u&#x27; (or &#x27;--include-untracked&#x27;) when stashing newly created files to isolate baseline test failures, preventing no-op stashes.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 10:12 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-11 10:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py. Reward signal will…
 - Attempt 2 (2026-09-11 09:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add deduplication match string and skipped-duplicate handling to scripts/check_last_cycle_repeat.py
+Title: Add function signature and return envelope extraction mode to scripts/targeted_file_slice.py
 
 
-In cycle-723507ffbc94, a proposal repeated cycle-c3a4a72e7a6d&#x27;s deduplication rejection because deduplication match strings and skipped-duplicate outcomes were not checked against the candidate proposal. Extending scripts/check_last_cycle_repeat.py to parse deduplication rejection metadata from recent cycle records prevents repeating deduplicated proposals.
+Resolves reflection-f281ab100683 by adding AST inspection to scripts/targeted_file_slice.py to extract sibling helper signatures and JSON envelope return structures without slicing full files.
 
-Target path: scripts/check_last_cycle_repeat.py
+Target path: scripts/targeted_file_slice.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_last_cycle_repeat.py parses deduplication match metadata and exits zero with --help
+## Concrete task to implement
+Implement and commit: Add function signature and return envelope extraction mode to scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2131,7 +2127,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 10:54:11 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 13:50:48 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 11:18:34 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 13:50:48 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
