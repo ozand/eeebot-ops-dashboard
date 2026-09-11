@@ -33,6 +33,33 @@ def _base_fixture() -> dict[str, Any]:
     }
 
 
+def test_agent_page_renders_non_full_prompt_fit_rung():
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-uniform-trim',
+            'chars': 24000,
+            'cap': 24000,
+            'rung': 'uniform_trim',
+            'sections': {'identity': 1446, 'bootstrap': 9333, 'skills_catalogue': 9200, 'memory': 4000},
+            'trimmed': [{'section': 'bootstrap', 'chars': 14, 'how': 'uniform-trim'}],
+            'dropped': [],
+            'ts': '2026-09-11T05:00:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'index_status': 'missing', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'index_status': 'missing', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-11 08:00:00')['agent.html']
+
+    assert 'Prompt fit degradation:' in html
+    assert 'uniform_trim' in html
+
+
 def test_agent_page_renders_two_tier_context_and_reconciliation():
     """Issue #227: Tier 1 strict assembly order, arithmetic reconciliation, and Tier 2 link."""
     fixture = _base_fixture()
