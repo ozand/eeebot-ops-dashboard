@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">202</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 00:14:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 21:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 21:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-2b8b3eed73a3</span>
+      <span class="cycle-pill">cycle-32c17dcfabf3</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 21:02:08.297313 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 21:28:06.279779 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,910c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,870c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,910 chars &bull; ~1,977 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document subagent error triage and recovery procedures for result 7bed43f0 in lessons
-Request ID: llm-proposer-cycle-2b8b3eed73a3
-Cycle ID: cycle-2b8b3eed73a3
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,870 chars &bull; ~1,717 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Package recurring verify_and_proof inspection procedure into skill
+Request ID: llm-proposer-cycle-32c17dcfabf3
+Cycle ID: cycle-32c17dcfabf3
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,71 +1746,63 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 10c0143a merge: integrate selfevo/cycle-cycle-2b8b3eed73a3
+- 2dea21f0 docs(lessons): document subagent error triage and recovery for result 7bed43f0
 - 4c203e1c curator: promote 0 fact(s), 7 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 - b51b012f merge: integrate selfevo/cycle-cycle-661ac5eb07c6
 - e38d559c docs(lessons): document uncooled script reflection handling policy
 - 32cee06c merge: integrate selfevo/cycle-cycle-57c9fca3f789
 - f9adcf1b fix(tests): use dynamic timestamps in prevent_repeat_failures fixtures
 - 380c6585 feat(prevent_repeat_failures): detect skipped-duplicate cycle statuses
-- cafcd2fc merge: integrate selfevo/cycle-cycle-4ac4325cb118
-- 2d87ef18 feat(verify_and_proof): add py_compile pre-check before pytest execution
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Fix default target evaluation and exit status in scripts/check_style.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2b8b3eed73a3.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-32c17dcfabf3.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document subagent error triage and recovery procedures for result 7bed43f0 in lessons&quot;,
-    &quot;backlog_instructions&quot;: &quot;Analyzes error evidence from result 7bed43f0.json (status=error) and documents root-cause taxonomy, triage protocols, and recovery guidelines in lessons to prevent repeat subagent failures.\n\nTarget path: lessons/subagent_result_error_handling.md&quot;,
+    &quot;title&quot;: &quot;Package recurring verify_and_proof inspection procedure into skill&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves skill-candidate-bceb87d94a71 by packaging the recurring read:verify_and_proof -&gt; exec:grep -&gt; read:verify_and_proof procedure into a standard skill document under skills/.\n\nTarget path: skills/inspect_verify_and_proof/SKILL.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document subagent error triage and recovery procedures for result 7bed43f0 in lessons (target: lessons/subagent_result_error_handling.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Package recurring verify_and_proof inspection procedure into skill (target: skills/inspect_verify_and_proof/SKILL.md)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;The inspect_verify_and_proof skill document exists and conforms to skill specifications&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;skills/inspect_verify_and_proof/SKILL.md&quot;
+    }
+  }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-acf736a5  Title: Implementing &quot;Document short-circuit rule for auxiliary git and test scans upon redundancy proof in lessons&quot; improves operator value.
-Problem: Committed 2 commit(s): lessons/early_edit_turn_discipline.md, memory/repeat_failures.json
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-acf736a5] in your proposal/response.
+ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
-- Configure secondary fallback deployments or model routing in LiteLLM so that transient exhaustion of un/qwen3.8-27b-gguf automatically routes requests to a secondary endpoint rather than aborting the 
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-11 20:23 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/uncooled_reflection_handling.md. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-11 19:38 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
-- Attempt 3 (2026-09-11 18:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Concrete task to implement
 
-Title: Document subagent error triage and recovery procedures for result 7bed43f0 in lessons
+Title: Package recurring verify_and_proof inspection procedure into skill
 
 
-Analyzes error evidence from result 7bed43f0.json (status=error) and documents root-cause taxonomy, triage protocols, and recovery guidelines in lessons to prevent repeat subagent failures.
+Resolves skill-candidate-bceb87d94a71 by packaging the recurring read:verify_and_proof -&gt; exec:grep -&gt; read:verify_and_proof procedure into a standard skill document under skills/.
 
-Target path: lessons/subagent_result_error_handling.md
+Target path: skills/inspect_verify_and_proof/SKILL.md
 
-## Concrete task to implement
-Implement and commit: Document subagent error triage and recovery procedures for result 7bed43f0 in lessons (target: lessons/subagent_result_error_handling.md)
+## Expected outcome (frozen claim from the proposal — informational)
+The inspect_verify_and_proof skill document exists and conforms to skill specifications
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2127,7 +2119,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 21:24:23 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 00:14:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 21:32:25 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 00:14:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
