@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">205</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 10:00:07 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 07:02 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 07:13 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-e8791120aaed</span>
+      <span class="cycle-pill">cycle-650c703f3657</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 06:17:41.790362 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 07:06:59.241973 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,324c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,188c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,324 chars &bull; ~1,831 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix default target scanning and exit code handling in scripts/check_style.py
-Request ID: llm-proposer-cycle-e8791120aaed
-Cycle ID: cycle-e8791120aaed
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,188 chars &bull; ~2,047 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix exit code failure in scripts/validate_markdown_format.py with robust parsing and warning handling
+Request ID: llm-proposer-cycle-650c703f3657
+Cycle ID: cycle-650c703f3657
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1755,23 +1755,23 @@ Recently completed (recent commits):
 - 437e21c0 feat(search_subagent_archive): add match relevance scoring and ranked output
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e8791120aaed.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-650c703f3657.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Fix default target scanning and exit code handling in scripts/check_style.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolve validator failure by ensuring scripts/check_style.py handles default arguments, excludes non-fatal warnings, and exits with 0 on clean runs.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Fix exit code failure in scripts/validate_markdown_format.py with robust parsing and warning handling&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves the exit code 1 failure by updating scripts/validate_markdown_format.py to handle edge cases in markdown syntax gracefully and distinguish non-fatal formatting warnings from fatal errors.\n\nTarget path: scripts/validate_markdown_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix default target scanning and exit code handling in scripts/check_style.py (target: scripts/check_style.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix exit code failure in scripts/validate_markdown_format.py with robust parsing and warning handling (target: scripts/validate_markdown_format.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_style.py exits with status code 0 when invoked as a validator&quot;,
+    &quot;claim&quot;: &quot;scripts/validate_markdown_format.py exits with code 0 when run on repository markdown files&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_style.py&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_markdown_format.py&quot;
     }
   }
 }
@@ -1783,30 +1783,32 @@ Root cause: The agent treated a non-zero exit code as a transient signal worth r
 Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-ff3ff930  Title: Implementing &quot;Add target threshold evaluation and failure exit code to scripts/check_confirmation_ratio.py&quot; improves operator value.
-Problem: Committed 1 commit(s): memory/confirmation_status.json
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260826-ff3ff930] in your proposal/response.
+ID: LESS-20260823-f4612702  Title: Implementing &quot;Fix exception handler inspection and exit status in scripts/validate_exception_handling.py&quot; improves operator value.
+Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/confirmation_status.json, scripts/validate_exception_handling.py, tests/test_validate_exception_handling.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260823-f4612702] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid bash-specific parameters such as ${PIPESTATUS[0]} in shell commands; use POSIX-compliant status checking ($?) or invoke bash explicitly when capturing pipeline exit codes.
-- Bash-specific syntax execution in POSIX shell: In turn 9, the agent appended `echo &quot;EXIT=${PIPESTATUS[0]}&quot;` to an exec command, triggering a `/bin/sh: 1: Bad substitution` failure because the host&#x27;s d
-- Use &#x27;git stash -u&#x27; (or &#x27;--include-untracked&#x27;) when stashing newly created files to isolate baseline test failures, preventing no-op stashes.
+- Avoid running auxiliary AST/style checks (such as check_ast_line_count.py) unless they are part of the target suite or smoke gate, to avoid detours investigating pre-existing violations.
+- Prepending conversational narrative before terminal JSON payload: In turn 19, the agent prepended status sentences (&#x27;Committed. The implementation is complete...&#x27;) before outputting the final JSON obj
+- Confine regression verification to the modified target&#x27;s companion test suite and self-tests; avoid running repository-wide test suites (e.g. run_all_tests.py) for localized utility changes to prevent
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/truncate_conversation.py, tests/test_truncate_conversation.py. Reward signal will be…
+- Attempt 1 (2026-09-11 06:56 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-11 05:34 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-11 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/truncate_conversation.py, tests/test_truncate_conversation.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Fix default target scanning and exit code handling in scripts/check_style.py
+Title: Fix exit code failure in scripts/validate_markdown_format.py with robust parsing and warning handling
 
 
-Resolve validator failure by ensuring scripts/check_style.py handles default arguments, excludes non-fatal warnings, and exits with 0 on clean runs.
+Resolves the exit code 1 failure by updating scripts/validate_markdown_format.py to handle edge cases in markdown syntax gracefully and distinguish non-fatal formatting warnings from fatal errors.
 
-Target path: scripts/check_style.py
+Target path: scripts/validate_markdown_format.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_style.py exits with status code 0 when invoked as a validator
+scripts/validate_markdown_format.py exits with code 0 when run on repository markdown files
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2123,7 +2125,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 07:02:56 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 10:00:07 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 07:13:31 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 10:00:07 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
