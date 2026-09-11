@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">205</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 07:59:31 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 05:25 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 05:35 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
-      <span class="cycle-pill">cycle-a8e3920dca24</span>
+      <span class="cycle-pill">cycle-94fb5483b55d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 05:05:32.030791 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 05:29:14.576932 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,745c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,441c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1730,9 +1730,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,745 chars &bull; ~1,936 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire standard-test-runner skill reference and unittest fallback into scripts/verify_and_proof.py
-Request ID: llm-proposer-cycle-a8e3920dca24
-Cycle ID: cycle-a8e3920dca24
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,441 chars &bull; ~1,860 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix scripts/validate_test_existence.py failure by adding legacy script allowlist and baseline support
+Request ID: llm-proposer-cycle-94fb5483b55d
+Cycle ID: cycle-94fb5483b55d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1754,53 +1754,60 @@ Recently completed (recent commits):
 - 437e21c0 feat(search_subagent_archive): add match relevance scoring and ranked output
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a8e3920dca24.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-94fb5483b55d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire standard-test-runner skill reference and unittest fallback into scripts/verify_and_proof.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Consumes idle skill skills/standard-test-runner-unittest-over-pytest/SKILL.md by integrating its standard unittest runner policy and path reference into scripts/verify_and_proof.py under code-bearing surface constraints.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Fix scripts/validate_test_existence.py failure by adding legacy script allowlist and baseline support&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves exit code 1 by updating scripts/validate_test_existence.py to support a baseline allowlist for legacy scripts without companion tests so default validation passes cleanly.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire standard-test-runner skill reference and unittest fallback into scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix scripts/validate_test_existence.py failure by adding legacy script allowlist and baseline support (target: scripts/validate_test_existence.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
+Root cause: The deployment script copies Python source files but does not create the lessons/ directory
+or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
+was invisible — no log, no error, just silent no-op.
+
+Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
+   as part of every release activation step.
+2. After deploying lessons integration, verify with:
+   sudo ls -la /opt/.../current/lessons
+   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+ID: LESS-20260825-b957628f  Title: Implementing &quot;Update script exclusion filters and exit status handling in scripts/validate_test_existence.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/repeat_failures.json, scripts/validate_test_existence.py, tests/test_validate_test_existence.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-b957628f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Treat loop_breaker safety alerts as a hard halt: when a loop breaker tool response is received, never repeat the previous command; immediately switch strategy to editing the target file or running a c
-- Cease repo-wide caller grepping once the target implementation file and test file are located; proceed directly to authoring functions on the designated target path.
-- Ignoring harness loop_breaker warning and re-submitting verbatim identical command: After submitting the exact same shell grep command three consecutive times (seq 9-11), the harness returned an expli
+- Resolve target script paths dynamically in test fixtures using Path(__file__).resolve().parent.parent / &#x27;scripts&#x27; / ... rather than assuming pre-existing global path constants exist in the test module
+- When building failure-class remediation maps, cross-reference distinct failure types observed across recent ledger entries to provide tailored guidance beyond generic fallback text.
+- Assuming undeclared global test variables: In turn 14, the agent added a test referencing an undefined module-level constant SCRIPT, triggering a NameError during pytest execution before resolving the
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-11 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/truncate_conversation.py, tests/test_truncate_conversation.py. Reward signal will be…
 - Attempt 2 (2026-09-11 04:38 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_fallbacks.py, tests/test_filter_futile_fallbacks.py. Reward signal will…
-- Attempt 3 (2026-09-11 03:15 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_smoke_test_loop.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Wire standard-test-runner skill reference and unittest fallback into scripts/verify_and_proof.py
+Title: Fix scripts/validate_test_existence.py failure by adding legacy script allowlist and baseline support
 
 
-Consumes idle skill skills/standard-test-runner-unittest-over-pytest/SKILL.md by integrating its standard unittest runner policy and path reference into scripts/verify_and_proof.py under code-bearing surface constraints.
+Resolves exit code 1 by updating scripts/validate_test_existence.py to support a baseline allowlist for legacy scripts without companion tests so default validation passes cleanly.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/validate_test_existence.py
 
 ## Concrete task to implement
-Implement and commit: Wire standard-test-runner skill reference and unittest fallback into scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)
+Implement and commit: Fix scripts/validate_test_existence.py failure by adding legacy script allowlist and baseline support (target: scripts/validate_test_existence.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2117,7 +2124,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 05:25:35 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 07:59:31 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 05:35:14 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 07:59:31 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
