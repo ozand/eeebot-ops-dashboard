@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">197</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 03:38:03 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 00:56 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 01:03 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1206,7 +1206,7 @@
     
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
-          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="defect-1947af1f0112 (served 2026-09-09T08:46:38.202413+00:00); defect-aa424eb0d9f2 (served 2026-09-10T06:47:34.367100+00:00); defect-791431b59fa3 (served 2026-09-10T08:53:36.734091+00:00); defect-7c53659b11b0 (served 2026-09-10T09:57:20.634967+00:00); defect-8619f33f6b4d (served 2026-09-10T15:09:46.422833+00:00); defect-a37000636e4d (served 2026-09-10T15:17:43.904155+00:00); defect-9dd6f0b88702 (served 2026-09-10T20:56:08.302684+00:00); defect-9585f06c2640 (served 2026-09-11T00:51:22.959913+00:00)">defect &times;8</span> <span class="demand-chip served demand-group" translate="no" title="hypothesis-e50575bda883 (served 2026-09-10T00:39:11.491511+00:00); skill-candidate-b2f0ab9833d2 (served 2026-09-10T21:43:13.101722+00:00)">other &times;2</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
+          <div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="defect-1947af1f0112 (served 2026-09-09T08:46:38.202413+00:00); defect-aa424eb0d9f2 (served 2026-09-10T06:47:34.367100+00:00); defect-791431b59fa3 (served 2026-09-10T08:53:36.734091+00:00); defect-7c53659b11b0 (served 2026-09-10T09:57:20.634967+00:00); defect-8619f33f6b4d (served 2026-09-10T15:09:46.422833+00:00); defect-a37000636e4d (served 2026-09-10T15:17:43.904155+00:00); defect-9dd6f0b88702 (served 2026-09-10T20:56:08.302684+00:00); defect-9585f06c2640 (served 2026-09-11T00:51:22.959913+00:00); +1 more">defect &times;9</span> <span class="demand-chip served demand-group" translate="no" title="hypothesis-e50575bda883 (served 2026-09-10T00:39:11.491511+00:00); skill-candidate-b2f0ab9833d2 (served 2026-09-10T21:43:13.101722+00:00)">other &times;2</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div>
         </div>
       </div>
     </section>
@@ -1214,7 +1214,7 @@
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 2 cycles tracked in the recent ledger window</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 3 cycles tracked in the recent ledger window</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="tokens.html">tokens</a> &mdash; 1.87B across 54 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 132 active / 5 answered + 20 strategist durable</li>
@@ -1224,10 +1224,24 @@
     </section>
     
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle Feed (Recent 2)</h2>
+      <h2 class="panel-title">Cycle Feed (Recent 3)</h2>
       
       <ul class="feed-list">
         
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-0aa3c7ea8e4a">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-0aa3c7ea8e4a)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-11T01:03:02.601249Z">04:03 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 17.59K tok &middot; dur 39s</div>
+        </li>
         
         <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-fallback-c819bc5b767a">
           <div class="feed-header">
@@ -1240,7 +1254,7 @@
           </div>
           <div class="entity-links"><a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-dd865bde">lesson:LESS-20260826-dd865bde</a></div>
           
-          <div class="feed-cost">&#9889; 24 calls &middot; 479.4K tok &middot; dur 2m21s</div>
+          <div class="feed-cost">&#9889; 25 calls &middot; 502.5K tok &middot; dur 2m34s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b501544fc650">
@@ -1254,14 +1268,14 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a5d82b0e91a7</span> &middot; <a class="lesson-link" href="lessons.html#q-lessons/skill-subdirectory-structure.md">lesson:lessons/skill-subdirectory-structure.md</a></div>
           <div class="feed-files">&#128193; skills/composite-context-inspection/SKILL.md</div>
-          <div class="feed-cost">&#9889; 9 calls &middot; 118.6K tok &middot; dur 1m40s</div>
+          <div class="feed-cost">&#9889; 10 calls &middot; 140.5K tok &middot; dur 1m56s</div>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 00:56:30 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 03:38:03 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 01:03:22 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 03:38:03 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
