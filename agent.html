@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 01:26:11 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 22:29 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 22:38 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-f00344159c0a</span>
+      <span class="cycle-pill">cycle-28122251ecd9</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 22:17:40.255847 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 22:33:12.909793 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,095c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,952c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,095 chars &bull; ~2,023 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Append incident postmortem and recovery protocol for subagent run d98ee9a7
-Request ID: llm-proposer-cycle-f00344159c0a
-Cycle ID: cycle-f00344159c0a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,952 chars &bull; ~1,738 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Ignore anchor fragments and external URLs in scripts/validate_markdown_format.py
+Request ID: llm-proposer-cycle-28122251ecd9
+Cycle ID: cycle-28122251ecd9
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,75 +1746,57 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- f0fb4794 merge: integrate selfevo/cycle-cycle-f00344159c0a
+- adc72045 docs(lessons): append incident postmortem and recovery protocol for subagent run d98ee9a7
 - 0549f118 chore: record structured error for [cycle-32c17d]
 - 10c0143a merge: integrate selfevo/cycle-cycle-2b8b3eed73a3
 - 2dea21f0 docs(lessons): document subagent error triage and recovery for result 7bed43f0
 - 4c203e1c curator: promote 0 fact(s), 7 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 - b51b012f merge: integrate selfevo/cycle-cycle-661ac5eb07c6
 - e38d559c docs(lessons): document uncooled script reflection handling policy
-- 32cee06c merge: integrate selfevo/cycle-cycle-57c9fca3f789
-- f9adcf1b fix(tests): use dynamic timestamps in prevent_repeat_failures fixtures
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Package recurring verify_and_proof inspection procedure into skill: mutation_surface_violation
 - Fix default target evaluation and exit status in scripts/check_style.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f00344159c0a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-28122251ecd9.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Append incident postmortem and recovery protocol for subagent run d98ee9a7&quot;,
-    &quot;backlog_instructions&quot;: &quot;Record error classification, failure root cause, and recovery protocol for subagent result d98ee9a7 in lessons/subagent_result_error_handling.md to resolve defect-7788e5b560a2.\n\nTarget path: lessons/subagent_result_error_handling.md&quot;,
+    &quot;title&quot;: &quot;Ignore anchor fragments and external URLs in scripts/validate_markdown_format.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/validate_markdown_format.py exits with code 1 when run because link integrity validation treats anchor fragments and external URL schemes as missing local files. Skipping non-local targets eliminates false-positive validation failures.\n\nTarget path: scripts/validate_markdown_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Append incident postmortem and recovery protocol for subagent run d98ee9a7 (target: lessons/subagent_result_error_handling.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Ignore anchor fragments and external URLs in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
-Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
+ID: LESS-20260825-c9b735fb  Title: Implementing &quot;Add structured JSON reporting and chronological order validation to scripts/validate_history_format.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_history_format.py, tests/test_validate_history_format.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-c9b735fb] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid executing broad working-tree resets such as &#x27;git checkout origin/main -- .&#x27; when newly authored untracked files exist, or stage/backup files before switching references.
-- Check &#x27;git check-ignore &lt;path&gt;&#x27; or &#x27;git ls-files&#x27; before staging auxiliary documentation files like lessons/index.md to avoid git add failures on ignored paths.
-- Run targeted pytest tests against the specific target file or inspect baseline differences with git diff rather than checking out prior commits on the working tree to investigate pre-existing test fai
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-11 21:31 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-11 21:20 UTC): no commits (blocked). Task &quot;Fix default target evaluation and exit status in scripts/che&quot; matches recently-failed/rejected proposal &quot;Fix…
-- Attempt 3 (2026-09-11 21:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/subagent_result_error_handling.md. Reward signal will be upgraded by coordinator.
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
+- Avoid bash-specific parameters like ${PIPESTATUS} in exec commands; use standard POSIX shell redirection or inspect $? directly to capture process status.
 
 ## Concrete task to implement
 
-Title: Append incident postmortem and recovery protocol for subagent run d98ee9a7
+Title: Ignore anchor fragments and external URLs in scripts/validate_markdown_format.py
 
 
-Record error classification, failure root cause, and recovery protocol for subagent result d98ee9a7 in lessons/subagent_result_error_handling.md to resolve defect-7788e5b560a2.
+scripts/validate_markdown_format.py exits with code 1 when run because link integrity validation treats anchor fragments and external URL schemes as missing local files. Skipping non-local targets eliminates false-positive validation failures.
 
-Target path: lessons/subagent_result_error_handling.md
+Target path: scripts/validate_markdown_format.py
 
 ## Concrete task to implement
-Implement and commit: Append incident postmortem and recovery protocol for subagent run d98ee9a7 (target: lessons/subagent_result_error_handling.md)
+Implement and commit: Ignore anchor fragments and external URLs in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2131,7 +2113,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 22:29:34 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 01:26:11 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 22:38:28 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 01:26:11 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
