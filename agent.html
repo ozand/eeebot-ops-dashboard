@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">79.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 19:54:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 17:10 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 17:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">fallback-31cbecfbcddb</span>
+      <span class="cycle-pill">cycle-261221843d37</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 16:58:34.508627 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 17:13:48.511431 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,643c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,681c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,643 chars &bull; ~1,910 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Normalize target paths to prevent false negatives in scripts/check_target_completion.py
-Request ID: llm-proposer-fallback-31cbecfbcddb
-Cycle ID: fallback-31cbecfbcddb
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,681 chars &bull; ~1,920 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error reason formatting and failure breakdown to scripts/loop_health_report.py
+Request ID: llm-proposer-cycle-261221843d37
+Cycle ID: cycle-261221843d37
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1754,59 +1754,59 @@ Recently completed (recent commits):
 - 32bd8cf5 selfevo: auto-commit uncommitted subagent work — Add unclosed code block fence detection to scripts/validate_markdown_format.py
 - 10c16232 merge: integrate selfevo/cycle-fallback-751a239d07d3
 
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Support zero-argument invocation in scripts/check_ast_line_count.py by defaulting to self-test: executor_llm_error
-
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-31cbecfbcddb.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-261221843d37.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Normalize target paths to prevent false negatives in scripts/check_target_completion.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Target paths submitted with leading relative prefixes, redundant slashes, or absolute paths can fail to match git commit paths. Normalizing paths ensures reliable completion detection.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add error reason formatting and failure breakdown to scripts/loop_health_report.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extracts and displays failure details and error payloads from result files marked status=error, diagnosing subagent errors like d4b6bd8e directly in the loop summary.\n\nTarget path: scripts/loop_health_report.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Normalize target paths to prevent false negatives in scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error reason formatting and failure breakdown to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/loop_health_report.py formats error diagnostics for error-status results and exits cleanly with --help&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/loop_health_report.py --help&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-20-001  Title: Systemd services failed with 226/NAMESPACE after opencode user deletion
-Root cause: Multiple systemd unit files, drop-in overrides, and instance configuration files (.env) contained hardcoded paths referencing /home/opencode/ (for repositories, PYTHONPATH, virtual environments, and target workspaces). Once the user was deleted, systemd namespace mount options (like ReadWritePaths=) failed to mount the missing directory structure, preventing service execution.
-
-Prevention: 1. Avoid using personal developer home directories (such as /home/opencode) for daemon workspaces, virtual environments, or scripts.
-2. Maintain all runtime resources (venvs, workspaces, logs) inside dedicated application directories (like /opt/eeepc-agent or /var/lib/eeepc-agent) owned by the application service account.
-
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-873885c8  Title: Implementing &quot;Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_and_proof.py
+ID: LESS-20260824-99fb9219  Title: Implementing &quot;Add sliding window rate evaluation and failure reason breakdown to scripts/audit_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/audit_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-99fb9219] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- For static analysis linters and validators, implement raw-text or regex pre-checks to gate expensive AST parsing and full tokenization on files that do not contain target tokens.
-- Proposing companion unit test files without visibility into existing test suite paths: The prompt provides a listing of existing scripts under scripts/ but omits existing test files under tests/, lead
-- Wire `find_affected_tests` into default verification slices (such as `discover_test_targets` or `target_script_tests`) so cycles benefit from dynamic affected-test discovery automatically rather than 
+- Executor initialization failure due to model deployment exhaustion: Litellm raised RateLimitError (&#x27;OpenAIException - No deployments available for selected model, Try again in 120 seconds. Passed mode
+- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
+- Repetitive tool call degeneration and failure to heed loop-breaker intervention: The agent entered an infinite tool-calling loop starting around turn 23, repeatedly invoking read_file on scripts/verif
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-11 16:49 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py. Reward signal will…
-- Attempt 2 (2026-09-11 15:47 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Normalize target paths to prevent false negatives in scripts/check_target_completion.py
+Title: Add error reason formatting and failure breakdown to scripts/loop_health_report.py
 
 
-Target paths submitted with leading relative prefixes, redundant slashes, or absolute paths can fail to match git commit paths. Normalizing paths ensures reliable completion detection.
+Extracts and displays failure details and error payloads from result files marked status=error, diagnosing subagent errors like d4b6bd8e directly in the loop summary.
 
-Target path: scripts/check_target_completion.py
+Target path: scripts/loop_health_report.py
 
-## Concrete task to implement
-Implement and commit: Normalize target paths to prevent false negatives in scripts/check_target_completion.py (target: scripts/check_target_completion.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/loop_health_report.py formats error diagnostics for error-status results and exits cleanly with --help
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2123,7 +2123,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 17:10:10 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 19:54:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 17:18:05 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 19:54:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
