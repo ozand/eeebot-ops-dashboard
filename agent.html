@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 04:52:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 01:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 02:06 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1196,7 +1196,7 @@
     </div>
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
-      <span class="cycle-pill">cycle-0c449e1b6eb9</span>
+      <span class="cycle-pill">cycle-b2d758356a12</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1222,7 +1222,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 01:45:53.856719 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-11 01:58:40.675428 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1242,7 +1242,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,109c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,690c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1730,9 +1730,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,109 chars &bull; ~1,777 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add lesson on defining contracts for mixed valid and invalid inputs in diagnostic recommendations
-Request ID: llm-proposer-cycle-0c449e1b6eb9
-Cycle ID: cycle-0c449e1b6eb9
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,690 chars &bull; ~1,922 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add chained CLI invocation, self-test, and bytecode compilation helper in scripts/workspace_validation_helpers.py
+Request ID: llm-proposer-cycle-b2d758356a12
+Cycle ID: cycle-b2d758356a12
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1744,74 +1744,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0311d07b merge: integrate selfevo/cycle-cycle-0c449e1b6eb9
+- 5f8056ea docs(lessons): add lesson on defining contracts for mixed valid/invalid diagnostic inputs
 - bcf560d8 merge: integrate selfevo/cycle-cycle-f2874ef0bbc1
 - 46ce8eb1 docs(lessons): add lesson on verifying docstring exit code tables for CLI subprocess assertions
 - 761b4935 merge: integrate selfevo/cycle-cycle-031c566fabce
 - e187c4e5 docs(skills): extend handle-loop-breaker with trigger thresholds, tool diversion, and recovery validation
 - 26a7e226 merge: integrate selfevo/cycle-cycle-b501544fc650
 - a43ee7b6 docs(skills): add explicit trigger criteria and inspection workflow to composite-context-inspection
-- 5c158f77 merge: integrate selfevo/cycle-cycle-5ca12e90d91c
-- 0bd738fa feat(prevent_repeat_failures): add actionable remediation hints alongside matching tokens
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0c449e1b6eb9.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b2d758356a12.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add lesson on defining contracts for mixed valid and invalid inputs in diagnostic recommendations&quot;,
-    &quot;backlog_instructions&quot;: &quot;Record explicit guidance on defining collection input contracts (filtering vs rejection on mixed valid/invalid items) to prevent test-implementation reconciliation cycles seen in cycle-c83ba44797fc.\n\nTarget path: lessons/mixed_input_diagnostic_contracts.md&quot;,
+    &quot;title&quot;: &quot;Add chained CLI invocation, self-test, and bytecode compilation helper in scripts/workspace_validation_helpers.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-dfab6e40a031 by providing a reusable script verification helper in workspace_validation_helpers.py that executes bytecode compilation, CLI help inspection, and internal self-tests in a single step.\n\nTarget path: scripts/workspace_validation_helpers.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add lesson on defining contracts for mixed valid and invalid inputs in diagnostic recommendations (target: lessons/mixed_input_diagnostic_contracts.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add chained CLI invocation, self-test, and bytecode compilation helper in scripts/workspace_validation_helpers.py (target: scripts/workspace_validation_helpers.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file on mixed valid and invalid diagnostic input contracts exists&quot;,
+    &quot;claim&quot;: &quot;workspace_validation_helpers exports a validate_script_pipeline function that verifies script compilation and CLI execution in one call&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/mixed_input_diagnostic_contracts.md&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.workspace_validation_helpers import validate_script_pipeline; assert callable(validate_script_pipeline)\&quot;&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260823-76c2802f  Title: Implementing &quot;Add keyword and failure tag filtering to scripts/lesson_lookup.py to retrieve failure avoidance lessons&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/lesson_lookup.py
+ID: LESS-20260827-20e9962c  Title: Implementing &quot;Extend workspace_validation_helpers.py with CLI entrypoint and unified workspace integrity check&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260823-76c2802f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-20e9962c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound performance profiling and diagnostic probes to at most 2-3 turns; once the slow path or scale bottleneck is identified, proceed directly to code implementation.
+- Continue consolidating implementation, self-test additions, and companion unit test assertions into consecutive edits before triggering test executions to maximize efficiency on constrained hosts.
+- Author companion test assertions alongside implementation edits prior to executing long-running test suites, consolidating regression and feature verification into a single run.
+- Use lightweight inline Python snippets with temporary directories to quickly inspect report formatting without requiring changes to persistent files or mock harness suites.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 01:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/cli_subprocess_exit_codes.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-11 00:56 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add lesson on defining contracts for mixed valid and invalid inputs in diagnostic recommendations
+Title: Add chained CLI invocation, self-test, and bytecode compilation helper in scripts/workspace_validation_helpers.py
 
 
-Record explicit guidance on defining collection input contracts (filtering vs rejection on mixed valid/invalid items) to prevent test-implementation reconciliation cycles seen in cycle-c83ba44797fc.
+Addresses reflection-dfab6e40a031 by providing a reusable script verification helper in workspace_validation_helpers.py that executes bytecode compilation, CLI help inspection, and internal self-tests in a single step.
 
-Target path: lessons/mixed_input_diagnostic_contracts.md
+Target path: scripts/workspace_validation_helpers.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Lesson file on mixed valid and invalid diagnostic input contracts exists
+workspace_validation_helpers exports a validate_script_pipeline function that verifies script compilation and CLI execution in one call
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2128,7 +2122,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 01:55:01 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 04:52:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 02:06:20 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 04:52:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

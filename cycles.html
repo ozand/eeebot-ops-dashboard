@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-11 04:52:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">16.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 01:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 02:06 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1193,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-11 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-b2d758356a12">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b2d758356a12">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-b2d758356a12</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add chained CLI invocation, self-test, and bytecode compilation helper in script</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b2d758356a12)</span>
             
-            
+            <a href="#node-98f1a71" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-11T01:54:43.837147Z">04:54 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-dfab6e40a031</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 8.58K tok &middot; dur 18s</div>
+          <div class="feed-files">&#128193; scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py</div>
+          <div class="feed-cost">&#9889; 33 calls &middot; 1.87M tok &middot; dur 5m47s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-0c449e1b6eb9">
@@ -1218,7 +1218,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5456cfebf71c</span></div>
           <div class="feed-files">&#128193; lessons/mixed_input_diagnostic_contracts.md</div>
-          <div class="feed-cost">&#9889; 14 calls &middot; 236.3K tok &middot; dur 2m3s</div>
+          <div class="feed-cost">&#9889; 15 calls &middot; 259.4K tok &middot; dur 2m19s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-f2874ef0bbc1">
@@ -1232,7 +1232,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a10c0fe8d33d</span></div>
           <div class="feed-files">&#128193; lessons/cli_subprocess_exit_codes.md</div>
-          <div class="feed-cost">&#9889; 14 calls &middot; 182.8K tok &middot; dur 2m21s</div>
+          <div class="feed-cost">&#9889; 15 calls &middot; 204.8K tok &middot; dur 2m37s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-50dc1400c7ea">
@@ -1353,7 +1353,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-9eb394ad411c)</span>
             
-            <a href="#node-55dfd82" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-10T22:03:50.085150Z">01:03 MSK</span>
           </div>
           
@@ -2794,14 +2794,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-de786b893b75">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(verify_and_proof): add recursive TestSuite traversal helper for test case discovery</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-de786b893b75)</span>
             
             
             <span class="feed-ts" title="2026-09-09T11:32:02.985906Z">Sep 9 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-92b067215620</span></div>
-          <div class="feed-files">&#128193; scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py</div>
+          
           <div class="feed-cost">&#9889; 18 calls &middot; 346.5K tok &middot; dur 12m28s</div>
         </li>
         
@@ -34236,7 +34236,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 01:55:01 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 04:52:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-11 02:06:20 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-11 04:52:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
