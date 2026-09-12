@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 09:44:57 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 06:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 07:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-8cc7a98e2a2f</span>
+      <span class="cycle-pill">cycle-60ce8a42d224</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 06:30:56.939956 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 07:01:09.115217 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,382c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,886c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,382 chars &bull; ~1,845 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py
-Request ID: llm-proposer-cycle-8cc7a98e2a2f
-Cycle ID: cycle-8cc7a98e2a2f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,886 chars &bull; ~1,971 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document postmortem analysis and prevention rules for failed subagent run 97a85206
+Request ID: llm-proposer-cycle-60ce8a42d224
+Cycle ID: cycle-60ce8a42d224
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1756,48 +1756,53 @@ Recently completed (recent commits):
 - 997dea53 feat(validate_test_existence): add baseline ratchet for legacy untested scripts
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8cc7a98e2a2f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-60ce8a42d224.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The harness times out after 60s running scripts/validate_unused_imports.py due to broad recursive walk overhead across the repo. Directly targeting scripts/*.py via Path.glob eliminates directory walking overhead and skips deprecated scripts, allowing the validator to complete comfortably within the 60s harness budget.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
+    &quot;title&quot;: &quot;Document postmortem analysis and prevention rules for failed subagent run 97a85206&quot;,
+    &quot;backlog_instructions&quot;: &quot;Investigate error result file 97a85206.json to determine the failure cause, recording the diagnostic findings and mitigation rules in lessons/subagent_result_error_handling.md to prevent future subagent errors.\n\nTarget path: lessons/subagent_result_error_handling.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document postmortem analysis and prevention rules for failed subagent run 97a85206 (target: lessons/subagent_result_error_handling.md)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
+Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
-Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
+ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
+Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Immediately halt exploratory execution and transition to code editing or cycle finalization upon receiving a loop_breaker safety stop warning.
-- Limit preliminary diagnostic and micro-benchmarking steps to 2-3 turns before applying code changes to the target file.
-- Avoid using bash-specific shell keywords like &#x27;time&#x27; in exec commands under /bin/sh; measure durations via Python&#x27;s time module or standard POSIX utilities.
+- Avoid executing broad working-tree resets such as &#x27;git checkout origin/main -- .&#x27; when newly authored untracked files exist, or stage/backup files before switching references.
+- Check &#x27;git check-ignore &lt;path&gt;&#x27; or &#x27;git ls-files&#x27; before staging auxiliary documentation files like lessons/index.md to avoid git add failures on ignored paths.
+- Run targeted pytest tests against the specific target file or inspect baseline differences with git diff rather than checking out prior commits on the working tree to investigate pre-existing test fai
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 06:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 2 (2026-09-12 05:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
-- Attempt 3 (2026-09-12 05:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 1 (2026-09-12 06:40 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-12 06:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 3 (2026-09-12 05:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py
+Title: Document postmortem analysis and prevention rules for failed subagent run 97a85206
 
 
-The harness times out after 60s running scripts/validate_unused_imports.py due to broad recursive walk overhead across the repo. Directly targeting scripts/*.py via Path.glob eliminates directory walking overhead and skips deprecated scripts, allowing the validator to complete comfortably within the 60s harness budget.
+Investigate error result file 97a85206.json to determine the failure cause, recording the diagnostic findings and mitigation rules in lessons/subagent_result_error_handling.md to prevent future subagent errors.
 
-Target path: scripts/validate_unused_imports.py
+Target path: lessons/subagent_result_error_handling.md
 
 ## Concrete task to implement
-Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)
+Implement and commit: Document postmortem analysis and prevention rules for failed subagent run 97a85206 (target: lessons/subagent_result_error_handling.md)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2114,7 +2119,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 06:57:27 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 09:44:57 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 07:04:46 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 09:44:57 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
