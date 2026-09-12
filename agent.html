@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 13:15:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 10:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 10:31 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-08a2f1d14685</span>
+      <span class="cycle-pill">cycle-0d50e3f1dcd6</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 10:04:49.629302 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 10:22:23.297408 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,450c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,106c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,450 chars &bull; ~2,112 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add subagent error result scanning to scripts/preflight_failure_check.py to flag failed subagent targets
-Request ID: llm-proposer-cycle-08a2f1d14685
-Cycle ID: cycle-08a2f1d14685
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,106 chars &bull; ~1,776 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options
+Request ID: llm-proposer-cycle-0d50e3f1dcd6
+Cycle ID: cycle-0d50e3f1dcd6
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1760,60 +1760,43 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add regression tests verifying scripts/collect_host_metrics.py execution and metrics payload: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-08a2f1d14685.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0d50e3f1dcd6.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add subagent error result scanning to scripts/preflight_failure_check.py to flag failed subagent targets&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses defect-9a413b65dd99 (subagent error 323b0c2f) by extending preflight_failure_check.py to inspect subagent result files with status=error and flag candidate targets from recently failed subagent runs.\n\nTarget path: scripts/preflight_failure_check.py&quot;,
+    &quot;title&quot;: &quot;Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycles repeatedly read and grep scripts/verify_and_proof.py to inspect verification options and proof conventions. Adding a structured --inspect CLI option provides direct introspection of the verification contract without grepping.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add subagent error result scanning to scripts/preflight_failure_check.py to flag failed subagent targets (target: scripts/preflight_failure_check.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/preflight_failure_check.py exits cleanly and includes subagent failure checking logic&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/preflight_failure_check.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
-Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260826-97cbb425  Title: Implementing &quot;Add test suite for preflight failure check signature matching and exit codes&quot; improves operator value.
-Problem: Committed 2 commit(s): scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py
+ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260826-97cbb425] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid executing broad working-tree resets such as &#x27;git checkout origin/main -- .&#x27; when newly authored untracked files exist, or stage/backup files before switching references.
-- Check &#x27;git check-ignore &lt;path&gt;&#x27; or &#x27;git ls-files&#x27; before staging auxiliary documentation files like lessons/index.md to avoid git add failures on ignored paths.
-- Run targeted pytest tests against the specific target file or inspect baseline differences with git diff rather than checking out prior commits on the working tree to investigate pre-existing test fai
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-12 09:48 UTC): no commits (blocked). Task &quot;Ensure tests/test_skill_frontmatter.py validates frontmatter&quot; matched an existing artifact…
-- Attempt 2 (2026-09-12 09:40 UTC): no commits (blocked). Task &quot;Add regression tests verifying scripts/collect_host_metrics.&quot; matched an existing artifact…
-- Attempt 3 (2026-09-12 09:12 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Concrete task to implement
 
-Title: Add subagent error result scanning to scripts/preflight_failure_check.py to flag failed subagent targets
+Title: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options
 
 
-Addresses defect-9a413b65dd99 (subagent error 323b0c2f) by extending preflight_failure_check.py to inspect subagent result files with status=error and flag candidate targets from recently failed subagent runs.
+Cycles repeatedly read and grep scripts/verify_and_proof.py to inspect verification options and proof conventions. Adding a structured --inspect CLI option provides direct introspection of the verification contract without grepping.
 
-Target path: scripts/preflight_failure_check.py
+Target path: scripts/verify_and_proof.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/preflight_failure_check.py exits cleanly and includes subagent failure checking logic
+## Concrete task to implement
+Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2130,7 +2113,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 10:18:29 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 13:15:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 10:31:47 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 13:15:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
