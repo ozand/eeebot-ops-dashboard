@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">197</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 03:06:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 00:23 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 00:34 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-4c2d912337aa</span>
+      <span class="cycle-pill">cycle-f43cc734426c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 00:12:57.906352 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 00:27:25.425642 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,454c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,318c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,454 chars &bull; ~1,863 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add target path deduplication to scripts/filter_futile_fallbacks.py to prevent self-dedup rejections
-Request ID: llm-proposer-cycle-4c2d912337aa
-Cycle ID: cycle-4c2d912337aa
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,318 chars &bull; ~1,829 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add high-churn defect quarantine detection to scripts/audit_repeat_failures.py
+Request ID: llm-proposer-cycle-f43cc734426c
+Cycle ID: cycle-f43cc734426c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,63 +1746,69 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 80d6e0a4 merge: integrate selfevo/cycle-cycle-4c2d912337aa
+- d7336a20 feat(filter_futile_fallbacks): deduplicate target paths upstream to prevent self_dedup rejections
 - 1eaf6c5d merge: integrate selfevo/cycle-cycle-eeb3c220d25b
 - 730f0d89 feat(search_subagent_archive): add error diagnostic extraction and summary formatting
 - f0fb4794 merge: integrate selfevo/cycle-cycle-f00344159c0a
 - adc72045 docs(lessons): append incident postmortem and recovery protocol for subagent run d98ee9a7
 - 0549f118 chore: record structured error for [cycle-32c17d]
 - 10c0143a merge: integrate selfevo/cycle-cycle-2b8b3eed73a3
-- 2dea21f0 docs(lessons): document subagent error triage and recovery for result 7bed43f0
-- 4c203e1c curator: promote 0 fact(s), 7 lesson card(s), and 0 loose lesson(s) from staging (#1001, #1209)
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-4c2d912337aa.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f43cc734426c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add target path deduplication to scripts/filter_futile_fallbacks.py to prevent self-dedup rejections&quot;,
-    &quot;backlog_instructions&quot;: &quot;Filters candidate fallback proposals to deduplicate identical target paths upstream before dispatch, directly preventing self_dedup fallback rejections and wasted cycle attempts.\n\nTarget path: scripts/filter_futile_fallbacks.py&quot;,
+    &quot;title&quot;: &quot;Add high-churn defect quarantine detection to scripts/audit_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extends audit_repeat_failures.py to detect demand and defect IDs exceeding repeat failure streak thresholds and output quarantined candidates, reducing wasted attempts and repeat failure rate.\n\nTarget path: scripts/audit_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add target path deduplication to scripts/filter_futile_fallbacks.py to prevent self-dedup rejections (target: scripts/filter_futile_fallbacks.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add high-churn defect quarantine detection to scripts/audit_repeat_failures.py (target: scripts/audit_repeat_failures.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/filter_futile_fallbacks.py filters out duplicate target paths across candidate proposals&quot;,
+    &quot;claim&quot;: &quot;scripts/audit_repeat_failures.py flags repeat failure streaks per demand ID and identifies quarantined candidates without syntax errors&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m py_compile scripts/filter_futile_fallbacks.py&quot;
+      &quot;args&quot;: [
+        &quot;python3&quot;,
+        &quot;-m&quot;,
+        &quot;py_compile&quot;,
+        &quot;scripts/audit_repeat_failures.py&quot;
+      ]
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-20260825-47cdd201  Title: Implementing &quot;Add threshold validation and non-zero exit code alerting to scripts/audit_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): scripts/audit_repeat_failures.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-47cdd201] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Verify leading whitespace alignment against the enclosing indentation block when performing string edits in Python source files to avoid indentation syntax errors.
-- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
-- Off-by-one indentation during file editing: When editing scripts/check_last_cycle_repeat.py in turn 6, the agent inserted CLI arguments with 3 spaces instead of 4, triggering an IndentationError at li
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
+- Ensure top-level classes and functions inserted into Python modules begin strictly at column 0 without leading whitespace to prevent pytest AST assertion-rewriting syntax failures.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-11 23:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
+- Attempt 1 (2026-09-12 00:16 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_fallbacks.py, tests/test_filter_futile_fallbacks.py. Reward signal will…
+- Attempt 2 (2026-09-11 23:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add target path deduplication to scripts/filter_futile_fallbacks.py to prevent self-dedup rejections
+Title: Add high-churn defect quarantine detection to scripts/audit_repeat_failures.py
 
 
-Filters candidate fallback proposals to deduplicate identical target paths upstream before dispatch, directly preventing self_dedup fallback rejections and wasted cycle attempts.
+Extends audit_repeat_failures.py to detect demand and defect IDs exceeding repeat failure streak thresholds and output quarantined candidates, reducing wasted attempts and repeat failure rate.
 
-Target path: scripts/filter_futile_fallbacks.py
+Target path: scripts/audit_repeat_failures.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/filter_futile_fallbacks.py filters out duplicate target paths across candidate proposals
+scripts/audit_repeat_failures.py flags repeat failure streaks per demand ID and identifies quarantined candidates without syntax errors
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2119,7 +2125,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 00:23:41 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 03:06:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 00:34:30 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 03:06:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
