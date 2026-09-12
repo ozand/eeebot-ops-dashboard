@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 00:09:14 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="45">data: 45s old &middot; generated 21:14 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 31s old &middot; generated 22:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-3f7416391fbd</span>
+      <span class="cycle-pill">cycle-769b714d3f4e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-12 20:32:02.955001 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-12 21:17:44.201367 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,432c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,213c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1647,12 +1647,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T203039Z-canonical-053ad129/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T210701Z-canonical-8969822b/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T203039Z-canonical-053ad129/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T210701Z-canonical-8969822b/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,432 chars &bull; ~2,108 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Pre-filter files for except clauses and optimize AST visitor traversal in scripts/validate_exception_handling.py
-Request ID: llm-proposer-cycle-3f7416391fbd
-Cycle ID: cycle-3f7416391fbd
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,213 chars &bull; ~2,053 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shell_true.py
+Request ID: llm-proposer-cycle-769b714d3f4e
+Cycle ID: cycle-769b714d3f4e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1694,32 +1694,38 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 80e6f889 refactor(lessons): move 104 legacy rows out of the live corpus (ADR-008 #1507)
+- 8efc159e merge: integrate selfevo/cycle-cycle-3f7416391fbd
+- 6d286b2a perf(validate_exception_handling): pre-filter files for except clauses and optimize AST visitor traversal
 - b7ec76aa fix(lessons): repair unparseable archive, durably (#1511)
 - 25e504b0 merge: integrate selfevo/cycle-cycle-a8f7e7c3364c
 - 8d09acab feat(check_cycle_budget): wire jsonl-stream-filter skill for streaming ledger evaluation
 - 1aab73b2 chore: record structured error for [cycle-d05746]
 - b6142d68 merge: integrate selfevo/cycle-cycle-a7336838cf6b
-- f317cd24 feat(workspace_validation_helpers): wire doc-only change classifier for test-bypass workflow
-- b72529d6 chore: record structured error for [cycle-861355]
-- c34f3c82 chore: record structured error for [cycle-da6c95]
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add unit tests for filter_futile_targets covering futile target filtering and goals.md exclusion: existence_index_duplicate
-- Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases: gate_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3f7416391fbd.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-769b714d3f4e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Pre-filter files for except clauses and optimize AST visitor traversal in scripts/validate_exception_handling.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The validator times out after 60s because it performs costly AST parsing and full node traversal across all scripts. Skipping files lacking &#x27;except&#x27; via fast text pre-filtering and replacing generic node walking with a targeted Try/ExceptHandler visitor ensures validation completes well within the 60s budget.\n\nTarget path: scripts/validate_exception_handling.py&quot;,
+    &quot;title&quot;: &quot;Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shell_true.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Prune traversal of ignored directories such as .git and caches in os.walk and pre-filter files for shell keywords before AST parsing so validation finishes well within the 60s harness timeout.\n\nTarget path: scripts/validate_no_shell_true.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Pre-filter files for except clauses and optimize AST visitor traversal in scripts/validate_exception_handling.py (target: scripts/validate_exception_handling.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shell_true.py (target: scripts/validate_no_shell_true.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_no_shell_true.py executes to completion and exits cleanly in under 60 seconds&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_no_shell_true.py&quot;
+    }
+  }
 }
 ```
 
@@ -1733,31 +1739,31 @@ Prevention: Pruning routines and dashboard monitoring logic must cover identical
 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-319c1d1f  Title: Add silent pass handler detection to scripts/validate_exception_handling.py
-Problem: Committed 2 commit(s): memory/prevent_repeats.json, memory/repeat_failures.json, scripts/validate_exception_handling.py, tests/test_validate_exception_handling.py
+ID: LESS-20260825-50a1def8  Title: Add os.system and os.popen AST checks to scripts/validate_no_shell_true.py
+Problem: Committed 1 commit(s): scripts/validate_no_shell_true.py, tests/test_validate_no_shell_true.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-319c1d1f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-50a1def8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Immediately halt exploratory execution and transition to code editing or cycle finalization upon receiving a loop_breaker safety stop warning.
 - Limit preliminary diagnostic and micro-benchmarking steps to 2-3 turns before applying code changes to the target file.
-- Avoid using bash-specific shell keywords like &#x27;time&#x27; in exec commands under /bin/sh; measure durations via Python&#x27;s time module or standard POSIX utilities.
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 19:14 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
-- Attempt 2 (2026-09-12 17:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
+- Attempt 1 (2026-09-12 21:06 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_exception_handling.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-12 19:14 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Pre-filter files for except clauses and optimize AST visitor traversal in scripts/validate_exception_handling.py
+Title: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shell_true.py
 
 
-The validator times out after 60s because it performs costly AST parsing and full node traversal across all scripts. Skipping files lacking &#x27;except&#x27; via fast text pre-filtering and replacing generic node walking with a targeted Try/ExceptHandler visitor ensures validation completes well within the 60s budget.
+Prune traversal of ignored directories such as .git and caches in os.walk and pre-filter files for shell keywords before AST parsing so validation finishes well within the 60s harness timeout.
 
-Target path: scripts/validate_exception_handling.py
+Target path: scripts/validate_no_shell_true.py
 
-## Concrete task to implement
-Implement and commit: Pre-filter files for except clauses and optimize AST visitor traversal in scripts/validate_exception_handling.py (target: scripts/validate_exception_handling.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_no_shell_true.py executes to completion and exits cleanly in under 60 seconds
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2074,7 +2080,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 21:14:26 UTC &middot; host eeepc &middot; newest source 45s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 00:09:14 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 22:04:42 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 00:09:14 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
