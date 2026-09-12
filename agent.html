@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 09:05:27 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 18s old &middot; generated 06:27 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 06:41 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-c3e7a909c3df</span>
+      <span class="cycle-pill">cycle-8cc7a98e2a2f</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 06:13:10.084405 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 06:30:56.939956 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,165c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,382c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,165 chars &bull; ~1,791 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add uncommitted working tree diff auditing to scripts/check_target_completion.py
-Request ID: llm-proposer-cycle-c3e7a909c3df
-Cycle ID: cycle-c3e7a909c3df
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,382 chars &bull; ~1,845 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py
+Request ID: llm-proposer-cycle-8cc7a98e2a2f
+Cycle ID: cycle-8cc7a98e2a2f
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,58 +1746,58 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 60e3c4e7 merge: integrate selfevo/cycle-cycle-c3e7a909c3df
+- 3f972519 feat(check_target_completion): add audit_working_tree_diff for uncommitted change detection
 - 5633733a merge: integrate selfevo/cycle-cycle-643aacc37966
 - 4deb2830 feat(prevent_repeat_failures): expose active target cooldowns and dedup failure strings
 - 0594e66f merge: integrate selfevo/cycle-cycle-2decf1f61465
 - 09360e8e feat(check_target_completion): add verify_code_patterns for direct file pattern verification
 - 523be1c6 merge: integrate selfevo/cycle-cycle-b6aa0fe6ada0
 - 997dea53 feat(validate_test_existence): add baseline ratchet for legacy untested scripts
-- 3d033ddd merge: integrate selfevo/cycle-cycle-8e70967e1cbd
-- ce94e537 docs(lessons): append incident postmortem and recovery protocol for subagent run 65c0fb05
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c3e7a909c3df.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8cc7a98e2a2f.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add uncommitted working tree diff auditing to scripts/check_target_completion.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves recurring edit cycles on check_target_completion.py by inspecting uncommitted working tree diffs and staged changes, enabling active edits to be verified without ad-hoc script tweaks.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;The harness times out after 60s running scripts/validate_unused_imports.py due to broad recursive walk overhead across the repo. Directly targeting scripts/*.py via Path.glob eliminates directory walking overhead and skips deprecated scripts, allowing the validator to complete comfortably within the 60s harness budget.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add uncommitted working tree diff auditing to scripts/check_target_completion.py (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-e8bf53c1  Title: Implementing &quot;Add target path and error type comparison to scripts/check_last_cycle_repeat.py&quot; improves operator value.
-Problem: Committed 3 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/repeat_failures.json, scripts/check_last_cycle_repeat.py, tests/test_check_last_cycle_repeat.py
+ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-e8bf53c1] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Run targeted pytest tests against the specific target file or inspect baseline differences with git diff rather than checking out prior commits on the working tree to investigate pre-existing test fai
-- Emit strictly the raw JSON object without conversational commentary in the final response turn to avoid JSON decoding ambiguities in automated harnesses.
-- Check &#x27;git ls-files &lt;path&gt;&#x27; before editing documentation index files to verify if the index is under version control or ignored.
+- Immediately halt exploratory execution and transition to code editing or cycle finalization upon receiving a loop_breaker safety stop warning.
+- Limit preliminary diagnostic and micro-benchmarking steps to 2-3 turns before applying code changes to the target file.
+- Avoid using bash-specific shell keywords like &#x27;time&#x27; in exec commands under /bin/sh; measure durations via Python&#x27;s time module or standard POSIX utilities.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 05:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
-- Attempt 2 (2026-09-12 05:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
-- Attempt 3 (2026-09-12 04:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-12 06:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
+- Attempt 2 (2026-09-12 05:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 3 (2026-09-12 05:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add uncommitted working tree diff auditing to scripts/check_target_completion.py
+Title: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py
 
 
-Resolves recurring edit cycles on check_target_completion.py by inspecting uncommitted working tree diffs and staged changes, enabling active edits to be verified without ad-hoc script tweaks.
+The harness times out after 60s running scripts/validate_unused_imports.py due to broad recursive walk overhead across the repo. Directly targeting scripts/*.py via Path.glob eliminates directory walking overhead and skips deprecated scripts, allowing the validator to complete comfortably within the 60s harness budget.
 
-Target path: scripts/check_target_completion.py
+Target path: scripts/validate_unused_imports.py
 
 ## Concrete task to implement
-Implement and commit: Add uncommitted working tree diff auditing to scripts/check_target_completion.py (target: scripts/check_target_completion.py)
+Implement and commit: Replace repo-wide traversal with direct scripts globbing in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2114,7 +2114,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 06:27:04 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 09:05:27 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 06:41:14 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 09:05:27 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
