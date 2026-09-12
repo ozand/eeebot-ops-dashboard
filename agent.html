@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 19:31:53 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 16:44 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 17:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-07028d648433</span>
+      <span class="cycle-pill">cycle-90587c78c76a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 16:08:55.311183 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 16:47:44.143349 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,666c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,885c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,666 chars &bull; ~2,166 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add regression tests for host metrics collection schema in tests/test_collect_host_metrics.py
-Request ID: llm-proposer-cycle-07028d648433
-Cycle ID: cycle-07028d648433
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,885 chars &bull; ~1,971 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add status filtering and error detail formatting to scripts/search_subagent_archive.py
+Request ID: llm-proposer-cycle-90587c78c76a
+Cycle ID: cycle-90587c78c76a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1757,56 +1757,52 @@ Recently completed (recent commits):
 - f952ff36 chore: record structured error for [cycle-51ca52]
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Validate all skill directory frontmatters including early-turn-staging in tests/test_skill_frontmatter.py: existence_index_duplicate
 - Retire unused composite-context-inspection skill and remove directory: mutation_surface_violation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-07028d648433.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-90587c78c76a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add regression tests for host metrics collection schema in tests/test_collect_host_metrics.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Directly resolves reflection-d15f94f2aba9 by providing regression tests for scripts/collect_host_metrics.py in tests/test_collect_host_metrics.py, validating metric extraction and schema without modifying cooled consumer scripts.\n\nTarget path: tests/test_collect_host_metrics.py&quot;,
+    &quot;title&quot;: &quot;Add status filtering and error detail formatting to scripts/search_subagent_archive.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Subagent result 323b0c2f recorded status=error. Enhancing scripts/search_subagent_archive.py with status filtering and error detail extraction enables querying and diagnosing error-state subagent runs directly from the archive.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add regression tests for host metrics collection schema in tests/test_collect_host_metrics.py (target: tests/test_collect_host_metrics.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add status filtering and error detail formatting to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260828-c2f0da09  Title: Implementing &quot;Add unit test suite in tests/test_collect_host_metrics.py for host metric collection and caching&quot; improves operator value.
-Problem: Committed 1 commit(s): tests/test_collect_host_metrics.py
-Solution: Task completed with 0 tool calls in 0s.
-If you apply this lesson, cite [Lesson LESS-20260828-c2f0da09] in your proposal/response.
+ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
+Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
-- When git log reveals an explicit commit implementing the requested feature and dedicated test functions exist, conclude the skip evaluation promptly without running synthetic micro-tests or full regre
+- Carefully escape subshell parentheses and compound statements when formatting exec commands executed under /bin/sh to avoid unexpected syntax termination.
+- Avoid spawning shell loops or individual subshells over large state directories (such as state/subagents/archive/); use head-limited stream pipelines or Python glob iterations with immediate break con
+- When adding new record presentation or diagnostic formatters, ensure newly required fields (e.g., &#x27;error&#x27;) are populated across all dictionary generation pipelines (such as search_archive, search_by_r
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 15:57 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-12 14:37 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
-- Attempt 3 (2026-09-12 14:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
+- Attempt 1 (2026-09-12 16:22 UTC): no commits (blocked). Task &quot;Validate all skill directory frontmatters including early-tu&quot; matched an existing artifact…
+- Attempt 2 (2026-09-12 16:12 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-12 15:57 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add regression tests for host metrics collection schema in tests/test_collect_host_metrics.py
+Title: Add status filtering and error detail formatting to scripts/search_subagent_archive.py
 
 
-Directly resolves reflection-d15f94f2aba9 by providing regression tests for scripts/collect_host_metrics.py in tests/test_collect_host_metrics.py, validating metric extraction and schema without modifying cooled consumer scripts.
+Subagent result 323b0c2f recorded status=error. Enhancing scripts/search_subagent_archive.py with status filtering and error detail extraction enables querying and diagnosing error-state subagent runs directly from the archive.
 
-Target path: tests/test_collect_host_metrics.py
+Target path: scripts/search_subagent_archive.py
 
 ## Concrete task to implement
-Implement and commit: Add regression tests for host metrics collection schema in tests/test_collect_host_metrics.py (target: tests/test_collect_host_metrics.py)
+Implement and commit: Add status filtering and error detail formatting to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2118,12 +2114,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add status filtering and error detail formatting to scripts/search_subagent_archive.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1005 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-12</td><td class="skill-reads">132</td><td>1.62M</td><td>31s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr></tbody></table>
+        <p class="proposer-decision">last decision: <strong>skipped (self_dedup)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1007 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-12</td><td class="skill-reads">134</td><td>1.64M</td><td>31s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr><tr><td>2026-09-07</td><td class="skill-reads">168</td><td>1.60M</td><td>24s</td></tr><tr><td>2026-09-06</td><td class="skill-reads">213</td><td>1.36M</td><td>14s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 16:44:16 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 19:31:53 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 17:01:32 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 19:31:53 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
