@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 13:15:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 10:38 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 10:50 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-0d50e3f1dcd6</span>
+      <span class="cycle-pill">cycle-a2ce39080746</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 10:22:23.297408 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 10:42:16.832507 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,106c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,889c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,106 chars &bull; ~1,776 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options
-Request ID: llm-proposer-cycle-0d50e3f1dcd6
-Cycle ID: cycle-0d50e3f1dcd6
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,889 chars &bull; ~1,972 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize symbol resolution with single-pass AST visitor in scripts/validate_unused_imports.py
+Request ID: llm-proposer-cycle-a2ce39080746
+Cycle ID: cycle-a2ce39080746
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,57 +1746,65 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 411ba073 merge: integrate selfevo/cycle-cycle-0d50e3f1dcd6
+- 286cd427 feat(verify_and_proof): add --inspect CLI mode to export verification contract and runner options
 - 2d498402 merge: integrate selfevo/cycle-cycle-d79dd764cc96
 - cd6619c4 feat(validate_documentation_code_blocks): strip REPL prompt prefixes before AST parsing
 - e6c5c979 merge: integrate selfevo/cycle-cycle-1f7cf8fb00c8
 - e9f162f0 feat(search_subagent_archive): add active result file lookup and error triage classification
 - 2beac15d merge: integrate selfevo/cycle-cycle-d90069de1ae3
 - 1b3997df feat(validate_test_existence): apply baseline ratchet by default on zero-argument execution
-- 9bca8a99 merge: integrate selfevo/cycle-cycle-60ce8a42d224
-- b24fc187 docs(lessons): append incident postmortem and prevention rules for subagent run 97a85206
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Ensure tests/test_skill_frontmatter.py validates frontmatter schema across all skills including early-turn-staging: existence_index_duplicate
 - Add regression tests verifying scripts/collect_host_metrics.py execution and metrics payload: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0d50e3f1dcd6.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a2ce39080746.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options&quot;,
-    &quot;backlog_instructions&quot;: &quot;Cycles repeatedly read and grep scripts/verify_and_proof.py to inspect verification options and proof conventions. Adding a structured --inspect CLI option provides direct introspection of the verification contract without grepping.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Optimize symbol resolution with single-pass AST visitor in scripts/validate_unused_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves timeout after 60s by replacing repeated AST node walks with a single-pass AST visitor collecting imports and referenced identifiers per file, speeding up symbol resolution across scripts.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options (target: scripts/verify_and_proof.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize symbol resolution with single-pass AST visitor in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
+Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-a830b59b  Title: Implementing &quot;Add touched script smoke testing and execution verification to scripts/verify_and_proof.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, scripts/verify_and_proof.py
+ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-a830b59b] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
-- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-12 10:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof_fast_check.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options
+Title: Optimize symbol resolution with single-pass AST visitor in scripts/validate_unused_imports.py
 
 
-Cycles repeatedly read and grep scripts/verify_and_proof.py to inspect verification options and proof conventions. Adding a structured --inspect CLI option provides direct introspection of the verification contract without grepping.
+Resolves timeout after 60s by replacing repeated AST node walks with a single-pass AST visitor collecting imports and referenced identifiers per file, speeding up symbol resolution across scripts.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/validate_unused_imports.py
 
 ## Concrete task to implement
-Implement and commit: Add CLI inspect mode to scripts/verify_and_proof.py to export verification contract and runner options (target: scripts/verify_and_proof.py)
+Implement and commit: Optimize symbol resolution with single-pass AST visitor in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2113,7 +2121,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 10:38:38 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 13:15:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 10:50:51 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 13:15:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
