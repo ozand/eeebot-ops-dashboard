@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 05:58:44 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">18.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="18">data: 17s old &middot; generated 03:00 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 03:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-8e70967e1cbd</span>
+      <span class="cycle-pill">cycle-3b83b2020987</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 02:50:25.207056 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 03:04:11.457078 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,205c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,398c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,205 chars &bull; ~2,051 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Record triage analysis and failure mitigation for subagent run 65c0fb05 in lessons
-Request ID: llm-proposer-cycle-8e70967e1cbd
-Cycle ID: cycle-8e70967e1cbd
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,398 chars &bull; ~2,099 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize directory pruning and AST parsing in scripts/validate_unused_imports.py to finish within timeout
+Request ID: llm-proposer-cycle-3b83b2020987
+Cycle ID: cycle-3b83b2020987
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1746,74 +1746,77 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 3d033ddd merge: integrate selfevo/cycle-cycle-8e70967e1cbd
+- ce94e537 docs(lessons): append incident postmortem and recovery protocol for subagent run 65c0fb05
 - a2728138 merge: integrate selfevo/cycle-cycle-f0f65f61550c
 - c6afba5a feat(preflight_failure_check): add blocked target path detection for skipped-duplicate and failed outcomes
 - 209fe86e merge: integrate selfevo/cycle-cycle-a834bd4eb0bd
 - 48f9c5b7 feat(prevent_repeat_failures): add recent failure string extraction helper
 - 43e7749a merge: integrate selfevo/cycle-cycle-f43cc734426c
 - 40691d39 feat(audit_repeat_failures): add high-churn demand/defect quarantine detection
-- 80d6e0a4 merge: integrate selfevo/cycle-cycle-4c2d912337aa
-- d7336a20 feat(filter_futile_fallbacks): deduplicate target paths upstream to prevent self_dedup rejections
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Support zero-argument invocation in scripts/check_ast_line_count.py with default scripts scan: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8e70967e1cbd.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3b83b2020987.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Record triage analysis and failure mitigation for subagent run 65c0fb05 in lessons&quot;,
-    &quot;backlog_instructions&quot;: &quot;Analyze the error cause in subagent result file 65c0fb05.json and document the triage findings, root cause diagnosis, and operational recovery procedures in lessons/subagent_result_error_handling.md to resolve defect-fd84bf0d1ce5.\n\nTarget path: lessons/subagent_result_error_handling.md&quot;,
+    &quot;title&quot;: &quot;Optimize directory pruning and AST parsing in scripts/validate_unused_imports.py to finish within timeout&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/validate_unused_imports.py timed out after 60s in the validator harness. Pruning unneeded directories from traversal and streamlining AST import analysis will allow it to complete within the harness per-script time budget.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Record triage analysis and failure mitigation for subagent run 65c0fb05 in lessons (target: lessons/subagent_result_error_handling.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize directory pruning and AST parsing in scripts/validate_unused_imports.py to finish within timeout (target: scripts/validate_unused_imports.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_unused_imports.py completes execution successfully within the per-script time limit&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_unused_imports.py&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
 
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
-Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
+ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
+Solution: Short utility scripts implementable in single bridge session (0 tool calls).
+If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Running plain &#x27;git stash&#x27; while new files were untracked resulted in &#x27;No local changes to save&#x27; (exit 1), repeating the unhandled stash failure pattern observed in cycle-661ac5eb07c6.
-- Avoid executing broad working-tree resets such as &#x27;git checkout origin/main -- .&#x27; when newly authored untracked files exist, or stage/backup files before switching references.
-- Check &#x27;git check-ignore &lt;path&gt;&#x27; or &#x27;git ls-files&#x27; before staging auxiliary documentation files like lessons/index.md to avoid git add failures on ignored paths.
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 02:19 UTC): no commits (blocked). Task &quot;Support zero-argument invocation in scripts/check_ast_line_c&quot; matches recently-failed/rejected proposal &quot;Support…
-- Attempt 2 (2026-09-12 01:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
-- Attempt 3 (2026-09-12 01:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 1 (2026-09-12 01:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/preflight_failure_check.py, tests/test_preflight_failure_check.py. Reward signal will…
+- Attempt 2 (2026-09-12 01:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 3 (2026-09-12 00:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/audit_repeat_failures.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Record triage analysis and failure mitigation for subagent run 65c0fb05 in lessons
+Title: Optimize directory pruning and AST parsing in scripts/validate_unused_imports.py to finish within timeout
 
 
-Analyze the error cause in subagent result file 65c0fb05.json and document the triage findings, root cause diagnosis, and operational recovery procedures in lessons/subagent_result_error_handling.md to resolve defect-fd84bf0d1ce5.
+scripts/validate_unused_imports.py timed out after 60s in the validator harness. Pruning unneeded directories from traversal and streamlining AST import analysis will allow it to complete within the harness per-script time budget.
 
-Target path: lessons/subagent_result_error_handling.md
+Target path: scripts/validate_unused_imports.py
 
-## Concrete task to implement
-Implement and commit: Record triage analysis and failure mitigation for subagent run 65c0fb05 in lessons (target: lessons/subagent_result_error_handling.md)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_unused_imports.py completes execution successfully within the per-script time limit
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2130,7 +2133,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 03:00:24 UTC &middot; host eeepc &middot; newest source 17s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 05:58:44 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 03:09:23 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 05:58:44 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
