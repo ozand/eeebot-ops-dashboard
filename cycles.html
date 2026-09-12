@@ -1180,19 +1180,33 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">198</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 02:33:11 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">17.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 23:54 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 00:02 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2430 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2431 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-12 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-849cdd06eb80">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-849cdd06eb80)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-12T00:02:31.605975Z">03:02 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 21.24K tok &middot; dur 52s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-b942e7f82c63">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: self_dedup</span>
@@ -1880,7 +1894,7 @@
           <div class="feed-cost">&#9889; 28 calls &middot; 1.64M tok &middot; dur 13m38s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-53320d96aa33">
+        <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-53320d96aa33">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">feat(check_last_cycle_repeat): add dedup match string parsing and skipped-duplicate candidate check</strong>
@@ -8561,7 +8575,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-05b56cbf2264</span></div>
           
-          <div class="feed-cost">&#9889; 17 calls &middot; 497.6K tok &middot; dur 3m44s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-1c4384b0932d">
@@ -8575,7 +8589,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-05b56cbf2264</span></div>
           
-          <div class="feed-cost">&#9889; 12 calls &middot; 161.7K tok &middot; dur 2m44s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6068ccec500f">
@@ -8589,7 +8603,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-e1a0aea47cac</span></div>
           
-          <div class="feed-cost">&#9889; 47 calls &middot; 1.88M tok &middot; dur 10m39s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9fff55dc6c77">
@@ -8603,7 +8617,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-45a8d4511e3e</span></div>
           
-          <div class="feed-cost">&#9889; 55 calls &middot; 2.38M tok &middot; dur 8m27s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-eaa2a959af9c">
@@ -8645,7 +8659,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5161a8739119</span></div>
           
-          <div class="feed-cost">&#9889; 30 calls &middot; 1.08M tok &middot; dur 7m13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6b988ed7a559">
@@ -8659,7 +8673,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-63558850b9c1</span></div>
           
-          <div class="feed-cost">&#9889; 23 calls &middot; 632.1K tok &middot; dur 3m37s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-925bb2e3bb93">
@@ -8673,7 +8687,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-fbf711036c82</span></div>
           
-          <div class="feed-cost">&#9889; 50 calls &middot; 2.54M tok &middot; dur 9m41s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7486504927ef">
@@ -8687,7 +8701,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9f6f599d8e4e</span></div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 406.1K tok &middot; dur 3m47s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-05555d5b44f4">
@@ -8701,7 +8715,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-45a8d4511e3e</span></div>
           
-          <div class="feed-cost">&#9889; 6 calls &middot; 46.89K tok &middot; dur 74s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-59bedf8550bc">
@@ -8715,7 +8729,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9f6f599d8e4e</span></div>
           
-          <div class="feed-cost">&#9889; 10 calls &middot; 93.88K tok &middot; dur 1m47s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-4a577d4482f1">
@@ -8729,7 +8743,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5e03e3a098cf</span></div>
           
-          <div class="feed-cost">&#9889; 37 calls &middot; 2.11M tok &middot; dur 5m45s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-16806366aa6e">
@@ -8743,7 +8757,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-57ab080dbded</span></div>
           
-          <div class="feed-cost">&#9889; 14 calls &middot; 322.1K tok &middot; dur 2m38s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9a3c5c72f0f1">
@@ -8757,7 +8771,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1b43998abb48</span></div>
           
-          <div class="feed-cost">&#9889; 17 calls &middot; 930.1K tok &middot; dur 3m24s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9532119b610b">
@@ -8771,7 +8785,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b14d11d4415f</span></div>
           
-          <div class="feed-cost">&#9889; 11 calls &middot; 209.7K tok &middot; dur 2m9s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-4fd0e76d81fa">
@@ -8799,7 +8813,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-521b6562e356</span></div>
           
-          <div class="feed-cost">&#9889; 70 calls &middot; 3.74M tok &middot; dur 10m17s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-8e78e52b5dc3">
@@ -8813,7 +8827,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-63d689ad83aa</span></div>
           
-          <div class="feed-cost">&#9889; 23 calls &middot; 1.03M tok &middot; dur 4m28s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-278754967527">
@@ -8841,7 +8855,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c7b2a446b2c9</span></div>
           
-          <div class="feed-cost">&#9889; 21 calls &middot; 687.3K tok &middot; dur 3m24s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-d0421ad98ab9">
@@ -8855,7 +8869,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9f6f599d8e4e</span></div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 799.3K tok &middot; dur 3m10s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fa9f1032a0ed">
@@ -8869,7 +8883,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-566e9da7fc36</span></div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 653.8K tok &middot; dur 3m20s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-eba3c369a1f7">
@@ -8883,7 +8897,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0ee5f2819a6b</span></div>
           
-          <div class="feed-cost">&#9889; 80 calls &middot; 2.64M tok &middot; dur 7m51s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-d1932a28f68a">
@@ -8897,7 +8911,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9138aa6bdd79</span></div>
           
-          <div class="feed-cost">&#9889; 22 calls &middot; 1.13M tok &middot; dur 3m27s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-2cbf0b5210a7">
@@ -8911,7 +8925,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-63d689ad83aa</span></div>
           
-          <div class="feed-cost">&#9889; 1 calls &middot; dur 74s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-e539c3594e42">
@@ -8925,7 +8939,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-31bf84b3745f</span></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; dur 1m50s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-4a1f34378697">
@@ -8939,7 +8953,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f0a9d777cab9</span></div>
           
-          <div class="feed-cost">&#9889; 25 calls &middot; 1.29M tok &middot; dur 4m15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-e0c5bb339d63">
@@ -8953,7 +8967,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0ee5f2819a6b</span></div>
           
-          <div class="feed-cost">&#9889; 42 calls &middot; 1.18M tok &middot; dur 3m25s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7ff9c7c935af">
@@ -8967,7 +8981,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-77b89b62fa1f</span></div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 575.8K tok &middot; dur 2m40s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-25fa5a688906">
@@ -8981,7 +8995,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-34454aa3efe2</span></div>
           
-          <div class="feed-cost">&#9889; 78 calls &middot; 2.23M tok &middot; dur 9m56s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-eb5a4c9c9767">
@@ -8995,7 +9009,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5a3b722dcc7c</span></div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 875.4K tok &middot; dur 4m35s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-159672a5198e">
@@ -9009,7 +9023,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-2624b0e89a40</span></div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 1.05M tok &middot; dur 3m55s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-0a776b606626">
@@ -9023,7 +9037,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a95158933682</span></div>
           
-          <div class="feed-cost">&#9889; 4 calls &middot; 86.54K tok &middot; dur 79s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-6edb54b5567f">
@@ -35273,7 +35287,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-11 23:54:12 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 02:33:11 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 00:02:52 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 02:33:11 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
