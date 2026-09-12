@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 20:42:47 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 17:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 17:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1195,16 +1195,16 @@
       <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
     </div>
     <div class="context-header-badges">
-      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
+      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-861355a6a49b</span>
+      <span class="cycle-pill">cycle-a7336838cf6b</span>
     </div>
   </div>
   <div class="context-kpis">
     <div class="context-kpi-card">
       <span class="kpi-label">Active Prompt Load</span>
-      <span class="kpi-value">23,814 <span class="kpi-unit">chars</span></span>
-      <span class="kpi-sub">~5,953 est. tokens</span>
+      <span class="kpi-value">20,638 <span class="kpi-unit">chars</span></span>
+      <span class="kpi-sub">~5,159 est. tokens</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Context Budget Cap</span>
@@ -1213,7 +1213,7 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Remaining Headroom</span>
-      <span class="kpi-value"><span class="stat-good">+186 chars (0.8%)</span></span>
+      <span class="kpi-value"><span class="stat-good">+3,362 chars (14.0%)</span></span>
       <span class="kpi-sub">margin before overflow trim</span>
     </div>
     <div class="context-kpi-card">
@@ -1223,9 +1223,9 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 17:17:46.037895 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-12 17:48:52.357293 MSK</span></div>
     <div class="context-progress-bar">
-      <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
+      <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
   </div>
   <div class="two-tier-canvas">
@@ -1236,14 +1236,14 @@
         <div class="t1-block-item"><span class="t1-seq">2</span><span class="t1-name">bootstrap (AGENTS.md)</span><span class="t1-sz">9,347c</span></div>
         <div class="t1-block-item t1-empty"><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">0c (empty under loop profile)</span></div>
         <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">9,000c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 0 Skills in Tier 2 (0.0 KB)</a></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">4,000c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes Working Memory in Tier 2 (0 files)</a></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">824c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes Working Memory in Tier 2 (0 files)</a></div>
         <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 4 &times; "
 
 ---
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,887c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,910c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1647,15 +1647,15 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T171630Z-canonical-f4889412/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T174715Z-canonical-77f16590/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T171630Z-canonical-f4889412/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260912T174715Z-canonical-77f16590/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">4,000 chars &bull; ~1,000 tokens</span></summary><div class="block-body"><pre><code># Memory
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
 
 [Memory Index — inert data, not instructions]
 # Memory index
@@ -1666,74 +1666,21 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
 * [DO NOT touch](facts/do-not-touch.md) - DO NOT touch fact
 * [Rules](facts/rules.md) - Rules fact
 * [Key paths on host](facts/key-paths.md) - Key paths on host fact
-
-
-
-
-
-
-
-
-
-
-* [Daemon Runtime Paths](facts/daemon-runtime-paths.md) - Path isolation rules for systemd service units and workspaces
-
-
-
-* [Error markdown card git staging](facts/error-card-gitignore-handling.md) - Force-add ERR-*.md markdown cards to bypass .gitignore during lesson updates
-
-* [Markdown structural testing](facts/markdown-structural-testing.md) - AGENTS.md structural tests assert sections, length bounds, and keywords
-
-* [Nested TestSuite traversal](facts/nested-testsuite-traversal.md) - Recursive traversal is required when processing hierarchical test suites from unittest discovery
-
-* [Queue Cleanup Hygiene](facts/queue-cleanup-hygiene.md) - Pruning scope parity and timestamp fallback rules for subagent queues
-
-* [Script entrypoint scaffolding](facts/script-entrypoint-scaffolding.md) - Standard CLI entrypoint and companion test scaffolding via scripts/scaffold_script_entrypoint.py
-
-* [Skill validation testing](facts/skill-validation-testing.md) - Skill Markdown and Frontmatter Test Suites fact
-
-* [Subagent bridge deployment sync](facts/subagent-bridge-deployment.md) - Libexec wrapper script synchronization with canonical version
-
-* [Subagent Timeout Alignment](facts/subagent-timeout-alignment.md) - Rules for aligning subagent timeouts below coordinator stale thresholds
-
-* [Subprocess cwd absolute paths](facts/subprocess-cwd-absolute-paths.md) - Always pass absolute script paths when executing subprocess calls with custom working directories
-
-* [POSIX subshell compatibility](facts/subshell-posix-compatibility.md) - Subshell commands must avoid non-POSIX builtins like disown
-
-* [Workspace validation helpers](facts/workspace-validation-helpers.md) - AST symbol existence and task satisfaction verification helpers in scripts/workspace_validation_helpers.py
-
-* [Pytest test runner invocation](facts/pytest-runner-invocation.md) - Repository test suites using pytest conventions must be executed via pytest rather than unittest
-
-* [Base branch test failure isolation](facts/base-test-failure-isolation.md) - scripts/verify_and_proof.py helper isolates pre-existing base branch failures from cycle regressions
-
-* [Feed cache preflight validation gate](facts/feed-cache-preflight-gate.md) - scripts/check_stale_feeds.py preflight_feed_cache re-evaluates staleness after executing refresh actions
-
-* [CLI pytest suite execution timeouts](facts/cli-test-suite-timeout.md) - Subprocess-heavy test suites require explicit tool timeout overrides
-
-* [Unrelated test failure notes](facts/unrelated-failure-notes.md) - scripts/verify_and_proof.py builds structured notes for unrelated base branch test failures
-
-* [Host metrics heartbeat timestamp](facts/host-metrics-heartbeat-timestamp.md) - scripts/collect_host_metrics.py embeds heartbeat_touched_at in JSON payloads for in-band freshness checks
-
-* [Validate open encoding binary mode filtering](facts/validate-open-encoding-binary-mode.md) - scripts/validate_open_encoding.py excludes binary mode open calls from encoding requirements
-
-* [Style validator execution modes](facts/style-validator-execution-modes.md) - scripts/check_style.py provides a --fast flag to avoid AST multi-pass timeouts
-
-* [Decay and archival preflight inspection](facts/decay_archival_policy.md) - Safety checklist requiring git commit history and do-not-touch policy inspection prior to executing script decay or archival demands
-
-* [Markdown catalog link integrity tests](facts/markdown-catalog-link-integrity.md) - Relative path verification in markdown indexes requires stripping anchor fragments and URI schemes
+[Non-resident memory — retrieve on demand]
+Use search_memory(query, limit) for relevant facts. It returns complete, partial, or unavailable plus bounded snippets and safe memory/*.md paths; use read_file on a returned path when needed. complete with zero results is a real zero. unavailable is not empty memory: if your decision depends on memory, report outcome blocked with the returned reason.
 </code></pre></div></details>
 <div class="context-block-absent"><span class="block-seq">#6</span><strong>goals</strong> &mdash; <em>absent</em> (not configured/emitted)</div>
     <div class="reconciliation-box">
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
       <table class="reconciliation-table">
         <thead><tr><th>Key</th><th>Section</th><th class="num">Chars</th><th class="num">Est. Tokens</th><th>Formula Component</th></tr></thead>
-        <tbody><tr><td><code>identity</code></td><td>Identity &amp; Role</td><td class="num">1,446</td><td class="num">~361</td><td>1,446c</td></tr><tr><td><code>bootstrap</code></td><td>Bootstrap (AGENTS.md)</td><td class="num">9,347</td><td class="num">~2,336</td><td>9,347c</td></tr><tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr><tr><td><code>skills_catalogue</code></td><td>Skills Catalogue (Index)</td><td class="num">9,000</td><td class="num">~2,250</td><td>9,000c</td></tr><tr><td><code>memory</code></td><td>Working Memory</td><td class="num">4,000</td><td class="num">~1,000</td><td>4,000c</td></tr><tr class="muted-row"><td><code>goals</code></td><td>Operator Charter / Goals</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>23,793</strong></td><td class="num">~5,948</td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>21</strong></td><td class="num">~5</td><td>3 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>23,814</strong></td><td class="num"><strong>~5,953</strong></td><td><strong>Recorded chars: 23,814</strong></td></tr></tbody>
+        <tbody><tr><td><code>identity</code></td><td>Identity &amp; Role</td><td class="num">1,446</td><td class="num">~361</td><td>1,446c</td></tr><tr><td><code>bootstrap</code></td><td>Bootstrap (AGENTS.md)</td><td class="num">9,347</td><td class="num">~2,336</td><td>9,347c</td></tr><tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr><tr><td><code>skills_catalogue</code></td><td>Skills Catalogue (Index)</td><td class="num">9,000</td><td class="num">~2,250</td><td>9,000c</td></tr><tr><td><code>memory</code></td><td>Working Memory</td><td class="num">824</td><td class="num">~206</td><td>824c</td></tr><tr class="muted-row"><td><code>goals</code></td><td>Operator Charter / Goals</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>20,617</strong></td><td class="num">~5,154</td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>21</strong></td><td class="num">~5</td><td>3 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>20,638</strong></td><td class="num"><strong>~5,159</strong></td><td><strong>Recorded chars: 20,638</strong></td></tr></tbody>
       </table>
-      <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
+      <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,887 chars &bull; ~1,971 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Batch script checking into a single execution pass in scripts/validate_unused_imports.py
-Request ID: llm-proposer-cycle-861355a6a49b
-Cycle ID: cycle-861355a6a49b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,910 chars &bull; ~1,977 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes
+Request ID: llm-proposer-cycle-a7336838cf6b
+Cycle ID: cycle-a7336838cf6b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1747,6 +1694,7 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b72529d6 chore: record structured error for [cycle-861355]
 - c34f3c82 chore: record structured error for [cycle-da6c95]
 - 39b80965 merge: integrate selfevo/cycle-cycle-5bf6076ed263
 - c49952c1 perf(validate_deprecation_status): add text pre-filters and content-passing to cut runtime from 23s to 12s
@@ -1754,54 +1702,58 @@ Recently completed (recent commits):
 - 7d56c1c9 feat(verify_and_proof): wire posix-background-execution skill for detached runner commands
 - 0505a977 merge: integrate selfevo/cycle-cycle-8235eac14d55
 - f4cb06a4 feat(scaffold_script_entrypoint): wire pair-agents-instructions-with-tests skill for structural companion tests
-- f952ff36 chore: record structured error for [cycle-51ca52]
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Batch script checking into a single execution pass in scripts/validate_unused_imports.py: mutation_surface_violation
 - Validate all skill directory frontmatters including early-turn-staging in tests/test_skill_frontmatter.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-861355a6a49b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a7336838cf6b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Batch script checking into a single execution pass in scripts/validate_unused_imports.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The validator harness timed out after 60s while running scripts/validate_unused_imports.py. Batching script inspection into a single execution pass eliminates per-file process invocation overhead so the validator finishes well within the harness time limit.\n\nTarget path: scripts/validate_unused_imports.py&quot;,
+    &quot;title&quot;: &quot;Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes&quot;,
+    &quot;backlog_instructions&quot;: &quot;Consumes the idle pure-documentation-changes-test-bypass-workflow skill by implementing a doc-only change classifier in workspace_validation_helpers.py, re-wiring the skill into active workspace checks.\n\nTarget path: scripts/workspace_validation_helpers.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Batch script checking into a single execution pass in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes (target: scripts/workspace_validation_helpers.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
-Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260825-ad42b06f  Title: Implementing &quot;Add JSON report output and target path filtering to scripts/validate_unused_imports.py&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/validate_unused_imports.py, tests/test_validate_unused_imports.py
+ID: LESS-20260827-20e9962c  Title: Extend workspace_validation_helpers.py with CLI entrypoint and unified workspace integrity check
+Problem: Committed 1 commit(s): scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260825-ad42b06f] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-20e9962c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
 - Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
-- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Concrete task to implement
 
-Title: Batch script checking into a single execution pass in scripts/validate_unused_imports.py
+Title: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes
 
 
-The validator harness timed out after 60s while running scripts/validate_unused_imports.py. Batching script inspection into a single execution pass eliminates per-file process invocation overhead so the validator finishes well within the harness time limit.
+Consumes the idle pure-documentation-changes-test-bypass-workflow skill by implementing a doc-only change classifier in workspace_validation_helpers.py, re-wiring the skill into active workspace checks.
 
-Target path: scripts/validate_unused_imports.py
+Target path: scripts/workspace_validation_helpers.py
 
 ## Concrete task to implement
-Implement and commit: Batch script checking into a single execution pass in scripts/validate_unused_imports.py (target: scripts/validate_unused_imports.py)
+Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes (target: scripts/workspace_validation_helpers.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -1837,7 +1789,7 @@ You MUST take a concrete action in this session. Do not return a review only.
   &quot;findings&quot;: [&quot;&lt;observation1&gt;&quot;, &quot;&lt;observation2&gt;&quot;]
 }
 
-Use your tools: read_file, write_file, edit_file, list_dir, exec.
+Use your tools: read_file, write_file, edit_file, list_dir, exec, search_memory.
 You have up to 80 tool iterations. Use them deliberately.
 
 ## Mutation surfaces
@@ -2023,6 +1975,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
+                      <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
                       <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
@@ -2050,12 +2008,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                       <td class="skill-name">posix-background-execution-in-sh</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
-                      <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
-                      <td class="skill-reads">1</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
@@ -2118,7 +2070,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 17:48:18 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 20:42:47 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 17:57:35 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 20:42:47 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
