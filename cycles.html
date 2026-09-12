@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">201</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 11:16:42 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 08:28 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 08:40 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1193,18 +1193,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-12 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-1f7cf8fb00c8">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1f7cf8fb00c8">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-1f7cf8fb00c8</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(search_subagent_archive): add active result file lookup and error triage classification</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1f7cf8fb00c8)</span>
             
-            
+            <a href="#node-e6c5c97" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-12T08:28:22.173722Z">11:28 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-2bd9f0bbc092</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 6.91K tok &middot; dur 15s</div>
+          <div class="feed-files">&#128193; scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py</div>
+          <div class="feed-cost">&#9889; 25 calls &middot; 1.26M tok &middot; dur 4m59s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-3f0efa82418c">
@@ -1535,7 +1535,7 @@
             <strong class="feed-title">feat(validate_test_existence): add baseline ratchet for legacy untested scripts</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b6aa0fe6ada0)</span>
             
-            <a href="#node-523be1c" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-12T03:51:46.411572Z">06:51 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-791431b59fa3</span></div>
@@ -3242,14 +3242,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-88abdad89fc2">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add provider mapping validation for escalated model identifiers in scripts/model</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-88abdad89fc2)</span>
             
             
             <span class="feed-ts" title="2026-09-10T16:19:27.875754Z">Sep 10 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f882d5957f5e</span></div>
-          <details class="feed-files"><summary>&#128193; memory/prevent_repeats.json, memory/repeat_failures.json, scripts/model_fallback_routing.py +1 more</summary><ul class="feed-files-list"><li>memory/prevent_repeats.json</li><li>memory/repeat_failures.json</li><li>scripts/model_fallback_routing.py</li><li>tests/test_model_fallback_routing.py</li></ul></details>
+          
           <div class="feed-cost">&#9889; 44 calls &middot; 1.01M tok &middot; dur 5m19s</div>
         </li>
         
@@ -35903,7 +35903,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 08:28:41 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 11:16:42 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 08:40:19 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 11:16:42 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
