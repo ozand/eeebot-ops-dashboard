@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">199</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 20:42:47 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">20.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 18:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 18:53 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-a7336838cf6b</span>
+      <span class="cycle-pill">cycle-d0574690c207</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-12 17:48:52.357293 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-12 18:08:47.456624 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,910c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,446c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,910 chars &bull; ~1,977 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes
-Request ID: llm-proposer-cycle-a7336838cf6b
-Cycle ID: cycle-a7336838cf6b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,446 chars &bull; ~1,861 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases
+Request ID: llm-proposer-cycle-d0574690c207
+Cycle ID: cycle-d0574690c207
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1694,66 +1694,60 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b6142d68 merge: integrate selfevo/cycle-cycle-a7336838cf6b
+- f317cd24 feat(workspace_validation_helpers): wire doc-only change classifier for test-bypass workflow
 - b72529d6 chore: record structured error for [cycle-861355]
 - c34f3c82 chore: record structured error for [cycle-da6c95]
 - 39b80965 merge: integrate selfevo/cycle-cycle-5bf6076ed263
 - c49952c1 perf(validate_deprecation_status): add text pre-filters and content-passing to cut runtime from 23s to 12s
 - e7c12ca9 merge: integrate selfevo/cycle-cycle-7fed45838b83
 - 7d56c1c9 feat(verify_and_proof): wire posix-background-execution skill for detached runner commands
-- 0505a977 merge: integrate selfevo/cycle-cycle-8235eac14d55
-- f4cb06a4 feat(scaffold_script_entrypoint): wire pair-agents-instructions-with-tests skill for structural companion tests
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Batch script checking into a single execution pass in scripts/validate_unused_imports.py: mutation_surface_violation
 - Validate all skill directory frontmatters including early-turn-staging in tests/test_skill_frontmatter.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a7336838cf6b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d0574690c207.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes&quot;,
-    &quot;backlog_instructions&quot;: &quot;Consumes the idle pure-documentation-changes-test-bypass-workflow skill by implementing a doc-only change classifier in workspace_validation_helpers.py, re-wiring the skill into active workspace checks.\n\nTarget path: scripts/workspace_validation_helpers.py&quot;,
+    &quot;title&quot;: &quot;Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves defect-2d74e67bda21 by consuming the idle recursive-unittest-testsuite-traversal skill in scripts/verify_and_proof.py to flatten nested unittest suites during proof collection.\n\nTarget path: scripts/verify_and_proof.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes (target: scripts/workspace_validation_helpers.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases (target: scripts/verify_and_proof.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
-Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
-2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
-3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
-
-Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
-
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-20e9962c  Title: Extend workspace_validation_helpers.py with CLI entrypoint and unified workspace integrity check
-Problem: Committed 1 commit(s): scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py
+ID: LESS-20260825-873885c8  Title: Add AST syntax check and import validation for target paths in scripts/verify_and_proof.py
+Problem: Committed 1 commit(s): scripts/verify_and_proof.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-20e9962c] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260825-873885c8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
 - Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-12 17:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
 
 ## Concrete task to implement
 
-Title: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes
+Title: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases
 
 
-Consumes the idle pure-documentation-changes-test-bypass-workflow skill by implementing a doc-only change classifier in workspace_validation_helpers.py, re-wiring the skill into active workspace checks.
+Resolves defect-2d74e67bda21 by consuming the idle recursive-unittest-testsuite-traversal skill in scripts/verify_and_proof.py to flatten nested unittest suites during proof collection.
 
-Target path: scripts/workspace_validation_helpers.py
+Target path: scripts/verify_and_proof.py
 
 ## Concrete task to implement
-Implement and commit: Wire pure documentation bypass skill into workspace validation helpers to detect doc-only changes (target: scripts/workspace_validation_helpers.py)
+Implement and commit: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enumerate individual test cases (target: scripts/verify_and_proof.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2070,7 +2064,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 18:04:46 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 20:42:47 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 18:53:28 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 20:42:47 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
