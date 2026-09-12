@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 10:27:53 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 07:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 07:44 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-5e788f99ec45</span>
+      <span class="cycle-pill">cycle-b8f1775fd489</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 07:15:55.947483 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 07:34:59.654104 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,253c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,481c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,253 chars &bull; ~1,813 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Prune ignored directories and optimize AST traversal in scripts/verify_imports.py
-Request ID: llm-proposer-cycle-5e788f99ec45
-Cycle ID: cycle-5e788f99ec45
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,481 chars &bull; ~1,870 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add baseline error threshold ratchet to scripts/validate_markdown_format.py to prevent legacy failures
+Request ID: llm-proposer-cycle-b8f1775fd489
+Cycle ID: cycle-b8f1775fd489
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1756,54 +1756,54 @@ Recently completed (recent commits):
 - 09360e8e feat(check_target_completion): add verify_code_patterns for direct file pattern verification
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5e788f99ec45.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b8f1775fd489.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Prune ignored directories and optimize AST traversal in scripts/verify_imports.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Pruning ignored directories such as .git, state, and cache directories during file traversal and optimizing AST import collection prevents scripts/verify_imports.py from exceeding the 60s harness timeout.\n\nTarget path: scripts/verify_imports.py&quot;,
+    &quot;title&quot;: &quot;Add baseline error threshold ratchet to scripts/validate_markdown_format.py to prevent legacy failures&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves defect-8619f33f6b4d where scripts/validate_markdown_format.py exits with code 1 due to existing markdown issues. Under doc budget constraints, adding a baseline ratchet enables the validator to exit 0 unless new regressions are introduced.\n\nTarget path: scripts/validate_markdown_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Prune ignored directories and optimize AST traversal in scripts/verify_imports.py (target: scripts/verify_imports.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add baseline error threshold ratchet to scripts/validate_markdown_format.py to prevent legacy failures (target: scripts/validate_markdown_format.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_imports.py completes import verification and exits 0 well within the 60s timeout&quot;,
+    &quot;claim&quot;: &quot;scripts/validate_markdown_format.py exits 0 when executed without arguments&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/verify_imports.py&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_markdown_format.py&quot;
     }
   }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260827-80dc08de  Title: Implementing &quot;Optimize scripts/verify_imports.py import resolution to avoid harness timeout&quot; improves operator value.
-Problem: Committed 1 commit(s): scripts/verify_imports.py, tests/test_verify_imports.py
+ID: LESS-20260824-5c2f9e95  Title: Implementing &quot;Add failure pattern clustering and recurring error threshold detection to scripts/analyze_repeat_failures.py&quot; improves operator value.
+Problem: Committed 2 commit(s): memory/HISTORY.md, scripts/analyze_repeat_failures.py, tests/test_analyze_repeat_failures.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260827-80dc08de] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260824-5c2f9e95] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
-- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- When writing test fixtures for time-decay and history-decay logic, use dynamic timestamps relative to datetime.now(timezone.utc) instead of static calendar dates to prevent date-drift regressions.
+- Run targeted pytest tests against the specific target file or inspect baseline differences with git diff rather than checking out prior commits on the working tree to investigate pre-existing test fai
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-12 06:40 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-12 07:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/subagent_result_error_handling.md. Reward signal will be upgraded by coordinator.
 - Attempt 2 (2026-09-12 06:19 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_target_completion.py, tests/test_check_target_completion.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Prune ignored directories and optimize AST traversal in scripts/verify_imports.py
+Title: Add baseline error threshold ratchet to scripts/validate_markdown_format.py to prevent legacy failures
 
 
-Pruning ignored directories such as .git, state, and cache directories during file traversal and optimizing AST import collection prevents scripts/verify_imports.py from exceeding the 60s harness timeout.
+Resolves defect-8619f33f6b4d where scripts/validate_markdown_format.py exits with code 1 due to existing markdown issues. Under doc budget constraints, adding a baseline ratchet enables the validator to exit 0 unless new regressions are introduced.
 
-Target path: scripts/verify_imports.py
+Target path: scripts/validate_markdown_format.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_imports.py completes import verification and exits 0 well within the 60s timeout
+scripts/validate_markdown_format.py exits 0 when executed without arguments
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2120,7 +2120,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 07:30:57 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 10:27:53 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 07:44:03 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 10:27:53 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
