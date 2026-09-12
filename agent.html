@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">201</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-12 15:48:04 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">19.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 12:52 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 26s old &middot; generated 13:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+186 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-128734a56127</span>
+      <span class="cycle-pill">cycle-7abbaee4d3eb</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 12:36:17.198081 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>99%</strong> (23,814 / 24,000 chars)</span><span>2026-09-12 12:56:01.199721 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:99%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,361c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,991c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1731,9 +1731,9 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
       </table>
       <p class="rec-note">Formula: &sum;(sections: 23,793c) + 3 separators &times; 7c (21c) = 23,814 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,361 chars &bull; ~2,090 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Audit subagent result error statuses and tally failure rates in scripts/audit_repeat_failures.py
-Request ID: llm-proposer-cycle-128734a56127
-Cycle ID: cycle-128734a56127
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,991 chars &bull; ~1,997 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Exclude archived and deprecated scripts from test coverage validation in scripts/validate_test_existence.py
+Request ID: llm-proposer-cycle-7abbaee4d3eb
+Cycle ID: cycle-7abbaee4d3eb
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1756,36 +1756,36 @@ Recently completed (recent commits):
 - cd6619c4 feat(validate_documentation_code_blocks): strip REPL prompt prefixes before AST parsing
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-128734a56127.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7abbaee4d3eb.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Audit subagent result error statuses and tally failure rates in scripts/audit_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Subagent result file d4b6bd8e.json failed with status=error; extend scripts/audit_repeat_failures.py to scan subagent result files, extract error statuses, and tally subagent failure counts alongside cycle ledger records.\n\nTarget path: scripts/audit_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Exclude archived and deprecated scripts from test coverage validation in scripts/validate_test_existence.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Filters out scripts marked with deprecation notices or archive headers from test requirements in scripts/validate_test_existence.py so active validator checks exit 0 without failing on obsolete scripts.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Audit subagent result error statuses and tally failure rates in scripts/audit_repeat_failures.py (target: scripts/audit_repeat_failures.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Exclude archived and deprecated scripts from test coverage validation in scripts/validate_test_existence.py (target: scripts/validate_test_existence.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
-Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
-Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260824-99fb9219  Title: Implementing &quot;Add sliding window rate evaluation and failure reason breakdown to scripts/audit_repeat_failures.py&quot; improves operator value.
-Problem: Committed 2 commit(s): memory/HISTORY.md, memory/MEMORY.md, memory/prevent_repeats.json, memory/repeat_failures.json, scripts/audit_repeat_failures.py
+ID: LESS-20260827-044af45f  Title: Implementing &quot;Extend scripts/validate_test_existence.py with missing test pair reporting and structured JSON output&quot; improves operator value.
+Problem: Committed 1 commit(s): scripts/validate_test_existence.py, tests/test_validate_test_existence.py
 Solution: Short utility scripts implementable in single bridge session (0 tool calls).
-If you apply this lesson, cite [Lesson LESS-20260824-99fb9219] in your proposal/response.
+If you apply this lesson, cite [Lesson LESS-20260827-044af45f] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Running plain &#x27;git stash&#x27; while new files were untracked resulted in &#x27;No local changes to save&#x27; (exit 1), repeating the unhandled stash failure pattern observed in cycle-661ac5eb07c6.
-- Avoid executing broad working-tree resets such as &#x27;git checkout origin/main -- .&#x27; when newly authored untracked files exist, or stage/backup files before switching references.
-- Check &#x27;git check-ignore &lt;path&gt;&#x27; or &#x27;git ls-files&#x27; before staging auxiliary documentation files like lessons/index.md to avoid git add failures on ignored paths.
+- When a validation script rejects a header or docstring format, align the file header directly to a known passing reference script rather than testing regex parsing variations in an inline Python shell
+- Cap exploratory regex and encoding diagnostic probes to at most 3 attempts; if validation does not clear, reformat the target section using basic ASCII single/triple quotes.
+- Oscillating tool execution loop bypassing consecutive loop breaker: After encountering regex extraction discrepancies with validate_deprecation_status.py, the executor alternated between two diagnosti
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-12 12:24 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
@@ -1794,15 +1794,15 @@ If you apply this lesson, cite [Lesson LESS-20260824-99fb9219] in your proposal/
 
 ## Concrete task to implement
 
-Title: Audit subagent result error statuses and tally failure rates in scripts/audit_repeat_failures.py
+Title: Exclude archived and deprecated scripts from test coverage validation in scripts/validate_test_existence.py
 
 
-Subagent result file d4b6bd8e.json failed with status=error; extend scripts/audit_repeat_failures.py to scan subagent result files, extract error statuses, and tally subagent failure counts alongside cycle ledger records.
+Filters out scripts marked with deprecation notices or archive headers from test requirements in scripts/validate_test_existence.py so active validator checks exit 0 without failing on obsolete scripts.
 
-Target path: scripts/audit_repeat_failures.py
+Target path: scripts/validate_test_existence.py
 
 ## Concrete task to implement
-Implement and commit: Audit subagent result error statuses and tally failure rates in scripts/audit_repeat_failures.py (target: scripts/audit_repeat_failures.py)
+Implement and commit: Exclude archived and deprecated scripts from test coverage validation in scripts/validate_test_existence.py (target: scripts/validate_test_existence.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2119,7 +2119,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 12:52:04 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 15:48:04 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-12 13:01:51 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-12 15:48:04 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
