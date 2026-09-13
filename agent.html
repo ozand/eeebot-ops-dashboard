@@ -1237,7 +1237,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">215</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 00:56:40 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="35">data: 35s old &middot; generated 22:00 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 22:07 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1254,7 +1254,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,743 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-5bfca0d33df3</span>
+      <span class="cycle-pill">cycle-e8828bd3b243</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1280,7 +1280,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 21:48:41.135897 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 22:03:37.280211 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1314,7 +1314,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,674c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,822c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1759,9 +1759,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,236c) + 3 separators &times; 7c (21c) = 21,257 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,674 chars &bull; ~1,918 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Extend early implementation transition skill with explicit transition triggers and verification steps
-Request ID: llm-proposer-cycle-5bfca0d33df3
-Cycle ID: cycle-5bfca0d33df3
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,822 chars &bull; ~1,955 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Extend git log history inspection skill with concrete single-file patch extraction workflows
+Request ID: llm-proposer-cycle-e8828bd3b243
+Cycle ID: cycle-e8828bd3b243
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1773,62 +1773,72 @@ Completed (do not repeat): Report confirmation ratio status (V2); Clean stale fe
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- ad61cd3e merge: integrate selfevo/cycle-cycle-5bfca0d33df3
+- f2dd5508 docs(skills): extend early-implementation-transition with explicit transition triggers and verification steps
 - 820880dd merge: integrate selfevo/cycle-cycle-52e556f46c4d
 - 1e53dbd8 docs(lessons): add uniform tuple structure guidelines for self-test sample collections
 - de0c5426 merge: integrate selfevo/cycle-cycle-ca0d3d9838f1
 - 4ff63d32 docs(lessons): add isolated script verification fast path lesson
 - b8c747a5 merge: integrate selfevo/cycle-fallback-057c52da8e05
 - 45800122 feat(validate_test_existence): add --target single-script path filter
-- 059e77cc merge: integrate selfevo/cycle-cycle-9d394ad5a217
-- c4b7afb5 selfevo: auto-commit uncommitted subagent work — Implement fallback path filtering function in scripts/filter_fallback_targets.py
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5bfca0d33df3.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e8828bd3b243.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Extend early implementation transition skill with explicit transition triggers and verification steps&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves defect-6540b01d37ff by extending the idle skill skills/early-implementation-transition/SKILL.md with explicit criteria for recognizing when to halt exploration and transition directly into implementation and verification.\n\nTarget path: skills/early-implementation-transition/SKILL.md&quot;,
+    &quot;title&quot;: &quot;Extend git log history inspection skill with concrete single-file patch extraction workflows&quot;,
+    &quot;backlog_instructions&quot;: &quot;Updates skills/target-git-log-history-inspection-single-file-fixes/SKILL.md with explicit invocation triggers and single-file git log patch extraction procedures to resolve idle status.\n\nTarget path: skills/target-git-log-history-inspection-single-file-fixes/SKILL.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Extend early implementation transition skill with explicit transition triggers and verification steps (target: skills/early-implementation-transition/SKILL.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Extend git log history inspection skill with concrete single-file patch extraction workflows (target: skills/target-git-log-history-inspection-single-file-fixes/SKILL.md)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;skills/target-git-log-history-inspection-single-file-fixes/SKILL.md contains expanded single-file inspection steps and triggers&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;file_exists&quot;,
+      &quot;path&quot;: &quot;skills/target-git-log-history-inspection-single-file-fixes/SKILL.md&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260905-05555d5b  Title: Cycle cycle-05555d5b44f4 failed: executor_llm_error
-Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-06-20-001  Title: Systemd services failed with 226/NAMESPACE after opencode user deletion
+Root cause: Multiple systemd unit files, drop-in overrides, and instance configuration files (.env) contained hardcoded paths referencing /home/opencode/ (for repositories, PYTHONPATH, virtual environments, and target workspaces). Once the user was deleted, systemd namespace mount options (like ReadWritePaths=) failed to mount the missing directory structure, preventing service execution.
+
+Prevention: 1. Avoid using personal developer home directories (such as /home/opencode) for daemon workspaces, virtual environments, or scripts.
+2. Maintain all runtime resources (venvs, workspaces, logs) inside dedicated application directories (like /opt/eeepc-agent or /var/lib/eeepc-agent) owned by the application service account.
+
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260905-6d238e44  Title: Chain the script&#x27;s own CLI self-test (--test) with the paired pytest suite in a single bounded verification pass before committing
-Problem: In cycle-6d238e44ec05, verification ran the paired pytest suite but skipped the script&#x27;s own --test self-test, so the CLI entrypoint path (argparse wiring, exit codes, stderr/JSON separation) went unverified and the cycle had to re-run a second pass to confirm the self-test still passed.
-Solution: When a changed script exposes a --test self-test flag, run it first (python3 scripts/&lt;name&gt;.py --test) and immediately chain the paired pytest suite (python3 -m pytest tests/test_&lt;name&gt;.py) in the same bounded exec call, so both the internal self-test and the external suite are verified in one pass before committing.
-If you apply this lesson, cite [Lesson LESS-20260905-6d238e44] in your proposal/response.
-Related: LESS-REF-e13f1cd0f155, LESS-REF-c2ab8feea257-4dc0
+ID: lessons/skill-subdirectory-structure.md  Title: Structuring Skills in Subdirectories as skills/&lt;skill_name&gt;/SKILL.md
+Problem: Read lessons/skill-subdirectory-structure.md: Before writing or editing any skill file, resolve the target to the canonical form `skills/&lt;name&gt;/SKILL.md` and confirm the directory exists (create it if needed).
+Solution: 
+If you apply this lesson, cite [Lesson lessons/skill-subdirectory-structure.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
 - Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
+- Use strict kebab-case (^[a-z0-9]+(-[a-z0-9]+)*$) for all skill directory names and frontmatter name identifiers to satisfy the integration gate layout validator.
+- Run integration surface checks (such as check_surfaces_valid in scripts/verify_and_proof.py) prior to committing new skills to verify directory naming and description similarity against existing skill
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 21:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/isolated_script_verification.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-13 21:51 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: skills/early-implementation-transition/SKILL.md. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-13 21:04 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Extend early implementation transition skill with explicit transition triggers and verification steps
+Title: Extend git log history inspection skill with concrete single-file patch extraction workflows
 
 
-Resolves defect-6540b01d37ff by extending the idle skill skills/early-implementation-transition/SKILL.md with explicit criteria for recognizing when to halt exploration and transition directly into implementation and verification.
+Updates skills/target-git-log-history-inspection-single-file-fixes/SKILL.md with explicit invocation triggers and single-file git log patch extraction procedures to resolve idle status.
 
-Target path: skills/early-implementation-transition/SKILL.md
+Target path: skills/target-git-log-history-inspection-single-file-fixes/SKILL.md
 
-## Concrete task to implement
-Implement and commit: Extend early implementation transition skill with explicit transition triggers and verification steps (target: skills/early-implementation-transition/SKILL.md)
+## Expected outcome (frozen claim from the proposal — informational)
+skills/target-git-log-history-inspection-single-file-fixes/SKILL.md contains expanded single-file inspection steps and triggers
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2008,6 +2018,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
+                      <td class="skill-name">early-implementation-transition</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
                       <td class="skill-name">chained-python-execution</td>
                       <td class="skill-reads">3</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
@@ -2020,15 +2036,15 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     </tr>
                     
                     <tr class="">
-                      <td class="skill-name">early-implementation-transition</td>
-                      <td class="skill-reads">3</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
                       <td class="skill-name">handle-loop-breaker</td>
                       <td class="skill-reads">3</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
                     </tr>
                     
                     <tr class="">
@@ -2057,12 +2073,6 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
                     
                     <tr class="">
                       <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
-                      <td class="skill-reads">2</td>
-                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
-                    </tr>
-                    
-                    <tr class="">
-                      <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
                       <td class="skill-reads">2</td>
                       <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
                     </tr>
@@ -2163,7 +2173,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 22:00:10 UTC &middot; host eeepc &middot; newest source 35s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 00:56:40 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 22:07:05 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 00:56:40 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
