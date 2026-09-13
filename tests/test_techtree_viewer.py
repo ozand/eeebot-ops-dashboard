@@ -334,12 +334,42 @@ def test_cycle_feed_renders_outcomes_files_and_failed_cycles() -> None:
     assert 'feed-outcome-failed' in html_out or 'feed-outcome-gate_blocked' in html_out
 
 
+def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() -> None:
+    scorecard = {
+        'computed_at_utc': '2026-09-13T13:18:17.184300Z', 'window_days': 7,
+        'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12},
+        'control_plane': {'hypothesis_loop': {
+            'supported': 5, 'refuted': 0, 'inconclusive': 4, 'total': 9,
+            'inconclusive_within_window': 3, 'inconclusive_aged': 0,
+            'inconclusive_undatable': 1,
+            'inconclusive_undatable_no_qualifying_artifact': 1,
+            'inconclusive_undatable_no_completion': 0,
+            'inconclusive_undatable_invalid_timestamp': 0,
+            'inconclusive_split_status': 'complete',
+        }},
+        'reader_status': {'ledger': {'status': 'complete'}},
+    }
+    html = tv.build_scorecard_hypothesis_metrics(scorecard)
+    assert '3.0%' in html and 'served cycles: <strong>12</strong>' in html
+    assert 'supported <strong>5</strong>' in html and 'refuted <strong>0</strong>' in html
+    assert 'total <strong>9</strong>' in html
+    assert 'computed_at_utc' in html and '2026-09-13T13:18:17.184300Z' in html
+
+
+def test_scorecard_hypothesis_metrics_preserve_unavailable_and_numeric_zero() -> None:
+    scorecard = {'loop': {'hypothesis_selection_rate': 0, 'hypothesis_served_cycles': 0}, 'control_plane': {'hypothesis_loop': {'supported': 0, 'refuted': 0, 'inconclusive': 0, 'total': 0, 'inconclusive_split_status': 'unavailable'}}, 'reader_status': {'ledger': {'status': 'unavailable'}}}
+    html = tv.build_scorecard_hypothesis_metrics(scorecard)
+    assert '0.0%' in html and 'supported <strong>0</strong>' in html
+    assert 'total <strong>0</strong>' in html and html.count('unavailable') >= 2
+
+
 def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     fixture = _fixture()
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
     # Active group
-    assert 'Active (1)' in html_out
+    assert 'Active titles (1)' in html_out
+    assert 'unique titles; lifecycle rows may be higher' in html_out
     assert 'Dynamic prompt injection improves dedup' in html_out
 
     # Answered group with evidence anchor
