@@ -12,6 +12,15 @@
   var ZOOM_MIN = 0.004;
   var ZOOM_MAX = 4;
   var ZOOM_STEP = 1.25;
+  // Below this a press is a click, above it a drag. #213's node panel must
+  // keep opening on a plain click, so the distinction is movement, never
+  // where the pointer went down.
+  var PAN_THRESHOLD_PX = 4;
+  var pan = {
+    mode: 'select', active: false, moved: false, pointerId: null,
+    startX: 0, startY: 0, startScrollLeft: 0, startScrollTop: 0,
+    spaceHeld: false, suppressClick: false
+  };
   var state = { payload: null, mode: 'today', rendered: null, initialRevealScheduled: false, initialRevealDone: false, layout: null, zoom: 1, zoomMode: 'manual' };
 
   function nodeIdToDomId(nodeId) {
@@ -253,26 +262,41 @@
     // history lands there.
     if (readout) readout.textContent = (zoom < 0.1 ? (zoom * 100).toFixed(1) : String(Math.round(zoom * 100))) + '%';
   }
-  function setZoom(value) {
+  // #252: the point the zoom holds still. Without an anchor that is the
+  // middle of the box; with one (the wheel's pointer) it is whatever sits
+  // under the cursor, which is what every canvas tool does.
+  function anchorOffsets(scroller, anchor) {
+    var width = scroller.clientWidth || 0;
+    var height = scroller.clientHeight || 0;
+    if (!anchor) return { x: width / 2, y: height / 2 };
+    var rect = scroller.getBoundingClientRect ? scroller.getBoundingClientRect() : null;
+    if (!rect) return { x: width / 2, y: height / 2 };
+    return {
+      x: Math.max(0, Math.min(width, anchor.x - rect.left)),
+      y: Math.max(0, Math.min(height, anchor.y - rect.top))
+    };
+  }
+  function setZoom(value, anchor) {
     var svg = document.getElementById('lineage-svg');
     if (!svg || !state.layout) return null;
     var previous = state.zoom || 1;
     var next = clampZoom(value);
     state.zoomMode = 'manual';
     if (next === previous) { applyZoomToSvg(svg); return next; }
-    // Keep whatever is in the middle of the viewport in the middle of it.
     var scroller = graphScroller();
-    var centreX = null;
-    var centreY = null;
+    var offsets = null;
+    var contentX = null;
+    var contentY = null;
     if (scroller && scroller.clientWidth) {
-      centreX = (scroller.scrollLeft + scroller.clientWidth / 2) / previous;
-      centreY = (scroller.scrollTop + (scroller.clientHeight || 0) / 2) / previous;
+      offsets = anchorOffsets(scroller, anchor);
+      contentX = (scroller.scrollLeft + offsets.x) / previous;
+      contentY = (scroller.scrollTop + offsets.y) / previous;
     }
     state.zoom = next;
     applyZoomToSvg(svg);
-    if (scroller && centreX != null) {
-      scroller.scrollLeft = Math.max(0, centreX * next - scroller.clientWidth / 2);
-      scroller.scrollTop = Math.max(0, centreY * next - (scroller.clientHeight || 0) / 2);
+    if (scroller && offsets) {
+      scroller.scrollLeft = Math.max(0, contentX * next - offsets.x);
+      scroller.scrollTop = Math.max(0, contentY * next - offsets.y);
     }
     return next;
   }
@@ -291,6 +315,102 @@
     scroller.scrollLeft = 0;
     scroller.scrollTop = 0;
     return state.zoom;
+  }
+  // --- #252: canvas navigation (wheel zooms, drag pans) --------------------
+  function handActive() { return pan.mode === 'hand' || pan.spaceHeld; }
+  function refreshPanCursor() {
+    var scroller = graphScroller();
+    if (!scroller || !scroller.setAttribute) return;
+    scroller.setAttribute('data-pan-mode', handActive() ? 'hand' : 'select');
+    if (pan.active && pan.moved) scroller.setAttribute('data-panning', 'true');
+    else if (scroller.removeAttribute) scroller.removeAttribute('data-panning');
+  }
+  function setPanMode(mode) {
+    pan.mode = mode === 'hand' ? 'hand' : 'select';
+    var toggle = document.querySelector('[data-lineage-pan-toggle]');
+    if (toggle && toggle.setAttribute) toggle.setAttribute('aria-pressed', pan.mode === 'hand' ? 'true' : 'false');
+    refreshPanCursor();
+    return pan.mode;
+  }
+  function inFormField(el) {
+    return !!(el && el.closest && el.closest('input, textarea, select'));
+  }
+  function onPanPointerDown(event) {
+    var scroller = graphScroller();
+    if (!scroller) return;
+    // Left button drags the canvas; the middle button does too, the way it
+    // does everywhere else. Everything on the control bar is left alone.
+    if (event.button !== 0 && event.button !== 1) return;
+    if (event.target && event.target.closest && event.target.closest('button, a, input, select, textarea, label')) return;
+    pan.suppressClick = false;
+    pan.active = true;
+    pan.moved = false;
+    pan.pointerId = event.pointerId == null ? null : event.pointerId;
+    pan.startX = event.clientX;
+    pan.startY = event.clientY;
+    pan.startScrollLeft = scroller.scrollLeft;
+    pan.startScrollTop = scroller.scrollTop;
+    // The middle button would otherwise start the browser's autoscroll.
+    if (event.button === 1 && event.preventDefault) event.preventDefault();
+    // Deliberately NO setPointerCapture here. Capturing at pointerdown
+    // retargets the click that follows to the capturing element, so every
+    // plain click on a node landed on the scroll container instead and
+    // #213's details panel stopped opening. Capture is taken in
+    // onPanPointerMove, once the movement threshold says this is a drag and
+    // the click is going to be suppressed anyway.
+  }
+  function capturePanPointer() {
+    var scroller = graphScroller();
+    if (!scroller || pan.pointerId == null || !scroller.setPointerCapture) return;
+    try { scroller.setPointerCapture(pan.pointerId); } catch (_error) { /* capture is an optimisation, not a requirement */ }
+  }
+  function onPanPointerMove(event) {
+    if (!pan.active) return;
+    var scroller = graphScroller();
+    if (!scroller) return;
+    var dx = event.clientX - pan.startX;
+    var dy = event.clientY - pan.startY;
+    if (!pan.moved && Math.abs(dx) < PAN_THRESHOLD_PX && Math.abs(dy) < PAN_THRESHOLD_PX) return;
+    if (!pan.moved) {
+      pan.moved = true;
+      capturePanPointer();
+    }
+    refreshPanCursor();
+    scroller.scrollLeft = pan.startScrollLeft - dx;
+    scroller.scrollTop = pan.startScrollTop - dy;
+    if (event.preventDefault) event.preventDefault();
+  }
+  function onPanPointerUp() {
+    if (!pan.active) return;
+    var scroller = graphScroller();
+    // A drag that ends on a node must not also open that node.
+    pan.suppressClick = pan.moved;
+    pan.active = false;
+    if (pan.pointerId != null && scroller && scroller.releasePointerCapture) {
+      try { scroller.releasePointerCapture(pan.pointerId); } catch (_error) { /* already released */ }
+    }
+    pan.pointerId = null;
+    refreshPanCursor();
+  }
+  function onGraphWheel(event) {
+    var scroller = graphScroller();
+    if (!scroller) return;
+    // Wheel zooms, so the wheel no longer scrolls: Shift keeps the sideways
+    // scroll that a wide graph still needs.
+    if (event.shiftKey && !event.ctrlKey && !event.metaKey) {
+      scroller.scrollLeft += (event.deltaY || event.deltaX || 0);
+      if (event.preventDefault) event.preventDefault();
+      return;
+    }
+    if (event.preventDefault) event.preventDefault();
+    var delta = event.deltaY || 0;
+    if (event.deltaMode === 1) delta *= 16;        // deltas in lines
+    else if (event.deltaMode === 2) delta *= 400;  // deltas in pages
+    if (!delta) return;
+    // Exponential so each notch is the same ratio, clamped so one violent
+    // flick cannot cross the whole zoom range.
+    var factor = Math.max(0.4, Math.min(2.5, Math.exp(-delta * 0.0015)));
+    setZoom((state.zoom || 1) * factor, { x: event.clientX, y: event.clientY });
   }
   function renderUnified(svg, payload, projection) {
     projection = projection || projectUnifiedGraph(payload, { window: { all: true } });
@@ -500,17 +620,54 @@
         setZoom((state.zoom || 1) * (action === 'in' ? ZOOM_STEP : 1 / ZOOM_STEP));
       });
     });
+    var toggle = document.querySelector('[data-lineage-pan-toggle]');
+    if (toggle && toggle.addEventListener) {
+      toggle.addEventListener('click', function () { setPanMode(pan.mode === 'hand' ? 'select' : 'hand'); });
+    }
     var zoomScroller = graphScroller();
     if (zoomScroller && zoomScroller.addEventListener) {
-      zoomScroller.addEventListener('wheel', function (event) {
-        if (!event.ctrlKey && !event.metaKey) return;
-        if (event.preventDefault) event.preventDefault();
-        setZoom((state.zoom || 1) * (event.deltaY < 0 ? 1.1 : 1 / 1.1));
-      }, { passive: false });
+      zoomScroller.addEventListener('wheel', onGraphWheel, { passive: false });
+      zoomScroller.addEventListener('pointerdown', onPanPointerDown);
+      // Move and release listen on the document, not the box: until the
+      // threshold is crossed there is no pointer capture, so a drag that
+      // leaves the box would otherwise stop dead and never end.
+      document.addEventListener('pointermove', onPanPointerMove);
+      document.addEventListener('pointerup', onPanPointerUp);
+      document.addEventListener('pointercancel', onPanPointerUp);
     }
+    // Capture phase, so the drag-ending click never reaches the document-level
+    // listener that opens the cycle-details panel.
+    document.addEventListener('click', function (event) {
+      if (!pan.suppressClick) return;
+      pan.suppressClick = false;
+      event.stopPropagation();
+      if (event.preventDefault) event.preventDefault();
+    }, true);
+    document.addEventListener('keydown', function (event) {
+      if (inFormField(document.activeElement)) return;
+      if (event.key === 'h' || event.key === 'H') {
+        setPanMode(pan.mode === 'hand' ? 'select' : 'hand');
+        return;
+      }
+      if (event.key !== ' ' && event.key !== 'Spacebar') return;
+      // A focused node keeps Space as its activation key (#218 keyboard path).
+      if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.lineage-node')) return;
+      if (pan.spaceHeld) return;
+      pan.spaceHeld = true;
+      refreshPanCursor();
+      if (event.preventDefault) event.preventDefault();
+    });
+    document.addEventListener('keyup', function (event) {
+      if (event.key !== ' ' && event.key !== 'Spacebar') return;
+      pan.spaceHeld = false;
+      refreshPanCursor();
+    });
     if (window.addEventListener) {
+      // A window that loses focus never delivers the keyup.
+      window.addEventListener('blur', function () { pan.spaceHeld = false; refreshPanCursor(); });
       window.addEventListener('resize', function () { if (state.zoomMode === 'fit') fitToWindow(); });
     }
+    setPanMode(pan.mode);
     applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
     revealInitialGraph();
     document.addEventListener('keydown', function (event) {
@@ -530,7 +687,9 @@
     selectNodeFromHash: selectNodeFromHash,
     setZoom: setZoom,
     fitToWindow: fitToWindow,
-    getZoom: function () { return state.zoom || 1; }
+    getZoom: function () { return state.zoom || 1; },
+    setPanMode: setPanMode,
+    getPanMode: function () { return pan.mode; }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
