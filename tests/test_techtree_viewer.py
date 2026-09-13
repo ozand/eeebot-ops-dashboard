@@ -3092,6 +3092,36 @@ def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
     assert ids.index('LESS-20260825-aaaa') < ids.index('LESS-20260819-cccc')  # newest first
 
 
+def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path) -> None:
+    import gzip as gz
+
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    (lessons_dir / 'lessons.yaml').write_text(_LESSON_YAML, encoding='utf-8')
+    arch = lessons_dir / 'archive'
+    arch.mkdir()
+    archive_text = """lessons:
+  - id: "LESS-RETIRED-1564"
+    date: "2026-09-12"
+    cycle_id: "cycle-retired"
+    task_id: "retired v1 receipt"
+    result: "Committed 1 commit(s)"
+"""
+    with gz.open(arch / 'lessons-2026-08-25.yaml.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(archive_text)
+    with gz.open(arch / 'lessons-2026-09-12.yaml.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(archive_text.replace('LESS-RETIRED-1564', 'LESS-RETIRED-1564-B'))
+    with gz.open(arch / 'lessons-2026-08-23.yaml.gz', 'wt', encoding='utf-8') as fh:
+        fh.write(archive_text.replace('LESS-RETIRED-1564', 'LESS-RETAINED-1564'))
+
+    data = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    ids = {str(item.get('id')) for item in data.get('lessons') or []}
+    assert 'LESS-RETAINED-1564' in ids
+    assert 'LESS-RETIRED-1564' not in ids
+    assert 'LESS-RETIRED-1564-B' not in ids
+
+
 def test_issue73_missing_file_graceful_note() -> None:
     data = _fixture()
     data['lessons'] = []
