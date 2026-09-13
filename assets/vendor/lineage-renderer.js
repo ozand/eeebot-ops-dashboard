@@ -6,7 +6,13 @@
   var MARGIN_X = 24;
   var MARGIN_TOP = 32;
   var RADIUS = 9;
-  var state = { payload: null, mode: 'today', rendered: null, initialRevealScheduled: false, initialRevealDone: false };
+  // The live 'All' projection lays out at 48316 x 21831 for 1500 nodes;
+  // a floor of 0.05 would leave Fit to window still overflowing, which is
+  // the one thing that control promises not to do.
+  var ZOOM_MIN = 0.004;
+  var ZOOM_MAX = 4;
+  var ZOOM_STEP = 1.25;
+  var state = { payload: null, mode: 'today', rendered: null, initialRevealScheduled: false, initialRevealDone: false, layout: null, zoom: 1, zoomMode: 'manual' };
 
   function nodeIdToDomId(nodeId) {
     // Keep encodeURIComponent's percent escapes intact. Replacing '%' with '_'
@@ -230,13 +236,72 @@
     });
     return { positions: positions, width: Math.max(220, Math.round(MARGIN_X * 2 + Math.max(1, cursor) * PITCH_X)), height: Math.max(84, MARGIN_TOP + maxDepth * PITCH_Y + RADIUS + 28), cycle_detected: cycle_detected };
   }
+  function graphScroller() { return document.querySelector('[data-lineage-graph-scroll]'); }
+  function clampZoom(value) {
+    if (!isFinite(value) || value <= 0) return 1;
+    return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+  }
+  function applyZoomToSvg(svg) {
+    var layout = state.layout;
+    if (!svg || !layout) return;
+    var zoom = state.zoom || 1;
+    svg.setAttribute('width', Math.max(1, Math.round(layout.width * zoom)));
+    svg.setAttribute('height', Math.max(1, Math.round(layout.height * zoom)));
+    svg.setAttribute('data-lineage-zoom', String(zoom));
+    var readout = document.querySelector('[data-lineage-zoom-level]');
+    // Whole percent loses every distinction below 10%, and fitting the full
+    // history lands there.
+    if (readout) readout.textContent = (zoom < 0.1 ? (zoom * 100).toFixed(1) : String(Math.round(zoom * 100))) + '%';
+  }
+  function setZoom(value) {
+    var svg = document.getElementById('lineage-svg');
+    if (!svg || !state.layout) return null;
+    var previous = state.zoom || 1;
+    var next = clampZoom(value);
+    state.zoomMode = 'manual';
+    if (next === previous) { applyZoomToSvg(svg); return next; }
+    // Keep whatever is in the middle of the viewport in the middle of it.
+    var scroller = graphScroller();
+    var centreX = null;
+    var centreY = null;
+    if (scroller && scroller.clientWidth) {
+      centreX = (scroller.scrollLeft + scroller.clientWidth / 2) / previous;
+      centreY = (scroller.scrollTop + (scroller.clientHeight || 0) / 2) / previous;
+    }
+    state.zoom = next;
+    applyZoomToSvg(svg);
+    if (scroller && centreX != null) {
+      scroller.scrollLeft = Math.max(0, centreX * next - scroller.clientWidth / 2);
+      scroller.scrollTop = Math.max(0, centreY * next - (scroller.clientHeight || 0) / 2);
+    }
+    return next;
+  }
+  function fitToWindow() {
+    var svg = document.getElementById('lineage-svg');
+    var scroller = graphScroller();
+    var layout = state.layout;
+    if (!svg || !scroller || !layout) return null;
+    var availableW = scroller.clientWidth;
+    var availableH = scroller.clientHeight;
+    // An unmeasurable container must not silently produce a zoom of zero.
+    if (!availableW || !availableH) return null;
+    state.zoom = clampZoom(Math.min((availableW - 8) / layout.width, (availableH - 8) / layout.height));
+    state.zoomMode = 'fit';
+    applyZoomToSvg(svg);
+    scroller.scrollLeft = 0;
+    scroller.scrollTop = 0;
+    return state.zoom;
+  }
   function renderUnified(svg, payload, projection) {
     projection = projection || projectUnifiedGraph(payload, { window: { all: true } });
     var layout = layoutProjection(projection);
     state.rendered = projection;
-    svg.setAttribute('width', layout.width);
-    svg.setAttribute('height', layout.height);
+    state.layout = layout;
+    // #250: the viewBox is always the layout box; zoom scales only the
+    // rendered box, so the graph stays vector-crisp and the scroll container
+    // keeps taking the overflow.
     svg.setAttribute('viewBox', '0 0 ' + layout.width + ' ' + layout.height);
+    applyZoomToSvg(svg);
     svg.setAttribute('data-lineage-rendered', 'unified-dag');
     if (layout.cycle_detected) svg.setAttribute('data-cycle-detected', 'true');
     svg.replaceChildren();
@@ -392,6 +457,7 @@
     // Projection changes visibility only; retain the complete server-formatted
     // receipt instead of replacing it with a lossy fallback string.
     renderUnified(svg, payload, projection);
+    if (state.zoomMode === 'fit') fitToWindow();
   }
   function selectNode(token) {
     var payload = state.payload;
@@ -426,6 +492,25 @@
     document.querySelectorAll('[data-lineage-filter]').forEach(function (button) {
       button.addEventListener('click', function () { applyFilter(button.getAttribute('data-lineage-filter')); });
     });
+    document.querySelectorAll('[data-lineage-zoom]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var action = button.getAttribute('data-lineage-zoom');
+        if (action === 'fit') { fitToWindow(); return; }
+        if (action === 'reset') { setZoom(1); return; }
+        setZoom((state.zoom || 1) * (action === 'in' ? ZOOM_STEP : 1 / ZOOM_STEP));
+      });
+    });
+    var zoomScroller = graphScroller();
+    if (zoomScroller && zoomScroller.addEventListener) {
+      zoomScroller.addEventListener('wheel', function (event) {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (event.preventDefault) event.preventDefault();
+        setZoom((state.zoom || 1) * (event.deltaY < 0 ? 1.1 : 1 / 1.1));
+      }, { passive: false });
+    }
+    if (window.addEventListener) {
+      window.addEventListener('resize', function () { if (state.zoomMode === 'fit') fitToWindow(); });
+    }
     applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
     revealInitialGraph();
     document.addEventListener('keydown', function (event) {
@@ -442,7 +527,10 @@
     renderUnified: renderUnified,
     applyFilter: applyFilter,
     selectNode: selectNode,
-    selectNodeFromHash: selectNodeFromHash
+    selectNodeFromHash: selectNodeFromHash,
+    setZoom: setZoom,
+    fitToWindow: fitToWindow,
+    getZoom: function () { return state.zoom || 1; }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();

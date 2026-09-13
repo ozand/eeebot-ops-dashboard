@@ -3056,7 +3056,7 @@ def _build_unified_lineage(
     height = max(84, max((y for _, y in positions.values()), default=42) + 36)
     data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
 
-    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><span class="lineage-zoom-label">Ctrl + wheel</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
     for edge in payload_edges:
         if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
             continue
@@ -6739,6 +6739,37 @@ CSS = '''
     .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
+    .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
+    .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-zoom-level { min-width: 5ch; text-align: center; color: #8aa695; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    /* Issue #250: on lineage.html the graph owns the viewport. The document
+       does not scroll; .lineage-graph-scroll does, on both axes. Every rule
+       here is scoped to body.page-lineage so the other six pages keep the
+       ordinary document flow. */
+    body.page-lineage { height: 100vh; height: 100dvh; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+    body.page-lineage .empire-strip,
+    body.page-lineage .site-nav,
+    body.page-lineage .page-footer { flex: 0 0 auto; }
+    /* .dashboard-main carries `margin: 0 auto`, and an auto cross-axis margin
+       cancels the flex `stretch` that would otherwise hold it to the body's
+       width -- it would size to its widest content and take the graph with it.
+       An explicit width restores the constraint; max-width still centres it. */
+    body.page-lineage .dashboard-main { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; padding-bottom: 0; }
+    body.page-lineage #panel-lineage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden; }
+    body.page-lineage .lineage-unified-graph { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
+    body.page-lineage .lineage-day-controls,
+    body.page-lineage .lineage-coverage-note,
+    body.page-lineage .lineage-legend,
+    body.page-lineage .lineage-zoom-controls { flex: 0 0 auto; }
+    body.page-lineage .lineage-graph-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+    /* The details panel would otherwise consume the column the graph needs,
+       so on this page it floats over the graph with its own scrollbar. */
+    body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    @media (max-width: 720px) {
+      body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+    }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
@@ -7088,7 +7119,7 @@ SITE_TEMPLATE = '''<!doctype html>
 <title>{title}</title>
 <style>{css}</style>
 </head>
-<body>
+<body{body_class}>
 {empire_strip}
 {site_nav}
 <main class="dashboard-main">
@@ -7144,10 +7175,18 @@ def _site_nav(current: str) -> str:
     return '<nav class="panel-nav site-nav" aria-label="Sections">' + ' &middot; '.join(parts) + '</nav>'
 
 
+# Issue #250: lineage.html is the one application-shaped page -- the graph owns
+# the viewport and scrolls inside itself. Every other page keeps the
+# document-shaped chrome, so the class is per-page and never global.
+BODY_PAGE_CLASSES = {'lineage.html': 'page-lineage'}
+
+
 def _site_page(title: str, current: str, empire_strip: str, page_main: str,
                generated_at: str, host: str, source_age: str,
                computed_note: str, error_note: str, titles_note: str, generator_sha: str = 'unknown') -> str:
+    page_class = BODY_PAGE_CLASSES.get(current, '')
     return SITE_TEMPLATE.format(
+        body_class=f' class="{page_class}"' if page_class else '',
         css=CSS + '\n' + AGENT_CONTEXT_CSS,
         title=esc(title),
         empire_strip=empire_strip,
