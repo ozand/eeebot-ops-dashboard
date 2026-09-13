@@ -4259,7 +4259,7 @@ def build_hypotheses_panel(
     else:
         active_body = "".join(fresh_rendered + stale_rendered)
 
-    active_html = f'<div class="hypo-group"><h3>Active ({total_active_count})</h3><ul class="hypo-list">{active_body}</ul></div>'
+    active_html = f'<div class="hypo-group"><h3>Active titles ({total_active_count})</h3><p class="hypo-count-note">unique titles; lifecycle rows may be higher</p><ul class="hypo-list">{active_body}</ul></div>'
 
     if answered_rendered:
         ans_count = len(answered_rendered)

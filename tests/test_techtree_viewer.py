@@ -368,7 +368,8 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
     # Active group
-    assert 'Active (1)' in html_out
+    assert 'Active titles (1)' in html_out
+    assert 'unique titles; lifecycle rows may be higher' in html_out
     assert 'Dynamic prompt injection improves dedup' in html_out
 
     # Answered group with evidence anchor
