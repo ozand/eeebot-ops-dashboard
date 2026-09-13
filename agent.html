@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">206</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 05:52:43 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">22.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 02:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 03:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-391975da7ec3</span>
+      <span class="cycle-pill">cycle-b8dcc108551d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 02:43:59.498668 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 02:59:28.875411 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,993c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,699c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,993 chars &bull; ~2,248 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Wire targeted test validation legacy glob suites skill into scripts/validate_test_existence.py
-Request ID: llm-proposer-cycle-391975da7ec3
-Cycle ID: cycle-391975da7ec3
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,699 chars &bull; ~2,174 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Optimize scripts/validate_test_existence.py test lookup with single-pass directory indexing
+Request ID: llm-proposer-cycle-b8dcc108551d
+Cycle ID: cycle-b8dcc108551d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1694,42 +1694,42 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 8b7e9d48 merge: integrate selfevo/cycle-cycle-391975da7ec3
+- 05e65ea2 feat(validate_test_existence): wire targeted-test-validation-legacy-glob-suites skill
 - 1d7b0816 merge: integrate selfevo/cycle-cycle-24e7eaaf9852
 - 10b33a91 feat(check_ast_line_count): make file argument optional for zero-argument harness execution
 - 061d8fe5 merge: integrate selfevo/cycle-cycle-16cafeffa876
 - bb2986b0 feat(scaffold_script_entrypoint): wire standard-test-runner-unittest-over-pytest skill for unittest companion scaffolding
 - c9657ebb merge: integrate selfevo/cycle-cycle-7f39e7a6802f
 - 665b69e0 feat(workspace_validation_helpers): wire secret-verification-scoping skill into diff-scoped sensitive-token checks
-- 9bf18b7e merge: integrate selfevo/cycle-cycle-38a0b085d410
-- f8500c85 feat(loop_health_report): extract failure diagnostics from error-status subagent results
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-391975da7ec3.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b8dcc108551d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Wire targeted test validation legacy glob suites skill into scripts/validate_test_existence.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses defect-fbc04301df68 by consuming skills/targeted-test-validation-legacy-glob-suites/SKILL.md in scripts/validate_test_existence.py to support legacy glob pattern matching when checking script test coverage.\n\nTarget path: scripts/validate_test_existence.py&quot;,
+    &quot;title&quot;: &quot;Optimize scripts/validate_test_existence.py test lookup with single-pass directory indexing&quot;,
+    &quot;backlog_instructions&quot;: &quot;Replaces repetitive per-script filesystem scans or subprocess lookups with a single-pass index of test files to allow the validator to complete well within the 60-second harness budget.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Wire targeted test validation legacy glob suites skill into scripts/validate_test_existence.py (target: scripts/validate_test_existence.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Optimize scripts/validate_test_existence.py test lookup with single-pass directory indexing (target: scripts/validate_test_existence.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
+Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-e13f1cd0f155  Title: When repo-wide test suites time out on the constrained eeepc host, fall back to targeted test execution (the paired test module for the changed file, or the script&#x27;s own --test flag) to validate scope
-Problem: In reflection-e13f1cd0f155, a full repo-wide pytest sweep exceeded the available time on the slow i386 host, leaving the scoped change unverified before the cycle budget ran out.
-Solution: When repo-wide test suites time out, validate scoped changes via targeted pytest on the paired test module (e.g. python3 -m pytest tests/test_&lt;changed&gt;.py) or the script&#x27;s own --test flag, and record the full-suite timeout in concrete_next_action rather than re-running the sweep.
-If you apply this lesson, cite [Lesson LESS-REF-e13f1cd0f155] in your proposal/response.
-Related: LESS-REF-c2ab8feea257-4dc0
+ID: LESS-20260905-6d238e44  Title: Chain the script&#x27;s own CLI self-test (--test) with the paired pytest suite in a single bounded verification pass before committing
+Problem: In cycle-6d238e44ec05, verification ran the paired pytest suite but skipped the script&#x27;s own --test self-test, so the CLI entrypoint path (argparse wiring, exit codes, stderr/JSON separation) went unverified and the cycle had to re-run a second pass to confirm the self-test still passed.
+Solution: When a changed script exposes a --test self-test flag, run it first (python3 scripts/&lt;name&gt;.py --test) and immediately chain the paired pytest suite (python3 -m pytest tests/test_&lt;name&gt;.py) in the same bounded exec call, so both the internal self-test and the external suite are verified in one pass before committing.
+If you apply this lesson, cite [Lesson LESS-20260905-6d238e44] in your proposal/response.
+Related: LESS-REF-e13f1cd0f155, LESS-REF-c2ab8feea257-4dc0
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Use strict kebab-case (^[a-z0-9]+(-[a-z0-9]+)*$) for all skill directory names and frontmatter name identifiers to satisfy the integration gate layout validator.
@@ -1737,21 +1737,21 @@ Related: LESS-REF-c2ab8feea257-4dc0
 - Skill directory and identifier naming used underscores instead of kebab-case. The agent created &#x27;skills/inspect_verify_and_proof/&#x27;, which passed unit test regex &#x27;^[a-z0-9][a-z0-9_-]*$&#x27; in test_skill_c
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 02:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_ast_line_count.py, tests/test_check_ast_line_count.py. Reward signal will be…
-- Attempt 2 (2026-09-13 02:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
-- Attempt 3 (2026-09-13 01:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, skills/secret-verification-scoping/SKILL.md,…
+- Attempt 1 (2026-09-13 02:48 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
+- Attempt 2 (2026-09-13 02:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_ast_line_count.py, tests/test_check_ast_line_count.py. Reward signal will be…
+- Attempt 3 (2026-09-13 02:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
 
 ## Concrete task to implement
 
-Title: Wire targeted test validation legacy glob suites skill into scripts/validate_test_existence.py
+Title: Optimize scripts/validate_test_existence.py test lookup with single-pass directory indexing
 
 
-Addresses defect-fbc04301df68 by consuming skills/targeted-test-validation-legacy-glob-suites/SKILL.md in scripts/validate_test_existence.py to support legacy glob pattern matching when checking script test coverage.
+Replaces repetitive per-script filesystem scans or subprocess lookups with a single-pass index of test files to allow the validator to complete well within the 60-second harness budget.
 
 Target path: scripts/validate_test_existence.py
 
 ## Concrete task to implement
-Implement and commit: Wire targeted test validation legacy glob suites skill into scripts/validate_test_existence.py (target: scripts/validate_test_existence.py)
+Implement and commit: Optimize scripts/validate_test_existence.py test lookup with single-pass directory indexing (target: scripts/validate_test_existence.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2068,7 +2068,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 02:55:53 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 05:52:43 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 03:04:44 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 05:52:43 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
