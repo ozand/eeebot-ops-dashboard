@@ -227,6 +227,49 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     rung = sys_prompt.get("rung")
     cid = sys_prompt.get("cycle_id", "")
     ts_str = str(sys_prompt.get("ts") or "")
+    prompt_fit = agent_context.get("prompt_fit") or {}
+    prompt_fit_status = prompt_fit.get("source_status", "unavailable")
+    prompt_fit_reader_status = prompt_fit.get("reader_status", "unavailable")
+    prompt_fit_latest = prompt_fit.get("latest") if isinstance(prompt_fit.get("latest"), dict) else None
+    prompt_fit_window_kind = prompt_fit.get("window_kind", "unavailable")
+    prompt_fit_window_days = prompt_fit.get("window_days")
+    prompt_fit_window_rows = prompt_fit.get("window_rows")
+    prompt_fit_rows_considered = prompt_fit.get("rows_considered")
+    prompt_fit_rows_with_drops = prompt_fit.get("rows_with_drops")
+    prompt_fit_rows_with_trims = prompt_fit.get("rows_with_trims")
+    prompt_fit_covered_from = prompt_fit.get("prompt_covered_from")
+    prompt_fit_covered_to = prompt_fit.get("prompt_covered_to")
+    prompt_fit_latest_ts = prompt_fit_latest.get("ts") if prompt_fit_latest else None
+
+    def fit_metric(metric_name: str, key: str) -> str:
+        metric = prompt_fit_latest.get(metric_name) if prompt_fit_latest else None
+        if not isinstance(metric, dict):
+            return "unavailable"
+        status = metric.get("status")
+        if status == "empty":
+            return "0" if key != "sections" else "none"
+        if status != "measured":
+            return str(status or "unavailable")
+        if key == "sections":
+            sections = metric.get("sections")
+            return "; ".join(str(section) for section in sections) if sections else "none"
+        value = metric.get(key)
+        return str(value) if value is not None else "unavailable"
+
+    def fit_window_text() -> str:
+        if not isinstance(prompt_fit_rows_considered, int) or not isinstance(prompt_fit_window_rows, int):
+            return "window unavailable"
+        period = (
+            f"{prompt_fit_covered_from} → {prompt_fit_covered_to}"
+            if prompt_fit_covered_from and prompt_fit_covered_to
+            else "timestamps unavailable"
+        )
+        return f"{prompt_fit_rows_considered}/{prompt_fit_window_rows} rows · {prompt_fit_window_kind} · {prompt_fit_window_days}d · {period}"
+
+    def fit_status_text() -> str:
+        if prompt_fit_status == "valid" and prompt_fit_reader_status == "complete":
+            return "published"
+        return f"{prompt_fit_status} (reader: {prompt_fit_reader_status})"
 
     ts_display = ts_str.replace("T", " ").replace("Z", " MSK") if ts_str else "active cycle"
 
@@ -359,6 +402,22 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'  {rung_html}')
     if dropped_html:
         out.append(f'  {dropped_html}')
+
+    out.append('  <div class="prompt-fit-events" id="prompt-fit-events">')
+    out.append('    <h3>Prompt Fit Event Telemetry</h3>')
+    out.append(f'    <p class="section-sub">Published runtime summary · latest prompt row: {esc(prompt_fit_latest_ts or ts_str or "unavailable")} · source: {esc(fit_status_text())}</p>')
+    out.append('    <div class="prompt-fit-event-grid">')
+    prompt_fit_rung = prompt_fit_latest.get("rung") if prompt_fit_latest else None
+    out.append(f'      <div class="prompt-fit-event-item"><strong>Rung</strong><span>{esc(prompt_fit_rung or rung or "unavailable")}</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item"><strong>Dropped</strong><span>{esc(fit_metric("dropped", "count"))} sections / {esc(fit_metric("dropped", "chars"))} chars</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item"><strong>Trimmed</strong><span>{esc(fit_metric("trimmed", "count"))} sections / {esc(fit_metric("trimmed", "chars"))} chars</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item"><strong>Recent rows with drops</strong><span>{esc(str(prompt_fit_rows_with_drops) if prompt_fit_rows_with_drops is not None else "unavailable")} / {esc(str(prompt_fit_rows_considered) if prompt_fit_rows_considered is not None else "unavailable")}</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item"><strong>Recent rows with trims</strong><span>{esc(str(prompt_fit_rows_with_trims) if prompt_fit_rows_with_trims is not None else "unavailable")} / {esc(str(prompt_fit_rows_considered) if prompt_fit_rows_considered is not None else "unavailable")}</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Event window</strong><span>{esc(fit_window_text())}</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>{esc(fit_metric("dropped", "sections"))}</span></div>')
+    out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>{esc(fit_metric("trimmed", "sections"))}</span></div>')
+    out.append('    </div>')
+    out.append('  </div>')
 
     out.append('  <div class="two-tier-canvas">')
     out.append('    <div class="tier-col tier1-col">')
@@ -562,6 +621,32 @@ AGENT_CONTEXT_CSS = """
   overflow: hidden;
 }
 .context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.prompt-fit-events {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.45);
+}
+.prompt-fit-events h3 { margin: 0 0 4px; }
+.prompt-fit-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.prompt-fit-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(110, 118, 129, 0.10);
+  font-size: 13px;
+}
+.prompt-fit-event-item strong { color: var(--text-muted, #8b949e); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.prompt-fit-event-item span { overflow-wrap: anywhere; }
+.prompt-fit-event-wide { grid-column: 1 / -1; }
+
 .context-dropped-alert {
   background: rgba(248, 81, 73, 0.1);
   border: 1px solid rgba(248, 81, 73, 0.4);

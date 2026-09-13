@@ -4803,7 +4803,10 @@ def build_agent_panel(
     host: str | None = None,
     proposer_stats: dict[str, Any] | None = None,
     agent_context: dict[str, Any] | None = None,
+    prompt_fit: dict[str, Any] | None = None,
 ) -> str:
+    if isinstance(agent_context, dict) and isinstance(prompt_fit, dict):
+        agent_context = {**agent_context, "prompt_fit": prompt_fit}
     context_html = build_two_tier_context_html(agent_context)
     # 1. AGENTS.md
     if agents_md is not None:
@@ -7039,6 +7042,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         host=host,
         proposer_stats=data.get('proposer_stats'),
         agent_context=data.get('agent_context'),
+        prompt_fit=data.get('scorecard', {}).get('prompt_fit') if isinstance(data.get('scorecard'), dict) else None,
     )
 
     return PAGE_TEMPLATE.format(
@@ -7368,6 +7372,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         host=host,
         proposer_stats=data.get('proposer_stats'),
         agent_context=data.get('agent_context'),
+        prompt_fit=data.get('scorecard', {}).get('prompt_fit') if isinstance(data.get('scorecard'), dict) else None,
     )
     lessons_panel = build_lessons_panel(data.get('lessons'))
 
