@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 08:35:51 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">23.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 06:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 06:07 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-9d9705ca5af7</span>
+      <span class="cycle-pill">cycle-83f2c976f4d2</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 05:14:53.316045 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 06:04:34.083992 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,040c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,823c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,040 chars &bull; ~2,010 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py
-Request ID: llm-proposer-cycle-9d9705ca5af7
-Cycle ID: cycle-9d9705ca5af7
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,823 chars &bull; ~2,205 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add discovery of all skill markdown files to tests/test_skill_frontmatter.py for centralized validation
+Request ID: llm-proposer-cycle-83f2c976f4d2
+Cycle ID: cycle-83f2c976f4d2
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1694,67 +1694,66 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 5bb90c89 merge: integrate selfevo/cycle-cycle-9d9705ca5af7
+- b7e76119 selfevo: auto-commit uncommitted subagent work — Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py
+- 0170615f feat(filter_futile_fallbacks): add deduplication cooldown filter
 - d9553915 merge: integrate selfevo/cycle-cycle-95df3a6a96f3
 - 574e08ea feat(search_subagent_archive): wire demand-and-reflection-lookup-paths skill
 - fc82638b merge: integrate selfevo/cycle-cycle-7a36af866062
 - 9358146b feat(check_cycle_budget): add staged milestone tracking (M1/M2/M3) from turn_budget_milestones doc
 - 03548a20 merge: integrate selfevo/cycle-cycle-b8dcc108551d
-- c8d26f3c perf(validate_test_existence): single-pass directory indexing for test lookup
-- 8b7e9d48 merge: integrate selfevo/cycle-cycle-391975da7ec3
-- 05e65ea2 feat(validate_test_existence): wire targeted-test-validation-legacy-glob-suites skill
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add proof history inspection helper to scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-9d9705ca5af7.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-83f2c976f4d2.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves reflection-5b324e89b8cd by adding target cooldown filtering to scripts/filter_futile_fallbacks.py so fallback selection avoids targets currently under deduplication cooldown when budget restrictions constrain proposals.\n\nTarget path: scripts/filter_futile_fallbacks.py&quot;,
+    &quot;title&quot;: &quot;Add discovery of all skill markdown files to tests/test_skill_frontmatter.py for centralized validation&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-b743abd2474d by extending tests/test_skill_frontmatter.py to dynamically discover and validate frontmatter for all skills in skills/, preventing duplicate per-skill test suites.\n\nTarget path: tests/test_skill_frontmatter.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py (target: scripts/filter_futile_fallbacks.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/filter_futile_fallbacks.py compiles and exports a cooldown filtering helper&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -c &#x27;import scripts.filter_futile_fallbacks&#x27;&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add discovery of all skill markdown files to tests/test_skill_frontmatter.py for centralized validation (target: tests/test_skill_frontmatter.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: lessons/enforcing_agents_sections_in_structural_tests.md  Title: Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py
+Problem: Read lessons/enforcing_agents_sections_in_structural_tests.md: **Rule of thumb:** if you add a `## ` section to `AGENTS.md` that states a standing instruction (a protocol, a ban, a required behavior), the same commit must add its entry to `REQUIRED_SECTIONS` in `tests/test_agents_structure.py`, plus a
+Solution: 
+If you apply this lesson, cite [Lesson lessons/enforcing_agents_sections_in_structural_tests.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Repeated cycle re-dispatch during active backend cooldown: The harness launched three consecutive attempts (14:39, 14:45, and 14:50 UTC) against an unavailable backend deployment, failing each time wi
-- Configure redundant or secondary model endpoints in the proxy routing table to prevent total cycle starvation when the primary deployment host enters cooldown.
-- Repetitive dispatch against a cooled-down deployment: The cycle dispatcher attempted execution three consecutive times (14:39, 14:45, and 14:50 UTC) without validating backend health or respecting the
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 04:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
-- Attempt 2 (2026-09-13 03:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 1 (2026-09-13 05:31 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/filter_futile_fallbacks.py,…
+- Attempt 2 (2026-09-13 04:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
+- Attempt 3 (2026-09-13 03:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py
+Title: Add discovery of all skill markdown files to tests/test_skill_frontmatter.py for centralized validation
 
 
-Resolves reflection-5b324e89b8cd by adding target cooldown filtering to scripts/filter_futile_fallbacks.py so fallback selection avoids targets currently under deduplication cooldown when budget restrictions constrain proposals.
+Addresses reflection-b743abd2474d by extending tests/test_skill_frontmatter.py to dynamically discover and validate frontmatter for all skills in skills/, preventing duplicate per-skill test suites.
 
-Target path: scripts/filter_futile_fallbacks.py
+Target path: tests/test_skill_frontmatter.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/filter_futile_fallbacks.py compiles and exports a cooldown filtering helper
+## Concrete task to implement
+Implement and commit: Add discovery of all skill markdown files to tests/test_skill_frontmatter.py for centralized validation (target: tests/test_skill_frontmatter.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2071,7 +2070,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 06:01:01 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 08:35:51 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 06:07:49 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 08:35:51 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
