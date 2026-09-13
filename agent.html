@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 02:12:19 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 23:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 28s old &middot; generated 23:36 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-6f9118345223</span>
+      <span class="cycle-pill">cycle-78057b375bae</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-13 23:03:58.034696 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-13 23:19:50.937607 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,192c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,784c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,192 chars &bull; ~1,798 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document companion cycle verification guidelines to avoid duplicate test proposals
-Request ID: llm-proposer-cycle-6f9118345223
-Cycle ID: cycle-6f9118345223
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,784 chars &bull; ~1,696 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Detect unexpected leading whitespace on top-level definitions in scripts/check_style.py
+Request ID: llm-proposer-cycle-78057b375bae
+Cycle ID: cycle-78057b375bae
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,62 +1780,56 @@ Completed (do not repeat): Report confirmation ratio status (V2); Clean stale fe
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- d40eb667 merge: integrate selfevo/cycle-cycle-6f9118345223
+- d085f327 docs(lessons): add companion cycle verification guidelines to avoid duplicate test proposals
 - de08f5e0 merge: integrate selfevo/cycle-fallback-f3034ae3d408
 - 6e62a9ec feat(defect_quarantine): add --query CLI entrypoint and --self-test verification
 - 3a826201 merge: integrate selfevo/cycle-cycle-616bc2e75d41
 - 0187043e docs(lessons): add shared helper collision avoidance guidelines favoring micro-modules
 - 6a9f9701 merge: integrate selfevo/cycle-cycle-e8828bd3b243
 - 66c57d14 docs(skills): extend git log history inspection skill with single-file patch extraction workflows
-- ad61cd3e merge: integrate selfevo/cycle-cycle-5bfca0d33df3
-- f2dd5508 docs(skills): extend early-implementation-transition with explicit transition triggers and verification steps
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6f9118345223.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-78057b375bae.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document companion cycle verification guidelines to avoid duplicate test proposals&quot;,
-    &quot;backlog_instructions&quot;: &quot;Document guidelines for handling reflection demands from recent cycles to inspect companion cycles and existence indices before proposing test additions, preventing duplicate test targets as observed in cycle-3e6693f0a07b.\n\nTarget path: lessons/companion_cycle_test_verification.md&quot;,
+    &quot;title&quot;: &quot;Detect unexpected leading whitespace on top-level definitions in scripts/check_style.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves evidence from cycle-c95ba066bcb5 where an accidental leading space before a top-level class definition caused an IndentationError during test collection. Adding a check in check_style.py flags rogue leading whitespace on top-level class and function definitions.\n\nTarget path: scripts/check_style.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document companion cycle verification guidelines to avoid duplicate test proposals (target: lessons/companion_cycle_test_verification.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Detect unexpected leading whitespace on top-level definitions in scripts/check_style.py (target: scripts/check_style.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/avoid_bundled_test_executions.md  Title: Avoid Bundled Test Executions
-Problem: Read lessons/avoid_bundled_test_executions.md: **Default to targeted, single-suite verification.** The in-cycle rule is &quot;one test file per `exec` call&quot;; the gate owns full-suite runs.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/avoid_bundled_test_executions.md] in your proposal/response.
+ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
+Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
+Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
+If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Ensure top-level classes and functions inserted into Python modules begin strictly at column 0 without leading whitespace to prevent pytest AST assertion-rewriting syntax failures.
+- Verify leading whitespace alignment against the enclosing indentation block when performing string edits in Python source files to avoid indentation syntax errors.
 - Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 22:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/shared_helper_collision_avoidance.md. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-13 21:37 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/uniform_selftest_tuples.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-13 22:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/defect_quarantine.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Document companion cycle verification guidelines to avoid duplicate test proposals
+Title: Detect unexpected leading whitespace on top-level definitions in scripts/check_style.py
 
 
-Document guidelines for handling reflection demands from recent cycles to inspect companion cycles and existence indices before proposing test additions, preventing duplicate test targets as observed in cycle-3e6693f0a07b.
+Resolves evidence from cycle-c95ba066bcb5 where an accidental leading space before a top-level class definition caused an IndentationError during test collection. Adding a check in check_style.py flags rogue leading whitespace on top-level class and function definitions.
 
-Target path: lessons/companion_cycle_test_verification.md
+Target path: scripts/check_style.py
 
 ## Concrete task to implement
-Implement and commit: Document companion cycle verification guidelines to avoid duplicate test proposals (target: lessons/companion_cycle_test_verification.md)
+Implement and commit: Detect unexpected leading whitespace on top-level definitions in scripts/check_style.py (target: scripts/check_style.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2170,7 +2164,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 23:16:06 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 02:12:19 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 23:36:30 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 02:12:19 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
