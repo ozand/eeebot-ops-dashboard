@@ -4052,6 +4052,37 @@ def build_cycle_feed(
     '''
 
 
+def _scorecard_value(value: Any) -> str:
+    if value is None:
+        return '<span class="unavailable-note">unavailable</span>'
+    return esc(value)
+
+
+def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
+    if not isinstance(scorecard, dict):
+        return '<section class="scorecard-hypothesis-metrics"><h3>Hypothesis loop metrics</h3><p class="unavailable-note">scorecard unavailable</p></section>'
+    loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
+    control = scorecard.get('control_plane') if isinstance(scorecard.get('control_plane'), dict) else {}
+    hypothesis = control.get('hypothesis_loop') if isinstance(control.get('hypothesis_loop'), dict) else {}
+    keys = ('supported', 'refuted', 'inconclusive')
+    values = [hypothesis.get(key) for key in keys]
+    total = sum(value for value in values if isinstance(value, (int, float)) and not isinstance(value, bool))
+    total_value = total if all(value is not None and isinstance(value, (int, float)) and not isinstance(value, bool) for value in values) else None
+    reader = scorecard.get('reader_status')
+    ledger = reader.get('ledger') if isinstance(reader, dict) else None
+    split_status = hypothesis.get('inconclusive_split_status')
+    reader_value = ledger.get('status') if isinstance(ledger, dict) else None
+    state = f'split: {split_status}; reader: {reader_value}' if split_status is not None and reader_value is not None else None
+    return f'''<section class="scorecard-hypothesis-metrics" id="scorecard-hypothesis-metrics">
+      <h3>Hypothesis loop metrics <small>(published scorecard)</small></h3>
+      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong></p>
+      <p class="scorecard-metric">verdict yield: supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
+      <p class="scorecard-metric">inconclusive window: within <strong>{_scorecard_value(hypothesis.get('inconclusive_within_window'))}</strong> · aged <strong>{_scorecard_value(hypothesis.get('inconclusive_aged'))}</strong></p>
+      <p class="scorecard-metric">undatable: <strong>{_scorecard_value(hypothesis.get('inconclusive_undatable'))}</strong> (no artifact {_scorecard_value(hypothesis.get('inconclusive_undatable_no_qualifying_artifact'))}, no completion {_scorecard_value(hypothesis.get('inconclusive_undatable_no_completion'))}, invalid timestamp {_scorecard_value(hypothesis.get('inconclusive_undatable_invalid_timestamp'))})</p>
+      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · window {_scorecard_value(scorecard.get('window_days'))}d · computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
+    </section>'''
+
+
 def build_hypotheses_panel(
     hypotheses_lifecycle: dict[str, Any] | None,
     hypotheses: dict[str, Any] | None = None,
@@ -4245,6 +4276,8 @@ def build_hypotheses_panel(
     else:
         answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
+    scorecard_metrics_html = build_scorecard_hypothesis_metrics(scorecard)
+
     # Extract active gap metrics from scorecard if available
     active_gap_metrics = None
     if isinstance(scorecard, dict) and isinstance(scorecard.get('gaps'), list):
@@ -4261,6 +4294,7 @@ def build_hypotheses_panel(
     return f'''
     <section class="panel panel-hypotheses" id="panel-hypotheses">
       <h2 class="panel-title">Hypotheses Lifecycle</h2>
+      {scorecard_metrics_html}
       {futility_html}
       <div class="hypo-split">
         {active_html}
