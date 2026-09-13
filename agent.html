@@ -1206,7 +1206,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">213</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 21:32:30 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 18:45 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 18:56 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1223,7 +1223,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,743 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-65185260dda6</span>
+      <span class="cycle-pill">cycle-17e158b12cef</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1249,7 +1249,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 18:12:23.122040 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 18:49:52.451164 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1283,7 +1283,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,904c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,244c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1728,9 +1728,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,236c) + 3 separators &times; 7c (21c) = 21,257 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,904 chars &bull; ~1,976 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement defect quarantine check function in scripts/defect_quarantine.py
-Request ID: llm-proposer-cycle-65185260dda6
-Cycle ID: cycle-65185260dda6
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,244 chars &bull; ~2,061 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Restrict target file discovery to active scripts in scripts/validate_heredoc_urls.py
+Request ID: llm-proposer-cycle-17e158b12cef
+Cycle ID: cycle-17e158b12cef
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1738,69 +1738,75 @@ Full operator charter: see system context (already loaded above).
 
 Current priority targets:
 (I) Priority 40 — Filter fallback candidate paths (V1): Write scripts/filter_fallback_targets.py with a single function filter_fallback_paths(candidate_paths, recent_paths) under 40 lines. Given candidate_paths as a list of str and recent_paths as an iterable of str, convert recent_paths to a set and return candidate paths excluding any path present in recent_paths, preserving original candidate order. Return an empty list if candidate_paths is empty or invalid.
-(J) Priority 41 — Check defect quarantine status (V1): Write scripts/defect_quarantine.py with a single function is_defect_quarantined(failure_timestamps, max_failures=3, window_seconds=3600, current_time=None) under 40 lines. Filter failure_timestamps to those occurring within window_seconds before current_time (defaulting to time.time()), and return True if the count is greater than or equal to max_failures, otherwise False. Return False if failure_timestamps is empty.
 
-Completed (do not repeat): Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1).
+Completed (do not repeat): Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Check defect quarantine status (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 17c19e61 merge: integrate selfevo/cycle-cycle-65185260dda6
+- 48c69387 selfevo: auto-commit uncommitted subagent work — Implement defect quarantine check function in scripts/defect_quarantine.py
+- 04f373d7 feat(defect_quarantine): add is_defect_quarantined sliding-window check
 - 5972d285 merge: integrate selfevo/cycle-cycle-cdcd995e029a
 - 24b3f923 docs(lessons): document alternative verification strategy for cooled scripts during idle rewiring
 - 5339924c merge: integrate selfevo/cycle-cycle-cee1d3522a7a
 - c4ad11f6 feat(model_fallback_routing): add argparse CLI entrypoint with --help and --query modes
 - cdc360f0 merge: integrate selfevo/cycle-cycle-365b74a65de8
-- e5d34af1 selfevo: auto-commit uncommitted subagent work — Fix default invocation exit code handling in scripts/validate_heredoc_urls.py
-- effa01d8 fix(validate_heredoc_urls): exit 0 on completed default scan
-- 3a0b1d7d merge: integrate selfevo/cycle-cycle-6b8063fb0065
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Disallow broad repository-wide test targets in scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-65185260dda6.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-17e158b12cef.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement defect quarantine check function in scripts/defect_quarantine.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implement scripts/defect_quarantine.py with is_defect_quarantined to evaluate failure counts within a sliding time window against max_failures, returning False when empty.\n\nTarget path: scripts/defect_quarantine.py&quot;,
+    &quot;title&quot;: &quot;Restrict target file discovery to active scripts in scripts/validate_heredoc_urls.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Validator exits with code 1 because default file discovery scans test fixtures and the validator itself which contain sample URL patterns. Restricting target discovery to active scripts and exempting self-references resolves the false-positive failure.\n\nTarget path: scripts/validate_heredoc_urls.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement defect quarantine check function in scripts/defect_quarantine.py (target: scripts/defect_quarantine.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/defect_quarantine.py defines is_defect_quarantined adhering to the sliding window threshold check.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -c \&quot;import sys; sys.path.insert(0, &#x27;.&#x27;); from scripts.defect_quarantine import is_defect_quarantined; assert not is_defect_quarantined([]); assert is_defect_quarantined([1000, 1010, 1020], max_failures=3, window_seconds=100, current_time=1050); assert not is_defect_quarantined([900, 1010], max_failures=2, window_seconds=100, current_time=1050)\&quot;&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Restrict target file discovery to active scripts in scripts/validate_heredoc_urls.py (target: scripts/validate_heredoc_urls.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-14-001  Title: Stalled Release Promotion due to missing SOURCE_COMMIT metadata
+Root cause: The coordinator&#x27;s promotion module checks for a &#x27;SOURCE_COMMIT&#x27; file in the
+active production release directory to establish the base git hash of the running system.
+During deployment or manual release creation, this file was missing, halting the pipeline.
+
+Prevention: Every release packaging or manual hotfix script must write and preserve the &#x27;SOURCE_COMMIT&#x27; file in the release directory root.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
-Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
-Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
-If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
+ID: LESS-REF-f0bd8333acbe-1d2e  Title: Inspect target file interfaces or git history during task proposal to verify whether proposed features (such as CLI flags) already exist before dispatching implementation cycles.
+Problem: scripts/verify_imports.py already contained lines 10, 1707-1711, and 1730-1737 supporting --json, and tests/test_verify_imports.py already tested it across multiple test cases.
+Solution: Inspect target file interfaces or git history during task proposal to verify whether proposed features (such as CLI flags) already exist before dispatching implementation cycles.
+If you apply this lesson, cite [Lesson LESS-REF-f0bd8333acbe-1d2e] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
-- Target grep commands directly to function definitions or call sites rather than issuing broad sequential read_file windows across large monolithic scripts.
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 17:05 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py. Reward signal will…
+- Attempt 1 (2026-09-13 18:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/defect_quarantine.py.…
+- Attempt 2 (2026-09-13 17:05 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py. Reward signal will…
+- Attempt 3 (2026-09-13 16:50 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/prevent_repeats.json, memory/repeat_failures.json.…
 
 ## Concrete task to implement
 
-Title: Implement defect quarantine check function in scripts/defect_quarantine.py
+Title: Restrict target file discovery to active scripts in scripts/validate_heredoc_urls.py
 
 
-Implement scripts/defect_quarantine.py with is_defect_quarantined to evaluate failure counts within a sliding time window against max_failures, returning False when empty.
+Validator exits with code 1 because default file discovery scans test fixtures and the validator itself which contain sample URL patterns. Restricting target discovery to active scripts and exempting self-references resolves the false-positive failure.
 
-Target path: scripts/defect_quarantine.py
+Target path: scripts/validate_heredoc_urls.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/defect_quarantine.py defines is_defect_quarantined adhering to the sliding window threshold check.
+## Concrete task to implement
+Implement and commit: Restrict target file discovery to active scripts in scripts/validate_heredoc_urls.py (target: scripts/validate_heredoc_urls.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2135,7 +2141,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 18:45:24 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 21:32:30 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 18:56:39 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 21:32:30 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
