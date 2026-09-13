@@ -825,6 +825,37 @@
     .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
+    .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
+    .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-zoom-level { min-width: 5ch; text-align: center; color: #8aa695; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    /* Issue #250: on lineage.html the graph owns the viewport. The document
+       does not scroll; .lineage-graph-scroll does, on both axes. Every rule
+       here is scoped to body.page-lineage so the other six pages keep the
+       ordinary document flow. */
+    body.page-lineage { height: 100vh; height: 100dvh; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+    body.page-lineage .empire-strip,
+    body.page-lineage .site-nav,
+    body.page-lineage .page-footer { flex: 0 0 auto; }
+    /* .dashboard-main carries `margin: 0 auto`, and an auto cross-axis margin
+       cancels the flex `stretch` that would otherwise hold it to the body's
+       width -- it would size to its widest content and take the graph with it.
+       An explicit width restores the constraint; max-width still centres it. */
+    body.page-lineage .dashboard-main { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; padding-bottom: 0; }
+    body.page-lineage #panel-lineage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden; }
+    body.page-lineage .lineage-unified-graph { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
+    body.page-lineage .lineage-day-controls,
+    body.page-lineage .lineage-coverage-note,
+    body.page-lineage .lineage-legend,
+    body.page-lineage .lineage-zoom-controls { flex: 0 0 auto; }
+    body.page-lineage .lineage-graph-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+    /* The details panel would otherwise consume the column the graph needs,
+       so on this page it floats over the graph with its own scrollbar. */
+    body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    @media (max-width: 720px) {
+      body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+    }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
@@ -1206,7 +1237,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">213</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 00:24:59 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 27s old &middot; generated 21:28 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 28s old &middot; generated 21:38 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1223,7 +1254,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,743 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ca0d3d9838f1</span>
+      <span class="cycle-pill">cycle-52e556f46c4d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1249,7 +1280,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 21:17:07.537030 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 21:32:16.883268 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1283,7 +1314,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,411c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,995c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1728,9 +1759,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,236c) + 3 separators &times; 7c (21c) = 21,257 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,411 chars &bull; ~1,852 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document isolation verification fast path to avoid running full test suite on isolated script changes
-Request ID: llm-proposer-cycle-ca0d3d9838f1
-Cycle ID: cycle-ca0d3d9838f1
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,995 chars &bull; ~1,998 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document uniform tuple structure guidelines for test sample collections in self-test functions
+Request ID: llm-proposer-cycle-52e556f46c4d
+Cycle ID: cycle-52e556f46c4d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1742,68 +1773,69 @@ Completed (do not repeat): Report confirmation ratio status (V2); Clean stale fe
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- de0c5426 merge: integrate selfevo/cycle-cycle-ca0d3d9838f1
+- 4ff63d32 docs(lessons): add isolated script verification fast path lesson
 - b8c747a5 merge: integrate selfevo/cycle-fallback-057c52da8e05
 - 45800122 feat(validate_test_existence): add --target single-script path filter
 - 059e77cc merge: integrate selfevo/cycle-cycle-9d394ad5a217
 - c4b7afb5 selfevo: auto-commit uncommitted subagent work — Implement fallback path filtering function in scripts/filter_fallback_targets.py
 - 80fe9f4b feat(filter_fallback_targets): add filter_fallback_paths for Priority 40
 - af9819a5 merge: integrate selfevo/cycle-cycle-17e158b12cef
-- 02dfbfa8 fix(validate_heredoc_urls): restrict default discovery to active scripts
-- 17c19e61 merge: integrate selfevo/cycle-cycle-65185260dda6
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ca0d3d9838f1.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-52e556f46c4d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document isolation verification fast path to avoid running full test suite on isolated script changes&quot;,
-    &quot;backlog_instructions&quot;: &quot;Codifies the operational rule that when reference checks confirm a modified script is only imported by its targeted unit test, passing targeted tests suffices to proceed to commit without launching the full test suite.\n\nTarget path: lessons/isolated_script_verification.md&quot;,
+    &quot;title&quot;: &quot;Document uniform tuple structure guidelines for test sample collections in self-test functions&quot;,
+    &quot;backlog_instructions&quot;: &quot;Documents the requirement to maintain identical tuple schemas across positive and negative test sample collections when iterating over combined cases in run_self_test(), directly addressing the ValueError observed in cycle cycle-54d21ce9beed.\n\nTarget path: lessons/uniform_selftest_tuples.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document isolation verification fast path to avoid running full test suite on isolated script changes (target: lessons/isolated_script_verification.md)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document uniform tuple structure guidelines for test sample collections in self-test functions (target: lessons/uniform_selftest_tuples.md)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file documents reference-isolation criteria to halt verification and commit without running redundant full-repository test suites.&quot;,
+    &quot;claim&quot;: &quot;A dedicated lesson file exists detailing tuple structure consistency for standalone self-test sample collections.&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/isolated_script_verification.md&quot;
+      &quot;path&quot;: &quot;lessons/uniform_selftest_tuples.md&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Cycle cycle-facedd128b83 failed: test_weakening
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
+Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
+Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/adjacent_test_suite_verification.md  Title: Adjacent and Dependent Test Suite Pre-Commit Verification Protocol
-Problem: Read lessons/adjacent_test_suite_verification.md: Before committing, identify every test suite that is adjacent to or dependent on the changed files and run all of them — not just the target suite.
+ID: lessons/enforcing_agents_sections_in_structural_tests.md  Title: Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py
+Problem: Read lessons/enforcing_agents_sections_in_structural_tests.md: **Rule of thumb:** if you add a `## ` section to `AGENTS.md` that states a standing instruction (a protocol, a ban, a required behavior), the same commit must add its entry to `REQUIRED_SECTIONS` in `tests/test_agents_structure.py`, plus a
 Solution: 
-If you apply this lesson, cite [Lesson lessons/adjacent_test_suite_verification.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/enforcing_agents_sections_in_structural_tests.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Verify leading whitespace alignment against the enclosing indentation block when performing string edits in Python source files to avoid indentation syntax errors.
 - When git log reveals an explicit commit implementing the requested feature and dedicated test functions exist, conclude the skip evaluation promptly without running synthetic micro-tests or full regre
 - Ensure top-level classes and functions inserted into Python modules begin strictly at column 0 without leading whitespace to prevent pytest AST assertion-rewriting syntax failures.
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 20:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
+- Attempt 1 (2026-09-13 21:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/isolated_script_verification.md. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-13 20:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Document isolation verification fast path to avoid running full test suite on isolated script changes
+Title: Document uniform tuple structure guidelines for test sample collections in self-test functions
 
 
-Codifies the operational rule that when reference checks confirm a modified script is only imported by its targeted unit test, passing targeted tests suffices to proceed to commit without launching the full test suite.
+Documents the requirement to maintain identical tuple schemas across positive and negative test sample collections when iterating over combined cases in run_self_test(), directly addressing the ValueError observed in cycle cycle-54d21ce9beed.
 
-Target path: lessons/isolated_script_verification.md
+Target path: lessons/uniform_selftest_tuples.md
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Lesson file documents reference-isolation criteria to halt verification and commit without running redundant full-repository test suites.
+A dedicated lesson file exists detailing tuple structure consistency for standalone self-test sample collections.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2138,7 +2170,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 21:28:43 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 00:24:59 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 21:38:06 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 00:24:59 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
