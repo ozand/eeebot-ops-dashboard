@@ -339,7 +339,7 @@ def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() ->
         'computed_at_utc': '2026-09-13T13:18:17.184300Z', 'window_days': 7,
         'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12},
         'control_plane': {'hypothesis_loop': {
-            'supported': 5, 'refuted': 0, 'inconclusive': 4,
+            'supported': 5, 'refuted': 0, 'inconclusive': 4, 'total': 9,
             'inconclusive_within_window': 3, 'inconclusive_aged': 0,
             'inconclusive_undatable': 1,
             'inconclusive_undatable_no_qualifying_artifact': 1,
@@ -357,7 +357,7 @@ def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() ->
 
 
 def test_scorecard_hypothesis_metrics_preserve_unavailable_and_numeric_zero() -> None:
-    scorecard = {'loop': {'hypothesis_selection_rate': 0, 'hypothesis_served_cycles': 0}, 'control_plane': {'hypothesis_loop': {'supported': 0, 'refuted': 0, 'inconclusive': 0, 'inconclusive_split_status': 'unavailable'}}, 'reader_status': {'ledger': {'status': 'unavailable'}}}
+    scorecard = {'loop': {'hypothesis_selection_rate': 0, 'hypothesis_served_cycles': 0}, 'control_plane': {'hypothesis_loop': {'supported': 0, 'refuted': 0, 'inconclusive': 0, 'total': 0, 'inconclusive_split_status': 'unavailable'}}, 'reader_status': {'ledger': {'status': 'unavailable'}}}
     html = tv.build_scorecard_hypothesis_metrics(scorecard)
     assert '0.0%' in html and 'supported <strong>0</strong>' in html
     assert 'total <strong>0</strong>' in html and html.count('unavailable') >= 2

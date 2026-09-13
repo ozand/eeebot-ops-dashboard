@@ -4064,10 +4064,7 @@ def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
     loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
     control = scorecard.get('control_plane') if isinstance(scorecard.get('control_plane'), dict) else {}
     hypothesis = control.get('hypothesis_loop') if isinstance(control.get('hypothesis_loop'), dict) else {}
-    keys = ('supported', 'refuted', 'inconclusive')
-    values = [hypothesis.get(key) for key in keys]
-    total = sum(value for value in values if isinstance(value, (int, float)) and not isinstance(value, bool))
-    total_value = total if all(value is not None and isinstance(value, (int, float)) and not isinstance(value, bool) for value in values) else None
+    total_value = hypothesis.get('total')
     reader = scorecard.get('reader_status')
     ledger = reader.get('ledger') if isinstance(reader, dict) else None
     split_status = hypothesis.get('inconclusive_split_status')
