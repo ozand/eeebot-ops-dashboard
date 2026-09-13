@@ -1206,7 +1206,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 22:45:45 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 29s old &middot; generated 19:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 20:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1223,7 +1223,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,743 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-9d394ad5a217</span>
+      <span class="cycle-pill">cycle-767e00119728</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1249,7 +1249,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 19:30:58.005381 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 20:01:29.320390 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1283,7 +1283,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,659c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,509c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1728,51 +1728,50 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,236c) + 3 separators &times; 7c (21c) = 21,257 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,659 chars &bull; ~1,914 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement fallback path filtering function in scripts/filter_fallback_targets.py
-Request ID: llm-proposer-cycle-9d394ad5a217
-Cycle ID: cycle-9d394ad5a217
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,509 chars &bull; ~1,877 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Exclude docstrings from multiline string validation in scripts/validate_heredoc_urls.py
+Request ID: llm-proposer-cycle-767e00119728
+Cycle ID: cycle-767e00119728
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(I) Priority 40 — Filter fallback candidate paths (V1): Write scripts/filter_fallback_targets.py with a single function filter_fallback_paths(candidate_paths, recent_paths) under 40 lines. Given candidate_paths as a list of str and recent_paths as an iterable of str, convert recent_paths to a set and return candidate paths excluding any path present in recent_paths, preserving original candidate order. Return an empty list if candidate_paths is empty or invalid.
 
-Completed (do not repeat): Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Check defect quarantine status (V1).
+Completed (do not repeat): Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 059e77cc merge: integrate selfevo/cycle-cycle-9d394ad5a217
+- c4b7afb5 selfevo: auto-commit uncommitted subagent work — Implement fallback path filtering function in scripts/filter_fallback_targets.py
+- 80fe9f4b feat(filter_fallback_targets): add filter_fallback_paths for Priority 40
 - af9819a5 merge: integrate selfevo/cycle-cycle-17e158b12cef
 - 02dfbfa8 fix(validate_heredoc_urls): restrict default discovery to active scripts
 - 17c19e61 merge: integrate selfevo/cycle-cycle-65185260dda6
 - 48c69387 selfevo: auto-commit uncommitted subagent work — Implement defect quarantine check function in scripts/defect_quarantine.py
 - 04f373d7 feat(defect_quarantine): add is_defect_quarantined sliding-window check
-- 5972d285 merge: integrate selfevo/cycle-cycle-cdcd995e029a
-- 24b3f923 docs(lessons): document alternative verification strategy for cooled scripts during idle rewiring
-- 5339924c merge: integrate selfevo/cycle-cycle-cee1d3522a7a
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Disallow broad repository-wide test targets in scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-9d394ad5a217.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-767e00119728.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement fallback path filtering function in scripts/filter_fallback_targets.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements filter_fallback_paths to filter candidate paths against recent paths while preserving order as required by Priority 40.\n\nTarget path: scripts/filter_fallback_targets.py&quot;,
+    &quot;title&quot;: &quot;Exclude docstrings from multiline string validation in scripts/validate_heredoc_urls.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;scripts/validate_heredoc_urls.py exits with code 1 because AST inspection flags multiline docstrings containing URLs as heredoc violations. Filtering out module, function, and class docstrings prevents false positives on active scripts so the validator can exit cleanly.\n\nTarget path: scripts/validate_heredoc_urls.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement fallback path filtering function in scripts/filter_fallback_targets.py (target: scripts/filter_fallback_targets.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Exclude docstrings from multiline string validation in scripts/validate_heredoc_urls.py (target: scripts/validate_heredoc_urls.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/filter_fallback_targets.py exports filter_fallback_paths preserving candidate order and handling invalid inputs&quot;,
+    &quot;claim&quot;: &quot;scripts/validate_heredoc_urls.py exits with code 0 when run against active scripts&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -c &#x27;import scripts.filter_fallback_targets as f; assert f.filter_fallback_paths([\&quot;a\&quot;, \&quot;b\&quot;, \&quot;c\&quot;], [\&quot;b\&quot;]) == [\&quot;a\&quot;, \&quot;c\&quot;]; assert f.filter_fallback_paths(None, []) == []&#x27;&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_heredoc_urls.py&quot;
     }
   }
 }
@@ -1785,25 +1784,26 @@ Solution: Schedule a clean-up proposal to resolve the duplicate function definit
 If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Configure secondary fallback deployments or model routing in LiteLLM so that transient exhaustion of un/qwen3.8-27b-gguf automatically routes requests to a secondary endpoint rather than aborting the 
+- When an assigned demand item addresses a script recently modified (&#x27;0d ago&#x27;) and prior fix attempts might be in cooldown, consider returning no_valuable_task if the target cannot be safely differentia
+- Divergence between proposer suppression history and dedup failure cache: The failure &#x27;Fix style validation rules and exit code handling in scripts/check_style.py&#x27; was tracked by the dedup engine but o
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 18:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_heredoc_urls.py, tests/test_validate_heredoc_urls.py. Reward signal will be…
-- Attempt 2 (2026-09-13 18:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/defect_quarantine.py.…
+- Attempt 1 (2026-09-13 19:40 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/filter_fallback_targets.py,…
+- Attempt 2 (2026-09-13 18:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_heredoc_urls.py, tests/test_validate_heredoc_urls.py. Reward signal will be…
+- Attempt 3 (2026-09-13 18:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/defect_quarantine.py.…
 
 ## Concrete task to implement
 
-Title: Implement fallback path filtering function in scripts/filter_fallback_targets.py
+Title: Exclude docstrings from multiline string validation in scripts/validate_heredoc_urls.py
 
 
-Implements filter_fallback_paths to filter candidate paths against recent paths while preserving order as required by Priority 40.
+scripts/validate_heredoc_urls.py exits with code 1 because AST inspection flags multiline docstrings containing URLs as heredoc violations. Filtering out module, function, and class docstrings prevents false positives on active scripts so the validator can exit cleanly.
 
-Target path: scripts/filter_fallback_targets.py
+Target path: scripts/validate_heredoc_urls.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/filter_fallback_targets.py exports filter_fallback_paths preserving candidate order and handling invalid inputs
+scripts/validate_heredoc_urls.py exits with code 0 when run against active scripts
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2138,7 +2138,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 19:57:34 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 22:45:45 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 20:04:00 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 22:45:45 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
