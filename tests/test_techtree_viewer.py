@@ -1411,12 +1411,78 @@ def test_now_panel_demand_grouping_fallback() -> None:
 
 
 def test_health_verdict_healthy_branch() -> None:
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z') == ('healthy', 'all signals within thresholds across monitored feeds')
+    scorecard = {'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}}
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', scorecard=scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
+
+
+def test_health_verdict_unavailable_age_is_not_healthy() -> None:
+    verdict, reason = tv.health_verdict(
+        None, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
+    )
+    assert verdict == 'degraded'
+    assert reason == 'data age unavailable'
+
+
+def test_health_verdict_malformed_integration_timestamp_is_not_healthy() -> None:
+    scorecard = {'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}}
+    for timestamp in ('not-a-timestamp', '', 123):
+        verdict, reason = tv.health_verdict(
+            120, timestamp, ['integrated'], False, '2026-09-01T02:00:00Z',
+            scorecard=scorecard,
+        )
+        assert verdict == 'degraded'
+        assert reason == 'last integrated timestamp malformed'
+
+
+def test_health_verdict_unreadable_scorecard_is_not_healthy() -> None:
+    scorecards = (
+        None,
+        {},
+        {'reader_status': {}},
+        {'reader_status': {'feeds': {}}},
+        {'reader_status': {'feeds': {'usage': {'status': 'unreadable'}}}},
+        {'reader_status': {'feeds': {'usage': None}}},
+    )
+    for scorecard in scorecards:
+        verdict, reason = tv.health_verdict(
+            120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
+            scorecard=scorecard,
+        )
+        assert verdict == 'degraded'
+        assert 'scorecard' in reason or 'monitored feed' in reason
 
 
 def test_health_verdict_degraded_by_staleness_or_integration_recency() -> None:
     assert tv.health_verdict(3601, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
     assert tv.health_verdict(120, '2026-08-31T20:00:00Z', ['integrated'], False, '2026-09-01T02:00:00Z')[0] == 'degraded'
+
+
+def test_health_verdict_unreadable_optional_age_variants_are_not_healthy() -> None:
+    scorecard = {'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}}
+    for age_seconds in (None, 'unreadable', True):
+        verdict, _ = tv.health_verdict(
+            age_seconds, '2026-09-01T01:50:00Z', ['integrated'], False,
+            '2026-09-01T02:00:00Z', scorecard=scorecard,
+        )
+        assert verdict != 'healthy'
+
+
+def test_health_verdict_no_unreadable_input_combination_is_healthy() -> None:
+    healthy_scorecard = {'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}}
+    for age_seconds, integrated_ts, scorecard in (
+        (None, '2026-09-01T01:50:00Z', healthy_scorecard),
+        (120, None, healthy_scorecard),
+        (120, 'not-a-timestamp', healthy_scorecard),
+        (120, '2026-09-01T01:50:00Z', None),
+        (120, '2026-09-01T01:50:00Z', {}),
+        (120, '2026-09-01T01:50:00Z', {'reader_status': {}}),
+    ):
+        verdict, _ = tv.health_verdict(
+            age_seconds, integrated_ts, ['integrated'], False,
+            '2026-09-01T02:00:00Z', scorecard=scorecard,
+        )
+        assert verdict != 'healthy'
 
 
 def test_health_verdict_investigate_by_failure_streak() -> None:
@@ -1429,6 +1495,7 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
 
 def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     data = _fixture()
+    data['scorecard']['reader_status'] = {'feeds': {'usage': {'status': 'fresh'}}}
     data['_newest_source_age_seconds'] = 120
     data['health_last_integrated_ts'] = '2026-09-01T01:50:00Z'
     data['health_recent_outcomes'] = ['integrated']
@@ -1437,7 +1504,7 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
 
     assert '<section class="health-verdict health-' in html
     assert '<strong>HEALTHY</strong>' in html
-    assert 'all signals within thresholds across monitored feeds' in html
+    assert 'all signals within thresholds across 1 monitored feeds (usage)' in html
     assert strip in html
     # Anchor on the banner markup, not the bare class name: the class also
     # appears earlier in the <head> stylesheet.
@@ -1446,10 +1513,12 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
 
 def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 1. absent/None -> does not trigger alarm
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=None) == ('healthy', 'all signals within thresholds across monitored feeds')
+    healthy_scorecard = {'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}}
+
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=None, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
     # 2. streak = 0 -> healthy
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}) == ('healthy', 'all signals within thresholds across monitored feeds')
+    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
     # 3. streak >= 1 -> investigate alarm with error details
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}) == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
@@ -1496,9 +1565,10 @@ def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
         demand_completed=None,
         age_seconds=120,
         now=now,
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
     )
     assert '<strong>HEALTHY</strong>' in html
-    assert 'all signals within thresholds across monitored feeds' in html
+    assert 'all signals within thresholds across 1 monitored feeds (usage)' in html
 
 
 def test_now_panel_prefers_current_evolution_tree_node_timestamp() -> None:
@@ -1516,6 +1586,7 @@ def test_now_panel_prefers_current_evolution_tree_node_timestamp() -> None:
         demand_completed=None,
         age_seconds=120,
         now='2026-09-01T12:00:00Z',
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
     )
     assert '<strong>HEALTHY</strong>' in html
 
@@ -3420,13 +3491,13 @@ def test_issue196_health_verdict_dynamic_feed_scope_when_membership_changes() ->
     assert reason == 'all signals within thresholds across 2 monitored feeds (feed_a, feed_b)'
 
 
-def test_issue196_health_verdict_fallback_when_scorecard_absent() -> None:
+def test_issue196_health_verdict_requires_scorecard_evidence() -> None:
     verdict, reason = tv.health_verdict(
         120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z',
         scorecard=None,
     )
-    assert verdict == 'healthy'
-    assert reason == 'all signals within thresholds across monitored feeds'
+    assert verdict == 'degraded'
+    assert reason == 'scorecard data unavailable'
 
 
 import scripts.techtree_viewer as tv

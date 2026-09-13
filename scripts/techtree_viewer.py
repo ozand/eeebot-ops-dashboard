@@ -106,8 +106,18 @@ def health_verdict(
             break
     if streak >= HEALTH_FAILURE_STREAK_LENGTH:
         return 'investigate', f'{streak} consecutive failed or partial cycles'
-    if isinstance(age_seconds, (int, float)) and age_seconds > HEALTH_STALE_SECONDS:
+    # An unavailable age is not a fresh age. Do not let a failed source read
+    # skip the staleness check and fall through to a reassuring verdict.
+    if age_seconds is None:
+        return 'degraded', 'data age unavailable'
+    if not isinstance(age_seconds, (int, float)) or isinstance(age_seconds, bool):
+        return 'degraded', 'data age malformed'
+    if age_seconds > HEALTH_STALE_SECONDS:
         return 'degraded', f'data is {humanize_age(age_seconds)} old'
+    if last_integrated_ts is None:
+        return 'degraded', 'last integrated timestamp unavailable'
+    if not isinstance(last_integrated_ts, str) or not last_integrated_ts.strip():
+        return 'degraded', 'last integrated timestamp malformed'
     if last_integrated_ts:
         try:
             now_dt = datetime.fromisoformat(now.replace('Z', '+00:00'))
@@ -119,17 +129,33 @@ def health_verdict(
             age = (now_dt - integrated_dt).total_seconds()
             if age >= HEALTH_INTEGRATION_RECENCY_SECONDS:
                 return 'degraded', f'last integrated cycle is {humanize_age(age)} old'
-        except ValueError:
-            pass
+        except (TypeError, ValueError):
+            return 'degraded', 'last integrated timestamp malformed'
+
+    # The feed scope is part of the verdict's evidence. An unreadable
+    # scorecard cannot support a healthy verdict, even when other checks pass.
+    if not isinstance(scorecard, dict):
+        return 'degraded', 'scorecard data unavailable'
 
     # Issue #196: make the verdict scope explicit rather than claiming the whole system is healthy.
     scope_feeds: list[str] = []
-    if isinstance(scorecard, dict):
-        feeds_dict = scorecard.get('feeds')
-        if isinstance(feeds_dict, dict) and isinstance(feeds_dict.get('feeds'), dict):
-            scope_feeds = sorted(feeds_dict['feeds'].keys())
-        elif isinstance(scorecard.get('reader_status'), dict) and isinstance(scorecard['reader_status'].get('feeds'), dict):
-            scope_feeds = sorted(scorecard['reader_status']['feeds'].keys())
+    feeds_dict = scorecard.get('feeds')
+    if isinstance(feeds_dict, dict) and isinstance(feeds_dict.get('feeds'), dict):
+        feed_records = feeds_dict['feeds']
+    elif isinstance(scorecard.get('reader_status'), dict) and isinstance(scorecard['reader_status'].get('feeds'), dict):
+        feed_records = scorecard['reader_status']['feeds']
+    else:
+        return 'degraded', 'scorecard feeds unavailable'
+    if not feed_records:
+        return 'degraded', 'scorecard feeds unavailable'
+    healthy_feed_statuses = {'complete', 'present', 'fresh', 'ok'}
+    for feed_name, feed_info in feed_records.items():
+        if not isinstance(feed_info, dict):
+            return 'degraded', f'monitored feed unavailable: {feed_name}'
+        feed_status = feed_info.get('status')
+        if feed_status not in healthy_feed_statuses:
+            return 'degraded', f'monitored feed unavailable: {feed_name}: {feed_status or "unknown"}'
+    scope_feeds = sorted(str(name) for name in feed_records)
 
     if scope_feeds:
         feed_summary = f'{len(scope_feeds)} monitored feeds ({", ".join(scope_feeds)})'
