@@ -33,6 +33,41 @@ def _base_fixture() -> dict[str, Any]:
     }
 
 
+def test_agent_page_renders_published_prompt_fit_event_telemetry():
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt', 'cycle_id': 'cycle-event', 'chars': 21257,
+            'cap': 24000, 'rung': 'full', 'dropped': [], 'ts': '2026-09-13T16:33:06Z',
+        },
+        'prompt_fit': {
+            'schema_version': 'prompt-fit-v1', 'source_status': 'valid',
+            'reader_status': 'complete', 'rows_considered': 25,
+            'rows_with_drops': 0, 'rows_with_trims': 1, 'window_rows': 25,
+            'window_kind': 'newest_system_prompt_rows', 'window_days': 90,
+            'prompt_covered_from': '2026-09-13T15:00:00Z',
+            'prompt_covered_to': '2026-09-13T16:33:06Z',
+            'latest': {
+                'rung': 'full',
+                'dropped': {'status': 'empty', 'count': 0, 'chars': 0, 'sections': []},
+                'trimmed': {'status': 'measured', 'count': 1, 'chars': 14, 'sections': ['bootstrap']},
+            },
+        },
+        'prompt_text': None, 'task_text': None, 'tier2_skills': [],
+        'tier2_lessons': {'index_status': 'missing', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'index_status': 'missing', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-13 16:54:54')['agent.html']
+    assert 'Prompt Fit Event Telemetry' in html
+    assert '0 sections / 0 chars' in html
+    assert '1 sections / 14 chars' in html
+    assert '0 / 25' in html
+    assert '1 / 25' in html
+    assert 'newest_system_prompt_rows' in html
+    assert '2026-09-13T16:33:06Z' in html
+    assert 'bootstrap' in html
+
+
 def test_agent_page_renders_non_full_prompt_fit_rung():
     fixture = _base_fixture()
     fixture['agent_context'] = {
