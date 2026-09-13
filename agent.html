@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">215</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 17:57:52 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">28.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 15:02 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 15:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,743 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-6b8063fb0065</span>
+      <span class="cycle-pill">cycle-50e9adf4004b</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 14:43:02.033942 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,257 / 24,000 chars)</span><span>2026-09-13 15:05:53.246496 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,508c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,600c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1688,9 +1688,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,236c) + 3 separators &times; 7c (21c) = 21,257 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,508 chars &bull; ~1,877 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Ensure clean standalone exit status in scripts/check_last_cycle_repeat.py
-Request ID: llm-proposer-cycle-6b8063fb0065
-Cycle ID: cycle-6b8063fb0065
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,600 chars &bull; ~1,900 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Refine raw URL matching patterns and benign scheme handling in scripts/validate_heredoc_urls.py
+Request ID: llm-proposer-cycle-50e9adf4004b
+Cycle ID: cycle-50e9adf4004b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1704,63 +1704,60 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 3a0b1d7d merge: integrate selfevo/cycle-cycle-6b8063fb0065
+- 1e03ab2f fix(check_last_cycle_repeat): exit 0 on standalone default check
 - 5f1b4642 chore: record structured error for [cycle-84e3f4]
 - 50e67c7e merge: integrate selfevo/cycle-cycle-3bbd1ef9dcc3
 - 198f75a3 docs(skills): package Immediate Skip Protocol into reusable skill
 - 2378591c merge: integrate selfevo/cycle-cycle-31283e6d8c50
 - bfcd1b3c docs(skills): package verify-and-proof inspection procedure into reusable skill
 - e2c54bf4 merge: integrate selfevo/cycle-cycle-d0f5ec5a6f87
-- 41bf3e5c selfevo: auto-commit uncommitted subagent work — Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py
-- 10354647 feat(filter_futile_targets): exclude goals.md paths from candidates
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Remove unused import from scripts/validate_unused_imports.py to resolve validator finding: recent_duplicate_failure
 - Package post-verification completion protocol into skill to halt exploratory commands once tests pass: mutation_surface_violation
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6b8063fb0065.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-50e9adf4004b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Ensure clean standalone exit status in scripts/check_last_cycle_repeat.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The validator executes scripts/check_last_cycle_repeat.py standalone, where it currently exits with code 1. Updating the script entrypoint and error handling to exit cleanly with code 0 on default checks resolves the defect.\n\nTarget path: scripts/check_last_cycle_repeat.py&quot;,
+    &quot;title&quot;: &quot;Refine raw URL matching patterns and benign scheme handling in scripts/validate_heredoc_urls.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;The validator exits with code 1 during runs due to false positives on benign multiline string templates. Refining regex rules and scheme exemptions resolves the non-zero exit code while maintaining heredoc safety checks.\n\nTarget path: scripts/validate_heredoc_urls.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Ensure clean standalone exit status in scripts/check_last_cycle_repeat.py (target: scripts/check_last_cycle_repeat.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_last_cycle_repeat.py exits with code 0 when executed standalone&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Refine raw URL matching patterns and benign scheme handling in scripts/validate_heredoc_urls.py (target: scripts/validate_heredoc_urls.py)&quot;
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid bash-specific parameters like ${PIPESTATUS} in exec commands; use standard POSIX shell redirection or inspect $? directly to capture process status.
-- Treat negative grep results (exit code 1) as conclusive; do not re-run identical searches hoping for different output.
-- Continue using standard POSIX exit status checks ($?) rather than bash-specific variables when verifying CLI execution.
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-13 14:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_last_cycle_repeat.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Ensure clean standalone exit status in scripts/check_last_cycle_repeat.py
+Title: Refine raw URL matching patterns and benign scheme handling in scripts/validate_heredoc_urls.py
 
 
-The validator executes scripts/check_last_cycle_repeat.py standalone, where it currently exits with code 1. Updating the script entrypoint and error handling to exit cleanly with code 0 on default checks resolves the defect.
+The validator exits with code 1 during runs due to false positives on benign multiline string templates. Refining regex rules and scheme exemptions resolves the non-zero exit code while maintaining heredoc safety checks.
 
-Target path: scripts/check_last_cycle_repeat.py
+Target path: scripts/validate_heredoc_urls.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_last_cycle_repeat.py exits with code 0 when executed standalone
+## Concrete task to implement
+Implement and commit: Refine raw URL matching patterns and benign scheme handling in scripts/validate_heredoc_urls.py (target: scripts/validate_heredoc_urls.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2095,7 +2092,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 15:02:11 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 17:57:52 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 15:09:07 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 17:57:52 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
