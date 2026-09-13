@@ -3025,7 +3025,9 @@ def test_issue73_missing_file_graceful_note() -> None:
     data = _fixture()
     data['lessons'] = []
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
-    assert 'no lessons data recorded' in pages['lessons.html']
+    # Deliberate #246 contract change: this page is a retained-history
+    # population, not the full executor retrieval corpus.
+    assert 'no lessons history data recorded' in pages['lessons.html']
 
 
 def test_issue73_filter_and_hash_markers() -> None:
@@ -3235,7 +3237,7 @@ def test_issue130_duplicate_real_shape_lessons_render_all_with_warning():
         {'id': 'LESS-REF-c871bf9abe41', 'schema_version': 2, 'title': 'When executing subprocess calls that change the working directory, always pass the absolute path to the target script.', 'problem': 'When executing subprocess calls that change the working directory, always pass the absolute path to the target script.', 'solution': 'Apply the reflected approach hint.', 'tags': ['reflector'], 'severity': 'medium', 'seen_count': 1, 'first_seen': '2026-08-29', 'last_seen': '2026-08-29', 'evidence': ['cycle-c871bf9abe41'], 'date': '2026-08-29', 'cycle_id': 'cycle-c871bf9abe41'},
     ]
     html = tv.build_lessons_panel(lessons)
-    assert 'Lessons History (2 total' in html
+    assert 'Lessons History (2 retained history rows' in html
     assert html.count('duplicate id on disk') == 2
     assert html.count('When introducing new default-enabled') == 1
     assert html.count('When executing subprocess calls') == 1

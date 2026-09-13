@@ -730,6 +730,8 @@ def read_lessons():
                 "problem": str(row.get('problem') or ''),
                 "solution": str(row.get('solution') or ''),
             })
+    # Preserve all source rows, including duplicate IDs; this reader renders
+    # history rather than claiming a deduplicated population.
     return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
@@ -1383,6 +1385,8 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         except Exception:  # noqa: BLE001
             for _src, text in texts:
                 _absorb(_parse_lessons_flat(text))
+        # Preserve all source rows, including duplicate IDs; the panel marks
+        # duplicates instead of silently changing the history population.
         return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
     data: dict[str, Any] = {
@@ -4592,7 +4596,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         return (
             '<section class="panel panel-lessons" id="panel-lessons">'
             '<h2 class="panel-title">Lessons History</h2>'
-            '<p class="unavailable-note">no lessons data recorded</p>'
+            '<p class="unavailable-note">no lessons history data recorded</p>'
             '</section>'
         )
 
@@ -4722,7 +4726,8 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
 
     return f'''
     <section class="panel panel-lessons" id="panel-lessons">
-      <h2 class="panel-title">Lessons History ({total} total &middot; {heading_detail})</h2>
+      <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
+      <p class="lessons-count-note">History only: {v2_count} active v2 cards plus retained archive rows; archive rows are not on the executor retrieval path. The executor retrieval corpus includes active v2 cards and active error cards from errors.yaml.</p>
       <input class="lessons-filter" type="text" placeholder="filter lessons...">
       <ul class="lessons-list">
         <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
