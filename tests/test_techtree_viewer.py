@@ -3025,7 +3025,9 @@ def test_issue73_missing_file_graceful_note() -> None:
     data = _fixture()
     data['lessons'] = []
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
-    assert 'no lessons data recorded' in pages['lessons.html']
+    # Deliberate #246 contract change: this page is a retained-history
+    # population, not the full executor retrieval corpus.
+    assert 'no lessons history data recorded' in pages['lessons.html']
 
 
 def test_issue73_filter_and_hash_markers() -> None:
