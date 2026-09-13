@@ -1180,19 +1180,33 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">200</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 02:44:23 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">21.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 23:56 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 00:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2533 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2534 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-13 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-2daee7b2e229">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-2daee7b2e229)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-13T00:04:32.492401Z">03:04 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 16.82K tok &middot; dur 68s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-8a3ac442cab6">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: self_dedup</span>
@@ -1880,7 +1894,7 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 11.05K tok &middot; dur 21s</div>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-a2ce39080746">
+        <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-a2ce39080746">
           <div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
             <strong class="feed-title">partial: no artifact recorded</strong>
@@ -8490,7 +8504,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cdc3c01cc8df</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-873885c8">lesson:LESS-20260825-873885c8</a></div>
           
-          <div class="feed-cost">&#9889; 82 calls &middot; 4.70M tok &middot; dur 8m1s</div>
+          <div class="feed-cost">&#9889; 81 calls &middot; 4.69M tok &middot; dur 7m43s</div>
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a449a0b379a9">
@@ -8504,7 +8518,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-3d82a74c70ea</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e8bf53c1">lesson:LESS-20260824-e8bf53c1</a></div>
           
-          <div class="feed-cost">&#9889; 23 calls &middot; 741.9K tok &middot; dur 3m47s</div>
+          <div class="feed-cost">&#9889; 1 calls &middot; 22.76K tok &middot; dur 10s</div>
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-8f26e68017ba">
@@ -8518,7 +8532,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ca62063b0970</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-97cbb425">lesson:LESS-20260826-97cbb425</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 29.47K tok &middot; dur 39s</div>
+          <div class="feed-cost">&#9889; 1 calls &middot; 16.86K tok &middot; dur 10s</div>
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-fa7aba97719d">
@@ -8532,7 +8546,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f93402a4028f</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-29209bf8">lesson:LESS-20260825-29209bf8</a></div>
           
-          <div class="feed-cost">&#9889; 40 calls &middot; 1.61M tok &middot; dur 6m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c95ba066bcb5">
@@ -8546,7 +8560,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ef6c8dba9801</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-97cbb425">lesson:LESS-20260826-97cbb425</a></div>
           
-          <div class="feed-cost">&#9889; 25 calls &middot; 748.8K tok &middot; dur 4m53s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-be3fdd5445b2">
@@ -8560,7 +8574,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-026d771e0a53</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-c9b735fb">lesson:LESS-20260825-c9b735fb</a></div>
           
-          <div class="feed-cost">&#9889; 11 calls &middot; 311.7K tok &middot; dur 4m13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-3e6693f0a07b">
@@ -8574,7 +8588,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1214d3cfa03b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-20e9962c">lesson:LESS-20260827-20e9962c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 52.35K tok &middot; dur 2m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-68a2810109b3">
@@ -8588,7 +8602,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b5657f4630aa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-20e9962c">lesson:LESS-20260827-20e9962c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 23.49K tok &middot; dur 25s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-54d21ce9beed">
@@ -8602,7 +8616,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ab8ebbcc86f5</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e301a8a7">lesson:LESS-20260824-e301a8a7</a></div>
           
-          <div class="feed-cost">&#9889; 33 calls &middot; 976.2K tok &middot; dur 5m39s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-08759252f294">
@@ -8616,7 +8630,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-52d85e7236bf</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-185dfdfe">lesson:LESS-20260827-185dfdfe</a></div>
           
-          <div class="feed-cost">&#9889; 82 calls &middot; 2.85M tok &middot; dur 7m51s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-e0fb8a5e9c55">
@@ -8630,7 +8644,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a97ee8777ff0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-c2f0da09">lesson:LESS-20260828-c2f0da09</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 25.20K tok &middot; dur 64s</div>
+          
         </li>
         
         <li class="feed-day-header">2026-09-06 MSK</li>
@@ -8645,7 +8659,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bed7673b8411</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-f47c580c">lesson:LESS-20260827-f47c580c</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 38.40K tok &middot; dur 84s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-0702caca5cb6">
@@ -8659,7 +8673,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-051e057bc31d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-044af45f">lesson:LESS-20260827-044af45f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 25.04K tok &middot; dur 64s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-32422316c74b">
@@ -8673,7 +8687,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-badd8ede0f3b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-c40c135f">lesson:LESS-20260823-c40c135f</a></div>
           
-          <div class="feed-cost">&#9889; 12 calls &middot; 215.6K tok &middot; dur 2m44s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6a4e04c1a32a">
@@ -8687,7 +8701,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-df1578fa521d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-3c711db47ed9-d63a">lesson:LESS-REF-3c711db47ed9-d63a</a></div>
           
-          <div class="feed-cost">&#9889; 23 calls &middot; 651.2K tok &middot; dur 3m43s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-567b7128072a">
@@ -8701,7 +8715,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-405da2e89832</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 23.89K tok &middot; dur 27s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-723507ffbc94">
@@ -8715,7 +8729,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1eb0f5eb9223</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ab342a5e">lesson:LESS-20260825-ab342a5e</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 25.00K tok &middot; dur 27s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-db1f94f33760">
@@ -8729,7 +8743,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-fbedf719df44</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 27.86K tok &middot; dur 47s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ac7149706732">
@@ -8743,7 +8757,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a24beb624f3b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-a830b59b">lesson:LESS-20260824-a830b59b</a></div>
           
-          <div class="feed-cost">&#9889; 10 calls &middot; 145.7K tok &middot; dur 1m53s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c83ba44797fc">
@@ -8757,7 +8771,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-618e81cd92ab</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-3c711db47ed9-d63a">lesson:LESS-REF-3c711db47ed9-d63a</a></div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 480.9K tok &middot; dur 3m25s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-c3a4a72e7a6d">
@@ -8771,7 +8785,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-560fea3f7b03</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 25.86K tok &middot; dur 31s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e95147054f90">
@@ -8785,7 +8799,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-afb572d4c9aa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-5c2f9e95">lesson:LESS-20260824-5c2f9e95</a></div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 1.50M tok &middot; dur 7m22s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-baa4b62c7c07">
@@ -8799,7 +8813,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-39af8a1b7a52</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-c9b735fb">lesson:LESS-20260825-c9b735fb</a></div>
           
-          <div class="feed-cost">&#9889; 83 calls &middot; 3.84M tok &middot; dur 14m46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7bbff99b9849">
@@ -8813,7 +8827,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-dd1776ae2d3b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-dd865bde">lesson:LESS-20260826-dd865bde</a></div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 287.8K tok &middot; dur 2m21s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-4dd9a703b90b">
@@ -8827,7 +8841,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-94d30394e39d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-f6cf166c">lesson:LESS-20260823-f6cf166c</a></div>
           
-          <div class="feed-cost">&#9889; 44 calls &middot; 1.92M tok &middot; dur 6m31s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1fd12ef4dbc1">
@@ -8841,7 +8855,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f45a467c35af</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260904-90931e43">lesson:LESS-20260904-90931e43</a></div>
           
-          <div class="feed-cost">&#9889; 10 calls &middot; 122.1K tok &middot; dur 84s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-749d922c7fbc">
@@ -8855,7 +8869,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-364207cda0be</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-87a1594c">lesson:LESS-20260826-87a1594c</a></div>
           
-          <div class="feed-cost">&#9889; 6 calls &middot; 164.0K tok &middot; dur 2m1s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-9bff97dfbae7">
@@ -8869,7 +8883,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-26431da05669</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.40K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-bc9f740d1570">
@@ -8883,7 +8897,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b4a7a8beca40</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.50K tok &middot; dur 45s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d44625988920">
@@ -8897,7 +8911,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1ebbe2708cbb</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260904-90931e43">lesson:LESS-20260904-90931e43</a></div>
           
-          <div class="feed-cost">&#9889; 12 calls &middot; 165.0K tok &middot; dur 1m57s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-d15f11e648d4">
@@ -8911,7 +8925,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-57b44a6ec86e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 19.61K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-de7121e75469">
@@ -8925,7 +8939,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-55f30731cef0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-3c711db4">lesson:LESS-20260827-3c711db4</a></div>
           
-          <div class="feed-cost">&#9889; 72 calls &middot; 3.29M tok &middot; dur 20m19s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-44f3e43b02bc">
@@ -8939,7 +8953,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8c0096d50851</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-3c711db47ed9-d63a">lesson:LESS-REF-3c711db47ed9-d63a</a></div>
           
-          <div class="feed-cost">&#9889; 14 calls &middot; 241.5K tok &middot; dur 2m20s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-9004ecc6e145">
@@ -8953,7 +8967,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-041005960270</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-c871bf9abe41">lesson:LESS-REF-c871bf9abe41</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 19.11K tok &middot; dur 11s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7299bd0ccae8">
@@ -8967,7 +8981,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5dc439ce9f7b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-2f228fb3">lesson:LESS-20260827-2f228fb3</a></div>
           
-          <div class="feed-cost">&#9889; 19 calls &middot; 507.1K tok &middot; dur 4m58s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-b36dd0c78797">
@@ -8981,7 +8995,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2ffefcecfab0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-3c711db4">lesson:LESS-20260827-3c711db4</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 22.36K tok &middot; dur 46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-26e8ad4fef79">
@@ -8995,7 +9009,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-eb17a682e8b8</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-62ca5a6de51a-530e">lesson:LESS-REF-62ca5a6de51a-530e</a></div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 432.0K tok &middot; dur 4m33s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-61034291295d">
@@ -9009,7 +9023,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f806f00857ac</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 18 calls &middot; 470.8K tok &middot; dur 3m15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-af7b966ba309">
@@ -9023,7 +9037,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a3732c2b9ebd</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-c2f0da09">lesson:LESS-20260828-c2f0da09</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 19.86K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-18ec02da69d7">
@@ -9037,7 +9051,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-52d85e7236bf</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.70K tok &middot; dur 16s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-6a403089f060">
@@ -9051,7 +9065,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9e0dd7a28fbe</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-87a1594c">lesson:LESS-20260826-87a1594c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 18.54K tok &middot; dur 20s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c5a3aa7f0136">
@@ -9065,7 +9079,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0c8f16fbde14</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-ad42b06f">lesson:LESS-20260825-ad42b06f</a></div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 600.3K tok &middot; dur 2m46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-ebdc61c85123">
@@ -9079,7 +9093,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f1461c6d0b0b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 513.9K tok &middot; dur 2m35s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-87e3e9868711">
@@ -9093,7 +9107,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.39K tok &middot; dur 11s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-24ff336c45ea">
@@ -9107,7 +9121,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9aba1f7318d3</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-acf736a5">lesson:LESS-20260828-acf736a5</a></div>
           
-          <div class="feed-cost">&#9889; 29 calls &middot; 888.1K tok &middot; dur 5m26s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-039b3e9fbe40">
@@ -9121,7 +9135,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9742233ecbf1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-47cdd201">lesson:LESS-20260825-47cdd201</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.89K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-5445c37c9d07">
@@ -9135,7 +9149,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-40604696">lesson:LESS-20260825-40604696</a></div>
           
-          <div class="feed-cost">&#9889; 7 calls &middot; 61.84K tok &middot; dur 2m4s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-ec911adcefae">
@@ -9149,7 +9163,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">decay-b0975ccffbd0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 18.20K tok &middot; dur 16s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-bac28942fd5d">
@@ -9163,7 +9177,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9062d93559fe</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-acf736a5">lesson:LESS-20260828-acf736a5</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.88K tok &middot; dur 51s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-14050fc615df">
@@ -9177,7 +9191,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9742233ecbf1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-bdc701ab">lesson:LESS-20260823-bdc701ab</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.26K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-a194a8d974e9">
@@ -9191,7 +9205,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bed7673b8411</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 9.94K tok &middot; dur 41s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-05e6100841d3">
@@ -9205,7 +9219,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5b47b23a1030</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.55K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-d911186ebba5">
@@ -9219,7 +9233,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-051e057bc31d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-7f531797">lesson:LESS-20260825-7f531797</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.91K tok &middot; dur 52s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-9a1e7cbe14b6">
@@ -9233,7 +9247,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-cd1c474f6faa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-649a0480">lesson:LESS-20260825-649a0480</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.54K tok &middot; dur 44s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-fae39b4220fe">
@@ -9247,7 +9261,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-39af8a1b7a52</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-b47428b1">lesson:LESS-20260827-b47428b1</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 18.16K tok &middot; dur 25s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-e92078390c15">
@@ -9261,7 +9275,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6d3e93fc8b6b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-dd865bde">lesson:LESS-20260826-dd865bde</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.55K tok &middot; dur 19s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-4bb7c138043e">
@@ -9275,7 +9289,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d312feeded61</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-87a1594c">lesson:LESS-20260826-87a1594c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.19K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-0a35ae063326">
@@ -9289,7 +9303,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-a6c3c1c4">lesson:LESS-20260824-a6c3c1c4</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.10K tok &middot; dur 11s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-a18dedda48d2">
@@ -9303,7 +9317,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-eaa898b50c99</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-20e9962c">lesson:LESS-20260827-20e9962c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 18.85K tok &middot; dur 55s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-fa61319deadf">
@@ -9317,7 +9331,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a882b15c2af7</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-3c711db4">lesson:LESS-20260827-3c711db4</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 22.13K tok &middot; dur 19s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-5768195d4237">
@@ -9331,7 +9345,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-63e83a7500c9</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.87K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-b32ae8ec8ef0">
@@ -9345,7 +9359,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-09bf2ebbdd2c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-0bd2aea7">lesson:LESS-20260825-0bd2aea7</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.84K tok &middot; dur 24s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-6fbaf5c4d2d1">
@@ -9359,7 +9373,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-82174a8ba04d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-73ef54be">lesson:LESS-20260827-73ef54be</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.76K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-6e7238ab04a7">
@@ -9373,7 +9387,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-28c106616006</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.84K tok &middot; dur 42s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-77348d6a44f5">
@@ -9387,7 +9401,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7aae8eebabbc</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-acf736a5">lesson:LESS-20260828-acf736a5</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.73K tok &middot; dur 75s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-f4f03e0bbbbe">
@@ -9401,7 +9415,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-473348508d10</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.41K tok &middot; dur 11s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-496707d96b81">
@@ -9415,7 +9429,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">decay-b0975ccffbd0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.19K tok &middot; dur 45s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-9c662bc195fa">
@@ -9429,7 +9443,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9742233ecbf1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-c2f0da09">lesson:LESS-20260828-c2f0da09</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.22K tok &middot; dur 17s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-19468d87ad09">
@@ -9443,7 +9457,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bed7673b8411</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 9.79K tok &middot; dur 42s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-b074fb6b354e">
@@ -9457,7 +9471,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-051e057bc31d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-649a0480">lesson:LESS-20260825-649a0480</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 21.66K tok &middot; dur 21s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-d24f5d3fbe8c">
@@ -9471,7 +9485,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-cd1c474f6faa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-319c1d1f">lesson:LESS-20260825-319c1d1f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.58K tok &middot; dur 46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-afed008db2e5">
@@ -9485,7 +9499,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">priority-d4d14d435776</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.90K tok &middot; dur 45s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-115994c52f19">
@@ -9499,7 +9513,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2e15277e2194</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e8bf53c1">lesson:LESS-20260824-e8bf53c1</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.51K tok &middot; dur 42s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-33ac44081d00">
@@ -9513,7 +9527,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d312feeded61</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.42K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-88a7d9c32bc1">
@@ -9527,7 +9541,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.78K tok &middot; dur 47s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-0d8aa82caad9">
@@ -9541,7 +9555,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-28c106616006</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-8871470d">lesson:LESS-20260825-8871470d</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.72K tok &middot; dur 46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-2c815a7d9684">
@@ -9555,7 +9569,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7aae8eebabbc</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-c40c135f">lesson:LESS-20260823-c40c135f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.70K tok &middot; dur 43s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-6dbae989af51">
@@ -9569,7 +9583,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cce75df4719a</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-87a1594c">lesson:LESS-20260826-87a1594c</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.82K tok &middot; dur 15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-de9ef2323ce3">
@@ -9583,7 +9597,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-96a527b95106</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-873885c8">lesson:LESS-20260825-873885c8</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.65K tok &middot; dur 11s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-d8d525dfb1c2">
@@ -9597,7 +9611,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-64af6a1b7293</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260824-e301a8a7">lesson:LESS-20260824-e301a8a7</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 22.12K tok &middot; dur 48s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-028160617609">
@@ -9611,7 +9625,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-78126de02dde</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260826-97cbb425">lesson:LESS-20260826-97cbb425</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.83K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-2c8601775298">
@@ -9625,7 +9639,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-eb9cb40d8da2</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.36K tok &middot; dur 15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-d47dd9ba959e">
@@ -9639,7 +9653,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">decay-b0975ccffbd0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-76c2802f">lesson:LESS-20260823-76c2802f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.94K tok &middot; dur 41s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-f648c1d1a090">
@@ -9653,7 +9667,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-64dcdff9172a</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-c2f0da09">lesson:LESS-20260828-c2f0da09</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 17.45K tok &middot; dur 51s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-07347a012b1d">
@@ -9667,7 +9681,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9742233ecbf1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260823-bdc701ab">lesson:LESS-20260823-bdc701ab</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.48K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-e870d24fada9">
@@ -9681,7 +9695,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8fa22685576e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-80dc08de">lesson:LESS-20260827-80dc08de</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.93K tok &middot; dur 12s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-e979da4bae3f">
@@ -9695,7 +9709,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bed7673b8411</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 9.75K tok &middot; dur 10s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-6a82424e7d75">
@@ -9709,7 +9723,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b5620aac324b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-80dc08de">lesson:LESS-20260827-80dc08de</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 16.07K tok &middot; dur 46s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-2b8e6e0ac130">
@@ -9723,7 +9737,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-68b32955b8df</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-cb400fe3">lesson:LESS-20260827-cb400fe3</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.47K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-4ce5371706d9">
@@ -9737,7 +9751,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-051e057bc31d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-7f531797">lesson:LESS-20260825-7f531797</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 15.31K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-e400fe624a5f">
@@ -9751,7 +9765,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-cd1c474f6faa</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-319c1d1f">lesson:LESS-20260825-319c1d1f</a></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 14.56K tok &middot; dur 15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-823ead79c736">
@@ -9765,7 +9779,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7b72cbc4326b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-73ef54be">lesson:LESS-20260827-73ef54be</a></div>
           
-          <div class="feed-cost">&#9889; 16 calls &middot; 412.7K tok &middot; dur 3m35s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-ad7b44b09ae1">
@@ -9779,7 +9793,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">priority-d4d14d435776</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.57K tok &middot; dur 42s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-f2fa5c30ced4">
@@ -9793,7 +9807,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d312feeded61</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.68K tok &middot; dur 15s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-76a1a7873a2c">
@@ -9807,7 +9821,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.04K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-2ea531c77807">
@@ -9821,7 +9835,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">priority-4ed3cb3a5b87</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 10.15K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-7a964498ba86">
@@ -9835,7 +9849,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7b72cbc4326b</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.21K tok &middot; dur 13s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-4bb3ea455ff4">
@@ -9849,7 +9863,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d312feeded61</span></div>
           
-          <div class="feed-cost">&#9889; 2 calls &middot; 11.85K tok &middot; dur 14s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-c173918c6678">
@@ -9863,7 +9877,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">defect-93d5458abb21</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260828-c2f0da09">lesson:LESS-20260828-c2f0da09</a></div>
           
-          <div class="feed-cost">&#9889; 6 calls &middot; 75.42K tok &middot; dur 64s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-748dd0c2a71f">
@@ -9877,7 +9891,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7b72cbc4326b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-c9b735fb">lesson:LESS-20260825-c9b735fb</a></div>
           
-          <div class="feed-cost">&#9889; 17 calls &middot; 273.4K tok &middot; dur 3m18s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-98965be46d12">
@@ -9891,7 +9905,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7b72cbc4326b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260827-044af45f">lesson:LESS-20260827-044af45f</a></div>
           
-          <div class="feed-cost">&#9889; 13 calls &middot; 196.4K tok &middot; dur 3m16s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1ca8e4e53486">
@@ -9905,7 +9919,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2448bd0c1003</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260825-3314b69b">lesson:LESS-20260825-3314b69b</a></div>
           
-          <div class="feed-cost">&#9889; 20 calls &middot; 383.2K tok &middot; dur 3m8s</div>
+          
         </li>
         
         <li class="feed-row feed-overflow-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-bca5b41e2c8c">
@@ -36716,7 +36730,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-12 23:56:07 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 02:44:23 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 00:04:59 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 02:44:23 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
