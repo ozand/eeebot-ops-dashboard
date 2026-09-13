@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">214</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 12:51:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">25.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 10:17 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 31s old &middot; generated 10:32 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-812c3fcb1922</span>
+      <span class="cycle-pill">cycle-d0f5ec5a6f87</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 09:33:45.251095 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 10:21:16.972843 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,269c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,211c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,269 chars &bull; ~2,317 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add command sequence repetition circuit breaker to scripts/check_repeat_failures.py
-Request ID: llm-proposer-cycle-812c3fcb1922
-Cycle ID: cycle-812c3fcb1922
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,211 chars &bull; ~1,802 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py
+Request ID: llm-proposer-cycle-d0f5ec5a6f87
+Cycle ID: cycle-d0f5ec5a6f87
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1695,71 +1695,53 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 3375dc1c merge: integrate selfevo/cycle-cycle-812c3fcb1922
+- 3e993373 feat(check_repeat_failures): add command sequence repetition circuit breaker
 - aec43d03 merge: integrate selfevo/cycle-cycle-e12ca9f64095
 - c2112289 feat(prevent_repeat_failures): add redundant skill test check
 - c94b42ae merge: integrate selfevo/cycle-cycle-5aca8d13679b
 - 01f3d53f test(validate_markdown_format): add main() exit-code contract tests
 - bf3403c7 merge: integrate selfevo/cycle-cycle-bff1863c4189
 - 20eb5834 feat(workspace_validation_helpers): wire sync-agents-sections skill into agent section validation
-- 5bb90c89 merge: integrate selfevo/cycle-cycle-9d9705ca5af7
-- b7e76119 selfevo: auto-commit uncommitted subagent work — Add deduplication cooldown filter to scripts/filter_futile_fallbacks.py
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add regression tests for scripts/collect_host_metrics.py verifying host metrics collection functions: existence_index_duplicate
-- Add non-blocking stdin check and timeout budget in scripts/validate_no_shell_true.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-812c3fcb1922.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d0f5ec5a6f87.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add command sequence repetition circuit breaker to scripts/check_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extends check_repeat_failures.py with a circuit breaker detecting recurring shell command sequences, addressing repetitive loops like cycle-08759252f294.\n\nTarget path: scripts/check_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses priority-abc757effd45 by ensuring scripts/filter_futile_targets.py contains filter_futile_targets under 40 lines, returning an empty list when candidates is None or empty and excluding futile targets and goals.md paths.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add command sequence repetition circuit breaker to scripts/check_repeat_failures.py (target: scripts/check_repeat_failures.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;check_repeat_failures detects identical repeating sequences of shell commands and flags circuit breaker trips&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;test_count_increase&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py (target: scripts/filter_futile_targets.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
-Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
-Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
-
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
-
 ## Recent reflections (how past cycles worked — steering hints)
-- Oscillating tool execution loop bypassing consecutive loop breaker: After encountering regex extraction discrepancies with validate_deprecation_status.py, the executor alternated between two diagnosti
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- When an assigned demand item addresses a script recently modified (&#x27;0d ago&#x27;) and prior fix attempts might be in cooldown, consider returning no_valuable_task if the target cannot be safely differentia
+- Divergence between proposer suppression history and dedup failure cache: The failure &#x27;Fix style validation rules and exit code handling in scripts/check_style.py&#x27; was tracked by the dedup engine but o
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 08:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 1 (2026-09-13 09:47 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_repeat_failures.py, tests/test_check_repeat_failures.py. Reward signal will be…
+- Attempt 2 (2026-09-13 08:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add command sequence repetition circuit breaker to scripts/check_repeat_failures.py
+Title: Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py
 
 
-Extends check_repeat_failures.py with a circuit breaker detecting recurring shell command sequences, addressing repetitive loops like cycle-08759252f294.
+Addresses priority-abc757effd45 by ensuring scripts/filter_futile_targets.py contains filter_futile_targets under 40 lines, returning an empty list when candidates is None or empty and excluding futile targets and goals.md paths.
 
-Target path: scripts/check_repeat_failures.py
+Target path: scripts/filter_futile_targets.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-check_repeat_failures detects identical repeating sequences of shell commands and flags circuit breaker trips
+## Concrete task to implement
+Implement and commit: Enforce None handling and goals.md exclusion in scripts/filter_futile_targets.py (target: scripts/filter_futile_targets.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2082,7 +2064,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 10:17:36 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 12:51:49 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 10:32:10 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 12:51:49 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
