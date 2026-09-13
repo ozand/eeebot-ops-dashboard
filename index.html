@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">214</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 19:54:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">28.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 16:58 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 17:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1191,7 +1191,7 @@
       <div class="now-content">
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>HEALTHY</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">proposer-quality</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.repeat_failure_rate</strong> &middot; aim: <em>lower</em> (last: 0.07, last cycle)</span></div>
-        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: auto-commit uncommitted subagent work — Fix default invocation exit code handling in scripts/validate_heredoc_urls.py</strong> <span class="now-sub">(cycle-365b74a65de8 [cdc360f0])</span></div>
+        <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(model_fallback_routing): add argparse CLI entrypoint with --help and --query modes</strong> <span class="now-sub">(cycle-cee1d3522a7a [5339924c])</span></div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (healthy)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 49m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 8m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 47s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 2.3h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-available">within budget (0/5 24h)</span></div>
@@ -1229,18 +1229,18 @@
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-cee1d3522a7a">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-cee1d3522a7a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-cee1d3522a7a</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(model_fallback_routing): add argparse CLI entrypoint with --help and --query modes</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cee1d3522a7a)</span>
             
-            
+            <a href="#node-5339924" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T16:58:08.189916Z">19:58 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bd352e7e46c5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 5.91K tok &middot; dur 42s</div>
+          <div class="feed-files">&#128193; scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py</div>
+          <div class="feed-cost">&#9889; 11 calls &middot; 211.4K tok &middot; dur 2m30s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-365b74a65de8">
@@ -1275,7 +1275,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 16:58:35 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 19:54:54 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 17:05:35 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 19:54:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
