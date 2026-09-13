@@ -1180,7 +1180,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-13 10:59:31 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">24.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 08:26 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 29s old &middot; generated 08:43 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1197,7 +1197,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,362 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-0b75320ad4e0</span>
+      <span class="cycle-pill">cycle-e12ca9f64095</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1223,7 +1223,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 07:37:11.983906 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>85%</strong> (20,638 / 24,000 chars)</span><span>2026-09-13 08:29:49.813369 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:85%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1243,7 +1243,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,558c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,905c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1678,9 +1678,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 20,617c) + 3 separators &times; 7c (21c) = 20,638 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,558 chars &bull; ~2,139 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix validator exit failure in scripts/check_style.py
-Request ID: llm-proposer-cycle-0b75320ad4e0
-Cycle ID: cycle-0b75320ad4e0
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,905 chars &bull; ~1,976 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add redundant skill test check to scripts/prevent_repeat_failures.py
+Request ID: llm-proposer-cycle-e12ca9f64095
+Cycle ID: cycle-e12ca9f64095
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1705,28 +1705,22 @@ Recently completed (recent commits):
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add non-blocking stdin check and timeout budget in scripts/validate_no_shell_true.py: recent_duplicate_failure
-- Wire recursive testsuite traversal skill into scripts/verify_and_proof.py for nested test discovery: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0b75320ad4e0.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-e12ca9f64095.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Fix validator exit failure in scripts/check_style.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;scripts/check_style.py exits with code 1 when executed as a validator. Fixing its invocation handling and violation checking logic will allow the validator to complete successfully.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Add redundant skill test check to scripts/prevent_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycle cycle-e0fb8a5e9c55 failed by proposing a redundant test file for skill YAML frontmatter when tests/test_skill_frontmatter.py already indexes it. Adding a check to scripts/prevent_repeat_failures.py flags proposed targets that duplicate existing skill frontmatter test suites.\n\nTarget path: scripts/prevent_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix validator exit failure in scripts/check_style.py (target: scripts/check_style.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add redundant skill test check to scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)&quot;
 }
 ```
-
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
-Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
-Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
 ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
@@ -1735,24 +1729,25 @@ Solution: Integrate the new demand and target path deduplication thresholds from
 If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When an assigned demand item addresses a script recently modified (&#x27;0d ago&#x27;) and prior fix attempts might be in cooldown, consider returning no_valuable_task if the target cannot be safely differentia
-- Divergence between proposer suppression history and dedup failure cache: The failure &#x27;Fix style validation rules and exit code handling in scripts/check_style.py&#x27; was tracked by the dedup engine but o
-- Running plain &#x27;git stash&#x27; while new files were untracked resulted in &#x27;No local changes to save&#x27; (exit 1), repeating the unhandled stash failure pattern observed in cycle-661ac5eb07c6.
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 06:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
+- Attempt 1 (2026-09-13 06:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_validate_markdown_format.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-13 06:31 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
 
 ## Concrete task to implement
 
-Title: Fix validator exit failure in scripts/check_style.py
+Title: Add redundant skill test check to scripts/prevent_repeat_failures.py
 
 
-scripts/check_style.py exits with code 1 when executed as a validator. Fixing its invocation handling and violation checking logic will allow the validator to complete successfully.
+Cycle cycle-e0fb8a5e9c55 failed by proposing a redundant test file for skill YAML frontmatter when tests/test_skill_frontmatter.py already indexes it. Adding a check to scripts/prevent_repeat_failures.py flags proposed targets that duplicate existing skill frontmatter test suites.
 
-Target path: scripts/check_style.py
+Target path: scripts/prevent_repeat_failures.py
 
 ## Concrete task to implement
-Implement and commit: Fix validator exit failure in scripts/check_style.py (target: scripts/check_style.py)
+Implement and commit: Add redundant skill test check to scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2075,7 +2070,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-13 08:26:15 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 10:59:31 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-13 08:43:14 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-13 10:59:31 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
