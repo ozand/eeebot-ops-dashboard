@@ -3234,25 +3234,33 @@ _LEGACY_LESSON = {
 }
 
 
-def test_issue255_v2_title_is_a_heading_and_searchable() -> None:
-    data = _fixture()
-    data['lessons'] = [{
-        **_V2_LESSON,
-        'title': 'Use a bounded title for lesson selection',
-    }]
-    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
-    les = pages['lessons.html']
+def test_issue255_title_survives_reader_to_renderer(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    (lessons_dir / 'lessons.yaml').write_text(
+        'lessons:\n'
+        '  - id: LESS-RETITLE-255\n'
+        '    date: "2026-09-05"\n'
+        '    title: "Use git stash -u for untracked files"\n'
+        '    problem: "Untracked files were omitted from the stash."\n'
+        '    solution: "Use git stash -u <path>."\n',
+        encoding='utf-8',
+    )
+    monkeypatch.setattr(tv, 'INSTANCE_REPO', str(repo))
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"',
+        f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    namespace: dict[str, object] = {}
+    exec(script, namespace)
+    remote_entries = namespace['read_lessons']()
+    remote_pages = tv.render_pages({**_fixture(), 'lessons': remote_entries}, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in remote_pages['lessons.html']
 
-    assert '<h3 class="lesson-title">Use a bounded title for lesson selection</h3>' in les
-    assert 'data-text="' in les
-    row_start = les.index('<li class="lesson-row lesson-row-v2"')
-    row = les[row_start:les.index('</li>', row_start)]
-    data_text = re.search(r'data-text="([^"]*)"', row).group(1)
-    assert 'use a bounded title for lesson selection' in data_text
-    title_pos = les.index('<h3 class="lesson-title">Use a bounded title for lesson selection</h3>')
-    problem_pos = les.index('<div class="lesson-problem">')
-    assert title_pos < problem_pos
-
+    local_entries = tv.read_local_state(str(tmp_path), instance_repo=str(repo))['lessons']
+    local_pages = tv.render_pages({**_fixture(), 'lessons': local_entries}, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert '<h3 class="lesson-title">Use git stash -u for untracked files</h3>' in local_pages['lessons.html']
 
 def test_issue96_v2_lesson_renders_as_card() -> None:
     data = _fixture()
