@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 22:25:41 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">32.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 19:41 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 19:59 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,661 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-d058d6f6717a</span>
+      <span class="cycle-pill">cycle-a94a1efeef7d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,339 / 24,000 chars)</span><span>2026-09-14 19:14:38.272451 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,339 / 24,000 chars)</span><span>2026-09-14 19:45:27.135287 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,944c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,183c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,318c) + 3 separators &times; 7c (21c) = 21,339 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,944 chars &bull; ~1,736 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error result archiving support to scripts/cleanup_subagent_queue.py
-Request ID: llm-proposer-cycle-d058d6f6717a
-Cycle ID: cycle-d058d6f6717a
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,183 chars &bull; ~1,795 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add subagent error status display to scripts/eeebot_dashboard.py
+Request ID: llm-proposer-cycle-a94a1efeef7d
+Cycle ID: cycle-a94a1efeef7d
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,28 +1780,35 @@ Completed (do not repeat): Prune stale feed cache files (V1); Add lesson keyword
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0a4bf3d4 merge: integrate selfevo/cycle-cycle-d058d6f6717a
+- f7da6e71 feat(cleanup_subagent_queue): extend failed-result archival to requests/ and exclude root-level records
 - 2848d13b merge: integrate selfevo/cycle-cycle-48551debbc70
 - 56630e34 selfevo: auto-commit uncommitted subagent work — Implement quarantine_repeat_defects helper in scripts/quarantine_defects.py
 - 86e2c771 feat(quarantine_defects): add quarantine_repeat_defects helper for repeat defect candidates
 - 058a8afd merge: integrate selfevo/cycle-cycle-47c590a3cb3e
 - 4ba04429 feat(assert_doc_only): add is_doc_only_change helper for doc-only change detection
 - c9983806 fix(ci): repair skill tests and jsonl docs (#201) (#202)
-- 78d25279 merge: integrate selfevo/cycle-cycle-27ef71e929dc
-- 69b25ef2 selfevo: auto-commit uncommitted subagent work — Add error filtering option to scripts/loop_health_report.py
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d058d6f6717a.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-a94a1efeef7d.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add error result archiving support to scripts/cleanup_subagent_queue.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend cleanup_subagent_queue.py to detect and archive subagent result files with status=error such as abae65a5.json, preventing stale failed execution records from accumulating in the active result directory.\n\nTarget path: scripts/cleanup_subagent_queue.py&quot;,
+    &quot;title&quot;: &quot;Add subagent error status display to scripts/eeebot_dashboard.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Subagent executions failing with status=error (such as adc3714d.json) are not surfaced in the status dashboard; adding subagent error status reporting to scripts/eeebot_dashboard.py gives operator visibility into failed subagent results.\n\nTarget path: scripts/eeebot_dashboard.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error result archiving support to scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add subagent error status display to scripts/eeebot_dashboard.py (target: scripts/eeebot_dashboard.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/eeebot_dashboard.py parses and displays subagent error metrics in dashboard output.&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -m py_compile scripts/eeebot_dashboard.py&quot;
+    }
+  }
 }
 ```
 
@@ -1817,26 +1824,26 @@ Solution:
 If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Emit strictly the raw JSON object without conversational text or preamble in the final turn when declaring cycle completion or skip.
-- Continue using standard POSIX exit status checks ($?) rather than bash-specific variables when verifying CLI execution.
-- Conversational preamble before terminal JSON: The executor emitted multiple explanatory paragraphs before printing the JSON payload, violating the instruction that the final response must be the raw J
+- Immediately halt tool execution and emit the final response or skip declaration upon receiving a loop_breaker safety warning.
+- Treat negative grep results (exit code 1) as conclusive; do not re-run identical searches hoping for different output.
+- Repetitive command execution loop and disregard of loop_breaker: The agent executed the identical command (`grep -n &quot;outcome&quot; tests/test_search_subagent_archive.py; echo &quot;grep_exit=$?&quot;`) five consecut
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 18:41 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/quarantine_defects.py, tests/test_quarantine_defects.py.…
-- Attempt 2 (2026-09-14 18:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/assert_doc_only.py, tests/test_assert_doc_only.py. Reward signal will be upgraded by…
-- Attempt 3 (2026-09-14 17:27 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/loop_health_report.py.…
+- Attempt 1 (2026-09-14 19:21 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/cleanup_subagent_queue.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-14 18:41 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/quarantine_defects.py, tests/test_quarantine_defects.py.…
+- Attempt 3 (2026-09-14 18:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/assert_doc_only.py, tests/test_assert_doc_only.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add error result archiving support to scripts/cleanup_subagent_queue.py
+Title: Add subagent error status display to scripts/eeebot_dashboard.py
 
 
-Extend cleanup_subagent_queue.py to detect and archive subagent result files with status=error such as abae65a5.json, preventing stale failed execution records from accumulating in the active result directory.
+Subagent executions failing with status=error (such as adc3714d.json) are not surfaced in the status dashboard; adding subagent error status reporting to scripts/eeebot_dashboard.py gives operator visibility into failed subagent results.
 
-Target path: scripts/cleanup_subagent_queue.py
+Target path: scripts/eeebot_dashboard.py
 
-## Concrete task to implement
-Implement and commit: Add error result archiving support to scripts/cleanup_subagent_queue.py (target: scripts/cleanup_subagent_queue.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/eeebot_dashboard.py parses and displays subagent error metrics in dashboard output.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2171,7 +2178,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 19:41:31 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 22:25:41 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 19:59:28 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 22:25:41 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
