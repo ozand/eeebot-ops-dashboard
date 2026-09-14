@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 11:09:39 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 08:28 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 29s old &middot; generated 08:40 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-14587add7699</span>
+      <span class="cycle-pill">cycle-1b599be2cd6f</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 07:56:32.782129 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 08:33:04.199773 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,936c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,488c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,936 chars &bull; ~1,984 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add consecutive single-edit streak detection to scripts/check_cycle_budget.py
-Request ID: llm-proposer-cycle-14587add7699
-Cycle ID: cycle-14587add7699
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,488 chars &bull; ~2,122 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add consolidated companion test stub scaffolding with repo_root helper to scripts/scaffold_script_entrypoint.py
+Request ID: llm-proposer-cycle-1b599be2cd6f
+Cycle ID: cycle-1b599be2cd6f
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,74 +1780,67 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- f992a27f merge: integrate selfevo/cycle-cycle-14587add7699
+- 66be3153 feat(check_cycle_budget): add consecutive single-edit streak detection
 - 1a5da775 merge: integrate selfevo/cycle-cycle-74e2ce6aa636
 - c3c62334 feat(workspace_validation_helpers): add compaction trigger budget validator
 - 3116222a merge: integrate selfevo/cycle-cycle-60ba80ebf2c7
 - 39e157b0 feat(search_subagent_archive): add read-only stall pattern detection
 - fb233c56 merge: integrate selfevo/cycle-cycle-dcaaa98e7ca5
 - 8ba3124f feat(verify_and_proof): add exit code 124 timeout check to halt broad verification
-- f167df97 merge: integrate selfevo/cycle-cycle-aa5f3749bccb
-- 5ebb3d1f feat(validate_test_existence): add --resolve-test companion test path resolver
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Consolidate repetitive cleanup blocks into a context manager in tests/test_workspace_validation_helpers.py: existence_index_duplicate
 - Add synthetic in-memory path fixture for scan cap regression tests in tests/conftest.py: existence_index_duplicate
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-14587add7699.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1b599be2cd6f.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add consecutive single-edit streak detection to scripts/check_cycle_budget.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Detects streaks of consecutive turns that make isolated single edits to the same target file, resolving the turn-budget drain evidenced in cycle-7fa367a113c2 where 11 turns were spent issuing individual edit_file calls.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Add consolidated companion test stub scaffolding with repo_root helper to scripts/scaffold_script_entrypoint.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-1ce0a0a93bcf where companion test authoring required multiple piecemeal edit calls across turns to add imports, tests, and repo_root. Adding consolidated companion test stub generation to scripts/scaffold_script_entrypoint.py ensures imports, path resolution helpers, and initial test stubs are emitted together in a single operation.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add consecutive single-edit streak detection to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_cycle_budget.py detects consecutive single-edit turns on identical targets and passes self-tests&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_cycle_budget.py --self-test&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add consolidated companion test stub scaffolding with repo_root helper to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260909-f59ebb9e  Title: Executor LLM call failed before cycle execution while attempting: Add single-file git log history inspection to scripts/preflight_failure_check.py
-Root cause: 
-Prevention: 
+ID: ERR-20260830-448fcd73  Title: Gate failure rejects deprecated-script entrypoint validation
+Root cause: The cycle gate verification or execution failed with gate_failed. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-20260905-6d238e44  Title: Chain the script&#x27;s own CLI self-test (--test) with the paired pytest suite in a single bounded verification pass before committing
+Problem: verification ran the paired pytest suite but skipped the script&#x27;s own --test self-test, so the CLI entrypoint path (argparse wiring, exit codes, stderr/JSON separation) went unverified and the cycle had to re-run a second pass to confirm the self-test still passed.
+Solution: When a changed script exposes a --test self-test flag, run it first (python3 scripts/&lt;name&gt;.py --test) and immediately chain the paired pytest suite (python3 -m pytest tests/test_&lt;name&gt;.py) in the same bounded exec call, so both the internal self-test and the external suite are verified in one pass before committing.
+If you apply this lesson, cite [Lesson LESS-20260905-6d238e44] in your proposal/response.
+Related: LESS-REF-e13f1cd0f155, LESS-REF-c2ab8feea257-4dc0
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Use grep -n or read larger window spans to relocate text blocks after an edit_file match failure rather than stepping through files with repeated micro-reads.
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- When git log reveals an explicit commit implementing the requested feature and dedicated test functions exist, conclude the skip evaluation promptly without running synthetic micro-tests or full regre
+- Avoid spawning shell loops or individual subshells over large state directories (such as state/subagents/archive/); use head-limited stream pipelines or Python glob iterations with immediate break con
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 07:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
-- Attempt 2 (2026-09-14 06:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
-- Attempt 3 (2026-09-14 06:10 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_and_proof.py, tests/test_verify_and_proof.py. Reward signal will be upgraded…
+- Attempt 1 (2026-09-14 08:05 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 2 (2026-09-14 07:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/workspace_validation_helpers.py, tests/test_workspace_validation_helpers.py. Reward…
 
 ## Concrete task to implement
 
-Title: Add consecutive single-edit streak detection to scripts/check_cycle_budget.py
+Title: Add consolidated companion test stub scaffolding with repo_root helper to scripts/scaffold_script_entrypoint.py
 
 
-Detects streaks of consecutive turns that make isolated single edits to the same target file, resolving the turn-budget drain evidenced in cycle-7fa367a113c2 where 11 turns were spent issuing individual edit_file calls.
+Addresses reflection-1ce0a0a93bcf where companion test authoring required multiple piecemeal edit calls across turns to add imports, tests, and repo_root. Adding consolidated companion test stub generation to scripts/scaffold_script_entrypoint.py ensures imports, path resolution helpers, and initial test stubs are emitted together in a single operation.
 
-Target path: scripts/check_cycle_budget.py
+Target path: scripts/scaffold_script_entrypoint.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_cycle_budget.py detects consecutive single-edit turns on identical targets and passes self-tests
+## Concrete task to implement
+Implement and commit: Add consolidated companion test stub scaffolding with repo_root helper to scripts/scaffold_script_entrypoint.py (target: scripts/scaffold_script_entrypoint.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2182,7 +2175,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 08:28:33 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 11:09:39 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 08:40:49 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 11:09:39 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
