@@ -214,15 +214,23 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     prompt_text = agent_context.get("prompt_text")
     task_text = agent_context.get("task_text")
     skills = agent_context.get("tier2_skills") or []
-    skills_status = agent_context.get("tier2_skills_status", "missing")
+    skills_status = agent_context.get("tier2_skills_status", "present" if "tier2_skills" in agent_context else "missing")
     lessons = agent_context.get("tier2_lessons") or {}
     memory = agent_context.get("tier2_memory") or {}
 
     chars = sys_prompt.get("chars")
-    cap = sys_prompt.get("cap", 30000)
+    cap = sys_prompt.get("cap")
     overflow = sys_prompt.get("overflow", False)
     over_by = sys_prompt.get("over_by", 0)
     sections = sys_prompt.get("sections")
+    separator_count = max(
+        0,
+        sum(
+            1 for key, _label in CANONICAL_ASSEMBLY_ORDER
+            if sections and key in sections and (sections.get(key) or 0) > 0
+        ) - 1,
+    )
+    separator_total_chars = separator_count * SEPARATOR_LEN
     dropped = sys_prompt.get("dropped") or []
     rung = sys_prompt.get("rung")
     cid = sys_prompt.get("cycle_id", "")
@@ -294,19 +302,18 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if overflow and cap is not None and over_by is not None:
             chars = cap + over_by
         else:
-            non_empty_sec = sum(1 for v in sections.values() if (v or 0) > 0)
-            chars = sum(sections.values()) + max(0, non_empty_sec - 1) * SEPARATOR_LEN
+            chars = sum(sections.values()) + separator_total_chars
 
     total_chars = chars or (len(prompt_text) if prompt_text else 0)
     total_tokens = estimate_tokens(total_chars)
 
-    if overflow or (total_chars and cap and total_chars > cap):
+    if overflow and cap is not None:
         ov_amount = over_by if over_by else (total_chars - cap)
         headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap)</span>'
         headroom_text = f'<span class="stat-warn">-{ov_amount:,} chars (OVERFLOW)</span>'
-        bar_pct = min(100, int((total_chars / cap) * 100)) if cap else 100
+        bar_pct = min(100, int((total_chars / cap) * 100)) if cap > 0 else None
         bar_color = "var(--color-danger, #f85149)"
-    elif total_chars and cap:
+    elif cap is not None and cap > 0 and total_chars:
         spare = cap - total_chars
         pct = (total_chars / cap) * 100
         headroom_badge = f'<span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+{spare:,} chars spare)</span>'
@@ -316,7 +323,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     else:
         headroom_badge = '<span class="context-badge badge-secondary">CAPACITY UNKNOWN</span>'
         headroom_text = '<span>n/a</span>'
-        bar_pct = 50
+        bar_pct = None
         bar_color = "var(--color-accent, #58a6ff)"
 
     rung_html = ""
@@ -342,11 +349,28 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     mem_cnt = memory.get("total_files", 0)
     mem_kb = memory.get("total_size_bytes", 0) / 1024
     t2_kb = skills_kb + lessons_kb + mem_kb
-    t2_files = len(skills) + lessons_cnt + mem_cnt
 
     def corpus_count(status: str, count: int) -> str:
         return str(count) if status == "present" else status
 
+    corpus_counts = (
+        (skills_status, len(skills)),
+        (lessons_corpus_status, lessons_cnt),
+        (mem_corpus_status, mem_cnt),
+    )
+    t2_files = (
+        str(sum(count for status, count in corpus_counts))
+        if all(status == "present" for status, _ in corpus_counts)
+        else "unavailable"
+    )
+    active_skills_sz = sections.get("active_skills") if sections and "active_skills" in sections else None
+    active_skills_text = (
+        f"{active_skills_sz:,}c (empty under loop profile)"
+        if active_skills_sz == 0
+        else f"{active_skills_sz:,}c"
+        if active_skills_sz is not None
+        else "unavailable"
+    )
     cat_sz = sections.get("skills_catalogue", 0) if sections else len(raw_sections_text.get("skills_catalogue", ""))
     mem_sz = sections.get("memory", 0) if sections else len(raw_sections_text.get("memory", ""))
     id_sz = sections.get("identity", 0) if sections else len(raw_sections_text.get("identity", ""))
@@ -376,8 +400,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Context Budget Cap</span>')
-    out.append(f'      <span class="kpi-value">{cap:,} <span class="kpi-unit">chars</span></span>')
-    out.append(f'      <span class="kpi-sub">~{estimate_tokens(cap):,} est. tokens limit</span>')
+    cap_display = f'{cap:,} <span class="kpi-unit">chars</span>' if cap is not None else 'unavailable'
+    cap_tokens_display = f'~{estimate_tokens(cap):,} est. tokens limit' if cap is not None else 'recorded cap unavailable'
+    out.append(f'      <span class="kpi-value">{cap_display}</span>')
+    out.append(f'      <span class="kpi-sub">{cap_tokens_display}</span>')
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Remaining Headroom</span>')
@@ -392,9 +418,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  </div>')
 
     out.append('  <div class="context-meter-box">')
-    out.append(f'    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)</span><span>{ts_display}</span></div>')
+    meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)' if bar_pct is not None and cap is not None else '<strong>unavailable</strong> (recorded cap unavailable)'
+    out.append(f'    <div class="meter-labels"><span>Prompt Budget Utilization: {meter_value}</span><span>{ts_display}</span></div>')
     out.append('    <div class="context-progress-bar">')
-    out.append(f'      <div class="context-progress-fill" style="width:{bar_pct}%;background:{bar_color};"></div>')
+    meter_fill = f'<div class="context-progress-fill" style="width:{bar_pct}%;background:{bar_color};"></div>' if bar_pct is not None else '<div class="context-progress-fill meter-unavailable" style="width:0%;"></div>'
+    out.append(f'      {meter_fill}')
     out.append('    </div>')
     out.append('  </div>')
 
@@ -425,10 +453,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('      <div class="tier1-blocks-list">')
     out.append(f'        <div class="t1-block-item"><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-sz">{id_sz:,}c</span></div>')
     out.append(f'        <div class="t1-block-item"><span class="t1-seq">2</span><span class="t1-name">bootstrap (AGENTS.md)</span><span class="t1-sz">{boot_sz:,}c</span></div>')
-    out.append('        <div class="t1-block-item t1-empty"><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">0c (empty under loop profile)</span></div>')
-    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">{cat_sz:,}c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {len(skills)} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
-    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">{mem_sz:,}c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes Working Memory in Tier 2 ({mem_cnt} files)</a></div>')
-    out.append('        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 4 &times; "\n\n---\n\n" Separators</span><span class="t1-sz">28c</span></div>')
+    active_class = "t1-empty" if active_skills_sz == 0 else ""
+    out.append(f'        <div class="t1-block-item {active_class}"><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">{active_skills_text}</span></div>')
+    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">{cat_sz:,}c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {corpus_count(skills_status, len(skills))} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
+    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">{mem_sz:,}c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes {corpus_count(mem_corpus_status, mem_cnt)} files in Tier 2</a></div>')
+    out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
     out.append('        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>')
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">{len(task_text) if task_text else 0:,}c</span></div>')
     out.append('      </div>')
@@ -460,7 +489,6 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     block_seq = 1
     reconciliation_rows = []
     total_sections_chars = 0
-    non_empty_count = 0
 
     if sections:
         for key, label in CANONICAL_ASSEMBLY_ORDER:
@@ -470,8 +498,6 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                 sec_sz = sec_sz or 0
                 sec_tokens = estimate_tokens(sec_sz)
                 total_sections_chars += sec_sz
-                if sec_sz > 0:
-                    non_empty_count += 1
                 sec_text = raw_sections_text.get(key, "")
                 if sec_sz == 0:
                     reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr>')
@@ -486,8 +512,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                 out.append(f'<div class="context-block-absent"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; <em>absent</em> (not configured/emitted)</div>')
                 block_seq += 1
 
-        sep_count = max(0, non_empty_count - 1)
-        sep_total_chars = sep_count * SEPARATOR_LEN
+        sep_count = separator_count
+        sep_total_chars = separator_total_chars
         reconciled_total = total_sections_chars + sep_total_chars
 
         reconciliation_rows.append(f'<tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>{total_sections_chars:,}</strong></td><td class="num">~{estimate_tokens(total_sections_chars):,}</td><td>&sum; section chars</td></tr>')
@@ -536,11 +562,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="t2-group" id="tier2-lessons-section">')
     out.append(f'      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-{lessons_corpus_status}">corpus: {lessons_corpus_status.upper()}</span> <span class="status-badge status-{lessons_st}">lessons/index.md: {lessons_st.upper()}</span></div>')
     if lessons_st == "missing":
-        out.append(f'      <div class="missing-artifact-callout"><span class="callout-icon">&#8505;</span><div><strong>lessons/index.md is MISSING</strong><p>The lessons index is generated once daily and cleared between cycles by <code>git clean -fd</code>. The underlying corpus of <strong>{lessons_cnt} lesson files</strong> (~{lessons_kb:.1f} KB) remains intact on disk.</p></div></div>')
+        lesson_count_text = corpus_count(lessons_corpus_status, lessons_cnt)
+        out.append(f'      <div class="missing-artifact-callout"><span class="callout-icon">&#8505;</span><div><strong>lessons/index.md is MISSING</strong><p>The lessons index is generated once daily and cleared between cycles by <code>git clean -fd</code>. The underlying corpus of <strong>{lesson_count_text} lesson files</strong> (~{lessons_kb:.1f} KB) remains intact on disk.</p></div></div>')
     out.append(f'      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> {corpus_count(lessons_corpus_status, lessons_cnt)} lesson records on disk (~{lessons_kb:.1f} KB total):</p><div class="lessons-pills">')
     for lf in lessons.get("files", [])[:30]:
         out.append(f'<span class="lesson-pill">{esc(lf.get("name", ""))} ({lf.get("size_bytes", 0):,} B)</span> ')
-    if lessons_cnt > 30:
+    if lessons_corpus_status == "present" and lessons_cnt > 30:
         out.append(f'<span class="lesson-pill pill-more">+{lessons_cnt - 30} more lessons...</span>')
     out.append('      </div></div>')
     out.append('    </div>')
@@ -550,7 +577,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>{corpus_count(mem_corpus_status, mem_cnt)} files</strong> on disk (~{mem_kb:.1f} KB total):</p><div class="memory-pills">')
     for mf in memory.get("files", [])[:30]:
         out.append(f'<span class="memory-pill">{esc(mf.get("name", ""))} ({mf.get("size_bytes", 0):,} B)</span> ')
-    if mem_cnt > 30:
+    if mem_corpus_status == "present" and mem_cnt > 30:
         out.append(f'<span class="memory-pill pill-more">+{mem_cnt - 30} more files...</span>')
     out.append('      </div></div>')
     out.append('    </div>')

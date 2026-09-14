@@ -337,6 +337,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f'authority-host state root to read (default: {tv.STATE_ROOT})',
     )
     parser.add_argument(
+        '--instance-repo', default=None,
+        help='instance repository containing Tier 2 corpus (default: state-root parent / eeebot-self-evolving)',
+    )
+    parser.add_argument(
         # Default to $STATE_DIRECTORY when systemd has set it (it does so
         # automatically for any unit with StateDirectory=, expanded to the
         # absolute path under /var/lib) rather than hardcoding
@@ -400,7 +404,8 @@ def run(args: argparse.Namespace) -> int:
     state_dir = Path(args.state_dir)
     staleness_floor_seconds = args.staleness_floor_hours * 3600.0
 
-    data = tv.read_local_state(str(state_root))
+    instance_repo = args.instance_repo or str(state_root.parent / 'eeebot-self-evolving')
+    data = tv.read_local_state(str(state_root), instance_repo=instance_repo)
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()

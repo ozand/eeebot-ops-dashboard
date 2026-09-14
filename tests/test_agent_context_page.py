@@ -304,6 +304,76 @@ def test_agent_context_tier2_corpus_states_are_explicit(tmp_path):
     assert "Skills Store: unavailable skills" in html
 
 
+def test_agent_page_unreadable_corpus_never_renders_zero_or_fabricated_total(tmp_path):
+    from scripts.agent_context import read_agent_context_dict
+
+    state = tmp_path / "state"
+    repo = tmp_path / "instance"
+    state.mkdir()
+    repo.mkdir()
+    (repo / "skills").write_text("not a directory", encoding="utf-8")
+    (repo / "lessons").write_text("not a directory", encoding="utf-8")
+    (repo / "memory").write_text("not a directory", encoding="utf-8")
+
+    context = read_agent_context_dict(state, repo)
+    html = tv.build_two_tier_context_html(context)
+
+    assert "Skills Store: unavailable skills" in html
+    assert "Lessons Corpus: unavailable lessons" in html
+    assert "Memory Store: unavailable files" in html
+    assert "unavailable files reachable via read_file" in html
+    assert "Skills Store: 0 skills" not in html
+
+
+def test_agent_page_preserves_non_empty_active_skills_and_separator_reconciliation():
+    fixture = _base_fixture()
+    fixture["agent_context"] = {
+        "system_prompt": {
+            "chars": 100,
+            "cap": 24000,
+            "sections": {
+                "identity": 10,
+                "bootstrap": 20,
+                "active_skills": 30,
+                "skills_catalogue": 40,
+            },
+        },
+        "prompt_text": None,
+        "task_text": None,
+        "tier2_skills": [{"name": "one", "size_bytes": 1}],
+        "tier2_skills_status": "present",
+        "tier2_lessons": {"corpus_status": "present", "corpus_count": 0, "total_size_bytes": 0, "files": []},
+        "tier2_memory": {"corpus_status": "present", "total_files": 0, "total_size_bytes": 0, "files": []},
+    }
+
+    html = tv.render_pages(fixture, host="eeepc", generated_at="now")["agent.html"]
+
+    assert "30c (empty under loop profile)" not in html
+    assert "30c</span>" in html
+    assert "3 &times;" in html
+    assert ">21c</span>" in html
+    assert "Recorded chars: 100" in html
+
+
+def test_agent_page_missing_prompt_cap_is_unavailable():
+    fixture = _base_fixture()
+    fixture["agent_context"] = {
+        "system_prompt": {"chars": 1234, "sections": {"identity": 1234}},
+        "prompt_text": None,
+        "task_text": None,
+        "tier2_skills": [],
+        "tier2_lessons": {"corpus_status": "present", "corpus_count": 0, "total_size_bytes": 0, "files": []},
+        "tier2_memory": {"corpus_status": "present", "total_files": 0, "total_size_bytes": 0, "files": []},
+    }
+
+    html = tv.render_pages(fixture, host="eeepc", generated_at="now")["agent.html"]
+
+    assert "Context Budget Cap" in html
+    assert "recorded cap unavailable" in html
+    assert "Prompt Budget Utilization: <strong>unavailable</strong>" in html
+    assert "30,000" not in html
+
+
 def test_agent_page_weight_under_budget():
     """Issue #227: Total agent.html byte length must be under 500 KB."""
     fixture = _base_fixture()

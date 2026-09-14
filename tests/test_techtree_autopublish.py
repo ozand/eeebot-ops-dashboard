@@ -154,6 +154,31 @@ def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
     assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None}
 
 
+def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'techtree-state'
+    captured = {}
+
+    def fake_read(state_root, instance_repo=None):
+        captured['state_root'] = state_root
+        captured['instance_repo'] = instance_repo
+        return {'_error': None}
+
+    monkeypatch.setattr(ap.tv, 'read_local_state', fake_read)
+    monkeypatch.setattr(ap, '_unreadable_tree_source', lambda data, state_root: None)
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages: 0)
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    assert ap.run(args) == 0
+    assert captured == {
+        'state_root': str(root),
+        'instance_repo': str(root.parent / 'eeebot-self-evolving'),
+    }
+
+
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     root = tmp_path / 'state'
     _write_state_root(root)
