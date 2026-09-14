@@ -711,8 +711,6 @@ def test_ci_freshness_renderer_shows_timestamp_and_independent_axes() -> None:
                 'actions_enabled': True,
                 'freshness_state': 'recent',
                 'latest_conclusion': 'failure',
-                'actions': {'enabled': False},
-                'freshness': {'state': 'runs_old', 'latest_conclusion': 'success', 'latest_completed_at_utc': '2026-09-14T12:00:00Z'},
             },
         },
     }
