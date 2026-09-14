@@ -1639,7 +1639,7 @@ def read_local_state(
         'cycle_titles': titles,
         'cycle_files': cycle_files,
         'cycle_titles_error': titles_error,
-        'agent_context': read_agent_context_dict(root, instance_repo),
+        'agent_context': read_agent_context_dict(root, repo_path),
         'generator_sha': '',
         '_newest_source_age_seconds': None,
     }
