@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">214</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 17:44:41 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">30.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 15:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 15:41 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1257,18 +1257,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-14 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-d38d026de159">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d38d026de159">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-d38d026de159</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add subagent error status detection to scripts/check_repeat_failures.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d38d026de159)</span>
             
-            
+            <a href="#node-718bcd5" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T15:12:27.422514Z">18:12 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-98122fe41f5f</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 22.21K tok &middot; dur 55s</div>
+          <div class="feed-files">&#128193; memory/repeat_failures.json, scripts/check_repeat_failures.py, tests/test_check_repeat_failures.py</div>
+          <div class="feed-cost">&#9889; 32 calls &middot; 1.11M tok &middot; dur 7m57s</div>
         </li>
         
         <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-345951d1b369">
@@ -2019,7 +2019,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-f3034ae3d408)</span>
             
-            <a href="#node-de08f5e" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-13T22:45:32.191897Z">01:45 MSK</span>
           </div>
           <div class="entity-links"><a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
@@ -3669,14 +3669,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-24e7eaaf9852">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(check_ast_line_count): make file argument optional for zero-argument harness execution</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-24e7eaaf9852)</span>
             
             
             <span class="feed-ts" title="2026-09-13T02:23:18.469675Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0d31c4d29d2e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-e13f1cd0f155">lesson:LESS-REF-e13f1cd0f155</a></div>
-          <div class="feed-files">&#128193; scripts/check_ast_line_count.py, tests/test_check_ast_line_count.py</div>
+          
           <div class="feed-cost">&#9889; 23 calls &middot; 488.4K tok &middot; dur 3m14s</div>
         </li>
         
@@ -39315,7 +39315,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 15:12:50 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 17:44:41 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 15:41:31 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 17:44:41 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
