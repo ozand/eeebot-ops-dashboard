@@ -3092,7 +3092,7 @@ def test_issue73_parses_live_and_archive_newest_first(tmp_path) -> None:
     assert ids.index('LESS-20260825-aaaa') < ids.index('LESS-20260819-cccc')  # newest first
 
 
-def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path) -> None:
+def _issue1564_archive_fixture(tmp_path: Path) -> Path:
     import gzip as gz
 
     repo = tmp_path / 'eeebot-self-evolving'
@@ -3114,9 +3114,35 @@ def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path
         fh.write(archive_text.replace('LESS-RETIRED-1564', 'LESS-RETIRED-1564-B'))
     with gz.open(arch / 'lessons-2026-08-23.yaml.gz', 'wt', encoding='utf-8') as fh:
         fh.write(archive_text.replace('LESS-RETIRED-1564', 'LESS-RETAINED-1564'))
+    return repo
 
+
+def test_issue1564_excludes_retired_v1_archives_from_local_reader(tmp_path: Path) -> None:
+    repo = _issue1564_archive_fixture(tmp_path)
     data = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
     ids = {str(item.get('id')) for item in data.get('lessons') or []}
+    assert 'LESS-RETAINED-1564' in ids
+    assert 'LESS-RETIRED-1564' not in ids
+    assert 'LESS-RETIRED-1564-B' not in ids
+
+
+def test_issue1564_excludes_retired_v1_archives_from_published_reader(tmp_path: Path) -> None:
+    import contextlib
+    import io
+
+    repo = _issue1564_archive_fixture(tmp_path)
+    # The published reader is embedded in the SSH script rather than exposed
+    # as a local module function. Execute that exact reader against an isolated
+    # fixture, with all unrelated sources remaining fail-soft.
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"',
+        f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    rows = namespace['read_lessons']()
+    ids = {str(item.get('id')) for item in rows}
     assert 'LESS-RETAINED-1564' in ids
     assert 'LESS-RETIRED-1564' not in ids
     assert 'LESS-RETIRED-1564-B' not in ids

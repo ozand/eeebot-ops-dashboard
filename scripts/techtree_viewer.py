@@ -713,6 +713,9 @@ def read_lessons():
         pass
     try:
         archive_dir = os.path.join(lessons_dir, "archive")
+        # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
+        # zero recurrence) are deleted from the instance repo; keep the guard
+        # so a stale mirror cannot render them after that deletion.
         names = sorted(
             f for f in os.listdir(archive_dir)
             if f.endswith(".yaml.gz") and f not in {
@@ -1361,6 +1364,9 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         except Exception:  # noqa: BLE001
             pass
         try:
+            # #1564: these v1 receipt archives (518 rows, 8 distinct insights,
+            # zero recurrence) are deleted from the instance repo; keep the guard
+            # so a stale mirror cannot render them after that deletion.
             archives = sorted(
                 p.name for p in (lessons_dir / 'archive').iterdir()
                 if p.name.endswith('.yaml.gz') and p.name not in {
