@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">79.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 07:21:48 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 04:44 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 04:55 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">fallback-38b829a3401e</span>
+      <span class="cycle-pill">cycle-dfcf3c68d90b</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 04:36:11.963044 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 04:48:19.038243 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,076c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,319c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,076 chars &bull; ~1,769 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py
-Request ID: llm-proposer-fallback-38b829a3401e
-Cycle ID: fallback-38b829a3401e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,319 chars &bull; ~1,829 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py
+Request ID: llm-proposer-cycle-dfcf3c68d90b
+Cycle ID: cycle-dfcf3c68d90b
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1790,36 +1790,36 @@ Recently completed (recent commits):
 - c2eb482c merge: integrate selfevo/cycle-cycle-d9cab51123e4
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-38b829a3401e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dfcf3c68d90b.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add limit option to cap output count in scripts/format_existence_index_exclusions.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;When formatting existence index entries for prompt exclusion, unbounded output can consume excessive prompt context on the constrained host. Adding a --limit CLI option allows callers to cap the number of emitted exclusion lines.\n\nTarget path: scripts/format_existence_index_exclusions.py&quot;,
+    &quot;title&quot;: &quot;Add consecutive sort call detection on identical targets to scripts/check_style.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Add a style and AST inspection check to scripts/check_style.py that flags consecutive .sort() invocations on the same target variable, prompting authors to consolidate multiple passes into a single tuple-key sort to prevent the multi-turn fix observed in cycle-45fe76c8c8d1.\n\nTarget path: scripts/check_style.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py (target: scripts/format_existence_index_exclusions.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py (target: scripts/check_style.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-4b4bdcf4  Title: Executor LLM call failed before cycle execution while attempting: Fix default target scanning and exit code in scripts/validate_markdown_format.py
+ID: ERR-20260911-d4624f07  Title: Executor LLM call failed before cycle execution while attempting: Fix style validation rules and exit code handling in scripts/check_style.py
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/existence_index_duplicate.md  Title: Existence Index Duplicate Skip Mode and Mitigation
-Problem: Read lessons/existence_index_duplicate.md: **Check Existing Scripts**: Before proposing or implementing a task, search the repository (e.g., in `scripts/`, `nanobot/`, etc.) to ensure a similar script does not already exist.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/existence_index_duplicate.md] in your proposal/response.
+ID: LESS-REF-9ff792579a7a-eef8  Title: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
+Problem: the agent repeated the identical inline python diagnostic snippet 5 times consecutively, including 2 times after the loop_breaker warning, resulting in a partial outcome with 0 files changed.
+Solution: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
+If you apply this lesson, cite [Lesson LESS-REF-9ff792579a7a-eef8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
-- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
+- Repetitive dispatch against an active cooldown backend: The coordinator initiated three consecutive attempts (15:01, 15:08, and 15:13 UTC) without validating model endpoint health or applying an exten
+- Repetitive command execution loop and loop-breaker bypass: The executor called an identical python microbenchmark command five times across turns 13 to 17. Even after receiving a system loop_breaker m
+- Immediately halt tool execution and emit the final response or skip declaration upon receiving a loop_breaker safety warning.
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-14 04:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
@@ -1827,15 +1827,15 @@ If you apply this lesson, cite [Lesson lessons/existence_index_duplicate.md] in 
 
 ## Concrete task to implement
 
-Title: Add limit option to cap output count in scripts/format_existence_index_exclusions.py
+Title: Add consecutive sort call detection on identical targets to scripts/check_style.py
 
 
-When formatting existence index entries for prompt exclusion, unbounded output can consume excessive prompt context on the constrained host. Adding a --limit CLI option allows callers to cap the number of emitted exclusion lines.
+Add a style and AST inspection check to scripts/check_style.py that flags consecutive .sort() invocations on the same target variable, prompting authors to consolidate multiple passes into a single tuple-key sort to prevent the multi-turn fix observed in cycle-45fe76c8c8d1.
 
-Target path: scripts/format_existence_index_exclusions.py
+Target path: scripts/check_style.py
 
 ## Concrete task to implement
-Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py (target: scripts/format_existence_index_exclusions.py)
+Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py (target: scripts/check_style.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2170,7 +2170,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 04:44:48 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:21:48 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 04:55:56 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:21:48 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
