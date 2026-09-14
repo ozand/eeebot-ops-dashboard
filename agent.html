@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 19:59:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">30.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 17:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 26s old &middot; generated 17:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-279ea3a88a1b</span>
+      <span class="cycle-pill">cycle-27ef71e929dc</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 16:45:43.690897 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 17:07:48.135332 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,270c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,795c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,270 chars &bull; ~1,817 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py
-Request ID: llm-proposer-cycle-279ea3a88a1b
-Cycle ID: cycle-279ea3a88a1b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,795 chars &bull; ~1,698 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error filtering option to scripts/loop_health_report.py
+Request ID: llm-proposer-cycle-27ef71e929dc
+Cycle ID: cycle-27ef71e929dc
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,64 +1780,66 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 62576bd4 merge: integrate selfevo/cycle-cycle-279ea3a88a1b
+- ec9d76b1 selfevo: auto-commit uncommitted subagent work — Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py
+- b26e270d feat(check_ast_line_count): add AsyncFunctionDef inspection coverage
 - 718bcd50 merge: integrate selfevo/cycle-cycle-d38d026de159
 - e3111460 selfevo: auto-commit uncommitted subagent work — Add subagent error status detection to scripts/check_repeat_failures.py
 - 28538ac6 feat(check_repeat_failures): add subagent error status detection
 - 716e47ff merge: integrate selfevo/cycle-cycle-bf8eeafe1d3a
 - ea28cdd2 selfevo: auto-commit uncommitted subagent work — Add async function and decorator inspection support to scripts/query_ast_symbols
-- 6260bb7f feat(query_ast_symbols): add decorator inspection (query_ast_decorators, --decorators CLI)
-- 9059b2ce merge: integrate selfevo/cycle-cycle-294aa1f2665c
-- fac6b36e feat(loop_health_report): add loop breaker safety interrupt summary reporting
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Fix branch status detection and exit code handling in scripts/check_git_clean_branch.py: executor_llm_error
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-279ea3a88a1b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-27ef71e929dc.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Subagent verification runs check_ast_line_count.py via the validator harness; adding AsyncFunctionDef node handling ensures asynchronous function definitions are analyzed for line limits rather than bypassed during subagent validation.\n\nTarget path: scripts/check_ast_line_count.py&quot;,
+    &quot;title&quot;: &quot;Add error filtering option to scripts/loop_health_report.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Defect defect-7ccc425c334a flags subagent result error 62f45d65. Adding an --errors-only filtering option to loop_health_report.py allows rapid identification and reporting of error-status runs from subagent results.\n\nTarget path: scripts/loop_health_report.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py (target: scripts/check_ast_line_count.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error filtering option to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/loop_health_report.py supports filtering subagent records with error status using an --errors-only flag&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/loop_health_report.py --help&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+ID: ERR-20260906-5445c37c  Title: Executor LLM call failed before cycle execution while attempting: Add error result file archiving and count reporting in scripts/archive_subagent_
 Root cause: 
 Prevention: 
 
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
-
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
+- Immediately halt tool execution and emit the final summary or skip declaration when a loop_breaker safety stop is triggered.
+- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
+- Repetitive tool execution loop and disregard of loop_breaker: The executor ran an identical python exec command six consecutive times (turns 11, 13, 14, 15, 16, 17) calculating litellm error counts. E
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 15:41 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/check_repeat_failures.py,…
+- Attempt 1 (2026-09-14 16:55 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_ast_line_count.py,…
+- Attempt 2 (2026-09-14 15:41 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/check_repeat_failures.py,…
 
 ## Concrete task to implement
 
-Title: Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py
+Title: Add error filtering option to scripts/loop_health_report.py
 
 
-Subagent verification runs check_ast_line_count.py via the validator harness; adding AsyncFunctionDef node handling ensures asynchronous function definitions are analyzed for line limits rather than bypassed during subagent validation.
+Defect defect-7ccc425c334a flags subagent result error 62f45d65. Adding an --errors-only filtering option to loop_health_report.py allows rapid identification and reporting of error-status runs from subagent results.
 
-Target path: scripts/check_ast_line_count.py
+Target path: scripts/loop_health_report.py
 
-## Concrete task to implement
-Implement and commit: Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py (target: scripts/check_ast_line_count.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/loop_health_report.py supports filtering subagent records with error status using an --errors-only flag
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2172,7 +2174,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 17:04:10 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 19:59:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 17:27:43 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 19:59:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
