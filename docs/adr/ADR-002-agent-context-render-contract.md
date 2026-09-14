@@ -95,7 +95,7 @@ The two-tier model itself (#227) and its Tier 1 / Tier 2 vocabulary. The assembl
 - A `system_prompt` row with no `cap` renders `unavailable`, and no percentage or bar width is computed for that row.
 - A fixture with the charter tail present reports both the capped total and the full system-message total, and `goals` is labelled outside-the-cap with a size rather than `absent`.
 - A fixture whose `skills_catalogue.truncated` is true renders every `omitted_names` entry; one whose `memory_index.resident_missing` is non-empty renders every label by name; an absent key in either renders `unavailable`, not an empty list.
-- An assertion that no figure displayed more than once on the page has more than one computation site — enforced on the renderer, by construction of the template, not by inspection.
+- Every displayed figure is collected into one `figures` mapping before any markup is emitted, and a test asserts each key is assigned exactly once. A second appearance of a figure reads from that mapping, so repeating a number for emphasis stays possible while deriving it twice does not. This is what enforces rule 1 today; enforcing it by construction of a template would require the page recomposition both issues defer, and a rule that cannot be checked until then is not a rule.
 
 ---
 
