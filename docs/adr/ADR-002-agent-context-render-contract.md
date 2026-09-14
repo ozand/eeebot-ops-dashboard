@@ -22,7 +22,7 @@ The render half has drifted from it. Four separate issues each added a reader ov
 
 These are not six unrelated bugs. Items 2, 3 and 5 are the same mechanism: the page holds its own copy of something the assembler owns — a count, a structural constant, a default — and the two copies drift. Items 1 and 6 are the other half of the same mechanism: where the page has no copy and no read, it prints the value a healthy empty system would have.
 
-This is the fourth instrument in sequence to report a number that answers a different question than the one its label asks: Tier 2 reported an empty corpus against 38 skills on `origin/main`; `lessons.html` reported `v2 Entries: 0` against 41 v2 rows; `hypotheses.html` reports attempt budgets instead of verdicts; this page reports a missing corpus as an empty one and its own arithmetic twice.
+This is the fourth instrument in sequence to report a number that answers a different question than the one its label asks: Tier 2 reported an empty corpus against a populated instance repository (`git ls-tree -r --name-only origin/main | grep -c 'SKILL\.md$'` returned 40 on 2026-09-14, with 81 `lessons/*.md` and 62 files under `memory/`); `lessons.html` reported `v2 Entries: 0` against 41 v2 rows; `hypotheses.html` reports attempt budgets instead of verdicts; this page reports a missing corpus as an empty one and its own arithmetic twice.
 
 ---
 
