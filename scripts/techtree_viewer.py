@@ -756,6 +756,7 @@ def read_lessons():
                 continue
             rows_all.append({
                 "id": lid,
+                "title": str(row.get('title') or ''),
                 "date": str(row.get('date') or ''),
                 "cycle_id": str(row.get('cycle_id') or ''),
                 "task_id": str(row.get('task_id') or ''),
@@ -1408,6 +1409,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
                 if isinstance(item, dict) and item.get('id'):
                     entries.append({
                         'id': str(item.get('id') or ''),
+                        'title': str(item.get('title') or ''),
                         'date': str(item.get('date') or ''),
                         'cycle_id': str(item.get('cycle_id') or ''),
                         'task_id': str(item.get('task_id') or ''),
