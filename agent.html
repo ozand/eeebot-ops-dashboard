@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 21:03:13 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">31.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.6M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 18:26 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 18:42 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,661 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-47c590a3cb3e</span>
+      <span class="cycle-pill">cycle-48551debbc70</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,339 / 24,000 chars)</span><span>2026-09-14 18:12:42.767988 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,339 / 24,000 chars)</span><span>2026-09-14 18:29:59.580873 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,823c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,715c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,85 +1766,79 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,318c) + 3 separators &times; 7c (21c) = 21,339 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,823 chars &bull; ~1,955 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/assert_doc_only.py with is_doc_only_change helper
-Request ID: llm-proposer-cycle-47c590a3cb3e
-Cycle ID: cycle-47c590a3cb3e
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,715 chars &bull; ~1,928 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement quarantine_repeat_defects helper in scripts/quarantine_defects.py
+Request ID: llm-proposer-cycle-48551debbc70
+Cycle ID: cycle-48551debbc70
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(H) Priority 42 — Assert doc change structure (V1): Write scripts/assert_doc_only.py with a single function is_doc_only_change(changed_files) under 40 lines. Given a list of changed file paths, return True if all files end with markdown or text extensions like .md or .txt, and return False if any file does not or if changed_files is empty or invalid.
 (J) Priority 44 — Quarantine repeat defect candidates (V1): Write scripts/quarantine_defects.py with a single function quarantine_repeat_defects(failure_counts, threshold=3) under 40 lines. The function takes a dictionary mapping defect keys to failure count integers, and returns a set of defect keys whose failure count meets or exceeds threshold. If failure_counts is empty or invalid, return an empty set.
 
-Completed (do not repeat): Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Filter fallback candidates dedup (V1).
+Completed (do not repeat): Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Filter fallback candidates dedup (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 058a8afd merge: integrate selfevo/cycle-cycle-47c590a3cb3e
+- 4ba04429 feat(assert_doc_only): add is_doc_only_change helper for doc-only change detection
+- c9983806 fix(ci): repair skill tests and jsonl docs (#201) (#202)
 - 78d25279 merge: integrate selfevo/cycle-cycle-27ef71e929dc
 - 69b25ef2 selfevo: auto-commit uncommitted subagent work — Add error filtering option to scripts/loop_health_report.py
 - 0cac772f feat(loop_health_report): add --errors-only filter for error-status subagent records
 - 62576bd4 merge: integrate selfevo/cycle-cycle-279ea3a88a1b
 - ec9d76b1 selfevo: auto-commit uncommitted subagent work — Add AsyncFunctionDef inspection support to scripts/check_ast_line_count.py
-- b26e270d feat(check_ast_line_count): add AsyncFunctionDef inspection coverage
-- 718bcd50 merge: integrate selfevo/cycle-cycle-d38d026de159
-- e3111460 selfevo: auto-commit uncommitted subagent work — Add subagent error status detection to scripts/check_repeat_failures.py
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-47c590a3cb3e.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-48551debbc70.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add scripts/assert_doc_only.py with is_doc_only_change helper&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implement is_doc_only_change(changed_files) under 40 lines in scripts/assert_doc_only.py to verify changed files end in .md or .txt and return False for invalid or non-doc inputs.\n\nTarget path: scripts/assert_doc_only.py&quot;,
+    &quot;title&quot;: &quot;Implement quarantine_repeat_defects helper in scripts/quarantine_defects.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements scripts/quarantine_defects.py with quarantine_repeat_defects(failure_counts, threshold=3) under 40 lines to return defect keys meeting or exceeding the threshold while safely returning an empty set on empty or invalid input.\n\nTarget path: scripts/quarantine_defects.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/assert_doc_only.py with is_doc_only_change helper (target: scripts/assert_doc_only.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement quarantine_repeat_defects helper in scripts/quarantine_defects.py (target: scripts/quarantine_defects.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/assert_doc_only.py exists and defines is_doc_only_change returning True only for valid doc-only changes&quot;,
+    &quot;claim&quot;: &quot;quarantine_repeat_defects returns keys meeting or exceeding threshold and handles empty/invalid inputs&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;scripts/assert_doc_only.py&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.quarantine_defects import quarantine_repeat_defects; assert quarantine_repeat_defects({&#x27;d1&#x27;: 3, &#x27;d2&#x27;: 2}, threshold=3) == {&#x27;d1&#x27;}; assert quarantine_repeat_defects(None) == set()\&quot;&quot;
     }
   }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260913-769b714d  Title: Verification gate rejected the proposed change while attempting: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shel
-Root cause: 
-Prevention: 
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/shared_helper_collision_avoidance.md  Title: Shared Helper Collision Avoidance: Prefer Micro-Modules Over Shared Helper Edits
-Problem: Read lessons/shared_helper_collision_avoidance.md: Treat &quot;which file do I edit?&quot; as a collision-surface question, not just a code-organization question: the right home for a new utility is the file with the fewest concurrent editors, which for a standalone utility is a new micro-module or
-Solution: 
-If you apply this lesson, cite [Lesson lessons/shared_helper_collision_avoidance.md] in your proposal/response.
+ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
+Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
+Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
+If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - Avoid spawning shell loops or individual subshells over large state directories (such as state/subagents/archive/); use head-limited stream pipelines or Python glob iterations with immediate break con
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- When adding new record presentation or diagnostic formatters, ensure newly required fields (e.g., &#x27;error&#x27;) are populated across all dictionary generation pipelines (such as search_archive, search_by_r
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 17:27 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/loop_health_report.py.…
-- Attempt 2 (2026-09-14 16:55 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_ast_line_count.py,…
+- Attempt 1 (2026-09-14 18:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/assert_doc_only.py, tests/test_assert_doc_only.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-14 17:27 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/loop_health_report.py.…
+- Attempt 3 (2026-09-14 16:55 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_ast_line_count.py,…
 
 ## Concrete task to implement
 
-Title: Add scripts/assert_doc_only.py with is_doc_only_change helper
+Title: Implement quarantine_repeat_defects helper in scripts/quarantine_defects.py
 
 
-Implement is_doc_only_change(changed_files) under 40 lines in scripts/assert_doc_only.py to verify changed files end in .md or .txt and return False for invalid or non-doc inputs.
+Implements scripts/quarantine_defects.py with quarantine_repeat_defects(failure_counts, threshold=3) under 40 lines to return defect keys meeting or exceeding the threshold while safely returning an empty set on empty or invalid input.
 
-Target path: scripts/assert_doc_only.py
+Target path: scripts/quarantine_defects.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/assert_doc_only.py exists and defines is_doc_only_change returning True only for valid doc-only changes
+quarantine_repeat_defects returns keys meeting or exceeding threshold and handles empty/invalid inputs
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2179,7 +2173,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 18:26:33 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 21:03:13 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 18:42:21 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 21:03:13 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
