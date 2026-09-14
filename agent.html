@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">216</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 03:02:22 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 00:20 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 00:34 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-8d005baea063</span>
+      <span class="cycle-pill">cycle-71ca9b26be99</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 00:08:51.751192 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 00:28:36.656350 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,032c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,461c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1735,12 +1735,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260913T163137Z-canonical-25c4a042/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T002637Z-canonical-3b41a73f/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260913T163137Z-canonical-25c4a042/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T002637Z-canonical-3b41a73f/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,032 chars &bull; ~1,758 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add pre-proposal futile surface and dedup digest generator to scripts/filter_futile_targets.py
-Request ID: llm-proposer-cycle-8d005baea063
-Cycle ID: cycle-8d005baea063
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,461 chars &bull; ~1,865 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add structural heading assertions for doc-only integrations in scripts/validate_markdown_format.py
+Request ID: llm-proposer-cycle-71ca9b26be99
+Cycle ID: cycle-71ca9b26be99
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1776,64 +1776,73 @@ Full operator charter: see system context (already loaded above).
 
 Current priority targets:
 
-Completed (do not repeat): Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1).
+Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Report confirmation ratio status (V2); Clean stale feed cache files (V1); Purge stale feed files (V1); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b848a7e1 merge: integrate selfevo/cycle-cycle-8d005baea063
+- c254fa7a feat(filter_futile_targets): add pre-proposal futile surface and dedup digest generator
+- c015ce53 chore(lessons): retire legacy v1 archives (#195)
 - 4ad05dc2 chore: record structured error for [cycle-abf03d]
 - db2196cc fix(lessons): retitle reusable corrective cards (#194)
 - 9096ea41 merge: integrate selfevo/cycle-cycle-78057b375bae
 - c2b7fd5c feat(check_style): detect unexpected leading whitespace on top-level definitions
 - d40eb667 merge: integrate selfevo/cycle-cycle-6f9118345223
-- d085f327 docs(lessons): add companion cycle verification guidelines to avoid duplicate test proposals
-- de08f5e0 merge: integrate selfevo/cycle-fallback-f3034ae3d408
-- 6e62a9ec feat(defect_quarantine): add --query CLI entrypoint and --self-test verification
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add active state reflections and demand search to scripts/search_subagent_archive.py: out_of_band_main_detected
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8d005baea063.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-71ca9b26be99.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add pre-proposal futile surface and dedup digest generator to scripts/filter_futile_targets.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses fallback rejections caused by futile surfaces and self-dedup by adding a compact digest formatting helper in scripts/filter_futile_targets.py, enabling pre-proposal injection of futile surfaces and recent target paths to lower the wasted attempt rate.\n\nTarget path: scripts/filter_futile_targets.py&quot;,
+    &quot;title&quot;: &quot;Add structural heading assertions for doc-only integrations in scripts/validate_markdown_format.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements automated structural heading hierarchy assertions in scripts/validate_markdown_format.py to structurally verify doc-only integrations and improve confirmation reliability.\n\nTarget path: scripts/validate_markdown_format.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add pre-proposal futile surface and dedup digest generator to scripts/filter_futile_targets.py (target: scripts/filter_futile_targets.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add structural heading assertions for doc-only integrations in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-2026-06-14-004  Title: Critical Queue Pressure Warning due to Unpruned Results Directory
+Root cause: 1. Dashboard parsed the entire &#x27;subagents/&#x27; directory recursively using rglob(&quot;*&quot;) to compute pressure.
+2. Cleanup scripts only walked &#x27;subagents/requests/&#x27;, leaving files in &#x27;subagents/results/&#x27; and temporary root logs unpruned.
+3. Old request payloads lacked a &#x27;timestamp&#x27; JSON key and were skipped by initial regex parsers.
+
+Prevention: Pruning routines and dashboard monitoring logic must cover identical scopes.
+
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
-Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
-Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
-If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
+ID: lessons/markdown_code_block_validation_protocol.md  Title: Paired Markdown Format and Code Block Validation Protocol for Documentation Edits
+Problem: Read lessons/markdown_code_block_validation_protocol.md: Make the paired run a fixed pre-commit step for any markdown edit: format validator, code block validator, then the two paired pytest suites, in that order, before `git add`.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/markdown_code_block_validation_protocol.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When an assigned demand item addresses a script recently modified (&#x27;0d ago&#x27;) and prior fix attempts might be in cooldown, consider returning no_valuable_task if the target cannot be safely differentia
-- Divergence between proposer suppression history and dedup failure cache: The failure &#x27;Fix style validation rules and exit code handling in scripts/check_style.py&#x27; was tracked by the dedup engine but o
-- Use strict kebab-case (^[a-z0-9]+(-[a-z0-9]+)*$) for all skill directory names and frontmatter name identifiers to satisfy the integration gate layout validator.
+- When a script already passes validation (exit code 0) and its test suite passes completely, evaluate whether the immediate skip protocol applies before deep edge-case exploration.
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-13 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-13 22:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/defect_quarantine.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-14 00:13 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
+- Attempt 2 (2026-09-13 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add pre-proposal futile surface and dedup digest generator to scripts/filter_futile_targets.py
+Title: Add structural heading assertions for doc-only integrations in scripts/validate_markdown_format.py
 
 
-Addresses fallback rejections caused by futile surfaces and self-dedup by adding a compact digest formatting helper in scripts/filter_futile_targets.py, enabling pre-proposal injection of futile surfaces and recent target paths to lower the wasted attempt rate.
+Implements automated structural heading hierarchy assertions in scripts/validate_markdown_format.py to structurally verify doc-only integrations and improve confirmation reliability.
 
-Target path: scripts/filter_futile_targets.py
+Target path: scripts/validate_markdown_format.py
 
 ## Concrete task to implement
-Implement and commit: Add pre-proposal futile surface and dedup digest generator to scripts/filter_futile_targets.py (target: scripts/filter_futile_targets.py)
+Implement and commit: Add structural heading assertions for doc-only integrations in scripts/validate_markdown_format.py (target: scripts/validate_markdown_format.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2168,7 +2177,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 00:20:48 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 03:02:22 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 00:34:40 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 03:02:22 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
