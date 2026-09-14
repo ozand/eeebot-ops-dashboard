@@ -4694,8 +4694,10 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
         solution_html = f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:400])}{"..." if len(solution) > 400 else ""}</div>' if solution else ''
 
+        title = str(l.get('title') or '')
+        title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
         search_text = esc((' '.join([
-            l.get('id') or '', str(l.get('task_id') or ''), problem, solution,
+            l.get('id') or '', title, str(l.get('task_id') or ''), problem, solution,
             severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
@@ -4703,6 +4705,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
             f' {cycle_link}</div>'
             f'{meta_chips_html}'
+            f'{title_html}'
             f'{problem_html}'
             f'{solution_html}'
             f'</li>'
