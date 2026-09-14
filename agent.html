@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">215</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 16:57:00 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">30.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 14:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 14:24 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ae9bd9499bca</span>
+      <span class="cycle-pill">cycle-dbfbde90d053</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 13:51:54.835184 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 14:16:09.715038 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,670c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,152c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,670 chars &bull; ~1,917 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add companion test target resolver and broad suite guard to scripts/verify_and_proof.py
-Request ID: llm-proposer-cycle-ae9bd9499bca
-Cycle ID: cycle-ae9bd9499bca
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,152 chars &bull; ~2,038 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add same-target edit fragmentation detection to scripts/search_subagent_archive.py
+Request ID: llm-proposer-cycle-dbfbde90d053
+Cycle ID: cycle-dbfbde90d053
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1790,63 +1790,64 @@ Recently completed (recent commits):
 - 8c98c7b3 selfevo: auto-commit uncommitted subagent work — Add test symbol import check to scripts/verify_imports.py
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add same-target edit fragmentation detection to scripts/search_subagent_archive.py: executor_llm_error
 - Add companion test target resolver and broad suite guard to scripts/verify_and_proof.py: executor_llm_error
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ae9bd9499bca.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dbfbde90d053.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add companion test target resolver and broad suite guard to scripts/verify_and_proof.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Resolves reflection-6d3c8fc61b01 where executing repo-wide pytest tests/ timed out after 60s instead of 3s on the companion test, by adding companion test resolution from source paths and guarding against broad test directory sweeps.\n\nTarget path: scripts/verify_and_proof.py&quot;,
+    &quot;title&quot;: &quot;Add same-target edit fragmentation detection to scripts/search_subagent_archive.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses reflection-c8128ff08703 where modifying a single file was split across four separate edit_file turns by enabling search_subagent_archive.py to detect and flag cycles exhibiting repeated edit_file invocations on the same target path.\n\nTarget path: scripts/search_subagent_archive.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add companion test target resolver and broad suite guard to scripts/verify_and_proof.py (target: scripts/verify_and_proof.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add same-target edit fragmentation detection to scripts/search_subagent_archive.py (target: scripts/search_subagent_archive.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/verify_and_proof.py supports companion test target resolution and CLI flags to guard broad test runs&quot;,
+    &quot;claim&quot;: &quot;scripts/search_subagent_archive.py supports detecting cycles with repeated edit_file invocations targeting the same file path&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/verify_and_proof.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/search_subagent_archive.py --help&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260912-d0574690  Title: Verification gate rejected the proposed change while attempting: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enu
+ID: ERR-20260914-abf03d77  Title: Out-of-band origin/main movement prevented integration while attempting: Add active state reflections and demand search to scripts/search_subagent_archiv
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/adjacent_test_suite_verification.md  Title: Adjacent and Dependent Test Suite Pre-Commit Verification Protocol
-Problem: Read lessons/adjacent_test_suite_verification.md: Before committing, identify every test suite that is adjacent to or dependent on the changed files and run all of them — not just the target suite.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/adjacent_test_suite_verification.md] in your proposal/response.
+ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
+Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
+Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
+If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When git log reveals an explicit commit implementing the requested feature and dedicated test functions exist, conclude the skip evaluation promptly without running synthetic micro-tests or full regre
-- Target grep commands directly to function definitions or call sites rather than issuing broad sequential read_file windows across large monolithic scripts.
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
+- Use grep -n or read larger window spans to relocate text blocks after an edit_file match failure rather than stepping through files with repeated micro-reads.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 13:47 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-14 12:54 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/query_ast_symbols.py, tests/test_query_ast_symbols.py.…
-- Attempt 3 (2026-09-14 12:02 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/loop_health_report.py, tests/test_loop_health_report.py. Reward signal will be…
+- Attempt 1 (2026-09-14 14:11 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-14 13:53 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-14 12:54 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/query_ast_symbols.py, tests/test_query_ast_symbols.py.…
 
 ## Concrete task to implement
 
-Title: Add companion test target resolver and broad suite guard to scripts/verify_and_proof.py
+Title: Add same-target edit fragmentation detection to scripts/search_subagent_archive.py
 
 
-Resolves reflection-6d3c8fc61b01 where executing repo-wide pytest tests/ timed out after 60s instead of 3s on the companion test, by adding companion test resolution from source paths and guarding against broad test directory sweeps.
+Addresses reflection-c8128ff08703 where modifying a single file was split across four separate edit_file turns by enabling search_subagent_archive.py to detect and flag cycles exhibiting repeated edit_file invocations on the same target path.
 
-Target path: scripts/verify_and_proof.py
+Target path: scripts/search_subagent_archive.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/verify_and_proof.py supports companion test target resolution and CLI flags to guard broad test runs
+scripts/search_subagent_archive.py supports detecting cycles with repeated edit_file invocations targeting the same file path
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2176,12 +2177,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add same-target edit fragmentation detection to scripts/search_subagent_archive.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 977 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-14</td><td class="skill-reads">74</td><td>652.5K</td><td>26s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add origin/main baseline file inspection helper to scripts/workspace_validation_helpers.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 978 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-14</td><td class="skill-reads">75</td><td>658.6K</td><td>26s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 14:01:25 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 16:57:00 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 14:24:54 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 16:57:00 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
