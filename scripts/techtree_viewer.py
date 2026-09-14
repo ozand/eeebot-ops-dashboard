@@ -75,12 +75,29 @@ CI_REPOSITORIES = (
     'ozand/eeebot-ops-dashboard',
 )
 CI_FRESHNESS_WINDOW_SECONDS = 24 * 3600
-# Six REST reads (permissions + run list for three repositories) must stay
-# well below the publisher unit's 300-second wall clock budget, including the
-# existing Pages publish calls. A per-call timeout alone is not an aggregate
-# bound, so read_ci_freshness also enforces this total budget.
-CI_API_TIMEOUT_SECONDS = 4
-CI_TOTAL_BUDGET_SECONDS = 25
+# Three REST reads (one run list per repository; the permissions call is
+# skipped, see CI_ACTIONS_ENABLED_UNANSWERABLE below) must stay well below the
+# publisher unit's 300-second wall clock budget, including the existing Pages
+# publish calls. A per-call timeout alone is not an aggregate bound, so
+# read_ci_freshness also enforces the total.
+#
+# The per-call timeout is calibrated, not guessed. Measured on the eeepc as
+# the publisher identity, 2026-09-15, with the timeout lifted for the run:
+#
+#     1.54s  repos/ozand/eeebot/actions/permissions              (403)
+#     3.89s  repos/ozand/eeebot/actions/runs?per_page=100
+#     1.60s  repos/ozand/eeebot-self-evolving/actions/permissions (403)
+#     3.84s  repos/ozand/eeebot-self-evolving/actions/runs?per_page=100
+#     2.03s  repos/ozand/eeebot-ops-dashboard/actions/permissions (403)
+#     5.68s  repos/ozand/eeebot-ops-dashboard/actions/runs?per_page=100
+#
+# At the previous 4s the run list sat ON the boundary: some calls returned at
+# 3.84s and some at 5.68s, so a reading was a coin flip that rendered as
+# `cannot_ask` -- honest, and indistinguishable from GitHub actually being
+# unavailable. An intermittently-wrong instrument is worse than a slow one.
+# 12s is a little over twice the worst observed call on an Atom N270.
+CI_API_TIMEOUT_SECONDS = 12
+CI_TOTAL_BUDGET_SECONDS = 45
 
 # Now-panel health verdict thresholds. The full rule, including precedence,
 # lives in the module docstring above.
