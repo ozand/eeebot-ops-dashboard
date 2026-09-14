@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 03:39:00 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">28.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 01:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="34">data: 33s old &middot; generated 01:17 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-467452138368</span>
+      <span class="cycle-pill">cycle-d3e2d626a880</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 00:45:18.597420 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 01:03:34.125520 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,358c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,423c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1735,12 +1735,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T002637Z-canonical-3b41a73f/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T010140Z-canonical-3536afc4/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T002637Z-canonical-3b41a73f/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260914T010140Z-canonical-3536afc4/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,358 chars &bull; ~1,839 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add prompt exclusion list formatting for recent unintegrated proposals to scripts/prevent_repeat_failures.py
-Request ID: llm-proposer-cycle-467452138368
-Cycle ID: cycle-467452138368
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,423 chars &bull; ~1,855 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add multi-file batch grep search and context slice extraction to scripts/targeted_file_slice.py
+Request ID: llm-proposer-cycle-d3e2d626a880
+Cycle ID: cycle-d3e2d626a880
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,61 +1780,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 445519f0 merge: integrate selfevo/cycle-cycle-467452138368
+- ca84f91e feat(prevent_repeat_failures): add prompt exclusion list formatting for recent unintegrated proposals
+- 8753a6d1 fix(lessons): strip incident lead-ins from problems (#1576) (#196)
 - dbd6b5cd merge: integrate selfevo/cycle-cycle-71ca9b26be99
 - 594f37e9 feat(validate_markdown_format): add structural heading hierarchy assertions
 - b848a7e1 merge: integrate selfevo/cycle-cycle-8d005baea063
 - c254fa7a feat(filter_futile_targets): add pre-proposal futile surface and dedup digest generator
 - c015ce53 chore(lessons): retire legacy v1 archives (#195)
-- 4ad05dc2 chore: record structured error for [cycle-abf03d]
-- db2196cc fix(lessons): retitle reusable corrective cards (#194)
-- 9096ea41 merge: integrate selfevo/cycle-cycle-78057b375bae
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add active state reflections and demand search to scripts/search_subagent_archive.py: out_of_band_main_detected
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-467452138368.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d3e2d626a880.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add prompt exclusion list formatting for recent unintegrated proposals to scripts/prevent_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extracts unintegrated proposal titles and failure targets from recent history so they can be injected into the prompt exclusion list, preventing proposing tasks rejected as skipped_recent_failure.\n\nTarget path: scripts/prevent_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Add multi-file batch grep search and context slice extraction to scripts/targeted_file_slice.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves defect-6dd9b3cf22e2 by consuming skills/batch-grep/SKILL.md in scripts/targeted_file_slice.py to support multi-file batch pattern searches with context slicing, satisfying the code-bearing improvement requirement.\n\nTarget path: scripts/targeted_file_slice.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add prompt exclusion list formatting for recent unintegrated proposals to scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add multi-file batch grep search and context slice extraction to scripts/targeted_file_slice.py (target: scripts/targeted_file_slice.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/targeted_file_slice.py executes multi-file batch grep pattern search and passes self-tests&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/targeted_file_slice.py --self-test&quot;
+    }
+  }
 }
 ```
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: In cycle-2782e96c24a8, `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-REF-0e294b2bf073-416c  Title: Batch related edits in one file operation
+Problem: Executed four separate sequential edit_file calls (RqZu8pLZ5, jrGQfczOB, EI4N1f8bf, FgL4uEqtk) on scripts/validate_unused_imports.py.
+Solution: Batch related modifications within the same file into a single edit_file call rather than issuing multiple sequential edits across imports, constants, and function definitions.
+If you apply this lesson, cite [Lesson LESS-REF-0e294b2bf073-416c] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Carefully escape subshell parentheses and compound statements when formatting exec commands executed under /bin/sh to avoid unexpected syntax termination.
-- Divergence between proposer suppression history and dedup failure cache: The failure &#x27;Fix style validation rules and exit code handling in scripts/check_style.py&#x27; was tracked by the dedup engine but o
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Oscillating tool execution loop bypassing consecutive loop breaker: After encountering regex extraction discrepancies with validate_deprecation_status.py, the executor alternated between two diagnosti
+- Avoid spawning shell loops or individual subshells over large state directories (such as state/subagents/archive/); use head-limited stream pipelines or Python glob iterations with immediate break con
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 00:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_markdown_format.py, tests/test_validate_markdown_format.py. Reward signal…
-- Attempt 2 (2026-09-14 00:13 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
-- Attempt 3 (2026-09-13 23:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-14 00:53 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/prevent_repeat_failures.py, tests/test_prevent_repeat_failures.py. Reward signal will…
+- Attempt 2 (2026-09-14 00:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_markdown_format.py, tests/test_validate_markdown_format.py. Reward signal…
+- Attempt 3 (2026-09-14 00:13 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_futile_targets.py, tests/test_filter_futile_targets.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add prompt exclusion list formatting for recent unintegrated proposals to scripts/prevent_repeat_failures.py
+Title: Add multi-file batch grep search and context slice extraction to scripts/targeted_file_slice.py
 
 
-Extracts unintegrated proposal titles and failure targets from recent history so they can be injected into the prompt exclusion list, preventing proposing tasks rejected as skipped_recent_failure.
+Resolves defect-6dd9b3cf22e2 by consuming skills/batch-grep/SKILL.md in scripts/targeted_file_slice.py to support multi-file batch pattern searches with context slicing, satisfying the code-bearing improvement requirement.
 
-Target path: scripts/prevent_repeat_failures.py
+Target path: scripts/targeted_file_slice.py
 
-## Concrete task to implement
-Implement and commit: Add prompt exclusion list formatting for recent unintegrated proposals to scripts/prevent_repeat_failures.py (target: scripts/prevent_repeat_failures.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/targeted_file_slice.py executes multi-file batch grep pattern search and passes self-tests
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2169,7 +2176,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 01:01:11 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 03:39:00 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 01:17:52 UTC &middot; host eeepc &middot; newest source 33s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 03:39:00 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
