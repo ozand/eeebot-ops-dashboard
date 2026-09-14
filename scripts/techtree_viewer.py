@@ -75,12 +75,29 @@ CI_REPOSITORIES = (
     'ozand/eeebot-ops-dashboard',
 )
 CI_FRESHNESS_WINDOW_SECONDS = 24 * 3600
-# Six REST reads (permissions + run list for three repositories) must stay
-# well below the publisher unit's 300-second wall clock budget, including the
-# existing Pages publish calls. A per-call timeout alone is not an aggregate
-# bound, so read_ci_freshness also enforces this total budget.
-CI_API_TIMEOUT_SECONDS = 4
-CI_TOTAL_BUDGET_SECONDS = 25
+# Three REST reads (one run list per repository; the permissions call is
+# skipped, see CI_ACTIONS_ENABLED_UNANSWERABLE below) must stay well below the
+# publisher unit's 300-second wall clock budget, including the existing Pages
+# publish calls. A per-call timeout alone is not an aggregate bound, so
+# read_ci_freshness also enforces the total.
+#
+# The per-call timeout is calibrated, not guessed. Measured on the eeepc as
+# the publisher identity, 2026-09-15, with the timeout lifted for the run:
+#
+#     1.54s  repos/ozand/eeebot/actions/permissions              (403)
+#     3.89s  repos/ozand/eeebot/actions/runs?per_page=100
+#     1.60s  repos/ozand/eeebot-self-evolving/actions/permissions (403)
+#     3.84s  repos/ozand/eeebot-self-evolving/actions/runs?per_page=100
+#     2.03s  repos/ozand/eeebot-ops-dashboard/actions/permissions (403)
+#     5.68s  repos/ozand/eeebot-ops-dashboard/actions/runs?per_page=100
+#
+# At the previous 4s the run list sat ON the boundary: some calls returned at
+# 3.84s and some at 5.68s, so a reading was a coin flip that rendered as
+# `cannot_ask` -- honest, and indistinguishable from GitHub actually being
+# unavailable. An intermittently-wrong instrument is worse than a slow one.
+# 12s is a little over twice the worst observed call on an Atom N270.
+CI_API_TIMEOUT_SECONDS = 12
+CI_TOTAL_BUDGET_SECONDS = 45
 
 # Now-panel health verdict thresholds. The full rule, including precedence,
 # lives in the module docstring above.
@@ -95,6 +112,41 @@ def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
         'latest_conclusion': 'cannot_ask',
         'observed_at_utc': observed_at_utc,
         'reason': reason[:240],
+    }
+
+
+# The publisher credential structurally cannot answer `actions/permissions`:
+# that endpoint requires repository administration rights, and the token is a
+# fine-grained PAT without them. Measured 2026-09-15 from the host, as the
+# publisher identity:
+#
+#     403  ozand/eeebot/actions/permissions
+#     403  ozand/eeebot-ops-dashboard/actions/permissions
+#     404  ozand/eeebot-self-evolving/actions/permissions   (outside token scope)
+#
+# `cannot_ask` is the wrong word for that. It means "asked and failed, may
+# succeed later", and it invites a reader to re-open a gap no retry can close.
+# `unanswerable` says the credential cannot answer the question at all — the
+# same treatment the battery probe received in ozand/eeebot#1605, where the
+# host exposes no BAT device and the result is recorded once with its reason
+# rather than retried forever.
+#
+# Setting this False restores the call unchanged. Do that when the token gains
+# Administration: read, and not before: until then the call spends a third of
+# the API budget to produce a fixed string.
+CI_ACTIONS_ENABLED_UNANSWERABLE = True
+CI_ACTIONS_ENABLED_UNANSWERABLE_REASON = (
+    'publisher credential lacks Administration: read; actions/permissions '
+    'returns 403, or 404 where the repository is outside the token scope'
+)
+
+
+def _ci_actions_unanswerable(observed_at_utc: str) -> dict[str, Any]:
+    return {
+        'state': 'unanswerable',
+        'enabled': 'unanswerable',
+        'observed_at_utc': observed_at_utc,
+        'reason': CI_ACTIONS_ENABLED_UNANSWERABLE_REASON,
     }
 
 
@@ -215,17 +267,26 @@ def read_ci_freshness(
     result: dict[str, Any] = {'schema_version': 'ci-freshness-v1', 'observed_at_utc': observed_at_utc, 'repositories': {}}
     deadline = time.monotonic() + CI_TOTAL_BUDGET_SECONDS
     for repository in repositories:
-        remaining = deadline - time.monotonic()
-        permissions, permissions_error = _ci_api_json(
-            f'repos/{repository}/actions/permissions',
-            timeout=min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining)),
-        ) if remaining > 0 else (None, 'budget_exhausted')
+        if CI_ACTIONS_ENABLED_UNANSWERABLE:
+            # No call at all: the answer is fixed and the budget is better
+            # spent on freshness, which this credential can actually read.
+            permissions, permissions_error = None, None
+        else:
+            remaining = deadline - time.monotonic()
+            permissions, permissions_error = _ci_api_json(
+                f'repos/{repository}/actions/permissions',
+                timeout=min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining)),
+            ) if remaining > 0 else (None, 'budget_exhausted')
         remaining = deadline - time.monotonic()
         runs, runs_error = _ci_api_json(
             f'repos/{repository}/actions/runs?per_page=100',
             timeout=min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining)),
         ) if remaining > 0 else (None, 'budget_exhausted')
-        actions = _ci_actions_state(permissions, permissions_error, observed_at_utc)
+        actions = (
+            _ci_actions_unanswerable(observed_at_utc)
+            if CI_ACTIONS_ENABLED_UNANSWERABLE
+            else _ci_actions_state(permissions, permissions_error, observed_at_utc)
+        )
         freshness = _ci_run_state(runs, runs_error, observed_at_utc)
         # Keep the axes directly addressable for consumers while retaining the
         # grouped form used by the renderer and future readers.
@@ -3707,7 +3768,16 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
         actions = record.get('actions') if isinstance(record.get('actions'), dict) else {}
         freshness = record.get('freshness') if isinstance(record.get('freshness'), dict) else {}
         enabled = record.get('actions_enabled', actions.get('enabled'))
-        actions_text = 'enabled=true' if enabled is True else 'enabled=false' if enabled is False else 'enabled=cannot_ask'
+        if enabled is True:
+            actions_text = 'enabled=true'
+        elif enabled is False:
+            actions_text = 'enabled=false'
+        elif enabled == 'unanswerable':
+            # Distinct from cannot_ask on purpose: no retry can change this,
+            # so the page says so instead of implying the next read might.
+            actions_text = 'enabled=unanswerable'
+        else:
+            actions_text = 'enabled=cannot_ask'
         state = str(record.get('freshness_state') or freshness.get('state') or 'cannot_ask')
         conclusion = str(record.get('latest_conclusion') or freshness.get('latest_conclusion') or 'cannot_ask')
         if state == 'cannot_ask':

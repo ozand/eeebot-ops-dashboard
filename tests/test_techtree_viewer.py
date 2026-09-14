@@ -652,6 +652,10 @@ def test_ci_freshness_rejects_malformed_run_records_fail_closed() -> None:
 
 
 def test_ci_freshness_read_keeps_actions_independent_and_bounds_calls(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Exercises the permissions-reading path, which is disabled by default
+    # because the live credential cannot answer it. Kept covered so the
+    # capability is intact the day the token gains Administration: read.
+    monkeypatch.setattr(tv, 'CI_ACTIONS_ENABLED_UNANSWERABLE', False)
     observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
     calls: list[tuple[str, float]] = []
     responses = iter([
@@ -674,6 +678,7 @@ def test_ci_freshness_read_keeps_actions_independent_and_bounds_calls(monkeypatc
 
 
 def test_ci_freshness_budget_exhaustion_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tv, 'CI_ACTIONS_ENABLED_UNANSWERABLE', False)
     observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(tv, 'CI_TOTAL_BUDGET_SECONDS', 0)
     calls: list[str] = []
@@ -686,6 +691,7 @@ def test_ci_freshness_budget_exhaustion_is_explicit(monkeypatch: pytest.MonkeyPa
 
 
 def test_ci_freshness_read_marks_malformed_and_timeout_as_cannot_ask(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tv, 'CI_ACTIONS_ENABLED_UNANSWERABLE', False)
     observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
     responses = iter([({'enabled': True}, None), (None, 'timeout')])
     monkeypatch.setattr(tv, '_ci_api_json', lambda endpoint, *, timeout: next(responses))
@@ -693,6 +699,55 @@ def test_ci_freshness_read_marks_malformed_and_timeout_as_cannot_ask(monkeypatch
     assert repo['actions_enabled'] is True
     assert repo['freshness_state'] == 'cannot_ask'
     assert repo['latest_conclusion'] == 'cannot_ask'
+
+
+def test_ci_actions_enabled_is_unanswerable_not_cannot_ask(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The credential cannot answer actions/permissions, so the page says so.
+
+    `cannot_ask` would invite a retry that can never succeed; `unanswerable`
+    records a fixed answer with its reason, the same treatment the battery
+    probe received in ozand/eeebot#1605.
+    """
+    observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+    calls: list[str] = []
+
+    def fake_api(endpoint: str, *, timeout: float) -> tuple[dict[str, object] | None, str | None]:
+        calls.append(endpoint)
+        return ({'workflow_runs': [_ci_run('2026-09-14T11:00:00Z')]}, None)
+
+    monkeypatch.setattr(tv, '_ci_api_json', fake_api)
+    repo = tv.read_ci_freshness(('one/repo',), now=observed)['repositories']['one/repo']
+
+    assert repo['actions_enabled'] == 'unanswerable'
+    assert repo['actions_enabled'] != 'cannot_ask'
+    # The permissions endpoint is not called at all: a fixed answer must not
+    # spend a third of the API budget on every publish.
+    assert not any('actions/permissions' in endpoint for endpoint in calls)
+    assert calls == ['repos/one/repo/actions/runs?per_page=100']
+    # Freshness is unaffected — the axes stay independent.
+    assert repo['freshness_state'] == 'recent'
+    assert repo['actions']['reason'] == tv.CI_ACTIONS_ENABLED_UNANSWERABLE_REASON
+
+
+def test_ci_unanswerable_renders_distinctly_from_cannot_ask() -> None:
+    def render(enabled: object) -> str:
+        return tv._build_ci_freshness_item({
+            'schema_version': 'ci-freshness-v1',
+            'observed_at_utc': '2026-09-14T12:00:00Z',
+            'repositories': {'one/repo': {
+                'actions_enabled': enabled,
+                'freshness_state': 'recent',
+                'latest_conclusion': 'failure',
+            }},
+        })
+
+    unanswerable = render('unanswerable')
+    cannot_ask = render('cannot_ask')
+    assert 'enabled=unanswerable' in unanswerable
+    assert 'enabled=cannot_ask' in cannot_ask
+    assert unanswerable != cannot_ask
+    # Both keep the freshness axis readable next to them.
+    assert 'recent' in unanswerable and 'failure' in unanswerable
 
 
 def test_read_local_state_attaches_ci_snapshot_only_after_state_read(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
