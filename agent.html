@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">219</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">79.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 07:21:48 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 20s old &middot; generated 04:28 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 04:37 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">fallback-be63bf44f3af</span>
+      <span class="cycle-pill">fallback-38b829a3401e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 04:25:51.458348 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 04:36:11.963044 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,003c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,076c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,003 chars &bull; ~2,000 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add fail-fast option to scripts/run_all_tests.py to abort immediately on test failure
-Request ID: llm-proposer-fallback-be63bf44f3af
-Cycle ID: fallback-be63bf44f3af
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,076 chars &bull; ~1,769 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py
+Request ID: llm-proposer-fallback-38b829a3401e
+Cycle ID: fallback-38b829a3401e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1790,43 +1790,36 @@ Recently completed (recent commits):
 - c2eb482c merge: integrate selfevo/cycle-cycle-d9cab51123e4
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-be63bf44f3af.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-38b829a3401e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add fail-fast option to scripts/run_all_tests.py to abort immediately on test failure&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds a --fail-fast CLI option to scripts/run_all_tests.py allowing test execution to stop immediately upon encountering the first failure, reducing wasted CPU cycles on the constrained eeepc host.\n\nTarget path: scripts/run_all_tests.py&quot;,
+    &quot;title&quot;: &quot;Add limit option to cap output count in scripts/format_existence_index_exclusions.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;When formatting existence index entries for prompt exclusion, unbounded output can consume excessive prompt context on the constrained host. Adding a --limit CLI option allows callers to cap the number of emitted exclusion lines.\n\nTarget path: scripts/format_existence_index_exclusions.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add fail-fast option to scripts/run_all_tests.py to abort immediately on test failure (target: scripts/run_all_tests.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/run_all_tests.py accepts --fail-fast flag in argument parsing&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/run_all_tests.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py (target: scripts/format_existence_index_exclusions.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-20260911-4b4bdcf4  Title: Executor LLM call failed before cycle execution while attempting: Fix default target scanning and exit code in scripts/validate_markdown_format.py
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/enforcing_agents_sections_in_structural_tests.md  Title: Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py
-Problem: Read lessons/enforcing_agents_sections_in_structural_tests.md: **Rule of thumb:** if you add a `## ` section to `AGENTS.md` that states a standing instruction (a protocol, a ban, a required behavior), the same commit must add its entry to `REQUIRED_SECTIONS` in `tests/test_agents_structure.py`, plus a
+ID: lessons/existence_index_duplicate.md  Title: Existence Index Duplicate Skip Mode and Mitigation
+Problem: Read lessons/existence_index_duplicate.md: **Check Existing Scripts**: Before proposing or implementing a task, search the repository (e.g., in `scripts/`, `nanobot/`, etc.) to ensure a similar script does not already exist.
 Solution: 
-If you apply this lesson, cite [Lesson lessons/enforcing_agents_sections_in_structural_tests.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/existence_index_duplicate.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Executor initialization failure due to model deployment exhaustion: Litellm raised RateLimitError (&#x27;OpenAIException - No deployments available for selected model, Try again in 120 seconds. Passed mode
-- Turn 1 executor failure due to upstream LiteLLM deployment cooldown: The LLM client failed immediately with &#x27;litellm.RateLimitError: OpenAIException - No deployments available for selected model, Try 
-- Executor initialization failure due to upstream LiteLLM deployment cooldown: LiteLLM raised litellm.RateLimitError (&#x27;No deployments available for selected model, Try again in 120 seconds. Passed model
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
+- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-14 04:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
@@ -1834,15 +1827,15 @@ If you apply this lesson, cite [Lesson lessons/enforcing_agents_sections_in_stru
 
 ## Concrete task to implement
 
-Title: Add fail-fast option to scripts/run_all_tests.py to abort immediately on test failure
+Title: Add limit option to cap output count in scripts/format_existence_index_exclusions.py
 
 
-Adds a --fail-fast CLI option to scripts/run_all_tests.py allowing test execution to stop immediately upon encountering the first failure, reducing wasted CPU cycles on the constrained eeepc host.
+When formatting existence index entries for prompt exclusion, unbounded output can consume excessive prompt context on the constrained host. Adding a --limit CLI option allows callers to cap the number of emitted exclusion lines.
 
-Target path: scripts/run_all_tests.py
+Target path: scripts/format_existence_index_exclusions.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/run_all_tests.py accepts --fail-fast flag in argument parsing
+## Concrete task to implement
+Implement and commit: Add limit option to cap output count in scripts/format_existence_index_exclusions.py (target: scripts/format_existence_index_exclusions.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2172,12 +2165,12 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add fail-fast option to scripts/run_all_tests.py to abort immediately on test failure</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 930 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-14</td><td class="skill-reads">27</td><td>241.8K</td><td>25s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add limit option to cap output count in scripts/format_existence_index_exclusions.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 933 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-14</td><td class="skill-reads">30</td><td>269.9K</td><td>24s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr><tr><td>2026-09-08</td><td class="skill-reads">162</td><td>1.65M</td><td>25s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 04:28:06 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:21:48 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 04:37:40 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:21:48 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
