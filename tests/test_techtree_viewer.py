@@ -627,6 +627,11 @@ def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separat
     assert recent_failed['latest_conclusion'] == 'failure'
     assert recent_failed['latest_run_id'] == 34841282556
 
+    for conclusion in ('neutral', 'skipped', 'timed_out', 'action_required', 'startup_failure', 'stale'):
+        terminal = tv._ci_freshness_state({'workflow_runs': [_ci_run(observed, conclusion=conclusion)]}, observed)
+        assert terminal['state'] == 'recent'
+        assert terminal['latest_conclusion'] == conclusion
+
 
 def test_ci_freshness_cannot_ask_is_not_zero_or_old() -> None:
     observed = '2026-09-14T12:00:00Z'
@@ -706,8 +711,8 @@ def test_ci_freshness_renderer_shows_timestamp_and_independent_axes() -> None:
                 'actions_enabled': True,
                 'freshness_state': 'recent',
                 'latest_conclusion': 'failure',
-                'actions': {'enabled': True},
-                'freshness': {'state': 'recent', 'latest_conclusion': 'failure', 'latest_completed_at_utc': '2026-09-14T12:00:00Z'},
+                'actions': {'enabled': False},
+                'freshness': {'state': 'runs_old', 'latest_conclusion': 'success', 'latest_completed_at_utc': '2026-09-14T12:00:00Z'},
             },
         },
     }

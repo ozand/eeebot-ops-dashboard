@@ -220,14 +220,17 @@ def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monke
     ap.save_publish_state(state_dir, digest=digest, published_at=__import__('time').time())
 
     called = []
+    ci_calls = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out: called.append(html_out) or 0)
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: ci_calls.append(True) or {})
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir), '--staleness-floor-hours', '6'])
     rc = ap.run(args)
 
     assert rc == 0
     assert called == []
+    assert ci_calls == []
     out = capsys.readouterr()
     assert out.out == ''
     assert out.err == ''

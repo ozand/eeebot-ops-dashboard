@@ -175,7 +175,11 @@ def _ci_freshness_state(runs_payload: dict[str, Any], observed_at_utc: str) -> d
     latest_dt, latest, latest_ts = max(dated, key=lambda item: item[0])
     age_seconds = max(0, int((observed_dt - latest_dt).total_seconds()))
     conclusion = latest.get('conclusion')
-    if conclusion not in {'success', 'failure', 'cancelled'}:
+    valid_conclusions = {
+        'success', 'failure', 'cancelled', 'neutral', 'skipped', 'timed_out',
+        'action_required', 'startup_failure', 'stale',
+    }
+    if conclusion not in valid_conclusions:
         return _ci_cannot_ask('latest_conclusion_invalid', observed_at_utc=observed_at_utc)
     return {
         'state': 'recent' if age_seconds <= CI_FRESHNESS_WINDOW_SECONDS else 'runs_old',
@@ -369,9 +373,6 @@ LEDGER_PHASES = {
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
 LEDGER_HISTORY_DAYS = 90
-CI_FRESHNESS_WINDOW_SECONDS = 24 * 3600
-CI_API_TIMEOUT_SECONDS = 4
-CI_TOTAL_BUDGET_SECONDS = 25
 
 _mtimes = []
 
@@ -462,102 +463,6 @@ def read_llm_stats():
             if fr == "length":
                 st["any_length"] = True
     return stats
-
-
-def _parse_iso_ts(ts):
-    if not ts:
-        return None
-    try:
-        value = str(ts).strip().replace("Z", "+00:00")
-        parsed = datetime.fromisoformat(value)
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed.astimezone(timezone.utc)
-    except Exception:
-        return None
-
-
-def _ci_cannot_ask(reason, observed_at_utc):
-    return {"state": "cannot_ask", "latest_conclusion": "cannot_ask", "observed_at_utc": observed_at_utc, "reason": str(reason)[:240]}
-
-
-def _ci_api_json(endpoint, timeout=CI_API_TIMEOUT_SECONDS):
-    try:
-        proc = subprocess.run(["gh", "api", endpoint, "-H", "Accept: application/vnd.github+json"], capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return None, "timeout"
-    except OSError as exc:
-        return None, exc.__class__.__name__
-    if proc.returncode != 0:
-        return None, f"api_exit_{proc.returncode}"
-    try:
-        payload = json.loads(proc.stdout)
-    except (TypeError, ValueError):
-        return None, "invalid_json"
-    return (payload, None) if isinstance(payload, dict) else (None, "invalid_payload")
-
-
-def _ci_actions_state(payload, error, observed_at_utc):
-    if error:
-        return {"state": "cannot_ask", "enabled": "cannot_ask", "observed_at_utc": observed_at_utc, "reason": str(error)[:240]}
-    enabled = payload.get("enabled") if isinstance(payload, dict) else None
-    if not isinstance(enabled, bool):
-        return {"state": "cannot_ask", "enabled": "cannot_ask", "observed_at_utc": observed_at_utc, "reason": "enabled_missing"}
-    return {"state": "known", "enabled": enabled, "observed_at_utc": observed_at_utc}
-
-
-def _ci_freshness_state(payload, observed_at_utc):
-    runs = payload.get("workflow_runs") if isinstance(payload, dict) else None
-    if not isinstance(runs, list):
-        return _ci_cannot_ask("workflow_runs_missing", observed_at_utc)
-    completed = []
-    pending_count = 0
-    for row in runs:
-        if not isinstance(row, dict):
-            return _ci_cannot_ask("run_record_invalid", observed_at_utc)
-        status = row.get("status")
-        if status == "completed":
-            completed.append(row)
-        elif status in {"queued", "in_progress", "requested", "waiting", "pending"}:
-            pending_count += 1
-        else:
-            return _ci_cannot_ask("run_status_invalid", observed_at_utc)
-    if not completed:
-        return {"state": "runs_pending" if pending_count else "no_runs", "latest_conclusion": "none", "observed_at_utc": observed_at_utc, "pending_count": pending_count, "run_count_returned": len(runs)}
-    dated = []
-    for row in completed:
-        timestamp = str(row.get("completed_at") or row.get("updated_at") or row.get("created_at") or "")
-        parsed = _parse_iso_ts(timestamp)
-        if parsed is None:
-            return _ci_cannot_ask("completed_timestamp_invalid", observed_at_utc)
-        dated.append((parsed, row, timestamp))
-    observed_dt = _parse_iso_ts(observed_at_utc)
-    if observed_dt is None:
-        return _ci_cannot_ask("observed_timestamp_invalid", observed_at_utc)
-    latest_dt, latest, latest_ts = max(dated, key=lambda item: item[0])
-    age_seconds = max(0, int((observed_dt - latest_dt).total_seconds()))
-    conclusion = latest.get("conclusion")
-    if conclusion not in {"success", "failure", "cancelled"}:
-        return _ci_cannot_ask("latest_conclusion_invalid", observed_at_utc)
-    return {"state": "recent" if age_seconds <= CI_FRESHNESS_WINDOW_SECONDS else "runs_old", "latest_conclusion": conclusion, "observed_at_utc": observed_at_utc, "latest_completed_at_utc": latest_ts, "latest_run_id": latest.get("id"), "latest_run_number": latest.get("run_number"), "latest_run_url": latest.get("html_url"), "latest_head_sha": latest.get("head_sha"), "latest_workflow": latest.get("name") or latest.get("path"), "age_seconds": age_seconds, "pending_count": pending_count, "run_count_returned": len(runs)}
-
-
-def read_ci_freshness(repositories=("ozand/eeebot", "ozand/eeebot-self-evolving", "ozand/eeebot-ops-dashboard"), now=None):
-    observed = now or datetime.now(timezone.utc)
-    if observed.tzinfo is None:
-        observed = observed.replace(tzinfo=timezone.utc)
-    observed_at_utc = observed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-    result = {"schema_version": "ci-freshness-v1", "observed_at_utc": observed_at_utc, "repositories": {}}
-    deadline = time.monotonic() + CI_TOTAL_BUDGET_SECONDS
-    for repository in repositories:
-        remaining = deadline - time.monotonic()
-        permissions, permissions_error = _ci_api_json(f"repos/{repository}/actions/permissions", min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining))) if remaining > 0 else (None, "budget_exhausted")
-        remaining = deadline - time.monotonic()
-        runs, runs_error = _ci_api_json(f"repos/{repository}/actions/runs?per_page=100", min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining))) if remaining > 0 else (None, "budget_exhausted")
-        actions = _ci_actions_state(permissions, permissions_error, observed_at_utc)
-        freshness = _ci_freshness_state(runs, observed_at_utc) if not runs_error else _ci_cannot_ask(runs_error, observed_at_utc)
-        result["repositories"][repository] = {"actions_enabled": actions["enabled"], "freshness_state": freshness["state"], "latest_conclusion": freshness["latest_conclusion"], "observed_at_utc": observed_at_utc, "actions": actions, "freshness": freshness}
-    return result
 
 
 def read_proposer_stats():
@@ -1135,7 +1040,6 @@ result = {
     "demand_futility": read_json("demand/futility.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
-    "ci_freshness": None,
     "cycle_titles": _cycle_titles,
     "cycle_files": _cycle_files,
     "cycle_titles_error": _cycle_titles_error,
@@ -3802,10 +3706,10 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
         record = record if isinstance(record, dict) else {}
         actions = record.get('actions') if isinstance(record.get('actions'), dict) else {}
         freshness = record.get('freshness') if isinstance(record.get('freshness'), dict) else {}
-        enabled = actions.get('enabled')
+        enabled = record.get('actions_enabled', actions.get('enabled'))
         actions_text = 'enabled=true' if enabled is True else 'enabled=false' if enabled is False else 'enabled=cannot_ask'
-        state = str(freshness.get('state') or 'cannot_ask')
-        conclusion = str(freshness.get('latest_conclusion') or 'cannot_ask')
+        state = str(record.get('freshness_state') or freshness.get('state') or 'cannot_ask')
+        conclusion = str(record.get('latest_conclusion') or freshness.get('latest_conclusion') or 'cannot_ask')
         if state == 'cannot_ask':
             status = f'{actions_text}, cannot_ask'
         else:
