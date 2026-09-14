@@ -36,6 +36,66 @@ def estimate_tokens(chars: int) -> int:
     return max(1, chars // 4) if chars > 0 else 0
 
 
+def parse_prompt_sections(
+    prompt_text: str | None,
+    recorded_sections: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Split the recorded prompt structurally, never by section headings.
+
+    ``ContextBuilder`` joins non-empty capped sections in canonical order and
+    the loop appends operator-owned ``system_context`` afterwards.  The ledger
+    records the former, so the first non-empty recorded sections map
+    positionally; remaining chunks are outside the cap (charter, identity,
+    etc.).  Length mismatches remain evidence instead of being repaired.
+    """
+    if not prompt_text or not isinstance(recorded_sections, dict):
+        return {"status": "unavailable", "sections": {}, "outside_cap": [], "mismatches": []}
+
+    capped_names = [
+        name for name, _label in CANONICAL_ASSEMBLY_ORDER
+        if (recorded_sections.get(name) or 0) > 0
+    ]
+    chunks = prompt_text.split(SEPARATOR)
+    parsed: dict[str, dict[str, Any]] = {}
+    mismatches: list[dict[str, Any]] = []
+    for index, name in enumerate(capped_names):
+        recorded = int(recorded_sections[name])
+        text = chunks[index] if index < len(chunks) else None
+        actual = len(text) if text is not None else None
+        parsed[name] = {"text": text, "recorded_chars": recorded, "actual_chars": actual}
+        if actual != recorded:
+            mismatches.append({"name": name, "recorded_chars": recorded, "actual_chars": actual})
+
+    outside_chunks = chunks[len(capped_names):]
+    outside_cap: list[dict[str, Any]] = []
+    for index, text in enumerate(outside_chunks):
+        if index == 0 and "\n\n# Loop agent identity\n\n" in text:
+            goals_text, identity_text = text.split("\n\n# Loop agent identity\n\n", 1)
+            outside_cap.extend([
+                {"name": "goals", "text": goals_text, "actual_chars": len(goals_text)},
+                {"name": "loop_identity", "text": "\n\n# Loop agent identity\n\n" + identity_text, "actual_chars": len(identity_text) + len("\n\n# Loop agent identity\n\n")},
+            ])
+        else:
+            outside_cap.append({
+                "name": "goals" if index == 0 else "loop_identity" if index == 1 else f"outside_cap_{index + 1}",
+                "text": text,
+                "actual_chars": len(text),
+            })
+    expected_total = sum(int(recorded_sections[name]) for name in capped_names)
+    expected_total += max(0, len(capped_names) - 1) * SEPARATOR_LEN
+    status = "exact" if not mismatches else "mismatch"
+    if len(chunks) < len(capped_names):
+        status = "mismatch"
+    return {
+        "status": status,
+        "sections": parsed,
+        "outside_cap": outside_cap,
+        "mismatches": mismatches,
+        "recorded_capped_chars": expected_total,
+        "actual_prompt_chars": len(prompt_text),
+    }
+
+
 def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None = None) -> dict[str, Any]:
     """Read context telemetry and Tier 2 corpus from the instance workspace.
 
@@ -281,21 +341,15 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
 
     ts_display = ts_str.replace("T", " ").replace("Z", " MSK") if ts_str else "active cycle"
 
-    raw_sections_text: dict[str, str] = {}
-    if prompt_text:
-        for p in prompt_text.split(SEPARATOR):
-            lines = [line_str.strip() for line_str in p.splitlines() if line_str.strip()]
-            fl = lines[0].lower() if lines else ""
-            if "nanobot" in fl or "identity" in fl:
-                raw_sections_text["identity"] = p
-            elif "agents.md" in fl or "bootstrap" in fl:
-                raw_sections_text["bootstrap"] = p
-            elif "# skills" in fl or "skills catalogue" in fl or "catalogue" in fl:
-                raw_sections_text["skills_catalogue"] = p
-            elif "# memory" in fl or "working memory" in fl or "facts" in fl:
-                raw_sections_text["memory"] = p
-            elif "charter" in fl or "goals" in fl or "immutable" in fl:
-                raw_sections_text["goals"] = p
+    parsed_prompt = parse_prompt_sections(prompt_text, sections)
+    raw_sections_text = {
+        name: details["text"]
+        for name, details in parsed_prompt["sections"].items()
+        if details.get("text") is not None
+    }
+    outside_cap = parsed_prompt["outside_cap"]
+    outside_cap_by_name = {item["name"]: item for item in outside_cap}
+    actual_system_chars = len(prompt_text) if prompt_text is not None else None
 
     if chars is None and sections:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of non-empty sections + separators
@@ -394,9 +448,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
 
     out.append('  <div class="context-kpis">')
     out.append('    <div class="context-kpi-card">')
-    out.append('      <span class="kpi-label">Active Prompt Load</span>')
-    out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">chars</span></span>')
-    out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens</span>')
+    out.append('      <span class="kpi-label">Capped Prompt Load</span>')
+    out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
+    out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
+    actual_system_display = f'<strong>Actual System Message:</strong> {actual_system_chars:,} chars received by model' if actual_system_chars is not None else '<strong>Actual System Message:</strong> unavailable'
+    out.append(f'      <span class="kpi-sub">{actual_system_display}</span>')
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Context Budget Cap</span>')
@@ -507,9 +563,14 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                     out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>')
                 block_seq += 1
             else:
-                # Key is absent from sections breakdown
-                reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr>')
-                out.append(f'<div class="context-block-absent"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; <em>absent</em> (not configured/emitted)</div>')
+                outside = outside_cap_by_name.get(key)
+                if outside is not None:
+                    outside_size = outside["actual_chars"]
+                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>{outside_size:,}</em></td><td class="num">~{estimate_tokens(outside_size):,}</td><td>outside capped prompt</td></tr>')
+                    out.append(f'<details class="context-block-details outside-cap-block"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{outside_size:,} chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>')
+                else:
+                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr>')
+                    out.append(f'<div class="context-block-absent"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; <em>absent</em> (not configured/emitted)</div>')
                 block_seq += 1
 
         sep_count = separator_count
@@ -527,7 +588,19 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append('        <thead><tr><th>Key</th><th>Section</th><th class="num">Chars</th><th class="num">Est. Tokens</th><th>Formula Component</th></tr></thead>')
         out.append(f'        <tbody>{"".join(reconciliation_rows)}<tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>{reconciled_total:,}</strong></td><td class="num"><strong>~{estimate_tokens(reconciled_total):,}</strong></td><td><strong>Recorded chars: {total_chars:,}</strong></td></tr></tbody>')
         out.append('      </table>')
-        out.append(f'      <p class="rec-note">Formula: &sum;(sections: {total_sections_chars:,}c) + {sep_count} separators &times; {SEPARATOR_LEN}c ({sep_total_chars:,}c) = {reconciled_total:,} chars.</p>')
+        out.append(f'      <p class="rec-note">Formula: &sum;(capped sections: {total_sections_chars:,}c) + {sep_count} separators &times; {SEPARATOR_LEN}c ({sep_total_chars:,}c) = {reconciled_total:,} chars. Outside-cap system context is not included.</p>')
+        if parsed_prompt["status"] == "exact":
+            evidence = " ".join(
+                f'<code>{esc(name)}</code>: recorded {details["recorded_chars"]:,} / parsed {details["actual_chars"]:,} chars (exact)'
+                for name, details in parsed_prompt["sections"].items()
+            )
+            out.append(f'      <p class="rec-note">Structural prompt parse: {evidence}</p>')
+        else:
+            evidence = " ".join(
+                f'<code>{esc(item["name"])}</code>: recorded {item["recorded_chars"]} / parsed {item["actual_chars"] if item["actual_chars"] is not None else "unavailable"}'
+                for item in parsed_prompt["mismatches"]
+            ) or "recorded section boundaries unavailable"
+            out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
         out.append('    </div>')
     else:
         out.append('    <div class="reconciliation-box rec-unavailable">')
@@ -536,6 +609,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append('    </div>')
         if prompt_text:
             out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(prompt_text)}</code></pre></div></details>')
+
+    rendered_outside_names = {"goals"}
+    for outside in outside_cap:
+        if outside["name"] in rendered_outside_names:
+            continue
+        out.append(f'<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">{esc(outside["name"])}</strong><span class="block-meta">{outside["actual_chars"]:,} chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>')
 
     if task_text:
         t_sz = len(task_text)

@@ -95,6 +95,32 @@ def test_agent_page_renders_non_full_prompt_fit_rung():
     assert 'uniform_trim' in html
 
 
+def test_structural_prompt_parser_preserves_outside_cap_sections_and_lengths():
+    from scripts.agent_context import parse_prompt_sections
+
+    prompt = "identity-body\n\n---\n\nbootstrap-body\n\n---\n\n# Immutable operator charter\n\ncharter\n\n# Loop agent identity\n\nidentity"
+    parsed = parse_prompt_sections(
+        prompt,
+        {"identity": len("identity-body"), "bootstrap": len("bootstrap-body")},
+    )
+
+    assert parsed["status"] == "exact"
+    assert [item["name"] for item in parsed["outside_cap"]] == ["goals", "loop_identity"]
+    assert parsed["outside_cap"][0]["actual_chars"] == len("# Immutable operator charter\n\ncharter")
+
+
+def test_structural_prompt_parser_surfaces_length_mismatch():
+    from scripts.agent_context import parse_prompt_sections
+
+    parsed = parse_prompt_sections(
+        'short',
+        {'identity': 99},
+    )
+
+    assert parsed['status'] == 'mismatch'
+    assert parsed['mismatches'] == [{'name': 'identity', 'recorded_chars': 99, 'actual_chars': 5}]
+
+
 def test_agent_page_renders_two_tier_context_and_reconciliation():
     """Issue #227: Tier 1 strict assembly order, arithmetic reconciliation, and Tier 2 link."""
     fixture = _base_fixture()
@@ -178,6 +204,55 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
     # Visual linkage: connector arrow / link to Tier 2
     assert 'Indexes 2 Skills in Tier 2' in html
     assert 'tier-link-origin' in html
+
+
+def test_agent_page_renders_goals_as_outside_capped_prompt_section():
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'cycle_id': 'cycle-goals',
+            'chars': 23,
+            'cap': 24000,
+            'sections': {'identity': 11, 'bootstrap': 5},
+        },
+        'prompt_text': 'identity text\n\n---\n\nboot!\n\n---\n\n# Immutable operator charter\n\ncharter body\n\n# Loop agent identity\n\nidentity body',
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert 'outside capped prompt' in html
+    assert '<strong class="block-title">goals</strong>' in html
+    assert 'charter body' in html
+    assert 'absent (not configured/emitted)' not in html
+
+
+def test_agent_page_reports_capped_and_actual_system_prompt_sizes():
+    fixture = _base_fixture()
+    prompt = 'identity text\n\n---\n\n# Immutable operator charter\n\ncharter body'
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'cycle_id': 'cycle-load',
+            'chars': len('identity text'),
+            'cap': 24000,
+            'sections': {'identity': len('identity text')},
+        },
+        'prompt_text': prompt,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert 'Prompt Load' in html
+    assert 'capped chars' in html
+    assert f'{len(prompt):,} chars received by model' in html
+    assert 'capped chars' in html and 'chars received by model' in html
 
 
 def test_agent_page_handles_missing_sections_before_1379_honestly():
