@@ -400,7 +400,11 @@ def run(args: argparse.Namespace) -> int:
     state_dir = Path(args.state_dir)
     staleness_floor_seconds = args.staleness_floor_hours * 3600.0
 
-    data = tv.read_local_state(str(state_root))
+    data = tv.read_local_state(str(state_root), include_ci_freshness=True)
+    # The publisher owns the authenticated GitHub API boundary. The detector
+    # runs only after the cheap digest gate says this firing will publish; the
+    # published page still receives the same in-memory observation that was
+    # rendered, while no-op cycles avoid six network calls.
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()
