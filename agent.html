@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 07:59:41 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">28.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="19">data: 18s old &middot; generated 05:03 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 05:18 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-dfcf3c68d90b</span>
+      <span class="cycle-pill">cycle-1e8362d76614</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 04:48:19.038243 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 05:07:15.031934 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,319c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,388c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,319 chars &bull; ~1,829 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py
-Request ID: llm-proposer-cycle-dfcf3c68d90b
-Cycle ID: cycle-dfcf3c68d90b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,388 chars &bull; ~1,847 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add missing standard library import detection to scripts/check_style.py
+Request ID: llm-proposer-cycle-1e8362d76614
+Cycle ID: cycle-1e8362d76614
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,28 +1780,28 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 330c584b merge: integrate selfevo/cycle-cycle-dfcf3c68d90b
+- aad687a9 feat(check_style): detect consecutive .sort() calls on identical targets
 - 39ba7d9a merge: integrate selfevo/cycle-cycle-cd469fa3f5b6
 - 0dae9d5b feat(run_all_tests): add --test-filter option for targeted self-test execution
 - d8b27b28 merge: integrate selfevo/cycle-fallback-f98a7c26fa16
 - 0b900958 feat(dashboard): add defect quarantine indicator to eeebot_dashboard
 - e0f07211 merge: integrate selfevo/cycle-fallback-05a897ab6009
 - b1b14221 selfevo: auto-commit uncommitted subagent work — Add token similarity threshold matching to scripts/check_last_cycle_repeat.py
-- f25b0ed9 feat(check_last_cycle_repeat): add token similarity threshold matching for paraphrase repeat detection
-- c2eb482c merge: integrate selfevo/cycle-cycle-d9cab51123e4
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dfcf3c68d90b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-1e8362d76614.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add consecutive sort call detection on identical targets to scripts/check_style.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Add a style and AST inspection check to scripts/check_style.py that flags consecutive .sort() invocations on the same target variable, prompting authors to consolidate multiple passes into a single tuple-key sort to prevent the multi-turn fix observed in cycle-45fe76c8c8d1.\n\nTarget path: scripts/check_style.py&quot;,
+    &quot;title&quot;: &quot;Add missing standard library import detection to scripts/check_style.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Detect unimported standard library module references such as json via AST inspection in scripts/check_style.py so missing import errors are surfaced immediately.\n\nTarget path: scripts/check_style.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py (target: scripts/check_style.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add missing standard library import detection to scripts/check_style.py (target: scripts/check_style.py)&quot;
 }
 ```
 
@@ -1811,31 +1811,32 @@ Root cause:
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-9ff792579a7a-eef8  Title: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-Problem: the agent repeated the identical inline python diagnostic snippet 5 times consecutively, including 2 times after the loop_breaker warning, resulting in a partial outcome with 0 files changed.
-Solution: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-If you apply this lesson, cite [Lesson LESS-REF-9ff792579a7a-eef8] in your proposal/response.
+ID: LESS-20260904-260bd269  Title: Use sys.stdlib_module_names (Python 3.10+) for O(1) standard library module detection instead of dynamic import inspection
+Problem: detecting whether a module is part of the standard library required dynamic inspection (importing modules or walking sys.path), which burned tool iterations and exhausted the cycle&#x27;s turn budget before the change was committed.
+Solution: Check membership against sys.stdlib_module_names, a frozenset of all standard library module names available since Python 3.10: `import sys; is_stdlib = name in sys.stdlib_module_names`. For submodules (e.g. &#x27;json.decoder&#x27;), check the top-level package name. Combine with importlib.util.find_spec only when you also need to confirm the module is importable in the current environment. This is a const
+If you apply this lesson, cite [Lesson LESS-20260904-260bd269] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Repetitive dispatch against an active cooldown backend: The coordinator initiated three consecutive attempts (15:01, 15:08, and 15:13 UTC) without validating model endpoint health or applying an exten
-- Repetitive command execution loop and loop-breaker bypass: The executor called an identical python microbenchmark command five times across turns 13 to 17. Even after receiving a system loop_breaker m
-- Immediately halt tool execution and emit the final response or skip declaration upon receiving a loop_breaker safety warning.
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 04:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-14 03:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py. Reward signal will be upgraded…
+- Attempt 1 (2026-09-14 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_style.py, tests/test_check_style.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-14 04:01 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Attempt 3 (2026-09-14 03:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/eeebot_dashboard.py, tests/test_eeebot_dashboard.py. Reward signal will be upgraded…
 
 ## Concrete task to implement
 
-Title: Add consecutive sort call detection on identical targets to scripts/check_style.py
+Title: Add missing standard library import detection to scripts/check_style.py
 
 
-Add a style and AST inspection check to scripts/check_style.py that flags consecutive .sort() invocations on the same target variable, prompting authors to consolidate multiple passes into a single tuple-key sort to prevent the multi-turn fix observed in cycle-45fe76c8c8d1.
+Detect unimported standard library module references such as json via AST inspection in scripts/check_style.py so missing import errors are surfaced immediately.
 
 Target path: scripts/check_style.py
 
 ## Concrete task to implement
-Implement and commit: Add consecutive sort call detection on identical targets to scripts/check_style.py (target: scripts/check_style.py)
+Implement and commit: Add missing standard library import detection to scripts/check_style.py (target: scripts/check_style.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2170,7 +2171,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 05:03:12 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:59:41 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 05:18:19 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 07:59:41 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
