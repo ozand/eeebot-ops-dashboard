@@ -69,11 +69,175 @@ SSH_USER = 'ozand'
 REMOTE_SUDO_USER = 'eeepc-agent'
 SSH_TIMEOUT_SECONDS = 45
 
+CI_REPOSITORIES = (
+    'ozand/eeebot',
+    'ozand/eeebot-self-evolving',
+    'ozand/eeebot-ops-dashboard',
+)
+CI_FRESHNESS_WINDOW_SECONDS = 24 * 3600
+# Six REST reads (permissions + run list for three repositories) must stay
+# well below the publisher unit's 300-second wall clock budget, including the
+# existing Pages publish calls. A per-call timeout alone is not an aggregate
+# bound, so read_ci_freshness also enforces this total budget.
+CI_API_TIMEOUT_SECONDS = 4
+CI_TOTAL_BUDGET_SECONDS = 25
+
 # Now-panel health verdict thresholds. The full rule, including precedence,
 # lives in the module docstring above.
 HEALTH_STALE_SECONDS = 3600
 HEALTH_INTEGRATION_RECENCY_SECONDS = 6 * 3600
 HEALTH_FAILURE_STREAK_LENGTH = 3
+
+
+def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
+    return {
+        'state': 'cannot_ask',
+        'latest_conclusion': 'cannot_ask',
+        'observed_at_utc': observed_at_utc,
+        'reason': reason[:240],
+    }
+
+
+def _ci_actions_state(payload: dict[str, Any] | None, error: str | None, observed_at_utc: str) -> dict[str, Any]:
+    if error:
+        return {'state': 'cannot_ask', 'enabled': 'cannot_ask', 'observed_at_utc': observed_at_utc, 'reason': error[:240]}
+    enabled = payload.get('enabled') if isinstance(payload, dict) else None
+    if not isinstance(enabled, bool):
+        return {'state': 'cannot_ask', 'enabled': 'cannot_ask', 'observed_at_utc': observed_at_utc, 'reason': 'enabled_missing'}
+    return {'state': 'known', 'enabled': enabled, 'observed_at_utc': observed_at_utc}
+
+
+def _ci_run_state(payload: dict[str, Any] | None, error: str | None, observed_at_utc: str) -> dict[str, Any]:
+    if error:
+        return _ci_cannot_ask(error, observed_at_utc=observed_at_utc)
+    return _ci_freshness_state(payload or {}, observed_at_utc)
+
+
+def _ci_api_json(endpoint: str, *, timeout: float = CI_API_TIMEOUT_SECONDS) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        proc = subprocess.run(
+            ['gh', 'api', endpoint, '-H', 'Accept: application/vnd.github+json'],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return None, 'timeout'
+    except OSError as exc:
+        return None, f'{exc.__class__.__name__}'
+    if proc.returncode != 0:
+        return None, f'api_exit_{proc.returncode}'
+    try:
+        payload = json.loads(proc.stdout)
+    except (TypeError, ValueError):
+        return None, 'invalid_json'
+    if not isinstance(payload, dict):
+        return None, 'invalid_payload'
+    return payload, None
+
+
+def _ci_freshness_state(runs_payload: dict[str, Any], observed_at_utc: str) -> dict[str, Any]:
+    runs = runs_payload.get('workflow_runs')
+    if not isinstance(runs, list):
+        return _ci_cannot_ask('workflow_runs_missing', observed_at_utc=observed_at_utc)
+    completed: list[dict[str, Any]] = []
+    pending_count = 0
+    for row in runs:
+        if not isinstance(row, dict):
+            return _ci_cannot_ask('run_record_invalid', observed_at_utc=observed_at_utc)
+        status = row.get('status')
+        if status == 'completed':
+            completed.append(row)
+        elif status in {'queued', 'in_progress', 'requested', 'waiting', 'pending'}:
+            pending_count += 1
+        else:
+            return _ci_cannot_ask('run_status_invalid', observed_at_utc=observed_at_utc)
+    if not completed:
+        return {
+            'state': 'runs_pending' if pending_count else 'no_runs',
+            'latest_conclusion': 'none',
+            'observed_at_utc': observed_at_utc,
+            'pending_count': pending_count,
+            'run_count_returned': len(runs),
+        }
+
+    # Prefer the terminal completion timestamp. GitHub's REST payload can
+    # expose completed_at as null for some completed runs, so retain the
+    # defensive updated_at/created_at fallback used by the API contract.
+    dated: list[tuple[datetime, dict[str, Any], str]] = []
+    for row in completed:
+        completed_ts = str(row.get('completed_at') or row.get('updated_at') or row.get('created_at') or '')
+        completed_dt = _parse_iso_ts(completed_ts)
+        if completed_dt is None:
+            return _ci_cannot_ask('completed_timestamp_invalid', observed_at_utc=observed_at_utc)
+        dated.append((completed_dt, row, completed_ts))
+    observed_dt = _parse_iso_ts(observed_at_utc)
+    if observed_dt is None:
+        return _ci_cannot_ask('observed_timestamp_invalid', observed_at_utc=observed_at_utc)
+    latest_dt, latest, latest_ts = max(dated, key=lambda item: item[0])
+    age_seconds = max(0, int((observed_dt - latest_dt).total_seconds()))
+    conclusion = latest.get('conclusion')
+    valid_conclusions = {
+        'success', 'failure', 'cancelled', 'neutral', 'skipped', 'timed_out',
+        'action_required', 'startup_failure', 'stale',
+    }
+    if conclusion not in valid_conclusions:
+        return _ci_cannot_ask('latest_conclusion_invalid', observed_at_utc=observed_at_utc)
+    return {
+        'state': 'recent' if age_seconds <= CI_FRESHNESS_WINDOW_SECONDS else 'runs_old',
+        'latest_conclusion': conclusion,
+        'observed_at_utc': observed_at_utc,
+        'latest_completed_at_utc': latest_ts,
+        'latest_run_id': latest.get('id'),
+        'latest_run_number': latest.get('run_number'),
+        'latest_run_url': latest.get('html_url'),
+        'latest_head_sha': latest.get('head_sha'),
+        'latest_workflow': latest.get('name') or latest.get('path'),
+        'age_seconds': age_seconds,
+        'pending_count': pending_count,
+        'run_count_returned': len(runs),
+    }
+
+
+def read_ci_freshness(
+    repositories: tuple[str, ...] = CI_REPOSITORIES,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Read bounded GitHub Actions freshness without collapsing API failure.
+
+    Each repository uses two short, independent calls: permissions and the
+    newest run page. A failed call produces ``cannot_ask`` for that fact; it
+    never becomes a zero-run or stale result.
+    """
+    observed = (now or datetime.now(timezone.utc))
+    if observed.tzinfo is None:
+        observed = observed.replace(tzinfo=timezone.utc)
+    observed_at_utc = observed.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+    result: dict[str, Any] = {'schema_version': 'ci-freshness-v1', 'observed_at_utc': observed_at_utc, 'repositories': {}}
+    deadline = time.monotonic() + CI_TOTAL_BUDGET_SECONDS
+    for repository in repositories:
+        remaining = deadline - time.monotonic()
+        permissions, permissions_error = _ci_api_json(
+            f'repos/{repository}/actions/permissions',
+            timeout=min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining)),
+        ) if remaining > 0 else (None, 'budget_exhausted')
+        remaining = deadline - time.monotonic()
+        runs, runs_error = _ci_api_json(
+            f'repos/{repository}/actions/runs?per_page=100',
+            timeout=min(CI_API_TIMEOUT_SECONDS, max(0.0, remaining)),
+        ) if remaining > 0 else (None, 'budget_exhausted')
+        actions = _ci_actions_state(permissions, permissions_error, observed_at_utc)
+        freshness = _ci_run_state(runs, runs_error, observed_at_utc)
+        # Keep the axes directly addressable for consumers while retaining the
+        # grouped form used by the renderer and future readers.
+        result['repositories'][repository] = {
+            'actions_enabled': actions['enabled'],
+            'freshness_state': freshness['state'],
+            'latest_conclusion': freshness['latest_conclusion'],
+            'observed_at_utc': observed_at_utc,
+            'actions': actions,
+            'freshness': freshness,
+        }
+    return result
 
 
 def health_verdict(
@@ -915,6 +1079,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'demand_futility': None,
         'goal_text': None,
         'agents_md': None,
+        'ci_freshness': None,
         'cycle_titles': None,
         'cycle_files': {},
         'cycle_titles_error': None,
@@ -1076,8 +1241,19 @@ def _parse_lessons_flat(text: str) -> list[dict[str, str]]:
     return entries
 
 
-def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[str, Any]:
-    """Read all state sources directly from `state_root` -- no SSH."""
+def read_local_state(
+    state_root: str,
+    instance_repo: str | None = None,
+    *,
+    include_ci_freshness: bool = False,
+) -> dict[str, Any]:
+    """Read local state, optionally adding the publisher-owned CI snapshot.
+
+    The default is deliberately side-effect free beyond local file reads. The
+    host publisher enables ``include_ci_freshness`` only after its digest gate
+    decides that a page will be rendered, so no-op bridge cycles do not spend
+    six GitHub API calls.
+    """
     empty: dict[str, Any] = {
         'portfolio': None,
         'scorecard': None,
@@ -1091,6 +1267,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'skill_evals': [],
         'goal_text': None,
         'agents_md': None,
+        'ci_freshness': None,
         'cycle_titles': None,
         'cycle_files': {},
         'cycle_titles_error': None,
@@ -1458,6 +1635,7 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
         'demand_futility': read_json('demand/futility.json'),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
+        'ci_freshness': None,
         'cycle_titles': titles,
         'cycle_files': cycle_files,
         'cycle_titles_error': titles_error,
@@ -1467,7 +1645,18 @@ def read_local_state(state_root: str, instance_repo: str | None = None) -> dict[
     }
     if mtimes:
         data['_newest_source_age_seconds'] = max(0.0, time.time() - max(mtimes))
+    if include_ci_freshness:
+        data['ci_freshness'] = read_ci_freshness()
     return data
+
+
+# ---------------------------------------------------------------------------
+# GitHub Actions freshness (issue #1592)
+# ---------------------------------------------------------------------------
+
+# The local publisher is the component with the authenticated gh boundary. Its
+# local state read therefore performs the bounded CI read; renderers remain
+# pure and only consume the already-collected object.
 
 
 # ---------------------------------------------------------------------------
@@ -3498,6 +3687,44 @@ def _render_failed_bridge_exits(bridge_exits: list[dict[str, Any]] | None) -> st
     """
 
 
+def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
+    """Render GitHub Actions freshness and outcome without collapsing states."""
+    if not isinstance(ci_freshness, dict):
+        return (
+            '<div class="now-item"><span class="now-label">GitHub CI:</span> '
+            '<span class="unavailable-note">cannot ask</span></div>'
+        )
+    observed = esc(ci_freshness.get('observed_at_utc') or 'unknown read time')
+    repositories = ci_freshness.get('repositories')
+    if not isinstance(repositories, dict) or not repositories:
+        return (
+            '<div class="now-item"><span class="now-label">GitHub CI:</span> '
+            f'<span class="unavailable-note">cannot ask (read {observed})</span></div>'
+        )
+    items = []
+    for repository, record in repositories.items():
+        record = record if isinstance(record, dict) else {}
+        actions = record.get('actions') if isinstance(record.get('actions'), dict) else {}
+        freshness = record.get('freshness') if isinstance(record.get('freshness'), dict) else {}
+        enabled = record.get('actions_enabled', actions.get('enabled'))
+        actions_text = 'enabled=true' if enabled is True else 'enabled=false' if enabled is False else 'enabled=cannot_ask'
+        state = str(record.get('freshness_state') or freshness.get('state') or 'cannot_ask')
+        conclusion = str(record.get('latest_conclusion') or freshness.get('latest_conclusion') or 'cannot_ask')
+        if state == 'cannot_ask':
+            status = f'{actions_text}, cannot_ask'
+        else:
+            status = f'{actions_text}, {state}, {conclusion}'
+            latest = freshness.get('latest_completed_at_utc')
+            if latest:
+                status += f', last {fmt_ts(latest)}'
+        items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}</li>')
+    return (
+        '<div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> '
+        f'<span class="now-sub">read {observed}</span>'
+        f'<ul class="ci-freshness-list">{"".join(items)}</ul></div>'
+    )
+
+
 def build_now_panel(
     portfolio: dict[str, Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -3514,6 +3741,7 @@ def build_now_panel(
     bridge_exits: list[dict[str, Any]] | None = None,
     scorecard: dict[str, Any] | None = None,
     strategist_decisions: list[dict[str, Any]] | None = None,
+    ci_freshness: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -3693,6 +3921,9 @@ def build_now_panel(
     # 7. Strategist run provenance (#204)
     strategist_html = _build_strategist_run_item(strategist_decisions)
 
+    # 8. GitHub Actions freshness and outcome (#1592)
+    ci_freshness_html = _build_ci_freshness_item(ci_freshness)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -3704,6 +3935,7 @@ def build_now_panel(
         {feed_ages_html}
         {doc_budget_html}
         {strategist_html}
+        {ci_freshness_html}
         {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
@@ -7057,6 +7289,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         bridge_exits=data.get('bridge_exits'),
         scorecard=scorecard,
         strategist_decisions=data.get('strategist_decisions'),
+        ci_freshness=data.get('ci_freshness'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -7384,6 +7617,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         bridge_exits=data.get('bridge_exits'),
         scorecard=scorecard,
         strategist_decisions=data.get('strategist_decisions'),
+        ci_freshness=data.get('ci_freshness'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
@@ -7679,7 +7913,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.local:
-        data = read_local_state(args.state_root)
+        data = read_local_state(args.state_root, include_ci_freshness=True)
     else:
         data = fetch_remote_state(args.host)
     pages = render_pages(data, args.host)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -587,6 +588,138 @@ def test_remote_reader_script_compiles() -> None:
     assert compiled is not None
 
 
+def _ci_run(ts: str, *, conclusion: str = 'success', status: str = 'completed', run_id: int = 1) -> dict[str, object]:
+    return {
+        'id': run_id,
+        'run_number': run_id,
+        'status': status,
+        'conclusion': conclusion if status == 'completed' else None,
+        'completed_at': ts if status == 'completed' else None,
+        'updated_at': ts,
+        'html_url': f'https://github.com/example/actions/runs/{run_id}',
+        'name': 'Test Suite',
+    }
+
+
+def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:
+    observed = '2026-09-14T12:00:00Z'
+    no_runs = tv._ci_freshness_state({'workflow_runs': []}, observed)
+    assert no_runs['state'] == 'no_runs'
+    assert no_runs['latest_conclusion'] == 'none'
+
+    # GitHub currently exposes completed_at as null on some historical rows;
+    # the detector must use the available terminal timestamp defensively.
+    completed_fallback = tv._ci_freshness_state(
+        {'workflow_runs': [{**_ci_run(observed, conclusion='success'), 'completed_at': None}]}, observed,
+    )
+    assert completed_fallback['state'] == 'recent'
+
+    pending = tv._ci_freshness_state({'workflow_runs': [_ci_run(observed, status='in_progress')]}, observed)
+    assert pending['state'] == 'runs_pending'
+    assert pending['latest_conclusion'] == 'none'
+
+    old = tv._ci_freshness_state({'workflow_runs': [_ci_run('2026-07-04T20:04:36Z')]}, observed)
+    assert old['state'] == 'runs_old'
+    assert old['latest_conclusion'] == 'success'
+
+    recent_failed = tv._ci_freshness_state({'workflow_runs': [_ci_run(observed, conclusion='failure', run_id=34841282556)]}, observed)
+    assert recent_failed['state'] == 'recent'
+    assert recent_failed['latest_conclusion'] == 'failure'
+    assert recent_failed['latest_run_id'] == 34841282556
+
+    for conclusion in ('neutral', 'skipped', 'timed_out', 'action_required', 'startup_failure', 'stale'):
+        terminal = tv._ci_freshness_state({'workflow_runs': [_ci_run(observed, conclusion=conclusion)]}, observed)
+        assert terminal['state'] == 'recent'
+        assert terminal['latest_conclusion'] == conclusion
+
+
+def test_ci_freshness_cannot_ask_is_not_zero_or_old() -> None:
+    observed = '2026-09-14T12:00:00Z'
+    result = tv._ci_run_state(None, 'auth_or_rate_limit', observed)
+    assert result['state'] == 'cannot_ask'
+    assert result['latest_conclusion'] == 'cannot_ask'
+    assert result['observed_at_utc'] == observed
+
+
+def test_ci_freshness_rejects_malformed_run_records_fail_closed() -> None:
+    observed = '2026-09-14T12:00:00Z'
+    assert tv._ci_freshness_state({'workflow_runs': [{'status': 'completed'}]}, observed)['state'] == 'cannot_ask'
+    assert tv._ci_freshness_state({'workflow_runs': [{'status': 'mystery'}]}, observed)['state'] == 'cannot_ask'
+    assert tv._ci_freshness_state({'workflow_runs': [{'status': 'queued', 'id': 1}, {'status': 'completed'}]}, observed)['state'] == 'cannot_ask'
+    assert tv._ci_freshness_state({'workflow_runs': [None]}, observed)['state'] == 'cannot_ask'
+    assert tv._ci_freshness_state({'workflow_runs': [{'status': 'completed', 'completed_at': None}]}, observed)['state'] == 'cannot_ask'
+    assert tv._ci_freshness_state({'workflow_runs': [{'status': 'completed', 'completed_at': 'bad', 'updated_at': 'bad', 'created_at': 'bad'}]}, observed)['state'] == 'cannot_ask'
+
+
+def test_ci_freshness_read_keeps_actions_independent_and_bounds_calls(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+    calls: list[tuple[str, float]] = []
+    responses = iter([
+        ({'enabled': False}, None), ({'workflow_runs': []}, None),
+        ({'enabled': True}, None), ({'workflow_runs': [_ci_run('2026-07-01T00:00:00Z')]}, None),
+    ])
+
+    def fake_api(endpoint: str, *, timeout: float) -> tuple[dict[str, object] | None, str | None]:
+        calls.append((endpoint, timeout))
+        return next(responses)
+
+    monkeypatch.setattr(tv, '_ci_api_json', fake_api)
+    result = tv.read_ci_freshness(('one/repo', 'two/repo'), now=observed)
+    first = result['repositories']['one/repo']
+    assert first['actions_enabled'] is False
+    assert first['freshness_state'] == 'no_runs'
+    assert first['latest_conclusion'] == 'none'
+    assert all(timeout <= tv.CI_API_TIMEOUT_SECONDS for _, timeout in calls)
+    assert len(calls) == 4
+
+
+def test_ci_freshness_budget_exhaustion_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(tv, 'CI_TOTAL_BUDGET_SECONDS', 0)
+    calls: list[str] = []
+    monkeypatch.setattr(tv, '_ci_api_json', lambda endpoint, *, timeout: calls.append(endpoint))
+    result = tv.read_ci_freshness(('one/repo',), now=observed)['repositories']['one/repo']
+    assert calls == []
+    assert result['actions_enabled'] == 'cannot_ask'
+    assert result['freshness_state'] == 'cannot_ask'
+    assert result['latest_conclusion'] == 'cannot_ask'
+
+
+def test_ci_freshness_read_marks_malformed_and_timeout_as_cannot_ask(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+    responses = iter([({'enabled': True}, None), (None, 'timeout')])
+    monkeypatch.setattr(tv, '_ci_api_json', lambda endpoint, *, timeout: next(responses))
+    repo = tv.read_ci_freshness(('one/repo',), now=observed)['repositories']['one/repo']
+    assert repo['actions_enabled'] is True
+    assert repo['freshness_state'] == 'cannot_ask'
+    assert repo['latest_conclusion'] == 'cannot_ask'
+
+
+def test_read_local_state_attaches_ci_snapshot_only_after_state_read(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _write_local_state_root(tmp_path)
+    snapshot = {'schema_version': 'ci-freshness-v1', 'observed_at_utc': '2026-09-14T12:00:00Z', 'repositories': {}}
+    monkeypatch.setattr(tv, 'read_ci_freshness', lambda: snapshot)
+    data = tv.read_local_state(str(tmp_path), include_ci_freshness=True)
+    assert data['ci_freshness'] is snapshot
+
+
+def test_ci_freshness_renderer_shows_timestamp_and_independent_axes() -> None:
+    data = {
+        'observed_at_utc': '2026-09-14T12:00:00Z',
+        'repositories': {
+            'ozand/eeebot-self-evolving': {
+                'actions_enabled': True,
+                'freshness_state': 'recent',
+                'latest_conclusion': 'failure',
+            },
+        },
+    }
+    html = tv._build_ci_freshness_item(data)
+    assert 'enabled=true, recent, failure' in html
+    assert 'read 2026-09-14T12:00:00Z' in html
+    assert 'CI silent' not in html
+
+
 
 def test_render_page_fails_soft_on_missing_sources() -> None:
     empty = {'portfolio': None, 'scorecard': None, 'evolution_tree': None, 'hypotheses': None, 'ledger_tail': None}
@@ -747,7 +880,7 @@ def test_read_local_state_missing_root_error_message_not_echoed_on_page() -> Non
     contain the state root path) must not survive into render_page's HTML.
     Checked via distinctive path segments rather than the full path string
     so this holds regardless of the platform's path-separator rendering."""
-    missing_root = '/var/lib/eeepc-agent/self-evolving-agent/state'
+    missing_root = '/var/lib/eeepc-agent/self-evolving-agent/state/path-that-does-not-exist-1592'
     data = tv.read_local_state(missing_root)
     error_text = data.get('_error') or ''
     # Sanity: the raw error really does carry host-specific path detail.

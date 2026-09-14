@@ -497,6 +497,11 @@ def run(args: argparse.Namespace) -> int:
         # Fall through: publish below using the same (still-broken) data;
         # render_page fails soft per source already.
 
+    # The publisher owns the authenticated GitHub API boundary. Read CI only
+    # after the cheap digest/staleness gate says this firing will render a
+    # page; no-op bridge cycles therefore avoid six network calls. The same
+    # in-memory observation is passed to every rendered page.
+    data['ci_freshness'] = tv.read_ci_freshness()
     pages = tv.render_pages(data, args.host_label)
 
     if not os.environ.get('GH_TOKEN'):
