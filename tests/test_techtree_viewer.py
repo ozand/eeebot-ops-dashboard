@@ -3234,6 +3234,26 @@ _LEGACY_LESSON = {
 }
 
 
+def test_issue255_v2_title_is_a_heading_and_searchable() -> None:
+    data = _fixture()
+    data['lessons'] = [{
+        **_V2_LESSON,
+        'title': 'Use a bounded title for lesson selection',
+    }]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    les = pages['lessons.html']
+
+    assert '<h3 class="lesson-title">Use a bounded title for lesson selection</h3>' in les
+    assert 'data-text="' in les
+    row_start = les.index('<li class="lesson-row lesson-row-v2"')
+    row = les[row_start:les.index('</li>', row_start)]
+    data_text = re.search(r'data-text="([^"]*)"', row).group(1)
+    assert 'use a bounded title for lesson selection' in data_text
+    title_pos = les.index('<h3 class="lesson-title">Use a bounded title for lesson selection</h3>')
+    problem_pos = les.index('<div class="lesson-problem">')
+    assert title_pos < problem_pos
+
+
 def test_issue96_v2_lesson_renders_as_card() -> None:
     data = _fixture()
     data['lessons'] = [_V2_LESSON]
@@ -3366,8 +3386,10 @@ def test_issue130_duplicate_real_shape_lessons_render_all_with_warning():
     html = tv.build_lessons_panel(lessons)
     assert 'Lessons History (2 retained history rows' in html
     assert html.count('duplicate id on disk') == 2
-    assert html.count('When introducing new default-enabled') == 1
-    assert html.count('When executing subprocess calls') == 1
+    assert html.count('<h3 class="lesson-title">When introducing new default-enabled') == 1
+    assert html.count('<h3 class="lesson-title">When executing subprocess calls') == 1
+    assert html.count('When introducing new default-enabled') == 2
+    assert html.count('When executing subprocess calls') == 2
 
 
 def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
