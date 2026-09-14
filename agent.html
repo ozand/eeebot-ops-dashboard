@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">217</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-14 15:07:43 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 19s old &middot; generated 12:11 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 12:54 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,709 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-294aa1f2665c</span>
+      <span class="cycle-pill">cycle-bf8eeafe1d3a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1287,7 +1287,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 11:56:27.251242 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>88%</strong> (21,291 / 24,000 chars)</span><span>2026-09-14 12:15:03.248795 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:88%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1321,7 +1321,7 @@
 
 " Separators</span><span class="t1-sz">28c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,492c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,396c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1766,9 +1766,9 @@ Use search_memory(query, limit) for relevant facts. It returns complete, partial
       </table>
       <p class="rec-note">Formula: &sum;(sections: 21,270c) + 3 separators &times; 7c (21c) = 21,291 chars.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,492 chars &bull; ~2,123 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add loop breaker safety interrupt summary reporting to scripts/loop_health_report.py
-Request ID: llm-proposer-cycle-294aa1f2665c
-Cycle ID: cycle-294aa1f2665c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,396 chars &bull; ~1,849 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add async function and decorator inspection support to scripts/query_ast_symbols.py
+Request ID: llm-proposer-cycle-bf8eeafe1d3a
+Cycle ID: cycle-bf8eeafe1d3a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1780,70 +1780,68 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 9059b2ce merge: integrate selfevo/cycle-cycle-294aa1f2665c
+- fac6b36e feat(loop_health_report): add loop breaker safety interrupt summary reporting
 - 19b7985c fix(dashboard): label the frozen cycle archive as retired history (eeebot#1225) (#200)
 - d62d1cba merge: integrate selfevo/cycle-cycle-603caecf9340
 - 8c98c7b3 selfevo: auto-commit uncommitted subagent work — Add test symbol import check to scripts/verify_imports.py
 - de8fde2b feat(verify_imports): add --check-test-symbols AST check for unimported test symbols
 - e96fd6ac merge: integrate selfevo/cycle-cycle-8f8d4baa72cc
 - 4c783a35 selfevo: auto-commit uncommitted subagent work — Add entry-point CLI invocation mode smoke check to scripts/smoke_test_loop.py
-- 983c72da feat(smoke_test_loop): add --check-cli entry-point invocation mode smoke check
-- e0717d2b merge: integrate selfevo/cycle-cycle-bdaa57b8432d
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-294aa1f2665c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bf8eeafe1d3a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add loop breaker safety interrupt summary reporting to scripts/loop_health_report.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Inspect subagent run records in loop_health_report.py for loop_breaker safety interrupt warnings and flag cycles where repeated tool executions persisted after warning, addressing evidence of workers ignoring loop breaker interrupts.\n\nTarget path: scripts/loop_health_report.py&quot;,
+    &quot;title&quot;: &quot;Add async function and decorator inspection support to scripts/query_ast_symbols.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses defect-a5f1e8416c52 by extending idle tool scripts/query_ast_symbols.py to parse AsyncFunctionDef AST nodes and decorator names, updating the idle query skill with modern Python AST coverage.\n\nTarget path: scripts/query_ast_symbols.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add loop breaker safety interrupt summary reporting to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add async function and decorator inspection support to scripts/query_ast_symbols.py (target: scripts/query_ast_symbols.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/loop_health_report.py supports loop breaker safety interrupt reporting and exits cleanly with --help&quot;,
+    &quot;claim&quot;: &quot;scripts/query_ast_symbols.py extracts symbol signatures from files containing async functions and decorated definitions&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/loop_health_report.py --help&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
-Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
-Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-9ff792579a7a-eef8  Title: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-Problem: the agent repeated the identical inline python diagnostic snippet 5 times consecutively, including 2 times after the loop_breaker warning, resulting in a partial outcome with 0 files changed.
-Solution: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-If you apply this lesson, cite [Lesson LESS-REF-9ff792579a7a-eef8] in your proposal/response.
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Immediately halt tool execution and emit the final summary or skip declaration when a loop_breaker safety stop is triggered.
-- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
-- Repetitive tool execution loop and disregard of loop_breaker: The executor ran an identical python exec command six consecutive times (turns 11, 13, 14, 15, 16, 17) calculating litellm error counts. E
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 11:17 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/verify_imports.py, tests/test_verify_imports.py. Reward…
-- Attempt 2 (2026-09-14 10:36 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/smoke_test_loop.py, tests/test_smoke_test_loop.py.…
-- Attempt 3 (2026-09-14 10:08 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py. Reward signal will…
+- Attempt 1 (2026-09-14 12:02 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/loop_health_report.py, tests/test_loop_health_report.py. Reward signal will be…
+- Attempt 2 (2026-09-14 11:17 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/verify_imports.py, tests/test_verify_imports.py. Reward…
 
 ## Concrete task to implement
 
-Title: Add loop breaker safety interrupt summary reporting to scripts/loop_health_report.py
+Title: Add async function and decorator inspection support to scripts/query_ast_symbols.py
 
 
-Inspect subagent run records in loop_health_report.py for loop_breaker safety interrupt warnings and flag cycles where repeated tool executions persisted after warning, addressing evidence of workers ignoring loop breaker interrupts.
+Addresses defect-a5f1e8416c52 by extending idle tool scripts/query_ast_symbols.py to parse AsyncFunctionDef AST nodes and decorator names, updating the idle query skill with modern Python AST coverage.
 
-Target path: scripts/loop_health_report.py
+Target path: scripts/query_ast_symbols.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/loop_health_report.py supports loop breaker safety interrupt reporting and exits cleanly with --help
+scripts/query_ast_symbols.py extracts symbol signatures from files containing async functions and decorated definitions
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2178,7 +2176,7 @@ Vector 2 (SECONDARY) — Operator Interface and Process Transparency: give the o
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-14 12:11:19 UTC &middot; host eeepc &middot; newest source 19s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 15:07:43 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-14 12:54:32 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-14 15:07:43 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
