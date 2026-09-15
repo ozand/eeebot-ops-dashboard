@@ -668,7 +668,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     skill_table_rows = []
     for name in sorted(name for name in skill_rows if name):
         record = skill_rows[name]
-        state = "unreachable" if record.get("omitted") and record.get("on_disk") else "omitted" if record.get("omitted") else "working" if record.get("on_disk") else "not on disk"
+        state = "unreachable" if record.get("omitted") else "working" if record.get("on_disk") else "not on disk"
         catalogue_value = "yes" if record.get("catalogue") else "no" if record.get("omitted") else "unavailable"
         skill_table_rows.append(f'<tr><td>{esc(name)}</td><td>{catalogue_value}</td><td>{"yes" if record.get("on_disk") else "no"}</td><td>{record.get("reads", 0)}</td><td>{record.get("confirmed", 0)}</td><td>{state}</td></tr>')
     out.append(f'<div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody>{"".join(skill_table_rows)}</tbody></table>')

@@ -1132,7 +1132,8 @@ def read_compaction():
     try:
         with open(path, encoding='utf-8', errors='replace') as fh:
             rows = [json.loads(line) for line in fh if line.strip()]
-        return {'status': 'present', 'rows': [row for row in rows if isinstance(row, dict)]}
+        rows = [row for row in rows if isinstance(row, dict)]
+        return {'status': 'empty' if not rows else 'present', 'rows': rows}
     except FileNotFoundError:
         return {'status': 'missing'}
     except Exception:
@@ -1629,7 +1630,8 @@ def read_local_state(
                 rows = [json.loads(line) for line in fh if line.strip()]
         except (OSError, json.JSONDecodeError):
             return {'status': 'missing'} if not path.exists() else {'status': 'unavailable'}
-        return {'status': 'present', 'rows': [row for row in rows if isinstance(row, dict)]}
+        rows = [row for row in rows if isinstance(row, dict)]
+        return {'status': 'empty' if not rows else 'present', 'rows': rows}
 
     def read_proposer_stats_local() -> dict[str, Any] | None:
         """Issue #63: proposer visibility -- local mirror of the
