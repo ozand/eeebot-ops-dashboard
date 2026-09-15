@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from datetime import timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -277,6 +278,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     skills_status = agent_context.get("tier2_skills_status", "present" if "tier2_skills" in agent_context else "missing")
     lessons = agent_context.get("tier2_lessons") or {}
     memory = agent_context.get("tier2_memory") or {}
+    skill_reads = agent_context.get("skill_reads")
+    skill_evals = agent_context.get("skill_evals") or []
+    executor_llm_stats = agent_context.get("executor_llm_stats")
+    compaction = agent_context.get("compaction")
 
     chars = sys_prompt.get("chars")
     cap = sys_prompt.get("cap")
@@ -514,7 +519,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">{cat_sz:,}c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {corpus_count(skills_status, len(skills))} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
     out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">{mem_sz:,}c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes {corpus_count(mem_corpus_status, mem_cnt)} files in Tier 2</a></div>')
     out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
-    out.append('        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>')
+    history_prompt_tokens = executor_llm_stats.get("prompt_tokens") if isinstance(executor_llm_stats, dict) else None
+    history_text = f"{history_prompt_tokens:,} prompt tokens (executor)" if isinstance(history_prompt_tokens, int) else "unavailable"
+    window_budget = 98000 - 8000
+    window_text = f"{window_budget:,} tokens available (98,000 − 8,000) · occupancy {history_text}"
+    out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">{window_text}</span></div>')
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">{len(task_text) if task_text else 0:,}c</span></div>')
     out.append('      </div>')
     out.append('    </div>')
@@ -522,9 +531,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="tier-bridge">')
     out.append('      <div class="bridge-card">')
     out.append('        <span class="bridge-arrow">&#10132;</span>')
-    out.append('        <strong>On-Demand Read</strong>')
-    out.append('        <p>read_file tool call</p>')
-    out.append(f'        <span class="bridge-cost">Catalogue costs {cat_sz:,}c &mdash; unlocks {skills_kb:.1f} KB</span>')
+    out.append('        <strong>On-Demand Access</strong>')
+    out.append('        <p>read_file · search_memory · exec</p>')
+    out.append(f'        <span class="bridge-cost">Tier 1 index costs: catalogue {cat_sz:,}c · memory {mem_sz:,}c · exec path unavailable</span>')
     out.append('      </div>')
     out.append('    </div>')
 
@@ -626,6 +635,43 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>')
     out.append(f'    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~{t2_kb:.1f} KB</strong> across <strong>{t2_files}</strong> files.</p>')
 
+    catalogue = sys_prompt.get("skills_catalogue")
+    omitted_names = [str(name) for name in catalogue.get("omitted_names", [])] if isinstance(catalogue, dict) else []
+    catalogue_state = "truncated" if isinstance(catalogue, dict) and catalogue.get("truncated") else "complete" if isinstance(catalogue, dict) else "unavailable"
+    out.append(f'<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget {catalogue.get("budget", "unavailable") if isinstance(catalogue, dict) else "unavailable"}c · retained {catalogue.get("retained_count", "unavailable") if isinstance(catalogue, dict) else "unavailable"}/{catalogue.get("total_count", "unavailable") if isinstance(catalogue, dict) else "unavailable"} · {catalogue_state} · omitted: {esc(", ".join(omitted_names) if omitted_names else "none")}</div>')
+    memory_index = sys_prompt.get("memory_index")
+    missing = [str(name) for name in memory_index.get("resident_missing", [])] if isinstance(memory_index, dict) and isinstance(memory_index.get("resident_missing"), list) else None
+    missing_text = ", ".join(missing) if missing else "none" if isinstance(memory_index, dict) else "unavailable"
+    out.append(f'<div class="context-telemetry-box"><strong>Memory index:</strong> status {esc(memory_index.get("status", "unavailable") if isinstance(memory_index, dict) else "unavailable")} · resident matched {memory_index.get("resident_matched", "unavailable") if isinstance(memory_index, dict) else "unavailable"} · resident missing: {esc(missing_text)}</div>')
+    window_tokens = 98000
+    reserve_tokens = 8000
+    window_budget = window_tokens - reserve_tokens
+    compaction_status = "compaction did not fire" if isinstance(compaction, dict) and compaction.get("status") in {"missing", "empty"} else esc(compaction.get("status", "unavailable") if isinstance(compaction, dict) else "unavailable")
+    out.append(f'<div class="context-telemetry-box"><strong>Dialogue Window:</strong> {window_budget:,} tokens ({window_tokens:,} − {reserve_tokens:,}) · occupancy: {history_text} · {compaction_status}</div>')
+    catalogue_text = raw_sections_text.get("skills_catalogue", "")
+    catalogue_names = {re.sub(r"<[^>]+>", "", name).strip() for name in re.findall(r"<name>(.*?)</name>", catalogue_text, re.DOTALL)}
+    catalogue_names.discard("")
+    skill_rows = {}
+    if isinstance(skill_reads, dict) and isinstance(skill_reads.get("reads"), list):
+        for row in skill_reads["reads"]:
+            if isinstance(row, dict) and row.get("skill"):
+                name = str(row["skill"])
+                record = skill_rows.setdefault(name, {"reads": 0, "confirmed": 0})
+                record["reads"] += 1
+                record["confirmed"] += int(row.get("confirmed") is True)
+    for name in catalogue_names:
+        skill_rows.setdefault(name, {})["catalogue"] = True
+    for skill in skills:
+        skill_rows.setdefault(str(skill.get("name", "")), {})["on_disk"] = True
+    for name in omitted_names:
+        skill_rows.setdefault(name, {})["omitted"] = True
+    skill_table_rows = []
+    for name in sorted(name for name in skill_rows if name):
+        record = skill_rows[name]
+        state = "unreachable" if record.get("omitted") else "working" if record.get("on_disk") else "not on disk"
+        catalogue_value = "yes" if record.get("catalogue") else "no" if record.get("omitted") else "unavailable"
+        skill_table_rows.append(f'<tr><td>{esc(name)}</td><td>{catalogue_value}</td><td>{"yes" if record.get("on_disk") else "no"}</td><td>{record.get("reads", 0)}</td><td>{record.get("confirmed", 0)}</td><td>{state}</td></tr>')
+    out.append(f'<div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody>{"".join(skill_table_rows)}</tbody></table>')
     out.append('    <div class="t2-group" id="tier2-skills-section">')
     out.append(f'      <div class="t2-group-header"><h4>Skills Store ({corpus_count(skills_status, len(skills))} skills &bull; ~{skills_kb:.1f} KB)</h4><span class="t2-group-note">Corpus: {skills_status}; indexed in Tier 1 via <code>skills_catalogue</code> ({cat_sz:,} chars)</span></div>')
     out.append('      <div class="skills-card-grid">')

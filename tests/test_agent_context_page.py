@@ -33,6 +33,77 @@ def _base_fixture() -> dict[str, Any]:
     }
 
 
+
+def _telemetry_fixture(**overrides: Any) -> dict[str, Any]:
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'cycle_id': 'cycle-261', 'chars': 100, 'cap': 24000,
+            'sections': {'identity': 10, 'skills_catalogue': 90},
+            'skills_catalogue': {
+                'budget': 100, 'retained_count': 1, 'total_count': 3,
+                'omitted_count': 2, 'omitted_names': ['lost-skill', 'second-lost'],
+                'truncated': True,
+            },
+            'memory_index': {
+                'status': 'present', 'resident_matched': 2,
+                'resident_missing': ['memory-rule-missing'],
+            },
+        },
+        'prompt_text': '# Identity\\n\\n---\\n\\n# Skills\\n<skill><name>kept-skill</name></skill>',
+        'task_text': None, 'tier2_skills': [
+            {'name': 'lost-skill', 'size_bytes': 10},
+            {'name': 'disk-only', 'size_bytes': 10},
+        ],
+        'skill_reads': {'reads': [{'skill': 'read-only', 'confirmed': False}]},
+        'executor_llm_stats': {'prompt_tokens': 12345},
+        'compaction': {'status': 'empty', 'rows': []},
+        'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'corpus_status': 'present', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    fixture['agent_context'].update(overrides)
+    return fixture
+
+
+def test_issue261_catalogue_truncation_and_omissions_are_visible():
+    html = tv.render_pages(_telemetry_fixture(), host='eeepc', generated_at='now')['agent.html']
+    assert 'budget 100c' in html and 'retained 1/3' in html and 'truncated' in html
+    assert 'lost-skill' in html and 'second-lost' in html
+    assert 'unreachable' in html
+
+
+def test_issue261_complete_catalogue_is_explicit():
+    fixture = _telemetry_fixture()
+    fixture['agent_context']['system_prompt']['skills_catalogue'] = {
+        'budget': 100, 'retained_count': 3, 'total_count': 3,
+        'omitted_count': 0, 'omitted_names': [], 'truncated': False,
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'retained 3/3' in html and 'complete' in html and 'omitted: none' in html
+
+
+def test_issue261_skill_sources_are_joined_without_dropping_single_source_rows():
+    html = tv.render_pages(_telemetry_fixture(), host='eeepc', generated_at='now')['agent.html']
+    assert 'Skill source join' in html
+    assert 'disk-only' in html and 'read-only' in html and 'lost-skill' in html
+    assert '<th>In catalogue</th>' in html and '<th>On disk</th>' in html
+
+
+def test_issue261_memory_index_and_compaction_empty_are_honest():
+    html = tv.render_pages(_telemetry_fixture(), host='eeepc', generated_at='now')['agent.html']
+    assert 'resident missing: memory-rule-missing' in html
+    assert '90,000 tokens' in html and '12,345 prompt tokens' in html
+    assert 'compaction did not fire' in html
+    assert 'results compacted: 0' not in html
+
+
+def test_issue261_missing_memory_index_is_unavailable():
+    fixture = _telemetry_fixture()
+    fixture['agent_context']['system_prompt'].pop('memory_index')
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'Memory index:</strong> status unavailable' in html
+    assert 'resident missing: unavailable' in html
+
 def test_agent_page_renders_published_prompt_fit_event_telemetry():
     fixture = _base_fixture()
     fixture['agent_context'] = {
