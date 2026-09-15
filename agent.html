@@ -947,6 +947,22 @@
 
 
 /* Issue #227: Two-tier agent context visualization styling */
+.context-subject-group {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #30363d;
+}
+.context-subject-group:first-of-type { margin-top: 16px; }
+.context-subject-heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #c9d1d9;
+  letter-spacing: .01em;
+}
+.context-knowledge-group .tier2-deep-section,
+.context-assembly-group .context-detail-section { margin-top: 0; }
+.context-telemetry-box { margin: 10px 0; padding: 9px 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #c9d1d9; font-size: 12px; overflow-wrap: anywhere; }
+
 .context-panel {
   background: var(--color-bg-subtle, #161b22);
   border: 1px solid var(--color-border-default, #30363d);
@@ -1244,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">227</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 13:24:50 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 10:37 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 10:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-dfd11c66d7be</span>
+      <span class="cycle-pill">cycle-5d9663e7e856</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1283,12 +1299,14 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Tier 2 Reachable Knowledge</span>
-      <span class="kpi-value">~935.2 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-value">~937.0 <span class="kpi-unit">KB</span></span>
       <span class="kpi-sub">189 files reachable via read_file</span>
     </div>
   </div>
+  <div class="context-subject-group context-overview-group">
+    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 10:00:49.116526 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 10:41:20.900730 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1306,7 +1324,10 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 55,069 prompt tokens (executor) · present</div>
   </div>
+  <div class="context-subject-group context-assembly-group">
+    <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
   <div class="two-tier-canvas">
     <div class="tier-col tier1-col">
       <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>
@@ -1321,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 61,782 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,715c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 55,069 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,098c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1338,7 +1359,7 @@
       <div class="tier2-targets-list">
         <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 32 skills</strong><span class="t2-size">156.8 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
         <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 95 lessons</strong><span class="t2-size">351.3 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">427.1 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">428.9 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
       </div>
     </div>
   </div>
@@ -1893,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,715 chars &bull; ~1,928 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add repeated command streak analyzer to scripts/check_cycle_budget.py
-Request ID: llm-proposer-cycle-dfd11c66d7be
-Cycle ID: cycle-dfd11c66d7be
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,098 chars &bull; ~1,774 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py
+Request ID: llm-proposer-cycle-5d9663e7e856
+Cycle ID: cycle-5d9663e7e856
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1907,67 +1928,59 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 69217b0f merge: integrate selfevo/cycle-cycle-dfd11c66d7be
+- 3a617f71 selfevo: auto-commit uncommitted subagent work — Add repeated command streak analyzer to scripts/check_cycle_budget.py
+- f5af365f feat(check_cycle_budget): add repeated command streak analyzer
+- 2f754afa feat(avatar): add instance drawing primitives, state reader and measured costs per ADR-018 (#207)
 - a173a4d4 merge: integrate selfevo/cycle-cycle-33e094c9142d
 - 0564e9ca test(timed_exec): add end-to-end tests for --timeout CLI flag
 - dbc51d22 merge: integrate selfevo/cycle-cycle-3b033a38b924
 - 310eb65d perf(verify_imports): prune state and cache dirs via shared DEFAULT_IGNORE_DIRS
-- bb625af1 merge: integrate selfevo/cycle-cycle-13d271b947b8
-- b1e68cb9 fix(audit_repeat_failures): repair self-test for default rate threshold and add window-days rate filtering tests
-- b3fdb293 merge: integrate selfevo/cycle-cycle-0a1cc579329c
-- 1a171ddd feat(check_cycle_budget): add git commit archaeology detector
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add surface exclusion diagnostic probe to scripts/analyze_repeat_failures.py: fetch_failed
-- Add nested quote collision detector for python shell commands to scripts/workspace_validation_helpers.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dfd11c66d7be.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5d9663e7e856.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add repeated command streak analyzer to scripts/check_cycle_budget.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements an analyzer in scripts/check_cycle_budget.py that detects consecutive identical command invocations and flags loop breaker safety stops from turn action histories, addressing repetitive exec loops like those seen in cycle-3406cc1cdae6.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Add error excerpt extraction and failure categorization to scripts/loop_health_report.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Subagent result 93cdd878 failed with status=error. Adding error excerpt extraction and failure categorization to loop_health_report.py enables automated reporting and triage of error statuses directly from subagent result payloads.\n\nTarget path: scripts/loop_health_report.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add repeated command streak analyzer to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
-Root cause: 
-Prevention: 
-
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: ERR-20260905-05555d5b  Title: Executor LLM failure blocks post-refresh gate re-evaluation
+Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
+Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
-- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
+- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
+- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
+- Executor initialization failure due to model deployment exhaustion: Litellm raised RateLimitError (&#x27;OpenAIException - No deployments available for selected model, Try again in 120 seconds. Passed mode
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 08:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-15 08:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/audit_repeat_failures.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-15 08:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 1 (2026-09-15 10:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/check_cycle_budget.py.…
+- Attempt 2 (2026-09-15 08:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Add repeated command streak analyzer to scripts/check_cycle_budget.py
+Title: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py
 
 
-Implements an analyzer in scripts/check_cycle_budget.py that detects consecutive identical command invocations and flags loop breaker safety stops from turn action histories, addressing repetitive exec loops like those seen in cycle-3406cc1cdae6.
+Subagent result 93cdd878 failed with status=error. Adding error excerpt extraction and failure categorization to loop_health_report.py enables automated reporting and triage of error statuses directly from subagent result payloads.
 
-Target path: scripts/check_cycle_budget.py
+Target path: scripts/loop_health_report.py
 
 ## Concrete task to implement
-Implement and commit: Add repeated command streak analyzer to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)
+Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py (target: scripts/loop_health_report.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2012,12 +2025,14 @@ Creating or improving skills for repeated patterns is valuable work.
 Do NOT modify: state/, goals.md, IDENTITY.md, secrets, or systemd units.
 </code></pre></div></details>
   </div>
+  </div>
+  <div class="context-subject-group context-knowledge-group">
+    <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
-    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~935.2 KB</strong> across <strong>189</strong> files.</p>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~937.0 KB</strong> across <strong>189</strong> files.</p>
 <div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 12362c · retained 34/34 · complete · omitted: none</div>
 <div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
-<div class="context-telemetry-box"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 61,782 prompt tokens (executor) · present</div>
 <div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>yes</td><td>yes</td><td>6</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>chained-python-execution</td><td>yes</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>check-target-completion</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>yes</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>yes</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>yes</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>yes</td><td>yes</td><td>12</td><td>10</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>yes</td><td>yes</td><td>4</td><td>2</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>yes</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>yes</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>memory</td><td>yes</td><td>no</td><td>0</td><td>0</td><td>not on disk</td></tr><tr><td>memory-lookup</td><td>yes</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>yes</td><td>yes</td><td>44</td><td>39</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>yes</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>skill-creator</td><td>yes</td><td>no</td><td>0</td><td>0</td><td>not on disk</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>yes</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr></tbody></table>
     <div class="t2-group" id="tier2-skills-section">
       <div class="t2-group-header"><h4>Skills Store (32 skills &bull; ~156.8 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (10,109 chars)</span></div>
@@ -5577,7 +5592,7 @@ Full allocation table and rationale: `lessons/early_edit_turn_discipline.md`.
     </div>
     <div class="t2-group" id="tier2-memory-section">
       <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-present">corpus: PRESENT</span> <span class="status-badge status-present">memory/index.md: PRESENT</span></div>
-      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>62 files</strong> on disk (~427.1 KB total):</p><div class="memory-pills">
+      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>62 files</strong> on disk (~428.9 KB total):</p><div class="memory-pills">
 <span class="memory-pill">memory/HISTORY.md (53 B)</span> 
 <span class="memory-pill">memory/MEMORY.md (196 B)</span> 
 <span class="memory-pill">memory/MEMORY_ARCHIVE.md (5,150 B)</span> 
@@ -5611,6 +5626,7 @@ Full allocation table and rationale: `lessons/early_edit_turn_discipline.md`.
 <span class="memory-pill pill-more">+32 more files...</span>
       </div></div>
     </div>
+  </div>
   </div>
 </section>
       <div class="host-identity" translate="no">eeepc · i386 · Debian 12 · 2 GB RAM · Python 3.11</div>
@@ -5878,7 +5894,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 10:37:43 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 13:24:50 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 10:57:04 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 13:24:50 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
