@@ -1078,6 +1078,67 @@ _tree_for_titles = read_json("evolution/tree.json")
 _node_shas_for_titles = list((_tree_for_titles or {}).get("nodes", {}).keys()) if isinstance(_tree_for_titles, dict) else []
 _cycle_titles, _cycle_files, _cycle_titles_error = extract_git_titles(_node_shas_for_titles)
 
+
+def read_agent_context():
+    rows = []
+    ledger = os.path.join(STATE_ROOT, 'ledger', 'cycles.jsonl')
+    try:
+        with open(ledger, encoding='utf-8', errors='replace') as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except Exception:
+                    continue
+                if isinstance(row, dict) and row.get('phase') == 'system_prompt':
+                    rows.append(row)
+    except Exception:
+        return None
+    if not rows:
+        return None
+    row = rows[-1]
+    cid = row.get('cycle_id')
+    prompt = None
+    if cid:
+        try:
+            with open(os.path.join(STATE_ROOT, 'prompts', f'{cid}.system.txt'), encoding='utf-8', errors='replace') as fh:
+                prompt = fh.read()[:150000]
+        except Exception:
+            pass
+    return {'system_prompt': row, 'prompt_text': prompt, 'task_text': None}
+
+
+def read_executor_stats():
+    latest = None
+    try:
+        names = sorted(n for n in os.listdir(os.path.join(STATE_ROOT, 'llm_calls')) if n.endswith('.jsonl'))
+    except Exception:
+        return None
+    for name in names[-7:]:
+        try:
+            with open(os.path.join(STATE_ROOT, 'llm_calls', name), encoding='utf-8', errors='replace') as fh:
+                for line in fh:
+                    try: row = json.loads(line)
+                    except Exception: continue
+                    if row.get('component') == 'executor' and isinstance(row.get('prompt_tokens'), int):
+                        if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
+                            latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': row.get('prompt_tokens'), 'ts': row.get('ts')}
+        except Exception:
+            continue
+    return latest
+
+
+def read_compaction():
+    path = os.path.join(STATE_ROOT, 'compaction', 'journal.jsonl')
+    try:
+        with open(path, encoding='utf-8', errors='replace') as fh:
+            rows = [json.loads(line) for line in fh if line.strip()]
+        return {'status': 'present', 'rows': [row for row in rows if isinstance(row, dict)]}
+    except FileNotFoundError:
+        return {'status': 'missing'}
+    except Exception:
+        return {'status': 'unavailable'}
+
+
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
     "scorecard": read_json("scorecard/latest.json"),
@@ -1101,6 +1162,9 @@ result = {
     "demand_futility": read_json("demand/futility.json"),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
+    "agent_context": read_agent_context(),
+    "executor_llm_stats": read_executor_stats(),
+    "compaction": read_compaction(),
     "cycle_titles": _cycle_titles,
     "cycle_files": _cycle_files,
     "cycle_titles_error": _cycle_titles_error,
@@ -1109,6 +1173,17 @@ result = {
 }
 print(json.dumps(result))
 '''.lstrip('\n')
+
+
+def _executor_stats_from_llm_stats(stats: Any) -> dict[str, Any] | None:
+    if not isinstance(stats, dict):
+        return None
+    rows = [value for value in stats.values() if isinstance(value, dict) and value.get('component') == 'executor']
+    return rows[-1] if rows else None
+
+
+def _compaction_status_from_remote(value: Any) -> dict[str, Any] | None:
+    return value if isinstance(value, dict) else None
 
 
 def fetch_remote_state(host: str) -> dict[str, Any]:
@@ -1132,6 +1207,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_evals': [],
         'llm_stats': {},
         'proposer_stats': None,
+        'executor_llm_stats': None,
+        'compaction': None,
         'token_heatmap': None,
         'reflections': [],
         'bridge_exit_streak': None,
@@ -1177,6 +1254,14 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
 
     for key in empty:
         data.setdefault(key, None)
+    agent_context = data.get('agent_context')
+    if isinstance(agent_context, dict):
+        agent_context.update({
+            'skill_reads': data.get('skill_reads'),
+            'skill_evals': data.get('skill_evals'),
+            'executor_llm_stats': _executor_stats_from_llm_stats(data.get('llm_stats')),
+            'compaction': _compaction_status_from_remote(data.get('compaction')),
+        })
 
     mtimes = data.pop('_source_mtimes', None)
     if isinstance(mtimes, list) and mtimes:
@@ -1510,6 +1595,42 @@ def read_local_state(
                     st['any_length'] = True
         return stats
 
+    def read_executor_stats_local() -> dict[str, Any] | None:
+        """Return the newest executor prompt-token observation."""
+        llm_dir = root / 'llm_calls'
+        latest: dict[str, Any] | None = None
+        try:
+            names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
+        except OSError:
+            return None
+        for name in names[-7:]:
+            try:
+                with (llm_dir / name).open('r', encoding='utf-8', errors='replace') as fh:
+                    for line in fh:
+                        try:
+                            row = json.loads(line)
+                        except Exception:  # noqa: BLE001
+                            continue
+                        if row.get('component') != 'executor':
+                            continue
+                        prompt_tokens = row.get('prompt_tokens')
+                        if isinstance(prompt_tokens, int) and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0:
+                            if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
+                                latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': prompt_tokens, 'ts': row.get('ts')}
+            except OSError:
+                continue
+        return latest
+
+    def read_compaction_local() -> dict[str, Any]:
+        """Read compaction journal with explicit never-fired semantics."""
+        path = root / 'compaction' / 'journal.jsonl'
+        try:
+            with path.open('r', encoding='utf-8', errors='replace') as fh:
+                rows = [json.loads(line) for line in fh if line.strip()]
+        except (OSError, json.JSONDecodeError):
+            return {'status': 'missing'} if not path.exists() else {'status': 'unavailable'}
+        return {'status': 'present', 'rows': [row for row in rows if isinstance(row, dict)]}
+
     def read_proposer_stats_local() -> dict[str, Any] | None:
         """Issue #63: proposer visibility -- local mirror of the
         REMOTE_READER_SCRIPT read_proposer_stats(); keep in sync."""
@@ -1687,6 +1808,8 @@ def read_local_state(
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
+        'executor_llm_stats': read_executor_stats_local(),
+        'compaction': read_compaction_local(),
         'token_heatmap': read_token_heatmap_local(),
         'lessons': read_lessons_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
@@ -1700,7 +1823,13 @@ def read_local_state(
         'cycle_titles': titles,
         'cycle_files': cycle_files,
         'cycle_titles_error': titles_error,
-        'agent_context': read_agent_context_dict(root, repo_path),
+        'agent_context': {
+            **read_agent_context_dict(root, repo_path),
+            'skill_reads': read_json('skill_fitness/reads.json'),
+            'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
+            'executor_llm_stats': read_executor_stats_local(),
+            'compaction': read_compaction_local(),
+        },
         'generator_sha': '',
         '_newest_source_age_seconds': None,
     }
