@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 05:25:51 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">33.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 02:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 02:55 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">fallback-3e5289519605</span>
+      <span class="cycle-pill">cycle-94acc358d1ab</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1283,12 +1283,12 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Tier 2 Reachable Knowledge</span>
-      <span class="kpi-value">~922.1 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-value">~922.7 <span class="kpi-unit">KB</span></span>
       <span class="kpi-sub">189 files reachable via read_file</span>
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 02:13:31.883758 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 02:39:06.343762 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1322,7 +1322,7 @@
 
 " Separators</span><span class="t1-sz">21c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">5,944c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,071c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1338,7 +1338,7 @@
       <div class="tier2-targets-list">
         <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 32 skills</strong><span class="t2-size">156.8 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
         <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 95 lessons</strong><span class="t2-size">351.3 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">414.0 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">414.6 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
       </div>
     </div>
   </div>
@@ -1893,9 +1893,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">5,944 chars &bull; ~1,486 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py
-Request ID: llm-proposer-fallback-3e5289519605
-Cycle ID: fallback-3e5289519605
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,071 chars &bull; ~1,767 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py
+Request ID: llm-proposer-cycle-94acc358d1ab
+Cycle ID: cycle-94acc358d1ab
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1907,57 +1907,58 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 9c3e2536 merge: integrate selfevo/cycle-fallback-3e5289519605
+- 98afa81c selfevo: auto-commit uncommitted subagent work — Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py
+- 9bb4457f feat(tile_surface): add render_tilemap_to_fb composite rendering
 - 94a93af8 merge: integrate selfevo/cycle-fallback-504f828035e7
 - a969bf88 selfevo: auto-commit uncommitted subagent work — Add demand failure aggregation and quarantine threshold flag to scripts/analyze_
 - e1e28cb9 feat(analyze_repeat_failures): add demand failure aggregation and quarantine threshold flag
 - a696f5f9 merge: integrate selfevo/cycle-cycle-1786f0e69d5b
 - 9a9a4e10 feat(model_fallback_routing): add RateLimitError cooldown failover resolution
-- 87299e16 merge: integrate selfevo/cycle-fallback-41c7be875696
-- 6dea5dc0 feat(fb_surface): add bounds-clipped blit function
-- 1f35aa62 merge: integrate selfevo/cycle-cycle-01d5078f4926
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-3e5289519605.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-94acc358d1ab.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extend tile_surface.py with render_tilemap_to_fb to blit 128x75 tilemaps into an 8bpp 1024x600 framebuffer bytearray, connecting tile composition with eeepc display surfaces.\n\nTarget path: scripts/tile_surface.py&quot;,
+    &quot;title&quot;: &quot;Add schema and field distribution probe to scripts/loop_health_report.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Adds a multi-metric schema probe mode to scripts/loop_health_report.py that aggregates top-level keys, stop_reasons, status counts, and error field distributions across state artifact JSON files, replacing repetitive sequential one-liner inspection commands with a single command.\n\nTarget path: scripts/loop_health_report.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py (target: scripts/tile_surface.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/tile_surface.py blits 128x75 tilemap cells into a 1024x600 bytearray buffer and self-test exits 0&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260912-861355a6  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Batch script checking into a single execution pass in scripts/validate_unused_im
-Root cause: 
-Prevention: 
+## Proven approach for this task (from lessons/lessons.yaml)
+ID: lessons/inspect_script_cli_flags.md  Title: Inspect Script CLI Flags Before Invoking Validation Scripts
+Problem: Read lessons/inspect_script_cli_flags.md: **Default to a one-shot interface probe for any script not invoked earlier in the same session.** `--help` is the canonical probe; a bounded `grep -n &quot;add_argument&quot; &lt;script&gt;` is the fallback when the script has no help text or the output
+Solution: 
+If you apply this lesson, cite [Lesson lessons/inspect_script_cli_flags.md] in your proposal/response.
+
+## Recent reflections (how past cycles worked — steering hints)
+- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
+- Immediately halt tool execution and emit the final summary or skip declaration when a loop_breaker safety stop is triggered.
+- Repetitive tool execution loop and disregard of loop_breaker: The executor ran an identical python exec command six consecutive times (turns 11, 13, 14, 15, 16, 17) calculating litellm error counts. E
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 01:51 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
-- Attempt 2 (2026-09-15 01:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py. Reward signal will…
+- Attempt 1 (2026-09-15 02:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/tile_surface.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-15 01:51 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
+- Attempt 3 (2026-09-15 01:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py
+Title: Add schema and field distribution probe to scripts/loop_health_report.py
 
 
-Extend tile_surface.py with render_tilemap_to_fb to blit 128x75 tilemaps into an 8bpp 1024x600 framebuffer bytearray, connecting tile composition with eeepc display surfaces.
+Adds a multi-metric schema probe mode to scripts/loop_health_report.py that aggregates top-level keys, stop_reasons, status counts, and error field distributions across state artifact JSON files, replacing repetitive sequential one-liner inspection commands with a single command.
 
-Target path: scripts/tile_surface.py
+Target path: scripts/loop_health_report.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/tile_surface.py blits 128x75 tilemap cells into a 1024x600 bytearray buffer and self-test exits 0
+## Concrete task to implement
+Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py (target: scripts/loop_health_report.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2004,7 +2005,7 @@ Do NOT modify: state/, goals.md, IDENTITY.md, secrets, or systemd units.
   </div>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
-    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~922.1 KB</strong> across <strong>189</strong> files.</p>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~922.7 KB</strong> across <strong>189</strong> files.</p>
     <div class="t2-group" id="tier2-skills-section">
       <div class="t2-group-header"><h4>Skills Store (32 skills &bull; ~156.8 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (10,109 chars)</span></div>
       <div class="skills-card-grid">
@@ -5563,7 +5564,7 @@ Full allocation table and rationale: `lessons/early_edit_turn_discipline.md`.
     </div>
     <div class="t2-group" id="tier2-memory-section">
       <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-present">corpus: PRESENT</span> <span class="status-badge status-present">memory/index.md: PRESENT</span></div>
-      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>62 files</strong> on disk (~414.0 KB total):</p><div class="memory-pills">
+      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>62 files</strong> on disk (~414.6 KB total):</p><div class="memory-pills">
 <span class="memory-pill">memory/HISTORY.md (53 B)</span> 
 <span class="memory-pill">memory/MEMORY.md (196 B)</span> 
 <span class="memory-pill">memory/MEMORY_ARCHIVE.md (5,150 B)</span> 
@@ -5573,7 +5574,7 @@ Full allocation table and rationale: `lessons/early_edit_turn_discipline.md`.
 <span class="memory-pill">memory/auxiliary_tool_call_discipline.md (2,388 B)</span> 
 <span class="memory-pill">memory/blocked_task_early_exit.md (5,865 B)</span> 
 <span class="memory-pill">memory/compound_task_scoping.md (5,066 B)</span> 
-<span class="memory-pill">memory/confirmation_status.json (6,454 B)</span> 
+<span class="memory-pill">memory/confirmation_status.json (7,099 B)</span> 
 <span class="memory-pill">memory/direct_edit_discipline.md (4,842 B)</span> 
 <span class="memory-pill">memory/facts/agents-instruction-assertions.md (321 B)</span> 
 <span class="memory-pill">memory/facts/base-test-failure-isolation.md (429 B)</span> 
@@ -5864,7 +5865,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 02:35:26 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 05:25:51 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 02:55:04 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 05:25:51 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
