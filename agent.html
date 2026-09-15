@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">223</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 11:19:45 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="33">data: 32s old &middot; generated 08:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 08:35 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-0a1cc579329c</span>
+      <span class="cycle-pill">cycle-13d271b947b8</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1288,7 +1288,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 08:00:53.335117 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 08:27:58.662789 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1893,9 +1893,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,146 chars &bull; ~2,036 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add git commit archaeology detector to scripts/check_cycle_budget.py
-Request ID: llm-proposer-cycle-0a1cc579329c
-Cycle ID: cycle-0a1cc579329c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,146 chars &bull; ~2,036 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py
+Request ID: llm-proposer-cycle-13d271b947b8
+Cycle ID: cycle-13d271b947b8
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1907,36 +1907,37 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- b3fdb293 merge: integrate selfevo/cycle-cycle-0a1cc579329c
+- 1a171ddd feat(check_cycle_budget): add git commit archaeology detector
 - 8e8930e8 merge: integrate selfevo/cycle-fallback-f16a59efdd73
 - 378a6e5a selfevo: auto-commit uncommitted subagent work — Add list element traversal and schema sampling to scripts/dict_schema_probe.py
 - 02671103 feat(dict_schema_probe): add list element traversal and schema sampling
 - f498610a merge: integrate selfevo/cycle-fallback-669ba3bd4f31
 - 830a0071 feat(quarantine_defects): add demand quarantine record evaluation and persistence
 - 668b8578 merge: integrate selfevo/cycle-cycle-a96840293e09
-- b5f84018 feat(dict_schema_probe): add dictionary schema probe and path extractor
-- 80f4419b merge: integrate selfevo/cycle-cycle-34b19430be72
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add nested quote collision detector for python shell commands to scripts/workspace_validation_helpers.py: recent_duplicate_failure
 - Add atomic verification registration to scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0a1cc579329c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-13d271b947b8.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add git commit archaeology detector to scripts/check_cycle_budget.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-b083162a3397 where cycles waste turns running git log, show, and diff on historical commit hashes rather than implementing directly; adds detection of commit-archaeology tool call sequences to flag and constrain excessive archaeology.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;The 7-day repeat_failure_rate is 0.351, breaching the 0.35 target. audit_repeat_failures.py audits cycle ledger streaks; adding trailing window duration filtering and a configurable threshold breach check allows targeted 7d audits and automated alerts.\n\nTarget path: scripts/audit_repeat_failures.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add git commit archaeology detector to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py (target: scripts/audit_repeat_failures.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_cycle_budget.py provides a detector that identifies git inspection commands targeting historical commit hashes and flags runs exceeding threshold.&quot;,
+    &quot;claim&quot;: &quot;audit_repeat_failures.py supports window-days filtering and exits non-zero when repeat failure rate breaches max threshold&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;cmd&quot;: &quot;python3 -c \&quot;from scripts.check_cycle_budget import detect_git_archaeology; res = detect_git_archaeology([{&#x27;command&#x27;: &#x27;git show 8af53360&#x27;}, {&#x27;command&#x27;: &#x27;git log -n 5 8a236855&#x27;}], threshold=1); assert res[&#x27;archaeology_detected&#x27;] is True\&quot;&quot;
+      &quot;command&quot;: &quot;python3 scripts/audit_repeat_failures.py --help&quot;
     }
   }
 }
@@ -1954,26 +1955,26 @@ Solution: Integrate the new demand and target path deduplication thresholds from
 If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
-- Immediately halt tool execution and emit the final response or skip declaration upon receiving a loop_breaker safety warning.
+- Verify leading whitespace alignment against the enclosing indentation block when performing string edits in Python source files to avoid indentation syntax errors.
+- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
+- Off-by-one indentation during file editing: When editing scripts/check_last_cycle_repeat.py in turn 6, the agent inserted CLI arguments with 3 spaces instead of 4, triggering an IndentationError at li
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 07:53 UTC): no commits (blocked). Task &quot;Add atomic verification registration to scripts/verify_and_p&quot; matches recently-failed/rejected proposal &quot;Add…
+- Attempt 1 (2026-09-15 08:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
 - Attempt 2 (2026-09-15 07:42 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/dict_schema_probe.py,…
 - Attempt 3 (2026-09-15 06:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/quarantine_defects.py, tests/test_quarantine_defects.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add git commit archaeology detector to scripts/check_cycle_budget.py
+Title: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py
 
 
-Addresses reflection-b083162a3397 where cycles waste turns running git log, show, and diff on historical commit hashes rather than implementing directly; adds detection of commit-archaeology tool call sequences to flag and constrain excessive archaeology.
+The 7-day repeat_failure_rate is 0.351, breaching the 0.35 target. audit_repeat_failures.py audits cycle ledger streaks; adding trailing window duration filtering and a configurable threshold breach check allows targeted 7d audits and automated alerts.
 
-Target path: scripts/check_cycle_budget.py
+Target path: scripts/audit_repeat_failures.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_cycle_budget.py provides a detector that identifies git inspection commands targeting historical commit hashes and flags runs exceeding threshold.
+audit_repeat_failures.py supports window-days filtering and exits non-zero when repeat failure rate breaches max threshold
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5880,7 +5881,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 08:24:23 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 11:19:45 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 08:35:32 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 11:19:45 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
