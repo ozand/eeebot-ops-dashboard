@@ -277,6 +277,23 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
     assert 'tier-link-origin' in html
 
 
+def test_agent_page_subject_oriented_context_group_order_is_stable():
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {'chars': 100, 'cap': 24000, 'sections': {'identity': 10}},
+        'prompt_text': None, 'task_text': None, 'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    budget = html.index('Prompt Budget &amp; Fit')
+    assembly = html.index('Prompt Assembly &amp; Context Architecture')
+    knowledge = html.index('Reachable Knowledge &amp; Access Paths')
+    assert budget < assembly < knowledge
+    assert html.count('Arithmetic Character Reconciliation') == 1
+    assert html.count('Dialogue Window:') == 1
+
+
 def test_agent_page_renders_goals_as_outside_capped_prompt_section():
     fixture = _base_fixture()
     fixture['agent_context'] = {

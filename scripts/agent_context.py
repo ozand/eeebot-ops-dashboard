@@ -478,6 +478,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('  </div>')
 
+    out.append('  <div class="context-subject-group context-overview-group">')
+    out.append('    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>')
     out.append('  <div class="context-meter-box">')
     meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)' if bar_pct is not None and cap is not None else '<strong>unavailable</strong> (recorded cap unavailable)'
     out.append(f'    <div class="meter-labels"><span>Prompt Budget Utilization: {meter_value}</span><span>{ts_display}</span></div>')
@@ -505,9 +507,18 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Event window</strong><span>{esc(fit_window_text())}</span></div>')
     out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>{esc(fit_metric("dropped", "sections"))}</span></div>')
     out.append(f'      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>{esc(fit_metric("trimmed", "sections"))}</span></div>')
+    history_prompt_tokens = executor_llm_stats.get("prompt_tokens") if isinstance(executor_llm_stats, dict) else None
+    history_text = f"{history_prompt_tokens:,} prompt tokens (executor)" if isinstance(history_prompt_tokens, int) else "unavailable"
     out.append('    </div>')
+    window_tokens = 98000
+    reserve_tokens = 8000
+    window_budget = window_tokens - reserve_tokens
+    compaction_status = "compaction did not fire" if isinstance(compaction, dict) and compaction.get("status") in {"missing", "empty"} else esc(compaction.get("status", "unavailable") if isinstance(compaction, dict) else "unavailable")
+    out.append(f'<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> {window_budget:,} tokens ({window_tokens:,} − {reserve_tokens:,}) · occupancy: {history_text} · {compaction_status}</div>')
     out.append('  </div>')
 
+    out.append('  <div class="context-subject-group context-assembly-group">')
+    out.append('    <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>')
     out.append('  <div class="two-tier-canvas">')
     out.append('    <div class="tier-col tier1-col">')
     out.append('      <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>')
@@ -519,8 +530,6 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">{cat_sz:,}c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {corpus_count(skills_status, len(skills))} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
     out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">{mem_sz:,}c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes {corpus_count(mem_corpus_status, mem_cnt)} files in Tier 2</a></div>')
     out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
-    history_prompt_tokens = executor_llm_stats.get("prompt_tokens") if isinstance(executor_llm_stats, dict) else None
-    history_text = f"{history_prompt_tokens:,} prompt tokens (executor)" if isinstance(history_prompt_tokens, int) else "unavailable"
     window_budget = 98000 - 8000
     window_text = f"{window_budget:,} tokens available (98,000 − 8,000) · occupancy {history_text}"
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">{window_text}</span></div>')
@@ -630,7 +639,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">{t_sz:,} chars &bull; ~{estimate_tokens(t_sz):,} tokens</span></summary><div class="block-body"><pre><code>{esc(task_text)}</code></pre></div></details>')
 
     out.append('  </div>')
+    out.append('  </div>')
 
+    out.append('  <div class="context-subject-group context-knowledge-group">')
+    out.append('    <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>')
     out.append('  <div class="tier2-deep-section">')
     out.append('    <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>')
     out.append(f'    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~{t2_kb:.1f} KB</strong> across <strong>{t2_files}</strong> files.</p>')
@@ -643,11 +655,6 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     missing = [str(name) for name in memory_index.get("resident_missing", [])] if isinstance(memory_index, dict) and isinstance(memory_index.get("resident_missing"), list) else None
     missing_text = ", ".join(missing) if missing else "none" if isinstance(memory_index, dict) else "unavailable"
     out.append(f'<div class="context-telemetry-box"><strong>Memory index:</strong> status {esc(memory_index.get("status", "unavailable") if isinstance(memory_index, dict) else "unavailable")} · resident matched {memory_index.get("resident_matched", "unavailable") if isinstance(memory_index, dict) else "unavailable"} · resident missing: {esc(missing_text)}</div>')
-    window_tokens = 98000
-    reserve_tokens = 8000
-    window_budget = window_tokens - reserve_tokens
-    compaction_status = "compaction did not fire" if isinstance(compaction, dict) and compaction.get("status") in {"missing", "empty"} else esc(compaction.get("status", "unavailable") if isinstance(compaction, dict) else "unavailable")
-    out.append(f'<div class="context-telemetry-box"><strong>Dialogue Window:</strong> {window_budget:,} tokens ({window_tokens:,} − {reserve_tokens:,}) · occupancy: {history_text} · {compaction_status}</div>')
     catalogue_text = raw_sections_text.get("skills_catalogue", "")
     catalogue_names = {re.sub(r"<[^>]+>", "", name).strip() for name in re.findall(r"<name>(.*?)</name>", catalogue_text, re.DOTALL)}
     catalogue_names.discard("")
@@ -708,12 +715,29 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
 
     out.append('  </div>')
+    out.append('  </div>')
     out.append('</section>')
 
     return "\n".join(out)
 
 AGENT_CONTEXT_CSS = """
 /* Issue #227: Two-tier agent context visualization styling */
+.context-subject-group {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #30363d;
+}
+.context-subject-group:first-of-type { margin-top: 16px; }
+.context-subject-heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #c9d1d9;
+  letter-spacing: .01em;
+}
+.context-knowledge-group .tier2-deep-section,
+.context-assembly-group .context-detail-section { margin-top: 0; }
+.context-telemetry-box { margin: 10px 0; padding: 9px 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #c9d1d9; font-size: 12px; overflow-wrap: anywhere; }
+
 .context-panel {
   background: var(--color-bg-subtle, #161b22);
   border: 1px solid var(--color-border-default, #30363d);
