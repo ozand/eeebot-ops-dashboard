@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">229</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 17:49:46 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 14:55 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="33">data: 32s old &middot; generated 15:20 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-82f3f8d8342f</span>
+      <span class="cycle-pill">fallback-d6d654e6af7a</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 14:42:03.402100 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 15:06:49.503896 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 20,928 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 28,784 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 20,928 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,705c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 28,784 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,284c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1757,12 +1757,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T113225Z-canonical-fcf64409/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T145847Z-canonical-28c1dec2/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T113225Z-canonical-fcf64409/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T145847Z-canonical-28c1dec2/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1914,17 +1914,19 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,705 chars &bull; ~1,926 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add bashism detection for PIPESTATUS and non-POSIX patterns to scripts/validate_no_shell_true.py
-Request ID: llm-proposer-cycle-82f3f8d8342f
-Cycle ID: cycle-82f3f8d8342f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,284 chars &bull; ~1,571 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Priority 17 — Framebuffer writer (V2)
+Request ID: llm-proposer-fallback-d6d654e6af7a
+Cycle ID: fallback-d6d654e6af7a
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
+(E) Priority 17 — Framebuffer writer (V2): write scripts/fb_surface.py that opens /dev/fb0, reads geometry and bit depth from /sys/class/graphics/fb0, and writes one full 1024x600x32 frame from a supplied RGBA buffer. Report the measured milliseconds and peak RSS of one full push. If the device is missing or unreadable, refuse and say which path failed — never a silent no-op. Keep it under 90 lines. Self-tests use a temporary file in place of the device. Commit.
+(O) Priority 43 — Filter fallback candidates dedup (V1): Write scripts/filter_fallback_targets.py with a single function filter_candidate_paths(candidates, recent_targets) under 40 lines. Given a list of candidate filepaths and a collection of recently targeted paths, return a list containing only candidates not in recent_targets, preserving original order. If candidates is empty or not a list, return an empty list.
 
-Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Framebuffer writer (V2); Palette expansion cost (V2); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Filter fallback candidates dedup (V1); Quarantine repeat defect candidates (V1).
+Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Palette expansion cost (V2); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
@@ -1942,53 +1944,37 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add isolated baseline test execution in temporary directory to scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-82f3f8d8342f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-d6d654e6af7a.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add bashism detection for PIPESTATUS and non-POSIX patterns to scripts/validate_no_shell_true.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Cycle cycle-d54835cb661e failed when /bin/sh rejected PIPESTATUS bashisms. Extending scripts/validate_no_shell_true.py to detect non-POSIX patterns like PIPESTATUS in shell invocations prevents invalid commands under POSIX /bin/sh.\n\nTarget path: scripts/validate_no_shell_true.py&quot;,
+    &quot;title&quot;: &quot;Priority 17 — Framebuffer writer (V2)&quot;,
+    &quot;backlog_instructions&quot;: &quot;Write scripts/fb_surface.py to open /dev/fb0, read geometry and bit depth from /sys/class/graphics/fb0, and write one full 1024x600x32 frame with timing and peak RSS metrics under 90 lines.\n\nTarget path: scripts/fb_surface.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add bashism detection for PIPESTATUS and non-POSIX patterns to scripts/validate_no_shell_true.py (target: scripts/validate_no_shell_true.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Priority 17 — Framebuffer writer (V2) (target: scripts/fb_surface.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260913-769b714d  Title: Verification gate rejected the proposed change while attempting: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shel
+ID: ERR-20260912-861355a6  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Batch script checking into a single execution pass in scripts/validate_unused_im
 Root cause: 
 Prevention: 
 
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-1767b3d47ede-ffe2  Title: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
-Problem: running `echo &quot;EXIT: ${PIPESTATUS[0]}&quot;` triggered `/bin/sh: 1: Bad substitution` with exit code 2 before switching back to `$?`.
-Solution: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
-If you apply this lesson, cite [Lesson LESS-REF-1767b3d47ede-ffe2] in your proposal/response.
-
-## Recent reflections (how past cycles worked — steering hints)
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
-- Unbounded read-only reconnaissance loop: The executor accumulated over 46k prompt tokens and 80 sequence turns performing passive reads and shell greps without ever transitioning into editing the targ
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-15 14:29 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, scripts/dict_schema_probe.py, tests/test_dict_schema_probe.py.…
-- Attempt 2 (2026-09-15 14:09 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-15 13:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py. Reward signal will be…
-
 ## Concrete task to implement
 
-Title: Add bashism detection for PIPESTATUS and non-POSIX patterns to scripts/validate_no_shell_true.py
+Title: Priority 17 — Framebuffer writer (V2)
 
 
-Cycle cycle-d54835cb661e failed when /bin/sh rejected PIPESTATUS bashisms. Extending scripts/validate_no_shell_true.py to detect non-POSIX patterns like PIPESTATUS in shell invocations prevents invalid commands under POSIX /bin/sh.
+Write scripts/fb_surface.py to open /dev/fb0, read geometry and bit depth from /sys/class/graphics/fb0, and write one full 1024x600x32 frame with timing and peak RSS metrics under 90 lines.
 
-Target path: scripts/validate_no_shell_true.py
+Target path: scripts/fb_surface.py
 
 ## Concrete task to implement
-Implement and commit: Add bashism detection for PIPESTATUS and non-POSIX patterns to scripts/validate_no_shell_true.py (target: scripts/validate_no_shell_true.py)
+Implement and commit: Priority 17 — Framebuffer writer (V2) (target: scripts/fb_surface.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5897,12 +5883,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (enhancement_without_caller)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 964 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">91</td><td>889.1K</td><td>31s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Priority 17 — Framebuffer writer (V2)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 966 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">93</td><td>912.7K</td><td>31s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 14:55:38 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 17:49:46 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 15:20:00 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 17:49:46 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
