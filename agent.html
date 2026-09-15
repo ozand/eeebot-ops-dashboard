@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">223</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 11:19:45 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 08:52 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 09:00 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-13d271b947b8</span>
+      <span class="cycle-pill">cycle-3b033a38b924</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1288,7 +1288,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 08:27:58.662789 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 08:55:50.685261 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1322,7 +1322,7 @@
 
 " Separators</span><span class="t1-sz">21c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,146c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,825c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1893,9 +1893,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,146 chars &bull; ~2,036 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py
-Request ID: llm-proposer-cycle-13d271b947b8
-Cycle ID: cycle-13d271b947b8
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,825 chars &bull; ~1,956 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Prune state and cache directories during file discovery in scripts/verify_imports.py
+Request ID: llm-proposer-cycle-3b033a38b924
+Cycle ID: cycle-3b033a38b924
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1907,74 +1907,74 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- bb625af1 merge: integrate selfevo/cycle-cycle-13d271b947b8
+- b1e68cb9 fix(audit_repeat_failures): repair self-test for default rate threshold and add window-days rate filtering tests
 - b3fdb293 merge: integrate selfevo/cycle-cycle-0a1cc579329c
 - 1a171ddd feat(check_cycle_budget): add git commit archaeology detector
 - 8e8930e8 merge: integrate selfevo/cycle-fallback-f16a59efdd73
 - 378a6e5a selfevo: auto-commit uncommitted subagent work — Add list element traversal and schema sampling to scripts/dict_schema_probe.py
 - 02671103 feat(dict_schema_probe): add list element traversal and schema sampling
 - f498610a merge: integrate selfevo/cycle-fallback-669ba3bd4f31
-- 830a0071 feat(quarantine_defects): add demand quarantine record evaluation and persistence
-- 668b8578 merge: integrate selfevo/cycle-cycle-a96840293e09
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add nested quote collision detector for python shell commands to scripts/workspace_validation_helpers.py: recent_duplicate_failure
 - Add atomic verification registration to scripts/verify_and_proof.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-13d271b947b8.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3b033a38b924.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;The 7-day repeat_failure_rate is 0.351, breaching the 0.35 target. audit_repeat_failures.py audits cycle ledger streaks; adding trailing window duration filtering and a configurable threshold breach check allows targeted 7d audits and automated alerts.\n\nTarget path: scripts/audit_repeat_failures.py&quot;,
+    &quot;title&quot;: &quot;Prune state and cache directories during file discovery in scripts/verify_imports.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Directory discovery in scripts/verify_imports.py scans transient state and cache folders; adding explicit pruning sets for state and cache directories avoids redundant traversal.\n\nTarget path: scripts/verify_imports.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py (target: scripts/audit_repeat_failures.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Prune state and cache directories during file discovery in scripts/verify_imports.py (target: scripts/verify_imports.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;audit_repeat_failures.py supports window-days filtering and exits non-zero when repeat failure rate breaches max threshold&quot;,
+    &quot;claim&quot;: &quot;scripts/verify_imports.py prunes state and cache directories during file discovery&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/audit_repeat_failures.py --help&quot;
+      &quot;command&quot;: &quot;python3 -m py_compile scripts/verify_imports.py&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+ID: ERR-20260914-abf03d77  Title: Out-of-band origin/main movement prevented integration while attempting: Add active state reflections and demand search to scripts/search_subagent_archiv
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-REF-f0bd8333acbe-1d2e  Title: Inspect target file interfaces or git history during task proposal to verify whether proposed features (such as CLI flags) already exist before dispatching implementation cycles.
+Problem: scripts/verify_imports.py already contained lines 10, 1707-1711, and 1730-1737 supporting --json, and tests/test_verify_imports.py already tested it across multiple test cases.
+Solution: Inspect target file interfaces or git history during task proposal to verify whether proposed features (such as CLI flags) already exist before dispatching implementation cycles.
+If you apply this lesson, cite [Lesson LESS-REF-f0bd8333acbe-1d2e] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Verify leading whitespace alignment against the enclosing indentation block when performing string edits in Python source files to avoid indentation syntax errors.
-- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
-- Off-by-one indentation during file editing: When editing scripts/check_last_cycle_repeat.py in turn 6, the agent inserted CLI arguments with 3 spaces instead of 4, triggering an IndentationError at li
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
+- Use `read_file` with explicit `offset` and `limit` arguments to read contiguous file segments in chunks of 50-100 lines rather than using `exec` to page through files in 5-line increments.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 08:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
-- Attempt 2 (2026-09-15 07:42 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/dict_schema_probe.py,…
-- Attempt 3 (2026-09-15 06:56 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/quarantine_defects.py, tests/test_quarantine_defects.py. Reward signal will be…
+- Attempt 1 (2026-09-15 08:34 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/audit_repeat_failures.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-15 08:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py. Reward signal will be…
+- Attempt 3 (2026-09-15 07:42 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/dict_schema_probe.py,…
 
 ## Concrete task to implement
 
-Title: Add trailing window filtering and rate threshold check to scripts/audit_repeat_failures.py
+Title: Prune state and cache directories during file discovery in scripts/verify_imports.py
 
 
-The 7-day repeat_failure_rate is 0.351, breaching the 0.35 target. audit_repeat_failures.py audits cycle ledger streaks; adding trailing window duration filtering and a configurable threshold breach check allows targeted 7d audits and automated alerts.
+Directory discovery in scripts/verify_imports.py scans transient state and cache folders; adding explicit pruning sets for state and cache directories avoids redundant traversal.
 
-Target path: scripts/audit_repeat_failures.py
+Target path: scripts/verify_imports.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-audit_repeat_failures.py supports window-days filtering and exits non-zero when repeat failure rate breaches max threshold
+scripts/verify_imports.py prunes state and cache directories during file discovery
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5881,7 +5881,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 08:52:26 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 11:19:45 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 09:00:33 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 11:19:45 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
