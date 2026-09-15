@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">226</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 21:35:21 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 18:50 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 26s old &middot; generated 18:58 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-3f5e3599dd84</span>
+      <span class="cycle-pill">cycle-cc0b0b5bb3e0</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 18:09:16.249119 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 18:53:31.641369 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 23,013 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 23,479 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 23,013 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,710c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 23,479 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,342c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1914,78 +1914,82 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,710 chars &bull; ~2,177 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Support validating individual lesson markdown files via CLI in scripts/check_lesson_markdown_sections.py
-Request ID: llm-proposer-cycle-3f5e3599dd84
-Cycle ID: cycle-3f5e3599dd84
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,342 chars &bull; ~2,085 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add get_quarantined_patterns function to scripts/quarantine_defects.py
+Request ID: llm-proposer-cycle-cc0b0b5bb3e0
+Cycle ID: cycle-cc0b0b5bb3e0
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
 
 Current priority targets:
-(E) Priority 17 — Write one frame to the real display (V2): make scripts/fb_surface.py actually open /dev/fb0, read virtual_size and bits_per_pixel from /sys/class/graphics/fb0, and write one full frame. An in-memory bytearray is not a framebuffer: this is not done until bytes have reached the device. Quote in the commit message the geometry read from sysfs, the measured milliseconds and peak RSS of one full push, and the output of stat on /dev/fb0. If the device cannot be opened, refuse with the failing path and the errno named - that is a complete outcome; a silent no-op is not. Commit.
-(P) Priority 43 — Filter fallback candidates dedup (V1): Write scripts/filter_fallback_targets.py with a single function filter_candidate_paths(candidates, recent_targets) under 40 lines. Given a list of candidate filepaths and a collection of recently targeted paths, return a list containing only candidates not in recent_targets, preserving original order. If candidates is empty or not a list, return an empty list.
+(G) Priority 43 — Filter fallback candidates dedup (V1): Write scripts/filter_fallback_targets.py with a single function filter_candidate_paths(candidates, recent_targets) under 40 lines. Given a list of candidate filepaths and a collection of recently targeted paths, return a list containing only candidates not in recent_targets, preserving original order. If candidates is empty or not a list, return an empty list.
+(I) Priority 45 — Assert doc integration structure (V1): Add a function validate_doc_structure in scripts/validate_doc_structure.py that inspects a markdown document file to verify it contains at least one top-level heading and a non-empty summary section, returning a boolean status. Keep the entire file under 40 lines.
+(J) Priority 46 — Quarantine repeat defect patterns (V1): Write a function get_quarantined_patterns in scripts/quarantine_defects.py that reads failure records from the cycle ledger JSONL and returns error strings that appear at or above a given failure threshold. Keep the entire file under 40 lines with clean error handling when the ledger path is missing or empty.
 
-Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Measure against the fastest thing this host can do (V2); One surface module, not three (V2); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1).
+Completed (do not repeat): Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- bb5f270c merge: integrate selfevo/cycle-cycle-3f5e3599dd84
+- 48a58675 feat(check_lesson_markdown_sections): validate individual lesson files via CLI
 - 7157a5c1 merge: integrate selfevo/cycle-fallback-4271bf01e723
 - ae15c47c test(validate_deprecation_status): cover --json/--summary CLI output and error summary
 - 9e59dcca merge: integrate selfevo/cycle-cycle-c330d89acbf6
 - fc2b9e17 refactor(tile_surface): import tile geometry primitives from avatar_tiles (Priority 19)
 - c0baf3ec merge: integrate selfevo/cycle-cycle-f04fa2860cb0
 - 0fe0fc73 selfevo: auto-commit uncommitted subagent work — Implement numpy-accelerated palette expansion in scripts/fb_surface.py
-- 5e18e9a2 feat(fb_surface): numpy-accelerated palette expansion (Priority 18)
-- 35b11135 merge: integrate selfevo/cycle-cycle-8183ecc346e5
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3f5e3599dd84.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-cc0b0b5bb3e0.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Support validating individual lesson markdown files via CLI in scripts/check_lesson_markdown_sections.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Allows scripts/check_lesson_markdown_sections.py to validate specific lesson markdown files passed as CLI arguments, enabling isolated preflight validation of newly authored cards without triggering repository-wide test failures on unrelated files.\n\nTarget path: scripts/check_lesson_markdown_sections.py&quot;,
+    &quot;title&quot;: &quot;Add get_quarantined_patterns function to scripts/quarantine_defects.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements get_quarantined_patterns in scripts/quarantine_defects.py to read cycle ledger failure records and return recurring error strings at or above a failure threshold with safe handling for missing ledger paths.\n\nTarget path: scripts/quarantine_defects.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Support validating individual lesson markdown files via CLI in scripts/check_lesson_markdown_sections.py (target: scripts/check_lesson_markdown_sections.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add get_quarantined_patterns function to scripts/quarantine_defects.py (target: scripts/quarantine_defects.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;get_quarantined_patterns returns quarantined error strings meeting threshold and returns an empty list if ledger path is missing or empty&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -c &#x27;import scripts.quarantine_defects as qd; assert hasattr(qd, \&quot;get_quarantined_patterns\&quot;); assert qd.get_quarantined_patterns(\&quot;/tmp/nonexistent_ledger.jsonl\&quot;, 2) == []&#x27;&quot;
+    }
+  }
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
-Root cause: 
-Prevention: 
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260904-90931e43  Title: Support both repository-relative (&#x27;memory/facts/...&#x27;) and directory-relative (&#x27;facts/...&#x27;) markdown link formats in catalog index consistency tests
-Problem: a markdown catalog index consistency test resolved every relative link in the index against a single base (the memory/ directory), so links written in the other common format — repository-relative (&#x27;memory/facts/...&#x27;) instead of directory-relative (&#x27;facts/...&#x27;) — were reported as missing files even though the target exists on disk. The test failed on a valid index purely because of the link&#x27;s path
-Solution: When validating relative markdown links in a catalog index (e.g. memory/index.md), resolve each link against both candidate bases — the index file&#x27;s own directory and the repository root — and treat the link as valid if either resolution yields an existing file. Only report a link as missing when neither candidate path exists. This makes the consistency check format-agnostic for the two relative p
-If you apply this lesson, cite [Lesson LESS-20260904-90931e43] in your proposal/response.
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Check whether modified files are tracked before attempting git stash, or include untracked files via &#x27;git stash -u&#x27; when testing baseline repository state.
-- Check &#x27;git ls-files &lt;path&gt;&#x27; before editing documentation index files to verify if the index is under version control or ignored.
-- Emit strictly the raw JSON object without conversational commentary in the final response.
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
+- Target grep commands directly to function definitions or call sites rather than issuing broad sequential read_file windows across large monolithic scripts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 17:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/tile_surface.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-15 17:14 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/fb_surface.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-15 18:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_lesson_markdown_sections.py, tests/test_check_lesson_markdown_sections.py.…
+- Attempt 2 (2026-09-15 17:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/tile_surface.py. Reward signal will be upgraded by coordinator.
+- Attempt 3 (2026-09-15 17:14 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/fb_surface.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Support validating individual lesson markdown files via CLI in scripts/check_lesson_markdown_sections.py
+Title: Add get_quarantined_patterns function to scripts/quarantine_defects.py
 
 
-Allows scripts/check_lesson_markdown_sections.py to validate specific lesson markdown files passed as CLI arguments, enabling isolated preflight validation of newly authored cards without triggering repository-wide test failures on unrelated files.
+Implements get_quarantined_patterns in scripts/quarantine_defects.py to read cycle ledger failure records and return recurring error strings at or above a failure threshold with safe handling for missing ledger paths.
 
-Target path: scripts/check_lesson_markdown_sections.py
+Target path: scripts/quarantine_defects.py
 
-## Concrete task to implement
-Implement and commit: Support validating individual lesson markdown files via CLI in scripts/check_lesson_markdown_sections.py (target: scripts/check_lesson_markdown_sections.py)
+## Expected outcome (frozen claim from the proposal — informational)
+get_quarantined_patterns returns quarantined error strings meeting threshold and returns an empty list if ledger path is missing or empty
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5899,7 +5903,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 18:50:11 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 21:35:21 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 18:58:06 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 21:35:21 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
