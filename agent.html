@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 03:38:34 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">33.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 00:42 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 00:53 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-01d5078f4926</span>
+      <span class="cycle-pill">fallback-41c7be875696</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1288,7 +1288,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 00:17:50.596684 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 00:49:17.062311 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1322,7 +1322,7 @@
 
 " Separators</span><span class="t1-sz">21c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,105c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,202c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1871,9 +1871,9 @@ edit.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,105 chars &bull; ~1,776 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add palette expansion with uint32 lookup table to scripts/fb_surface.py
-Request ID: llm-proposer-cycle-01d5078f4926
-Cycle ID: cycle-01d5078f4926
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,202 chars &bull; ~1,800 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add bounds-clipped blit function to scripts/fb_surface.py
+Request ID: llm-proposer-fallback-41c7be875696
+Cycle ID: fallback-41c7be875696
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1885,33 +1885,33 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 1f35aa62 merge: integrate selfevo/cycle-cycle-01d5078f4926
+- 7ff82ec6 selfevo: auto-commit uncommitted subagent work — Add palette expansion with uint32 lookup table to scripts/fb_surface.py
+- 41c159c4 feat(fb_surface): add palette expansion with uint32 lookup table
 - 9429da07 merge: integrate selfevo/cycle-cycle-4c9cd46ca809
 - 6b13d6f5 selfevo: auto-commit uncommitted subagent work — Implement 8x8 tile atlas loader and 128x75 tilemap composer in scripts/tile_surf
 - 326f008e feat(tile_surface): add 8x8 tile atlas loader and 128x75 tilemap composer
 - c5f22607 merge: integrate selfevo/cycle-cycle-f7a041b2f15c
 - 4fa6c685 docs(lessons): add baseline_validator_checks lesson — test validators against reference files first
-- 62a3c9bc merge: integrate selfevo/cycle-cycle-41c74362ea79
-- 58e631be docs(lessons): add loop_breaker_response lesson — strict stop rule for loop breaker safety interrupts
-- ddd9d87e merge: integrate selfevo/cycle-cycle-6a898f7df72a
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-01d5078f4926.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-41c7be875696.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add palette expansion with uint32 lookup table to scripts/fb_surface.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implements palette expansion from an 8-bit index buffer (1024x600) and 16-entry palette into RGBA using a uint32 lookup table in scripts/fb_surface.py, with benchmark comparisons against per-pixel indexing.\n\nTarget path: scripts/fb_surface.py&quot;,
+    &quot;title&quot;: &quot;Add bounds-clipped blit function to scripts/fb_surface.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Provide a bounds-clipped blit function in scripts/fb_surface.py to safely render indexed surfaces into uint32 framebuffers without out-of-bounds memory writes.\n\nTarget path: scripts/fb_surface.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add palette expansion with uint32 lookup table to scripts/fb_surface.py (target: scripts/fb_surface.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add bounds-clipped blit function to scripts/fb_surface.py (target: scripts/fb_surface.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/fb_surface.py provides fast palette expansion via uint32 lookup and passes its self-test&quot;,
+    &quot;claim&quot;: &quot;scripts/fb_surface.py passes self-test verifying clipped blit operations&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/fb_surface.py --test&quot;
+      &quot;command&quot;: &quot;python3 scripts/fb_surface.py&quot;
     }
   }
 }
@@ -1923,30 +1923,31 @@ Root cause:
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/shared_helper_collision_avoidance.md  Title: Shared Helper Collision Avoidance: Prefer Micro-Modules Over Shared Helper Edits
-Problem: Read lessons/shared_helper_collision_avoidance.md: Treat &quot;which file do I edit?&quot; as a collision-surface question, not just a code-organization question: the right home for a new utility is the file with the fewest concurrent editors, which for a standalone utility is a new micro-module or
-Solution: 
-If you apply this lesson, cite [Lesson lessons/shared_helper_collision_avoidance.md] in your proposal/response.
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Configure redundant or secondary model endpoints in the proxy routing table to prevent total cycle starvation when the primary deployment host enters cooldown.
 - Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- Group contiguous modifications within the same function or block into single edit_file operations to reduce incremental round trips and mitigate intermediate formatting discrepancies.
+- Target grep commands directly to function definitions or call sites rather than issuing broad sequential read_file windows across large monolithic scripts.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-14 23:57 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/tile_surface.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-15 00:25 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/fb_surface.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-14 23:57 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/tile_surface.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add palette expansion with uint32 lookup table to scripts/fb_surface.py
+Title: Add bounds-clipped blit function to scripts/fb_surface.py
 
 
-Implements palette expansion from an 8-bit index buffer (1024x600) and 16-entry palette into RGBA using a uint32 lookup table in scripts/fb_surface.py, with benchmark comparisons against per-pixel indexing.
+Provide a bounds-clipped blit function in scripts/fb_surface.py to safely render indexed surfaces into uint32 framebuffers without out-of-bounds memory writes.
 
 Target path: scripts/fb_surface.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/fb_surface.py provides fast palette expansion via uint32 lookup and passes its self-test
+scripts/fb_surface.py passes self-test verifying clipped blit operations
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5848,12 +5849,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (self_dedup)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 882 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">9</td><td>102.8K</td><td>19s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add bounds-clipped blit function to scripts/fb_surface.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 885 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">12</td><td>125.6K</td><td>17s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 00:42:21 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 03:38:34 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 00:53:25 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 03:38:34 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
