@@ -1244,7 +1244,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">220</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">76.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 05:58:42 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 03:09 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 03:19 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1261,7 +1261,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-94acc358d1ab</span>
+      <span class="cycle-pill">cycle-2b665692e635</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1288,7 +1288,7 @@
     </div>
   </div>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 02:39:06.343762 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 03:12:35.395602 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1322,7 +1322,7 @@
 
 " Separators</span><span class="t1-sz">21c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history [1..n]</span><span class="t1-desc">turn messages</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,071c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,042c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1893,9 +1893,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,071 chars &bull; ~1,767 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py
-Request ID: llm-proposer-cycle-94acc358d1ab
-Cycle ID: cycle-94acc358d1ab
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,042 chars &bull; ~2,010 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add tool call repetition and loop breaker notice detection to scripts/check_cycle_budget.py
+Request ID: llm-proposer-cycle-2b665692e635
+Cycle ID: cycle-2b665692e635
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1907,58 +1907,73 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- e1a81530 merge: integrate selfevo/cycle-cycle-94acc358d1ab
+- 41c20546 selfevo: auto-commit uncommitted subagent work — Add schema and field distribution probe to scripts/loop_health_report.py
+- f73a978d feat(loop_health_report): add --probe schema and field distribution mode
 - 9c3e2536 merge: integrate selfevo/cycle-fallback-3e5289519605
 - 98afa81c selfevo: auto-commit uncommitted subagent work — Add render_tilemap_to_fb composite rendering in scripts/tile_surface.py
 - 9bb4457f feat(tile_surface): add render_tilemap_to_fb composite rendering
 - 94a93af8 merge: integrate selfevo/cycle-fallback-504f828035e7
 - a969bf88 selfevo: auto-commit uncommitted subagent work — Add demand failure aggregation and quarantine threshold flag to scripts/analyze_
-- e1e28cb9 feat(analyze_repeat_failures): add demand failure aggregation and quarantine threshold flag
-- a696f5f9 merge: integrate selfevo/cycle-cycle-1786f0e69d5b
-- 9a9a4e10 feat(model_fallback_routing): add RateLimitError cooldown failover resolution
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add companion test field assertion scanner to scripts/workspace_validation_helpers.py: recent_duplicate_failure
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-94acc358d1ab.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2b665692e635.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add schema and field distribution probe to scripts/loop_health_report.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds a multi-metric schema probe mode to scripts/loop_health_report.py that aggregates top-level keys, stop_reasons, status counts, and error field distributions across state artifact JSON files, replacing repetitive sequential one-liner inspection commands with a single command.\n\nTarget path: scripts/loop_health_report.py&quot;,
+    &quot;title&quot;: &quot;Add tool call repetition and loop breaker notice detection to scripts/check_cycle_budget.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Extends scripts/check_cycle_budget.py to inspect turn records for consecutive identical tool invocations and post-loop_breaker executions, addressing cycle-15fc0ea6f654 where exec was repeated after safety stop triggers.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add tool call repetition and loop breaker notice detection to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/check_cycle_budget.py provides options to detect consecutive duplicate tool calls and loop_breaker trigger events in turn records&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/check_cycle_budget.py --help&quot;
+    }
+  }
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+Root cause: 
+Prevention: 
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/inspect_script_cli_flags.md  Title: Inspect Script CLI Flags Before Invoking Validation Scripts
-Problem: Read lessons/inspect_script_cli_flags.md: **Default to a one-shot interface probe for any script not invoked earlier in the same session.** `--help` is the canonical probe; a bounded `grep -n &quot;add_argument&quot; &lt;script&gt;` is the fallback when the script has no help text or the output
-Solution: 
-If you apply this lesson, cite [Lesson lessons/inspect_script_cli_flags.md] in your proposal/response.
+ID: LESS-REF-62ca5a6de51a-530e  Title: When a loop-breaker safety alert is returned by the tool executor, change the strategy immediately (e.g. read the full file or begin editing) rather than re-submitting the identical tool call.
+Problem: tool call egd6E10DT-lb issued a loop breaker safety stop, but the agent issued the identical grep command twice more (945yLHhfU and vhm5IInZr).
+Solution: When a loop-breaker safety alert is returned by the tool executor, change the strategy immediately (e.g. read the full file or begin editing) rather than re-submitting the identical tool call.
+If you apply this lesson, cite [Lesson LESS-REF-62ca5a6de51a-530e] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
-- Immediately halt tool execution and emit the final summary or skip declaration when a loop_breaker safety stop is triggered.
-- Repetitive tool execution loop and disregard of loop_breaker: The executor ran an identical python exec command six consecutive times (turns 11, 13, 14, 15, 16, 17) calculating litellm error counts. E
+- Oscillating tool execution loop bypassing consecutive loop breaker: After encountering regex extraction discrepancies with validate_deprecation_status.py, the executor alternated between two diagnosti
+- Repetitive command execution loop and loop-breaker bypass: The executor called an identical python microbenchmark command five times across turns 13 to 17. Even after receiving a system loop_breaker m
+- Immediately halt tool execution and emit the final response or skip declaration upon receiving a loop_breaker safety warning.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 02:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/tile_surface.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-15 01:51 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
-- Attempt 3 (2026-09-15 01:30 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/model_fallback_routing.py, tests/test_model_fallback_routing.py. Reward signal will…
+- Attempt 1 (2026-09-15 02:54 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/loop_health_report.py.…
+- Attempt 2 (2026-09-15 02:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/tile_surface.py. Reward signal will be upgraded by…
+- Attempt 3 (2026-09-15 01:51 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/analyze_repeat_failures.py,…
 
 ## Concrete task to implement
 
-Title: Add schema and field distribution probe to scripts/loop_health_report.py
+Title: Add tool call repetition and loop breaker notice detection to scripts/check_cycle_budget.py
 
 
-Adds a multi-metric schema probe mode to scripts/loop_health_report.py that aggregates top-level keys, stop_reasons, status counts, and error field distributions across state artifact JSON files, replacing repetitive sequential one-liner inspection commands with a single command.
+Extends scripts/check_cycle_budget.py to inspect turn records for consecutive identical tool invocations and post-loop_breaker executions, addressing cycle-15fc0ea6f654 where exec was repeated after safety stop triggers.
 
-Target path: scripts/loop_health_report.py
+Target path: scripts/check_cycle_budget.py
 
-## Concrete task to implement
-Implement and commit: Add schema and field distribution probe to scripts/loop_health_report.py (target: scripts/loop_health_report.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/check_cycle_budget.py provides options to detect consecutive duplicate tool calls and loop_breaker trigger events in turn records
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5865,7 +5880,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 03:09:12 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 05:58:42 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 03:19:36 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 05:58:42 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
