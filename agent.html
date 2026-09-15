@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">227</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 14:00:37 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 11:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 11:27 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-5d9663e7e856</span>
+      <span class="cycle-pill">cycle-f64a13b76951</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 10:41:20.900730 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 11:08:30.660063 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 55,069 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 39,095 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 55,069 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,098c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 39,095 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,554c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,098 chars &bull; ~1,774 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py
-Request ID: llm-proposer-cycle-5d9663e7e856
-Cycle ID: cycle-5d9663e7e856
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,554 chars &bull; ~1,888 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Fix deprecation check failure in scripts/validate_deprecation_status.py
+Request ID: llm-proposer-cycle-f64a13b76951
+Cycle ID: cycle-f64a13b76951
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1928,59 +1928,72 @@ Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle repo
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 41833c72 merge: integrate selfevo/cycle-cycle-5d9663e7e856
+- ffddb9d3 selfevo: auto-commit uncommitted subagent work — Add error excerpt extraction and failure categorization to scripts/loop_health_r
+- 64f7ef38 feat(loop_health_report): add error excerpt extraction and failure categorization
 - 69217b0f merge: integrate selfevo/cycle-cycle-dfd11c66d7be
 - 3a617f71 selfevo: auto-commit uncommitted subagent work — Add repeated command streak analyzer to scripts/check_cycle_budget.py
 - f5af365f feat(check_cycle_budget): add repeated command streak analyzer
 - 2f754afa feat(avatar): add instance drawing primitives, state reader and measured costs per ADR-018 (#207)
 - a173a4d4 merge: integrate selfevo/cycle-cycle-33e094c9142d
-- 0564e9ca test(timed_exec): add end-to-end tests for --timeout CLI flag
-- dbc51d22 merge: integrate selfevo/cycle-cycle-3b033a38b924
-- 310eb65d perf(verify_imports): prune state and cache dirs via shared DEFAULT_IGNORE_DIRS
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add surface exclusion diagnostic probe to scripts/analyze_repeat_failures.py: fetch_failed
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5d9663e7e856.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f64a13b76951.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add error excerpt extraction and failure categorization to scripts/loop_health_report.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Subagent result 93cdd878 failed with status=error. Adding error excerpt extraction and failure categorization to loop_health_report.py enables automated reporting and triage of error statuses directly from subagent result payloads.\n\nTarget path: scripts/loop_health_report.py&quot;,
+    &quot;title&quot;: &quot;Fix deprecation check failure in scripts/validate_deprecation_status.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolve the exit code 1 validation failure in validate_deprecation_status.py by repairing import inspection logic or handling false positive deprecation references.\n\nTarget path: scripts/validate_deprecation_status.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py (target: scripts/loop_health_report.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Fix deprecation check failure in scripts/validate_deprecation_status.py (target: scripts/validate_deprecation_status.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/validate_deprecation_status.py executes cleanly with exit code 0&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/validate_deprecation_status.py&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260905-05555d5b  Title: Executor LLM failure blocks post-refresh gate re-evaluation
-Root cause: The cycle gate verification or execution failed with executor_llm_error. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-20260909-f59ebb9e  Title: Executor LLM call failed before cycle execution while attempting: Add single-file git log history inspection to scripts/preflight_failure_check.py
+Root cause: 
+Prevention: 
+
+## Proven approach for this task (from lessons/lessons.yaml)
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Batch related modifications within the same file into fewer `edit_file` calls to reduce round-trip turn consumption and limit vulnerability to mid-cycle provider failures.
-- Mid-execution rate limit crash: The executor halted at sequence 14 due to an unhandled upstream provider error (&#x27;litellm.RateLimitError: RateLimitError: OpenAIException - No deployments available for 
-- Executor initialization failure due to model deployment exhaustion: Litellm raised RateLimitError (&#x27;OpenAIException - No deployments available for selected model, Try again in 120 seconds. Passed mode
+- When a validation script rejects a header or docstring format, align the file header directly to a known passing reference script rather than testing regex parsing variations in an inline Python shell
+- Cap exploratory regex and encoding diagnostic probes to at most 3 attempts; if validation does not clear, reformat the target section using basic ASCII single/triple quotes.
+- Oscillating tool execution loop bypassing consecutive loop breaker: After encountering regex extraction discrepancies with validate_deprecation_status.py, the executor alternated between two diagnosti
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 10:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/check_cycle_budget.py.…
-- Attempt 2 (2026-09-15 08:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_imports.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-15 10:56 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/prevent_repeats.json, memory/repeat_failures.json, scripts/loop_health_report.py.…
+- Attempt 2 (2026-09-15 10:20 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json, scripts/check_cycle_budget.py.…
 
 ## Concrete task to implement
 
-Title: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py
+Title: Fix deprecation check failure in scripts/validate_deprecation_status.py
 
 
-Subagent result 93cdd878 failed with status=error. Adding error excerpt extraction and failure categorization to loop_health_report.py enables automated reporting and triage of error statuses directly from subagent result payloads.
+Resolve the exit code 1 validation failure in validate_deprecation_status.py by repairing import inspection logic or handling false positive deprecation references.
 
-Target path: scripts/loop_health_report.py
+Target path: scripts/validate_deprecation_status.py
 
-## Concrete task to implement
-Implement and commit: Add error excerpt extraction and failure categorization to scripts/loop_health_report.py (target: scripts/loop_health_report.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/validate_deprecation_status.py executes cleanly with exit code 0
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5894,7 +5907,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 11:04:41 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 14:00:37 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 11:27:09 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 14:00:37 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
