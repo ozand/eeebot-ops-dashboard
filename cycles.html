@@ -1244,19 +1244,33 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">218</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 04:17:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">33.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 01:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 01:51 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2756 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2757 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-15 MSK</li>
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-504f828035e7">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-504f828035e7)</span>
+            
+            <a href="#node-94a93af" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-15T01:37:51.742227Z">04:37 MSK</span>
+          </div>
+          <div class="entity-links"><a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
+          
+          <div class="feed-cost">&#9889; 45 calls &middot; 2.11M tok &middot; dur 7m6s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1786f0e69d5b">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
@@ -1417,7 +1431,7 @@
             <strong class="feed-title">docs(lessons): add loop_breaker_response lesson — strict stop rule for loop breaker safety interrupts</strong>
             <span class="feed-cid copyable" translate="no">(cycle-41c74362ea79)</span>
             
-            <a href="#node-62a3c9b" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-14T22:43:45.222690Z">01:43 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-d63932fbfb75</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-9ff792579a7a-eef8">lesson:LESS-REF-9ff792579a7a-eef8</a></div>
@@ -1944,7 +1958,7 @@
           <div class="feed-cost">&#9889; 19 calls &middot; 648.7K tok &middot; dur 4m20s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-61c561997cca">
+        <li class="feed-row feed-overflow-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-61c561997cca">
           <div class="feed-header">
             <span class="badge badge-available">running</span>
             <strong class="feed-title">in progress</strong>
@@ -2689,14 +2703,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ca0d3d9838f1">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">docs(lessons): add isolated script verification fast path lesson</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ca0d3d9838f1)</span>
             
             
             <span class="feed-ts" title="2026-09-13T21:12:35.198078Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b49fc837a506</span></div>
-          <div class="feed-files">&#128193; lessons/isolated_script_verification.md</div>
+          
           <div class="feed-cost">&#9889; 15 calls &middot; 217.8K tok &middot; dur 2m14s</div>
         </li>
         
@@ -39904,7 +39918,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 01:30:51 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 04:17:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 01:51:47 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 04:17:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
