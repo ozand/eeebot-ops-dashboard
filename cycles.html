@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">228</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">78.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 18:24:10 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 15:58 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="33">data: 32s old &middot; generated 16:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1273,18 +1273,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-15 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-8183ecc346e5">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-8183ecc346e5">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-8183ecc346e5</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add AST check for pathlib mkdir parents parameter in scripts/check_pathlib_mkdir</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8183ecc346e5)</span>
             
-            
+            <a href="#node-35b1113" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T15:57:35.457559Z">18:57 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6cc3c0222670</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
-          
-          <div class="feed-cost">&#9889; 2 calls &middot; 32.74K tok &middot; dur 1m56s</div>
+          <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/check_pathlib_mkdir.py, tests/test_check_pathlib_mkdir.py</div>
+          <div class="feed-cost">&#9889; 29 calls &middot; 593.9K tok &middot; dur 8m8s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-d45fe9477c0e">
@@ -2259,7 +2259,7 @@
             <strong class="feed-title">docs(lessons): add prefer_existing_self_tests lesson — run existing self-tests before inline fixtures</strong>
             <span class="feed-cid copyable" translate="no">(cycle-2ee5c72d9df4)</span>
             
-            <a href="#node-ad1a879" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-14T21:27:12.700800Z">00:27 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-431c8b79e29e</span></div>
@@ -3111,14 +3111,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-dfcf3c68d90b">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(check_style): detect consecutive .sort() calls on identical targets</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dfcf3c68d90b)</span>
             
             <a href="#node-330c584" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T04:44:23.055772Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5c1696d0f3eb</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-9ff792579a7a-eef8">lesson:LESS-REF-9ff792579a7a-eef8</a></div>
-          <div class="feed-files">&#128193; scripts/check_style.py, tests/test_check_style.py</div>
+          
           <div class="feed-cost">&#9889; 20 calls &middot; 548.5K tok &middot; dur 3m8s</div>
         </li>
         
@@ -40704,7 +40704,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 15:58:14 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 18:24:10 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 16:16:03 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 18:24:10 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
