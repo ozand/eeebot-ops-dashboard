@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">227</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-15 20:18:42 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="31">data: 30s old &middot; generated 17:39 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="31">data: 30s old &middot; generated 17:58 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-c330d89acbf6</span>
+      <span class="cycle-pill">fallback-4271bf01e723</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 17:26:00.533104 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-15 17:53:19.434182 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 31,951 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 24,274 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 31,951 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,136c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 24,274 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,371c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1757,12 +1757,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T160502Z-canonical-00d884ef/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T175018Z-canonical-61ccdb74/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T160502Z-canonical-00d884ef/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260915T175018Z-canonical-61ccdb74/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,136 chars &bull; ~2,284 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py
-Request ID: llm-proposer-cycle-c330d89acbf6
-Cycle ID: cycle-c330d89acbf6
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,371 chars &bull; ~2,092 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add structured JSON report option to scripts/validate_deprecation_status.py
+Request ID: llm-proposer-fallback-4271bf01e723
+Cycle ID: fallback-4271bf01e723
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1924,68 +1924,69 @@ Full operator charter: see system context (already loaded above).
 
 Current priority targets:
 (E) Priority 17 — Write one frame to the real display (V2): make scripts/fb_surface.py actually open /dev/fb0, read virtual_size and bits_per_pixel from /sys/class/graphics/fb0, and write one full frame. An in-memory bytearray is not a framebuffer: this is not done until bytes have reached the device. Quote in the commit message the geometry read from sysfs, the measured milliseconds and peak RSS of one full push, and the output of stat on /dev/fb0. If the device cannot be opened, refuse with the failing path and the errno named - that is a complete outcome; a silent no-op is not. Commit.
-(G) Priority 19 — One surface module, not three (V2): scripts/avatar_tiles.py, scripts/tile_surface.py and scripts/fb_surface.py overlap. Keep scripts/avatar_tiles.py as the tile and palette primitives; make the others import from it instead of redefining TILE, MAP_W, MAP_H, atlas loading or tilemap composition; delete whatever is then left with no caller. Quote in the commit message which definitions were removed and which module owns each now. Commit. Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Measure against the fastest thing this host can do (V2); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1); Priority 14 (demand/idle dashboard section, commit 1029364), Priority 5 (host_metrics_sampler.py, commit 196fe6a), Priority 6 (cleanup_subagent_queue.py archival + queue
 (P) Priority 43 — Filter fallback candidates dedup (V1): Write scripts/filter_fallback_targets.py with a single function filter_candidate_paths(candidates, recent_targets) under 40 lines. Given a list of candidate filepaths and a collection of recently targeted paths, return a list containing only candidates not in recent_targets, preserving original order. If candidates is empty or not a list, return an empty list.
+
+Completed (do not repeat): Loop health in dashboard (V2); Archive old cycle reports (V2); Script inventory map (V2); Cycle strip line in dashboard (V2); Measure against the fastest thing this host can do (V2); One surface module, not three (V2); Prune stale feed cache files (V1); Add lesson keyword search function (V2); Filter futile fallback proposals (V1); Filter futile fallback targets (V1); Pre-filter futile fallback targets (V1); Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 9e59dcca merge: integrate selfevo/cycle-cycle-c330d89acbf6
+- fc2b9e17 refactor(tile_surface): import tile geometry primitives from avatar_tiles (Priority 19)
 - c0baf3ec merge: integrate selfevo/cycle-cycle-f04fa2860cb0
 - 0fe0fc73 selfevo: auto-commit uncommitted subagent work — Implement numpy-accelerated palette expansion in scripts/fb_surface.py
 - 5e18e9a2 feat(fb_surface): numpy-accelerated palette expansion (Priority 18)
 - 35b11135 merge: integrate selfevo/cycle-cycle-8183ecc346e5
 - a52f52d7 selfevo: auto-commit uncommitted subagent work — Add AST check for pathlib mkdir parents parameter in scripts/check_pathlib_mkdir
 - f0e91770 feat(check_pathlib_mkdir): AST check for pathlib mkdir() missing parents=True
-- c828a7ad feat(surfaces): add reusable explanation scenes (#1615) (#209)
-- 763d7aac merge: integrate selfevo/cycle-fallback-6b46cce66026
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c330d89acbf6.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-fallback-4271bf01e723.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses Priority 19 by removing redundant tile and palette constant definitions from scripts/tile_surface.py and importing shared primitives from scripts/avatar_tiles.py.\n\nTarget path: scripts/tile_surface.py&quot;,
+    &quot;title&quot;: &quot;Add structured JSON report option to scripts/validate_deprecation_status.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Adding a --json flag to validate_deprecation_status.py allows cycle gate and pre-commit audit tools to programmatically inspect scanned script counts, identified deprecated scripts, and any active import violations without parsing plaintext stdout.\n\nTarget path: scripts/validate_deprecation_status.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py (target: scripts/tile_surface.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add structured JSON report option to scripts/validate_deprecation_status.py (target: scripts/validate_deprecation_status.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260912-861355a6  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Batch script checking into a single execution pass in scripts/validate_unused_im
+ID: ERR-20260913-769b714d  Title: Verification gate rejected the proposed change while attempting: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shel
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-REF-16436c7d5b3a-4c67  Title: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+Problem: Analysis during test writing noted: &#x27;The script has a duplicate definition of _has_leftover_deprecation_header (lines 84-96 and 112-162); the second definition shadows the first.&#x27;
+Solution: Schedule a clean-up proposal to resolve the duplicate function definition of _has_leftover_deprecation_header in scripts/validate_deprecation_status.py.
+If you apply this lesson, cite [Lesson LESS-REF-16436c7d5b3a-4c67] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
-- In turn 5, invoking full cProfile on `vi.main([])` across the entire repository timed out after 300 seconds because the profiler overhead multiplied the script&#x27;s baseline 60s runtime beyond the tool e
+- Cap preliminary diagnostic state queries to 2-3 turns; once the relevant schema is identified, either proceed to editing the script or invoke the Immediate Skip Protocol.
+- Emit strictly the raw JSON object without conversational text or preamble in the final turn when declaring cycle completion or skip.
+- Continue using standard POSIX exit status checks ($?) rather than bash-specific variables when verifying CLI execution.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-15 17:14 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/fb_surface.py. Reward signal will be upgraded by…
-- Attempt 2 (2026-09-15 16:35 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-15 17:39 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/tile_surface.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-15 17:14 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/fb_surface.py. Reward signal will be upgraded by…
 - Attempt 3 (2026-09-15 16:15 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_pathlib_mkdir.py,…
 
 ## Concrete task to implement
 
-Title: Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py
+Title: Add structured JSON report option to scripts/validate_deprecation_status.py
 
 
-Addresses Priority 19 by removing redundant tile and palette constant definitions from scripts/tile_surface.py and importing shared primitives from scripts/avatar_tiles.py.
+Adding a --json flag to validate_deprecation_status.py allows cycle gate and pre-commit audit tools to programmatically inspect scanned script counts, identified deprecated scripts, and any active import violations without parsing plaintext stdout.
 
-Target path: scripts/tile_surface.py
+Target path: scripts/validate_deprecation_status.py
 
 ## Concrete task to implement
-Implement and commit: Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py (target: scripts/tile_surface.py)
+Implement and commit: Add structured JSON report option to scripts/validate_deprecation_status.py (target: scripts/validate_deprecation_status.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5894,12 +5895,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Refactor scripts/tile_surface.py to import tile and palette primitives from scripts/avatar_tiles.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 978 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">105</td><td>1.07M</td><td>34s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add structured JSON report option to scripts/validate_deprecation_status.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 981 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-15</td><td class="skill-reads">108</td><td>1.12M</td><td>34s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr><tr><td>2026-09-10</td><td class="skill-reads">104</td><td>993.2K</td><td>25s</td></tr><tr><td>2026-09-09</td><td class="skill-reads">91</td><td>801.7K</td><td>23s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-15 17:39:50 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 20:18:42 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-15 17:58:22 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-15 20:18:42 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
