@@ -4878,6 +4878,12 @@ def _build_durable_hadi_section(hypotheses_durable: dict[str, Any] | None) -> st
     )
 
 
+# Issue #275: bounds for the futility block; the published page carried 1 309
+# unbounded resolved rows (84% of hypotheses.html) before these existed.
+FUTILITY_ACTIVE_CAP = 25
+FUTILITY_RESOLVED_CAP = 50
+
+
 def _build_demand_futility_section(
     demand_futility: dict[str, Any] | None,
     active_gap_metrics: set[str] | None = None,
@@ -4887,6 +4893,7 @@ def _build_demand_futility_section(
     3-state reporting:
     - Missing/unavailable: rendered as unavailable note (not 0/10).
     - Healthy / Low attempts: rendered as compact meter.
+    - attempt_count null (#275): rendered as 'never evaluated', never as None/10.
     - High attempts (>= 7/10): prominent warning banner with attempt unit & surface tokens.
     """
     if demand_futility is None:
@@ -4899,13 +4906,14 @@ def _build_demand_futility_section(
     if not isinstance(gaps, dict) or not gaps:
         return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: no active gap tracking</p></div>'
 
-    rows: list[str] = []
+    active_rows: list[str] = []
+    resolved_rows: list[str] = []
     has_alarm = False
 
     for gap_id, gap_data in sorted(gaps.items()):
         if not isinstance(gap_data, dict):
             continue
-        attempts = gap_data.get('attempt_count', 0)
+        attempts = gap_data.get('attempt_count')
         threshold = gap_data.get('threshold', 10)
         unit = gap_data.get('attempt_unit') or 'demand_id'
         surface = gap_data.get('surface') or []
@@ -4915,7 +4923,10 @@ def _build_demand_futility_section(
         # Check whether this gap corresponds to an active gap in the current scorecard
         is_active = active_gap_metrics is None or (metric is not None and metric in active_gap_metrics)
 
-        is_warning = is_active and (attempts >= 7)
+        # Issue #275: `attempt_count: null` means the gap was never evaluated --
+        # a different fact from 0 attempts. Never format None as a number.
+        never_evaluated = not isinstance(attempts, (int, float)) or isinstance(attempts, bool)
+        is_warning = is_active and not never_evaluated and attempts >= 7
         if is_warning:
             has_alarm = True
 
@@ -4929,23 +4940,58 @@ def _build_demand_futility_section(
             status_cls = 'badge-researching'
             active_label = ''
 
-        attempts_label = f'{attempts}/{threshold} attempts [{esc(unit)}]{esc(surface_str)}{active_label}'
+        if never_evaluated:
+            counter = 'never evaluated (no attempt count recorded)'
+        else:
+            counter = f'{esc(attempts)}/{esc(threshold)} attempts'
+        attempts_label = f'{counter} [{esc(unit)}]{esc(surface_str)}{active_label}'
 
-        rows.append(
-            f'<li class="futility-item{" futility-resolved" if not is_active else ""}">'
+        row = (
+            f'<li class="futility-item{" futility-resolved" if not is_active else ""}'
+            f'{" futility-never-evaluated" if never_evaluated else ""}">'
             f'<span class="badge {status_cls}">{esc(gap_id)}</span> '
             f'<strong class="futility-attempts">{attempts_label}</strong>'
             f'</li>'
         )
+        (active_rows if is_active else resolved_rows).append(row)
 
-    if not rows:
+    if not active_rows and not resolved_rows:
         return '<div class="hypo-futility-section"><p class="unavailable-note">goal gap futility: no valid records</p></div>'
+
+    def _bounded(rows: list[str], cap: int) -> str:
+        shown = rows[:cap]
+        omitted = len(rows) - len(shown)
+        note = (
+            f'<li class="futility-omitted-note">{omitted} more not shown (list capped at {cap})</li>'
+            if omitted > 0 else ''
+        )
+        return f'<ul class="futility-list">{"".join(shown)}{note}</ul>'
+
+    # Issue #275: default view = active gaps only, bounded; resolved gaps stay
+    # reachable behind a toggle that states how many are hidden.
+    if active_rows:
+        active_html = _bounded(active_rows, FUTILITY_ACTIVE_CAP)
+    else:
+        active_html = (
+            f'<p class="futility-empty">no active gaps'
+            f'{f" ({len(resolved_rows)} resolved hidden below)" if resolved_rows else ""}</p>'
+        )
+
+    resolved_html = ''
+    if resolved_rows:
+        resolved_html = (
+            f'<details class="hypo-details futility-hidden">'
+            f'<summary class="hypo-summary">{len(resolved_rows)} resolved gaps hidden &mdash; show</summary>'
+            f'{_bounded(resolved_rows, FUTILITY_RESOLVED_CAP)}'
+            f'</details>'
+        )
 
     alarm_class = ' futility-alarm' if has_alarm else ''
     return (
         f'<div class="hypo-futility-section{alarm_class}">'
         f'<h3 class="hypo-futility-title">Goal Gap Futility Tracking</h3>'
-        f'<ul class="futility-list">{"".join(rows)}</ul>'
+        f'{active_html}'
+        f'{resolved_html}'
         f'</div>'
     )
 
@@ -6811,6 +6857,9 @@ CSS = '''
       padding-bottom: 4px;
     }
     .hypo-details { margin-top: 8px; }
+    .futility-empty { font-size: 0.85em; color: #9db4a6; margin: 4px 0; }
+    .futility-omitted-note { font-size: 0.8em; color: #9db4a6; font-style: italic; }
+    .futility-never-evaluated .futility-attempts { color: #9db4a6; font-weight: normal; }
     .hypo-summary {
       font-size: 0.82em;
       color: #9db4a6;

@@ -2780,6 +2780,90 @@ def test_issue193_active_gap_below_threshold_raises_no_alarm() -> None:
     assert 'badge-researching' in html
 
 
+def test_issue275_futility_null_attempt_count_never_renders_none() -> None:
+    """#275: `attempt_count: null` reached the template as the literal `None/10`.
+
+    null, 0 and 6 are three different facts and must render as three visibly
+    different strings; the null case must say it was never evaluated.
+    """
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {
+        'gap-null': {'metric': 'm_null', 'attempt_count': None, 'threshold': 10, 'attempt_unit': 'demand_id'},
+        'gap-zero': {'metric': 'm_zero', 'attempt_count': 0, 'threshold': 10, 'attempt_unit': 'demand_id'},
+        'gap-six': {'metric': 'm_six', 'attempt_count': 6, 'threshold': 10, 'attempt_unit': 'demand_id'},
+    }
+    scorecard = {'gaps': [{'metric': 'm_null'}, {'metric': 'm_zero'}, {'metric': 'm_six'}]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    assert 'None' not in html
+    assert 'never evaluated' in html
+    assert '0/10 attempts [demand_id]' in html
+    assert '6/10 attempts [demand_id]' in html
+    assert 'futility-never-evaluated' in html
+    assert 'futility-alarm' not in html  # null must not compare as >= 7 either
+
+
+def test_issue275_futility_default_view_hides_resolved_with_count() -> None:
+    """#275 inverse of #193: zero active gaps among many resolved ones must
+    render an explicit 'no active gaps' state, and the resolved list stays
+    reachable behind a control that states how many are hidden."""
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {
+        f'decay-{i:04d}': {'metric': f'dead_{i}', 'attempt_count': None if i % 2 else i % 10, 'threshold': 10}
+        for i in range(120)
+    }
+    scorecard = {'gaps': [{'metric': 'confirmed_ratio'}]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    section = html[html.index('hypo-futility-section'):html.index('hypo-split')]
+    assert 'None' not in section
+    assert 'no active gaps' in section
+    assert '120 resolved gaps hidden' in section
+    assert '<details class="hypo-details futility-hidden">' in section
+    assert 'futility-alarm' not in section
+    # bounded: the resolved list is capped and says how many were omitted
+    assert section.count('class="futility-item') == tv.FUTILITY_RESOLVED_CAP
+    omitted = 120 - tv.FUTILITY_RESOLVED_CAP
+    assert f'{omitted} more not shown' in section
+
+
+def test_issue275_active_alarm_visible_without_toggle_among_resolved() -> None:
+    """#193's closing behaviour must survive #275: one active gap at 9/10
+    among many resolved ones fires the alarm in the default view."""
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    futility = {f'decay-{i:04d}': {'metric': f'dead_{i}', 'attempt_count': None, 'threshold': 10} for i in range(40)}
+    futility['goal-gap-live'] = {'metric': 'confirmed_ratio', 'attempt_count': 9, 'threshold': 10, 'attempt_unit': 'demand_id'}
+    scorecard = {'gaps': [{'metric': 'confirmed_ratio'}]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    section = html[html.index('hypo-futility-section'):html.index('hypo-split')]
+    assert 'futility-alarm' in section
+    before_toggle = section[:section.index('<details')]
+    assert 'goal-gap-live' in before_toggle
+    assert '9/10 attempts [demand_id]' in before_toggle
+    assert 'badge-stale' in before_toggle
+    assert 'no active gaps' not in section
+    assert '40 resolved gaps hidden' in section
+
+
+def test_issue275_active_list_is_bounded() -> None:
+    dummy_hypo = {'entries': {'h-dummy': {'title': 'Dummy', 'status': 'active'}}}
+    n = tv.FUTILITY_ACTIVE_CAP + 7
+    futility = {f'gap-{i:04d}': {'metric': f'live_{i}', 'attempt_count': 1, 'threshold': 10} for i in range(n)}
+    scorecard = {'gaps': [{'metric': f'live_{i}'} for i in range(n)]}
+    html = tv.build_hypotheses_panel(dummy_hypo, demand_futility=futility, scorecard=scorecard)
+    section = html[html.index('hypo-futility-section'):html.index('hypo-split')]
+    assert section.count('class="futility-item') == tv.FUTILITY_ACTIVE_CAP
+    assert '7 more not shown' in section
+    assert 'futility-resolved' not in section
+
+
+def test_issue275_no_rendered_page_contains_literal_none() -> None:
+    """Site-level guard: no produced page prints a bare `None` as text."""
+    import re
+    pages = _site()
+    for name, html in pages.items():
+        text = re.sub(r'<[^>]+>', ' ', html)
+        assert not re.search(r'(?<![A-Za-z_])None(?![A-Za-z_])', text), name
+
+
 def test_issue70_techtree_redirects_to_index() -> None:
     redir = _site()['techtree.html']
     assert 'http-equiv="refresh" content="0; url=index.html"' in redir
