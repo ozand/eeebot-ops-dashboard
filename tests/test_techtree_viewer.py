@@ -4814,3 +4814,8 @@ def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
     ]
     html = tv.build_lessons_panel(lessons)
     assert '<span class="lesson-chip lesson-kind">operational-pattern</span>' in html
+
+
+def test_issue277_defect5_legacy_details_auto_open_script_present() -> None:
+    html = tv.build_lessons_panel([_LEGACY_LESSON])
+    assert 'legacyDetails.open = legacyMatch;' in html

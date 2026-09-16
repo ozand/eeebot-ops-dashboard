@@ -5782,11 +5782,19 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         function apply(q) {{
           var t = (q || '').toLowerCase();
            var shown = 0;
+           var legacyMatch = false;
            rowsL.forEach(function (r) {{
              var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
              r.style.display = visible ? '' : 'none';
-             if (visible) shown += 1;
+             if (visible) {{
+               shown += 1;
+               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
+             }}
            }});
+           var legacyDetails = document.querySelector('.lesson-legacy-details');
+           if (legacyDetails && t) {{
+             legacyDetails.open = legacyMatch;
+           }}
            var empty = document.querySelector('#panel-lessons [data-filter-empty]');
            if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }}
           input.value = t;
