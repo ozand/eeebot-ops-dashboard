@@ -7934,7 +7934,14 @@ def _generator_sha() -> str:
     if _BAKED_GENERATOR_SHA:
         return _BAKED_GENERATOR_SHA
     try:
-        result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, timeout=5)
+        repo_dir = Path(__file__).resolve().parent.parent
+        result = subprocess.run(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(repo_dir),
+        )
         return result.stdout.strip() if result.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'

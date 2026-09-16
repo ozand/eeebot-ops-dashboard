@@ -4783,3 +4783,17 @@ def test_issue277_defect2_index_teasers_label_full_history() -> None:
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     idx = pages['index.html']
     assert 'cycles</a> &mdash; 4 cycles in full history' in idx
+
+
+def test_issue277_defect3_generator_sha_from_arbitrary_cwd(monkeypatch) -> None:
+    # Ensure _BAKED_GENERATOR_SHA is empty so git branch is exercised
+    monkeypatch.setattr(tv, '_BAKED_GENERATOR_SHA', '')
+    import os
+    orig = os.getcwd()
+    try:
+        os.chdir(os.path.abspath(os.sep))
+        sha = tv._generator_sha()
+        assert sha != 'unknown'
+        assert len(sha) >= 7
+    finally:
+        os.chdir(orig)
