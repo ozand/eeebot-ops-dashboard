@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">222</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 06:55:09 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="20">data: 20s old &middot; generated 03:59 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 04:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-7cfb360faf9c</span>
+      <span class="cycle-pill">cycle-8f1698a71904</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 03:47:12.517642 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 04:03:24.419285 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 17,257 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 12,827 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 17,257 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,140c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 12,827 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,577c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,140 chars &bull; ~1,785 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings
-Request ID: llm-proposer-cycle-7cfb360faf9c
-Cycle ID: cycle-7cfb360faf9c
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,577 chars &bull; ~1,644 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add standard markdown sections to skills/jsonl-stream-filter/SKILL.md
+Request ID: llm-proposer-cycle-8f1698a71904
+Cycle ID: cycle-8f1698a71904
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1940,48 +1940,43 @@ Recently completed (recent commits):
 - 46794e75 docs(lessons): add lesson on referencing canonical string constants for CLI text assertions
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7cfb360faf9c.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8f1698a71904.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings&quot;,
-    &quot;backlog_instructions&quot;: &quot;Provides a validator script that scans shell command strings for bashisms such as PIPESTATUS to prevent dash execution failures under /bin/sh.\n\nTarget path: scripts/check_shell_bashisms.py&quot;,
+    &quot;title&quot;: &quot;Add standard markdown sections to skills/jsonl-stream-filter/SKILL.md&quot;,
+    &quot;backlog_instructions&quot;: &quot;Populate skills/jsonl-stream-filter/SKILL.md with required ## markdown sections and skill description so that tests/test_skill_conformance.py passes.\n\nTarget path: skills/jsonl-stream-filter/SKILL.md&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings (target: scripts/check_shell_bashisms.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add standard markdown sections to skills/jsonl-stream-filter/SKILL.md (target: skills/jsonl-stream-filter/SKILL.md)&quot;
 }
 ```
 
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
-Root cause: 
-Prevention: 
-
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-1767b3d47ede-ffe2  Title: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
-Problem: running `echo &quot;EXIT: ${PIPESTATUS[0]}&quot;` triggered `/bin/sh: 1: Bad substitution` with exit code 2 before switching back to `$?`.
-Solution: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
-If you apply this lesson, cite [Lesson LESS-REF-1767b3d47ede-ffe2] in your proposal/response.
+ID: lessons/skill-subdirectory-structure.md  Title: Structuring Skills in Subdirectories as skills/&lt;skill_name&gt;/SKILL.md
+Problem: Read lessons/skill-subdirectory-structure.md: Before writing or editing any skill file, resolve the target to the canonical form `skills/&lt;name&gt;/SKILL.md` and confirm the directory exists (create it if needed).
+Solution: 
+If you apply this lesson, cite [Lesson lessons/skill-subdirectory-structure.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid embedding literal sensitive paths or private URL strings such as &#x27;file:///etc/passwd&#x27; in exec commands; construct test inputs dynamically or use dedicated unit test files to avoid triggering saf
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
+- Avoid bash-specific parameters like ${PIPESTATUS} in exec commands; use standard POSIX shell redirection or inspect $? directly to capture process status.
+- Use standard POSIX `$?` or file redirection rather than bash-specific `${PIPESTATUS}` arrays when running shell commands via exec.
+- Check whether modified files are tracked before attempting git stash, or include untracked files via &#x27;git stash -u&#x27; when testing baseline repository state.
 
 ## Concrete task to implement
 
-Title: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings
+Title: Add standard markdown sections to skills/jsonl-stream-filter/SKILL.md
 
 
-Provides a validator script that scans shell command strings for bashisms such as PIPESTATUS to prevent dash execution failures under /bin/sh.
+Populate skills/jsonl-stream-filter/SKILL.md with required ## markdown sections and skill description so that tests/test_skill_conformance.py passes.
 
-Target path: scripts/check_shell_bashisms.py
+Target path: skills/jsonl-stream-filter/SKILL.md
 
 ## Concrete task to implement
-Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings (target: scripts/check_shell_bashisms.py)
+Implement and commit: Add standard markdown sections to skills/jsonl-stream-filter/SKILL.md (target: skills/jsonl-stream-filter/SKILL.md)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5895,7 +5890,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 03:59:39 UTC &middot; host eeepc &middot; newest source 20s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 06:55:09 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 04:05:17 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 06:55:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
