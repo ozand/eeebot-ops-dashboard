@@ -4840,7 +4840,7 @@ def build_cycle_feed(
                     sha_val = s
                     break
             if sha_val:
-                node_link_html = f'<a href="#node-{esc(short_sha(sha_val))}" class="feed-tree-link">tree &#8599;</a>'
+                node_link_html = f'<a href="lineage.html#node-{esc(short_sha(sha_val))}" class="feed-tree-link">tree &#8599;</a>'
 
         if outcome_kind == 'integrated':
             badge_class = 'badge-integrated'

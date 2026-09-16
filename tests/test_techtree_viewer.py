@@ -2232,7 +2232,7 @@ def test_issue47_feed_integrated_cycle_has_tree_link() -> None:
         cycle_files=None,
     )
     assert 'feed-tree-link' in html
-    assert 'href="#node-sha1234"' in html
+    assert 'href="lineage.html#node-sha1234"' in html
 
 
 def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
@@ -4742,3 +4742,26 @@ def test_fmt_ts_full_iso_conversion_to_msk() -> None:
     assert tv.fmt_ts('2026-09-06T10:00:00Z') == '2026-09-06 13:00:00 MSK'
     assert tv.fmt_ts('') == 'unknown time'
     assert tv.fmt_ts(None) == 'unknown time'
+
+
+def test_issue277_defect1_node_link_points_to_lineage_page() -> None:
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-evo1', 'status': 'integrated'},
+    ]
+    evolution_tree = {
+        'nodes': {
+            'sha1234567890abcdef': {
+                'cycle_id': 'cycle-evo1',
+                'branch': 'selfevo/cycle-evo1',
+                'parent_sha': None,
+            }
+        }
+    }
+    html = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=evolution_tree,
+        cycle_files=None,
+    )
+    assert 'href="lineage.html#node-sha1234"' in html
