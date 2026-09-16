@@ -589,6 +589,16 @@
     }
     .lesson-label { font-weight: 600; color: #8aa695; }
     .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
     .lesson-tag {
       display: inline-block;
       font-size: 0.72em;
@@ -1261,33 +1271,47 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 00:44:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 01:35:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 22:31 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 22:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2985 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2986 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-17 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-4229cb294ad3">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-4229cb294ad3)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-16T22:39:14.017973Z">01:39 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 10.70K tok &middot; dur 20s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-5486ff44f150">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">feat(validate_heredoc_urls): add clean_files list to JSON report and summary</strong>
             <span class="feed-cid copyable" translate="no">(cycle-5486ff44f150)</span>
             
-            <a href="#node-582ecf1" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-582ecf1" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T22:11:43.735707Z">01:11 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0fab9e2d5437</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-861355a6 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
           <div class="feed-files">&#128193; scripts/validate_heredoc_urls.py, tests/test_validate_heredoc_urls.py</div>
-          <div class="feed-cost">&#9889; 11 calls &middot; 286.7K tok &middot; dur 12m2s</div>
+          <div class="feed-cost">&#9889; 12 calls &middot; 310.1K tok &middot; dur 12m19s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-65d1bc93e5c9">
@@ -1338,7 +1362,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add candidate flag collision detection to scripts/extract_cli_flags.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d4be1f761413)</span>
             
-            <a href="#node-7caf167" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-7caf167" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T21:26:08.209647Z">00:26 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-772d262f6028</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-51ca52a5 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/inspect_script_cli_flags.md (unavailable)</span></div>
@@ -1352,7 +1376,7 @@
             <strong class="feed-title">feat(extract_cli_flags): AST extraction of argparse option flags with self-test and paired tests</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6465f6bbb284)</span>
             
-            <a href="#node-6fd7a11" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-6fd7a11" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T21:08:15.580073Z">00:08 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-61fabb990999</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-4b4bdcf4 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -1381,7 +1405,7 @@
             <strong class="feed-title">feat(targeted_file_slice): add centered line window extraction (slice_around_line, --around/--radius)</strong>
             <span class="feed-cid copyable" translate="no">(cycle-725faadc1790)</span>
             
-            <a href="#node-f8c7bb5" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-f8c7bb5" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T20:15:14.143397Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a9d095160730</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
@@ -1409,7 +1433,7 @@
             <strong class="feed-title">feat(scan_archive): add CLI with build_parser/main and direct parse_args tests</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f3d53ed48901)</span>
             
-            <a href="#node-78cfd84" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-78cfd84" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T19:46:46.290685Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-faafe86822a5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/enforcing_agents_sections_in_structural_tests.md (unavailable)</span></div>
@@ -1423,7 +1447,7 @@
             <strong class="feed-title">feat(filter_quarantined_demands): filter demands below failure threshold with paired tests</strong>
             <span class="feed-cid copyable" translate="no">(cycle-5b23aeb2d012)</span>
             
-            <a href="#node-ed98e58" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-ed98e58" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T19:30:22.204113Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-092c82e5af95</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260913-769b714d (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/git_checkout_recovery.md (unavailable)</span></div>
@@ -1437,7 +1461,7 @@
             <strong class="feed-title">feat(scan_archive): bounded archive file traversal via os.scandir with limit</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c88ad1727b22)</span>
             
-            <a href="#node-dc5ea4e" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-dc5ea4e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T19:14:51.169209Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-b149b087296f</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260906-5445c37c">error:ERR-20260906-5445c37c</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/bounded_initial_reconnaissance.md (unavailable)</span></div>
@@ -1465,7 +1489,7 @@
             <strong class="feed-title">feat(scaffold_script_entrypoint): add --streaming template with paired self-tests and companion pytest generation</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0c34c55786ef)</span>
             
-            <a href="#node-65bf67e" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-65bf67e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T18:28:55.698652Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8786b9377afe</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260908-c72cd8a9 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
@@ -1493,7 +1517,7 @@
             <strong class="feed-title">feat(run_all_tests): snapshot and restore tracked memory files around test execution</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b6bfd7aa3b53)</span>
             
-            <a href="#node-6678b09" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-6678b09" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T17:48:23.606770Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a88bda5286e1</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260907-bd9c0bed (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/check_existing_tests_before_proposals.md (unavailable)</span></div>
@@ -1507,7 +1531,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add test target formatting to scripts/format_existence_index_exclusions.py for p</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c74f14f756a9)</span>
             
-            <a href="#node-507cb15" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-507cb15" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T17:05:48.168838Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-00bfe7fffef4</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-4b4bdcf4 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/existence_index_duplicate.md (unavailable)</span></div>
@@ -1535,7 +1559,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add scripts/verify_skill_keywords.py to validate literal presence of asserted ke</strong>
             <span class="feed-cid copyable" translate="no">(cycle-feb4313bfaa5)</span>
             
-            <a href="#node-29caed8" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-29caed8" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T16:31:21.949919Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e106c6db2744</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-d0574690 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -1563,7 +1587,7 @@
             <strong class="feed-title">fix(validate_sys_path_modification): ignore __main__ guards and own-dir bootstrap inserts</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f6af54234769)</span>
             
-            <a href="#node-49917ab" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-49917ab" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T15:47:21.715777Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-738e94aaee7c</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260914-abf03d77 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -1647,7 +1671,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add check_process_pool_picklable.py to detect lambda and local callables in Proc</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3d07251f7468)</span>
             
-            <a href="#node-60a99ce" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-60a99ce" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T13:43:18.140893Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a832ce5f19d5</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -1675,7 +1699,7 @@
             <strong class="feed-title">feat(check_target_completion): add scoped pytest check for test target satisfaction</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6aa4d674656c)</span>
             
-            <a href="#node-27915e0" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-27915e0" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T12:50:08.358844Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9ce08436104e</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-4b4bdcf4 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -1963,7 +1987,7 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-d06e78361f2e">
+        <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-d06e78361f2e">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
             <strong class="feed-title">rejected: llm_unavailable</strong>
@@ -2571,7 +2595,7 @@
             <strong class="feed-title">feat(check_preexisting_regression): add stash-isolated test execution probe</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c782377a9087)</span>
             
-            <a href="#node-a5497d5" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-a5497d5" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T07:39:53.870133Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2a7c74ad1951</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/concise_late_turn_tool_outputs.md (unavailable)</span></div>
@@ -2669,7 +2693,7 @@
             <strong class="feed-title">feat(probe_callable_signature): add pre-wrap signature probe (inspect + AST) with self-test</strong>
             <span class="feed-cid copyable" translate="no">(cycle-45dc8bdd2ee0)</span>
             
-            <a href="#node-1ab185c" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-1ab185c" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T06:11:43.533764Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c8dfee6c251f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-4b4bdcf4 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/inspect-stdlib-attributes.md (unavailable)</span></div>
@@ -2683,7 +2707,7 @@
             <strong class="feed-title">feat(check_cycle_budget): add exploratory probing turn limit audit</strong>
             <span class="feed-cid copyable" translate="no">(cycle-db66225d0861)</span>
             
-            <a href="#node-30ccf71" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-30ccf71" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T05:46:55.808900Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f08367272ddf</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -2739,7 +2763,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Wire inspect_existing_symbols outputs into build_concrete_next_action in scripts</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dd32a5012317)</span>
             
-            <a href="#node-f689f0f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-f689f0f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T05:00:58.620603Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-36ad8ca2b63c</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-d0574690 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-3c711db47ed9-d63a (unavailable)</span></div>
@@ -2753,7 +2777,7 @@
             <strong class="feed-title">feat(run_all_tests): add --keyword (pytest -k) filtering for pytest execution</strong>
             <span class="feed-cid copyable" translate="no">(cycle-5afea7d247dc)</span>
             
-            <a href="#node-48dc9e4" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-48dc9e4" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T04:20:25.794293Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-15a4bb3cc347</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-f90b4a3f2327-b284 (unavailable)</span></div>
@@ -2809,7 +2833,7 @@
             <strong class="feed-title">docs(lessons): add lesson on inline interpreter probing for edge case test suites</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ac89330e6e7d)</span>
             
-            <a href="#node-c66fe0a" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-c66fe0a" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T03:19:14.735717Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0d2613f10c6b</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/test_scope_anomaly_handoffs.md (unavailable)</span></div>
@@ -2823,7 +2847,7 @@
             <strong class="feed-title">docs(lessons): add lesson on compact turn template for single-script enhancement tasks</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7bf0af105580)</span>
             
-            <a href="#node-f5d9258" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-f5d9258" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T02:41:17.986962Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c691ea2f2f98</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260906-de7121e7 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
@@ -2837,7 +2861,7 @@
             <strong class="feed-title">docs(lessons): add lesson on targeted reference script inspection for CLI and boilerplate structures</strong>
             <span class="feed-cid copyable" translate="no">(cycle-818fe886583d)</span>
             
-            <a href="#node-e06f502" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e06f502" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T02:24:14.745293Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ca0b322a5bdd</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/avoid_state_report_inspection.md (unavailable)</span></div>
@@ -2851,7 +2875,7 @@
             <strong class="feed-title">docs(lessons): add lesson on referencing canonical string constants for CLI text assertions</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c58e5b15796e)</span>
             
-            <a href="#node-5dc9e53" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-5dc9e53" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T01:38:51.429933Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0222f32f6bdf</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/inspect_script_cli_flags.md (unavailable)</span></div>
@@ -2865,7 +2889,7 @@
             <strong class="feed-title">docs(lessons): add lesson on bundling import additions with functional logic in atomic edits</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3970bca2c24b)</span>
             
-            <a href="#node-28a2a83" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-28a2a83" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T00:43:52.345506Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b22e2101071c</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
@@ -3454,7 +3478,7 @@
             <strong class="feed-title">fix: return empty list from collect_error_entries when limit &lt;= 0</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ead58dd4d202)</span>
             
-            <a href="#node-bdc95d2" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-bdc95d2" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T20:23:33.924417Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-8891ab942401</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260915-54c64b19 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -3608,7 +3632,7 @@
             <strong class="feed-title">feat(quarantine_defects): add get_quarantined_patterns for ledger failure records (Priority 46)</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cc0b0b5bb3e0)</span>
             
-            <a href="#node-e975742" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e975742" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T18:49:33.943789Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-1f16ca5ce85d</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -3650,7 +3674,7 @@
             <strong class="feed-title">feat(check_lesson_markdown_sections): validate individual lesson files via CLI</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3f5e3599dd84)</span>
             
-            <a href="#node-bb5f270" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-bb5f270" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T18:05:10.318474Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1dcae8dd45e7</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
@@ -3664,7 +3688,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-4271bf01e723)</span>
             
-            <a href="#node-7157a5c" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-7157a5c" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T17:50:17.139081Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260913-769b714d (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -3678,7 +3702,7 @@
             <strong class="feed-title">refactor(tile_surface): import tile geometry primitives from avatar_tiles (Priority 19)</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c330d89acbf6)</span>
             
-            <a href="#node-9e59dcc" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-9e59dcc" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T17:22:01.748776Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-c70ce3302dbd</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-861355a6 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -3692,7 +3716,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Implement numpy-accelerated palette expansion in scripts/fb_surface.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f04fa2860cb0)</span>
             
-            <a href="#node-c0baf3e" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-c0baf3e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T16:42:51.013005Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-a1ca4749b8e5</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-861355a6 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/git_checkout_recovery.md (unavailable)</span></div>
@@ -3720,7 +3744,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add AST check for pathlib mkdir parents parameter in scripts/check_pathlib_mkdir</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8183ecc346e5)</span>
             
-            <a href="#node-35b1113" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-35b1113" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T15:57:35.457559Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6cc3c0222670</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -3818,7 +3842,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-6b46cce66026)</span>
             
-            <a href="#node-763d7aa" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-763d7aa" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T14:20:09.065920Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/inspect_script_cli_flags.md (unavailable)</span></div>
@@ -3832,7 +3856,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-2fbcac977e35)</span>
             
-            <a href="#node-7d55659" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-7d55659" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T14:02:43.250913Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><a class="lesson-link" href="lessons.html#q-ERR-20260906-5445c37c">error:ERR-20260906-5445c37c</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-c871bf9abe41 (unavailable)</span></div>
@@ -3888,7 +3912,7 @@
             <strong class="feed-title">feat(targeted_file_slice): add --max-line-length per-line truncation</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fe4980f6fd18)</span>
             
-            <a href="#node-3a1b99e" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-3a1b99e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T13:07:02.900942Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-749903105334</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
@@ -3944,7 +3968,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(fallback-e046428a5ca6)</span>
             
-            <a href="#node-d55fc4c" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-d55fc4c" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T12:18:20.382329Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-4b4bdcf4 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/existence_index_duplicate.md (unavailable)</span></div>
@@ -4028,7 +4052,7 @@
             <strong class="feed-title">fix(validate_deprecation_status): exempt pre-deprecation integration and drop dead duplicate</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f64a13b76951)</span>
             
-            <a href="#node-ef43f40" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-ef43f40" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T11:04:03.872127Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6309e320a8b1</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260909-f59ebb9e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -4042,7 +4066,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add error excerpt extraction and failure categorization to scripts/loop_health_r</strong>
             <span class="feed-cid copyable" translate="no">(cycle-5d9663e7e856)</span>
             
-            <a href="#node-41833c7" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-41833c7" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T10:37:08.200647Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0f3f69a8ad63</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260905-05555d5b">error:ERR-20260905-05555d5b</a></div>
@@ -4070,7 +4094,7 @@
             <strong class="feed-title">selfevo: auto-commit uncommitted subagent work — Add repeated command streak analyzer to scripts/check_cycle_budget.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dfd11c66d7be)</span>
             
-            <a href="#node-69217b0" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-69217b0" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T09:56:08.382807Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0e0ddeac2d9f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -4126,7 +4150,7 @@
             <strong class="feed-title">test(timed_exec): add end-to-end tests for --timeout CLI flag</strong>
             <span class="feed-cid copyable" translate="no">(cycle-33e094c9142d)</span>
             
-            <a href="#node-a173a4d" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-a173a4d" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T09:07:43.446893Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-bad6b2bc0a82</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span></div>
@@ -4140,7 +4164,7 @@
             <strong class="feed-title">perf(verify_imports): prune state and cache dirs via shared DEFAULT_IGNORE_DIRS</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3b033a38b924)</span>
             
-            <a href="#node-dbc51d2" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-dbc51d2" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T08:51:51.281658Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c9bb6363c329</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260914-abf03d77 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-f0bd8333acbe-1d2e (unavailable)</span></div>
@@ -4168,7 +4192,7 @@
             <strong class="feed-title">fix(audit_repeat_failures): repair self-test for default rate threshold and add window-days rate filtering tests</strong>
             <span class="feed-cid copyable" translate="no">(cycle-13d271b947b8)</span>
             
-            <a href="#node-bb625af" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-bb625af" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T08:23:35.700562Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">goal-gap-5d4d5a9dc822</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -4196,7 +4220,7 @@
             <strong class="feed-title">feat(check_cycle_budget): add git commit archaeology detector</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0a1cc579329c)</span>
             
-            <a href="#node-b3fdb29" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-b3fdb29" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T07:56:47.447599Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b083162a3397</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -4280,7 +4304,7 @@
             <strong class="feed-title">feat(dict_schema_probe): add dictionary schema probe and path extractor</strong>
             <span class="feed-cid copyable" translate="no">(cycle-a96840293e09)</span>
             
-            <a href="#node-668b857" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-668b857" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-15T04:40:58.863120Z">Sep 15 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2aa5764f8e3f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -5149,7 +5173,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bf8eeafe1d3a)</span>
             
-            <a href="#node-716e47f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-716e47f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T12:11:00.383306Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a5f1e8416c52</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-af2a878e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -5191,7 +5215,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-603caecf9340)</span>
             
-            <a href="#node-d62d1cb" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-d62d1cb" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T10:43:41.395586Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c5adfa1c24bc</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260912-d0574690 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/check_existing_tests_before_proposals.md (unavailable)</span></div>
@@ -5205,7 +5229,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8f8d4baa72cc)</span>
             
-            <a href="#node-e96fd6a" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e96fd6a" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T10:15:56.807580Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-39f4a14d71d8</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260907-bd9c0bed (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
@@ -5219,7 +5243,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bdaa57b8432d)</span>
             
-            <a href="#node-e0717d2" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e0717d2" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T09:52:09.215747Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7af24908b4a7</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260906-5445c37c">error:ERR-20260906-5445c37c</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-9ff792579a7a-eef8 (unavailable)</span></div>
@@ -5233,7 +5257,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-60d1fc73d319)</span>
             
-            <a href="#node-d7ac748" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-d7ac748" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T09:27:53.331438Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-98aeae58d06a</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260909-f59ebb9e (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
@@ -5275,7 +5299,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d8b2d6983cc9)</span>
             
-            <a href="#node-b839c03" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-b839c03" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T08:47:32.232469Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-95d6d13f72e8</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-001">error:ERR-2026-09-06-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/concise_late_turn_tool_outputs.md (unavailable)</span></div>
@@ -5429,7 +5453,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-60ba80ebf2c7)</span>
             
-            <a href="#node-3116222" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-3116222" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T06:43:22.416059Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9809ea7e86d7</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260914-abf03d77 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/subagent_result_error_handling.md (unavailable)</span></div>
@@ -5541,7 +5565,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dfcf3c68d90b)</span>
             
-            <a href="#node-330c584" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-330c584" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T04:44:23.055772Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5c1696d0f3eb</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260911-d4624f07 (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-9ff792579a7a-eef8 (unavailable)</span></div>
@@ -5597,7 +5621,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cd469fa3f5b6)</span>
             
-            <a href="#node-39ba7d9" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-39ba7d9" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-14T03:46:36.493556Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-526a889a1317</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">error:ERR-20260907-bd9c0bed (unavailable)</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
@@ -6046,7 +6070,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9d394ad5a217)</span>
             
-            <a href="#node-059e77c" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-059e77c" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T19:27:03.159422Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-a839e285c2ed</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -6102,7 +6126,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-17e158b12cef)</span>
             
-            <a href="#node-af9819a" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-af9819a" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T18:44:57.786143Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0b09170cedf2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-001">error:ERR-2026-06-14-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-f0bd8333acbe-1d2e (unavailable)</span></div>
@@ -6144,7 +6168,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-65185260dda6)</span>
             
-            <a href="#node-17c19e6" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-17c19e6" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T18:08:15.891260Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-89c5712013e1</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
@@ -6172,7 +6196,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cdcd995e029a)</span>
             
-            <a href="#node-5972d28" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-5972d28" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T17:42:26.111480Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-d15f94f2aba9</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-20-002">error:ERR-2026-06-20-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-3c711db47ed9-d63a (unavailable)</span></div>
@@ -6242,7 +6266,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cee1d3522a7a)</span>
             
-            <a href="#node-5339924" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-5339924" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T16:58:08.189916Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-bd352e7e46c5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
@@ -6256,7 +6280,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-365b74a65de8)</span>
             
-            <a href="#node-cdc360f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-cdc360f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-13T16:17:50.734897Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0b09170cedf2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-002">error:ERR-2026-09-06-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/cli_subprocess_exit_codes.md (unavailable)</span></div>
@@ -16414,7 +16438,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8d04a608a9a9)</span>
             
-            <a href="#node-5b3bd94" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-5b3bd94" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T20:40:32.536887Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-05b56cbf2264</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-044af45f (unavailable)</span></div>
@@ -16498,7 +16522,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-220943d72194)</span>
             
-            <a href="#node-f9f3d95" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-f9f3d95" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T15:33:47.372282Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5161a8739119</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-185dfdfe (unavailable)</span></div>
@@ -16582,7 +16606,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4a577d4482f1)</span>
             
-            <a href="#node-784753f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-784753f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T10:31:23.227672Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5e03e3a098cf</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260823-76c2802f (unavailable)</span></div>
@@ -16596,7 +16620,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-16806366aa6e)</span>
             
-            <a href="#node-d5ae197" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-d5ae197" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T10:19:30.561444Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-57ab080dbded</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-c2ab8feea257-4dc0 (unavailable)</span></div>
@@ -16610,7 +16634,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9a3c5c72f0f1)</span>
             
-            <a href="#node-890bbce" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-890bbce" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T10:06:29.424544Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1b43998abb48</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-1094c6ba84b4-be5c (unavailable)</span></div>
@@ -16624,7 +16648,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9532119b610b)</span>
             
-            <a href="#node-4483acf" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-4483acf" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T09:54:26.388552Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b14d11d4415f</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
@@ -16652,7 +16676,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-09b9f993614f)</span>
             
-            <a href="#node-d720857" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-d720857" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T09:09:25.096722Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-521b6562e356</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-5b349fbfddd0 (unavailable)</span></div>
@@ -16694,7 +16718,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-15e1c93a58a2)</span>
             
-            <a href="#node-224b88f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-224b88f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T05:46:39.706778Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c7b2a446b2c9</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-cb400fe3 (unavailable)</span></div>
@@ -16722,7 +16746,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fa9f1032a0ed)</span>
             
-            <a href="#node-965c1d5" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-965c1d5" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T05:17:33.767119Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-566e9da7fc36</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260824-5c2f9e95 (unavailable)</span></div>
@@ -16792,7 +16816,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4a1f34378697)</span>
             
-            <a href="#node-ba122cf" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-ba122cf" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T02:50:45.906887Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f0a9d777cab9</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260826-97cbb425 (unavailable)</span></div>
@@ -16820,7 +16844,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7ff9c7c935af)</span>
             
-            <a href="#node-e67194b" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e67194b" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T02:19:09.889311Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-77b89b62fa1f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-ab342a5e (unavailable)</span></div>
@@ -16834,7 +16858,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-25fa5a688906)</span>
             
-            <a href="#node-2534b3c" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-2534b3c" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T01:56:24.984181Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-34454aa3efe2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260831-6554c7fc">error:ERR-20260831-6554c7fc</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260826-ff3ff930 (unavailable)</span></div>
@@ -16848,7 +16872,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-eb5a4c9c9767)</span>
             
-            <a href="#node-e177958" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e177958" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T01:40:50.060471Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5a3b722dcc7c</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-185dfdfe (unavailable)</span></div>
@@ -16862,7 +16886,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-159672a5198e)</span>
             
-            <a href="#node-54f934d" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-54f934d" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-05T01:14:29.666369Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-2624b0e89a40</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
@@ -16904,7 +16928,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-de4246080b2b)</span>
             
-            <a href="#node-0a0a934" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-0a0a934" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T23:08:00.314130Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5d4010b95f60</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260826-97cbb425 (unavailable)</span></div>
@@ -16918,7 +16942,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-76791ead8b6a)</span>
             
-            <a href="#node-dbbf225" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-dbbf225" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T22:49:33.585664Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9864d82a4955</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-185dfdfe (unavailable)</span></div>
@@ -16932,7 +16956,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b0c846a618e3)</span>
             
-            <a href="#node-4c327f5" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-4c327f5" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T22:33:40.121978Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-ca74ed084e42</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-cb400fe3 (unavailable)</span></div>
@@ -16960,7 +16984,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8da3b65babec)</span>
             
-            <a href="#node-fc5547d" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-fc5547d" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T21:56:37.964535Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-29aa77fbdc18</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-842d3c7f (unavailable)</span></div>
@@ -16974,7 +16998,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-85a26dea5953)</span>
             
-            <a href="#node-eb43389" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-eb43389" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T21:44:05.752147Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-3a065dd75902</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-ab342a5e (unavailable)</span></div>
@@ -16988,7 +17012,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-09fc14d55cf5)</span>
             
-            <a href="#node-9b8a577" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-9b8a577" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T21:20:26.195145Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5b335ea292c9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260824-1c25796d (unavailable)</span></div>
@@ -17002,7 +17026,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1387465b520e)</span>
             
-            <a href="#node-60927c6" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-60927c6" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T21:03:03.818017Z">Sep 5 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c680650675f0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260824-e301a8a7 (unavailable)</span></div>
@@ -17017,7 +17041,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0a7aeaf0bf20)</span>
             
-            <a href="#node-6b1d1e4" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-6b1d1e4" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T20:44:37.182757Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-55b6e38d698a</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260823-c40c135f (unavailable)</span></div>
@@ -17031,7 +17055,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bd316bb0a133)</span>
             
-            <a href="#node-03b3070" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-03b3070" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T20:26:11.883003Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-dcaddc7fae11</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-002">error:ERR-2026-06-14-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-044af45f (unavailable)</span></div>
@@ -17045,7 +17069,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3ef20040cd6b)</span>
             
-            <a href="#node-7fd8ee8" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-7fd8ee8" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T20:09:38.546401Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-76e9a245965c</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-044af45f (unavailable)</span></div>
@@ -17059,7 +17083,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-2cb8ada2a94d)</span>
             
-            <a href="#node-b721707" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-b721707" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T19:55:10.993433Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-48c6ca857591</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-20e9962c (unavailable)</span></div>
@@ -17073,7 +17097,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8ef5fcc9efe4)</span>
             
-            <a href="#node-ed8c34b" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-ed8c34b" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T19:39:36.214884Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c62517fd6792</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-73ef54be (unavailable)</span></div>
@@ -17087,7 +17111,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-895cdc377917)</span>
             
-            <a href="#node-8324548" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-8324548" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T19:26:26.950760Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c5e50cd6a3a4</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-004">error:ERR-2026-06-15-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-c9b735fb (unavailable)</span></div>
@@ -17101,7 +17125,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-708c073efcfb)</span>
             
-            <a href="#node-fb2b06e" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-fb2b06e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T18:36:59.600806Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b3f43bf98c58</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-b957628f (unavailable)</span></div>
@@ -17115,7 +17139,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-34a2f915173b)</span>
             
-            <a href="#node-c797dd8" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-c797dd8" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T17:40:49.510642Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-39a556d0b4dd</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-044af45f (unavailable)</span></div>
@@ -17129,7 +17153,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0e9329b0fc37)</span>
             
-            <a href="#node-51336e6" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-51336e6" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T17:26:06.563422Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-750c18bf4158</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-80dc08de (unavailable)</span></div>
@@ -17199,7 +17223,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fe47bb63ea15)</span>
             
-            <a href="#node-93166e8" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-93166e8" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T12:04:37.014773Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-17d24bf5ee2a</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-b957628f (unavailable)</span></div>
@@ -17213,7 +17237,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9237b841ccb6)</span>
             
-            <a href="#node-4ff78d7" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-4ff78d7" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T11:47:31.508492Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2fe45501b3aa</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-c9b735fb (unavailable)</span></div>
@@ -17227,7 +17251,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bd177aba1753)</span>
             
-            <a href="#node-55c5682" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-55c5682" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T11:23:59.345111Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1156aac025a5</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-cb400fe3 (unavailable)</span></div>
@@ -17241,7 +17265,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c5f237c60f5b)</span>
             
-            <a href="#node-bbd15cf" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-bbd15cf" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T10:56:09.605742Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8746d0d0788c</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-cb400fe3 (unavailable)</span></div>
@@ -17255,7 +17279,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d44ed220091b)</span>
             
-            <a href="#node-c3d50f9" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-c3d50f9" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T10:22:09.870799Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8e2ff86b161e</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260823-76c2802f (unavailable)</span></div>
@@ -17297,7 +17321,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-dd2c83d4b4db)</span>
             
-            <a href="#node-cbc571f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-cbc571f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T09:53:52.958115Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-fa86c761898e</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260823-c40c135f (unavailable)</span></div>
@@ -17311,7 +17335,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-260bd269e5a0)</span>
             
-            <a href="#node-1638698" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-1638698" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T09:42:27.583175Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ecc3551b697b</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-4f03664182da-0d35 (unavailable)</span></div>
@@ -17325,7 +17349,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b5b86d028a89)</span>
             
-            <a href="#node-50fab76" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-50fab76" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T08:47:43.995093Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e13f1cd0f155</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-c871bf9abe41 (unavailable)</span></div>
@@ -17493,7 +17517,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3cbcc1f77d25)</span>
             
-            <a href="#node-e1ff240" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-e1ff240" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T02:43:43.524576Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-09520ab1b50b</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260825-b957628f (unavailable)</span></div>
@@ -17535,7 +17559,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-344be666c447)</span>
             
-            <a href="#node-995ba5f" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-995ba5f" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T01:18:46.297773Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6c72156e36e7</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-80dc08de (unavailable)</span></div>
@@ -17549,7 +17573,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-57c94e2e11ca)</span>
             
-            <a href="#node-3c183c6" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-3c183c6" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T01:05:22.451031Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-442fc7c9340f</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-20-001">error:ERR-2026-06-20-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260827-20e9962c (unavailable)</span></div>
@@ -17591,7 +17615,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ecbe56903f35)</span>
             
-            <a href="#node-871b846" class="feed-tree-link">tree &#8599;</a>
+            <a href="lineage.html#node-871b846" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-04T00:07:41.842628Z">Sep 4 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c162abb0a89c</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-14-004">error:ERR-2026-06-14-004</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260826-97cbb425 (unavailable)</span></div>
@@ -43131,7 +43155,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 22:31:01 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 00:44:12 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 22:39:59 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 01:35:12 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

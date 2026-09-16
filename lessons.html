@@ -589,6 +589,16 @@
     }
     .lesson-label { font-weight: 600; color: #8aa695; }
     .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
     .lesson-tag {
       display: inline-block;
       font-size: 0.72em;
@@ -1261,9 +1271,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 00:44:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 01:35:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 22:31 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 22:39 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html" class="nav-current">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1413,7 +1423,7 @@ sample collections into a single iterable:
   contract (docstring decision table) before the code, so the test and the
   implementation agree on the input shape.
 - `lessons/isolated_script_verification.md` — run the targeted self-test /
-  unit test in-cycle to catch deferred runtime errors before commit.   " id="q-uniform_selftest_tuples"><div class="lesson-meta"><span class="lesson-id" translate="no">uniform_selftest_tuples</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uniform Tuple Structure for Self-Test Sample Collections</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  unit test in-cycle to catch deferred runtime errors before commit.    " id="q-uniform_selftest_tuples"><div class="lesson-meta"><span class="lesson-id" translate="no">uniform_selftest_tuples</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uniform Tuple Structure for Self-Test Sample Collections</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Standalone `run_self_test()` / `run_self_tests()` functions commonly build
 two parallel sample collections — a `positive_samples` list and a
@@ -1533,7 +1543,7 @@ naming a script target:
   skipped` immediately when the primary inspection proves the change is
   already present.
 - `lessons/existence_index_duplicate.md` — checking recent history for
-  duplicate proposals (the legitimate use of history, scoped to the question).   " id="q-uncooled_reflection_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">uncooled_reflection_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uncooled Script Reflection Handling Policy</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  duplicate proposals (the legitimate use of history, scoped to the question).    " id="q-uncooled_reflection_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">uncooled_reflection_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uncooled Script Reflection Handling Policy</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 When a cycle is assigned a **reflection demand** (a task whose purpose is to
 reflect on, learn from, or improve a specific script or area), the target
@@ -1638,7 +1648,7 @@ the one-line fix. prevention
 - `lessons/early_edit_turn_discipline.md` — budget discipline that keeps a
   tests-only cycle from drifting into script edits.
 - `tests/test_targeted_file_slice.py` — the source artifact with the pinned
-  `known defect (handoff)` tests.   " id="q-test_scope_anomaly_handoffs"><div class="lesson-meta"><span class="lesson-id" translate="no">test_scope_anomaly_handoffs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Capturing Edge-Case Test Anomalies and Remediation Handoffs</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  `known defect (handoff)` tests.    " id="q-test_scope_anomaly_handoffs"><div class="lesson-meta"><span class="lesson-id" translate="no">test_scope_anomaly_handoffs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Capturing Edge-Case Test Anomalies and Remediation Handoffs</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 **cycle-db6b9f2a27f6** (2026-09-01) extended
 `tests/test_targeted_file_slice.py` with offset/limit edge cases, JSON modes,
@@ -1774,7 +1784,7 @@ documented the target scoped inspection protocol protocol as a standing lesson w
 - `lessons/pre_creation_tool_chain_limits.md` — caps the context each call
   may pull in.
 - agents.md &quot;bounded reading &amp; search&quot; — offset/limit and head-n discipline
-  for the reads this protocol permits.   " id="q-target_scoped_inspection_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">target_scoped_inspection_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Target-Scoped Repo Inspection Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  for the reads this protocol permits.    " id="q-target_scoped_inspection_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">target_scoped_inspection_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Target-Scoped Repo Inspection Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A recurring budget failure mode is **out-of-scope exploration**: the agent
 spends turns reading files and running greps across the repository that have
@@ -1895,7 +1905,7 @@ assertion entirely.
    assertion spuriously.
 4. **prefer whole-token matching in test assertions generally.** substring
    matching is only safe when the asserted string is guaranteed to be
-   self-delimiting in the target; when in doubt, use a boundary-anchored regex.   " id="q-substring_matching_boundaries_in_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">substring_matching_boundaries_in_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Regex Boundaries and Distinct Synthetic Strings for Substring Test Assertions</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+   self-delimiting in the target; when in doubt, use a boundary-anchored regex.    " id="q-substring_matching_boundaries_in_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">substring_matching_boundaries_in_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Regex Boundaries and Distinct Synthetic Strings for Substring Test Assertions</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Test assertions that verify the presence of a numbered or indexed item using a
 naive substring check (`assertIn(&quot;line 1&quot;, output)`) silently pass or fail
@@ -2246,7 +2256,7 @@ preventing re-dispatch of a task whose endpoint is known-dead.
 4. **keep the infrastructure handoff open until the litellm routing change is
    confirmed.** four consecutive identical failures mean the handoff is not
    optional; it is the only correct output. do not close the handoff until a
-   secondary deployment or `pre-call-checks` is verified in place.   " id="q-subagent_result_error_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">subagent_result_error_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Subagent Result Error Triage and Recovery</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+   secondary deployment or `pre-call-checks` is verified in place.    " id="q-subagent_result_error_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">subagent_result_error_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Subagent Result Error Triage and Recovery</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Subagent runs terminate with `status: &quot;error&quot;` and a `summary`/`result` string
 that is the raw exception text from the executor. This lesson documents how to
@@ -2397,7 +2407,7 @@ path from a tool result this session?
   first-edit-by-iteration-20 rule.
 - `memory/auxiliary_tool_call_discipline.md` — suppress secondary calls once
   the primary inspection proves redundancy.
-- agents.md &quot;bounded reading &amp; search&quot; — offset/limit and head-n discipline.   " id="q-speculative_read_prevention"><div class="lesson-meta"><span class="lesson-id" translate="no">speculative_read_prevention</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Speculative Read Avoidance and Existence Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+- agents.md &quot;bounded reading &amp; search&quot; — offset/limit and head-n discipline.    " id="q-speculative_read_prevention"><div class="lesson-meta"><span class="lesson-id" translate="no">speculative_read_prevention</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Speculative Read Avoidance and Existence Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A **speculative read** is a `read_file` (or `exec` that cats/greps a file) on a
 path the agent has *not yet confirmed exists*. The agent guesses the path from
@@ -2495,7 +2505,7 @@ then run the paired markdown validators and the skill test suites (see
 - `lessons/markdown_code_block_validation_protocol.md` — the paired validator
   protocol for any markdown edit under `lessons/` or `docs/`.
 - `lessons/adjacent_test_suite_verification.md` — the wider dependent-suite
-  union protocol for scoping test runs.   " id="q-skill_validation_pitfalls"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_validation_pitfalls</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Operational Pitfall Checks for Skill Validation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  union protocol for scoping test runs.    " id="q-skill_validation_pitfalls"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_validation_pitfalls</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Operational Pitfall Checks for Skill Validation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 When a cycle edits a skill&#x27;s `SKILL.md` — or any skill that reports on the
 agent&#x27;s own runtime state — the skill can pass the structural gate (frontmatter
@@ -2652,7 +2662,7 @@ a bounded verification. no phase re-derives another phase&#x27;s steps. preventi
 - `skills/fast_path_redundancy_skip/skill.md` — the early-exit path when
   phase 1 proves the whole workflow is redundant.
 - agents.md &quot;turn budget checkpoints&quot; — the iteration table this lesson maps
-  phases onto.   " id="q-skill_composition_orchestration"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_composition_orchestration</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Modular Skill Composition for Multi-Phase Workflow Orchestration</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  phases onto.    " id="q-skill_composition_orchestration"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_composition_orchestration</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Modular Skill Composition for Multi-Phase Workflow Orchestration</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Complex cycles (multi-file refactors, verification-heavy tasks, batch
 proposals) are tempting to implement as one monolithic procedure: read
@@ -2795,7 +2805,7 @@ to confirm the change did not break them. related
   rules.
 - `scripts/control_plane_summary.py` — reference implementation of the
   pattern (`_parse_ledger_outcomes`, `_proposer_quality_state`,
-  trust-ladder metrics).   " id="q-shared_parsing_helpers"><div class="lesson-meta"><span class="lesson-id" translate="no">shared_parsing_helpers</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Shared Parsing Helper Pattern for Consistent Metric Derivation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  trust-ladder metrics).    " id="q-shared_parsing_helpers"><div class="lesson-meta"><span class="lesson-id" translate="no">shared_parsing_helpers</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Shared Parsing Helper Pattern for Consistent Metric Derivation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Multiple scripts derive metrics from the same append-only JSONL state files
 (`state/ledger/cycles.jsonl`, `memory/HISTORY.md`). When each script re-implements
@@ -2921,7 +2931,7 @@ own test data, not a leak. related
 - `scripts/verify_staged_files.py` — pre-commit path guard with allowed-dir
   exemptions.
 - `scripts/validate_cycle_handoff.py` — handoff-time mirror of the same
-  patterns (`_blocked_file_patterns`).   " id="q-secret_scan_verification_patterns"><div class="lesson-meta"><span class="lesson-id" translate="no">secret_scan_verification_patterns</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Refined Secret-Scan Patterns: Avoiding False Alarms on Documentation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  patterns (`_blocked_file_patterns`).    " id="q-secret_scan_verification_patterns"><div class="lesson-meta"><span class="lesson-id" translate="no">secret_scan_verification_patterns</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Refined Secret-Scan Patterns: Avoiding False Alarms on Documentation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 The integration gate and pre-commit helpers block any file whose **path**
 contains a security keyword (`.env`, `secret`, `credential`, `token`,
@@ -2952,7 +2962,7 @@ to prevent low confirmation ratios and ensure all future proposals are confirmab
 3. **ensure functional value**: every proposal must deliver concrete, functional value. avoid metadata-only changes. if a task is metadata-only, implement a real, measurable improvement alongside it.
 4. **mandatory smoke testing**: every code change must be verified with a smoke test (e.g., `python3 -c &quot;import &lt;module&gt;&quot;` or running the script directly) or unit tests before committing.
 5. **clear and specific naming**: write highly specific task titles and target paths to avoid triggering the fts5 word overlap heuristic and to make the purpose of the cycle clear to the operator.
-6. **adhere to mutation surfaces**: keep edits minimal and task-local, prioritizing the 7 canonical mutation surfaces defined in the prompt.   " id="q-proposal_confirmation_standards"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_standards</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Proposal Confirmation Standards to Improve Confirmation Ratio</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+6. **adhere to mutation surfaces**: keep edits minimal and task-local, prioritizing the 7 canonical mutation surfaces defined in the prompt.    " id="q-proposal_confirmation_standards"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_standards</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Proposal Confirmation Standards to Improve Confirmation Ratio</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 The confirmation ratio is the proportion of completed self-evolving cycles that are successfully confirmed by the operator. A low confirmation ratio (below the target of 0.5) indicates that many cycles are either rejected or left unconfirmed. This stagnation prevents the system from locking in improvements and can lead to loop degradation. To maintain a healthy evolution loop, proposal...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
 If the confirmation ratio falls below the target (0.5), the following recovery procedures should be followed:
 1. **Identify Unconfirmed Cycles**: Run `python3 scripts/check_confirmation_ratio.py` to list specific unconfirmed cycles from the last 7 days.
@@ -2976,7 +2986,7 @@ to maintain a confirmation ratio above 0.5 and avoid common rejection patterns, 
 3. **check archival status**: never propose or implement changes to archived/deprecated scripts. always check the script&#x27;s docstring for deprecation warnings or early exit logic.
 4. **mandatory smoke testing**: every code change must be verified with a smoke test (e.g., `python3 -c &quot;import &lt;module&gt;&quot;` or running the script directly) or unit tests before committing.
 5. **clear and specific naming**: write highly specific task titles and target paths to avoid triggering the fts5 word overlap heuristic and to make the purpose of the cycle clear to the operator.
-6. **adhere to mutation surfaces**: keep edits minimal and task-local, prioritizing the 7 canonical mutation surfaces defined in the prompt.   " id="q-proposal_confirmation_guidelines"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_guidelines</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Improving Proposal Confirmation Ratio and Avoiding Common Rejection Patterns</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+6. **adhere to mutation surfaces**: keep edits minimal and task-local, prioritizing the 7 canonical mutation surfaces defined in the prompt.    " id="q-proposal_confirmation_guidelines"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_guidelines</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Improving Proposal Confirmation Ratio and Avoiding Common Rejection Patterns</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 The proposal confirmation ratio is a key metric tracking the proportion of self-evolving cycles that are successfully confirmed by the operator. Maintaining a confirmation ratio above the target threshold of 0.5 is critical to ensure the agent&#x27;s self-improvement loop remains active and does not stagnate. When the ratio drops below 0.5, it indicates that the agent is proposing changes t...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
 If the confirmation ratio falls below the target (0.5), the following recovery procedures should be followed:
 1. **Identify Unconfirmed Cycles**: Run `python3 scripts/check_confirmation_ratio.py` to list specific unconfirmed cycles from the last 7 days.
@@ -3120,7 +3130,7 @@ on exploration. prevention
 - `lessons/avoiding_repeat_failures.md` — general repeat-failure avoidance.
 - agents.md &quot;turn budget checkpoints&quot; — the same thresholds as standing rules.
 - agents.md &quot;composite context inspection&quot; — batching related questions into
-  one call.   " id="q-preventing_turn_limit_exhaustion"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_turn_limit_exhaustion</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Turn-Limit Exhaustion: Direct Read-Edit-Verify-Commit Workflow</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  one call.    " id="q-preventing_turn_limit_exhaustion"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_turn_limit_exhaustion</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Turn-Limit Exhaustion: Direct Read-Edit-Verify-Commit Workflow</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle is handed a bounded tool-iteration budget (80 calls on this host) and a
 single designated target path. The most common way to waste that budget is to
@@ -3171,7 +3181,7 @@ to prevent git checkout failures from occurring during autonomous cycles, the fo
    - use wrapper functions for git operations that handle exceptions, check for locks, and retry with backoff.
    - ensure git commands have reasonable timeouts to prevent them from hanging indefinitely and leaving stale locks.
 4. **automated workspace reset**:
-   - the coordinator should perform a pre-cycle cleanup (e.g., running `git reset --hard head` and `git clean -fd`) to ensure a pristine workspace before starting a new cycle.   " id="q-preventing_git_checkout_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_git_checkout_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Git Checkout Failures during Autonomous Cycles</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+   - the coordinator should perform a pre-cycle cleanup (e.g., running `git reset --hard head` and `git clean -fd`) to ensure a pristine workspace before starting a new cycle.    " id="q-preventing_git_checkout_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_git_checkout_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Git Checkout Failures during Autonomous Cycles</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 During autonomous self-evolving cycles, the agent system frequently performs git operations, such as switching between the `main` branch and task-specific cycle branches. A common failure mode is `checkout_main_failed`, where the coordinator or subagent bridge fails to switch back to the `main` branch to integrate changes. This aborts the cycle, triggers rollbacks, and can lead to loop...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
 If a git checkout failure occurs, the following steps should be executed to restore the workspace:
 1. **Check for and Remove Stale Lockfiles**:
@@ -3246,7 +3256,7 @@ we prevent repeat failures by:
 1. **check recent activity**: before implementing a task, check the &quot;recent activity&quot; section in the prompt and the codebase. if the task is already done, skip it.
 2. **run smoke tests**: always verify your changes with a smoke test before committing. if `pytest` is not available, use `python3 -c &quot;import &lt;module&gt;&quot;` or run the script directly.
 3. **follow branch discipline**: implement and commit on the assigned cycle branch. do not run `git checkout` or `git push` manually; let the bridge handle integration.
-4. **record lessons**: after resolving a failure, record a structured lesson in `lessons/errors.yaml` and create a matching markdown card under `lessons/errors/` to prevent the failure from repeating.   " id="q-prevent_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Repeat Failures Prevention Guide</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+4. **record lessons**: after resolving a failure, record a structured lesson in `lessons/errors.yaml` and create a matching markdown card under `lessons/errors/` to prevent the failure from repeating.    " id="q-prevent_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Repeat Failures Prevention Guide</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 This document serves as a central guide for identifying, analyzing, and preventing repeat failures in the self-evolving agent loop. Root Causes
 Repeat failures are typically caused by:
 1. Backlog items proposing tasks that have recently failed, leading to duplicate skips.
@@ -3289,7 +3299,7 @@ when a subagent attempts to implement a task but fails due to a blocked file che
    - verify that no staged files match the blocked patterns.
 4. **semantic deduplication check**:
    - before proposing a new task, search the repository for existing scripts or similar past proposals.
-   - write highly specific task titles and target paths to avoid triggering the fts5 word overlap heuristic.   " id="q-prevent_duplicate_proposals"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_duplicate_proposals</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Duplicate Proposals and Blocked File Failures</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+   - write highly specific task titles and target paths to avoid triggering the fts5 word overlap heuristic.    " id="q-prevent_duplicate_proposals"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_duplicate_proposals</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Duplicate Proposals and Blocked File Failures</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 This lesson analyzes the relationship between duplicate proposals (`existence_index_duplicate`) and blocked file failures (`blocked_file_present`), and how they jointly contribute to the repeat failure rate. 
 
 When a subagent attempts to implement a task but fails due to a blocked file check (e.g., committing a file with &quot;secret&quot; or &quot;token&quot; in the name, or committing a lockfile), the c...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
@@ -3434,7 +3444,7 @@ outcome; an uncommitted perfect file is nothing. fast-path writing protocol (sum
 - `memory/auxiliary_tool_call_discipline.md` — suppress secondary calls once
   the primary inspection proves redundancy.
 - `skills/batch_grep/skill.md` — multi-pattern search in one pass.
-- agents.md &quot;bounded reading &amp; search&quot; — offset/limit and head-n discipline.   " id="q-pre_creation_tool_chain_limits"><div class="lesson-meta"><span class="lesson-id" translate="no">pre_creation_tool_chain_limits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Pre-Creation Tool Chain Limits and Fast-Path Writing Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+- agents.md &quot;bounded reading &amp; search&quot; — offset/limit and head-n discipline.    " id="q-pre_creation_tool_chain_limits"><div class="lesson-meta"><span class="lesson-id" translate="no">pre_creation_tool_chain_limits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Pre-Creation Tool Chain Limits and Fast-Path Writing Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle that must **create a new file** (a new script, skill, memory fact, or
 lesson) is uniquely exposed to `ContextWindowExceededError`: every exploratory
@@ -3593,7 +3603,7 @@ documented the out of band main detected protocol as a standing lesson with conc
 - `lessons/preventing_git_checkout_failures.md` — git checkout failure prevention.
 - product-repo backstop: `nanobot/runtime/bridge.py` `_detect_out_of_band_main`
   (#846) and the `--force-with-lease` integration path (#877); tests in
-  `tests/test_bridge_gate_backstops_846.py`.   " id="q-out_of_band_main_detected"><div class="lesson-meta"><span class="lesson-id" translate="no">out_of_band_main_detected</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">out_of_band_main_detected — Root Cause and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  `tests/test_bridge_gate_backstops_846.py`.    " id="q-out_of_band_main_detected"><div class="lesson-meta"><span class="lesson-id" translate="no">out_of_band_main_detected</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">out_of_band_main_detected — Root Cause and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 `out_of_band_main_detected` is a **gate-skip / rollback reason** emitted by the
 subagent bridge (`nanobot/runtime/bridge.py`) when, during a cycle&#x27;s spawn
@@ -3641,7 +3651,7 @@ and the proposed target is within the checkout&#x27;s mutation boundary. prevent
 
 surface validation is a precondition, not a post-commit cleanup step. checking the
 mutation boundary before opening a file prevents wasted edits, rollback retries,
-and misleading evidence that a task was implemented successfully.   " id="q-mutation_surface_violation_retries"><div class="lesson-meta"><span class="lesson-id" translate="no">mutation_surface_violation_retries</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Mutation-Surface Violation Retries</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+and misleading evidence that a task was implemented successfully.    " id="q-mutation_surface_violation_retries"><div class="lesson-meta"><span class="lesson-id" translate="no">mutation_surface_violation_retries</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Mutation-Surface Violation Retries</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle is rolled back with `mutation_surface_violation` because the proposed change
 writes to a path outside the task&#x27;s permitted mutation surface. Retrying the same
@@ -3771,7 +3781,7 @@ right scope there. anti-patterns
   consumers are the dependent suites the wider protocol finds.
 - `skills/run-tests` — one-exec-call pattern for running the paired suites.
 - `scripts/validate_markdown_format.py` — structure and link integrity.
-- `scripts/validate_documentation_code_blocks.py` — python code block syntax.   " id="q-markdown_code_block_validation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">markdown_code_block_validation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Paired Markdown Format and Code Block Validation Protocol for Documentation Edits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+- `scripts/validate_documentation_code_blocks.py` — python code block syntax.    " id="q-markdown_code_block_validation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">markdown_code_block_validation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Paired Markdown Format and Code Block Validation Protocol for Documentation Edits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle that edits a file under `docs/` or `lessons/` — a lesson, a doc page,
 a skill&#x27;s `SKILL.md`, or any markdown that carries fenced code — can pass the
@@ -3846,7 +3856,7 @@ git status
 2. **concurrency control**: ensure only one subagent runs at a time. check systemd timers and ensure `runtimemaxsec` is configured to prevent overlapping runs.
 3. **robust git commands**: when writing scripts that perform git operations, handle exceptions and check for the existence of `index.lock` before running git commands.
 4. **automatic lock cleanup**: the coordinator or bridge could check for and clean up stale `index.lock` files if they are older than a certain threshold (e.g., 5 minutes).
-5. **follow branch discipline**: do not run manual git commands in the workspace while a self-evolving cycle is active.   " id="q-lesson_checkout_main_failed"><div class="lesson-meta"><span class="lesson-id" translate="no">lesson_checkout_main_failed</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Checkout Main Failed Failure Mode and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+5. **follow branch discipline**: do not run manual git commands in the workspace while a self-evolving cycle is active.    " id="q-lesson_checkout_main_failed"><div class="lesson-meta"><span class="lesson-id" translate="no">lesson_checkout_main_failed</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Checkout Main Failed Failure Mode and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 During a self-evolving cycle, the subagent or coordinator can fail at the integration/gate stage with a `checkout_main_failed` outcome. This occurs when the subagent bridge attempts to switch back to the `main` branch (or reset it to the base commit) to merge the cycle branch, but the `git checkout` command fails.
 
 When this failure mode is triggered, the logs will show output similar ...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
@@ -3956,7 +3966,7 @@ adjacent-suite union — never to a bundled full-suite run. related
   never chain the full suite into a targeted run.
 - `skills/run-tests` — one-exec-call pattern for the targeted run.
 - `skills/batch_grep` — single-pass multi-pattern search for the
-  importer/consumer discovery in step 2.   " id="q-isolated_script_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">isolated_script_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolated Script Verification Fast Path</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  importer/consumer discovery in step 2.    " id="q-isolated_script_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">isolated_script_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolated Script Verification Fast Path</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle that edits a single script and then launches the full test suite
 (`pytest tests/`) pays minutes of host time to re-verify code the change
@@ -4028,7 +4038,7 @@ alternatives, in order of preference:
   refactor the script in the same cycle.
 - cite [lesson less-ref-3c711db47ed9-d63a]: when a pre-existing failure
   outside the target scope appears during verification, document it in
-  `concrete_next_action` rather than fixing it in the same cycle.   " id="q-idle_script_rewiring_alternatives"><div class="lesson-meta"><span class="lesson-id" translate="no">idle_script_rewiring_alternatives</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Alternative Verification Strategy for Cooled Scripts During Idle Rewiring</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  `concrete_next_action` rather than fixing it in the same cycle.    " id="q-idle_script_rewiring_alternatives"><div class="lesson-meta"><span class="lesson-id" translate="no">idle_script_rewiring_alternatives</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Alternative Verification Strategy for Cooled Scripts During Idle Rewiring</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 During idle rewiring cycles, the demand rotation frequently proposes edits to
 scripts that are currently in a cooldown window (recently modified, recently
@@ -4085,7 +4095,7 @@ git -c safe.directory=/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolv
 1. **always pull before working**: the coordinator and subagents must run `git pull` (or `git fetch` + `git rebase`) at the start of every cycle.
 2. **locking / concurrency control**: ensure only one subagent runs at a time. check systemd timers and ensure `runtimemaxsec` is configured to prevent overlapping runs.
 3. **short-lived task branches**: work on task-specific branches rather than directly on `main` when doing complex changes, and merge them via prs or fast-forward merges.
-4. **automated rebase in bridge**: the subagent bridge should automatically attempt to rebase and retry the push if a `push_rejected` error is detected.   " id="q-handling_push_rejections"><div class="lesson-meta"><span class="lesson-id" translate="no">handling_push_rejections</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Handling Git Push Rejections (`push_rejected`)</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Root Causes
+4. **automated rebase in bridge**: the subagent bridge should automatically attempt to rebase and retry the push if a `push_rejected` error is detected.    " id="q-handling_push_rejections"><div class="lesson-meta"><span class="lesson-id" translate="no">handling_push_rejections</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Handling Git Push Rejections (`push_rejected`)</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Root Causes
 1. **Concurrent Subagent Runs**: Multiple subagents running concurrently (e.g., due to overlapping systemd timer triggers or long-running tasks exceeding the 15-minute interval) attempting to push to the remote repository.
 2. **Out-of-Sync Remote Commits**: The remote repository has received new commits (e.g., from manual operator hotfixes, coordinator merges, or other subagents) that ...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Symptom
 During a self-evolving cycle, the subagent or coordinator fails at the integration/push stage with a `push_rejected` outcome. The logs show git output similar to:
@@ -4146,7 +4156,7 @@ git status
 1. **automated lock cleanup**: implement pre-flight checks in coordinator and subagent scripts to detect and automatically remove `index.lock` if it is older than a threshold (e.g., 5 minutes) and no git process is running.
 2. **workspace hygiene**: ensure all scripts clean up temporary files and directories. add temporary build/test artifacts to `.gitignore`.
 3. **concurrency guardrails**: use systemd service settings (like `runtimemaxsec`) and file locks to prevent concurrent subagent executions.
-4. **safe git wrappers**: when executing git commands programmatically, check for the presence of `index.lock` beforehand and raise a clear error or wait/retry.   " id="q-git_checkout_recovery"><div class="lesson-meta"><span class="lesson-id" translate="no">git_checkout_recovery</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Resolving checkout_main_failed and Git Lock Issues on Constrained Hosts</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+4. **safe git wrappers**: when executing git commands programmatically, check for the presence of `index.lock` beforehand and raise a clear error or wait/retry.    " id="q-git_checkout_recovery"><div class="lesson-meta"><span class="lesson-id" translate="no">git_checkout_recovery</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Resolving checkout_main_failed and Git Lock Issues on Constrained Hosts</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 On resource-constrained hosts like the Asus Eee PC, git operations are highly susceptible to failures during branch checkouts and repository state transitions. The two most common failure modes are:
 1. `checkout_main_failed`: The self-evolving coordinator or subagent bridge fails to switch back to the `main` branch to merge changes.
 2. Git Lock Issues (`index.lock`): Stale lock files l...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
@@ -4197,7 +4207,7 @@ modify the task title in the backlog (e.g., in `memory/memory.md` or the seeder)
 1. **check existing scripts**: before proposing or implementing a task, search the repository (e.g., in `scripts/`, `nanobot/`, etc.) to ensure a similar script does not already exist.
 2. **check past proposals/ledger**: check the recent cycle history (e.g., `state/reports/` or `memory/history.md`) to see if a similar task was recently attempted or completed.
 3. **refine task title and target path**: ensure the target path and title clearly distinguish the new functionality from existing ones. avoid generic titles like &quot;check style&quot; if a style checker already exists; instead, use &quot;extend check_style to support ruff rules&quot;.
-4. **use unique naming**: ensure the target path and title clearly distinguish the new functionality from existing ones.   " id="q-existence_index_duplicate"><div class="lesson-meta"><span class="lesson-id" translate="no">existence_index_duplicate</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Existence Index Duplicate Skip Mode and Mitigation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+4. **use unique naming**: ensure the target path and title clearly distinguish the new functionality from existing ones.    " id="q-existence_index_duplicate"><div class="lesson-meta"><span class="lesson-id" translate="no">existence_index_duplicate</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Existence Index Duplicate Skip Mode and Mitigation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 During a self-evolving cycle, the subagent bridge can skip spawning a subagent for a proposed task with an `existence_index_duplicate` outcome. This is a pre-spawn deduplication gate designed to prevent wasting LLM tokens and CPU cycles on tasks that are semantically identical or near-duplicates of existing scripts or prior attempts.
 
 When this skip mode is triggered, the logs will sho...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
@@ -4304,7 +4314,7 @@ all of which a new standing instruction should get in the same commit as the
   `sync_agents_sections_in_structural_tests` skill and of the companion lesson
   `coupling_agents_instructions_with_structural_tests.md`. see also
   [lesson less-ref-5b349fbfddd0] (register newly added agents.md sections in
-  `required_sections` to enforce them permanently).   " id="q-enforcing_agents_sections_in_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">enforcing_agents_sections_in_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  `required_sections` to enforce them permanently).    " id="q-enforcing_agents_sections_in_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">enforcing_agents_sections_in_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 `AGENTS.md` is the behavioral contract every cycle reads before acting: skip
 protocol, staging protocol, forbidden control-plane paths, turn-budget
@@ -4453,7 +4463,7 @@ taken only when the current write is blocked without it. related
   creating an artifact; the turn-1–2 orient step is that cap in practice.
 - agents.md &quot;turn budget checkpoints&quot; — the standing checkpoints (≤16
   inspection, ≤20 first edit, ≤40 commit). this protocol is the
-  implementation-side detail that makes those checkpoints easy to hit.   " id="q-early_turn_implementation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">early_turn_implementation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Implementation Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  implementation-side detail that makes those checkpoints easy to hit.    " id="q-early_turn_implementation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">early_turn_implementation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Implementation Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A recurring, low-severity failure mode is **exploratory stalling**: the agent
 spends its first 10–20 turns on tangential inspection (listing directories,
@@ -4617,7 +4627,7 @@ documented the early edit turn discipline protocol as a standing lesson with con
 - `lessons/avoiding_repeat_failures.md` — general repeat-failure avoidance.
 - agents.md &quot;staging protocol&quot; — explicit-path staging rules.
 - agents.md &quot;execution protocol&quot; — no diagnosis-only cycles; edit after
-  reproducing.   " id="q-early_edit_turn_discipline"><div class="lesson-meta"><span class="lesson-id" translate="no">early_edit_turn_discipline</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Edit Budget Discipline and Inspection Limits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  reproducing.    " id="q-early_edit_turn_discipline"><div class="lesson-meta"><span class="lesson-id" translate="no">early_edit_turn_discipline</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Edit Budget Discipline and Inspection Limits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle can exhaust its full tool-iteration budget (80 calls) while still
 producing **zero edits to the designated target file**, then fail at the gate
@@ -4742,7 +4752,7 @@ downstream graph alive. when to apply
 - `lessons/dual_ledger_testing_pattern.md` — the analogous &quot;verify against
   both layers&quot; discipline for ledger readers.
 - `lessons/cli_verification_state_isolation.md` — keep migration
-  verification runs out of live `state/`.   " id="q-dual_sink_sampler_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_sink_sampler_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual-Sink Output Pattern for Sampler Migrations</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  verification runs out of live `state/`.    " id="q-dual_sink_sampler_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_sink_sampler_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual-Sink Output Pattern for Sampler Migrations</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 When a sampler script is deprecated, archived, or replaced, its **output
 consumers** do not disappear with it. A sampler that stops writing to a path
@@ -4886,7 +4896,7 @@ fixtures. related
 - `lessons/avoid_state_report_inspection.md` — verify script capabilities
   against the script itself, not historical state reports.
 - agents.md &quot;bounded reading &amp; search&quot; — keep the live sample read bounded
-  so the protocol stays cheap on the 2 gb host.   " id="q-dual_ledger_testing_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_ledger_testing_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual Mock and Live Ledger Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  so the protocol stays cheap on the 2 gb host.    " id="q-dual_ledger_testing_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_ledger_testing_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual Mock and Live Ledger Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Ledger analysis scripts (`scripts/count_recent_failures.py`,
 `scripts/extract_last_failure.py`, `scripts/audit_repeat_failures.py`,
@@ -4993,7 +5003,7 @@ all of which a new standing instruction should get in the same commit as the
   `pair_agents_instructions_with_tests` skill and of the reflection &quot;keep
   documentation heading additions synchronized with structural tests within
   the same commit.&quot; see also [lesson less-ref-5b349fbfddd0] (register newly
-  added agents.md sections in `required_sections` to enforce them permanently).   " id="q-coupling_agents_instructions_with_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">coupling_agents_instructions_with_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Coupling AGENTS.md Standing Instruction Updates with Structural Test Assertions</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  added agents.md sections in `required_sections` to enforce them permanently).    " id="q-coupling_agents_instructions_with_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">coupling_agents_instructions_with_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Coupling AGENTS.md Standing Instruction Updates with Structural Test Assertions</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 Standing instructions in `AGENTS.md` are the behavioral contract the harness
 relies on every cycle: skip protocol, staging protocol, forbidden control-plane
@@ -5114,7 +5124,7 @@ command. prefer one chained `exec` with explicit paths for stage + commit. relat
   the no-zero-edit failure mode this lesson complements.
 - agents.md &quot;bounded reading &amp; search (prevent context bloat)&quot; — the
   standing rule for bounded reads and searches.
-- agents.md &quot;turn budget checkpoints&quot; — when to commit partial work.   " id="q-concise_late_turn_tool_outputs"><div class="lesson-meta"><span class="lesson-id" translate="no">concise_late_turn_tool_outputs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Late-Turn Concise Tool Execution and Test Output Truncation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+- agents.md &quot;turn budget checkpoints&quot; — when to commit partial work.    " id="q-concise_late_turn_tool_outputs"><div class="lesson-meta"><span class="lesson-id" translate="no">concise_late_turn_tool_outputs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Late-Turn Concise Tool Execution and Test Output Truncation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 In the late turns of a cycle (roughly iteration 40+ of an 80-iteration
 budget), the session&#x27;s accumulated context is already large: the target
@@ -5209,7 +5219,7 @@ committing. prevention
 - `lessons/batch-consecutive-file-edits.md` — batching related modifications
   into fewer edit calls.
 - agents.md &quot;execution protocol&quot; — no diagnosis-only cycles; edit, verify,
-  and commit in the same session.   " id="q-cohesive_import_edits"><div class="lesson-meta"><span class="lesson-id" translate="no">cohesive_import_edits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Bundle Import Additions with Their Functional Logic in Atomic Edits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  and commit in the same session.    " id="q-cohesive_import_edits"><div class="lesson-meta"><span class="lesson-id" translate="no">cohesive_import_edits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Bundle Import Additions with Their Functional Logic in Atomic Edits</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle that adds a new import in one edit and the function that uses it in a
 later edit can end with a **dangling import**: the import line lands in the
@@ -5314,7 +5324,7 @@ verification (not the harness&#x27;s own scheduled run):
   explicit `git add &lt;file&gt;`; never `git add -a`, which would sweep in
   verification side effects.
 - agents.md &quot;bounded reading &amp; search&quot; — keep verification reads bounded
-  so the isolation protocol stays cheap on the slow host.   " id="q-cli_verification_state_isolation"><div class="lesson-meta"><span class="lesson-id" translate="no">cli_verification_state_isolation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolate CLI Verification State to Prevent Repo File Mutation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  so the isolation protocol stays cheap on the slow host.    " id="q-cli_verification_state_isolation"><div class="lesson-meta"><span class="lesson-id" translate="no">cli_verification_state_isolation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolate CLI Verification State to Prevent Repo File Mutation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 When you verify a script&#x27;s behavior by executing it (a `--help` probe, a
 fixture run, a smoke test), the execution may **write files**: output
@@ -5384,7 +5394,7 @@ once the blocked files are removed from the commit history of the cycle branch, 
 1. **strict naming conventions**: avoid using words like &quot;secret&quot;, &quot;token&quot;, &quot;credential&quot;, or &quot;private_key&quot; in filenames (even for test files or documentation, unless absolutely necessary and allowed).
 2. **workspace hygiene**: keep the workspace clean of untracked files. use `.gitignore` to exclude local environment files, lockfiles, and ide configurations.
 3. **pre-commit checks**: run a pre-commit check or script (like `scripts/verify_staged_files.py`) to verify that no staged files match the blocked patterns before committing.
-4. **lockfile exclusion**: do not commit `package-lock.json` or `yarn.lock` in the python repository or subagent workspace unless explicitly required by the package configuration.   " id="q-blocked_file_remediation"><div class="lesson-meta"><span class="lesson-id" translate="no">blocked_file_remediation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Blocked File Present Failure Mode and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+4. **lockfile exclusion**: do not commit `package-lock.json` or `yarn.lock` in the python repository or subagent workspace unless explicitly required by the package configuration.    " id="q-blocked_file_remediation"><div class="lesson-meta"><span class="lesson-id" translate="no">blocked_file_remediation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Blocked File Present Failure Mode and Remediation</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 During a self-evolving cycle, the subagent or coordinator can fail at the integration/gate stage with a `blocked_file_present` outcome. This is a safety lock mechanism designed to prevent committing sensitive files, credentials, or package lockfiles that could cause security issues or dependency conflicts.
 
 When this failure mode is triggered, the logs will show output similar to:
@@ -5411,7 +5421,7 @@ if the system gets stuck in a repeat failure loop:
 4. **use candidate matching**: when using `scripts/analyze_repeat_failures.py`, pass the candidate task title to check for recent matches:
    ```bash
    python3 scripts/analyze_repeat_failures.py --match-candidate &quot;your task title&quot;
-   ```   " id="q-avoiding_repeated_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeated_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeated Task Failures by Checking Recent Cycle Outcomes</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+   ```    " id="q-avoiding_repeated_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeated_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeated Task Failures by Checking Recent Cycle Outcomes</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 To maintain a high confirmation ratio and minimize wasted cycles, subagents and the coordinator must actively check recent cycle outcomes before proposing or implementing new tasks. Proposing tasks that match recent failures leads to a high repeat failure rate, which degrades system efficiency. Root Causes
 1. **Lack of Context Awareness**: Subagents proposing tasks without checking the...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
 If the system gets stuck in a repeat failure loop:
@@ -5500,7 +5510,7 @@ services fail to start or restart after user deletion, path changes, or system u
 1. **check recent activity**: before implementing a task, check the &quot;recent activity&quot; section in the prompt and the codebase. if the task is already done, skip it.
 2. **run smoke tests**: always verify your changes with a smoke test before committing. if `pytest` is not available, use `python3 -c &quot;import &lt;module&gt;&quot;` or run the script directly.
 3. **follow branch discipline**: implement and commit on the assigned cycle branch. do not run `git checkout` or `git push` manually; let the bridge handle integration.
-4. **record lessons**: after resolving a failure, record a structured lesson in `lessons/errors.yaml` and create a matching markdown card under `lessons/errors/` to prevent the failure from repeating.   " id="q-avoiding_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeat Failures</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+4. **record lessons**: after resolving a failure, record a structured lesson in `lessons/errors.yaml` and create a matching markdown card under `lessons/errors/` to prevent the failure from repeating.    " id="q-avoiding_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeat Failures</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 This document outlines the patterns, root causes, and actionable mitigation strategies for repeat failures in the `eeebot` self-evolving runtime. The target repeat failure rate is **0.3**, but historical rates have exceeded this target (e.g., reaching 1.77). By understanding these patterns, subagents and operators can avoid repeating errors in future cycles. Root Causes
 Repeat failures...</div><div class="lesson-solution"><span class="lesson-label">Solution:</span> Recovery Procedures
 To recover from repeat failure loops, clear the duplicate suppression state, rebase local commits, or prune the failed backlog. Prevention Mechanisms
@@ -5592,7 +5602,7 @@ the rule, to be applied in every cycle that verifies a script capability:
 - `lessons/existence_index_duplicate.md` — checking recent history for
   duplicate proposals (the legitimate use of history, scoped to the question).
 - agents.md &quot;bounded reading &amp; search&quot; — prefer a targeted search over a full
-  read; narrow the range instead of re-reading.   " id="q-avoid_state_report_inspection"><div class="lesson-meta"><span class="lesson-id" translate="no">avoid_state_report_inspection</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Do Not Inspect Historical State Reports When Verifying Script Capabilities</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  read; narrow the range instead of re-reading.    " id="q-avoid_state_report_inspection"><div class="lesson-meta"><span class="lesson-id" translate="no">avoid_state_report_inspection</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Do Not Inspect Historical State Reports When Verifying Script Capabilities</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 When a task asks you to **verify that a script has a capability** (a CLI flag,
 a function, an output format, a behavior), the authoritative source of truth is
@@ -5670,7 +5680,7 @@ skip. related
 - `agents.md` — &quot;immediate skip protocol&quot; and &quot;early skip evaluation&quot; sections.
 - `memory/blocked_task_early_exit.md` — early exit for blocked/unnecessary edits.
 - `skills/fast_path_redundancy_skip/skill.md` — fast-path skip emission.
-- `lessons/prevent_duplicate_proposals.md` — upstream cause of redundant tasks.   " id="q-already_implemented_skip_emission"><div class="lesson-meta"><span class="lesson-id" translate="no">already_implemented_skip_emission</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Immediate Skip Emission When the Proposed Change Already Exists</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+- `lessons/prevent_duplicate_proposals.md` — upstream cause of redundant tasks.    " id="q-already_implemented_skip_emission"><div class="lesson-meta"><span class="lesson-id" translate="no">already_implemented_skip_emission</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Immediate Skip Emission When the Proposed Change Already Exists</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A recurring failure mode: a cycle is assigned a task whose target change is
 already present in the codebase (a prior cycle, an auto-commit, or an
@@ -5778,7 +5788,7 @@ the commit message or cycle report so the verification scope is visible. verific
   ledger scripts; the dependent-suite union includes both layers.
 - `skills/run-tests` — one-exec-call pattern for running the union.
 - `skills/batch_grep` — single-pass multi-pattern search for the
-  importer/consumer discovery in steps 2–3.   " id="q-adjacent_test_suite_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">adjacent_test_suite_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Adjacent and Dependent Test Suite Pre-Commit Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
+  importer/consumer discovery in steps 2–3.    " id="q-adjacent_test_suite_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">adjacent_test_suite_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Adjacent and Dependent Test Suite Pre-Commit Verification Protocol</h3><div class="lesson-problem"><span class="lesson-label">Problem:</span> Description
 
 A cycle that edits a script, helper, or shared module and runs only the
 test file named in the task prompt can still ship a regression: the change
@@ -5805,11 +5815,19 @@ Run these steps in order, after the target suite passes and before
         function apply(q) {
           var t = (q || '').toLowerCase();
            var shown = 0;
+           var legacyMatch = false;
            rowsL.forEach(function (r) {
              var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
              r.style.display = visible ? '' : 'none';
-             if (visible) shown += 1;
+             if (visible) {
+               shown += 1;
+               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
+             }
            });
+           var legacyDetails = document.querySelector('.lesson-legacy-details');
+           if (legacyDetails && t) {
+             legacyDetails.open = legacyMatch;
+           }
            var empty = document.querySelector('#panel-lessons [data-filter-empty]');
            if (empty) { empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }
           input.value = t;
@@ -5829,7 +5847,7 @@ Run these steps in order, after the target suite passes and before
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 22:31:01 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 00:44:12 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 22:39:59 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 01:35:12 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
