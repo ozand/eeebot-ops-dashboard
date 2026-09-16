@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">221</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">75.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 06:16:22 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="32">data: 32s old &middot; generated 03:44 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 03:51 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ac89330e6e7d</span>
+      <span class="cycle-pill">cycle-7cfb360faf9c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 03:27:34.619279 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 03:47:12.517642 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 45,259 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 17,257 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 45,259 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,659c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 17,257 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,140c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,659 chars &bull; ~2,164 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document lesson on inline interpreter probing for edge case test suites
-Request ID: llm-proposer-cycle-ac89330e6e7d
-Cycle ID: cycle-ac89330e6e7d
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,140 chars &bull; ~1,785 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings
+Request ID: llm-proposer-cycle-7cfb360faf9c
+Cycle ID: cycle-7cfb360faf9c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1930,70 +1930,58 @@ Completed (do not repeat): Filter futile fallback proposals (V1); Filter futile 
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- c66fe0a2 merge: integrate selfevo/cycle-cycle-ac89330e6e7d
+- 1f1d258f docs(lessons): add lesson on inline interpreter probing for edge case test suites
 - f5d9258e merge: integrate selfevo/cycle-cycle-7bf0af105580
 - 97cd2e2d docs(lessons): add lesson on compact turn template for single-script enhancement tasks
 - e06f5026 merge: integrate selfevo/cycle-cycle-818fe886583d
 - 9d5fb34d docs(lessons): add lesson on targeted reference script inspection for CLI and boilerplate structures
 - 5dc9e534 merge: integrate selfevo/cycle-cycle-c58e5b15796e
 - 46794e75 docs(lessons): add lesson on referencing canonical string constants for CLI text assertions
-- 28a2a833 merge: integrate selfevo/cycle-cycle-3970bca2c24b
-- 3411c019 docs(lessons): add lesson on bundling import additions with functional logic in atomic edits
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ac89330e6e7d.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7cfb360faf9c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document lesson on inline interpreter probing for edge case test suites&quot;,
-    &quot;backlog_instructions&quot;: &quot;Codifies reflection-0d2613f10c6b into a structured lesson detailing how inline python3 -c probing of compound edge cases catalogs actual behavior to write robust unit test suites without iterative trial-and-error edits.\n\nTarget path: lessons/interpreter_probe_edge_cases.md&quot;,
+    &quot;title&quot;: &quot;Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings&quot;,
+    &quot;backlog_instructions&quot;: &quot;Provides a validator script that scans shell command strings for bashisms such as PIPESTATUS to prevent dash execution failures under /bin/sh.\n\nTarget path: scripts/check_shell_bashisms.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document lesson on inline interpreter probing for edge case test suites (target: lessons/interpreter_probe_edge_cases.md)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;lessons/interpreter_probe_edge_cases.md passes lesson markdown structure validation&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/check_lesson_markdown_sections.py lessons/interpreter_probe_edge_cases.md&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings (target: scripts/check_shell_bashisms.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/test_scope_anomaly_handoffs.md  Title: Capturing Edge-Case Test Anomalies and Remediation Handoffs
-Problem: Read lessons/test_scope_anomaly_handoffs.md: **Pin, don&#x27;t hide.** When a tests-only cycle discovers a script anomaly, write a test that asserts the *current* behavior and annotate it with the marker `# KNOWN DEFECT (handoff):` followed by: the exact invocation that triggers it, the
-Solution: 
-If you apply this lesson, cite [Lesson lessons/test_scope_anomaly_handoffs.md] in your proposal/response.
+ID: LESS-REF-1767b3d47ede-ffe2  Title: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
+Problem: running `echo &quot;EXIT: ${PIPESTATUS[0]}&quot;` triggered `/bin/sh: 1: Bad substitution` with exit code 2 before switching back to `$?`.
+Solution: Use standard POSIX shell exit status captures (`$?`) rather than bash-specific variables like `${PIPESTATUS[0]}` when executing commands in POSIX `/bin/sh` environments.
+If you apply this lesson, cite [Lesson LESS-REF-1767b3d47ede-ffe2] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When git log reveals an explicit commit implementing the requested feature and dedicated test functions exist, conclude the skip evaluation promptly without running synthetic micro-tests or full regre
-- When a script already passes validation (exit code 0) and its test suite passes completely, evaluate whether the immediate skip protocol applies before deep edge-case exploration.
-- Check whether modified files are tracked before attempting git stash, or include untracked files via &#x27;git stash -u&#x27; when testing baseline repository state.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-16 03:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/compact_script_enhancement.md. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-16 02:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/targeted_reference_reading.md. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-16 02:16 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/canonical_cli_assertions.md. Reward signal will be upgraded by coordinator.
+- Avoid embedding literal sensitive paths or private URL strings such as &#x27;file:///etc/passwd&#x27; in exec commands; construct test inputs dynamically or use dedicated unit test files to avoid triggering saf
+- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
+- Avoid invoking cProfile on full-workspace scans that take ~60 seconds uninstrumented; profile a single file or a representative slice to avoid 300-second execution timeouts.
 
 ## Concrete task to implement
 
-Title: Document lesson on inline interpreter probing for edge case test suites
+Title: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings
 
 
-Codifies reflection-0d2613f10c6b into a structured lesson detailing how inline python3 -c probing of compound edge cases catalogs actual behavior to write robust unit test suites without iterative trial-and-error edits.
+Provides a validator script that scans shell command strings for bashisms such as PIPESTATUS to prevent dash execution failures under /bin/sh.
 
-Target path: lessons/interpreter_probe_edge_cases.md
+Target path: scripts/check_shell_bashisms.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-lessons/interpreter_probe_edge_cases.md passes lesson markdown structure validation
+## Concrete task to implement
+Implement and commit: Add check_shell_bashisms.py to detect non-POSIX bashisms in command strings (target: scripts/check_shell_bashisms.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5907,7 +5895,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 03:44:00 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 06:16:22 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 03:51:38 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 06:16:22 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
