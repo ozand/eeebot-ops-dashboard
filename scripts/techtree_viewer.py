@@ -48,19 +48,21 @@ import webbrowser
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 try:
     from scripts.agent_context import (
         AGENT_CONTEXT_CSS,
         build_two_tier_context_html,
         read_agent_context_dict,
+        read_lesson_corpus,
     )
 except ImportError:
     from agent_context import (
         AGENT_CONTEXT_CSS,
         build_two_tier_context_html,
         read_agent_context_dict,
+        read_lesson_corpus,
     )
 
 MSK_TZ = timezone(timedelta(hours=3))
@@ -422,8 +424,10 @@ from datetime import datetime, timezone, timedelta
 import gzip
 import json
 import os
+import re
 import subprocess
 import time
+from urllib.parse import unquote
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
@@ -923,12 +927,117 @@ def _parse_lessons_text(text):
     return lessons
 
 
+def _lesson_corpus_scan(lessons_dir):
+    """#274: enumerate lessons/*.md (excluding index.md) -- the live corpus
+    the loop writes today. Distinguishes a missing dir from an unreadable
+    one so the page can say which happened rather than showing 0 either way."""
+    if not os.path.isdir(lessons_dir):
+        return None, "missing"
+    try:
+        names = sorted(f for f in os.listdir(lessons_dir) if f.endswith(".md") and f != "index.md")
+    except Exception:
+        return None, "unavailable"
+    return names, "present"
+
+
+def _read_lesson_index(lessons_dir):
+    """Parse lessons/index.md rows ('| [title](file) | prevention | tags |'),
+    mirroring nanobot.runtime.lesson_index's row shape without importing
+    nanobot (this dashboard stays dependency-free of the loop's runtime).
+    Missing/unreadable index -> {} -- callers fall back to the filename as
+    the title rather than treating it as a distinct failure state."""
+    path = os.path.join(lessons_dir, "index.md")
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+        _mtimes.append(os.path.getmtime(path))
+    except Exception:
+        return {}
+    rows = {}
+    for line in text.splitlines():
+        m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
+        if not m:
+            continue
+        title, filename, prevention, _tags = m.groups()
+        filename = unquote(filename)
+        if "/" in filename or "\\" in filename or not filename.endswith(".md"):
+            continue
+        rows[filename] = {"title": title, "prevention": prevention}
+    return rows
+
+
+def _read_lesson_md_body(path):
+    """Bounded read of one lesson card, split on '## ' headers into condition
+    (Description/Root Causes) vs action (everything else) -- mirrors
+    nanobot.runtime.lesson_v2.markdown_lesson_pair's split without importing
+    nanobot."""
+    try:
+        if os.path.getsize(path) > 128 * 1024:
+            return "", ""
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except Exception:
+        return "", ""
+    sections = re.split(r"(?m)^## ", text)[1:]
+    condition = " ".join(s.strip() for s in sections if s.startswith(("Description", "Root Causes")))
+    action = " ".join(s.strip() for s in sections if not s.startswith(("Description", "Root Causes")))
+    return condition.strip(), action.strip()
+
+
+def _lesson_id_date(lid):
+    parts = lid.split("-")
+    if len(parts) >= 2 and len(parts[1]) == 8 and parts[1].isdigit():
+        return f"{parts[1][:4]}-{parts[1][4:6]}-{parts[1][6:8]}"
+    return ""
+
+
 def read_lessons():
+    """#274: lessons.html's primary population is the live corpus
+    (lessons/*.md, catalogued by lessons/index.md) -- the loop moved off
+    lessons.yaml around 2026-09-05 (nanobot.runtime.lesson_index, eeebot
+    #1343) but this reader never followed, so the page kept showing a store
+    the loop had left. Every file the corpus scan finds is rendered here
+    (falling back to its filename as the title when index.md is stale or
+    missing) -- nothing is silently dropped. lessons.yaml is retained only
+    as an explicitly labelled archive via `_read_lessons_archive` below;
+    it is never the count source."""
+    lessons_dir = os.path.join(INSTANCE_REPO, "lessons")
+    names, _corpus_state = _lesson_corpus_scan(lessons_dir)
+    rows_all = []
+    if names:
+        index_rows = _read_lesson_index(lessons_dir)
+        for name in names:
+            lid = name[:-3]
+            meta = index_rows.get(name, {})
+            path = os.path.join(lessons_dir, name)
+            try:
+                _mtimes.append(os.path.getmtime(path))
+            except Exception:
+                pass
+            problem, solution = _read_lesson_md_body(path)
+            rows_all.append({
+                "id": lid,
+                "title": meta.get("title") or lid,
+                "date": _lesson_id_date(lid),
+                "cycle_id": "",
+                "task_id": "",
+                "hypothesis": "",
+                "result": "",
+                "insight": meta.get("prevention") or "",
+                "problem": problem,
+                "solution": solution,
+                "source": "live",
+            })
+    rows_all.extend(_read_lessons_archive(lessons_dir))
+    return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
+
+
+def _read_lessons_archive(lessons_dir):
     """Issue #73: collect lessons from lessons/lessons.yaml plus
     lessons/archive/*.yaml.gz (rotation archives), dedupe by id, newest
     first. Fail-soft everywhere (#29): an unreadable lessons file must
-    never break the publish."""
-    lessons_dir = os.path.join(INSTANCE_REPO, "lessons")
+    never break the publish. #274: this is now an explicitly labelled
+    archive, not the live-corpus count source -- see `read_lessons` above."""
     texts = []
     try:
         with open(os.path.join(lessons_dir, "lessons.yaml"), "r", encoding="utf-8", errors="replace") as fh:
@@ -1712,12 +1821,87 @@ def read_local_state(
                 pass
         return res
 
+    def _read_lesson_index_local(lessons_dir: Path) -> dict[str, dict[str, str]]:
+        """Local mirror of REMOTE_READER_SCRIPT _read_lesson_index() -- keep
+        in sync. Missing/unreadable index -> {}."""
+        path = lessons_dir / 'index.md'
+        try:
+            text = path.read_text(encoding='utf-8', errors='replace')
+            mtimes.append(path.stat().st_mtime)
+        except OSError:
+            return {}
+        rows: dict[str, dict[str, str]] = {}
+        for line in text.splitlines():
+            m = re.fullmatch(r"\| \[(.*?)\]\(([^)]+)\) \| (.*?) \| (.*?) \|", line.strip())
+            if not m:
+                continue
+            title, filename, prevention, _tags = m.groups()
+            filename = unquote(filename)
+            if '/' in filename or '\\' in filename or not filename.endswith('.md'):
+                continue
+            rows[filename] = {'title': title, 'prevention': prevention}
+        return rows
+
+    def _read_lesson_md_body_local(path: Path) -> tuple[str, str]:
+        """Local mirror of REMOTE_READER_SCRIPT _read_lesson_md_body() --
+        keep in sync."""
+        try:
+            if path.stat().st_size > 128 * 1024:
+                return '', ''
+            text = path.read_text(encoding='utf-8', errors='replace')
+        except OSError:
+            return '', ''
+        sections = re.split(r"(?m)^## ", text)[1:]
+        condition = ' '.join(s.strip() for s in sections if s.startswith(('Description', 'Root Causes')))
+        action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
+        return condition.strip(), action.strip()
+
     def read_lessons_local() -> list[dict[str, Any]]:
-        """Issue #73: lessons from the instance repo (lessons.yaml + daily
-        .yaml.gz archives). Local mirror of the REMOTE_READER_SCRIPT
-        read_lessons() -- keep in sync. PyYAML when available, minimal
-        flat-shape parser otherwise; fail-soft everywhere (#29)."""
+        """#274: local mirror of the REMOTE_READER_SCRIPT read_lessons() --
+        keep in sync. The live-corpus count here comes from the SAME
+        function agent.html's Tier 2 panel calls (agent_context.
+        read_lesson_corpus), so the two pages cannot disagree about the
+        size of one corpus. lessons.yaml is now read only as an explicitly
+        labelled archive via `_read_lessons_archive_local` below."""
         lessons_dir = repo_path / 'lessons'
+        corpus = read_lesson_corpus(repo_path)
+        live_rows: list[dict[str, Any]] = []
+        if corpus['corpus_status'] == 'present':
+            index_rows = _read_lesson_index_local(lessons_dir)
+            for f in corpus['files']:
+                name = Path(f['name']).name
+                if not name.endswith('.md'):
+                    continue
+                lid = name[:-3]
+                meta = index_rows.get(name, {})
+                problem, solution = _read_lesson_md_body_local(lessons_dir / name)
+                live_rows.append({
+                    'id': lid,
+                    'title': meta.get('title') or lid,
+                    'date': _lesson_id_date_local(lid),
+                    'cycle_id': '',
+                    'task_id': '',
+                    'hypothesis': '',
+                    'result': '',
+                    'insight': meta.get('prevention') or '',
+                    'problem': problem,
+                    'solution': solution,
+                    'source': 'live',
+                })
+        entries = live_rows + _read_lessons_archive_local(lessons_dir)
+        return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
+
+    def _lesson_id_date_local(lid: str) -> str:
+        parts = lid.split('-')
+        if len(parts) >= 2 and len(parts[1]) == 8 and parts[1].isdigit():
+            return f'{parts[1][:4]}-{parts[1][4:6]}-{parts[1][6:8]}'
+        return ''
+
+    def _read_lessons_archive_local(lessons_dir: Path) -> list[dict[str, Any]]:
+        """Issue #73: lessons from lessons.yaml + daily .yaml.gz archives.
+        PyYAML when available, minimal flat-shape parser otherwise;
+        fail-soft everywhere (#29). #274: this is now an explicitly
+        labelled archive, not the live-corpus count source."""
         texts: list[tuple[str, str]] = []
         try:
             live = lessons_dir / 'lessons.yaml'
@@ -4239,10 +4423,17 @@ def build_cycle_feed(
                 entity_links.append(f'<span class="entity-chip">{esc(str(demand_id))}</span>')
             context = phase.get('lessons_context')
             if isinstance(context, list):
-                entity_links.extend(
-                    f'<a class="lesson-link" href="lessons.html#q-{esc(str(lesson_id).split(":", 1)[-1])}">{esc(str(lesson_id))}</a>'
-                    for lesson_id in context if lesson_id and (rendered_lesson_ids is None or str(lesson_id).split(":", 1)[-1] in rendered_lesson_ids)
-                )
+                for lesson_id in context:
+                    if not lesson_id:
+                        continue
+                    lid = str(lesson_id).split(":", 1)[-1]
+                    if rendered_lesson_ids is None or lid in rendered_lesson_ids:
+                        entity_links.append(f'<a class="lesson-link" href="lessons.html#q-{esc(lid)}">{esc(str(lesson_id))}</a>')
+                    else:
+                        # #274: a lesson injected into context but absent from
+                        # the rendered set (stale store, retention window) is
+                        # shown and marked unavailable rather than dropped.
+                        entity_links.append(f'<span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">{esc(str(lesson_id))} (unavailable)</span>')
 
         # Check demand and cycle_files for files_changed
         all_files: list[str] = []
@@ -5091,11 +5282,24 @@ def _is_v2_lesson(lesson: dict[str, Any]) -> bool:
     return bool(lesson.get('problem'))
 
 
-def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
-    """Issue #73/#96: lessons history page — v2 entries rendered as
+def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: str | None = None) -> str:
+    """Issue #73/#96/#274: lessons history page — v2 entries rendered as
     problem→solution cards (with tags/severity/seen_count); legacy
-    protocol records folded under 'legacy (pre-v2, frozen)'."""
+    protocol records folded under 'legacy (pre-v2, frozen)'.
+
+    ``corpus_status`` is the SAME value agent.html's Tier 2 panel reads
+    (agent_context.read_lesson_corpus's ``corpus_status``) -- missing,
+    unavailable and present-but-empty must be three distinguishable states,
+    not one collapsed "no data" note (#274)."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
+    corpus_note = ''
+    if corpus_status == 'missing':
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): directory missing on host.</p>'
+    elif corpus_status == 'unavailable':
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): present but unreadable.</p>'
+    elif corpus_status == 'present':
+        live_count = sum(1 for l in entries if isinstance(l, dict) and l.get('source') == 'live')
+        corpus_note = f'<p class="lessons-corpus-note">Live corpus (lessons/*.md): {live_count} files &mdash; same count agent.html reports.</p>'
     id_counts: dict[str, int] = {}
     for entry in entries:
         lesson_id = str(entry.get('id') or '')
@@ -5121,6 +5325,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
         return (
             '<section class="panel panel-lessons" id="panel-lessons">'
             '<h2 class="panel-title">Lessons History</h2>'
+            f'{corpus_note}'
             '<p class="unavailable-note">no lessons history data recorded</p>'
             '</section>'
         )
@@ -5256,6 +5461,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None) -> str:
     <section class="panel panel-lessons" id="panel-lessons">
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
       <p class="lessons-count-note">History only: {v2_count} active v2 cards plus retained archive rows; archive rows are not on the executor retrieval path. The executor retrieval corpus includes active v2 cards and active error cards from errors.yaml.</p>
+      {corpus_note}
       <input class="lessons-filter" type="text" placeholder="filter lessons...">
       <ul class="lessons-list">
         <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
@@ -7560,7 +7766,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         str(lesson.get('id')) for lesson in (data.get('lessons') or [])
         if isinstance(lesson, dict) and lesson.get('id')
     }
-    lessons_panel = build_lessons_panel(data.get('lessons'))
+    lessons_panel = build_lessons_panel(
+        data.get('lessons'),
+        corpus_status=((data.get('agent_context') or {}).get('tier2_lessons') or {}).get('corpus_status'),
+    )
     cycle_feed = build_cycle_feed(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -7568,6 +7777,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        rendered_lesson_ids=rendered_lesson_ids,
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
@@ -7927,7 +8137,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         agent_context=data.get('agent_context'),
         prompt_fit=data.get('scorecard', {}).get('prompt_fit') if isinstance(data.get('scorecard'), dict) else None,
     )
-    lessons_panel = build_lessons_panel(data.get('lessons'))
+    lessons_panel = build_lessons_panel(
+        data.get('lessons'),
+        corpus_status=((data.get('agent_context') or {}).get('tier2_lessons') or {}).get('corpus_status'),
+    )
 
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,
