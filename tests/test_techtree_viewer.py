@@ -2232,7 +2232,7 @@ def test_issue47_feed_integrated_cycle_has_tree_link() -> None:
         cycle_files=None,
     )
     assert 'feed-tree-link' in html
-    assert 'href="#node-sha1234"' in html
+    assert 'href="lineage.html#node-sha1234"' in html
 
 
 def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
@@ -3062,7 +3062,7 @@ def test_issue175_teaser_panels_three_state_reporting() -> None:
         'reflections': [],
     }
     idx_em = tv.render_pages(data_empty, host='eeepc', generated_at='2026-08-18 12:00:00')['index.html']
-    assert 'cycles</a> &mdash; 0 cycles tracked in the recent ledger window' in idx_em
+    assert 'cycles</a> &mdash; 0 cycles in full history' in idx_em
     assert 'lineage</a> &mdash; 0 evolution nodes' in idx_em
     assert 'hypotheses</a> &mdash; 0 active / 0 answered + 0 strategist durable' in idx_em
 
@@ -4742,3 +4742,80 @@ def test_fmt_ts_full_iso_conversion_to_msk() -> None:
     assert tv.fmt_ts('2026-09-06T10:00:00Z') == '2026-09-06 13:00:00 MSK'
     assert tv.fmt_ts('') == 'unknown time'
     assert tv.fmt_ts(None) == 'unknown time'
+
+
+def test_issue277_defect1_node_link_points_to_lineage_page() -> None:
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-evo1', 'status': 'integrated'},
+    ]
+    evolution_tree = {
+        'nodes': {
+            'sha1234567890abcdef': {
+                'cycle_id': 'cycle-evo1',
+                'branch': 'selfevo/cycle-evo1',
+                'parent_sha': None,
+            }
+        }
+    }
+    html = tv.build_cycle_feed(
+        ledger_tail=ledger_tail,
+        demand_completed=None,
+        task_titles=None,
+        evolution_tree=evolution_tree,
+        cycle_files=None,
+    )
+    assert 'href="lineage.html#node-sha1234"' in html
+
+
+def test_issue277_defect2_index_teasers_label_full_history() -> None:
+    data = {
+        'ledger_tail': [
+            {'phase': 'outcome', 'cycle_id': 'c1', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c2', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c3', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c4', 'status': 'integrated'},
+        ],
+        'evolution_tree': {'nodes': {}},
+        'hypotheses': {'entries': {}},
+        'lessons': [],
+        'reflections': [],
+    }
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    idx = pages['index.html']
+    assert 'cycles</a> &mdash; 4 cycles in full history' in idx
+
+
+def test_issue277_defect3_generator_sha_from_arbitrary_cwd(monkeypatch) -> None:
+    # Ensure _BAKED_GENERATOR_SHA is empty so git branch is exercised
+    monkeypatch.setattr(tv, '_BAKED_GENERATOR_SHA', '')
+    import os
+    orig = os.getcwd()
+    try:
+        os.chdir(os.path.abspath(os.sep))
+        sha = tv._generator_sha()
+        assert sha != 'unknown'
+        assert len(sha) >= 7
+    finally:
+        os.chdir(orig)
+
+
+def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
+    lessons = [
+        {
+            'schema': 2,
+            'id': 'KB-0277',
+            'kind': 'operational-pattern',
+            'title': 'Test Lesson Kind',
+            'date': '2026-09-15',
+            'severity': 'medium',
+            'problem': 'Something failed',
+            'solution': 'Fix it',
+        }
+    ]
+    html = tv.build_lessons_panel(lessons)
+    assert '<span class="lesson-chip lesson-kind">operational-pattern</span>' in html
+
+
+def test_issue277_defect5_legacy_details_auto_open_script_present() -> None:
+    html = tv.build_lessons_panel([_LEGACY_LESSON])
+    assert 'legacyDetails.open = legacyMatch;' in html

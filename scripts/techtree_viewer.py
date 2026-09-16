@@ -4840,7 +4840,7 @@ def build_cycle_feed(
                     sha_val = s
                     break
             if sha_val:
-                node_link_html = f'<a href="#node-{esc(short_sha(sha_val))}" class="feed-tree-link">tree &#8599;</a>'
+                node_link_html = f'<a href="lineage.html#node-{esc(short_sha(sha_val))}" class="feed-tree-link">tree &#8599;</a>'
 
         if outcome_kind == 'integrated':
             badge_class = 'badge-integrated'
@@ -5659,10 +5659,15 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         tags = l.get('tags') or []
         tags_list = tags if isinstance(tags, list) else [str(tags)]
         severity = str(l.get('severity') or '')
+        kind = str(l.get('kind') or '')
         seen_count = l.get('seen_count')
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
 
+        kind_html = (
+            f'<span class="lesson-chip lesson-kind">{esc(kind)}</span>'
+            if kind else ''
+        )
         severity_html = (
             f'<span class="lesson-severity lesson-severity-{esc(severity.lower())}">{esc(severity)}</span>'
             if severity else ''
@@ -5675,7 +5680,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
             f'<span class="lesson-seen" title="times this pattern was observed">×{esc(str(seen_count))}</span>'
             if seen_count is not None else ''
         )
-        meta_chips = severity_html + tags_html + seen_html + duplicate_html
+        meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
         problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
@@ -5685,7 +5690,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
         search_text = esc((' '.join([
             l.get('id') or '', title, str(l.get('task_id') or ''), problem, solution,
-            severity, ' '.join(str(t) for t in tags_list), cid,
+            kind, severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
             f'<li class="lesson-row lesson-row-v2" data-text="{search_text}"{item_anchor}>'
@@ -5777,11 +5782,19 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         function apply(q) {{
           var t = (q || '').toLowerCase();
            var shown = 0;
+           var legacyMatch = false;
            rowsL.forEach(function (r) {{
              var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
              r.style.display = visible ? '' : 'none';
-             if (visible) shown += 1;
+             if (visible) {{
+               shown += 1;
+               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
+             }}
            }});
+           var legacyDetails = document.querySelector('.lesson-legacy-details');
+           if (legacyDetails && t) {{
+             legacyDetails.open = legacyMatch;
+           }}
            var empty = document.querySelector('#panel-lessons [data-filter-empty]');
            if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }}
           input.value = t;
@@ -7512,6 +7525,16 @@ CSS = '''
     }
     .lesson-label { font-weight: 600; color: #8aa695; }
     .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
     .lesson-tag {
       display: inline-block;
       font-size: 0.72em;
@@ -7934,7 +7957,14 @@ def _generator_sha() -> str:
     if _BAKED_GENERATOR_SHA:
         return _BAKED_GENERATOR_SHA
     try:
-        result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True, timeout=5)
+        repo_dir = Path(__file__).resolve().parent.parent
+        result = subprocess.run(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(repo_dir),
+        )
         return result.stdout.strip() if result.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'
@@ -8240,7 +8270,7 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
             str(r.get('cycle_id')) for r in ledger_tail
             if isinstance(r, dict) and r.get('cycle_id')
         }
-        cycles_teaser = f'{len(cycle_ids)} cycles tracked in the recent ledger window'
+        cycles_teaser = f'{len(cycle_ids)} cycles in full history'
 
     if evolution_tree is None or not isinstance(evolution_tree, dict):
         lineage_teaser = 'unavailable'
