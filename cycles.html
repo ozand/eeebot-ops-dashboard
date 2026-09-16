@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 21:15:24 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="38">data: 37s old &middot; generated 18:29 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 18:59 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1273,18 +1273,18 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-16 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-0c34c55786ef">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-0c34c55786ef">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-0c34c55786ef</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(scaffold_script_entrypoint): add --streaming template with paired self-tests and companion pytest generation</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0c34c55786ef)</span>
             
-            
+            <a href="#node-65bf67e" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-16T18:28:55.698652Z">21:28 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8786b9377afe</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 6.82K tok &middot; dur 39s</div>
+          <div class="feed-files">&#128193; scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py</div>
+          <div class="feed-cost">&#9889; 54 calls &middot; 2.88M tok &middot; dur 20m12s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-ff16f6ecd4a1">
@@ -1312,7 +1312,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a88bda5286e1</span></div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py</div>
-          <div class="feed-cost">&#9889; 29 calls &middot; 999.6K tok &middot; dur 9m55s</div>
+          <div class="feed-cost">&#9889; 30 calls &middot; 1.02M tok &middot; dur 10m20s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c74f14f756a9">
@@ -4554,14 +4554,14 @@
         <li class="feed-row feed-overflow-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7938f26ad9b2">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">fix: resolve Class D contracts for #201 (#204)</strong>
+            <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7938f26ad9b2)</span>
             
             
             <span class="feed-ts" title="2026-09-14T20:12:46.480826Z">Sep 14 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-7fc7b5d1fe8a</span></div>
-          <div class="feed-files">&#128193; scripts/count_recent_failures.py</div>
+          
           <div class="feed-cost">&#9889; 19 calls &middot; 552.4K tok &middot; dur 3m4s</div>
         </li>
         
@@ -6238,7 +6238,7 @@
             <strong class="feed-title">success</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6b8063fb0065)</span>
             
-            <a href="#node-3a0b1d7" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-13T14:39:03.092262Z">Sep 13 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-dee7e4c27374</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
@@ -42945,7 +42945,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 18:29:51 UTC &middot; host eeepc &middot; newest source 37s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 21:15:24 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 18:59:47 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 21:15:24 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
