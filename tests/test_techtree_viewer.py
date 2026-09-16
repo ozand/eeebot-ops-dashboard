@@ -202,6 +202,70 @@ def test_read_local_state_collects_reflections_fail_soft(tmp_path: Path) -> None
     ]
 
 
+def test_read_local_state_local_ci_four_states(tmp_path: Path) -> None:
+    """#1593/#276: read_local_state must distinguish absent/targets_missing/
+    ran/unreadable -- never collapse to a bare ok bool."""
+    import json
+
+    state = tmp_path / 'state'
+    state.mkdir()
+
+    assert tv.read_local_state(str(state))['local_ci'] == {'probe': 'absent'}
+
+    ci_dir = state / 'local_ci'
+    ci_dir.mkdir()
+    (ci_dir / 'latest.json').write_text(json.dumps({
+        'state': 'targets_missing', 'exit_code': None, 'ok': False,
+        'summary': 'targets absent from /workspace: tests/test_identity_contract.py',
+    }), encoding='utf-8')
+    result = tv.read_local_state(str(state))['local_ci']
+    assert result['probe'] == 'present_uninitialized'
+    assert result['exit_code'] is None
+
+    (ci_dir / 'latest.json').write_text(json.dumps({
+        'state': 'ran', 'exit_code': 0, 'ok': True, 'summary': '13 passed',
+    }), encoding='utf-8')
+    result = tv.read_local_state(str(state))['local_ci']
+    assert result['probe'] == 'present'
+    assert result['exit_code'] == 0
+
+    (ci_dir / 'latest.json').write_text('not-json', encoding='utf-8')
+    result = tv.read_local_state(str(state))['local_ci']
+    assert result['probe'] == 'probe_unavailable'
+
+
+def test_read_local_state_executor_model_status_states(tmp_path: Path) -> None:
+    """#1660/#1678/#276: an executor/harness row classified as vendor IS the
+    fallback signal -- the only field persisted is the served model."""
+    import json
+
+    state = tmp_path / 'state'
+    state.mkdir()
+
+    assert tv.read_local_state(str(state))['executor_model_status'] == {'probe': 'absent'}
+
+    llm_dir = state / 'llm_calls'
+    llm_dir.mkdir()
+    (llm_dir / '2026-09-16.jsonl').write_text(
+        '\n'.join(json.dumps(r) for r in [
+            {'component': 'proposer', 'model': 'an/gemini-3.8-flash-high', 'ts': '2026-09-16T00:00:00Z'},
+            {'component': 'executor', 'model': 'openai/un/qwen3.8-27b-gguf', 'ts': '2026-09-16T00:01:00Z'},
+        ]) + '\n', encoding='utf-8',
+    )
+    result = tv.read_local_state(str(state))['executor_model_status']
+    assert result['probe'] == 'present'
+    assert result['latest_class'] == 'self_hosted'
+    assert result['fallback_seen_recent'] is False
+
+    (llm_dir / '2026-09-16.jsonl').write_text(
+        json.dumps({'component': 'executor', 'model': 'an/gemini-3.8-flash-high', 'ts': '2026-09-16T00:02:00Z'}) + '\n',
+        encoding='utf-8',
+    )
+    result = tv.read_local_state(str(state))['executor_model_status']
+    assert result['fallback_seen_recent'] is True
+    assert result['latest_class'] == 'vendor'
+
+
 def test_cycle_details_join_and_bound_fields() -> None:
     details = tv.build_cycle_details(
         ledger_rows=[{
@@ -1691,7 +1755,7 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     strip = tv.build_empire_stats_strip(data['scorecard'], age_seconds=120, generated_at='2026-09-01 02:00:00')
 
     assert '<section class="health-verdict health-' in html
-    assert '<strong>HEALTHY</strong>' in html
+    assert '<strong>FEEDS OK</strong>' in html  # #276: narrowed from HEALTHY, badge scope is 4 feeds
     assert 'all signals within thresholds across 1 monitored feeds (usage)' in html
     assert strip in html
     # Anchor on the banner markup, not the bare class name: the class also
@@ -1719,9 +1783,12 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '<span class="unavailable-note">unavailable</span>' in p_none
     assert '0 failures' not in p_none
 
-    # 2. streak = 0 -> healthy badge
+    # 2. streak = 0 -> badge, but #276 (c): caveated -- this counter has a
+    # known blind class (signal kills, eeebot#1683), so a bare 0 must not
+    # read as unqualified proof of health.
     p_zero = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={'consecutive_failures': 0})
-    assert '0 failures (healthy)' in p_zero
+    assert '0 failures (crash_record)' in p_zero
+    assert 'eeebot#1683' in p_zero
 
     # 3. streak > 0 -> alarm with details
     p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
@@ -1732,6 +1799,96 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '140 consecutive failures' in p_alarm
     assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_alarm or "NameError: name '_parse_explore_mode' is not defined" in p_alarm
     assert 'bridge.py:1874' in p_alarm
+
+
+def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_budget_cap() -> None:
+    """#276: reproduces the exact published-page inputs -- feeds fresh,
+    consecutive_failures=0, strategist errored, doc budget at cap. Must not
+    render the unqualified word HEALTHY; the badge is scoped to what it
+    measures, and the other signals stay visible at equal prominence."""
+    html = tv.build_now_panel(
+        portfolio=None,
+        evolution_tree=None,
+        demand_rotation=None,
+        demand_completed=None,
+        ledger_tail=[
+            {'phase': 'doc_only_budget', 'doc_budget_exceeded': True,
+             'doc_only_integrations_24h': 5, 'doc_only_budget_24h': 5,
+             'items_considered': 21, 'doc_only_deferred': 0},
+        ],
+        age_seconds=120,
+        now='2026-09-16T02:00:00Z',
+        health_last_integrated_ts='2026-09-16T01:50:00Z',
+        health_recent_outcomes=['integrated'],
+        bridge_exit_streak={'consecutive_failures': 0},
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
+        strategist_decisions=[{
+            'success': False, 'reason': 'no writes applied; watermark unchanged',
+            'timestamp': '2026-09-16T00:00:04Z',
+            'inputs_status': {n: {'status': 'complete'} for n in
+                               ('goals', 'scorecard', 'funnel', 'insights', 'evolution_tree')},
+            'counts': {'hypotheses_appended': 0, 'advisories_written': 0},
+        }],
+    )
+    # The word HEALTHY must not appear anywhere in the panel, unqualified.
+    assert 'HEALTHY' not in html
+    assert '<strong>FEEDS OK</strong>' in html
+    assert 'health-alert-text">error' in html  # strategist error still visible
+    assert 'cap reached' in html or 'exceeded' in html or 'doc-only' in html  # doc budget still visible
+
+
+def test_local_ci_item_four_states() -> None:
+    """#1593/#276: state distinguishes ran from targets_missing; ok=false
+    must not read the same as a real failing run."""
+    # None means the fetch itself failed (SSH down) -- distinct from the
+    # host answering "no file": neither is a fabricated absent/zero.
+    assert 'probe-probe_unavailable' in tv._build_local_ci_item(None)
+    assert 'probe-absent' in tv._build_local_ci_item({'probe': 'absent'})
+    assert 'no local_ci result recorded' in tv._build_local_ci_item({'probe': 'absent'})
+
+    unavailable = tv._build_local_ci_item({'probe': 'probe_unavailable', 'reason': 'JSONDecodeError'})
+    assert 'probe-probe_unavailable' in unavailable
+    assert 'JSONDecodeError' in unavailable
+
+    uninit = tv._build_local_ci_item({
+        'probe': 'present_uninitialized', 'state': 'targets_missing', 'exit_code': None,
+        'summary': 'targets absent from /workspace: tests/test_identity_contract.py',
+    })
+    assert 'probe-present_uninitialized' in uninit
+    assert 'no targets to check' in uninit
+    assert 'exit=' not in uninit  # never rendered as a run result
+
+    passed = tv._build_local_ci_item({'probe': 'present', 'state': 'ran', 'exit_code': 0, 'summary': '13 passed'})
+    assert 'probe-present' in passed
+    assert 'pass:' in passed
+
+    failed = tv._build_local_ci_item({'probe': 'present', 'state': 'ran', 'exit_code': 1, 'summary': '1 failed'})
+    assert 'exit=1' in failed
+
+
+def test_executor_model_item_four_states() -> None:
+    """#1660/#1678/#276: a vendor-class model on an executor/harness row is
+    the fallback signal, derived from the single persisted model field."""
+    assert 'probe-absent' in tv._build_executor_model_item({'probe': 'absent'})
+
+    uninit = tv._build_executor_model_item({'probe': 'present_uninitialized', 'reason': 'no executor/harness calls in recent files'})
+    assert 'probe-present_uninitialized' in uninit
+
+    normal = tv._build_executor_model_item({
+        'probe': 'present', 'latest_model': 'openai/un/qwen3.8-27b-gguf', 'latest_class': 'self_hosted',
+        'fallback_seen_recent': False, 'checked_calls': 12,
+    })
+    assert 'probe-present' in normal
+    assert 'self_hosted' in normal
+    assert 'health-alert-text' not in normal
+
+    fallback = tv._build_executor_model_item({
+        'probe': 'present', 'latest_model': 'an/gemini-3.8-flash-high', 'latest_class': 'vendor',
+        'fallback_seen_recent': True, 'checked_calls': 3,
+    })
+    assert 'health-alert-text' in fallback
+    assert 'fallback' in fallback
+    assert 'an/gemini-3.8-flash-high' in fallback
 
 
 def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
@@ -1755,7 +1912,7 @@ def test_now_panel_uses_latest_integration_from_ledger_tail() -> None:
         now=now,
         scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
     )
-    assert '<strong>HEALTHY</strong>' in html
+    assert '<strong>FEEDS OK</strong>' in html  # #276: narrowed from HEALTHY, badge scope is 4 feeds
     assert 'all signals within thresholds across 1 monitored feeds (usage)' in html
 
 
@@ -1776,7 +1933,7 @@ def test_now_panel_prefers_current_evolution_tree_node_timestamp() -> None:
         now='2026-09-01T12:00:00Z',
         scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
     )
-    assert '<strong>HEALTHY</strong>' in html
+    assert '<strong>FEEDS OK</strong>' in html  # #276: narrowed from HEALTHY, badge scope is 4 feeds
 
 
 def test_health_verdict_states_are_styled() -> None:
