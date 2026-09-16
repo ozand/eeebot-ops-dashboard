@@ -984,6 +984,104 @@ def read_jsonl(relpath):
     return rows
 
 
+_MAX_SUBAGENT_FILES = 6000
+_SUBAGENT_TEXT_LIMIT = 400
+_MAX_PROMPT_BYTES = 65536
+
+
+def read_subagent_records():
+    """#272: state/subagents/*.json -- one telemetry file per subagent
+    spawn, flat in this directory (the `requests/` and `results/`
+    subdirectories beside it are a separate bridge-coordination handoff,
+    not telemetry; they never match the `.json`-file glob at this level).
+    Bounded: newest _MAX_SUBAGENT_FILES by mtime, text fields excerpted
+    to _SUBAGENT_TEXT_LIMIT with the original byte count and a truncated
+    flag -- never the full ~7.8 KB task brief inlined per record."""
+    sdir = os.path.join(STATE_ROOT, "subagents")
+    try:
+        names = [f for f in os.listdir(sdir) if f.endswith(".json")]
+    except Exception:
+        return []
+    dated = []
+    for name in names:
+        path = os.path.join(sdir, name)
+        try:
+            dated.append((os.path.getmtime(path), path))
+        except OSError:
+            continue
+    dated.sort(reverse=True)
+    records = []
+    for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                data = json.load(fh)
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        task_text = str(data.get("task") or "")
+        summary_text = str(data.get("summary") or "")
+        result_text = str(data.get("result") or "")
+        context_usage = data.get("context_usage")
+        iteration_count = None
+        if isinstance(context_usage, dict) and isinstance(context_usage.get("iterations"), list):
+            iteration_count = len(context_usage["iterations"])
+        records.append({
+            "subagent_id": data.get("subagent_id"),
+            "cycle_id": data.get("cycle_id") or None,
+            "goal_id": data.get("goal_id") or None,
+            "label": str(data.get("label") or ""),
+            "status": str(data.get("status") or ""),
+            "started_at": data.get("started_at"),
+            "finished_at": data.get("finished_at"),
+            "task_excerpt": task_text[:_SUBAGENT_TEXT_LIMIT],
+            "task_truncated": len(task_text) > _SUBAGENT_TEXT_LIMIT,
+            "task_bytes": len(task_text.encode("utf-8")),
+            "summary_excerpt": summary_text[:_SUBAGENT_TEXT_LIMIT],
+            "summary_truncated": len(summary_text) > _SUBAGENT_TEXT_LIMIT,
+            "result_excerpt": result_text[:_SUBAGENT_TEXT_LIMIT],
+            "result_truncated": len(result_text) > _SUBAGENT_TEXT_LIMIT,
+            "iteration_count": iteration_count,
+        })
+    return records
+
+
+def read_cycle_prompts():
+    """#272: state/prompts/{cycle_id}.system.txt / .task.txt -- the exact
+    text sent for a cycle. Retention is short (~20 cycles); most cycle ids
+    will simply have no entry here, which the renderer must show as
+    "not retained", never an empty panel. Prompts that exceed
+    _MAX_PROMPT_BYTES ship truncated with the original byte count stated."""
+    pdir = os.path.join(STATE_ROOT, "prompts")
+    try:
+        names = [f for f in os.listdir(pdir) if f.endswith(".system.txt") or f.endswith(".task.txt")]
+    except Exception:
+        return {}
+    prompts = {}
+    for name in names:
+        if name.endswith(".system.txt"):
+            cid, kind = name[:-len(".system.txt")], "system"
+        else:
+            cid, kind = name[:-len(".task.txt")], "task"
+        path = os.path.join(pdir, name)
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        original_bytes = len(raw)
+        truncated = original_bytes > _MAX_PROMPT_BYTES
+        text = raw[:_MAX_PROMPT_BYTES].decode("utf-8", errors="replace")
+        prompts.setdefault(cid, {})[kind] = {
+            "text": text,
+            "truncated": truncated,
+            "original_bytes": original_bytes,
+        }
+    return prompts
+
+
 def _parse_lessons_text(text):
     """Issue #73: minimal line-based parser for the machine-written flat
     lessons.yaml shape ('- id:' blocks with 2-space-indented fields and
@@ -1361,6 +1459,8 @@ result = {
     "proposer_stats": read_proposer_stats(),
     "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
+    "subagent_records": read_subagent_records(),
+    "cycle_prompts": read_cycle_prompts(),
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
@@ -1598,6 +1698,15 @@ def _parse_lessons_flat(text: str) -> list[dict[str, str]]:
     return entries
 
 
+# #272: mirrors the identically-named constants inside REMOTE_READER_SCRIPT's
+# embedded copy of read_subagent_records()/read_cycle_prompts() -- keep in
+# sync. Declared here (real module scope) because that string is a separate,
+# self-contained namespace and cannot share these with read_local_state.
+_MAX_SUBAGENT_FILES = 6000
+_SUBAGENT_TEXT_LIMIT = 400
+_MAX_PROMPT_BYTES = 65536
+
+
 def read_local_state(
     state_root: str,
     instance_repo: str | None = None,
@@ -1633,6 +1742,8 @@ def read_local_state(
         'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'lessons': [],
+        'subagent_records': [],
+        'cycle_prompts': {},
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
@@ -2048,6 +2159,85 @@ def read_local_state(
         action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
         return condition.strip(), action.strip()
 
+    def read_subagent_records_local() -> list[dict[str, Any]]:
+        """#272: local mirror of REMOTE_READER_SCRIPT read_subagent_records()
+        -- keep in sync."""
+        sdir = root / 'subagents'
+        try:
+            names = [p for p in sdir.iterdir() if p.is_file() and p.name.endswith('.json')]
+        except OSError:
+            return []
+        dated: list[tuple[float, Path]] = []
+        for path in names:
+            try:
+                dated.append((path.stat().st_mtime, path))
+            except OSError:
+                continue
+        dated.sort(key=lambda pair: pair[0], reverse=True)
+        records: list[dict[str, Any]] = []
+        for _mtime, path in dated[:_MAX_SUBAGENT_FILES]:
+            try:
+                data = json.loads(path.read_text(encoding='utf-8', errors='replace'))
+                mtimes.append(path.stat().st_mtime)
+            except (OSError, ValueError):
+                continue
+            if not isinstance(data, dict):
+                continue
+            task_text = str(data.get('task') or '')
+            summary_text = str(data.get('summary') or '')
+            result_text = str(data.get('result') or '')
+            context_usage = data.get('context_usage')
+            iteration_count = None
+            if isinstance(context_usage, dict) and isinstance(context_usage.get('iterations'), list):
+                iteration_count = len(context_usage['iterations'])
+            records.append({
+                'subagent_id': data.get('subagent_id'),
+                'cycle_id': data.get('cycle_id') or None,
+                'goal_id': data.get('goal_id') or None,
+                'label': str(data.get('label') or ''),
+                'status': str(data.get('status') or ''),
+                'started_at': data.get('started_at'),
+                'finished_at': data.get('finished_at'),
+                'task_excerpt': task_text[:_SUBAGENT_TEXT_LIMIT],
+                'task_truncated': len(task_text) > _SUBAGENT_TEXT_LIMIT,
+                'task_bytes': len(task_text.encode('utf-8')),
+                'summary_excerpt': summary_text[:_SUBAGENT_TEXT_LIMIT],
+                'summary_truncated': len(summary_text) > _SUBAGENT_TEXT_LIMIT,
+                'result_excerpt': result_text[:_SUBAGENT_TEXT_LIMIT],
+                'result_truncated': len(result_text) > _SUBAGENT_TEXT_LIMIT,
+                'iteration_count': iteration_count,
+            })
+        return records
+
+    def read_cycle_prompts_local() -> dict[str, dict[str, Any]]:
+        """#272: local mirror of REMOTE_READER_SCRIPT read_cycle_prompts()
+        -- keep in sync."""
+        pdir = root / 'prompts'
+        try:
+            names = [p for p in pdir.iterdir() if p.is_file() and (p.name.endswith('.system.txt') or p.name.endswith('.task.txt'))]
+        except OSError:
+            return {}
+        prompts: dict[str, dict[str, Any]] = {}
+        for path in names:
+            if path.name.endswith('.system.txt'):
+                cid, kind = path.name[:-len('.system.txt')], 'system'
+            else:
+                cid, kind = path.name[:-len('.task.txt')], 'task'
+            try:
+                raw = path.read_bytes()
+                mtimes.append(path.stat().st_mtime)
+            except OSError:
+                continue
+            original_bytes = len(raw)
+            truncated = original_bytes > _MAX_PROMPT_BYTES
+            text = raw[:_MAX_PROMPT_BYTES].decode('utf-8', errors='replace')
+            prompts.setdefault(cid, {})[kind] = {
+                'text': text,
+                'truncated': truncated,
+                'original_bytes': original_bytes,
+            }
+        return prompts
+
     def read_lessons_local() -> list[dict[str, Any]]:
         """#274: local mirror of the REMOTE_READER_SCRIPT read_lessons() --
         keep in sync. The live-corpus count here comes from the SAME
@@ -2192,6 +2382,8 @@ def read_local_state(
         'compaction': read_compaction_local(),
         'token_heatmap': read_token_heatmap_local(),
         'lessons': read_lessons_local(),
+        'subagent_records': read_subagent_records_local(),
+        'cycle_prompts': read_cycle_prompts_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
         'bridge_exits': read_jsonl('bridge/exits.jsonl'),
@@ -3890,7 +4082,7 @@ def _build_unified_lineage(
     }}).join('') + '</ul>';
   }}
   function load() {{ if (data) return Promise.resolve(data); if (!loading) loading = fetch(src).then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (json) {{ data = json; return data; }}).catch(function (err) {{ loading = null; throw err; }}); return loading; }}
-  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var nodeId = node.getAttribute('data-node-id') || ''; var sha = node.getAttribute('data-sha') || ''; var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var selected = '<h3>Selected node</h3>' + line('Node ID', nodeId) + '<p><b>SHA:</b> ' + esc(sha || 'No commit recorded') + '</p>' + line('Timestamp', node.getAttribute('data-ts')); var cycle = '<h3>Cycle summary (shared across ' + count + ' nodes)</h3>' + line('Cycle', item.cycle_id || cid) + line('Title', item.title) + line('Outcome', item.outcome || 'unknown') + line('Reason', item.reason) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); var html = selected + multi + cycle + siblingLinks(node, cid); html += '<p class="cycle-details-links"><a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
+  function render(node, cid) {{ var item = (data && data[cid]) || {{cycle_id: cid}}; var count = Number(node.getAttribute('data-cycle-node-count') || '1'); var index = Number(node.getAttribute('data-cycle-node-index') || '1'); var nodeId = node.getAttribute('data-node-id') || ''; var sha = node.getAttribute('data-sha') || ''; var multi = count > 1 ? '<p><b>Node:</b> ' + index + ' of ' + count + ' for ' + esc(cid) + '</p>' : ''; var selected = '<h3>Selected node</h3>' + line('Node ID', nodeId) + '<p><b>SHA:</b> ' + esc(sha || 'No commit recorded') + '</p>' + line('Timestamp', node.getAttribute('data-ts')); var cycle = '<h3>Cycle summary (shared across ' + count + ' nodes)</h3>' + line('Cycle', item.cycle_id || cid) + line('Title', item.title) + line('Outcome', item.outcome || 'unknown') + line('Reason', item.reason) + line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id) + list('Files changed', item.files_changed) + list('Gate violations', item.gate_violations); var html = selected + multi + cycle + siblingLinks(node, cid); html += '<p class="cycle-details-links"><a class="cycle-detail-link" href="cycle.html?id=' + encodeURIComponent(cid) + '">full cycle detail (subagents &amp; prompts)</a> · <a class="cycle-feed-link" href="cycles.html#cycle-' + encodeURIComponent(cid) + '">open in Cycle Feed</a> · <a href="lessons.html#q-' + encodeURIComponent(cid) + '">related lessons</a></p>'; panel.querySelector('.cycle-details-body').innerHTML = html; }}
   var selectedNode = null, openedByNode = null, openSeq = 0, focusAtOpen = null, userDeparted = false;
   function clearSelection() {{ if (selectedNode) {{ selectedNode.classList.remove('cycle-node-selected'); selectedNode = null; }} }}
   function markUserDeparture(event) {{
@@ -3949,6 +4141,8 @@ def build_cycle_details(
     reflections: list[Any] | None,
     cycle_titles: dict[str, str] | None = None,
     cycle_files: dict[str, list[str]] | None = None,
+    subagent_records: list[dict[str, Any]] | None = None,
+    cycle_prompts: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Build bounded, JSON-safe records for the lineage details panel."""
     records: dict[str, dict[str, Any]] = {}
@@ -4018,7 +4212,59 @@ def build_cycle_details(
         if cid in records and not records[cid].get('files_changed'):
             records[cid]['files_changed'] = [text(item, 300) for item in files[:20]]
 
+    # #272: subagent records join by the record's OWN cycle_id field, never
+    # by proximity in time -- a record with no cycle_id is reported under
+    # a reserved '__unjoined_subagents__' pseudo-entry instead of being
+    # attached to whichever cycle happens to be nearby.
+    unjoined_subagents: list[dict[str, Any]] = []
+    for rec in subagent_records or []:
+        if not isinstance(rec, dict):
+            continue
+        cid = rec.get('cycle_id')
+        bounded = {
+            'subagent_id': text(rec.get('subagent_id'), 80),
+            'label': text(rec.get('label'), 200),
+            'status': text(rec.get('status'), 40),
+            'started_at': rec.get('started_at'),
+            'finished_at': rec.get('finished_at'),
+            'task_excerpt': text(rec.get('task_excerpt'), 400),
+            'task_truncated': bool(rec.get('task_truncated')),
+            'task_bytes': rec.get('task_bytes'),
+            'summary_excerpt': text(rec.get('summary_excerpt'), 400),
+            'result_excerpt': text(rec.get('result_excerpt'), 400),
+            'iteration_count': rec.get('iteration_count'),
+        }
+        if not cid:
+            unjoined_subagents.append(bounded)
+            continue
+        out = record(str(cid))
+        out.setdefault('subagents', [])
+        if len(out['subagents']) < 20:
+            out['subagents'].append(bounded)
+    if unjoined_subagents:
+        records['__unjoined_subagents__'] = {
+            'cycle_id': None,
+            'subagents': unjoined_subagents[:20],
+            'unjoined_count': len(unjoined_subagents),
+        }
+
+    for cid, prompt_pair in (cycle_prompts or {}).items():
+        if not isinstance(prompt_pair, dict):
+            continue
+        out = record(str(cid))
+        out['prompt'] = {
+            kind: {
+                'text': str((entry or {}).get('text') or ''),
+                'truncated': bool((entry or {}).get('truncated')),
+                'original_bytes': (entry or {}).get('original_bytes'),
+            }
+            for kind, entry in prompt_pair.items()
+            if isinstance(entry, dict)
+        }
+
     for cid, out in records.items():
+        if cid == '__unjoined_subagents__':
+            continue
         title = out.get('task_title') or (cycle_titles or {}).get(cid) or (cycle_titles or {}).get(cid.replace('cycle-', '', 1))
         if not title and out.get('files_changed'):
             title = out['files_changed'][0]
@@ -4028,6 +4274,86 @@ def build_cycle_details(
         if not out.get('gate_violations'):
             out.pop('gate_violations', None)
     return records
+
+
+def build_cycle_detail_page() -> str:
+    """#272: cycle.html?id=<cycle_id> -- fetches the SAME sibling JSON
+    lineage.html already fetches (LINEAGE_DETAILS_FILE, extended by
+    build_cycle_details with subagent records and prompt text) and renders
+    one of four explicit states for the requested id: full detail, no
+    subagent records, prompt not retained, or unknown cycle id -- never an
+    empty-looking page for any of them. No page grows as a result of this
+    route: the detail is fetched on load, not inlined."""
+    return f'''
+    <section class="panel panel-cycle-detail" id="panel-cycle-detail">
+      <h2 class="panel-title">Cycle Detail</h2>
+      <div id="cycle-detail-body"><p class="unavailable-note">loading&hellip;</p></div>
+    </section>
+    <script>
+    (function () {{
+      var body = document.getElementById('cycle-detail-body');
+      function esc(v) {{ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }}
+      function line(label, value) {{ return (value || value === 0) ? '<p><b>' + esc(label) + ':</b> ' + esc(value) + '</p>' : ''; }}
+      function list(label, values) {{ if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + esc(label) + '</h3><ul>' + values.map(function (v) {{ return '<li>' + esc(v) + '</li>'; }}).join('') + '</ul>' : ''; }}
+      function renderPromptBlock(label, entry) {{
+        if (!entry) return '';
+        var note = entry.truncated ? ' <span class="cycle-detail-truncated">(truncated, original ' + esc(entry.original_bytes) + ' bytes)</span>' : '';
+        return '<h3>' + esc(label) + note + '</h3><pre class="cycle-detail-prompt">' + esc(entry.text || '') + '</pre>';
+      }}
+      function renderSubagent(sa) {{
+        var truncNote = sa.task_truncated ? ' <span class="cycle-detail-truncated">(truncated, original ' + esc(sa.task_bytes) + ' bytes)</span>' : '';
+        return '<li class="cycle-detail-subagent">' +
+          '<div><span class="badge">' + esc(sa.status || 'unknown') + '</span> <strong>' + esc(sa.label || sa.subagent_id || '') + '</strong></div>' +
+          line('Started', sa.started_at) + line('Finished', sa.finished_at) +
+          line('Loop iterations', sa.iteration_count) +
+          '<p><b>Task:</b> ' + esc(sa.task_excerpt || '') + truncNote + '</p>' +
+          (sa.summary_excerpt ? '<p><b>Summary:</b> ' + esc(sa.summary_excerpt) + '</p>' : '') +
+          (sa.result_excerpt ? '<p><b>Result:</b> ' + esc(sa.result_excerpt) + '</p>' : '') +
+          '</li>';
+      }}
+      function render(id, data) {{
+        if (!data || !Object.prototype.hasOwnProperty.call(data, id)) {{
+          body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="unknown">Unknown cycle id: ' + esc(id) + '. It does not appear in the published cycle-details data.</p>';
+          return;
+        }}
+        var item = data[id] || {{}};
+        var head = '<h3>' + esc(item.title || id) + '</h3>' +
+          line('Cycle', item.cycle_id || id) + line('Outcome', item.outcome) + line('Reason', item.reason) +
+          line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id);
+        var links = '<p class="cycle-detail-links"><a href="cycles.html#cycle-' + encodeURIComponent(id) + '">open in Cycle Feed</a>' +
+          (item.sha ? ' &middot; <a href="lineage.html#node-' + encodeURIComponent(item.sha) + '">open in Lineage</a>' : '') +
+          ' &middot; <a href="lessons.html#q-' + encodeURIComponent(id) + '">related lessons</a></p>';
+        var artifacts = list('Files changed', item.files_changed) +
+          line('Lesson insight', item.lesson_insight) + line('Lesson problem', item.lesson_problem) + line('Lesson solution', item.lesson_solution);
+
+        var subagentsHtml;
+        if (Array.isArray(item.subagents) && item.subagents.length) {{
+          subagentsHtml = '<h3>Subagent records (' + item.subagents.length + ')</h3><ul class="cycle-detail-subagent-list">' + item.subagents.map(renderSubagent).join('') + '</ul>';
+        }} else {{
+          subagentsHtml = '<p class="unavailable-note" data-cycle-detail-state="no-subagents">No subagent records recorded for this cycle.</p>';
+        }}
+
+        var promptHtml;
+        if (item.prompt && (item.prompt.system || item.prompt.task)) {{
+          promptHtml = renderPromptBlock('System prompt', item.prompt.system) + renderPromptBlock('Task prompt', item.prompt.task);
+        }} else {{
+          promptHtml = '<p class="unavailable-note" data-cycle-detail-state="prompt-not-retained">Prompt text not retained for this cycle (short retention window; only recent cycles keep it).</p>';
+        }}
+
+        body.innerHTML = head + links + artifacts + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
+      }}
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id') || '';
+      if (!id) {{
+        body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="no-id">No cycle id given. Use cycle.html?id=&lt;cycle_id&gt;.</p>';
+      }} else {{
+        fetch('{LINEAGE_DETAILS_FILE}').then(function (r) {{ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }}).then(function (data) {{ render(id, data); }}).catch(function (err) {{
+          body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="fetch-failed">Cycle details unavailable &mdash; could not load {LINEAGE_DETAILS_FILE} (' + esc(err && err.message || err) + ').</p>';
+        }});
+      }}
+    }})();
+    </script>
+    '''
 
 
 def build_archive_tree(
@@ -4951,6 +5277,7 @@ def build_cycle_feed(
             <span class="badge {badge_class}">{esc(outcome_label)}</span>
             <strong class="feed-title">{esc(title)}</strong>
             <span class="feed-cid copyable" translate="no">({esc(cid)})</span>
+            <a class="cycle-detail-link" href="cycle.html?id={quote(str(cid), safe='')}">details</a>
             {delta_html}
             {node_link_html}
             {ts_html}
@@ -7977,6 +8304,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         data.get('reflections'),
         cycle_titles,
         data.get('cycle_files'),
+        subagent_records=data.get('subagent_records'),
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -8340,6 +8669,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         data.get('reflections'),
         cycle_titles,
         data.get('cycle_files'),
+        subagent_records=data.get('subagent_records'),
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -8465,6 +8796,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     pages: dict[str, str] = {
         'index.html': _page('eeebot / now', 'index.html', now_panel + teaser_html + teaser_feed),
         'lineage.html': _page('eeebot / lineage', 'lineage.html', canvas_html),
+        'cycle.html': _page('eeebot / cycle', 'cycle.html', build_cycle_detail_page()),
         # #208 step 8: the cycle-details records travel as a sibling static JSON
         # (published and written by the same loops as the pages), fetched by
         # lineage.html on the first node click. Nothing is filtered out.

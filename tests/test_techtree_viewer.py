@@ -3996,6 +3996,157 @@ def test_issue130_duplicate_lessons_get_unique_anchors():
     assert 'q-LESS-REF-c871bf9abe41-2' in anchors
     assert 'q-LESS-20260828-c2f0da09' in anchors
 
+# ---------------------------------------------------------------------------
+# Issue #272: per-cycle detail route carrying subagent records and prompts
+# ---------------------------------------------------------------------------
+
+
+def test_272_read_subagent_records_local_bounded_excerpt(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    (state / 'subagents').mkdir(parents=True)
+    long_task = 'x' * 1000
+    (state / 'subagents' / 'sa1.json').write_text(json.dumps({
+        'subagent_id': 'sa1', 'cycle_id': 'cycle-a', 'label': 'do thing', 'status': 'ok',
+        'started_at': 't0', 'finished_at': 't1', 'task': long_task, 'summary': 'sum', 'result': 'res',
+        'context_usage': {'iterations': [10, 20, 30]},
+    }), encoding='utf-8')
+    # requests/ and results/ subdirectories beside it must never be misread as records.
+    (state / 'subagents' / 'requests').mkdir()
+    (state / 'subagents' / 'requests' / 'not-a-record.json').write_text('{}', encoding='utf-8')
+    data = tv.read_local_state(str(state))
+    records = data['subagent_records']
+    assert len(records) == 1
+    rec = records[0]
+    assert rec['subagent_id'] == 'sa1'
+    assert rec['cycle_id'] == 'cycle-a'
+    assert rec['task_truncated'] is True
+    assert rec['task_bytes'] == 1000
+    assert len(rec['task_excerpt']) < 1000
+    assert rec['iteration_count'] == 3
+
+
+def test_272_read_cycle_prompts_local_reports_truncation(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    (state / 'prompts').mkdir(parents=True)
+    big = 'y' * (70 * 1024)
+    (state / 'prompts' / 'cycle-b.system.txt').write_text(big, encoding='utf-8')
+    (state / 'prompts' / 'cycle-b.task.txt').write_text('short task text', encoding='utf-8')
+    data = tv.read_local_state(str(state))
+    prompts = data['cycle_prompts']
+    assert prompts['cycle-b']['system']['truncated'] is True
+    assert prompts['cycle-b']['system']['original_bytes'] == 70 * 1024
+    assert len(prompts['cycle-b']['system']['text']) < 70 * 1024
+    assert prompts['cycle-b']['task']['truncated'] is False
+    assert prompts['cycle-b']['task']['original_bytes'] == len('short task text')
+
+
+def test_272_remote_reader_script_mirrors_subagents_and_prompts(tmp_path: Path) -> None:
+    import contextlib
+    import io
+
+    state = tmp_path / 'state'
+    (state / 'subagents').mkdir(parents=True)
+    (state / 'prompts').mkdir(parents=True)
+    (state / 'subagents' / 'sa2.json').write_text(json.dumps({
+        'subagent_id': 'sa2', 'cycle_id': 'cycle-c', 'label': 'l', 'status': 'ok',
+        'task': 't', 'summary': 's', 'result': 'r',
+    }), encoding='utf-8')
+    (state / 'prompts' / 'cycle-c.system.txt').write_text('sys', encoding='utf-8')
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(state)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    records = namespace['read_subagent_records']()
+    prompts = namespace['read_cycle_prompts']()
+    assert len(records) == 1 and records[0]['cycle_id'] == 'cycle-c'
+    assert prompts['cycle-c']['system']['text'] == 'sys'
+
+
+def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
+    """#272 acceptance: a subagent record with no cycle_id must be reported
+    as unjoined, never attached to the nearest cycle by time."""
+    ledger_rows = [
+        {'cycle_id': 'cycle-only-one', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'},
+    ]
+    subagent_records = [
+        {'subagent_id': 'joined', 'cycle_id': 'cycle-only-one', 'label': 'l', 'status': 'ok',
+         'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
+         'result_excerpt': 'r', 'iteration_count': 2},
+        {'subagent_id': 'orphan', 'cycle_id': None, 'label': 'l2', 'status': 'ok',
+         'task_excerpt': 't2', 'task_truncated': False, 'task_bytes': 2, 'summary_excerpt': 's2',
+         'result_excerpt': 'r2', 'iteration_count': 1},
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
+    assert details['cycle-only-one']['subagents'] == [{
+        'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
+        'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
+        'result_excerpt': 'r', 'iteration_count': 2,
+    }]
+    assert details['__unjoined_subagents__']['unjoined_count'] == 1
+    assert details['__unjoined_subagents__']['subagents'][0]['subagent_id'] == 'orphan'
+    # The orphan must not have leaked onto the only real cycle.
+    joined_ids = {sa['subagent_id'] for sa in details['cycle-only-one']['subagents']}
+    assert 'orphan' not in joined_ids
+
+
+def test_272_build_cycle_details_attaches_and_bounds_prompts() -> None:
+    ledger_rows = [{'cycle_id': 'cycle-p', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'}]
+    cycle_prompts = {
+        'cycle-p': {
+            'system': {'text': 'sys text', 'truncated': False, 'original_bytes': 8},
+            'task': {'text': 'task text', 'truncated': True, 'original_bytes': 99999},
+        },
+    }
+    details = tv.build_cycle_details(ledger_rows, None, None, None, cycle_prompts=cycle_prompts)
+    assert details['cycle-p']['prompt']['system']['text'] == 'sys text'
+    assert details['cycle-p']['prompt']['task']['truncated'] is True
+    assert details['cycle-p']['prompt']['task']['original_bytes'] == 99999
+    # A cycle with no ledger row at all still gets a details entry if a
+    # prompt exists for it -- it's a real cycle, just absent from this window.
+    cycle_prompts_only = {'cycle-only-prompt': {'system': {'text': 's', 'truncated': False, 'original_bytes': 1}}}
+    details2 = tv.build_cycle_details([], None, None, None, cycle_prompts=cycle_prompts_only)
+    assert 'cycle-only-prompt' in details2
+
+
+def test_272_cycle_detail_page_renders_four_distinguishable_states() -> None:
+    page = tv.build_cycle_detail_page()
+    # Every one of the four states must be its own reachable, labelled branch.
+    assert 'data-cycle-detail-state="unknown"' in page
+    assert 'data-cycle-detail-state="no-subagents"' in page
+    assert 'data-cycle-detail-state="prompt-not-retained"' in page
+    assert 'renderSubagent' in page and 'item.subagents' in page
+    assert tv.LINEAGE_DETAILS_FILE in page
+
+
+def test_272_cycle_html_published_and_reachable_from_pages() -> None:
+    data = _fixture()
+    data['ledger_tail'] = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-link-me', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'},
+    ]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-09-17 12:00:00')
+    assert 'cycle.html' in pages
+    assert 'data-cycle-detail-state="unknown"' in pages['cycle.html']
+    assert 'cycle.html?id=cycle-link-me' in pages['cycles.html']
+    assert 'cycle.html?id=cycle-link-me' in pages['index.html']
+
+
+def test_272_every_rendered_cycle_id_links_to_cycle_detail_route() -> None:
+    """#272 acceptance: the count of cycle.html?id= links must equal the
+    count of distinct cycle ids rendered in the feed -- the index's
+    previous zero-links defect must not recur."""
+    ledger_tail = [
+        {'phase': 'outcome', 'cycle_id': f'cycle-{i}', 'outcome': 'success', 'ts': f'2026-09-1{i}T00:00:00Z'}
+        for i in range(1, 6)
+    ]
+    feed_html = tv.build_cycle_feed(ledger_tail, history_mode=True)
+    rendered_ids = {row.get('cycle_id') for row in ledger_tail}
+    detail_links = re.findall(r'cycle\.html\?id=([^"&\']+)', feed_html)
+    assert len(detail_links) == len(rendered_ids)
+    assert set(detail_links) == rendered_ids
+
 
 def test_issue188_provenance_badge_three_state() -> None:
     # 1. Unavailable when scorecard or reader_status is missing/None:
