@@ -1263,7 +1263,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 22:02:02 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 19:31 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 19:38 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1280,7 +1280,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-c88ad1727b22</span>
+      <span class="cycle-pill">cycle-5b23aeb2d012</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1309,7 +1309,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-16 19:19:10.881975 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-16 19:34:22.062244 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1327,7 +1327,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 15,450 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 16,146 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1345,8 +1345,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 15,450 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,743c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 16,146 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,691c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1761,12 +1761,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T190019Z-canonical-ab722e0f/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T192307Z-canonical-93f4c643/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T190019Z-canonical-ab722e0f/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T192307Z-canonical-93f4c643/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1918,9 +1918,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,743 chars &bull; ~2,185 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement bounded archive file traversal in scripts/scan_archive.py
-Request ID: llm-proposer-cycle-c88ad1727b22
-Cycle ID: cycle-c88ad1727b22
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,691 chars &bull; ~2,172 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement filter_demands in scripts/filter_quarantined_demands.py
+Request ID: llm-proposer-cycle-5b23aeb2d012
+Cycle ID: cycle-5b23aeb2d012
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1930,76 +1930,76 @@ Current priority targets:
 (D) Priority 43 — Filter fallback candidates dedup (V1): Write scripts/filter_fallback_targets.py with a single function filter_candidate_paths(candidates, recent_targets) under 40 lines. Given a list of candidate filepaths and a collection of recently targeted paths, return a list containing only candidates not in recent_targets, preserving original order. If candidates is empty or not a list, return an empty list.
 (F) Priority 45 — Assert doc integration structure (V1): Add a function validate_doc_structure in scripts/validate_doc_structure.py that inspects a markdown document file to verify it contains at least one top-level heading and a non-empty summary section, returning a boolean status. Keep the entire file under 40 lines.
 (H) Priority 47 — Validate skill name format (V1): Write scripts/validate_skill_name.py containing a single function is_valid_skill_name(name: str) -&gt; bool under 40 lines. It returns True if name matches the regex pattern ^[a-z0-9]+(-[a-z0-9]+)*$, and False otherwise. Handle None or empty string by returning False without raising an exception.
-(I) Priority 48 — Scan archive files with limit (V1): Write scripts/scan_archive.py containing a single function iter_archive_files(archive_dir: str, limit: int = 100) under 40 lines. Using os.scandir, yield file paths found in archive_dir up to limit entries before stopping to avoid unbounded directory traversal. Yield nothing if archive_dir does not exist or is not a directory.
 (J) Priority 49 — Filter quarantined demands (V1): Write scripts/filter_quarantined_demands.py with a single function filter_demands(demands, demand_failures, max_failures=3) under 40 lines. Given demands as a list of demand identifier strings and demand_failures as a mapping of demand IDs to failure counts, return a list of demands whose failure count is strictly less than max_failures. Return an empty list if demands is empty or None.
 
-Completed (do not repeat): Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1); Quarantine repeat defect patterns (V1).
+Completed (do not repeat): Filter fallback candidate paths (V1); Check defect quarantine status (V1); Assert doc change structure (V1); Quarantine repeat defect candidates (V1); Quarantine repeat defect patterns (V1); Scan archive files with limit (V1).
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- dc5ea4e7 merge: integrate selfevo/cycle-cycle-c88ad1727b22
+- d7e0a5fc feat(scan_archive): bounded archive file traversal via os.scandir with limit
+- 03f62a6b docs(agents): charter is injected into the prompt, not read from goals.md (eeebot#1685) (#210)
 - 65bf67e1 merge: integrate selfevo/cycle-cycle-0c34c55786ef
 - 870d2fb1 feat(scaffold_script_entrypoint): add --streaming template with paired self-tests and companion pytest generation
 - 6678b094 merge: integrate selfevo/cycle-cycle-b6bfd7aa3b53
 - feef689c feat(run_all_tests): snapshot and restore tracked memory files around test execution
 - 507cb15e merge: integrate selfevo/cycle-cycle-c74f14f756a9
-- 1e18b601 selfevo: auto-commit uncommitted subagent work — Add test target formatting to scripts/format_existence_index_exclusions.py for p
-- b068fc5e feat(format_existence_index_exclusions): format tests/ targets as distinct section for proposer context
-- 29caed87 merge: integrate selfevo/cycle-cycle-feb4313bfaa5
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c88ad1727b22.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5b23aeb2d012.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Implement bounded archive file traversal in scripts/scan_archive.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Implement iter_archive_files using os.scandir to yield archive file paths up to a specified limit, handling missing or non-directory paths gracefully under 40 lines.\n\nTarget path: scripts/scan_archive.py&quot;,
+    &quot;title&quot;: &quot;Implement filter_demands in scripts/filter_quarantined_demands.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements filter_demands to filter demand identifiers whose failure count is strictly less than max_failures, returning an empty list if demands is empty or None.\n\nTarget path: scripts/filter_quarantined_demands.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement bounded archive file traversal in scripts/scan_archive.py (target: scripts/scan_archive.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Implement filter_demands in scripts/filter_quarantined_demands.py (target: scripts/filter_quarantined_demands.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/scan_archive.py defines iter_archive_files which yields file paths up to limit without traversing invalid paths&quot;,
+    &quot;claim&quot;: &quot;filter_demands returns demands with failure count below max_failures and returns empty list on None or empty demands&quot;,
     &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;scripts/scan_archive.py&quot;
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 -c \&quot;from scripts.filter_quarantined_demands import filter_demands; assert filter_demands([&#x27;a&#x27;, &#x27;b&#x27;], {&#x27;a&#x27;: 3, &#x27;b&#x27;: 2}, 3) == [&#x27;b&#x27;]; assert filter_demands(None, {}) == []\&quot;&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260906-5445c37c  Title: Executor LLM call failed before cycle execution while attempting: Add error result file archiving and count reporting in scripts/archive_subagent_
+ID: ERR-20260913-769b714d  Title: Verification gate rejected the proposed change while attempting: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shel
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/bounded_initial_reconnaissance.md  Title: Bounded Initial Reconnaissance
-Problem: Read lessons/bounded_initial_reconnaissance.md: Enforce the turn-1-4 sequence: read the designated target once, confirm it is not already done (Recent activity list plus at most one targeted grep/git log), read at most one companion file, and begin editing by turn Treat &quot;still reading
+ID: lessons/git_checkout_recovery.md  Title: Resolving checkout_main_failed and Git Lock Issues on Constrained Hosts
+Problem: Read lessons/git_checkout_recovery.md: **Automated Lock Cleanup**: Implement pre-flight checks in coordinator and subagent scripts to detect and automatically remove `index.lock` if it is older than a threshold (e.g., 5 minutes) and no git process is running.
 Solution: 
-If you apply this lesson, cite [Lesson lessons/bounded_initial_reconnaissance.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/git_checkout_recovery.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When looking up source text for a demand reflection item, inspect recent proposer prompts in &#x27;state/llm_calls/prompts/&#x27; or subagent artifacts directly before scanning historical archives and rotation 
+- Avoid exhaustive multi-turn enumeration of patterns during reasoning; establish a core minimal set of high-confidence patterns (e.g. PIPESTATUS, [[, ((, arrays) and proceed promptly to writing the scr
 - Keep chain-of-thought token budgets bounded when designing regex rules to avoid entering repetitive degenerate loops that abort tool execution.
-- When executing long-running test suites or gate commands in non-interactive shell sessions, redirect stdout and stderr to a file directly rather than piping into grep or tail, which can swallow output
+- The LLM entered a degenerative repetitive pattern during chain-of-thought reasoning (repeating lines such as &#x27;** in for loops&#x27; dozens of times and enumerating expansive regex patterns), exhausting the
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-16 18:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
-- Attempt 2 (2026-09-16 18:10 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-16 19:24 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scan_archive.py, tests/test_scan_archive.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-16 18:59 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py. Reward…
+- Attempt 3 (2026-09-16 18:10 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Implement bounded archive file traversal in scripts/scan_archive.py
+Title: Implement filter_demands in scripts/filter_quarantined_demands.py
 
 
-Implement iter_archive_files using os.scandir to yield archive file paths up to a specified limit, handling missing or non-directory paths gracefully under 40 lines.
+Implements filter_demands to filter demand identifiers whose failure count is strictly less than max_failures, returning an empty list if demands is empty or None.
 
-Target path: scripts/scan_archive.py
+Target path: scripts/filter_quarantined_demands.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/scan_archive.py defines iter_archive_files which yields file paths up to limit without traversing invalid paths
+filter_demands returns demands with failure count below max_failures and returns empty list on None or empty demands
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5914,7 +5914,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 19:31:03 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 22:02:02 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 19:38:23 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 22:02:02 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
