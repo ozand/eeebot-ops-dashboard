@@ -4797,3 +4797,20 @@ def test_issue277_defect3_generator_sha_from_arbitrary_cwd(monkeypatch) -> None:
         assert len(sha) >= 7
     finally:
         os.chdir(orig)
+
+
+def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
+    lessons = [
+        {
+            'schema': 2,
+            'id': 'KB-0277',
+            'kind': 'operational-pattern',
+            'title': 'Test Lesson Kind',
+            'date': '2026-09-15',
+            'severity': 'medium',
+            'problem': 'Something failed',
+            'solution': 'Fix it',
+        }
+    ]
+    html = tv.build_lessons_panel(lessons)
+    assert '<span class="lesson-chip lesson-kind">operational-pattern</span>' in html

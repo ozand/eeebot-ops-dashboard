@@ -5659,10 +5659,15 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         tags = l.get('tags') or []
         tags_list = tags if isinstance(tags, list) else [str(tags)]
         severity = str(l.get('severity') or '')
+        kind = str(l.get('kind') or '')
         seen_count = l.get('seen_count')
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
 
+        kind_html = (
+            f'<span class="lesson-chip lesson-kind">{esc(kind)}</span>'
+            if kind else ''
+        )
         severity_html = (
             f'<span class="lesson-severity lesson-severity-{esc(severity.lower())}">{esc(severity)}</span>'
             if severity else ''
@@ -5675,7 +5680,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
             f'<span class="lesson-seen" title="times this pattern was observed">×{esc(str(seen_count))}</span>'
             if seen_count is not None else ''
         )
-        meta_chips = severity_html + tags_html + seen_html + duplicate_html
+        meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
         problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
@@ -5685,7 +5690,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
         search_text = esc((' '.join([
             l.get('id') or '', title, str(l.get('task_id') or ''), problem, solution,
-            severity, ' '.join(str(t) for t in tags_list), cid,
+            kind, severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
             f'<li class="lesson-row lesson-row-v2" data-text="{search_text}"{item_anchor}>'
@@ -7512,6 +7517,16 @@ CSS = '''
     }
     .lesson-label { font-weight: 600; color: #8aa695; }
     .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
     .lesson-tag {
       display: inline-block;
       font-size: 0.72em;
