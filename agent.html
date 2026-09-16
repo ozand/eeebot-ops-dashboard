@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">222</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">74.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 09:07:23 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 06:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 06:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-db66225d0861</span>
+      <span class="cycle-pill">cycle-45dc8bdd2ee0</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 05:49:29.607217 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 06:15:48.854093 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 63,125 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 21,763 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 63,125 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,711c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 21,763 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,726c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,711 chars &bull; ~1,927 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add exploratory probing turn limit audit to scripts/check_cycle_budget.py
-Request ID: llm-proposer-cycle-db66225d0861
-Cycle ID: cycle-db66225d0861
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,726 chars &bull; ~1,931 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add probe_callable_signature.py to inspect function parameters and return annotations before wrapping
+Request ID: llm-proposer-cycle-45dc8bdd2ee0
+Cycle ID: cycle-45dc8bdd2ee0
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1930,62 +1930,65 @@ Completed (do not repeat): Filter futile fallback proposals (V1); Filter futile 
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 30ccf716 merge: integrate selfevo/cycle-cycle-db66225d0861
+- 51a7bc2e feat(check_cycle_budget): add exploratory probing turn limit audit
 - f689f0f2 merge: integrate selfevo/cycle-cycle-dd32a5012317
 - ee45e58f selfevo: auto-commit uncommitted subagent work — Wire inspect_existing_symbols outputs into build_concrete_next_action in scripts
 - d171e8ec feat(check_target_completion): cite existing symbols in concrete_next_action
 - 48dc9e4f merge: integrate selfevo/cycle-cycle-5afea7d247dc
 - f37e521b feat(run_all_tests): add --keyword (pytest -k) filtering for pytest execution
 - c66fe0a2 merge: integrate selfevo/cycle-cycle-ac89330e6e7d
-- 1f1d258f docs(lessons): add lesson on inline interpreter probing for edge case test suites
-- f5d9258e merge: integrate selfevo/cycle-cycle-7bf0af105580
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-db66225d0861.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-45dc8bdd2ee0.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add exploratory probing turn limit audit to scripts/check_cycle_budget.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Adds an audit_probing_turns function to scripts/check_cycle_budget.py that flags consecutive non-modifying probe turns exceeding a single turn before file modifications, preventing wasted cycles on baseline probing.\n\nTarget path: scripts/check_cycle_budget.py&quot;,
+    &quot;title&quot;: &quot;Add probe_callable_signature.py to inspect function parameters and return annotations before wrapping&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses evidence from cycle-8c2b215d7a81 where implementing load_failure_reasons without checking parameter defaults and schema caused TypeErrors. Providing a probe tool that extracts callable parameters, defaults, and return annotations via inspect and AST gives the agent a fast inspection mechanism prior to wrapping utility functions.\n\nTarget path: scripts/probe_callable_signature.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add exploratory probing turn limit audit to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add probe_callable_signature.py to inspect function parameters and return annotations before wrapping (target: scripts/probe_callable_signature.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/probe_callable_signature.py inspects callable parameter names and defaults and passes self-test verification&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/probe_callable_signature.py --self-test&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+ID: ERR-20260911-4b4bdcf4  Title: Executor LLM call failed before cycle execution while attempting: Fix default target scanning and exit code in scripts/validate_markdown_format.py
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: lessons/inspect-stdlib-attributes.md  Title: Inspect Standard Library Class Attributes and Return Types Before Code Edits
+Problem: Read lessons/inspect-stdlib-attributes.md: **Probe before you glue.** Any time you write code that calls a standard library method you have not called earlier in the same session, run a one-liner (`python3 -c &quot;...&quot;`) that (a) lists the class&#x27;s public attributes via `dir()`, (b)
+Solution: 
+If you apply this lesson, cite [Lesson lessons/inspect-stdlib-attributes.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Cap exploratory regex and encoding diagnostic probes to at most 3 attempts; if validation does not clear, reformat the target section using basic ASCII single/triple quotes.
-- Bound exploratory micro-benchmarking to 3-4 turns; once a slow method or recurring syscall is identified (such as repetitive `iterdir()` calls), move immediately to implementing the fix rather than re
-- Bound preparatory code inspection for documentation and skill tasks to 2-3 focused lookups, transitioning promptly to drafting and updating markdown content.
-
-## Previous attempts for this task
-- Attempt 1 (2026-09-16 05:23 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/check_target_completion.py,…
-- Attempt 2 (2026-09-16 04:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Avoid bash-specific parameters like ${PIPESTATUS} in exec commands; use standard POSIX shell redirection or inspect $? directly to capture process status.
+- Emit strictly the raw JSON object without conversational text or preamble in the final turn when declaring cycle completion or skip.
+- Target grep commands directly to function definitions or call sites rather than issuing broad sequential read_file windows across large monolithic scripts.
 
 ## Concrete task to implement
 
-Title: Add exploratory probing turn limit audit to scripts/check_cycle_budget.py
+Title: Add probe_callable_signature.py to inspect function parameters and return annotations before wrapping
 
 
-Adds an audit_probing_turns function to scripts/check_cycle_budget.py that flags consecutive non-modifying probe turns exceeding a single turn before file modifications, preventing wasted cycles on baseline probing.
+Addresses evidence from cycle-8c2b215d7a81 where implementing load_failure_reasons without checking parameter defaults and schema caused TypeErrors. Providing a probe tool that extracts callable parameters, defaults, and return annotations via inspect and AST gives the agent a fast inspection mechanism prior to wrapping utility functions.
 
-Target path: scripts/check_cycle_budget.py
+Target path: scripts/probe_callable_signature.py
 
-## Concrete task to implement
-Implement and commit: Add exploratory probing turn limit audit to scripts/check_cycle_budget.py (target: scripts/check_cycle_budget.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/probe_callable_signature.py inspects callable parameter names and defaults and passes self-test verification
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5899,7 +5902,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 06:12:20 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 09:07:23 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 06:21:12 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 09:07:23 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
