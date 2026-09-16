@@ -222,15 +222,22 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             data = json.load(fh)
         if isinstance(data, dict) and 'digest' in data and 'published_at' in data:
             data.setdefault('refusing_since', None)
+            # #278: a state file written before per-page fingerprinting
+            # existed simply lacks this key -- treat that the same as "no
+            # page has a known-unchanged fingerprint yet", which is exactly
+            # correct: every page uploads fresh on the first run after this
+            # field is introduced, same as day one.
+            data.setdefault('page_fingerprints', {})
             return data
     except Exception:  # noqa: BLE001
         pass
-    return {'digest': None, 'published_at': None, 'refusing_since': None}
+    return {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
 
 
 def save_publish_state(
     state_dir: Path, digest: str | None, published_at: float | None,
     refusing_since: float | None = None,
+    page_fingerprints: dict[str, str] | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -257,6 +264,7 @@ def save_publish_state(
         payload = {
             'digest': digest, 'published_at': published_at,
             'refusing_since': refusing_since,
+            'page_fingerprints': page_fingerprints or {},
         }
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
@@ -481,6 +489,7 @@ def run(args: argparse.Namespace) -> int:
                 save_publish_state(
                     state_dir, state.get('digest'), state.get('published_at'),
                     refusing_since=refusing_since,
+                    page_fingerprints=state.get('page_fingerprints'),
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '
@@ -522,13 +531,20 @@ def run(args: argparse.Namespace) -> int:
     # failure and never writes anything on that path -- so a failed publish
     # here simply skips save_publish_state below and leaves gh-pages as it
     # was, ready to retry next cycle.
-    rc = tv.publish_to_pages(pages)
+    #
+    # #278: previous_fingerprints lets publish_to_pages skip re-uploading
+    # any page whose normalized content (timestamp/age stripped) matches
+    # what was published last time -- this is the mechanism that stops
+    # re-uploading all 8 files in full on every run.
+    rc, fingerprints = tv.publish_to_pages(
+        pages, previous_fingerprints=state.get('page_fingerprints'),
+    )
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
-    save_publish_state(state_dir, digest, now)
+    save_publish_state(state_dir, digest, now, page_fingerprints=fingerprints)
     return 0
 
 
