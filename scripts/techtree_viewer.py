@@ -592,6 +592,103 @@ def classify_model(model_str):
     return "other"
 
 
+def read_local_ci_status():
+    """#1593: local_ci writes `state` ('ran'/'targets_missing') alongside
+    `exit_code`, which is None (so `ok = exit_code == 0` reads False) when
+    no run happened at all. A reader keying only on `ok` cannot tell "ran
+    and failed" from "never ran" -- render the four-state probe vocabulary
+    (present/absent/present_uninitialized/probe_unavailable) instead of
+    collapsing both into a bare boolean."""
+    path = os.path.join(STATE_ROOT, "local_ci", "latest.json")
+    if not os.path.isfile(path):
+        return {"probe": "absent"}
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        _mtimes.append(os.path.getmtime(path))
+    except Exception as exc:
+        return {"probe": "probe_unavailable", "reason": f"{exc.__class__.__name__}"}
+    if not isinstance(data, dict):
+        return {"probe": "probe_unavailable", "reason": "not_a_dict"}
+    state = data.get("state")
+    if state == "targets_missing":
+        probe = "present_uninitialized"
+    elif state == "ran":
+        probe = "present"
+    else:
+        probe = "probe_unavailable"
+    return {
+        "probe": probe,
+        "state": state,
+        "exit_code": data.get("exit_code"),
+        "ok": data.get("ok"),
+        "summary": data.get("summary"),
+        "created_at_utc": data.get("created_at_utc"),
+    }
+
+
+def read_executor_model_status():
+    """#1660/#1678: llm_calls rows record the model that actually served
+    the call (may differ from what the role requested when a gateway
+    fallback fires), but only ONE model field is persisted -- there is no
+    separate "requested" field to diff against. The detectable signal is
+    role-appropriateness: the executor/harness role is only ever supposed
+    to run on a self-hosted model (`un/...`); a recorded `vendor` (`cl/`,
+    `an/`) class on one of those rows IS the fallback having fired, derived
+    from the existing schema rather than a new field."""
+    ldir = os.path.join(STATE_ROOT, "llm_calls")
+    if not os.path.isdir(ldir):
+        return {"probe": "absent"}
+    try:
+        names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
+    except Exception as exc:
+        return {"probe": "probe_unavailable", "reason": f"{exc.__class__.__name__}"}
+    if not names:
+        return {"probe": "present_uninitialized", "reason": "no jsonl files yet"}
+    latest_ts = ""
+    latest_model = None
+    latest_class = None
+    fallback_seen = False
+    checked = 0
+    for name in names[-3:]:
+        path = os.path.join(ldir, name)
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(row, dict) or row.get("component") not in ("executor", "harness"):
+                continue
+            checked += 1
+            model = row.get("model")
+            cls = classify_model(model)
+            if cls == "vendor":
+                fallback_seen = True
+            ts = str(row.get("ts") or "")
+            if ts >= latest_ts:
+                latest_ts = ts
+                latest_model = model
+                latest_class = cls
+    if checked == 0:
+        return {"probe": "present_uninitialized", "reason": "no executor/harness calls in recent files"}
+    return {
+        "probe": "present",
+        "latest_model": latest_model,
+        "latest_class": latest_class,
+        "fallback_seen_recent": fallback_seen,
+        "checked_calls": checked,
+    }
+
+
 def compute_quantiles(values):
     pos = sorted(int(v) for v in values if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0)
     if not pos:
@@ -1166,6 +1263,8 @@ result = {
     "agent_context": read_agent_context(),
     "executor_llm_stats": read_executor_stats(),
     "compaction": read_compaction(),
+    "local_ci": read_local_ci_status(),
+    "executor_model_status": read_executor_model_status(),
     "cycle_titles": _cycle_titles,
     "cycle_files": _cycle_files,
     "cycle_titles_error": _cycle_titles_error,
@@ -1210,6 +1309,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
+        'local_ci': None,
+        'executor_model_status': None,
         'token_heatmap': None,
         'reflections': [],
         'bridge_exit_streak': None,
@@ -1420,6 +1521,8 @@ def read_local_state(
         'cycle_titles_error': None,
         'llm_stats': {},
         'proposer_stats': None,
+        'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
+        'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'lessons': [],
         'reflections': [],
         'bridge_exit_streak': None,
@@ -1633,6 +1736,95 @@ def read_local_state(
         rows = [row for row in rows if isinstance(row, dict)]
         return {'status': 'empty' if not rows else 'present', 'rows': rows}
 
+    def read_local_ci_status_local() -> dict[str, Any]:
+        """#1593: local mirror of REMOTE_READER_SCRIPT read_local_ci_status()
+        -- keep in sync. Four-state probe vocabulary, never a bare bool: a
+        `targets_missing` run is neither a pass nor a fail."""
+        path = root / 'local_ci' / 'latest.json'
+        if not path.is_file():
+            return {'probe': 'absent'}
+        try:
+            with path.open('r', encoding='utf-8') as fh:
+                data = json.load(fh)
+            mtimes.append(path.stat().st_mtime)
+        except Exception as exc:  # noqa: BLE001
+            return {'probe': 'probe_unavailable', 'reason': f'{exc.__class__.__name__}'}
+        if not isinstance(data, dict):
+            return {'probe': 'probe_unavailable', 'reason': 'not_a_dict'}
+        state = data.get('state')
+        if state == 'targets_missing':
+            probe = 'present_uninitialized'
+        elif state == 'ran':
+            probe = 'present'
+        else:
+            probe = 'probe_unavailable'
+        return {
+            'probe': probe,
+            'state': state,
+            'exit_code': data.get('exit_code'),
+            'ok': data.get('ok'),
+            'summary': data.get('summary'),
+            'created_at_utc': data.get('created_at_utc'),
+        }
+
+    def read_executor_model_status_local() -> dict[str, Any]:
+        """#1660/#1678: local mirror of REMOTE_READER_SCRIPT
+        read_executor_model_status() -- keep in sync. Only one `model` field
+        is persisted (no separate requested field), so the fallback signal
+        is role-appropriateness: executor/harness recording a vendor-class
+        model IS the fallback having fired."""
+        llm_dir = root / 'llm_calls'
+        if not llm_dir.is_dir():
+            return {'probe': 'absent'}
+        try:
+            names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
+        except OSError as exc:
+            return {'probe': 'probe_unavailable', 'reason': f'{exc.__class__.__name__}'}
+        if not names:
+            return {'probe': 'present_uninitialized', 'reason': 'no jsonl files yet'}
+        latest_ts = ''
+        latest_model = None
+        latest_class = None
+        fallback_seen = False
+        checked = 0
+        for name in names[-3:]:
+            path = llm_dir / name
+            try:
+                with path.open('r', encoding='utf-8', errors='replace') as fh:
+                    lines = fh.readlines()
+                mtimes.append(path.stat().st_mtime)
+            except OSError:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:  # noqa: BLE001
+                    continue
+                if not isinstance(row, dict) or row.get('component') not in ('executor', 'harness'):
+                    continue
+                checked += 1
+                model = row.get('model')
+                cls = classify_model(model)
+                if cls == 'vendor':
+                    fallback_seen = True
+                ts = str(row.get('ts') or '')
+                if ts >= latest_ts:
+                    latest_ts = ts
+                    latest_model = model
+                    latest_class = cls
+        if checked == 0:
+            return {'probe': 'present_uninitialized', 'reason': 'no executor/harness calls in recent files'}
+        return {
+            'probe': 'present',
+            'latest_model': latest_model,
+            'latest_class': latest_class,
+            'fallback_seen_recent': fallback_seen,
+            'checked_calls': checked,
+        }
+
     def read_proposer_stats_local() -> dict[str, Any] | None:
         """Issue #63: proposer visibility -- local mirror of the
         REMOTE_READER_SCRIPT read_proposer_stats(); keep in sync."""
@@ -1810,6 +2002,8 @@ def read_local_state(
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': read_llm_stats_local(),
         'proposer_stats': read_proposer_stats_local(),
+        'local_ci': read_local_ci_status_local(),
+        'executor_model_status': read_executor_model_status_local(),
         'executor_llm_stats': read_executor_stats_local(),
         'compaction': read_compaction_local(),
         'token_heatmap': read_token_heatmap_local(),
@@ -3926,6 +4120,80 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
     )
 
 
+_PROBE_SYMBOLS = {
+    'present': '✓', 'present_uninitialized': '!', 'absent': '✗', 'probe_unavailable': '?',
+}
+
+
+def _build_local_ci_item(local_ci: dict[str, Any] | None) -> str:
+    """#1593/#276: local_ci writes `state` ('ran'/'targets_missing')
+    alongside `exit_code`, which is None (so ok=False) for a run that never
+    happened. Render the four-state probe vocabulary instead of a bare
+    pass/fail so a targets_missing row never reads as a red run."""
+    if not isinstance(local_ci, dict):
+        probe, reason = 'probe_unavailable', 'ssh or read failed'
+    else:
+        probe = local_ci.get('probe')
+        reason = local_ci.get('reason')
+    symbol = _PROBE_SYMBOLS.get(probe, '?')
+    if probe == 'absent':
+        detail = 'no local_ci result recorded'
+    elif probe == 'probe_unavailable':
+        detail = f'cannot read local_ci result{f" ({esc(str(reason))})" if reason else ""}'
+    elif probe == 'present_uninitialized':
+        detail = f'ran, no targets to check: {esc(str(local_ci.get("summary") or "targets missing"))}'
+    elif probe == 'present':
+        exit_code = local_ci.get('exit_code')
+        state_word = 'pass' if exit_code == 0 else f'exit={esc(str(exit_code))}'
+        detail = f'{state_word}: {esc(str(local_ci.get("summary") or ""))}'
+    else:
+        probe, symbol, detail = 'probe_unavailable', '?', 'unrecognized local_ci state'
+    return (
+        '<div class="now-item"><span class="now-label">Local CI:</span> '
+        f'<span class="badge probe-{esc(probe)}">{symbol} {esc(probe)}</span> '
+        f'<span class="now-sub">{detail}</span></div>'
+    )
+
+
+def _build_executor_model_item(executor_model_status: dict[str, Any] | None) -> str:
+    """#1660/#1678/#276: llm_calls persists one `model` field (the served
+    model, preferred over the requested one since #1678) -- there is no
+    separate requested field to diff. The fallback signal is derived from
+    role-appropriateness instead: the executor/harness role is only ever
+    supposed to run self-hosted; a recorded vendor-class model on one of
+    those rows IS the fallback having fired."""
+    if not isinstance(executor_model_status, dict):
+        probe, reason = 'probe_unavailable', 'ssh or read failed'
+    else:
+        probe = executor_model_status.get('probe')
+        reason = executor_model_status.get('reason')
+    symbol = _PROBE_SYMBOLS.get(probe, '?')
+    if probe == 'absent':
+        detail = 'no llm_calls files found'
+    elif probe == 'probe_unavailable':
+        detail = f'cannot read llm_calls{f" ({esc(str(reason))})" if reason else ""}'
+    elif probe == 'present_uninitialized':
+        detail = f'llm_calls present, {esc(str(reason or "no executor/harness rows yet"))}'
+    elif probe == 'present':
+        cls = executor_model_status.get('latest_class')
+        model = executor_model_status.get('latest_model') or 'n/a'
+        checked = executor_model_status.get('checked_calls', 0)
+        if executor_model_status.get('fallback_seen_recent'):
+            detail = (
+                f'<strong class="health-alert-text">fallback: {esc(str(model))} ({esc(str(cls))})</strong> '
+                f'-- executor/harness expected self_hosted, {checked} recent calls checked'
+            )
+        else:
+            detail = f'{esc(str(model))} ({esc(str(cls))}), {checked} recent calls checked'
+    else:
+        probe, symbol, detail = 'probe_unavailable', '?', 'unrecognized executor_model_status state'
+    return (
+        '<div class="now-item"><span class="now-label">Executor Model:</span> '
+        f'<span class="badge probe-{esc(probe)}">{symbol} {esc(probe)}</span> '
+        f'<span class="now-sub">{detail}</span></div>'
+    )
+
+
 def build_now_panel(
     portfolio: dict[str, Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -3943,6 +4211,8 @@ def build_now_panel(
     scorecard: dict[str, Any] | None = None,
     strategist_decisions: list[dict[str, Any]] | None = None,
     ci_freshness: dict[str, Any] | None = None,
+    local_ci: dict[str, Any] | None = None,
+    executor_model_status: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -3972,9 +4242,20 @@ def build_now_panel(
         bridge_exit_streak=bridge_exit_streak,
         scorecard=scorecard,
     )
+    # #276: `health_verdict` decides on exactly four narrow inputs (cycle
+    # outcome streak, bridge exit streak, source age, scorecard feed
+    # status) and its own internal state name stays 'healthy' for that
+    # scope -- but the badge's PRINTED WORD claimed the whole system, and
+    # rendered above a strategist error and a doc-budget cap it never
+    # considers. Narrow the word to what it measures (#276 option b); the
+    # other signals already have their own now-items below at equal
+    # prominence (strategist, doc-budget, futility), this only stops the
+    # badge from reading as an overriding verdict over them.
+    HEALTH_BADGE_LABELS = {'healthy': 'FEEDS OK'}
+    badge_label = HEALTH_BADGE_LABELS.get(verdict, verdict.upper())
     health_banner = (
         f'<section class="health-verdict health-{verdict}" aria-label="Health verdict">'
-        f'<span class="now-label">Health:</span> <strong>{esc(verdict.upper())}</strong> '
+        f'<span class="now-label">Health:</span> <strong>{esc(badge_label)}</strong> '
         f'<span class="health-verdict-reason">{esc(verdict_reason)}</span></section>'
     )
     # 1. Active research direction
@@ -4094,9 +4375,18 @@ def build_now_panel(
                 '<span class="unavailable-note">unavailable</span></div>'
             )
         elif consec == 0:
+            # #276 (c): this counter has a known blind class -- signal kills
+            # of the bridge unit are not recorded (ozand/eeebot #1683), so a
+            # run killed by SIGTERM leaves this at 0 indistinguishably from
+            # a genuinely clean streak. Show the caveat rather than let a
+            # trusted-looking 0 read as proof of health. Remove this note
+            # once eeebot#1683 closes -- not a live check, same convention
+            # as CI_ACTIONS_ENABLED_UNANSWERABLE above.
             streak_html = (
                 '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
-                '<span class="badge badge-available">0 failures (healthy)</span></div>'
+                '<span class="badge badge-available">0 failures (crash_record)</span> '
+                '<span class="now-sub" title="ozand/eeebot#1683: this counter does not observe '
+                'signal kills of the bridge unit">does not see SIGTERM kills (eeebot#1683)</span></div>'
             )
         else:
             err = bridge_exit_streak.get('last_error') or ''
@@ -4125,6 +4415,15 @@ def build_now_panel(
     # 8. GitHub Actions freshness and outcome (#1592)
     ci_freshness_html = _build_ci_freshness_item(ci_freshness)
 
+    # 9. Local CI (#1593) -- state distinguishes a real run from
+    # targets_missing; ok=false must never stand in for "never ran".
+    local_ci_html = _build_local_ci_item(local_ci)
+
+    # 10. Executor model class (#1660/#1678) -- a vendor-class model on an
+    # executor/harness call is the fallback signal; the schema has one
+    # model field, no separate requested field to diff against.
+    executor_model_html = _build_executor_model_item(executor_model_status)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -4137,6 +4436,8 @@ def build_now_panel(
         {doc_budget_html}
         {strategist_html}
         {ci_freshness_html}
+        {local_ci_html}
+        {executor_model_html}
         {_render_failed_bridge_exits(bridge_exits)}
         <div class="now-item">
           <span class="now-label">Demand Queue:</span>
@@ -7491,6 +7792,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         scorecard=scorecard,
         strategist_decisions=data.get('strategist_decisions'),
         ci_freshness=data.get('ci_freshness'),
+        local_ci=data.get('local_ci'),
+        executor_model_status=data.get('executor_model_status'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -7819,6 +8122,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         scorecard=scorecard,
         strategist_decisions=data.get('strategist_decisions'),
         ci_freshness=data.get('ci_freshness'),
+        local_ci=data.get('local_ci'),
+        executor_model_status=data.get('executor_model_status'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
