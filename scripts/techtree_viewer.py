@@ -8240,7 +8240,7 @@ def _index_teasers(data: dict[str, Any], ledger_tail: list[Any] | None,
             str(r.get('cycle_id')) for r in ledger_tail
             if isinstance(r, dict) and r.get('cycle_id')
         }
-        cycles_teaser = f'{len(cycle_ids)} cycles tracked in the recent ledger window'
+        cycles_teaser = f'{len(cycle_ids)} cycles in full history'
 
     if evolution_tree is None or not isinstance(evolution_tree, dict):
         lineage_teaser = 'unavailable'

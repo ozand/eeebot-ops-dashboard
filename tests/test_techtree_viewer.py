@@ -3062,7 +3062,7 @@ def test_issue175_teaser_panels_three_state_reporting() -> None:
         'reflections': [],
     }
     idx_em = tv.render_pages(data_empty, host='eeepc', generated_at='2026-08-18 12:00:00')['index.html']
-    assert 'cycles</a> &mdash; 0 cycles tracked in the recent ledger window' in idx_em
+    assert 'cycles</a> &mdash; 0 cycles in full history' in idx_em
     assert 'lineage</a> &mdash; 0 evolution nodes' in idx_em
     assert 'hypotheses</a> &mdash; 0 active / 0 answered + 0 strategist durable' in idx_em
 
@@ -4765,3 +4765,21 @@ def test_issue277_defect1_node_link_points_to_lineage_page() -> None:
         cycle_files=None,
     )
     assert 'href="lineage.html#node-sha1234"' in html
+
+
+def test_issue277_defect2_index_teasers_label_full_history() -> None:
+    data = {
+        'ledger_tail': [
+            {'phase': 'outcome', 'cycle_id': 'c1', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c2', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c3', 'status': 'integrated'},
+            {'phase': 'outcome', 'cycle_id': 'c4', 'status': 'integrated'},
+        ],
+        'evolution_tree': {'nodes': {}},
+        'hypotheses': {'entries': {}},
+        'lessons': [],
+        'reflections': [],
+    }
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    idx = pages['index.html']
+    assert 'cycles</a> &mdash; 4 cycles in full history' in idx
