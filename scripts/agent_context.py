@@ -97,6 +97,60 @@ def parse_prompt_sections(
     }
 
 
+def corpus_status(path: Path, *, read_error: bool = False) -> str:
+    if read_error:
+        return "unavailable"
+    if not path.exists():
+        return "missing"
+    return "present"
+
+
+def read_dir_files(root: Path, matcher: Any) -> tuple[list[Path], str]:
+    if not root.exists():
+        return [], "missing"
+    if not root.is_dir():
+        return [], "unavailable"
+    try:
+        files = []
+        for path in sorted(root.rglob("*")):
+            if path.is_file() and matcher(path):
+                files.append(path)
+        return files, "present"
+    except (OSError, UnicodeError):
+        return [], "unavailable"
+
+
+def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
+    """#274: single source of truth for the live lesson-file count.
+
+    ``lessons.html`` and ``agent.html`` reported four disagreeing counts for
+    one corpus because each page counted it a different way. Both now call
+    this function so they cannot disagree again.
+    """
+    lessons_dir = inst_path / "lessons" if inst_path else Path("__missing_instance_repo__/lessons")
+    lesson_files, status = read_dir_files(
+        lessons_dir, lambda path: path.suffix == ".md" and path.name != "index.md",
+    )
+    index_status = corpus_status(lessons_dir / "index.md")
+    files: list[dict[str, Any]] = []
+    total_size = 0
+    for path in lesson_files:
+        try:
+            size = path.stat().st_size
+            total_size += size
+            rel = path.relative_to(inst_path).as_posix() if inst_path else path.name
+            files.append({"name": rel, "size_bytes": size})
+        except (OSError, ValueError):
+            status = "unavailable"
+    return {
+        "index_status": index_status,
+        "corpus_status": status,
+        "corpus_count": len(files),
+        "total_size_bytes": total_size,
+        "files": files,
+    }
+
+
 def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None = None) -> dict[str, Any]:
     """Read context telemetry and Tier 2 corpus from the instance workspace.
 
@@ -107,27 +161,6 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     """
     state_root = Path(state_root)
     inst_path = Path(instance_repo) if instance_repo else None
-
-    def corpus_status(path: Path, *, read_error: bool = False) -> str:
-        if read_error:
-            return "unavailable"
-        if not path.exists():
-            return "missing"
-        return "present"
-
-    def read_dir_files(root: Path, matcher: Any) -> tuple[list[dict[str, Any]], str]:
-        if not root.exists():
-            return [], "missing"
-        if not root.is_dir():
-            return [], "unavailable"
-        try:
-            files = []
-            for path in sorted(root.rglob("*")):
-                if path.is_file() and matcher(path):
-                    files.append(path)
-            return files, "present"
-        except (OSError, UnicodeError):
-            return [], "unavailable"
 
     # 1. Scan ledger/cycles.jsonl for latest system_prompt row
     lpath = state_root / "ledger" / "cycles.jsonl"
@@ -204,22 +237,7 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
         except (OSError, UnicodeError, ValueError):
             skills_status = "unavailable"
 
-    lessons_dir = inst_path / "lessons" if inst_path else Path("__missing_instance_repo__/lessons")
-    lesson_files, lessons_status = read_dir_files(
-        lessons_dir,
-        lambda path: path.suffix == ".md" and path.name != "index.md",
-    )
-    lessons_index_path = lessons_dir / "index.md"
-    lessons_index_status = corpus_status(lessons_index_path)
-    lessons_files: list[dict[str, Any]] = []
-    total_lessons_size = 0
-    for path in lesson_files:
-        try:
-            size = path.stat().st_size
-            total_lessons_size += size
-            lessons_files.append({"name": path.relative_to(inst_path).as_posix(), "size_bytes": size})
-        except (OSError, ValueError):
-            lessons_status = "unavailable"
+    lesson_corpus = read_lesson_corpus(inst_path)
 
     memory_dir = inst_path / "memory" if inst_path else Path("__missing_instance_repo__/memory")
     memory_paths, memory_status = read_dir_files(memory_dir, lambda path: True)
@@ -243,11 +261,8 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
         "tier2_skills": skills_list,
         "tier2_skills_status": skills_status,
         "tier2_lessons": {
-            "index_status": lessons_index_status,
-            "corpus_status": lessons_status,
-            "corpus_count": len(lessons_files),
-            "total_size_bytes": total_lessons_size,
-            "files": lessons_files[:50],
+            **lesson_corpus,
+            "files": lesson_corpus["files"][:50],
         },
         "tier2_memory": {
             "index_status": memory_index_status,

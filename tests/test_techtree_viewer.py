@@ -3637,6 +3637,121 @@ def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
     assert len(lessons) >= 4  # 2 live + 2 archived
 
 # ---------------------------------------------------------------------------
+# Issue #274: lessons.html reads lessons/lessons.yaml, a store the loop has
+# left; four counts described one corpus. Primary population is now the live
+# corpus (lessons/*.md + index.md); lessons.yaml is an explicitly labelled
+# archive.
+# ---------------------------------------------------------------------------
+
+
+def _write_lesson_md(lessons_dir: Path, filename: str, *, description: str, prevention: str) -> None:
+    (lessons_dir / filename).write_text(
+        f'# placeholder\n\n## Description\n\n{description}\n\n## Prevention\n\n{prevention}\n',
+        encoding='utf-8',
+    )
+
+
+def test_274_lessons_html_reads_live_corpus_matches_agent_html_count(tmp_path: Path) -> None:
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    _write_lesson_md(lessons_dir, 'LESS-20260916-aaaa.md', description='Root cause A', prevention='Fix A')
+    _write_lesson_md(lessons_dir, 'LESS-20260915-bbbb.md', description='Root cause B', prevention='Fix B')
+    (lessons_dir / 'index.md').write_text(
+        '| [Corpus title A](LESS-20260916-aaaa.md) | Fix A | corrective |\n'
+        '| [Corpus title B](LESS-20260915-bbbb.md) | Fix B | corrective |\n',
+        encoding='utf-8',
+    )
+    state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    live = [l for l in (state.get('lessons') or []) if l.get('source') == 'live']
+    assert {l['id'] for l in live} == {'LESS-20260916-aaaa', 'LESS-20260915-bbbb'}
+    titled = next(l for l in live if l['id'] == 'LESS-20260916-aaaa')
+    assert titled['title'] == 'Corpus title A'
+    assert 'Root cause A' in titled['problem']
+    assert 'Fix A' in titled['solution']
+
+    # Single code path: same count agent.html's Tier 2 panel reports.
+    tier2_count = state['agent_context']['tier2_lessons']['corpus_count']
+    assert tier2_count == 2 == len(live)
+
+    pages = tv.render_pages(state, host='eeepc', generated_at='2026-09-16 12:00:00')
+    assert 'Corpus title A' in pages['lessons.html']
+    assert 'Live corpus (lessons/*.md): 2 files' in pages['lessons.html']
+
+
+def test_274_missing_index_falls_back_to_filename_no_silent_drop(tmp_path: Path) -> None:
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    _write_lesson_md(lessons_dir, 'LESS-20260916-cccc.md', description='Root cause C', prevention='Fix C')
+    # No index.md at all -- the corpus scan must still find and render it.
+    state = tv.read_local_state(str(tmp_path), instance_repo=str(repo))
+    live = [l for l in (state.get('lessons') or []) if l.get('source') == 'live']
+    assert len(live) == 1
+    assert live[0]['id'] == 'LESS-20260916-cccc'
+    assert live[0]['title'] == 'LESS-20260916-cccc'  # falls back to filename
+
+
+def test_274_remote_reader_script_mirrors_live_corpus(tmp_path: Path) -> None:
+    import contextlib
+    import io
+
+    repo = tmp_path / 'eeebot-self-evolving'
+    lessons_dir = repo / 'lessons'
+    lessons_dir.mkdir(parents=True)
+    _write_lesson_md(lessons_dir, 'LESS-20260916-dddd.md', description='Root cause D', prevention='Fix D')
+    (lessons_dir / 'index.md').write_text('| [Remote title D](LESS-20260916-dddd.md) | Fix D | corrective |\n', encoding='utf-8')
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"',
+        f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    rows = namespace['read_lessons']()
+    live = [r for r in rows if r.get('source') == 'live']
+    assert len(live) == 1
+    assert live[0]['id'] == 'LESS-20260916-dddd'
+    assert live[0]['title'] == 'Remote title D'
+
+
+def test_274_corpus_status_three_distinguishable_states() -> None:
+    missing = tv.build_lessons_panel([], corpus_status='missing')
+    unavailable = tv.build_lessons_panel([], corpus_status='unavailable')
+    present_empty = tv.build_lessons_panel(
+        [{'id': 'LESS-ARCHIVE-1', 'date': '2026-08-01', 'task_id': 't', 'hypothesis': 'h', 'result': 'r'}],
+        corpus_status='present',
+    )
+    assert 'directory missing on host' in missing
+    assert 'present but unreadable' in unavailable
+    assert 'Live corpus (lessons/*.md): 0 files' in present_empty
+    assert missing != unavailable != present_empty
+
+
+def test_274_cycle_lesson_link_shown_as_unavailable_not_dropped() -> None:
+    cycles = tv.build_cycle_feed(
+        [{'phase': 'outcome', 'cycle_id': 'cycle-x', 'outcome': 'success', 'ts': '2026-09-16T00:00:00Z',
+          'lessons_context': ['LESS-GONE-1']}],
+        rendered_lesson_ids={'LESS-STILL-HERE'},
+    )
+    assert 'LESS-GONE-1' in cycles
+    assert 'lesson-link-unavailable' in cycles
+    assert '(unavailable)' in cycles
+
+
+def test_274_render_page_and_render_pages_apply_same_lesson_filter() -> None:
+    data = _fixture()
+    data['ledger_tail'] = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-y', 'outcome': 'success', 'ts': '2026-09-16T00:00:00Z',
+         'lessons_context': ['LESS-ABSENT-1']},
+    ]
+    data['lessons'] = [{'id': 'LESS-PRESENT-1', 'date': '2026-09-16', 'problem': 'p', 'solution': 's'}]
+    single = tv.render_page(data, host='eeepc', generated_at='2026-09-16 12:00:00')
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-09-16 12:00:00')
+    assert 'lesson-link-unavailable' in single
+    assert 'lesson-link-unavailable' in pages['cycles.html']
+
+# ---------------------------------------------------------------------------
 # Issue #96: v2 lessons rendering — problem→solution cards, legacy fold,
 # stale #73 index wording removed
 # ---------------------------------------------------------------------------
