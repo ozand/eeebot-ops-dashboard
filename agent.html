@@ -1260,7 +1260,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 20:44:32 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="53">data: 52s old &middot; generated 17:49 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="31">data: 30s old &middot; generated 18:11 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
@@ -1277,7 +1277,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,253 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-c74f14f756a9</span>
+      <span class="cycle-pill">cycle-b6bfd7aa3b53</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1306,7 +1306,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 17:08:05.391775 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,747 / 24,000 chars)</span><span>2026-09-16 17:53:37.227500 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1324,7 +1324,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 37,182 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 44,986 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1342,8 +1342,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 37,182 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,781c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 44,986 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,716c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1757,12 +1757,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T170457Z-canonical-b33c01a6/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T174159Z-canonical-7aafbac7/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T170457Z-canonical-b33c01a6/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260916T174159Z-canonical-7aafbac7/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1914,9 +1914,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,781 chars &bull; ~1,945 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test target formatting to scripts/format_existence_index_exclusions.py for proposer context
-Request ID: llm-proposer-cycle-c74f14f756a9
-Cycle ID: cycle-c74f14f756a9
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,716 chars &bull; ~1,929 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Restore tracked memory files after test execution in scripts/run_all_tests.py
+Request ID: llm-proposer-cycle-b6bfd7aa3b53
+Cycle ID: cycle-b6bfd7aa3b53
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1930,63 +1930,63 @@ Completed (do not repeat): Filter futile fallback proposals (V1); Filter futile 
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 507cb15e merge: integrate selfevo/cycle-cycle-c74f14f756a9
+- 1e18b601 selfevo: auto-commit uncommitted subagent work — Add test target formatting to scripts/format_existence_index_exclusions.py for p
+- b068fc5e feat(format_existence_index_exclusions): format tests/ targets as distinct section for proposer context
 - 29caed87 merge: integrate selfevo/cycle-cycle-feb4313bfaa5
 - 8df62a90 selfevo: auto-commit uncommitted subagent work — Add scripts/verify_skill_keywords.py to validate literal presence of asserted ke
 - 10309e01 feat(verify_skill_keywords): preflight validator for literal keyword presence in skill markdown
 - 49917ab7 merge: integrate selfevo/cycle-cycle-f6af54234769
 - ea650d76 fix(validate_sys_path_modification): ignore __main__ guards and own-dir bootstrap inserts
-- 29fcd62e merge: integrate selfevo/cycle-cycle-18f940db9751
-- 37a52d4f feat(validate_heredoc_urls): add URL allowlisting and inline suppression
-- 60a99ce2 merge: integrate selfevo/cycle-cycle-3d07251f7468
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c74f14f756a9.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b6bfd7aa3b53.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add test target formatting to scripts/format_existence_index_exclusions.py for proposer context&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-00bfe7fffef4 by extending format_existence_index_exclusions.py to format tests/ targets from existence index alongside scripts, preventing duplicate test creation.\n\nTarget path: scripts/format_existence_index_exclusions.py&quot;,
+    &quot;title&quot;: &quot;Restore tracked memory files after test execution in scripts/run_all_tests.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Snapshot memory/confirmation_status.json before test execution and restore it in a finally block to prevent test runs from leaving dirty modifications that break git stash pop.\n\nTarget path: scripts/run_all_tests.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add test target formatting to scripts/format_existence_index_exclusions.py for proposer context (target: scripts/format_existence_index_exclusions.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Restore tracked memory files after test execution in scripts/run_all_tests.py (target: scripts/run_all_tests.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-4b4bdcf4  Title: Executor LLM call failed before cycle execution while attempting: Fix default target scanning and exit code in scripts/validate_markdown_format.py
+ID: ERR-20260907-bd9c0bed  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Add self-test suite and CLI execution entry point to scripts/approval_truth.py
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/existence_index_duplicate.md  Title: Existence Index Duplicate Skip Mode and Mitigation
-Problem: Read lessons/existence_index_duplicate.md: **Check Existing Scripts**: Before proposing or implementing a task, search the repository (e.g., in `scripts/`, `nanobot/`, etc.) to ensure a similar script does not already exist.
+ID: lessons/check_existing_tests_before_proposals.md  Title: Verify Existing Test Files and Commits Before Queuing Unit Test Proposals
+Problem: Read lessons/check_existing_tests_before_proposals.md: Treat &quot;does the target artifact already exist?&quot; as a mandatory first step for any proposal whose deliverable is a file (tests, scripts, lessons, docs).
 Solution: 
-If you apply this lesson, cite [Lesson lessons/existence_index_duplicate.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/check_existing_tests_before_proposals.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid mutating the active working tree with git stash and git stash pop to confirm baseline test failures; test the target artifact in isolation or evaluate diffs against origin/main.
-- When task proposers draft tickets referencing specific function symbols, verify via symbol lookup that the proposed target path actually defines those symbols before formulating the task title and tar
-- Use standard irregular pluralization handling (or standard noun dictionaries) when building human-facing symbol citations to avoid awkward formatting such as &#x27;class(s)&#x27; that can break intuitive test a
+- Avoid inspecting state/ledger/*.jsonl.gz files for test stdout/stderr or failure stack traces; cycle ledger records only track lifecycle phases, budget telemetry, and task identifiers.
+- Inspect top-level imports and path fixtures in test files before writing new tests to avoid predictable NameErrors on standard modules or repository path constants.
+- When executing long-running test suites or gate commands in non-interactive shell sessions, redirect stdout and stderr to a file directly rather than piping into grep or tail, which can swallow output
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-16 16:49 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/verify_skill_keywords.py,…
-- Attempt 2 (2026-09-16 16:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py, tests/test_validate_sys_path_modification.py.…
-- Attempt 3 (2026-09-16 15:29 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_heredoc_urls.py, tests/test_validate_heredoc_urls.py. Reward signal will be…
+- Attempt 1 (2026-09-16 17:41 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/prevent_repeats.json, memory/repeat_failures.json.…
+- Attempt 2 (2026-09-16 16:49 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, scripts/verify_skill_keywords.py,…
+- Attempt 3 (2026-09-16 16:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_sys_path_modification.py, tests/test_validate_sys_path_modification.py.…
 
 ## Concrete task to implement
 
-Title: Add test target formatting to scripts/format_existence_index_exclusions.py for proposer context
+Title: Restore tracked memory files after test execution in scripts/run_all_tests.py
 
 
-Addresses reflection-00bfe7fffef4 by extending format_existence_index_exclusions.py to format tests/ targets from existence index alongside scripts, preventing duplicate test creation.
+Snapshot memory/confirmation_status.json before test execution and restore it in a finally block to prevent test runs from leaving dirty modifications that break git stash pop.
 
-Target path: scripts/format_existence_index_exclusions.py
+Target path: scripts/run_all_tests.py
 
 ## Concrete task to implement
-Implement and commit: Add test target formatting to scripts/format_existence_index_exclusions.py for proposer context (target: scripts/format_existence_index_exclusions.py)
+Implement and commit: Restore tracked memory files after test execution in scripts/run_all_tests.py (target: scripts/run_all_tests.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5900,7 +5900,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 17:49:32 UTC &middot; host eeepc &middot; newest source 52s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 20:44:32 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 18:11:02 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 20:44:32 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
