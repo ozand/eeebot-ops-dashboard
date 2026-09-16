@@ -1261,19 +1261,34 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 23:12:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-16 23:56:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">34.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 20:52 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 21:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (2978 cycles)</h2>
+      <h2 class="panel-title">Cycle History (2979 cycles)</h2>
       <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" onclick="(function(){document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});this.remove();}).call(this)">show all history</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script>
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
+        
+        <li class="feed-day-header">2026-09-17 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-629b71b471c0">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-629b71b471c0)</span>
+            
+            
+            <span class="feed-ts" title="2026-09-16T21:00:38.161225Z">00:00 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 9.82K tok &middot; dur 16s</div>
+        </li>
         
         <li class="feed-day-header">2026-09-16 MSK</li>
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-725faadc1790">
@@ -1283,7 +1298,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-725faadc1790)</span>
             
             <a href="#node-f8c7bb5" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T20:15:14.143397Z">23:15 MSK</span>
+            <span class="feed-ts" title="2026-09-16T20:15:14.143397Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a9d095160730</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-e13f1cd0f155">lesson:LESS-REF-e13f1cd0f155</a></div>
           <div class="feed-files">&#128193; scripts/targeted_file_slice.py, tests/test_targeted_file_slice.py</div>
@@ -1297,7 +1312,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-5abd6d6d32db)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T20:07:38.605605Z">23:07 MSK</span>
+            <span class="feed-ts" title="2026-09-16T20:07:38.605605Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1311,7 +1326,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f3d53ed48901)</span>
             
             <a href="#node-78cfd84" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T19:46:46.290685Z">22:46 MSK</span>
+            <span class="feed-ts" title="2026-09-16T19:46:46.290685Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-faafe86822a5</span></div>
           <div class="feed-files">&#128193; scripts/scan_archive.py, tests/test_scan_archive.py</div>
@@ -1325,7 +1340,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5b23aeb2d012)</span>
             
             <a href="#node-ed98e58" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T19:30:22.204113Z">22:30 MSK</span>
+            <span class="feed-ts" title="2026-09-16T19:30:22.204113Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-092c82e5af95</span></div>
           <div class="feed-files">&#128193; scripts/filter_quarantined_demands.py, tests/test_filter_quarantined_demands.py</div>
@@ -1339,7 +1354,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c88ad1727b22)</span>
             
             <a href="#node-dc5ea4e" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T19:14:51.169209Z">22:14 MSK</span>
+            <span class="feed-ts" title="2026-09-16T19:14:51.169209Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-b149b087296f</span></div>
           <div class="feed-files">&#128193; scripts/scan_archive.py, tests/test_scan_archive.py</div>
@@ -1353,7 +1368,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-77d3ee2c2b5f)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T19:07:41.831410Z">22:07 MSK</span>
+            <span class="feed-ts" title="2026-09-16T19:07:41.831410Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1367,7 +1382,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0c34c55786ef)</span>
             
             <a href="#node-65bf67e" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T18:28:55.698652Z">21:28 MSK</span>
+            <span class="feed-ts" title="2026-09-16T18:28:55.698652Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8786b9377afe</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
           <div class="feed-files">&#128193; scripts/scaffold_script_entrypoint.py, tests/test_scaffold_script_entrypoint.py</div>
@@ -1381,7 +1396,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ff16f6ecd4a1)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T18:19:44.811518Z">21:19 MSK</span>
+            <span class="feed-ts" title="2026-09-16T18:19:44.811518Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1395,7 +1410,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b6bfd7aa3b53)</span>
             
             <a href="#node-6678b09" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T17:48:23.606770Z">20:48 MSK</span>
+            <span class="feed-ts" title="2026-09-16T17:48:23.606770Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a88bda5286e1</span></div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py</div>
@@ -1409,7 +1424,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c74f14f756a9)</span>
             
             <a href="#node-507cb15" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T17:05:48.168838Z">20:05 MSK</span>
+            <span class="feed-ts" title="2026-09-16T17:05:48.168838Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-00bfe7fffef4</span></div>
           <details class="feed-files"><summary>&#128193; memory/confirmation_status.json, memory/prevent_repeats.json, memory/repeat_failures.json +2 more</summary><ul class="feed-files-list"><li>memory/confirmation_status.json</li><li>memory/prevent_repeats.json</li><li>memory/repeat_failures.json</li><li>scripts/format_existence_index_exclusions.py</li><li>tests/test_format_existence_index_exclusions.py</li></ul></details>
@@ -1423,7 +1438,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-5899775156d5)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T16:59:05.705469Z">19:59 MSK</span>
+            <span class="feed-ts" title="2026-09-16T16:59:05.705469Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1437,7 +1452,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-feb4313bfaa5)</span>
             
             <a href="#node-29caed8" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T16:31:21.949919Z">19:31 MSK</span>
+            <span class="feed-ts" title="2026-09-16T16:31:21.949919Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e106c6db2744</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-16436c7d5b3a-4c67">lesson:LESS-REF-16436c7d5b3a-4c67</a></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/verify_skill_keywords.py, tests/test_verify_skill_keywords.py</div>
@@ -1451,7 +1466,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ba7676295c3f)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T16:23:12.081487Z">19:23 MSK</span>
+            <span class="feed-ts" title="2026-09-16T16:23:12.081487Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1465,7 +1480,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-f6af54234769)</span>
             
             <a href="#node-49917ab" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T15:47:21.715777Z">18:47 MSK</span>
+            <span class="feed-ts" title="2026-09-16T15:47:21.715777Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-738e94aaee7c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-16436c7d5b3a-4c67">lesson:LESS-REF-16436c7d5b3a-4c67</a></div>
           <div class="feed-files">&#128193; scripts/validate_sys_path_modification.py, tests/test_validate_sys_path_modification.py</div>
@@ -1479,7 +1494,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ecc2eac6eefa)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T15:39:39.624254Z">18:39 MSK</span>
+            <span class="feed-ts" title="2026-09-16T15:39:39.624254Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1493,7 +1508,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-18f940db9751)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T15:10:51.132193Z">18:10 MSK</span>
+            <span class="feed-ts" title="2026-09-16T15:10:51.132193Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-413fd90c03d0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-16436c7d5b3a-4c67">lesson:LESS-REF-16436c7d5b3a-4c67</a></div>
           <div class="feed-files">&#128193; scripts/validate_heredoc_urls.py, tests/test_validate_heredoc_urls.py</div>
@@ -1507,7 +1522,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-de3499f97729)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T14:53:15.764078Z">17:53 MSK</span>
+            <span class="feed-ts" title="2026-09-16T14:53:15.764078Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6309e320a8b1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-16436c7d5b3a-4c67">lesson:LESS-REF-16436c7d5b3a-4c67</a></div>
           
@@ -1521,7 +1536,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0fec0ac96153)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T14:36:36.864956Z">17:36 MSK</span>
+            <span class="feed-ts" title="2026-09-16T14:36:36.864956Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-e9e45b2fd38e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           
@@ -1535,7 +1550,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-07fafda27edb)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T14:29:21.402740Z">17:29 MSK</span>
+            <span class="feed-ts" title="2026-09-16T14:29:21.402740Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1549,7 +1564,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3d07251f7468)</span>
             
             <a href="#node-60a99ce" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T13:43:18.140893Z">16:43 MSK</span>
+            <span class="feed-ts" title="2026-09-16T13:43:18.140893Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-a832ce5f19d5</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/check_process_pool_picklable.py, tests/test_check_process_pool_picklable.py</div>
@@ -1563,7 +1578,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9a6b953c37a2)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T13:29:54.387381Z">16:29 MSK</span>
+            <span class="feed-ts" title="2026-09-16T13:29:54.387381Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-5e7ec3ca4188</span></div>
           
@@ -1577,7 +1592,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6aa4d674656c)</span>
             
             <a href="#node-27915e0" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T12:50:08.358844Z">15:50 MSK</span>
+            <span class="feed-ts" title="2026-09-16T12:50:08.358844Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9ce08436104e</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
@@ -1591,7 +1606,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-4d8028990337)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T12:07:18.131393Z">15:07 MSK</span>
+            <span class="feed-ts" title="2026-09-16T12:07:18.131393Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cb902ee0561c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
@@ -1605,7 +1620,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-c596b5a8be6d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T12:00:43.041039Z">15:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T12:00:43.041039Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1619,7 +1634,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-2e0fa893e08a)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T12:00:05.248994Z">15:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T12:00:05.248994Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d473436e3601</span></div>
           
@@ -1633,7 +1648,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-a48004ebc368)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:53:03.872914Z">14:53 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:53:03.872914Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1647,7 +1662,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-74498c00526f)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:35:27.925020Z">14:35 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:35:27.925020Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e4f70bb5700f</span></div>
           
@@ -1661,7 +1676,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ec20a5d00a19)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:26:55.002201Z">14:26 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:26:55.002201Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1675,7 +1690,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-348bdf254ab3)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:25:54.296378Z">14:25 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:25:54.296378Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1689,7 +1704,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b84c20cfb412)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:19:45.535922Z">14:19 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:19:45.535922Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1703,7 +1718,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8d774a52da52)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:19:06.720447Z">14:19 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:19:06.720447Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1717,7 +1732,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-7b4b9837166a)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:12:25.486537Z">14:12 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:12:25.486537Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1731,7 +1746,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-a73465be5bbc)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:11:50.091756Z">14:11 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:11:50.091756Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1745,7 +1760,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b455603d788b)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:05:36.660106Z">14:05 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:05:36.660106Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1759,7 +1774,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-184bd5abec3d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T11:05:02.226907Z">14:05 MSK</span>
+            <span class="feed-ts" title="2026-09-16T11:05:02.226907Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1773,7 +1788,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-6754b56644d6)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:58:32.972758Z">13:58 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:58:32.972758Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1787,7 +1802,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d0be02957a6e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:57:49.140569Z">13:57 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:57:49.140569Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1801,7 +1816,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-a34c02259046)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:51:12.850956Z">13:51 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:51:12.850956Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1815,7 +1830,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7c9979eb00cf)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:50:32.143681Z">13:50 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:50:32.143681Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1829,7 +1844,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-6db383135289)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:44:32.099520Z">13:44 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:44:32.099520Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1843,7 +1858,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b5e3fa273de3)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:43:53.432328Z">13:43 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:43:53.432328Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1857,7 +1872,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-0b7b91f6e108)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:37:16.062468Z">13:37 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:37:16.062468Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1871,7 +1886,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d06e78361f2e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:36:36.135039Z">13:36 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:36:36.135039Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1885,7 +1900,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b901fba36155)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:30:25.394020Z">13:30 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:30:25.394020Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1899,7 +1914,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-95331376926e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:29:44.236472Z">13:29 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:29:44.236472Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1913,7 +1928,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-c1e712dfc60d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:22:56.697402Z">13:22 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:22:56.697402Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1927,7 +1942,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6bfdca6ced20)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:22:13.952504Z">13:22 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:22:13.952504Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1941,7 +1956,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-e63057b74ea4)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:15:42.119069Z">13:15 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:15:42.119069Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1955,21 +1970,21 @@
             <span class="feed-cid copyable" translate="no">(cycle-ca5d67857fc0)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:15:05.298254Z">13:15 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:15:05.298254Z">Sep 16 MSK</span>
           </div>
           
           
           
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-eb03d0fb43a5">
+        <li class="feed-row feed-overflow-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-eb03d0fb43a5">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
             <strong class="feed-title">rejected: llm_unavailable</strong>
             <span class="feed-cid copyable" translate="no">(fallback-eb03d0fb43a5)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:09:00.176811Z">13:09 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:09:00.176811Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1983,7 +1998,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-742c7ac2d09b)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:08:16.395730Z">13:08 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:08:16.395730Z">Sep 16 MSK</span>
           </div>
           
           
@@ -1997,7 +2012,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-adf5154eaa90)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:00:46.540072Z">13:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:00:46.540072Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2011,7 +2026,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5eca8644e778)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T10:00:06.061602Z">13:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T10:00:06.061602Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2025,7 +2040,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-30af6adc578a)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:53:35.466237Z">12:53 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:53:35.466237Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2039,7 +2054,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c83845fa1b38)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:52:53.436150Z">12:52 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:52:53.436150Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2053,7 +2068,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-46e18ccd7d65)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:46:11.243846Z">12:46 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:46:11.243846Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2067,7 +2082,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7fbd83550a44)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:45:38.944243Z">12:45 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:45:38.944243Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2081,7 +2096,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-bf8c92923c0d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:39:18.420951Z">12:39 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:39:18.420951Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2095,7 +2110,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8d03e6a71602)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:38:37.394370Z">12:38 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:38:37.394370Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2109,7 +2124,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b43e0f0e0ff3)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:31:11.300850Z">12:31 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:31:11.300850Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2123,7 +2138,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-93d5ca0eb90f)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:30:31.030343Z">12:30 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:30:31.030343Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2137,7 +2152,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-fe9ee0d26e72)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:23:45.712400Z">12:23 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:23:45.712400Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2151,7 +2166,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-721808e1fbb4)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:23:05.068487Z">12:23 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:23:05.068487Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2165,7 +2180,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ef617d5ad34e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:16:25.005953Z">12:16 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:16:25.005953Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2179,7 +2194,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6a32cd549223)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:15:39.767230Z">12:15 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:15:39.767230Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2193,7 +2208,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-362891745364)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:09:19.774663Z">12:09 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:09:19.774663Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2207,7 +2222,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-42908b1b3d9d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:08:28.773779Z">12:08 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:08:28.773779Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2221,7 +2236,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-e06b5a39e936)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:01:56.970417Z">12:01 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:01:56.970417Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2235,7 +2250,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b50069aaf1a0)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T09:01:06.991765Z">12:01 MSK</span>
+            <span class="feed-ts" title="2026-09-16T09:01:06.991765Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2249,7 +2264,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-319a3ee67407)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:54:05.436910Z">11:54 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:54:05.436910Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2263,7 +2278,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-0b39e24e9df5)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:53:24.789928Z">11:53 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:53:24.789928Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2277,7 +2292,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-b45301fae7ff)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:46:41.364937Z">11:46 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:46:41.364937Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2291,7 +2306,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-10e64677798d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:46:05.056881Z">11:46 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:46:05.056881Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2305,7 +2320,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-d0554645e848)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:39:46.089800Z">11:39 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:39:46.089800Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2319,7 +2334,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-79017a730c87)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:39:08.447195Z">11:39 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:39:08.447195Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2333,7 +2348,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-7d32e7940719)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:32:34.892777Z">11:32 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:32:34.892777Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2347,7 +2362,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-fa8d6465a9b2)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:32:01.750590Z">11:32 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:32:01.750590Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2361,7 +2376,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f2776c86ba7e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:24:23.317518Z">11:24 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:24:23.317518Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2375,7 +2390,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-49e245a64616)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:23:41.904082Z">11:23 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:23:41.904082Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2389,7 +2404,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f8138a9c09bd)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:16:36.962047Z">11:16 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:16:36.962047Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2403,7 +2418,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7d880ba7d86e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:16:00.952948Z">11:16 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:16:00.952948Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2417,7 +2432,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-dcfb0995c8da)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:09:12.775177Z">11:09 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:09:12.775177Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2431,7 +2446,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-24f98d561ae7)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:08:28.181613Z">11:08 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:08:28.181613Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2445,7 +2460,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-013e7f5818e2)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:01:50.654561Z">11:01 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:01:50.654561Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2459,7 +2474,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b4bccd6b0a13)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T08:01:09.627976Z">11:01 MSK</span>
+            <span class="feed-ts" title="2026-09-16T08:01:09.627976Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2473,7 +2488,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c782377a9087)</span>
             
             <a href="#node-a5497d5" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T07:39:53.870133Z">10:39 MSK</span>
+            <span class="feed-ts" title="2026-09-16T07:39:53.870133Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2a7c74ad1951</span></div>
           <div class="feed-files">&#128193; scripts/check_preexisting_regression.py, tests/test_check_preexisting_regression.py</div>
@@ -2487,7 +2502,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b6cc78bc94fe)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T07:21:05.796983Z">10:21 MSK</span>
+            <span class="feed-ts" title="2026-09-16T07:21:05.796983Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-2f9bd33bdf3d</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           
@@ -2501,7 +2516,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-290c3ec5f316)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T07:13:03.715896Z">10:13 MSK</span>
+            <span class="feed-ts" title="2026-09-16T07:13:03.715896Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2515,7 +2530,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-aeae8c7d77fd)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T07:03:23.650463Z">10:03 MSK</span>
+            <span class="feed-ts" title="2026-09-16T07:03:23.650463Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2529,7 +2544,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-cb993ff70b5d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T06:43:08.416365Z">09:43 MSK</span>
+            <span class="feed-ts" title="2026-09-16T06:43:08.416365Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-554a7c792a87</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-c871bf9abe41">lesson:LESS-REF-c871bf9abe41</a></div>
           
@@ -2543,7 +2558,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-9eddf7e31e2e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T06:36:02.288667Z">09:36 MSK</span>
+            <span class="feed-ts" title="2026-09-16T06:36:02.288667Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-e1d3bddd2ea0</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-e13f1cd0f155">lesson:LESS-REF-e13f1cd0f155</a></div>
           
@@ -2557,7 +2572,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-a9d95a6fc558)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T06:29:32.944951Z">09:29 MSK</span>
+            <span class="feed-ts" title="2026-09-16T06:29:32.944951Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2571,7 +2586,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-45dc8bdd2ee0)</span>
             
             <a href="#node-1ab185c" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T06:11:43.533764Z">09:11 MSK</span>
+            <span class="feed-ts" title="2026-09-16T06:11:43.533764Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c8dfee6c251f</span></div>
           <div class="feed-files">&#128193; scripts/probe_callable_signature.py, tests/test_probe_callable_signature.py</div>
@@ -2585,7 +2600,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-db66225d0861)</span>
             
             <a href="#node-30ccf71" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T05:46:55.808900Z">08:46 MSK</span>
+            <span class="feed-ts" title="2026-09-16T05:46:55.808900Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f08367272ddf</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-2782e96c24a8">lesson:LESS-REF-2782e96c24a8</a></div>
           <div class="feed-files">&#128193; scripts/check_cycle_budget.py, tests/test_check_cycle_budget.py</div>
@@ -2599,7 +2614,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-0da28d4c01e3)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T05:40:03.772107Z">08:40 MSK</span>
+            <span class="feed-ts" title="2026-09-16T05:40:03.772107Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2613,7 +2628,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-d2d6720a34fe)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T05:32:50.538297Z">08:32 MSK</span>
+            <span class="feed-ts" title="2026-09-16T05:32:50.538297Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2627,7 +2642,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-02d384eafafa)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T05:31:56.633899Z">08:31 MSK</span>
+            <span class="feed-ts" title="2026-09-16T05:31:56.633899Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-aff6ccc0372a</span></div>
           
@@ -2641,7 +2656,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-dd32a5012317)</span>
             
             <a href="#node-f689f0f" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T05:00:58.620603Z">08:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T05:00:58.620603Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-36ad8ca2b63c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-3c711db47ed9-d63a">lesson:LESS-REF-3c711db47ed9-d63a</a></div>
           <div class="feed-files">&#128193; memory/confirmation_status.json, scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
@@ -2655,7 +2670,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-5afea7d247dc)</span>
             
             <a href="#node-48dc9e4" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T04:20:25.794293Z">07:20 MSK</span>
+            <span class="feed-ts" title="2026-09-16T04:20:25.794293Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-15a4bb3cc347</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-f90b4a3f2327-b284">lesson:LESS-REF-f90b4a3f2327-b284</a></div>
           <div class="feed-files">&#128193; scripts/run_all_tests.py, tests/test_run_all_tests.py</div>
@@ -2669,7 +2684,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-17d6af14b765)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T04:13:37.289750Z">07:13 MSK</span>
+            <span class="feed-ts" title="2026-09-16T04:13:37.289750Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2683,7 +2698,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8f1698a71904)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T03:59:06.130257Z">06:59 MSK</span>
+            <span class="feed-ts" title="2026-09-16T03:59:06.130257Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-31d702e0dd35</span></div>
           
@@ -2697,7 +2712,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7cfb360faf9c)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T03:43:12.999148Z">06:43 MSK</span>
+            <span class="feed-ts" title="2026-09-16T03:43:12.999148Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1a7a95a9f98b</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-1767b3d47ede-ffe2">lesson:LESS-REF-1767b3d47ede-ffe2</a></div>
           
@@ -2711,7 +2726,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-ac89330e6e7d)</span>
             
             <a href="#node-c66fe0a" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T03:19:14.735717Z">06:19 MSK</span>
+            <span class="feed-ts" title="2026-09-16T03:19:14.735717Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0d2613f10c6b</span></div>
           <div class="feed-files">&#128193; lessons/interpreter_probe_edge_cases.md</div>
@@ -2725,7 +2740,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-7bf0af105580)</span>
             
             <a href="#node-f5d9258" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T02:41:17.986962Z">05:41 MSK</span>
+            <span class="feed-ts" title="2026-09-16T02:41:17.986962Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-c691ea2f2f98</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-6d238e44">lesson:LESS-20260905-6d238e44</a></div>
           <div class="feed-files">&#128193; lessons/compact_script_enhancement.md</div>
@@ -2739,7 +2754,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-818fe886583d)</span>
             
             <a href="#node-e06f502" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T02:24:14.745293Z">05:24 MSK</span>
+            <span class="feed-ts" title="2026-09-16T02:24:14.745293Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ca0b322a5bdd</span></div>
           <div class="feed-files">&#128193; lessons/targeted_reference_reading.md</div>
@@ -2753,7 +2768,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c58e5b15796e)</span>
             
             <a href="#node-5dc9e53" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T01:38:51.429933Z">04:38 MSK</span>
+            <span class="feed-ts" title="2026-09-16T01:38:51.429933Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0222f32f6bdf</span></div>
           <div class="feed-files">&#128193; lessons/canonical_cli_assertions.md</div>
@@ -2767,7 +2782,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-3970bca2c24b)</span>
             
             <a href="#node-28a2a83" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-16T00:43:52.345506Z">03:43 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:43:52.345506Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b22e2101071c</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-20260905-521b6562">lesson:LESS-20260905-521b6562</a></div>
           <div class="feed-files">&#128193; lessons/cohesive_import_edits.md</div>
@@ -2781,7 +2796,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-80e675480afb)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:29:01.091859Z">03:29 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:29:01.091859Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-121513b87216</span></div>
           
@@ -2795,7 +2810,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f2a156e8cbf6)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:21:30.287512Z">03:21 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:21:30.287512Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2809,7 +2824,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-278493cdff02)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:14:51.667368Z">03:14 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:14:51.667368Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2823,7 +2838,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c1fed2f0b8bf)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:14:13.749851Z">03:14 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:14:13.749851Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2837,7 +2852,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-96327ea62c0d)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:07:56.665480Z">03:07 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:07:56.665480Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2851,7 +2866,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-e8b7d027cc3e)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:07:16.257933Z">03:07 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:07:16.257933Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2865,7 +2880,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-eb944d1772ec)</span>
             
             
-            <span class="feed-ts" title="2026-09-16T00:00:18.601085Z">03:00 MSK</span>
+            <span class="feed-ts" title="2026-09-16T00:00:18.601085Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2879,7 +2894,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-c6c3e34333ab)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:59:40.182960Z">02:59 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:59:40.182960Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2893,7 +2908,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-93052807ba80)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:52:58.956498Z">02:52 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:52:58.956498Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2907,7 +2922,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-aae7640d0bb4)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:52:11.412662Z">02:52 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:52:11.412662Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2921,7 +2936,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-baae03346aa9)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:45:58.785576Z">02:45 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:45:58.785576Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2935,7 +2950,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-658972f96db8)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:45:03.492476Z">02:45 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:45:03.492476Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2949,7 +2964,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-03647e310340)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:38:12.472717Z">02:38 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:38:12.472717Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2963,7 +2978,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-d670bf33cc26)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:37:36.382022Z">02:37 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:37:36.382022Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2977,7 +2992,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-827771d0d2b2)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:30:36.146230Z">02:30 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:30:36.146230Z">Sep 16 MSK</span>
           </div>
           
           
@@ -2991,7 +3006,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-623ca7a65c89)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:30:01.403851Z">02:30 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:30:01.403851Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3005,7 +3020,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-01214ee62d0b)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:23:12.209935Z">02:23 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:23:12.209935Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3019,7 +3034,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b4307c4569c9)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:22:35.996929Z">02:22 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:22:35.996929Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3033,7 +3048,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-e0e906d935f6)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:15:48.332250Z">02:15 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:15:48.332250Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3047,7 +3062,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-612e351e194e)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:15:02.411837Z">02:15 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:15:02.411837Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3061,7 +3076,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-327b3d363003)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:07:47.309157Z">02:07 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:07:47.309157Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3075,7 +3090,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-742b8fbae297)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:07:07.116882Z">02:07 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:07:07.116882Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3089,7 +3104,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-63b0ebea14f4)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T23:00:02.603995Z">02:00 MSK</span>
+            <span class="feed-ts" title="2026-09-15T23:00:02.603995Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3103,7 +3118,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-eb8db42142f9)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:59:25.266779Z">01:59 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:59:25.266779Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3117,7 +3132,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-985effcdbcfb)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:52:58.466867Z">01:52 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:52:58.466867Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3131,7 +3146,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-5bd091e6f270)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:45:06.969071Z">01:45 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:45:06.969071Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3145,7 +3160,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-be010aa67f0b)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:36:43.131691Z">01:36 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:36:43.131691Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3159,7 +3174,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b051394e0b77)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:20:36.975405Z">01:20 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:20:36.975405Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cfa7cf6c909b</span></div>
           
@@ -3173,7 +3188,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-ed594c11eb61)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:13:16.855616Z">01:13 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:13:16.855616Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3187,7 +3202,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-8c3e6f5cdbfb)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:11:57.685901Z">01:11 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:11:57.685901Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-097f559580d7</span></div>
           
@@ -3201,7 +3216,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-3aff72a1cf28)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T22:04:25.599615Z">01:04 MSK</span>
+            <span class="feed-ts" title="2026-09-15T22:04:25.599615Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3215,7 +3230,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-aa1b714ee2b6)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:57:05.432545Z">00:57 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:57:05.432545Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3229,7 +3244,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-c359b79012f2)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:48:16.677267Z">00:48 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:48:16.677267Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3243,7 +3258,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-6cbafbc59d69)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:46:43.684747Z">00:46 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:46:43.684747Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3257,7 +3272,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-5d88e7cf3080)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:37:29.638521Z">00:37 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:37:29.638521Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3271,7 +3286,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-64c4ae76c2f0)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:35:53.109418Z">00:35 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:35:53.109418Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3285,7 +3300,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-a86a63e99176)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:27:28.731222Z">00:27 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:27:28.731222Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3299,7 +3314,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-b8f297ed0b37)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:25:51.554427Z">00:25 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:25:51.554427Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3313,7 +3328,7 @@
             <span class="feed-cid copyable" translate="no">(fallback-f01b58b31d8a)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:17:18.324580Z">00:17 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:17:18.324580Z">Sep 16 MSK</span>
           </div>
           
           
@@ -3327,7 +3342,7 @@
             <span class="feed-cid copyable" translate="no">(cycle-654ec328b201)</span>
             
             
-            <span class="feed-ts" title="2026-09-15T21:08:22.917612Z">00:08 MSK</span>
+            <span class="feed-ts" title="2026-09-15T21:08:22.917612Z">Sep 16 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-627ff77045b1</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-f0bd8333acbe-1d2e">lesson:LESS-REF-f0bd8333acbe-1d2e</a></div>
           
@@ -43032,7 +43047,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-16 20:52:30 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 23:12:49 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-16 21:01:20 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-16 23:56:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
