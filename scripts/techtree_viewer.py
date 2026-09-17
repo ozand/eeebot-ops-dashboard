@@ -65,6 +65,13 @@ except ImportError:
         read_lesson_corpus,
     )
 
+# #273: the "how the project is organized" page lives in its own module,
+# not in this file's growth (see scripts/about_page.py's own docstring).
+try:
+    from scripts.about_page import build_about_panel
+except ImportError:
+    from about_page import build_about_panel
+
 MSK_TZ = timezone(timedelta(hours=3))
 
 SSH_USER = 'ozand'
@@ -8584,6 +8591,7 @@ SITE_PAGES = [
     ('lessons.html', 'lessons'),
     ('agent.html', 'agent'),
     ('hypotheses.html', 'hypotheses'),
+    ('about.html', 'about'),  # #273
 ]
 
 SITE_TEMPLATE = '''<!doctype html>
@@ -8933,6 +8941,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         'lessons.html': _page('eeebot / lessons', 'lessons.html', lessons_panel),
         'agent.html': _page('eeebot / agent', 'agent.html', agent_panel),
         'hypotheses.html': _page('eeebot / hypotheses', 'hypotheses.html', hypotheses_panel),
+        'about.html': _page('eeebot / about', 'about.html', build_about_panel(data, host, generated_at)),  # #273
         'techtree.html': TECHTREE_REDIRECT,
     }
 

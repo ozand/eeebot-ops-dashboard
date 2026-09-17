@@ -38,6 +38,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OPT_DIR=/opt/eeebot-techtree
 VIEWER=techtree_viewer.py
 AUTOPUBLISH=techtree_autopublish.py
+# #273: techtree_viewer.py imports this sibling module (the about.html page
+# content); it must be deployed alongside it or the deployed generator
+# ImportErrors on the host.
+ABOUT_PAGE=about_page.py
 PUBLISH_SERVICE=eeebot-techtree-publish.service
 
 HOST=""
@@ -67,7 +71,7 @@ done
 GIT_SHA="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 echo "deploy_generator.sh: deploying generator sha=$GIT_SHA"
-echo "  source: $ROOT/scripts/{$VIEWER,$AUTOPUBLISH}"
+echo "  source: $ROOT/scripts/{$VIEWER,$AUTOPUBLISH,$ABOUT_PAGE}"
 echo "  target: ${HOST:+(on $HOST) }$OPT_DIR/"
 
 # --- helpers ----------------------------------------------------------------
@@ -113,7 +117,7 @@ fi
 # backup fails (the existing copy is already absent, or permissions deny it)
 # we warn but do not abort -- the real guard is py_compile in step 3.
 BACKUP_TS="$(date -u +%Y%m%dT%H%M%SZ)"
-for f in "$VIEWER" "$AUTOPUBLISH"; do
+for f in "$VIEWER" "$AUTOPUBLISH" "$ABOUT_PAGE"; do
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "[dry-run] backup $OPT_DIR/$f -> $OPT_DIR/${f%.py}.bak.$BACKUP_TS.py"
   else
@@ -126,7 +130,7 @@ for f in "$VIEWER" "$AUTOPUBLISH"; do
 done
 
 # --- step 2: copy -----------------------------------------------------------
-for f in "$VIEWER" "$AUTOPUBLISH"; do
+for f in "$VIEWER" "$AUTOPUBLISH" "$ABOUT_PAGE"; do
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "[dry-run] copy $ROOT/scripts/$f -> $OPT_DIR/$f"
   else
@@ -160,12 +164,14 @@ else
 fi
 
 # --- step 3: py_compile -----------------------------------------------------
-# Syntax-check both files on the target Python before pronouncing success.
-# A failed py_compile leaves the backup in place as the last known-good copy.
+# Syntax-check all three files on the target Python before pronouncing
+# success. A failed py_compile leaves the backup in place as the last
+# known-good copy. about_page.py is included: py_compiling only the viewer
+# would not catch a syntax error in the sibling module it imports.
 if [[ "$DRY_RUN" == "1" ]]; then
-  echo "[dry-run] python3 -m py_compile $OPT_DIR/$VIEWER $OPT_DIR/$AUTOPUBLISH"
+  echo "[dry-run] python3 -m py_compile $OPT_DIR/$VIEWER $OPT_DIR/$AUTOPUBLISH $OPT_DIR/$ABOUT_PAGE"
 else
-  if ! remote "python3 -m py_compile $OPT_DIR/$VIEWER $OPT_DIR/$AUTOPUBLISH"; then
+  if ! remote "python3 -m py_compile $OPT_DIR/$VIEWER $OPT_DIR/$AUTOPUBLISH $OPT_DIR/$ABOUT_PAGE"; then
     echo "ERROR: py_compile failed on the target -- deploy aborted." >&2
     echo "       Prior backup: $OPT_DIR/<name>.bak.$BACKUP_TS.py" >&2
     exit 1
