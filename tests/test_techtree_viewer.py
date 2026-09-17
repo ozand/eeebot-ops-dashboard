@@ -2811,6 +2811,51 @@ def test_issue59_inflight_cycle_still_running() -> None:
     assert 'SKIPPED' not in row
 
 
+# ---------------------------------------------------------------------------
+# Issue #293: outcome `push_pending` is its own bucket, not `skipped`
+# (eeebot#1709, PR eeebot#1715)
+# ---------------------------------------------------------------------------
+
+
+def test_293_push_pending_renders_own_badge_not_skipped() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-pushpending-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-pushpending-1', 'outcome': 'push_pending',
+         'reason': 'push_pending', 'push_attempts': 3, 'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-pushpending-1"')[1].split('</li>')[0]
+    assert 'PUSH PENDING' in row
+    assert 'badge-push-pending' in row
+    assert '3 attempt(s)' in row
+    # Neither failed nor skipped -- a gate-passed, retry-exhausted-network
+    # cycle must not be counted or filtered as either.
+    assert 'SKIPPED' not in row
+    assert 'FAILED' not in row
+    assert 'data-outcome="push_pending"' in html_out
+
+    history_html = tv.build_cycle_feed([
+        {'phase': 'outcome', 'cycle_id': 'cycle-pushpending-1', 'outcome': 'push_pending',
+         'push_attempts': 3, 'ts': '2026-08-18T03:05:00Z'},
+    ], history_mode=True)
+    assert 'data-filter="push_pending"' in history_html
+
+
+def test_293_push_pending_no_attempts_field_still_labelled() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-pushpending-2', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-pushpending-2', 'outcome': 'push_pending',
+         'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-pushpending-2"')[1].split('</li>')[0]
+    assert 'PUSH PENDING' in row
+
+
+def test_293_leaf_outcome_push_pending_distinct_from_skipped() -> None:
+    assert tv._leaf_outcome({'outcome': 'push_pending'}) == 'push_pending'
+    assert tv._leaf_outcome({'status': 'push_pending'}) == 'push_pending'
+    assert tv._leaf_outcome({'outcome': 'something_else'}) == 'skipped'
+
+
 def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
     # AC: rendered line contains the real middle dot and NOT literal '&middot;'
     data = _fixture()
