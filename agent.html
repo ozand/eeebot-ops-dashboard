@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 20:30:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 17:49 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 27s old &middot; generated 18:00 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-5eeffa938655</span>
+      <span class="cycle-pill">cycle-2e51d5453d31</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1325,7 +1325,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 17:37:27.439727 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 17:53:19.870897 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 28,162 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 36,296 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 28,162 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,200c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 36,296 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,254c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1934,9 +1934,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,200 chars &bull; ~2,050 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --check-syntax CLI flag to scripts/smoke_test_loop.py to validate runtime Python syntax
-Request ID: llm-proposer-cycle-5eeffa938655
-Cycle ID: cycle-5eeffa938655
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,254 chars &bull; ~2,063 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add companion test pairing check to scripts/inspect_cycle_diff.py to flag script modifications lacking test updates
+Request ID: llm-proposer-cycle-2e51d5453d31
+Cycle ID: cycle-2e51d5453d31
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1951,63 +1951,63 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 4b28d89d merge: integrate selfevo/cycle-cycle-5eeffa938655
+- fbc2f3bc feat(smoke_test_loop): add --check-syntax flag to validate runtime Python syntax via ast.parse
 - 77cb38e0 merge: integrate selfevo/cycle-cycle-0e9996ba5a69
 - e7035a30 selfevo: auto-commit uncommitted subagent work — Add scripts/detect_off_target_reads.py to flag file read sequences outside targe
 - 61a9985c feat(detect_off_target_reads): flag file read sequences outside target and companion test paths
 - 32ec0f78 merge: integrate selfevo/cycle-cycle-ffffd15f803f
 - 979debb8 feat(parse_yaml_list): add line-based YAML list parser stripping inline comments
 - c445b8c3 merge: integrate selfevo/cycle-cycle-e04f3ce872f2
-- 33aee9c2 feat(validate_test_existence): surface companion test path in isolated --target reports
-- 78d1e6cd merge: integrate selfevo/cycle-cycle-ae88c092f575
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5eeffa938655.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2e51d5453d31.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add --check-syntax CLI flag to scripts/smoke_test_loop.py to validate runtime Python syntax&quot;,
-    &quot;backlog_instructions&quot;: &quot;Cycle fallback-c8057e396b07 noted that scripts/smoke_test_loop.py needed --check-syntax to check runtime files before getting stuck in inspection loops. Adding --check-syntax using ast.parse directly implements this confirmed missing feature.\n\nTarget path: scripts/smoke_test_loop.py&quot;,
+    &quot;title&quot;: &quot;Add companion test pairing check to scripts/inspect_cycle_diff.py to flag script modifications lacking test updates&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-b1b17043ff15, full suites ran before test cases were authored. Adding test pairing detection to scripts/inspect_cycle_diff.py flags script edits lacking companion test modifications in diffs before suite execution.\n\nTarget path: scripts/inspect_cycle_diff.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --check-syntax CLI flag to scripts/smoke_test_loop.py to validate runtime Python syntax (target: scripts/smoke_test_loop.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add companion test pairing check to scripts/inspect_cycle_diff.py to flag script modifications lacking test updates (target: scripts/inspect_cycle_diff.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260917-9e2e7024  Title: Executor LLM call failed before cycle execution while attempting: Add hard-stop command rejection mode to scripts/check_loop_breaker_violation.py
+ID: ERR-20260917-2a6fd33e  Title: Executor LLM call failed before cycle execution while attempting: Add keyword test discovery to scripts/inventory_test_suites.py to format targeted pytest filter commands
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-51147d6c3412-c4ff  Title: Turn 2 ran `time python3 scripts/validate_unused_imports.py`, resulting in `/bin/sh: 1: time: not found`.
-Problem: Turn 2 ran `time python3 scripts/validate_unused_imports.py`, resulting in `/bin/sh: 1: time: not found`.
-Solution: Avoid using bash-specific shell keywords like &#x27;time&#x27; in exec commands under /bin/sh; measure durations via Python&#x27;s time module or standard POSIX utilities.
-If you apply this lesson, cite [Lesson LESS-REF-51147d6c3412-c4ff] in your proposal/response.
+ID: lessons/companion_cycle_test_verification.md  Title: Companion Cycle Verification Before Proposing Test Additions
+Problem: Read lessons/companion_cycle_test_verification.md: Treat &quot;did a companion cycle already add these tests?&quot; as a mandatory pre-proposal check for any reflection demand whose deliverable is a test file.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/companion_cycle_test_verification.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
+- Decompose multi-part script extensions into incremental tool invocations: apply new regex patterns and classification functions in a first edit turn, verify with `--test`, and follow up with CLI flag 
+- Consolidate pre-implementation checks of script entrypoint idioms and style parameters into a single step or run existing validation scripts against draft files rather than reading validator implement
 - When editing indented argument or function blocks in large Python scripts with `edit_file`, anchor replacements to surrounding multi-line structural boundaries to avoid leading whitespace discrepancie
-- Bound internal reasoning length and transition to concrete tool actions (such as drafting stubs or running edits) early rather than evaluating extensive hypothetical implementation questions in a sing
-- When executing workspace inspection scripts that perform multiple git subprocess calls across repository modules on the i686 architecture, provide an explicit `timeout` parameter in `exec` or query ta
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 17:26 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/detect_off_target_reads.py,…
-- Attempt 2 (2026-09-17 16:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/parse_yaml_list.py, tests/test_parse_yaml_list.py. Reward signal will be upgraded by…
-- Attempt 3 (2026-09-17 16:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
+- Attempt 1 (2026-09-17 17:42 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/smoke_test_loop.py, tests/test_smoke_test_loop.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-17 17:26 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/detect_off_target_reads.py,…
+- Attempt 3 (2026-09-17 16:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/parse_yaml_list.py, tests/test_parse_yaml_list.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add --check-syntax CLI flag to scripts/smoke_test_loop.py to validate runtime Python syntax
+Title: Add companion test pairing check to scripts/inspect_cycle_diff.py to flag script modifications lacking test updates
 
 
-Cycle fallback-c8057e396b07 noted that scripts/smoke_test_loop.py needed --check-syntax to check runtime files before getting stuck in inspection loops. Adding --check-syntax using ast.parse directly implements this confirmed missing feature.
+In cycle-b1b17043ff15, full suites ran before test cases were authored. Adding test pairing detection to scripts/inspect_cycle_diff.py flags script edits lacking companion test modifications in diffs before suite execution.
 
-Target path: scripts/smoke_test_loop.py
+Target path: scripts/inspect_cycle_diff.py
 
 ## Concrete task to implement
-Implement and commit: Add --check-syntax CLI flag to scripts/smoke_test_loop.py to validate runtime Python syntax (target: scripts/smoke_test_loop.py)
+Implement and commit: Add companion test pairing check to scripts/inspect_cycle_diff.py to flag script modifications lacking test updates (target: scripts/inspect_cycle_diff.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5922,7 +5922,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 17:49:54 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 20:30:20 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 18:00:58 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 20:30:20 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
