@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="600">
-<title>eeebot / cycle</title>
+<title>eeebot / about</title>
 <style>
     :root {
       color-scheme: dark;
@@ -1276,78 +1276,51 @@
       <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 28s old &middot; generated 00:29 UTC</span></div>
     </header>
     
-<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html" class="nav-current">about</a></nav>
 <main class="dashboard-main">
 
-    <section class="panel panel-cycle-detail" id="panel-cycle-detail">
-      <h2 class="panel-title">Cycle Detail</h2>
-      <div id="cycle-detail-body"><p class="unavailable-note">loading&hellip;</p></div>
-    </section>
-    <script>
-    (function () {
-      var body = document.getElementById('cycle-detail-body');
-      function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
-      function line(label, value) { return (value || value === 0) ? '<p><b>' + esc(label) + ':</b> ' + esc(value) + '</p>' : ''; }
-      function list(label, values) { if (!Array.isArray(values)) values = values ? [values] : []; return values.length ? '<h3>' + esc(label) + '</h3><ul>' + values.map(function (v) { return '<li>' + esc(v) + '</li>'; }).join('') + '</ul>' : ''; }
-      function renderPromptBlock(label, entry) {
-        if (!entry) return '';
-        var note = entry.truncated ? ' <span class="cycle-detail-truncated">(truncated, original ' + esc(entry.original_bytes) + ' bytes)</span>' : '';
-        return '<h3>' + esc(label) + note + '</h3><pre class="cycle-detail-prompt">' + esc(entry.text || '') + '</pre>';
-      }
-      function renderSubagent(sa) {
-        var truncNote = sa.task_truncated ? ' <span class="cycle-detail-truncated">(truncated, original ' + esc(sa.task_bytes) + ' bytes)</span>' : '';
-        return '<li class="cycle-detail-subagent">' +
-          '<div><span class="badge">' + esc(sa.status || 'unknown') + '</span> <strong>' + esc(sa.label || sa.subagent_id || '') + '</strong></div>' +
-          line('Started', sa.started_at) + line('Finished', sa.finished_at) +
-          line('Loop iterations', sa.iteration_count) +
-          '<p><b>Task:</b> ' + esc(sa.task_excerpt || '') + truncNote + '</p>' +
-          (sa.summary_excerpt ? '<p><b>Summary:</b> ' + esc(sa.summary_excerpt) + '</p>' : '') +
-          (sa.result_excerpt ? '<p><b>Result:</b> ' + esc(sa.result_excerpt) + '</p>' : '') +
-          '</li>';
-      }
-      function render(id, data) {
-        if (!data || !Object.prototype.hasOwnProperty.call(data, id)) {
-          body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="unknown">Unknown cycle id: ' + esc(id) + '. It does not appear in the published cycle-details data.</p>';
-          return;
-        }
-        var item = data[id] || {};
-        var head = '<h3>' + esc(item.title || id) + '</h3>' +
-          line('Cycle', item.cycle_id || id) + line('Outcome', item.outcome) + line('Reason', item.reason) +
-          line('Target path', item.target_path) + line('Serves / demand', item.serves || item.demand_id);
-        var links = '<p class="cycle-detail-links"><a href="cycles.html#cycle-' + encodeURIComponent(id) + '">open in Cycle Feed</a>' +
-          (item.sha ? ' &middot; <a href="lineage.html#node-' + encodeURIComponent(item.sha) + '">open in Lineage</a>' : '') +
-          ' &middot; <a href="lessons.html#q-' + encodeURIComponent(id) + '">related lessons</a></p>';
-        var artifacts = list('Files changed', item.files_changed) +
-          line('Lesson insight', item.lesson_insight) + line('Lesson problem', item.lesson_problem) + line('Lesson solution', item.lesson_solution);
+<style>
+.about-table { border-collapse: collapse; width: 100%; margin: 0.75em 0; }
+.about-table th, .about-table td { border: 1px solid var(--border, #444); padding: 0.4em 0.6em; text-align: left; vertical-align: top; }
+.about-table th { font-weight: 600; }
+.about-note { font-size: 0.9em; opacity: 0.85; margin: 0.5em 0; }
+.about-glossary dt { font-weight: 600; margin-top: 0.6em; }
+.about-glossary dd { margin: 0.15em 0 0.4em 1em; }
+.about-source { opacity: 0.7; font-size: 0.85em; }
+</style>
+<section class="panel about-intro">
+  <h2>What this is</h2>
+  <p>eeebot is an autonomous improvement loop that runs bounded cycles on a
+  constrained host (eeepc), editing its own instance repository under a gate.
+  Every change the loop makes to its own capabilities goes through the same
+  bounded gate described below; nothing here bypasses it.</p>
+</section>
 
-        var subagentsHtml;
-        if (Array.isArray(item.subagents) && item.subagents.length) {
-          subagentsHtml = '<h3>Subagent records (' + item.subagents.length + ')</h3><ul class="cycle-detail-subagent-list">' + item.subagents.map(renderSubagent).join('') + '</ul>';
-        } else {
-          subagentsHtml = '<p class="unavailable-note" data-cycle-detail-state="no-subagents">No subagent records recorded for this cycle.</p>';
-        }
+<section class="panel about-repos">
+  <h2>The machine: four repositories</h2>
+  <table class="about-table"><thead><tr><th>repository</th><th>role</th><th>holds</th><th>identifiers on this site</th></tr></thead><tbody><tr><td>ozand/eeebot</td><td>harness / product</td><td>the runtime code (nanobot/), specs, host deploy tooling, and the fitness function (scorecard, targets, held-out checkers)</td><td>issue numbers (#NNNN); commit shas for the harness's own history</td></tr><tr><td>ozand/eeebot-self-evolving</td><td>instance</td><td>the mutable workspace the loop edits (scripts/, surfaces/, tests/, memory/, docs/); checked out on the host beside the state root</td><td>cycle ids (cycle-&lt;hex&gt;) mark commits the bridge integrates onto this repo's main; commit shas here are cycle integrations</td></tr><tr><td>ozand/eeebot-ops-dashboard</td><td>dashboard (this repo)</td><td>the WSGI observability app (dormant, not deployed) and the standalone techtree_viewer.py static-site generator that produces the page you are reading</td><td>issue numbers (#NNNN) for dashboard-only work; no cycle ids or shas of its own appear on the published site</td></tr><tr><td>ozand/eeebot-channel-app</td><td>channel app</td><td>the home page, privacy policy and terms for the eeebot channel publisher's OAuth client</td><td>not surfaced on this dashboard</td></tr></tbody></table>
+</section>
 
-        var promptHtml;
-        if (item.prompt && (item.prompt.system || item.prompt.task)) {
-          promptHtml = renderPromptBlock('System prompt', item.prompt.system) + renderPromptBlock('Task prompt', item.prompt.task);
-        } else {
-          promptHtml = '<p class="unavailable-note" data-cycle-detail-state="prompt-not-retained">Prompt text not retained for this cycle (short retention window; only recent cycles keep it).</p>';
-        }
+<section class="panel about-cycle">
+  <h2>The cycle</h2>
+  <table class="about-table"><thead><tr><th>stage</th><th>what happens</th><th>where the output appears</th></tr></thead><tbody><tr><td>1. Demand selection</td><td>demand.py scans state and yields items in trust order: priority &gt; defect &gt; goal-gap &gt; hypothesis &gt; decay.</td><td>the demand kind and target for the current/most recent cycle appear in <a href="cycles.html">cycles</a>; hypothesis-kind demand is detailed on <a href="hypotheses.html">hypotheses</a></td></tr><tr><td>2. Propose</td><td>the LLM proposer (llm_proposer.py) selects and refines one presented demand item -- it never invents from a bare inventory. No demand means zero LLM calls that cycle.</td><td>what the proposer/executor is given (charter, derived priorities, skills) is on <a href="agent.html">agent</a></td></tr><tr><td>3. Dedup chain</td><td>a proposal passes exact-tag replay protection, recent-failure suppression, and an FTS5 existence-index check before any subagent spawns.</td><td>not yet surfaced as its own section on this site</td></tr><tr><td>4. Bounded executor</td><td>exactly one fresh-context subagent runs and commits on a cycle branch.</td><td>subagent records and prompts for one cycle are on the per-cycle detail page (linked from <a href="cycles.html">cycles</a>)</td></tr><tr><td>5. Gate</td><td>the bounded smoke gate: py_compile of changed files, the tests they affect, and a small fixed core set -- not the full suite. A mutation-surface violation is a hard block. The gate fails safe: any error, timeout, or missing pytest counts as failure.</td><td>PASS / BLOCK / unknown badges per cycle are on <a href="cycles.html">cycles</a></td></tr><tr><td>6. Integrate</td><td>only on a green gate does the bridge merge the cycle onto the instance repo's main (script tier) or, for an operator-approved runtime-slice cycle, land it as a pending promotion candidate for a product PR instead of auto-integrating.</td><td>merged commits and the direction/lever state after integration are on <a href="lineage.html">lineage</a> and <a href="index.html">now</a></td></tr><tr><td>7. Scorecard + demand feeds the next cycle</td><td>scorecard.py computes a deterministic, LLM-free 7-day snapshot; demand.py reads it to decide what the loop is offered next, closing the loop.</td><td>the scorecard-derived KPI strip appears at the top of every page, including <a href="index.html">now</a>; held-out pass rate is one of its rows</td></tr></tbody></table>
+</section>
 
-        body.innerHTML = head + links + artifacts + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
-      }
-      var params = new URLSearchParams(window.location.search);
-      var id = params.get('id') || '';
-      if (!id) {
-        body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="no-id">No cycle id given. Use cycle.html?id=&lt;cycle_id&gt;.</p>';
-      } else {
-        fetch('lineage-cycle-details.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (data) { render(id, data); }).catch(function (err) {
-          body.innerHTML = '<p class="unavailable-note" data-cycle-detail-state="fetch-failed">Cycle details unavailable &mdash; could not load lineage-cycle-details.json (' + esc(err && err.message || err) + ').</p>';
-        });
-      }
-    })();
-    </script>
-    
+<section class="panel about-schedule">
+  <h2>The schedule</h2>
+  <table class="about-table"><thead><tr><th>unit</th><th>cadence</th><th>produces</th><th>appears on</th></tr></thead><tbody><tr><td>eeepc-self-evolving-subagent-bridge</td><td>every 15 min (OnBootSec=4m, OnUnitActiveSec=15m)</td><td>one bridge cycle: demand -&gt; propose -&gt; gate -&gt; integrate</td><td>cycles.html, lineage.html</td></tr><tr><td>eeebot-reflector</td><td>every 30 min (OnBootSec=25m, OnUnitActiveSec=30m)</td><td>per-cycle reflections (findings, recommendations) -- the night contour&#x27;s transcript reader</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-knowledge-curator</td><td>daily (OnCalendar=daily, i.e. 00:00)</td><td>curates lessons into the bounded knowledge base</td><td>lessons.html</td></tr><tr><td>eeebot-strategist</td><td>daily at 03:00 (OnCalendar=*-*-* 03:00:00)</td><td>periodic archive review</td><td>not yet surfaced as its own page</td></tr><tr><td>eeepc-promotion-verifier</td><td>every 15 min (OnBootSec=5m, OnUnitActiveSec=15m)</td><td>root-verified re-check of runtime-slice promotion candidates</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-validator-harness</td><td>every 6 h (OnBootSec=20m, OnUnitActiveSec=6h)</td><td>runs built validator scripts and records findings</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-skill-evals</td><td>daily at 04:30 (OnCalendar=*-*-* 04:30:00)</td><td>harness A/B skill evals, measured with/without delta</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-local-ci</td><td>every 4 h 15 min (OnCalendar=*-*-* 00/4:15:00)</td><td>bounded local CI check</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-action-index</td><td>daily at 00:05 (OnCalendar=*-*-* 00:05:00)</td><td>extracts the durable per-cycle action index before prompt rotation</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-archive-subagent-requests</td><td>hourly (OnBootSec=10m, OnUnitActiveSec=1h)</td><td>archives stale subagent requests older than 24h</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-host-metrics</td><td>every 6 h (OnBootSec=10min, OnUnitActiveSec=6h)</td><td>refreshes the host metrics feed</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-host-capabilities</td><td>daily at 01:00 (OnCalendar=*-*-* 01:00:00, plus OnBootSec=10min)</td><td>refreshes the host capability inventory</td><td>not yet surfaced as its own page</td></tr><tr><td>eeebot-dashboard</td><td>always-on (no timer)</td><td>the OTHER dashboard -- scripts/eeebot_dashboard.py, port 8080, in ozand/eeebot -- not this repo&#x27;s WSGI app (dormant) and not the static site this page is part of</td><td>n/a (not this site)</td></tr></tbody></table><p class="about-note">This site itself is not generated on a timer. eeebot-techtree-publish.service (installed from this repo's systemd/ directory) runs when eeepc-self-evolving-subagent-bridge.service's OnSuccess= completes -- i.e. once per bridge cycle that finishes, digest-gated so an unchanged snapshot does not re-publish.</p><p class="about-note">Confirmed running on the live host but with no corresponding file in the harness repo's <code>host/eeepc/systemd/</code> as of this page's writing:</p><ul><li><code>eeepc-monitor.timer</code></li></ul>
+</section>
+
+<section class="panel about-models">
+  <h2>The models</h2>
+  <table class="about-table"><thead><tr><th>role</th><th>model</th><th>why</th></tr></thead><tbody><tr><td>executor (the bounded subagent that edits code; telemetry component name: bridge)</td><td>self-hosted, owned 3090Ti GPU on the LAN (un/qwen3.8-27b-gguf)</td><td>784/1004 recorded calls on the measured day; 24.30 completion tokens/request-wall-second</td></tr><tr><td>proposer, curator, reflector, strategist (the night contour + the proposer)</td><td>vendor API (an/gemini-3.8-flash-high)</td><td>nanobot/runtime/model_registry.py&#x27;s _ROLE_DEFAULTS; the operator preset overrides these per-role in production</td></tr></tbody></table><p class="about-note">Both self-hosted and vendor traffic traverse the same LAN gateway (docs/model-routing-evidence-1362.md): a gateway failure can affect either class. The dashboard's own executor-model-status check (_build_executor_model_item in techtree_viewer.py) flags a fallback when a vendor-class model serves a call the executor/harness role expected to be self-hosted -- the detectable signal, since llm_calls persists only the model that actually served the call, not a separate 'requested' field.</p><p class="about-note">eeepc: Intel Atom N270, i686/32-bit (docs/specs/demo_category_determination.md, #1619 live measurement). RAM is stated inconsistently across harness-repo sources: 1 GB per that same measurement, 2 GB per docs/adr/ADR-013-capability-tiers-probe-and-cost.md and docs/model-routing-evidence-1362.md's operator-verified topology -- not reconciled here. Core count and swap configuration: not documented in the harness repo.</p>
+</section>
+
+<section class="panel about-vocabulary">
+  <h2>The vocabulary</h2>
+  <dl class="about-glossary"><dt>harness</dt><dd>ozand/eeebot: the product repo. Owns the runtime code, the fitness function, and the deploy tooling. Never edited by the loop itself. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>instance</dt><dd>ozand/eeebot-self-evolving: the mutable workspace the loop edits. The bridge integrates green cycles onto this repo's main. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>cycle</dt><dd>one timer-paced bridge process invocation -- demand selection through integrate-or-not. Identified by a cycle id (cycle-&lt;hex&gt;). <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>gate</dt><dd>the bounded smoke gate a cycle's changes must pass before integration: py_compile of changed files, the tests they affect, and a small fixed core set (not the full suite). Fails safe on any error, timeout, or missing pytest. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>integration</dt><dd>the bridge merging a green, script-tier cycle onto the instance repo's main (--no-ff). origin/main never advances on a red gate. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>night contour</dt><dd>the reflector -> curator -> strategist chain: components that see across many cycles, as opposed to the executor, which sees one. ADR-021's subject: the night contour may propose capability changes; it does not commit them directly. <span class="about-source">(docs/adr/ADR-021-whoever-sees-the-performance-may-change-the-capability.md)</span></dd><dt>direction</dt><dd>one node in the tech-tree portfolio (nanobot/runtime/tech_tree.py): an improvement domain the loop can invest cycles in, paired with a lever metric and which way that metric should move. <span class="about-source">(nanobot/runtime/tech_tree.py)</span></dd><dt>lever</dt><dd>the scorecard metric (section.metric) a tech-tree direction is measured against, e.g. loop.confirmed_integration_ratio. <span class="about-source">(nanobot/runtime/tech_tree.py)</span></dd><dt>vector</dt><dd>an operator-set, ordered purpose for the loop. Vector 1 (primary): self-improvement of the agent system. Vector 2 (secondary): operator interface and process transparency. <span class="about-source">(docs/ACTIVE_GOAL.md)</span></dd><dt>demand kind</dt><dd>the category of the next thing offered to the proposer, in trust order: priority &gt; defect &gt; goal-gap &gt; hypothesis &gt; decay. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>held-out</dt><dd>sandboxed behavioral checkers run against instance artifacts on the scorecard recompute path; a failure becomes defect demand carrying the checker's evidence, without the instance ever seeing the checker itself. <span class="about-source">(docs/CURRENT_ARCHITECTURE.md)</span></dd><dt>scorecard feed</dt><dd>one of the named, freshness-monitored input paths nanobot/runtime/scorecard.py reads to compute its 7-day snapshot. <span class="about-source">(nanobot/runtime/scorecard.py)</span></dd><dt>provenance</dt><dd>the citable evidence trail behind a decision or claim -- which source file, ledger row, or scan produced it -- as opposed to an assertion with no traceable origin. <span class="about-source">(nanobot/runtime/goal_review.py)</span></dd><dt>present</dt><dd>probe state: the source exists and was read successfully, with real content. <span class="about-source">(scripts/techtree_viewer.py (read_local_ci_status))</span></dd><dt>absent</dt><dd>probe state: the source file or directory does not exist at all. <span class="about-source">(scripts/techtree_viewer.py (read_local_ci_status))</span></dd><dt>present_uninitialized</dt><dd>probe state: the source exists, but its own content says nothing has run yet (e.g. no rows, targets_missing) -- distinct from absent (nothing to find) and from a read failure. <span class="about-source">(scripts/techtree_viewer.py (read_local_ci_status))</span></dd><dt>probe_unavailable</dt><dd>probe state: the source exists but could not be read or parsed (a transient failure) -- distinct from absent (never existed) and present_uninitialized (readable, just empty of activity). <span class="about-source">(scripts/techtree_viewer.py (read_local_ci_status))</span></dd></dl>
+</section>
+
 </main>
 <footer class="page-footer">generator unknown · generated 2026-09-17 00:29:37 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 02:54:59 MSK</span></footer>
 <script>
