@@ -51,11 +51,15 @@ else
   run useradd --system --no-create-home --shell /usr/sbin/nologin "$PUBLISH_USER"
 fi
 
-# 2. Root-owned, publisher-read-only install of the two scripts under /opt.
-#    0644: readable by eeebot-publish (and everyone else), writable only by root.
+# 2. Root-owned, publisher-read-only install of the generator scripts under
+#    /opt. 0644: readable by eeebot-publish (and everyone else), writable
+#    only by root. about_page.py (#273) is a sibling module techtree_viewer.py
+#    imports -- it must be installed alongside it or the deployed generator
+#    ImportErrors.
 run mkdir -p "$OPT_DIR"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_viewer.py" "$OPT_DIR/techtree_viewer.py"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_autopublish.py" "$OPT_DIR/techtree_autopublish.py"
+run install -o root -g root -m 0644 "$ROOT/scripts/about_page.py" "$OPT_DIR/about_page.py"
 
 # 3. The publisher's own state dir (digest + last-publish timestamp) is
 #    NOT created here: eeebot-techtree-publish.service declares

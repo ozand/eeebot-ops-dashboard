@@ -55,6 +55,14 @@ def test_deploy_generator_references_both_scripts() -> None:
     assert "techtree_autopublish.py" in text
 
 
+def test_deploy_generator_references_about_page() -> None:
+    """#273: about_page.py is a sibling module techtree_viewer.py imports --
+    it must be deployed and py_compiled alongside the viewer, or the
+    deployed generator ImportErrors on the host."""
+    text = DEPLOY_SCRIPT.read_text(encoding="utf-8")
+    assert "about_page.py" in text
+
+
 def test_deploy_generator_references_opt_dir() -> None:
     """The script must target /opt/eeebot-techtree/."""
     text = DEPLOY_SCRIPT.read_text(encoding="utf-8")
