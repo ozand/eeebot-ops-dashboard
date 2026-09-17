@@ -3557,6 +3557,22 @@ def _leaf_outcome(row: dict[str, Any]) -> str:
         # #293: eeebot#1709/#1715 -- gate passed, push pending after a
         # transient network error; not a failure and not skipped.
         return 'push_pending'
+    if row.get('outcome') == 'pushed_late' or row.get('status') == 'pushed_late':
+        # #297: eeebot#1709 increment 2 -- a genuine success, delayed one
+        # cycle by the next cycle-start finishing what push_pending left
+        # undone. Same visual bucket as any other integrated node -- no new
+        # CSS class needed; the delay/attempt count is a cycle-feed badge
+        # detail, not a graph-node distinction.
+        return 'integrated'
+    if row.get('outcome') == 'superseded' or row.get('status') == 'superseded':
+        # #297: origin/main moved past the pending push's recorded base --
+        # never merged/rebased automatically. Neither a success nor a
+        # failure of the original work; its own neutral pill.
+        return 'superseded'
+    if row.get('outcome') == 'abandoned' or row.get('status') == 'abandoned':
+        # #297: the branch no longer exists. Neither a success nor a
+        # failure of the original work; its own neutral pill.
+        return 'abandoned'
     return 'skipped'
 
 
@@ -3664,7 +3680,7 @@ def _build_vertical_day_lineage(
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>',
              '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>',
-             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span></div>',
+             '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span></div>',
              '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>',
              '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>',
              '</div>',
@@ -4113,7 +4129,7 @@ def _build_unified_lineage(
     height = max(84, max((y for _, y in positions.values()), default=42) + 36)
     data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
 
-    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
     for edge in payload_edges:
         if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
             continue
@@ -5404,6 +5420,7 @@ def build_cycle_feed(
         outcome_status = None
         outcome_reason = ''
         push_attempts: str | None = None
+        pushed_late = False
 
         for p in phases:
             if not ts_val and p.get('ts'):
@@ -5470,6 +5487,31 @@ def build_cycle_feed(
                     outcome_kind = 'push_pending'
                     if p.get('push_attempts') is not None:
                         push_attempts = str(p.get('push_attempts'))
+                elif st == 'pushed_late':
+                    # #297: eeebot#1709 increment 2 -- the next cycle-start
+                    # finished a push_pending cycle's push: a genuine
+                    # success, just delayed one cycle. Same bucket as any
+                    # other success -- no new filter chip -- the badge/title
+                    # note the delay and attempt count.
+                    outcome_kind = 'integrated'
+                    pushed_late = True
+                    if p.get('push_attempts') is not None:
+                        push_attempts = str(p.get('push_attempts'))
+                elif st == 'superseded':
+                    # #297: origin/main moved past the pending push's
+                    # recorded base -- never merged/rebased automatically.
+                    # Neither a success nor a failure of the original work.
+                    outcome_kind = 'superseded'
+                    if p.get('reason'):
+                        outcome_reason = str(p.get('reason'))
+                        reason = outcome_reason
+                elif st == 'abandoned':
+                    # #297: the branch no longer exists. Neither a success
+                    # nor a failure of the original work.
+                    outcome_kind = 'abandoned'
+                    if p.get('reason'):
+                        outcome_reason = str(p.get('reason'))
+                        reason = outcome_reason
                 if p.get('delta') is not None:
                     metric_delta = str(p.get('delta'))
                 elif p.get('metric_delta') is not None:
@@ -5495,6 +5537,12 @@ def build_cycle_feed(
         if outcome_kind == 'integrated':
             badge_class = 'badge-integrated'
             outcome_label = 'INTEGRATED'
+            if pushed_late:
+                # #297: a genuine success, just delayed one cycle by the
+                # push_pending -> pushed_late pickup. Still 'integrated' --
+                # not its own filter bucket -- with the delay/attempts noted.
+                attempts_note = f', {push_attempts} attempt(s)' if push_attempts else ''
+                outcome_label = f'INTEGRATED (late{attempts_note})'
         elif outcome_kind == 'failed':
             badge_class = 'badge-failed'
             outcome_label = f'FAILED{(": " + reason) if reason else ""}'
@@ -5520,6 +5568,16 @@ def build_cycle_feed(
             badge_class = 'badge-push-pending'
             attempts_note = f', {push_attempts} attempt(s)' if push_attempts else ''
             outcome_label = f'PUSH PENDING{attempts_note}'
+        elif outcome_kind == 'superseded':
+            # #297: origin/main moved past the pending push's base -- not
+            # failed, not skipped, its own neutral pill.
+            badge_class = 'badge-superseded'
+            outcome_label = f'SUPERSEDED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'abandoned':
+            # #297: the branch no longer exists -- not failed, not skipped,
+            # its own neutral pill.
+            badge_class = 'badge-abandoned'
+            outcome_label = f'ABANDONED{(": " + reason) if reason else ""}'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:
@@ -5533,6 +5591,11 @@ def build_cycle_feed(
                     # #293: say the attempt count, not a bare status word.
                     derived_title = (
                         f'push pending, {push_attempts} attempt(s)' if push_attempts else 'push pending'
+                    )
+                elif outcome_status == 'pushed_late':
+                    # #297: say the attempt count, not a bare status word.
+                    derived_title = (
+                        f'pushed late, {push_attempts} attempt(s)' if push_attempts else 'pushed late'
                     )
                 else:
                     derived_title = outcome_status
@@ -5650,7 +5713,13 @@ def build_cycle_feed(
         # Issue #89/#72: client-side outcome filter, state in URL hash (#f-<kind>).
         filter_buttons = ''.join(
             f'<button class="filter-btn" data-filter="{k}">{k}</button>'
-            for k in ('all', 'integrated', 'failed', 'partial', 'skipped', 'push_pending', 'running')
+            for k in (
+                'all', 'integrated', 'failed', 'partial', 'skipped', 'push_pending',
+                # #297: pushed_late folds into 'integrated' above (a delayed
+                # success, not its own bucket) -- no chip for it. superseded
+                # and abandoned are their own neutral outcomes.
+                'superseded', 'abandoned', 'running',
+            )
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
         if archive_out is not None:
@@ -8477,6 +8546,8 @@ CSS = '''
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
     .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
+    .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
+    .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
     .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
     .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
     .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
@@ -8566,6 +8637,8 @@ CSS = '''
     .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
+    .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
+    .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
