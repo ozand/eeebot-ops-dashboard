@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 08:08:52 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 05:41 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 05:49 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1290,7 +1290,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-5aa0e732546f</span>
+      <span class="cycle-pill">cycle-dbe8d35a143c</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1319,7 +1319,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 05:23:40.684731 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 05:45:00.715584 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1337,7 +1337,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 64,334 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 24,362 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1355,8 +1355,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 64,334 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,133c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 24,362 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,544c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1928,9 +1928,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,133 chars &bull; ~2,033 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately
-Request ID: llm-proposer-cycle-5aa0e732546f
-Cycle ID: cycle-5aa0e732546f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,544 chars &bull; ~2,136 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/check_toplevel_indentation.py to detect accidental leading whitespace in module-level code snippets
+Request ID: llm-proposer-cycle-dbe8d35a143c
+Cycle ID: cycle-dbe8d35a143c
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1954,52 +1954,62 @@ Recently completed (recent commits):
 - bebdc273 merge: integrate selfevo/cycle-cycle-8247c8350b07
 - f283a432 docs(lessons): add immediate filter pivot rule for monolithic test timeouts
 
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately: push_rejected
+
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5aa0e732546f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-dbe8d35a143c.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-140fb435cbb4 where agents inspect code slices after identifying a prior commit instead of running the check command. Adding --check-command to scripts/check_target_completion.py executes verification directly when matching commits are identified, enabling immediate confirmation.\n\nTarget path: scripts/check_target_completion.py&quot;,
+    &quot;title&quot;: &quot;Add scripts/check_toplevel_indentation.py to detect accidental leading whitespace in module-level code snippets&quot;,
+    &quot;backlog_instructions&quot;: &quot;In cycle-fe0eca121e07, replacement strings introduced accidental leading spaces before imports and top-level definitions, causing IndentationErrors that halted test collection. This script inspects snippets or files to detect leading whitespace before top-level statements.\n\nTarget path: scripts/check_toplevel_indentation.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately (target: scripts/check_target_completion.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/check_toplevel_indentation.py to detect accidental leading whitespace in module-level code snippets (target: scripts/check_toplevel_indentation.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/check_toplevel_indentation.py exists, identifies indented top-level statements, and passes self-tests with exit code 0.&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/check_toplevel_indentation.py --test&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260912-d0574690  Title: Verification gate rejected the proposed change while attempting: Wire recursive testsuite traversal skill into scripts/verify_and_proof.py to enu
+ID: ERR-20260911-d4624f07  Title: Executor LLM call failed before cycle execution while attempting: Fix style validation rules and exit code handling in scripts/check_style.py
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-9ff792579a7a-eef8  Title: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-Problem: the agent repeated the identical inline python diagnostic snippet 5 times consecutively, including 2 times after the loop_breaker warning, resulting in a partial outcome with 0 files changed.
-Solution: When a loop breaker safety stop fires or identical diagnostic output is returned across consecutive turns, immediately cease executing the command and switch to modifying the target source file.
-If you apply this lesson, cite [Lesson LESS-REF-9ff792579a7a-eef8] in your proposal/response.
+ID: LESS-REF-4b4bdcf4bec7-8fd2  Title: running &#x27;python3 scripts/validate_markdown_format.py 2&gt;&amp;1 | head -80; echo &quot;EXIT: ${PIPESTATUS[0]}&quot;&#x27; resulted in &#x27;/bin/sh: 1: Bad substitution&#x27; (exit code 2).
+Problem: In turn 2, running &#x27;python3 scripts/validate_markdown_format.py 2&gt;&amp;1 | head -80; echo &quot;EXIT: ${PIPESTATUS[0]}&quot;&#x27; resulted in &#x27;/bin/sh: 1: Bad substitution&#x27; (exit code 2).
+Solution: Avoid bashisms such as ${PIPESTATUS} in exec commands; use POSIX standard shell redirection and inspect $? directly to capture exit codes.
+If you apply this lesson, cite [Lesson LESS-REF-4b4bdcf4bec7-8fd2] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Keep script self-test suites lean when invoking subprocesses like pytest, ensuring total execution remains comfortably under the 30-second timeout enforced by run_all_tests.py.
-- Inspect top-level imports and path fixtures in test files before writing new tests to avoid predictable NameErrors on standard modules or repository path constants.
-- Do not execute &#x27;time&#x27; directly in shell tool calls when running under /bin/sh; measure execution duration with date or Python time functions instead.
+- When authoring new static analysis and AST check scripts, run them against existing repository code as an early verification step to catch false positives across similar standard library APIs before d
+- When applying the immediate skip protocol, run the frozen expected outcome command verbatim to confirm that the existing codebase satisfies the acceptance criteria before exiting.
+- When executing long-running test suites or gate commands in non-interactive shell sessions, redirect stdout and stderr to a file directly rather than piping into grep or tail, which can swallow output
 
 ## Previous attempts for this task
 - Attempt 1 (2026-09-17 05:04 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/inventory_test_suites.py, tests/test_inventory_test_suites.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately
+Title: Add scripts/check_toplevel_indentation.py to detect accidental leading whitespace in module-level code snippets
 
 
-Addresses reflection-140fb435cbb4 where agents inspect code slices after identifying a prior commit instead of running the check command. Adding --check-command to scripts/check_target_completion.py executes verification directly when matching commits are identified, enabling immediate confirmation.
+In cycle-fe0eca121e07, replacement strings introduced accidental leading spaces before imports and top-level definitions, causing IndentationErrors that halted test collection. This script inspects snippets or files to detect leading whitespace before top-level statements.
 
-Target path: scripts/check_target_completion.py
+Target path: scripts/check_toplevel_indentation.py
 
-## Concrete task to implement
-Implement and commit: Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately (target: scripts/check_target_completion.py)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/check_toplevel_indentation.py exists, identifies indented top-level statements, and passes self-tests with exit code 0.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5914,7 +5924,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 05:41:23 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 08:08:52 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 05:49:57 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 08:08:52 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
