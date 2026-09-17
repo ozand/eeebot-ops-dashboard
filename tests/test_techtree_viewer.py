@@ -1956,6 +1956,17 @@ def test_271_head_rank_reason_shown() -> None:
     assert 'provenance(operator&lt;self-derived)' in html or 'provenance(operator<self-derived)' in html
 
 
+def test_291_selector_rule_note_names_ranking_vs_selection() -> None:
+    """#291: eeebot#1708/#1711 found the ranking and the selector
+    (llm_proposer._select_assigned_demand) disagreed for 38h; the block
+    must name the rule so this order is never read as the presented one."""
+    html = _now_panel_with_derived_view(_derived_view_fixture())
+    assert 'demand-queue-rule-note' in html
+    assert 'provenance' in html and 'vector' in html
+    assert 'eeebot#1708' in html or '#1708' in html
+    assert '#902' in html
+
+
 def test_271_queue_order_matches_published_order_exactly() -> None:
     """The viewer must never re-sort -- rendered order equals published
     array order, even when that order looks 'wrong' by vector/provenance."""
@@ -4532,6 +4543,66 @@ def test_289_cycle_detail_page_renders_all_error_card_states() -> None:
     assert 'data-error-card-state="probe_unavailable"' in page
     assert 'error_card_recording' in page
     assert '__ledger_status__' in page
+
+
+# ---------------------------------------------------------------------------
+# Issue #292: cycle detail renders already_recorded / attempt / write_failed
+# error (eeebot#1710, PR eeebot#1713)
+# ---------------------------------------------------------------------------
+
+
+def test_292_already_recorded_status_carries_card_id() -> None:
+    """An executor-LLM-error retry finding its own prior card must render
+    as a distinct neutral state, not fall through and read as no rollback."""
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-rb3', 'outcome': 'failed', 'ts': '2026-09-17T00:00:00Z'},
+        {
+            'phase': 'error_card_recording', 'cycle_id': 'cycle-rb3',
+            'status': 'already_recorded', 'card_id': 'ERR-20260917-cyclerb3', 'attempt': '2/3',
+        },
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert details['cycle-rb3']['error_card_recording'] == {
+        'status': 'already_recorded', 'card_id': 'ERR-20260917-cyclerb3', 'attempt': '2/3',
+    }
+
+
+def test_292_not_created_write_failed_carries_error_detail() -> None:
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-rb4', 'outcome': 'failed', 'ts': '2026-09-17T00:00:00Z'},
+        {
+            'phase': 'error_card_recording', 'cycle_id': 'cycle-rb4', 'status': 'not_created',
+            'skip_reason': 'write_failed', 'error': 'PermissionError:/repo/lessons/errors.yaml',
+        },
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert details['cycle-rb4']['error_card_recording'] == {
+        'status': 'not_created', 'skip_reason': 'write_failed',
+        'error': 'PermissionError:/repo/lessons/errors.yaml',
+    }
+
+
+def test_292_created_status_carries_attempt_when_present() -> None:
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-rb5', 'outcome': 'failed', 'ts': '2026-09-17T00:00:00Z'},
+        {
+            'phase': 'error_card_recording', 'cycle_id': 'cycle-rb5',
+            'status': 'created', 'card_commit': 'def5678', 'attempt': '1/3',
+        },
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert details['cycle-rb5']['error_card_recording'] == {
+        'status': 'created', 'card_commit': 'def5678', 'attempt': '1/3',
+    }
+
+
+def test_292_cycle_detail_page_renders_already_recorded_state() -> None:
+    page = tv.build_cycle_detail_page()
+    assert 'data-error-card-state="already_recorded"' in page
+    assert 'already recorded' in page
+    assert 'ecr.card_id' in page
+    assert 'ecr.attempt' in page
+    assert 'ecr.error' in page
 
 
 def test_272_cycle_detail_page_renders_four_distinguishable_states() -> None:

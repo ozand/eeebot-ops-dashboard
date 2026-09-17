@@ -4256,10 +4256,27 @@ def build_cycle_details(
             # absence (no key at all), never render as an error.
             if row.get('phase') == 'error_card_recording':
                 ecr_status = str(row.get('status') or '')
+                ecr: dict[str, str] | None = None
                 if ecr_status == 'created':
-                    out['error_card_recording'] = {'status': 'created', 'card_commit': text(row.get('card_commit'), 80)}
+                    ecr = {'status': 'created', 'card_commit': text(row.get('card_commit'), 80)}
+                elif ecr_status == 'already_recorded':
+                    # #292: eeebot#1710/#1713 -- an executor-LLM-error retry
+                    # found its own prior attempt's card already on
+                    # origin/main. Not a failure; a distinct neutral state
+                    # that must never fall through to "no row" (the
+                    # no-rollback signal).
+                    ecr = {'status': 'already_recorded', 'card_id': text(row.get('card_id'), 80)}
                 elif ecr_status == 'not_created':
-                    out['error_card_recording'] = {'status': 'not_created', 'skip_reason': text(row.get('skip_reason'), 200)}
+                    ecr = {'status': 'not_created', 'skip_reason': text(row.get('skip_reason'), 200)}
+                    if row.get('skip_reason') == 'write_failed' and row.get('error'):
+                        ecr['error'] = text(row.get('error'), 200)
+                if ecr is not None:
+                    # #292: the attempt number (e.g. "2/3") rides along on
+                    # any status when the rollback is an executor_llm_error
+                    # retry -- not just already_recorded.
+                    if row.get('attempt'):
+                        ecr['attempt'] = text(row.get('attempt'), 20)
+                    out['error_card_recording'] = ecr
 
     # #289: ledger_rows is None means the ledger itself was unreadable this
     # publish, distinct from "read fine, no error_card_recording row for
@@ -4435,14 +4452,23 @@ def build_cycle_detail_page() -> str:
         var ecr = item.error_card_recording;
         var ledgerStatus = (data['__ledger_status__'] || {{}}).status;
         var errorCardHtml = '';
+        var ecrAttempt = (ecr && ecr.attempt) ? ' <span class="now-sub">attempt ' + esc(ecr.attempt) + '</span>' : '';
         if (ecr && ecr.status === 'created') {{
           errorCardHtml = '<div class="now-item" data-error-card-state="created"><span class="now-label">Error card recording:</span> ' +
             '<span class="badge badge-available">created</span> ' +
-            (ecr.card_commit ? '<span class="now-sub">commit ' + esc(ecr.card_commit) + '</span>' : '') + '</div>';
+            (ecr.card_commit ? '<span class="now-sub">commit ' + esc(ecr.card_commit) + '</span>' : '') + ecrAttempt + '</div>';
+        }} else if (ecr && ecr.status === 'already_recorded') {{
+          // #292: eeebot#1710/#1713 -- an executor-LLM-error retry found its
+          // own prior attempt's card already on origin/main. Neutral, not
+          // an error: rendered distinct from both created and not_created.
+          errorCardHtml = '<div class="now-item" data-error-card-state="already_recorded"><span class="now-label">Error card recording:</span> ' +
+            '<span class="badge badge-available">already recorded</span> ' +
+            (ecr.card_id ? '<span class="now-sub">card ' + esc(ecr.card_id) + '</span>' : '') + ecrAttempt + '</div>';
         }} else if (ecr && ecr.status === 'not_created') {{
           errorCardHtml = '<div class="now-item" data-error-card-state="not_created"><span class="now-label">Error card recording:</span> ' +
             '<span class="badge">not created</span> ' +
-            '<span class="now-sub">' + esc(ecr.skip_reason || 'no reason recorded') + '</span></div>';
+            '<span class="now-sub">' + esc(ecr.skip_reason || 'no reason recorded') + '</span>' +
+            (ecr.error ? ' <span class="now-sub">' + esc(ecr.error) + '</span>' : '') + ecrAttempt + '</div>';
         }} else if (ledgerStatus === 'probe_unavailable') {{
           errorCardHtml = '<div class="now-item" data-error-card-state="probe_unavailable"><span class="now-label">Error card recording:</span> ' +
             '<span class="unavailable-note">ledger unreadable</span></div>';
@@ -4884,12 +4910,22 @@ def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
             f'<span class="now-sub">vector {vector}</span>'
             f'{summary_html}</li>'
         )
+    # #291: eeebot#1708/#1711 found the ranking below and the selector
+    # (llm_proposer._select_assigned_demand) disagreed for 38h -- this order
+    # is the ranking rule alone, not a preview of what runs next.
+    rule_note = (
+        '<p class="demand-queue-rule-note">Ranked by provenance (operator '
+        '&lt; self-derived), then vector. Selection (eeebot#1708/#1711) '
+        'takes the eligible operator item first, else LRU rotation (#902) '
+        '-- the presented order above may differ from what is picked next.</p>'
+    )
     return (
         '<div class="now-item now-item-demand-queue" data-demand-queue-state="present">'
         '<span class="now-label">Next Up:</span> '
         f'<span class="now-sub">{len(items)} ranked items, published {generated_at}</span>'
         f'<p class="demand-queue-head-reason">Head: {head_reason}</p>'
-        f'<ol class="demand-queue-list">{"".join(rows)}</ol></div>'
+        f'<ol class="demand-queue-list">{"".join(rows)}</ol>'
+        f'{rule_note}</div>'
     )
 
 
