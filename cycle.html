@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 05:48:19 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 03:13 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 03:20 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1320,6 +1320,26 @@
         var artifacts = list('Files changed', item.files_changed) +
           line('Lesson insight', item.lesson_insight) + line('Lesson problem', item.lesson_problem) + line('Lesson solution', item.lesson_solution);
 
+        // #289: eeebot#1687 -- present ONLY on cycles that rolled back;
+        // absence here is the no-rollback signal, never rendered as an error.
+        var ecr = item.error_card_recording;
+        var ledgerStatus = (data['__ledger_status__'] || {}).status;
+        var errorCardHtml = '';
+        if (ecr && ecr.status === 'created') {
+          errorCardHtml = '<div class="now-item" data-error-card-state="created"><span class="now-label">Error card recording:</span> ' +
+            '<span class="badge badge-available">created</span> ' +
+            (ecr.card_commit ? '<span class="now-sub">commit ' + esc(ecr.card_commit) + '</span>' : '') + '</div>';
+        } else if (ecr && ecr.status === 'not_created') {
+          errorCardHtml = '<div class="now-item" data-error-card-state="not_created"><span class="now-label">Error card recording:</span> ' +
+            '<span class="badge">not created</span> ' +
+            '<span class="now-sub">' + esc(ecr.skip_reason || 'no reason recorded') + '</span></div>';
+        } else if (ledgerStatus === 'probe_unavailable') {
+          errorCardHtml = '<div class="now-item" data-error-card-state="probe_unavailable"><span class="now-label">Error card recording:</span> ' +
+            '<span class="unavailable-note">ledger unreadable</span></div>';
+        }
+        // No row and a readable ledger: this cycle did not roll back --
+        // render nothing extra, not an unavailable note.
+
         var subagentsHtml;
         if (Array.isArray(item.subagents) && item.subagents.length) {
           subagentsHtml = '<h3>Subagent records (' + item.subagents.length + ')</h3><ul class="cycle-detail-subagent-list">' + item.subagents.map(renderSubagent).join('') + '</ul>';
@@ -1334,7 +1354,7 @@
           promptHtml = '<p class="unavailable-note" data-cycle-detail-state="prompt-not-retained">Prompt text not retained for this cycle (short retention window; only recent cycles keep it).</p>';
         }
 
-        body.innerHTML = head + links + artifacts + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
+        body.innerHTML = head + links + artifacts + errorCardHtml + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
       }
       var params = new URLSearchParams(window.location.search);
       var id = params.get('id') || '';
@@ -1349,7 +1369,7 @@
     </script>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 03:13:29 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 05:48:19 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 03:20:45 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 05:48:19 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
