@@ -2060,6 +2060,67 @@ def test_local_ci_item_four_states() -> None:
     assert 'exit=1' in failed
 
 
+def test_298_systemd_drift_item_states() -> None:
+    """#298: eeebot#1701/PR#1717 -- two separate four-state verdicts must
+    never collapse into one: this reader's own read outcome (absent/
+    probe_unavailable/present) vs. the host probe's own `state` field
+    inside the file, read through unmodified."""
+    # SSH/read itself failed -- distinct from the host answering "no file".
+    assert 'probe-probe_unavailable' in tv._build_systemd_drift_item(None)
+
+    absent = tv._build_systemd_drift_item({'status': 'absent'})
+    assert 'probe-absent' in absent
+    assert 'no drift result recorded' in absent
+
+    unreadable = tv._build_systemd_drift_item({'status': 'probe_unavailable', 'reason': 'JSONDecodeError'})
+    assert 'probe-probe_unavailable' in unreadable
+    assert 'JSONDecodeError' in unreadable
+
+    # File readable, but the HOST's own comparison failed -- its verdict
+    # wins, not a fabricated "present".
+    host_failed = tv._build_systemd_drift_item({
+        'status': 'present', 'state': 'probe_unavailable', 'details': 'PermissionError: no access',
+    })
+    assert 'probe-probe_unavailable' in host_failed
+    assert 'PermissionError' in host_failed
+    assert 'defect(s)' not in host_failed
+
+    clean = tv._build_systemd_drift_item({
+        'status': 'present', 'state': 'present', 'defect_count': 0,
+        'scanned_at': '2026-09-17T02:00:00Z',
+        'findings': {'installed_not_in_release': [], 'release_not_installed': [], 'content_differs': [], 'stray': []},
+    })
+    assert 'probe-present' in clean
+    assert '0 defect(s)' in clean
+    assert 'systemd-drift-findings' not in clean  # nothing to list
+
+    with_findings = tv._build_systemd_drift_item({
+        'status': 'present', 'state': 'present', 'defect_count': 2,
+        'scanned_at': '2026-09-17T02:00:00Z',
+        'findings': {
+            'installed_not_in_release': [
+                {'path': 'eeepc-self-evolving-subagent-bridge.timer.d/preset.conf', 'owner': 'preset'},
+                {'path': 'eeebot-techtree-publish.service.d/10-state-read.conf', 'owner': 'unknown'},
+            ],
+            'release_not_installed': ['eeebot-strategist.timer'],
+            'content_differs': [{'path': 'eeebot-host-metrics.service', 'detail': 'content differs from release'}],
+            'stray': ['eeepc-monitor.service.bak-20260817-880'],
+        },
+    })
+    assert '2 defect(s)' in with_findings
+    # Every finding gets a line, known-owner included, but only unknown-owner
+    # (and the other three buckets) carry the defect marker class.
+    assert 'preset.conf' in with_findings and 'owner: preset' in with_findings
+    assert '10-state-read.conf' in with_findings and 'owner: unknown' in with_findings
+    assert 'eeebot-strategist.timer' in with_findings
+    assert 'eeebot-host-metrics.service' in with_findings
+    assert 'eeepc-monitor.service.bak-20260817-880' in with_findings
+    preset_line = with_findings.split('preset.conf')[0].rsplit('<li', 1)[1]
+    assert 'systemd-drift-defect' not in preset_line
+    unknown_line = with_findings.split('10-state-read.conf')[0].rsplit('<li', 1)[1]
+    assert 'systemd-drift-defect' in unknown_line
+
+
 def test_executor_model_item_four_states() -> None:
     """#1660/#1678/#276: a vendor-class model on an executor/harness row is
     the fallback signal, derived from the single persisted model field."""

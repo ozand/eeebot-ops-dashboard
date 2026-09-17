@@ -1474,6 +1474,25 @@ def read_derived_view():
     return {"status": "present", **data}
 
 
+def read_systemd_drift():
+    """#298: state/systemd_drift.json (eeebot#1701/PR#1717), written daily
+    by the host's systemd_drift_check.py. `status` is this reader's own
+    read outcome; the file's OWN `state` field is read through via **data,
+    never recomputed here."""
+    path = os.path.join(STATE_ROOT, "systemd_drift.json")
+    if not os.path.isfile(path):
+        return {"status": "absent"}
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        _mtimes.append(os.path.getmtime(path))
+    except Exception as exc:
+        return {"status": "probe_unavailable", "reason": f"{exc.__class__.__name__}"}
+    if not isinstance(data, dict):
+        return {"status": "probe_unavailable", "reason": "not_a_dict"}
+    return {"status": "present", **data}
+
+
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
     "scorecard": read_json("scorecard/latest.json"),
@@ -1498,6 +1517,7 @@ result = {
     "bridge_exits": read_jsonl("bridge/exits.jsonl"),
     "strategist_decisions": read_jsonl("strategist/decisions.jsonl"),
     "demand_futility": read_json("demand/futility.json"),
+    "systemd_drift": read_systemd_drift(),
     "goal_text": read_json("goals/goal_text.json"),
     "agents_md": read_file_text("AGENTS.md"),
     "agent_context": read_agent_context(),
@@ -1557,6 +1577,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'bridge_exits': None,
         'strategist_decisions': None,
         'demand_futility': None,
+        'systemd_drift': None,
         'goal_text': None,
         'agents_md': None,
         'ci_freshness': None,
@@ -1781,6 +1802,7 @@ def read_local_state(
         'bridge_exits': None,
         'strategist_decisions': None,
         'demand_futility': None,
+        'systemd_drift': {'status': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         '_newest_source_age_seconds': None,
     }
     root = Path(state_root)
@@ -2206,6 +2228,28 @@ def read_local_state(
             return {'status': 'probe_unavailable', 'reason': 'not_a_dict'}
         return {'status': 'present', **data}
 
+    def read_systemd_drift_local() -> dict[str, Any]:
+        """#298: local mirror of REMOTE_READER_SCRIPT read_systemd_drift()
+        -- keep in sync. eeebot#1701/PR#1717: <state_dir>/systemd_drift.json,
+        written daily by the host's systemd_drift_check.py. `status` here is
+        this reader's own four-state read outcome (absent/probe_unavailable/
+        present) -- absent means the daily probe has not written a result
+        since deploy, not that the host has zero drift. The file's OWN
+        `state` field is a SEPARATE verdict (whether the host's comparison
+        itself ran) and is read through unmodified via `**data`, never
+        recomputed here."""
+        path = root / 'systemd_drift.json'
+        if not path.is_file():
+            return {'status': 'absent'}
+        try:
+            data = json.loads(path.read_text(encoding='utf-8'))
+            mtimes.append(path.stat().st_mtime)
+        except (OSError, ValueError) as exc:
+            return {'status': 'probe_unavailable', 'reason': f'{exc.__class__.__name__}'}
+        if not isinstance(data, dict):
+            return {'status': 'probe_unavailable', 'reason': 'not_a_dict'}
+        return {'status': 'present', **data}
+
     def read_subagent_records_local() -> list[dict[str, Any]]:
         """#272: local mirror of REMOTE_READER_SCRIPT read_subagent_records()
         -- keep in sync."""
@@ -2437,6 +2481,7 @@ def read_local_state(
         'bridge_exits': read_jsonl('bridge/exits.jsonl'),
         'strategist_decisions': read_jsonl('strategist/decisions.jsonl'),
         'demand_futility': read_json('demand/futility.json'),
+        'systemd_drift': read_systemd_drift_local(),
         'goal_text': read_json('goals/goal_text.json'),
         'agents_md': agents_text,
         'ci_freshness': None,
@@ -4835,6 +4880,78 @@ def _build_local_ci_item(local_ci: dict[str, Any] | None) -> str:
     )
 
 
+def _build_systemd_drift_item(systemd_drift: dict[str, Any] | None) -> str:
+    """#298: eeebot#1701/PR#1717 -- <state_dir>/systemd_drift.json, written
+    daily by the host's systemd_drift_check.py, read as published and
+    never recomputed here. Two separate four-state verdicts on purpose:
+    this reader's own `status` (absent/probe_unavailable/present) says
+    whether the FILE could be read; the file's OWN `state` field is the
+    host probe's unmodified verdict about whether ITS comparison ran.
+    `defect_count` is shown verbatim (never re-summed from `findings`
+    here), same discipline as `_build_local_ci_item`'s exit_code."""
+    if not isinstance(systemd_drift, dict):
+        probe, reason = 'probe_unavailable', 'ssh or read failed'
+    else:
+        probe = systemd_drift.get('status')
+        reason = systemd_drift.get('reason')
+    findings: dict[str, Any] = {}
+    defect_count = None
+    scanned_at = None
+    if isinstance(systemd_drift, dict) and probe == 'present':
+        host_state = systemd_drift.get('state')
+        if host_state != 'present':
+            # File readable, but the host's own comparison failed -- its
+            # verdict wins, unmodified.
+            probe = 'probe_unavailable'
+            reason = systemd_drift.get('details') or host_state
+        else:
+            defect_count = systemd_drift.get('defect_count')
+            scanned_at = systemd_drift.get('scanned_at')
+            findings = systemd_drift.get('findings') if isinstance(systemd_drift.get('findings'), dict) else {}
+
+    symbol = _PROBE_SYMBOLS.get(probe, '?')
+    if probe == 'absent':
+        detail = 'no drift result recorded (daily probe has not run since deploy)'
+    elif probe == 'probe_unavailable':
+        detail = f'cannot read drift result{f" ({esc(str(reason))})" if reason else ""}'
+    elif probe == 'present':
+        when = fmt_ts(scanned_at) if scanned_at else 'unknown time'
+        count_text = str(defect_count) if defect_count is not None else '?'
+        detail = f'{count_text} defect(s), scanned {when}'
+    else:
+        probe, symbol, detail = 'probe_unavailable', '?', 'unrecognized systemd drift state'
+
+    finding_rows = ''
+    if probe == 'present':
+        rows: list[str] = []
+        for entry in findings.get('installed_not_in_release') or []:
+            if not isinstance(entry, dict):
+                continue
+            owner = str(entry.get('owner') or 'unknown')
+            path = esc(str(entry.get('path') or ''))
+            cls = ' class="systemd-drift-defect"' if owner == 'unknown' else ''
+            rows.append(f'<li{cls}>installed, not in release: <code>{path}</code> (owner: {esc(owner)})</li>')
+        for path in findings.get('release_not_installed') or []:
+            rows.append(f'<li class="systemd-drift-defect">release ships it, not installed: <code>{esc(str(path))}</code></li>')
+        for entry in findings.get('content_differs') or []:
+            if not isinstance(entry, dict):
+                continue
+            path = esc(str(entry.get('path') or ''))
+            entry_detail = esc(str(entry.get('detail') or ''))
+            rows.append(f'<li class="systemd-drift-defect">content differs: <code>{path}</code> -- {entry_detail}</li>')
+        for path in findings.get('stray') or []:
+            rows.append(f'<li class="systemd-drift-defect">stray backup file: <code>{esc(str(path))}</code></li>')
+        if rows:
+            finding_rows = f'<ul class="systemd-drift-findings">{"".join(rows)}</ul>'
+
+    return (
+        '<div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> '
+        f'<span class="badge probe-{esc(probe)}">{symbol} {esc(probe)}</span> '
+        f'<span class="now-sub">{detail}</span>'
+        f'{finding_rows}</div>'
+    )
+
+
 def _build_executor_model_item(executor_model_status: dict[str, Any] | None) -> str:
     """#1660/#1678/#276: llm_calls persists one `model` field (the served
     model, preferred over the requested one since #1678) -- there is no
@@ -5036,6 +5153,7 @@ def build_now_panel(
     local_ci: dict[str, Any] | None = None,
     executor_model_status: dict[str, Any] | None = None,
     derived_view: dict[str, Any] | None = None,
+    systemd_drift: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -5247,6 +5365,10 @@ def build_now_panel(
     # 8. GitHub Actions freshness and outcome (#1592)
     ci_freshness_html = _build_ci_freshness_item(ci_freshness)
 
+    # 8b. Systemd drift (#298, eeebot#1701/#1717) -- installed units/drop-ins
+    # vs. the release tree, read as published, never recomputed here.
+    systemd_drift_html = _build_systemd_drift_item(systemd_drift)
+
     # 9. Local CI (#1593) -- state distinguishes a real run from
     # targets_missing; ok=false must never stand in for "never ran".
     local_ci_html = _build_local_ci_item(local_ci)
@@ -5276,6 +5398,7 @@ def build_now_panel(
         {doc_budget_html}
         {strategist_html}
         {ci_freshness_html}
+        {systemd_drift_html}
         {local_ci_html}
         {executor_model_html}
         {_render_failed_bridge_exits(bridge_exits)}
@@ -8874,6 +8997,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         local_ci=data.get('local_ci'),
         executor_model_status=data.get('executor_model_status'),
         derived_view=data.get('derived_view'),
+        systemd_drift=data.get('systemd_drift'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -9212,6 +9336,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         local_ci=data.get('local_ci'),
         executor_model_status=data.get('executor_model_status'),
         derived_view=data.get('derived_view'),
+        systemd_drift=data.get('systemd_drift'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.
