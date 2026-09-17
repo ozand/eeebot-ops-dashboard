@@ -824,6 +824,8 @@
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
     .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
+    .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
+    .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
     .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
     .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
     .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
@@ -913,6 +915,8 @@
     .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
+    .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
+    .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
@@ -1273,9 +1277,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 16:26:23 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 17:11:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 14:08 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 14:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html" class="nav-current">about</a></nav>
@@ -1324,7 +1328,7 @@
 </section>
 
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 14:08:17 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 16:26:23 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 14:16:51 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 17:11:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
