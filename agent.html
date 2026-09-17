@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">211</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 10:52:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 08:04 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="33">data: 32s old &middot; generated 08:19 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1290,7 +1290,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-c97cd8f23ca4</span>
+      <span class="cycle-pill">cycle-7957bc1dcf63</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1319,7 +1319,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 07:23:36.638623 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 08:08:38.370710 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1337,7 +1337,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 33,574 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 63,652 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1355,8 +1355,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 33,574 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,112c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 63,652 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,088c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1928,9 +1928,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,112 chars &bull; ~2,278 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after loop breaker warnings
-Request ID: llm-proposer-cycle-c97cd8f23ca4
-Cycle ID: cycle-c97cd8f23ca4
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,088 chars &bull; ~2,272 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/search_workspace.py to search patterns confined to local workspace directories and reject external paths
+Request ID: llm-proposer-cycle-7957bc1dcf63
+Cycle ID: cycle-7957bc1dcf63
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1945,72 +1945,72 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 83b80070 merge: integrate selfevo/cycle-cycle-c97cd8f23ca4
+- b7455b25 selfevo: auto-commit uncommitted subagent work — Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after lo
+- 7f7fdee8 feat(scripts): add check_loop_breaker_violation.py to flag post-warning repeated tool calls
 - a6d9a48f merge: integrate selfevo/cycle-cycle-9c602ef44e83
 - 60e97837 feat(run_all_tests): add AST parse preflight surfacing SyntaxError/IndentationError file lines
 - def4bb01 merge: integrate selfevo/cycle-cycle-b44f418d58a9
 - 2a22013a feat(scripts): add inventory_test_suites.py to discover and summarize test suites
 - 5b7e3faf merge: integrate selfevo/cycle-cycle-977e0f7709f8
-- f09718cf docs(lessons): add synthetic token fixture rule for threshold boundary tests
-- 9c16dd74 merge: integrate selfevo/cycle-cycle-d2d64d689a24
-- 488ac331 docs(lessons): add edge case test differentiation rule for existing features
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Audit target file header docstrings for capability keywords in scripts/check_target_completion.py: recent_duplicate_failure
-- Add --check-command option to scripts/check_target_completion.py to verify pre-implemented targets immediately: push_rejected
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-c97cd8f23ca4.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7957bc1dcf63.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after loop breaker warnings&quot;,
-    &quot;backlog_instructions&quot;: &quot;Provides a trace-analysis utility to detect when a tool call identical to the flagged invocation immediately follows a loop_breaker prompt injection, supporting hard-stop enforcement.\n\nTarget path: scripts/check_loop_breaker_violation.py&quot;,
+    &quot;title&quot;: &quot;Add scripts/search_workspace.py to search patterns confined to local workspace directories and reject external paths&quot;,
+    &quot;backlog_instructions&quot;: &quot;Cycle cycle-51e7ef398bb4 timed out searching /opt/eeepc-agent/runtimes/ causing an 8-turn detour; providing a workspace-confined search tool restricts inspection to local repo directories (scripts/, tests/) and rejects external host paths.\n\nTarget path: scripts/search_workspace.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after loop breaker warnings (target: scripts/check_loop_breaker_violation.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/search_workspace.py to search patterns confined to local workspace directories and reject external paths (target: scripts/search_workspace.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/check_loop_breaker_violation.py parses turn history and signals violation on post-warning repeated tool calls&quot;,
+    &quot;claim&quot;: &quot;scripts/search_workspace.py searches local workspace files and rejects external paths outside repo root&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 -m py_compile scripts/check_loop_breaker_violation.py&quot;
+      &quot;command&quot;: &quot;python3 scripts/search_workspace.py --help&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
-Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
-Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
+ID: ERR-20260914-abf03d77  Title: Out-of-band origin/main movement prevented integration while attempting: Add active state reflections and demand search to scripts/search_subagent_archiv
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-15fc0ea6f654-8f52  Title: Stop repeating commands after loop_breaker
-Problem: after loop_breaker was triggered following three identical exec calls testing eeebot import resolution, the model re-executed the identical exec command two additional times.
-Solution: Halt repetitive tool executions immediately upon receiving a loop_breaker safety stop notice and pivot to modifying code or evaluating next steps.
-If you apply this lesson, cite [Lesson LESS-REF-15fc0ea6f654-8f52] in your proposal/response.
+ID: LESS-20260904-d44ed220  Title: Stop repeated codebase searches when grep returns empty for newly requested feature terms; proceed directly to inspecting and editing the target script
+Problem: When a task requests a new feature or term that does not yet exist in the codebase, subagents repeatedly re-run grep and list_dir sweeps searching for the term, burning tool iterations on searches that will always return empty. The term is new by definition, so no existing match is possible, and each redundant search wastes a full iteration of the cycle budget.
+Solution: When a task names a new feature, term, or symbol that is not yet present in the codebase, run at most one targeted grep to confirm absence, then stop searching and proceed directly to reading the designated target file and making the edit. Do not re-run the same or similar searches expecting a different result. If the first grep returns empty, treat that as confirmation the feature is new and move
+If you apply this lesson, cite [Lesson LESS-20260904-d44ed220] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid bash-only syntax such as `${PIPESTATUS}` in shell execution commands; use standard POSIX `$?` or check command exit statuses directly to prevent `/bin/sh` syntax errors and wasted retry steps.
-- When auditing command-line flags or functions in large script files (&gt;3,500 lines), use targeted grep commands (e.g. `grep -n &#x27;add_argument&#x27;`) to pinpoint line offsets instead of sequentially reading 
-- Used the bash-specific parameter substitution `${PIPESTATUS[0]}` in shell commands running under `/bin/sh` (dash) across two separate tool calls (`lB4Nvqx6b` and `hoa0bp1VL`), producing `/bin/sh: 1: B
+- Avoid executing shell commands containing &#x27;rm -f&#x27; or embedded URL scheme strings in exec tool calls, as the runtime safety guard flags them as dangerous patterns; use Python stdlib functions like &#x27;os.
+- Account for working directory depth when constructing database file paths in Python one-liners, as `state/` resides in the agent root rather than the nested workspace repository.
+- When writing test assertions against files or directories created with &#x27;tempfile.TemporaryDirectory()&#x27;, keep all filesystem existence and file status assertions inside the &#x27;with&#x27; block before context 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 06:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-17 07:48 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json,…
+- Attempt 2 (2026-09-17 06:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after loop breaker warnings
+Title: Add scripts/search_workspace.py to search patterns confined to local workspace directories and reject external paths
 
 
-Provides a trace-analysis utility to detect when a tool call identical to the flagged invocation immediately follows a loop_breaker prompt injection, supporting hard-stop enforcement.
+Cycle cycle-51e7ef398bb4 timed out searching /opt/eeepc-agent/runtimes/ causing an 8-turn detour; providing a workspace-confined search tool restricts inspection to local repo directories (scripts/, tests/) and rejects external host paths.
 
-Target path: scripts/check_loop_breaker_violation.py
+Target path: scripts/search_workspace.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_loop_breaker_violation.py parses turn history and signals violation on post-warning repeated tool calls
+scripts/search_workspace.py searches local workspace files and rejects external paths outside repo root
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5925,7 +5925,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 08:04:56 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 10:52:16 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 08:19:45 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 10:52:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
