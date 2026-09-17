@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 18:15:28 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.5%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 29s old &middot; generated 15:19 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 15:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ae88c092f575</span>
+      <span class="cycle-pill">cycle-8c667e80fb69</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1325,7 +1325,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 14:57:53.158931 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 15:22:46.246921 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 52,345 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 45,197 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 52,345 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,648c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 45,197 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,596c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1934,9 +1934,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,648 chars &bull; ~2,162 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/inspect_cycle_diff.py to summarize modified files and test cases from a git commit or diff
-Request ID: llm-proposer-cycle-ae88c092f575
-Cycle ID: cycle-ae88c092f575
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,596 chars &bull; ~2,149 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Ensure CLI companion test scaffolding generates consistent exit code and stderr assertions
+Request ID: llm-proposer-cycle-8c667e80fb69
+Cycle ID: cycle-8c667e80fb69
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1951,70 +1951,61 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 78d1e6cd merge: integrate selfevo/cycle-cycle-ae88c092f575
+- 7ecca0bd feat(inspect_cycle_diff): summarize modified files and test cases from a git commit or diff
 - 4ca95195 merge: integrate selfevo/cycle-cycle-29891423d05e
 - 3fb835de feat(detect_chained_git_commands): flag compound commands chaining test runs with git staging/commit
 - a9322ce9 merge: integrate selfevo/cycle-cycle-633da6d9a806
 - 2d11e6d3 docs: propose stem-dissimilarity weighting for existence-index dedup
 - c7ad47ea merge: integrate selfevo/cycle-cycle-d0e3cb34aa23
 - 3fa9281d fix(validate_script_entrypoints): exempt library-only modules from entrypoint validation
-- 4bcd2bb0 merge: integrate selfevo/cycle-cycle-41a556e4df97
-- c337136f feat(fb_surface): add sysfs geometry inspection and timed /dev/fb0 frame writing
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ae88c092f575.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8c667e80fb69.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add scripts/inspect_cycle_diff.py to summarize modified files and test cases from a git commit or diff&quot;,
-    &quot;backlog_instructions&quot;: &quot;Provides a dedicated CLI tool to inspect HEAD or working diff to report changed files and modified test cases, preventing turn waste when diagnosing resumed cycles as seen in cycle-d6423dba884f.\n\nTarget path: scripts/inspect_cycle_diff.py&quot;,
+    &quot;title&quot;: &quot;Ensure CLI companion test scaffolding generates consistent exit code and stderr assertions&quot;,
+    &quot;backlog_instructions&quot;: &quot;Prevents conflicting assertions like returncode == 0 with stderr error strings seen in cycle-d6423dba884f by generating separate success and failure companion test cases in scripts/scaffold_script_entrypoint.py.\n\nTarget path: scripts/scaffold_script_entrypoint.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/inspect_cycle_diff.py to summarize modified files and test cases from a git commit or diff (target: scripts/inspect_cycle_diff.py)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/inspect_cycle_diff.py provides structured diff inspection of HEAD or working tree changes and exits zero on --help.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/inspect_cycle_diff.py --help&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Ensure CLI companion test scaffolding generates consistent exit code and stderr assertions (target: scripts/scaffold_script_entrypoint.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260917-2a6fd33e  Title: Executor LLM call failed before cycle execution while attempting: Add keyword test discovery to scripts/inventory_test_suites.py to format targeted pytest filter commands
-Root cause: 
-Prevention: 
+ID: ERR-2026-09-06-002  Title: Non-zero exit code re-executed without inspecting stderr or traceback
+Root cause: The agent treated a non-zero exit code as a transient signal worth retrying rather than as a pointer to a specific failure. The exact stderr text and traceback were already available in the first invocation&#x27;s output, but the agent skipped reading them and re-executed the unchanged command. Re-running a deterministic command with no change to its inputs cannot produce a different exit code, so the 
+Prevention: On any non-zero exit code, immediately inspect the exact stderr and traceback output from that invocation before running anything else. Do not re-execute an identical failing command — a deterministic command with unchanged inputs will return the same non-zero code. Read the exception type, message, and the failing line, form a hypothesis about the root cause, and change at least one input (path, 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
-Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
-Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
-If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
+ID: LESS-REF-4b4bdcf4bec7-8fd2  Title: running &#x27;python3 scripts/validate_markdown_format.py 2&gt;&amp;1 | head -80; echo &quot;EXIT: ${PIPESTATUS[0]}&quot;&#x27; resulted in &#x27;/bin/sh: 1: Bad substitution&#x27; (exit code 2).
+Problem: In turn 2, running &#x27;python3 scripts/validate_markdown_format.py 2&gt;&amp;1 | head -80; echo &quot;EXIT: ${PIPESTATUS[0]}&quot;&#x27; resulted in &#x27;/bin/sh: 1: Bad substitution&#x27; (exit code 2).
+Solution: Avoid bashisms such as ${PIPESTATUS} in exec commands; use POSIX standard shell redirection and inspect $? directly to capture exit codes.
+If you apply this lesson, cite [Lesson LESS-REF-4b4bdcf4bec7-8fd2] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When authoring negative test cases for filename pattern matchers, avoid substrings that match secondary convention patterns (e.g. use `helper.py` or `util.py` rather than `not_a_test.py` when testing 
-- Batch related modifications within the same function or block (e.g., parameter signature, docstrings, execution body, and returned dict keys) into fewer `edit_file` calls to reduce roundtrip execution
-- When validating targeted test additions in large test suites with long runtimes, run a scoped pytest execution (`-k &lt;target_test_name&gt;`) for fast feedback before running the entire file suite.
+- When checking command exit statuses in shell pipelines (e.g. `cmd | tail`), avoid relying on `$?` immediately after the pipe as it returns the exit status of the final pipeline command (`tail`), poten
+- For purely additive changes adding new standalone scripts and test files, rely on scoped runners (`scripts/run_all_tests.py --target &lt;name&gt;`) and targeted integrity checks rather than launching full r
+- Batch cosmetic cleanups or defer import refactoring until after running the initial test execution, avoiding multiple single-line edit turns before verifying basic functionality.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 14:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/detect_chained_git_commands.py. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-17 14:07 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: docs/plans/2026-09-17-existence-index-stem-dissimilarity-proposal.md. Reward signal will be…
-- Attempt 3 (2026-09-17 13:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_script_entrypoints.py. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-17 15:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/inspect_cycle_diff.py, tests/test_inspect_cycle_diff.py. Reward signal will be…
 
 ## Concrete task to implement
 
-Title: Add scripts/inspect_cycle_diff.py to summarize modified files and test cases from a git commit or diff
+Title: Ensure CLI companion test scaffolding generates consistent exit code and stderr assertions
 
 
-Provides a dedicated CLI tool to inspect HEAD or working diff to report changed files and modified test cases, preventing turn waste when diagnosing resumed cycles as seen in cycle-d6423dba884f.
+Prevents conflicting assertions like returncode == 0 with stderr error strings seen in cycle-d6423dba884f by generating separate success and failure companion test cases in scripts/scaffold_script_entrypoint.py.
 
-Target path: scripts/inspect_cycle_diff.py
+Target path: scripts/scaffold_script_entrypoint.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/inspect_cycle_diff.py provides structured diff inspection of HEAD or working tree changes and exits zero on --help.
+## Concrete task to implement
+Implement and commit: Ensure CLI companion test scaffolding generates consistent exit code and stderr assertions (target: scripts/scaffold_script_entrypoint.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5929,7 +5920,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 15:19:24 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 18:15:28 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 15:28:34 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 18:15:28 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
