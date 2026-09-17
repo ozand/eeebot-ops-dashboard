@@ -1451,6 +1451,29 @@ def read_compaction():
         return {'status': 'unavailable'}
 
 
+def read_derived_view():
+    """#271: state/public/derived_view.json -- schema derived-view-v1,
+    written by the harness's demand.publish_derived_view (mode 0644,
+    readable by eeebot-publish; eeebot#1684/#1702). Absent means the writer
+    hasn't run since deploy or failed (a phase: derived_view,
+    outcome: write_failed row would appear in the ledger) -- must render as
+    unavailable, never as an empty queue. Never widen state/goals
+    permissions to read anything else -- this is the one file the
+    publisher is meant to read."""
+    path = os.path.join(STATE_ROOT, "public", "derived_view.json")
+    if not os.path.isfile(path):
+        return {"status": "absent"}
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        _mtimes.append(os.path.getmtime(path))
+    except Exception as exc:
+        return {"status": "probe_unavailable", "reason": f"{exc.__class__.__name__}"}
+    if not isinstance(data, dict):
+        return {"status": "probe_unavailable", "reason": "not_a_dict"}
+    return {"status": "present", **data}
+
+
 result = {
     "portfolio": read_json("tech_tree/portfolio.json"),
     "scorecard": read_json("scorecard/latest.json"),
@@ -1467,6 +1490,7 @@ result = {
     "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
     "subagent_records": read_subagent_records(),
+    "derived_view": read_derived_view(),
     "cycle_prompts": read_cycle_prompts(),
     "reflections": read_jsonl("reflector/reflections.jsonl"),
     "ledger_history": read_ledger_history(),
@@ -1750,6 +1774,7 @@ def read_local_state(
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'lessons': [],
         'subagent_records': [],
+        'derived_view': {'status': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'cycle_prompts': {},
         'reflections': [],
         'bridge_exit_streak': None,
@@ -2166,6 +2191,21 @@ def read_local_state(
         action = ' '.join(s.strip() for s in sections if not s.startswith(('Description', 'Root Causes')))
         return condition.strip(), action.strip()
 
+    def read_derived_view_local() -> dict[str, Any]:
+        """#271: local mirror of REMOTE_READER_SCRIPT read_derived_view() --
+        keep in sync."""
+        path = root / 'public' / 'derived_view.json'
+        if not path.is_file():
+            return {'status': 'absent'}
+        try:
+            data = json.loads(path.read_text(encoding='utf-8'))
+            mtimes.append(path.stat().st_mtime)
+        except (OSError, ValueError) as exc:
+            return {'status': 'probe_unavailable', 'reason': f'{exc.__class__.__name__}'}
+        if not isinstance(data, dict):
+            return {'status': 'probe_unavailable', 'reason': 'not_a_dict'}
+        return {'status': 'present', **data}
+
     def read_subagent_records_local() -> list[dict[str, Any]]:
         """#272: local mirror of REMOTE_READER_SCRIPT read_subagent_records()
         -- keep in sync."""
@@ -2390,6 +2430,7 @@ def read_local_state(
         'token_heatmap': read_token_heatmap_local(),
         'lessons': read_lessons_local(),
         'subagent_records': read_subagent_records_local(),
+        'derived_view': read_derived_view_local(),
         'cycle_prompts': read_cycle_prompts_local(),
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
@@ -4745,6 +4786,138 @@ def _build_executor_model_item(executor_model_status: dict[str, Any] | None) -> 
     )
 
 
+def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
+    """#271: the ranked demand queue -- head + next few items, exactly as
+    published (state/public/derived_view.json, eeebot#1684/#1702). Kind and
+    provenance are rendered verbatim from the item's own fields; nothing is
+    re-sorted or re-bucketed here (the ranking is the loop's, not the
+    viewer's), and an unrecognised kind renders as itself rather than
+    collapsing into an 'other' bucket."""
+    status = (derived_view or {}).get('status')
+    if status in (None, 'absent'):
+        return (
+            '<div class="now-item"><span class="now-label">Next Up:</span> '
+            '<span class="unavailable-note" data-demand-queue-state="absent">demand queue absent '
+            '(writer has not run since deploy, or failed -- check for a phase: derived_view, '
+            'outcome: write_failed row in the ledger)</span></div>'
+        )
+    if status == 'probe_unavailable':
+        reason = str((derived_view or {}).get('reason') or '')
+        note = f' ({esc(reason)})' if reason else ''
+        return (
+            '<div class="now-item"><span class="now-label">Next Up:</span> '
+            f'<span class="unavailable-note" data-demand-queue-state="probe_unavailable">demand queue unreadable{note}</span></div>'
+        )
+    assert derived_view is not None
+    generated_at = esc(derived_view.get('generated_at_utc') or 'unknown')
+    items = derived_view.get('priority_items')
+    if not isinstance(items, list) or not items:
+        return (
+            '<div class="now-item"><span class="now-label">Next Up:</span> '
+            f'<span class="badge badge-available" data-demand-queue-state="empty">0 items</span> '
+            f'<span class="now-sub">queue published {generated_at}</span></div>'
+        )
+    sort_rule = str(derived_view.get('sort') or '')
+    head = items[0] if isinstance(items[0], dict) else {}
+    head_provenance = esc(head.get('provenance') or 'unknown')
+    head_vector = esc(head.get('vector') or '')
+    head_reason = f'{head_provenance} &middot; vector {head_vector}'
+    if sort_rule:
+        head_reason += f' &mdash; {esc(sort_rule)}'
+    rows: list[str] = []
+    for item in items[:10]:
+        if not isinstance(item, dict):
+            continue
+        kind = esc(item.get('kind') or 'unknown')
+        provenance = str(item.get('provenance') or 'unknown')
+        label = esc(item.get('label') or item.get('id') or '')
+        vector = esc(item.get('vector') or '')
+        summary = str(item.get('summary') or '')
+        summary_html = f'<div class="demand-queue-summary">{esc(summary[:300])}</div>' if summary else ''
+        rows.append(
+            f'<li class="demand-queue-row" data-demand-provenance="{esc(provenance)}">'
+            f'<span class="badge badge-researching" translate="no">{kind}</span> '
+            f'<span class="provenance-badge provenance-{esc(provenance)}">{esc(provenance)}</span> '
+            f'<strong>{label}</strong> '
+            f'<span class="now-sub">vector {vector}</span>'
+            f'{summary_html}</li>'
+        )
+    return (
+        '<div class="now-item now-item-demand-queue" data-demand-queue-state="present">'
+        '<span class="now-label">Next Up:</span> '
+        f'<span class="now-sub">{len(items)} ranked items, published {generated_at}</span>'
+        f'<p class="demand-queue-head-reason">Head: {head_reason}</p>'
+        f'<ol class="demand-queue-list">{"".join(rows)}</ol></div>'
+    )
+
+
+def _build_charter_item(derived_view: dict[str, Any] | None) -> str:
+    """#271: operator charter and self-derived priorities rendered as two
+    visibly separate lists -- never merged text -- so the provenance
+    distinction is the thing a reader sees, not something they have to
+    infer by parsing entry text."""
+    status = (derived_view or {}).get('status')
+    if status in (None, 'absent'):
+        return (
+            '<div class="now-item"><span class="now-label">Charter:</span> '
+            '<span class="unavailable-note" data-charter-state="absent">charter/priorities unavailable '
+            '(demand queue writer absent)</span></div>'
+        )
+    if status == 'probe_unavailable':
+        return (
+            '<div class="now-item"><span class="now-label">Charter:</span> '
+            '<span class="unavailable-note" data-charter-state="probe_unavailable">charter/priorities unreadable</span></div>'
+        )
+    assert derived_view is not None
+    charter = derived_view.get('charter') if isinstance(derived_view.get('charter'), dict) else {}
+    charter_text = str(charter.get('text') or '')
+    charter_source = esc(charter.get('source') or 'none')
+    operator_html = (
+        '<div class="charter-operator"><h4>Operator Charter</h4>'
+        f'<p class="now-sub">source: {charter_source}</p>'
+        + (
+            f'<blockquote class="charter-text">{esc(charter_text[:2000])}</blockquote>'
+            if charter_text else '<p class="unavailable-note">charter text empty</p>'
+        )
+        + '</div>'
+    )
+    derived_status = str(derived_view.get('derived_status') or 'absent')
+    derived_priorities = derived_view.get('derived_priorities')
+    if derived_status == 'absent':
+        self_html = (
+            '<div class="charter-self-derived" data-derived-status="absent"><h4>Self-Derived Priorities</h4>'
+            '<span class="unavailable-note">absent</span></div>'
+        )
+    elif derived_status == 'probe_unavailable':
+        self_html = (
+            '<div class="charter-self-derived" data-derived-status="probe_unavailable"><h4>Self-Derived Priorities</h4>'
+            '<span class="unavailable-note">unreadable</span></div>'
+        )
+    elif isinstance(derived_priorities, list) and derived_priorities:
+        p_rows = []
+        for p in derived_priorities[:20]:
+            if not isinstance(p, dict):
+                continue
+            p_rows.append(
+                f'<li><span class="badge" translate="no">{esc(p.get("number") or "")}</span> '
+                f'{esc(p.get("label") or "")} '
+                f'<span class="now-sub">vector {esc(p.get("vector") or "")} &middot; {esc(p.get("direction") or "")}</span></li>'
+            )
+        self_html = (
+            '<div class="charter-self-derived" data-derived-status="present"><h4>Self-Derived Priorities</h4>'
+            f'<ul>{"".join(p_rows)}</ul></div>'
+        )
+    else:
+        self_html = (
+            '<div class="charter-self-derived" data-derived-status="present"><h4>Self-Derived Priorities</h4>'
+            '<span class="badge badge-available">0 items</span></div>'
+        )
+    return (
+        '<div class="now-item now-item-charter"><span class="now-label">Charter:</span>'
+        f'<div class="charter-split">{operator_html}{self_html}</div></div>'
+    )
+
+
 def build_now_panel(
     portfolio: dict[str, Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -4764,6 +4937,7 @@ def build_now_panel(
     ci_freshness: dict[str, Any] | None = None,
     local_ci: dict[str, Any] | None = None,
     executor_model_status: dict[str, Any] | None = None,
+    derived_view: dict[str, Any] | None = None,
 ) -> str:
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
@@ -4911,6 +5085,15 @@ def build_now_panel(
         c_part = f'<div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> {_render_demand_groups(completed_groups, "completed", "cycle")}</div>'
         demand_html = f'<div class="now-demand-grid">{s_part}{c_part}</div>'
 
+    # #271: served/completed counts are demoted to history now that the
+    # ranked queue itself (Next Up, below) is published and rendered --
+    # kept, not deleted, folded under a details/summary the same way the
+    # lessons panel folds legacy (pre-v2) rows.
+    demand_history_html = (
+        '<details class="now-demand-history"><summary>Served / completed history</summary>'
+        f'<div class="now-demand-history-body">{demand_html}</div></details>'
+    )
+
     # 4. Bridge exit streak (issue #182)
     streak_html = ''
     if bridge_exit_streak is None:
@@ -4975,6 +5158,12 @@ def build_now_panel(
     # model field, no separate requested field to diff against.
     executor_model_html = _build_executor_model_item(executor_model_status)
 
+    # 11/12. Ranked demand queue + charter split (#271) -- published by the
+    # harness at state/public/derived_view.json (eeebot#1684/#1702); never
+    # re-derived or re-sorted here.
+    next_up_html = _build_next_up_item(derived_view)
+    charter_html = _build_charter_item(derived_view)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -4982,6 +5171,8 @@ def build_now_panel(
         {health_banner}
         {dir_html}
         {cycle_html}
+        {next_up_html}
+        {charter_html}
         {streak_html}
         {feed_ages_html}
         {doc_budget_html}
@@ -4990,10 +5181,7 @@ def build_now_panel(
         {local_ci_html}
         {executor_model_html}
         {_render_failed_bridge_exits(bridge_exits)}
-        <div class="now-item">
-          <span class="now-label">Demand Queue:</span>
-          {demand_html}
-        </div>
+        {demand_history_html}
       </div>
     </section>
     '''
@@ -8506,6 +8694,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         ci_freshness=data.get('ci_freshness'),
         local_ci=data.get('local_ci'),
         executor_model_status=data.get('executor_model_status'),
+        derived_view=data.get('derived_view'),
     )
     canvas_html = build_tech_canvas(
         portfolio=portfolio,
@@ -8843,6 +9032,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ci_freshness=data.get('ci_freshness'),
         local_ci=data.get('local_ci'),
         executor_model_status=data.get('executor_model_status'),
+        derived_view=data.get('derived_view'),
     )
     # Issue #71: lineage.html renders the DGM archive tree (full history);
     # the legacy single-page render keeps build_tech_canvas.

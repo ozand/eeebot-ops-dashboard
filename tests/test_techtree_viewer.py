@@ -1836,6 +1836,189 @@ def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_bud
     assert 'health-alert-text">error' in html  # strategist error still visible
     assert 'cap reached' in html or 'exceeded' in html or 'doc-only' in html  # doc budget still visible
 
+# ---------------------------------------------------------------------------
+# Issue #271: ranked demand queue + charter split (state/public/derived_view.json)
+# ---------------------------------------------------------------------------
+
+_DEMAND_KINDS_TRUST_ORDER = [
+    'priority', 'defect', 'goal-gap', 'artifact-gap', 'skill-candidate',
+    'hypothesis', 'decay', 'repair-unused', 'reflection',
+]
+
+
+def _derived_view_fixture(**overrides) -> dict:
+    base = {
+        'status': 'present',
+        'schema_version': 'derived-view-v1',
+        'generated_at_utc': '2026-09-17T03:00:00Z',
+        'charter': {'source': 'release_goals_md', 'merged': False, 'text': 'Ship the operator dashboard.'},
+        'derived_status': 'present',
+        'derived_priorities': [
+            {'number': 1, 'label': 'Reduce publish payload', 'vector': 'V1', 'direction': 'shrink', 'added_utc': '2026-09-15T00:00:00Z'},
+        ],
+        'priority_items': [
+            {'rank': i + 1, 'id': f'item-{kind}', 'kind': kind, 'number': i + 1,
+             'label': f'{kind} task', 'vector': 'V1' if i % 2 == 0 else 'V2',
+             'provenance': 'operator' if i % 2 == 0 else 'self-derived',
+             'direction': 'shrink', 'summary': f'summary for {kind}', 'evidence': []}
+            for i, kind in enumerate(_DEMAND_KINDS_TRUST_ORDER)
+        ],
+        'input_mtimes_utc': {'charter': '2026-09-15T00:00:00Z', 'goal_text_json': None, 'derived_priorities_json': '2026-09-15T00:00:00Z'},
+        'sort': 'provenance(operator<self-derived), then vector(V1<V2)',
+    }
+    base.update(overrides)
+    return base
+
+
+def _now_panel_with_derived_view(derived_view) -> str:
+    return tv.build_now_panel(
+        portfolio=None, evolution_tree=None, demand_rotation=None, demand_completed=None,
+        derived_view=derived_view,
+    )
+
+
+def test_271_next_up_renders_all_nine_kinds_no_other_bucket() -> None:
+    html = _now_panel_with_derived_view(_derived_view_fixture())
+    for kind in _DEMAND_KINDS_TRUST_ORDER:
+        assert f'>{kind}</span>' in html, f'kind {kind!r} not rendered under its own name'
+    assert html.count('data-demand-provenance=') == 9
+    # No bucket collapse: the literal string 'other' must not appear as a
+    # rendered kind badge.
+    assert '>other</span>' not in html
+
+
+def test_271_unrecognised_kind_renders_as_itself() -> None:
+    view = _derived_view_fixture(priority_items=[
+        {'rank': 1, 'id': 'item-x', 'kind': 'brand-new-kind-2026', 'number': 1,
+         'label': 'novel item', 'vector': 'V1', 'provenance': 'operator',
+         'direction': 'shrink', 'summary': '', 'evidence': []},
+    ])
+    html = _now_panel_with_derived_view(view)
+    assert '>brand-new-kind-2026</span>' in html
+    assert '>other</span>' not in html
+
+
+def test_271_next_up_three_state_plus_empty() -> None:
+    absent = _now_panel_with_derived_view({'status': 'absent'})
+    unavailable = _now_panel_with_derived_view({'status': 'probe_unavailable', 'reason': 'JSONDecodeError'})
+    empty = _now_panel_with_derived_view(_derived_view_fixture(priority_items=[]))
+    present = _now_panel_with_derived_view(_derived_view_fixture())
+    assert 'data-demand-queue-state="absent"' in absent
+    assert 'data-demand-queue-state="probe_unavailable"' in unavailable
+    assert 'JSONDecodeError' in unavailable
+    assert 'data-demand-queue-state="empty"' in empty
+    assert 'data-demand-queue-state="present"' in present
+    # All four renders are distinct -- no state collapses into another.
+    assert len({absent, unavailable, empty, present}) == 4
+    # None of the non-present states render an empty-looking queue silently.
+    assert 'unavailable' in absent and 'unavailable' in unavailable
+
+
+def test_271_charter_split_operator_vs_self_derived() -> None:
+    html = _now_panel_with_derived_view(_derived_view_fixture())
+    assert '<h4>Operator Charter</h4>' in html
+    assert '<h4>Self-Derived Priorities</h4>' in html
+    assert 'Ship the operator dashboard.' in html
+    assert 'Reduce publish payload' in html
+    # The two sections are distinct DOM nodes, not one merged blob.
+    op_idx = html.index('<h4>Operator Charter</h4>')
+    self_idx = html.index('<h4>Self-Derived Priorities</h4>')
+    assert op_idx != self_idx
+
+
+def test_271_charter_derived_status_three_states() -> None:
+    absent = _now_panel_with_derived_view(_derived_view_fixture(derived_status='absent', derived_priorities=[]))
+    unavailable = _now_panel_with_derived_view(_derived_view_fixture(derived_status='probe_unavailable', derived_priorities=[]))
+    present = _now_panel_with_derived_view(_derived_view_fixture())
+    assert 'data-derived-status="absent"' in absent
+    assert 'data-derived-status="probe_unavailable"' in unavailable
+    assert 'data-derived-status="present"' in present
+
+
+def test_271_provenance_from_field_not_from_parsing_label_text() -> None:
+    """A label whose TEXT mentions the other provenance word must not
+    change which badge renders -- the provenance field alone decides."""
+    view = _derived_view_fixture(priority_items=[
+        {'rank': 1, 'id': 'item-1', 'kind': 'priority', 'number': 1,
+         'label': 'this task looks self-derived but is not', 'vector': 'V1',
+         'provenance': 'operator', 'direction': 'shrink', 'summary': '', 'evidence': []},
+    ])
+    html = _now_panel_with_derived_view(view)
+    assert 'data-demand-provenance="operator"' in html
+    assert 'data-demand-provenance="self-derived"' not in html
+
+
+def test_271_head_rank_reason_shown() -> None:
+    html = _now_panel_with_derived_view(_derived_view_fixture())
+    assert 'Head:' in html
+    assert 'operator' in html.split('Head:')[1].split('</p>')[0]
+    assert 'vector V1' in html.split('Head:')[1].split('</p>')[0]
+    assert 'provenance(operator&lt;self-derived)' in html or 'provenance(operator<self-derived)' in html
+
+
+def test_271_queue_order_matches_published_order_exactly() -> None:
+    """The viewer must never re-sort -- rendered order equals published
+    array order, even when that order looks 'wrong' by vector/provenance."""
+    view = _derived_view_fixture(priority_items=[
+        {'rank': 1, 'id': 'z-item', 'kind': 'reflection', 'number': 1, 'label': 'z', 'vector': 'V2', 'provenance': 'self-derived', 'direction': 'x', 'summary': '', 'evidence': []},
+        {'rank': 2, 'id': 'a-item', 'kind': 'priority', 'number': 2, 'label': 'a', 'vector': 'V1', 'provenance': 'operator', 'direction': 'x', 'summary': '', 'evidence': []},
+    ])
+    html = _now_panel_with_derived_view(view)
+    assert html.index('>z</strong>') < html.index('>a</strong>')
+
+
+def test_271_generated_at_timestamp_rendered() -> None:
+    html = _now_panel_with_derived_view(_derived_view_fixture())
+    assert '2026-09-17T03:00:00Z' in html
+
+
+def test_271_served_completed_history_demoted_to_fold() -> None:
+    html = tv.build_now_panel(
+        portfolio=None, evolution_tree=None,
+        demand_rotation={'served': {'defect-1': '2026-09-16T00:00:00Z'}},
+        demand_completed=None,
+        derived_view=_derived_view_fixture(),
+    )
+    assert '<details class="now-demand-history">' in html
+    assert 'Served / completed history' in html
+
+
+def test_271_read_derived_view_local_four_states(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    state.mkdir()
+    assert tv.read_local_state(str(state))['derived_view'] == {'status': 'absent'}
+
+    public_dir = state / 'public'
+    public_dir.mkdir()
+    (public_dir / 'derived_view.json').write_text('not-json', encoding='utf-8')
+    result = tv.read_local_state(str(state))['derived_view']
+    assert result['status'] == 'probe_unavailable'
+
+    (public_dir / 'derived_view.json').write_text(json.dumps(_derived_view_fixture()), encoding='utf-8')
+    result = tv.read_local_state(str(state))['derived_view']
+    assert result['status'] == 'present'
+    assert len(result['priority_items']) == 9
+    assert result['charter']['source'] == 'release_goals_md'
+
+
+def test_271_remote_reader_script_mirrors_derived_view(tmp_path: Path) -> None:
+    import contextlib
+    import io
+
+    state = tmp_path / 'state'
+    (state / 'public').mkdir(parents=True)
+    (state / 'public' / 'derived_view.json').write_text(json.dumps(_derived_view_fixture()), encoding='utf-8')
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(state)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    result = namespace['read_derived_view']()
+    assert result['status'] == 'present'
+    assert len(result['priority_items']) == 9
+
 
 def test_local_ci_item_four_states() -> None:
     """#1593/#276: state distinguishes ran from targets_missing; ok=false
