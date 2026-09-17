@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 06:59:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 04:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 05:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1290,7 +1290,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-977e0f7709f8</span>
+      <span class="cycle-pill">cycle-b44f418d58a9</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1319,7 +1319,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 04:06:11.760961 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 04:22:53.340227 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1337,7 +1337,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 35,267 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 39,854 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1355,8 +1355,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 35,267 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,716c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 39,854 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,963c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1771,12 +1771,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T034956Z-canonical-12436359/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T041251Z-canonical-01d57773/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T034956Z-canonical-12436359/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T041251Z-canonical-01d57773/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1928,9 +1928,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,716 chars &bull; ~2,179 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document synthetic token fixture rule for threshold boundary tests in lessons/token_boundary_test_fixtures.md
-Request ID: llm-proposer-cycle-977e0f7709f8
-Cycle ID: cycle-977e0f7709f8
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,963 chars &bull; ~2,240 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/inventory_test_suites.py to discover and summarize existing test suites in tests/
+Request ID: llm-proposer-cycle-b44f418d58a9
+Cycle ID: cycle-b44f418d58a9
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1945,28 +1945,35 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 5b7e3faf merge: integrate selfevo/cycle-cycle-977e0f7709f8
+- f09718cf docs(lessons): add synthetic token fixture rule for threshold boundary tests
 - 9c16dd74 merge: integrate selfevo/cycle-cycle-d2d64d689a24
 - 488ac331 docs(lessons): add edge case test differentiation rule for existing features
 - bebdc273 merge: integrate selfevo/cycle-cycle-8247c8350b07
 - f283a432 docs(lessons): add immediate filter pivot rule for monolithic test timeouts
 - 334ee555 merge: integrate selfevo/cycle-cycle-ee169efa48ae
 - c1a93f01 docs(lessons): add reference pattern search early-exit rule to bounded_inspection_turns
-- 96f1140c merge: integrate selfevo/cycle-cycle-856ad0965865
-- 4cc812f4 feat(detect_repetitive_outputs): add alternating command sequence detection
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-977e0f7709f8.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b44f418d58a9.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Document synthetic token fixture rule for threshold boundary tests in lessons/token_boundary_test_fixtures.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Addresses reflection-15e69a77b528 by documenting guidelines to use synthetic non-dictionary terms or inspect tokenizer STOP_WORDS when constructing boundary-assertion test fixtures, preventing unintentional word overlap failures.\n\nTarget path: lessons/token_boundary_test_fixtures.md&quot;,
+    &quot;title&quot;: &quot;Add scripts/inventory_test_suites.py to discover and summarize existing test suites in tests/&quot;,
+    &quot;backlog_instructions&quot;: &quot;Resolves reflection-7c9d056936dd by creating a script that discovers existing test files under tests/ and formats a compact summary of suites and test cases to provide visibility against test path collisions.\n\nTarget path: scripts/inventory_test_suites.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Document synthetic token fixture rule for threshold boundary tests in lessons/token_boundary_test_fixtures.md (target: lessons/token_boundary_test_fixtures.md)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/inventory_test_suites.py to discover and summarize existing test suites in tests/ (target: scripts/inventory_test_suites.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;scripts/inventory_test_suites.py discovers test suites in tests/ and outputs a compact inventory with test file paths and test counts.&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/inventory_test_suites.py&quot;
+    }
+  }
 }
 ```
 
@@ -1983,25 +1990,25 @@ If you apply this lesson, cite [Lesson lessons/prefer_existing_self_tests.md] in
 
 ## Recent reflections (how past cycles worked — steering hints)
 - When verifying new test classes in integration test suites that involve git operations or worktree setups, run a targeted `-k &lt;NewTestClass&gt;` check first for rapid feedback before running the full fil
-- Check script CLI help (`--help`) or existing flag parsing before calling self-tests, as repository scripts alternate between `--test` and `--self-test`.
-- Avoid bashisms like `${PIPESTATUS}` in exec tool commands when shell execution runs under `/bin/sh` to ensure clean exit code reporting.
+- Before queueing candidate tasks that add CLI options or functions to core scripts, proposer prompts should verify whether the flag or symbol already exists in the target script or test files.
+- When applying the immediate skip protocol, run the frozen expected outcome command verbatim to confirm that the existing codebase satisfies the acceptance criteria before exiting.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 03:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/existing_feature_edge_cases.md. Reward signal will be upgraded by coordinator.
-- Attempt 2 (2026-09-17 03:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/test_timeout_scoping.md. Reward signal will be upgraded by coordinator.
-- Attempt 3 (2026-09-17 02:58 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/bounded_inspection_turns.md. Reward signal will be upgraded by coordinator.
+- Attempt 1 (2026-09-17 04:12 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/token_boundary_test_fixtures.md. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-17 03:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/existing_feature_edge_cases.md. Reward signal will be upgraded by coordinator.
+- Attempt 3 (2026-09-17 03:20 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/test_timeout_scoping.md. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Document synthetic token fixture rule for threshold boundary tests in lessons/token_boundary_test_fixtures.md
+Title: Add scripts/inventory_test_suites.py to discover and summarize existing test suites in tests/
 
 
-Addresses reflection-15e69a77b528 by documenting guidelines to use synthetic non-dictionary terms or inspect tokenizer STOP_WORDS when constructing boundary-assertion test fixtures, preventing unintentional word overlap failures.
+Resolves reflection-7c9d056936dd by creating a script that discovers existing test files under tests/ and formats a compact summary of suites and test cases to provide visibility against test path collisions.
 
-Target path: lessons/token_boundary_test_fixtures.md
+Target path: scripts/inventory_test_suites.py
 
-## Concrete task to implement
-Implement and commit: Document synthetic token fixture rule for threshold boundary tests in lessons/token_boundary_test_fixtures.md (target: lessons/token_boundary_test_fixtures.md)
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/inventory_test_suites.py discovers test suites in tests/ and outputs a compact inventory with test file paths and test counts.
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5916,7 +5923,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 04:18:57 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 06:59:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 05:05:30 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 06:59:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

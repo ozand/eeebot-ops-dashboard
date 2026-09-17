@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">212</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">73.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 06:59:01 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">36.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 25s old &middot; generated 04:18 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 05:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1316,19 +1316,19 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-17 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-b44f418d58a9">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b44f418d58a9">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">cycle-b44f418d58a9</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(scripts): add inventory_test_suites.py to discover and summarize test suites</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b44f418d58a9)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-b44f418d58a9">details</a>
             
-            
+            <a href="lineage.html#node-def4bb0" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-17T04:18:17.515462Z">07:18 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7c9d056936dd</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/prefer_existing_self_tests.md (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 9.12K tok &middot; dur 17s</div>
+          <div class="feed-files">&#128193; scripts/inventory_test_suites.py, tests/test_inventory_test_suites.py</div>
+          <div class="feed-cost">&#9889; 29 calls &middot; 1.14M tok &middot; dur 11m30s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-977e0f7709f8">
@@ -1343,7 +1343,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-15e69a77b528</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-05-001">error:ERR-2026-09-05-001</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/prefer_existing_self_tests.md (unavailable)</span></div>
           <div class="feed-files">&#128193; lessons/token_boundary_test_fixtures.md</div>
-          <div class="feed-cost">&#9889; 24 calls &middot; 587.4K tok &middot; dur 5m8s</div>
+          <div class="feed-cost">&#9889; 25 calls &middot; 613.5K tok &middot; dur 5m34s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-aaa9fa84cd63">
@@ -2071,7 +2071,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 04:18:57 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 06:59:01 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 05:05:30 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 06:59:01 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
