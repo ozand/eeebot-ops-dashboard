@@ -3338,9 +3338,7 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
             seq['ref'] += 1
             return cp('')
         if 'branches/gh-pages' in joined:
-            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
-        if 'git/ref/heads/gh-pages' in joined:
-            return cp('oldparent')
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if '/pages' in joined:
             return cp('{}')
         return cp('{}')
@@ -3352,6 +3350,153 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
     assert seq['tree'] == 1
     assert seq['commit'] == 1
     assert seq['ref'] == 1  # exactly one atomic ref switch
+
+# ---------------------------------------------------------------------------
+# Issue #270: publish_to_pages closes the base_tree/ref race -- a commit
+# landing on gh-pages between the base_tree read and the ref update used to
+# be silently dropped (base_tree read too early, ref update forced).
+# ---------------------------------------------------------------------------
+
+
+def test_270_no_race_single_attempt_no_retry_message(monkeypatch, capsys) -> None:
+    calls = []
+    branch_reads = {'n': 0}
+
+    def fake_gh(args, input_text=None):
+        calls.append(list(args))
+        joined = ' '.join(args)
+
+        def cp(out, rc=0, err=''):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=rc, stdout=out, stderr=err)
+        if 'branches/gh-pages' in joined:
+            branch_reads['n'] += 1
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if 'git/blobs' in joined:
+            return cp('blobsha1')
+        if 'git/trees' in joined:
+            return cp('treesha-new')
+        if 'git/commits' in joined and '-X' in args:
+            return cp('commitsha-new')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            return cp('')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+    rc, _fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    assert rc == 0
+    # 1 bootstrap existence probe + exactly 1 retry-loop read -- no race.
+    assert branch_reads['n'] == 2
+    out = capsys.readouterr()
+    assert 'retr' not in out.out.lower() and 'retr' not in out.err.lower()
+    assert 'moved' not in out.out.lower() and 'moved' not in out.err.lower()
+    # Non-forcing: the ref PATCH never carries a force flag.
+    patch_calls = [a for a in calls if 'git/refs/heads/gh-pages' in ' '.join(a) and '-X' in a]
+    assert patch_calls
+    assert not any('force' in part for part in patch_calls[0])
+
+
+def test_270_concurrent_commit_between_read_and_write_is_retried_not_lost(monkeypatch, capsys) -> None:
+    """The exact race from the issue: a commit lands on gh-pages between the
+    base_tree read and the ref update. The publisher must reject its own
+    stale-parented commit (422, non-forcing update), re-read the NOW-current
+    head, and rebuild the tree/commit from THAT -- so the concurrent
+    commit's tree becomes this commit's base_tree and its files survive,
+    rather than being replaced by a tree built on the stale parent."""
+    payloads = {'tree': [], 'commit': []}
+    branch_reads = {'n': 0}
+
+    def fake_gh(args, input_text=None):
+        joined = ' '.join(args)
+
+        def cp(out, rc=0, err=''):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=rc, stdout=out, stderr=err)
+        if 'branches/gh-pages' in joined:
+            branch_reads['n'] += 1
+            # Call 1 is the bootstrap existence probe (content unused --
+            # only its returncode matters); the retry loop's own reads
+            # start at call 2, so loop_attempt is 1-indexed from there.
+            loop_attempt = branch_reads['n'] - 1
+            if loop_attempt <= 1:
+                # This read's view: the concurrent human commit has not
+                # landed yet.
+                return cp('{"commit":{"sha":"stale-parent","commit":{"tree":{"sha":"stale-tree"}}}}')
+            # Re-read after rejection: the concurrent commit is now the tip.
+            return cp('{"commit":{"sha":"concurrent-parent","commit":{"tree":{"sha":"concurrent-tree"}}}}')
+        if 'git/blobs' in joined:
+            return cp('blobsha1')
+        if 'git/trees' in joined:
+            payloads['tree'].append(json.loads(input_text))
+            return cp(f'treesha-attempt{branch_reads["n"]}')
+        if 'git/commits' in joined and '-X' in args:
+            payloads['commit'].append(json.loads(input_text))
+            return cp(f'commitsha-attempt{branch_reads["n"]}')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            if branch_reads['n'] - 1 <= 1:
+                # Rejected: stale-parent is no longer the branch tip.
+                return cp('', rc=1, err='HTTP 422: Update is not a fast forward')
+            return cp('')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+    rc, _fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    assert rc == 0
+    # 1 bootstrap probe + 2 retry-loop reads (the rejected attempt, then the
+    # re-read that landed).
+    assert branch_reads['n'] == 3
+
+    # The commit that actually landed carries the CONCURRENT commit as its
+    # parent and base_tree -- inheriting every one of its files via git's
+    # own tree-inheritance, not the stale ones.
+    assert payloads['tree'][-1]['base_tree'] == 'concurrent-tree'
+    assert payloads['commit'][-1]['parents'] == ['concurrent-parent']
+    # The FIRST (rejected) attempt really was built from the stale read --
+    # proving the retry, not a lucky single read, is what closed the race.
+    assert payloads['tree'][0]['base_tree'] == 'stale-tree'
+    assert payloads['commit'][0]['parents'] == ['stale-parent']
+
+    out = capsys.readouterr()
+    assert 'attempt 1/3' in out.err
+    assert 'retried and landed on attempt 2/3' in out.out
+
+
+def test_270_retries_bounded_and_fails_loudly_on_exhaustion(monkeypatch, capsys) -> None:
+    branch_reads = {'n': 0}
+
+    def fake_gh(args, input_text=None):
+        joined = ' '.join(args)
+
+        def cp(out, rc=0, err=''):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=rc, stdout=out, stderr=err)
+        if 'branches/gh-pages' in joined:
+            branch_reads['n'] += 1
+            n = branch_reads['n']
+            return cp(f'{{"commit":{{"sha":"parent{n}","commit":{{"tree":{{"sha":"tree{n}"}}}}}}}}')
+        if 'git/blobs' in joined:
+            return cp('blobsha1')
+        if 'git/trees' in joined:
+            return cp('treesha')
+        if 'git/commits' in joined and '-X' in args:
+            return cp('commitsha')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            # Every attempt races and loses -- the branch never stops moving.
+            return cp('', rc=1, err='HTTP 422: Update is not a fast forward')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+    rc, fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    assert rc == 1
+    assert fp == {}
+    # 1 bootstrap probe + 3 retry-loop reads -- bounded, never unbounded.
+    assert branch_reads['n'] == 4
+    out = capsys.readouterr()
+    assert 'failed after 3 attempt(s)' in out.err
+
 
 # ---------------------------------------------------------------------------
 # Issue #71: DGM archive tree on lineage.html (full history)
@@ -3717,9 +3862,7 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
             return cp('')
         if 'branches/gh-pages' in joined:
-            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
-        if 'git/ref/heads/gh-pages' in joined:
-            return cp('oldparent')
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if '/pages' in joined:
             return cp('{}')
         return cp('{}')
@@ -3758,9 +3901,7 @@ def _fake_gh_publish_factory(calls: list):
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
             return cp('')
         if 'branches/gh-pages' in joined:
-            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
-        if 'git/ref/heads/gh-pages' in joined:
-            return cp('oldparent')
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if '/pages' in joined:
             return cp('{}')
         return cp('{}')

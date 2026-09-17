@@ -9434,19 +9434,21 @@ def publish_to_pages(
                   file=sys.stderr)
             return 1, {}
 
-    head_tree = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}',
-                     '--jq', '.commit.commit.tree.sha'])
-    base_tree = head_tree.stdout.strip() if head_tree.returncode == 0 else None
-
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
+    # #270: base_tree is no longer read here -- the bootstrap block above
+    # already guarantees the branch exists, so a fresh base_tree is always
+    # obtainable below; the only way it wouldn't be is a transient read
+    # failure, which the retry loop returns 1 for BEFORE ever building a
+    # tree, so a tree that omits an unchanged page is never created without
+    # a base_tree to inherit it from.
     tree_entries = []
     fingerprints: dict[str, str] = {}
     skipped: list[str] = []
     for fname, html in sorted(pages.items()):
         fingerprint = _page_fingerprint(html)
         fingerprints[fname] = fingerprint
-        if base_tree and previous_fingerprints.get(fname) == fingerprint:
+        if previous_fingerprints.get(fname) == fingerprint:
             skipped.append(fname)
             continue
         blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
@@ -9474,41 +9476,74 @@ def publish_to_pages(
         print(f'publish: {len(skipped)} page(s) unchanged, nothing to publish')
         return 0, fingerprints
 
-    # 2. One tree carrying every CHANGED page.
+    # 2-4. One tree, one commit, one ref update -- retried as a whole
+    # against a fresh read on a concurrent-write rejection (#270). The
+    # publisher used to read base_tree once, long before this point, then
+    # force-update the ref: a commit landed on gh-pages between that read
+    # and the write took its files out from under it, silently, because the
+    # stale base_tree became this commit's entire tree and the force push
+    # never checked whether the ref had moved. Closing that race means:
+    # base_tree and the commit's parent must come from the SAME read, taken
+    # immediately before building the tree (not cached from earlier), and
+    # the ref update must be non-forcing so a ref that moved after that
+    # read is rejected by GitHub (422, "not a fast forward") instead of
+    # overwritten -- the fix retries the whole read/tree/commit cycle
+    # against the new head rather than forcing the stale one through.
     import json as _json
-    tree_payload = {'tree': tree_entries}
-    if base_tree:
-        tree_payload['base_tree'] = base_tree
-    tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
-                '--jq', '.sha', '--input', '-'], input_text=_json.dumps(tree_payload))
-    if tree.returncode != 0:
-        print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
-              file=sys.stderr)
-        return 1, {}
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        head = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+        if head.returncode != 0:
+            print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1, {}
+        try:
+            head_data = _json.loads(head.stdout)
+            parent_sha = head_data['commit']['sha']
+            base_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            print(f'publish: unreadable {PUBLISH_BRANCH} HEAD: {exc}', file=sys.stderr)
+            return 1, {}
 
-    # 3. One commit.
-    parent = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/{PUBLISH_BRANCH}',
-                  '--jq', '.object.sha'])
-    commit_payload = {
-        'message': 'techtree multi-page snapshot (techtree_viewer --publish)',
-        'tree': tree.stdout.strip(),
-    }
-    if parent.returncode == 0 and parent.stdout.strip():
-        commit_payload['parents'] = [parent.stdout.strip()]
-    commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits',
-                  '--jq', '.sha', '--input', '-'], input_text=_json.dumps(commit_payload))
-    if commit.returncode != 0:
-        print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
-              file=sys.stderr)
-        return 1, {}
+        tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
+        tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
+                    '--jq', '.sha', '--input', '-'], input_text=_json.dumps(tree_payload))
+        if tree.returncode != 0:
+            print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
+                  file=sys.stderr)
+            return 1, {}
 
-    # 4. Single ref update -- the atomic switch.
-    ref = _gh(['api', '-X', 'PATCH', f'repos/{PUBLISH_REPO}/git/refs/heads/{PUBLISH_BRANCH}',
-               '-f', f'sha={commit.stdout.strip()}'])
-    if ref.returncode != 0:
-        print(f'publish: ref update failed: {ref.stderr.strip()[:300]}',
-              file=sys.stderr)
-        return 1, {}
+        commit_payload = {
+            'message': 'techtree multi-page snapshot (techtree_viewer --publish)',
+            'tree': tree.stdout.strip(),
+            'parents': [parent_sha],
+        }
+        commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits',
+                      '--jq', '.sha', '--input', '-'], input_text=_json.dumps(commit_payload))
+        if commit.returncode != 0:
+            print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
+                  file=sys.stderr)
+            return 1, {}
+
+        # Non-forcing: GitHub rejects this if PUBLISH_BRANCH moved since
+        # `head` was read above, rather than accepting a commit whose
+        # parent is no longer the branch tip.
+        ref = _gh(['api', '-X', 'PATCH', f'repos/{PUBLISH_REPO}/git/refs/heads/{PUBLISH_BRANCH}',
+                   '-f', f'sha={commit.stdout.strip()}'])
+        if ref.returncode == 0:
+            if attempt > 1:
+                print(f'publish: {PUBLISH_BRANCH} moved during publish -- '
+                      f'retried and landed on attempt {attempt}/{max_attempts}')
+            break
+
+        err = ref.stderr.strip()
+        retryable = '422' in err or 'fast' in err.lower()
+        if not retryable or attempt >= max_attempts:
+            print(f'publish: ref update failed after {attempt} attempt(s): {err[:300]}',
+                  file=sys.stderr)
+            return 1, {}
+        print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
+              f're-reading and retrying', file=sys.stderr)
 
     # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
     pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
