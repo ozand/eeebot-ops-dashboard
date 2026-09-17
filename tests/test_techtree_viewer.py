@@ -2856,6 +2856,90 @@ def test_293_leaf_outcome_push_pending_distinct_from_skipped() -> None:
     assert tv._leaf_outcome({'outcome': 'something_else'}) == 'skipped'
 
 
+# ---------------------------------------------------------------------------
+# Issue #297: outcomes `pushed_late` / `superseded` / `abandoned` (eeebot#1709
+# increment 2, PR eeebot#1716) -- pushed_late is a delayed success (the
+# `integrated` bucket, noted "late"); superseded/abandoned are their own
+# neutral pills, neither failed nor skipped.
+# ---------------------------------------------------------------------------
+
+
+def test_297_pushed_late_renders_as_integrated_with_late_note() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-latepush-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-latepush-1', 'outcome': 'pushed_late',
+         'push_attempts': 2, 'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-latepush-1"')[1].split('</li>')[0]
+    assert 'INTEGRATED' in row
+    assert 'badge-integrated' in row
+    assert 'late' in row
+    assert '2 attempt(s)' in row
+    # A genuine success, delayed -- not failed, not skipped, and not the
+    # push_pending bucket either (it already resolved).
+    assert 'FAILED' not in row
+    assert 'SKIPPED' not in row
+    assert 'PUSH PENDING' not in row
+    assert 'data-outcome="integrated"' in html_out
+
+    history_html = tv.build_cycle_feed([
+        {'phase': 'outcome', 'cycle_id': 'cycle-latepush-1', 'outcome': 'pushed_late',
+         'push_attempts': 2, 'ts': '2026-08-18T03:05:00Z'},
+    ], history_mode=True)
+    # No dedicated filter chip -- pushed_late folds into 'integrated'.
+    assert 'data-filter="pushed_late"' not in history_html
+    assert 'data-outcome="integrated"' in history_html
+
+
+def test_297_superseded_renders_own_neutral_pill() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-superseded-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-superseded-1', 'outcome': 'superseded',
+         'reason': 'push_pending_main_moved', 'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-superseded-1"')[1].split('</li>')[0]
+    assert 'SUPERSEDED' in row
+    assert 'badge-superseded' in row
+    assert 'push_pending_main_moved' in row
+    assert 'FAILED' not in row
+    assert 'SKIPPED' not in row
+    assert 'data-outcome="superseded"' in html_out
+
+    history_html = tv.build_cycle_feed([
+        {'phase': 'outcome', 'cycle_id': 'cycle-superseded-1', 'outcome': 'superseded',
+         'ts': '2026-08-18T03:05:00Z'},
+    ], history_mode=True)
+    assert 'data-filter="superseded"' in history_html
+
+
+def test_297_abandoned_renders_own_neutral_pill() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-abandoned-1', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-abandoned-1', 'outcome': 'abandoned',
+         'reason': 'push_pending_branch_missing', 'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-abandoned-1"')[1].split('</li>')[0]
+    assert 'ABANDONED' in row
+    assert 'badge-abandoned' in row
+    assert 'push_pending_branch_missing' in row
+    assert 'FAILED' not in row
+    assert 'SKIPPED' not in row
+    assert 'data-outcome="abandoned"' in html_out
+
+    history_html = tv.build_cycle_feed([
+        {'phase': 'outcome', 'cycle_id': 'cycle-abandoned-1', 'outcome': 'abandoned',
+         'ts': '2026-08-18T03:05:00Z'},
+    ], history_mode=True)
+    assert 'data-filter="abandoned"' in history_html
+
+
+def test_297_leaf_outcome_maps_new_statuses() -> None:
+    assert tv._leaf_outcome({'outcome': 'pushed_late'}) == 'integrated'
+    assert tv._leaf_outcome({'status': 'pushed_late'}) == 'integrated'
+    assert tv._leaf_outcome({'outcome': 'superseded'}) == 'superseded'
+    assert tv._leaf_outcome({'outcome': 'abandoned'}) == 'abandoned'
+
+
 def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
     # AC: rendered line contains the real middle dot and NOT literal '&middot;'
     data = _fixture()
