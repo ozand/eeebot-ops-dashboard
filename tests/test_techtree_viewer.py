@@ -4481,6 +4481,58 @@ def test_272_build_cycle_details_attaches_and_bounds_prompts() -> None:
     details2 = tv.build_cycle_details([], None, None, None, cycle_prompts=cycle_prompts_only)
     assert 'cycle-only-prompt' in details2
 
+# ---------------------------------------------------------------------------
+# Issue #289: cycle detail shows error_card_recording outcome (eeebot#1687)
+# ---------------------------------------------------------------------------
+
+
+def test_289_created_status_carries_card_commit() -> None:
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-rb1', 'outcome': 'failed', 'ts': '2026-09-17T00:00:00Z'},
+        {'phase': 'error_card_recording', 'cycle_id': 'cycle-rb1', 'status': 'created', 'card_commit': 'abc1234'},
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert details['cycle-rb1']['error_card_recording'] == {'status': 'created', 'card_commit': 'abc1234'}
+
+
+def test_289_not_created_status_carries_skip_reason() -> None:
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-rb2', 'outcome': 'failed', 'ts': '2026-09-17T00:00:00Z'},
+        {'phase': 'error_card_recording', 'cycle_id': 'cycle-rb2', 'status': 'not_created', 'skip_reason': 'push_rejected'},
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert details['cycle-rb2']['error_card_recording'] == {'status': 'not_created', 'skip_reason': 'push_rejected'}
+
+
+def test_289_no_row_means_no_rollback_not_an_error() -> None:
+    """A cycle that didn't roll back has no error_card_recording row at
+    all -- that absence must not be rendered as an error or an unavailable
+    state, just no fact."""
+    ledger_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-clean', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'},
+    ]
+    details = tv.build_cycle_details(ledger_rows, None, None, None)
+    assert 'error_card_recording' not in details['cycle-clean']
+
+
+def test_289_unreadable_ledger_is_probe_unavailable_distinct_from_no_row() -> None:
+    details_unreadable = tv.build_cycle_details(None, None, None, None)
+    details_empty_but_readable = tv.build_cycle_details([], None, None, None)
+    assert details_unreadable['__ledger_status__'] == {'status': 'probe_unavailable'}
+    # A readable-but-empty ledger needs no sentinel: absence of the key
+    # itself means "readable" to the renderer, same as absence of any one
+    # cycle's own error_card_recording row means "didn't roll back".
+    assert '__ledger_status__' not in details_empty_but_readable
+
+
+def test_289_cycle_detail_page_renders_all_error_card_states() -> None:
+    page = tv.build_cycle_detail_page()
+    assert 'data-error-card-state="created"' in page
+    assert 'data-error-card-state="not_created"' in page
+    assert 'data-error-card-state="probe_unavailable"' in page
+    assert 'error_card_recording' in page
+    assert '__ledger_status__' in page
+
 
 def test_272_cycle_detail_page_renders_four_distinguishable_states() -> None:
     page = tv.build_cycle_detail_page()
