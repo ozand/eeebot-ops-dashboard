@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">72.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 05:08:07 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 28s old &middot; generated 02:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 02:44 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1290,7 +1290,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-bc011e8b7d11</span>
+      <span class="cycle-pill">cycle-856ad0965865</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1319,7 +1319,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 02:15:53.455044 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 02:34:27.634064 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1337,7 +1337,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 26,302 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 43,831 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1355,8 +1355,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 26,302 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,123c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 43,831 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,013c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1928,9 +1928,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,123 chars &bull; ~2,030 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Record 5-8 turn inspection cap and transition rule in lessons/bounded_inspection_turns.md
-Request ID: llm-proposer-cycle-bc011e8b7d11
-Cycle ID: cycle-bc011e8b7d11
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,013 chars &bull; ~2,003 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add alternating command sequence detection to scripts/detect_repetitive_outputs.py
+Request ID: llm-proposer-cycle-856ad0965865
+Cycle ID: cycle-856ad0965865
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1945,50 +1945,35 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 63236315 merge: integrate selfevo/cycle-cycle-bc011e8b7d11
+- ce5de97e docs(lessons): add 5-8 turn inspection cap and transition rule lesson
 - dd275a92 merge: integrate selfevo/cycle-cycle-7e5e7478e289
 - ccc63709 selfevo: auto-commit uncommitted subagent work — Add scripts/detect_repetitive_outputs.py to detect consecutive identical or near
 - a76964ba merge: integrate selfevo/cycle-cycle-c231b6f16975
 - 6b656e03 feat(validate_test_existence): recognize package-qualified imports in pairing check
 - b18c22e7 merge: integrate selfevo/cycle-cycle-cfb6a8286ef2
 - c82245e4 feat(run_all_tests): add -x exitfirst short flag (alias for --fail-fast)
-- 582ecf1d merge: integrate selfevo/cycle-cycle-5486ff44f150
-- 88df5294 feat(validate_heredoc_urls): add clean_files list to JSON report and summary
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bc011e8b7d11.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-856ad0965865.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Record 5-8 turn inspection cap and transition rule in lessons/bounded_inspection_turns.md&quot;,
-    &quot;backlog_instructions&quot;: &quot;Documents the operational rule to cease shell inspection within 5-8 turns once target file behavior is confirmed, resolving cycle-c31553ae8485&#x27;s redundant 77-turn search loop.\n\nTarget path: lessons/bounded_inspection_turns.md&quot;,
+    &quot;title&quot;: &quot;Add alternating command sequence detection to scripts/detect_repetitive_outputs.py&quot;,
+    &quot;backlog_instructions&quot;: &quot;Evidence in cycle-c31553ae8485 shows the agent repeated two alternating commands across dozens of turns. Extending detect_repetitive_outputs.py to detect alternating repeating cycles identifies loops that single-step consecutive checks miss.\n\nTarget path: scripts/detect_repetitive_outputs.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Record 5-8 turn inspection cap and transition rule in lessons/bounded_inspection_turns.md (target: lessons/bounded_inspection_turns.md)&quot;,
-  &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;Lesson file documenting the 5-8 turn inspection limit exists.&quot;,
-    &quot;check&quot;: {
-      &quot;kind&quot;: &quot;file_exists&quot;,
-      &quot;path&quot;: &quot;lessons/bounded_inspection_turns.md&quot;
-    }
-  }
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add alternating command sequence detection to scripts/detect_repetitive_outputs.py (target: scripts/detect_repetitive_outputs.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-06-15-002  Title: Runtime lessons/ directory missing — symlink not created after deploy
-Root cause: The deployment script copies Python source files but does not create the lessons/ directory
-or symlink in the runtime root. LessonsDB.record_lesson() is non-raising, so the failure
-was invisible — no log, no error, just silent no-op.
-
-Prevention: 1. deploy_release.sh must create lessons/ symlink pointing to eeebot-self-evolving/lessons/
-   as part of every release activation step.
-2. After deploying lessons integration, verify with:
-   sudo ls -la /opt/.../current/lessons
-   sudo python3 -c &quot;from nanobot.runtime.lessons import LessonsDB; ...&quot;
-
+ID: ERR-20260912-51ca52a5  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Add structured record normalization and conflict detection to scripts/approval_t
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
 ID: lessons/concise_late_turn_tool_outputs.md  Title: Late-Turn Concise Tool Execution and Test Output Truncation
@@ -1997,21 +1982,25 @@ Solution:
 If you apply this lesson, cite [Lesson lessons/concise_late_turn_tool_outputs.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When enhancing large scripts (&gt;2,000 lines), apply edits incrementally (e.g., adding helper functions first) rather than planning an all-in-one monolithic overhaul of AST inspection, CLI arguments, an
-- Once code inspection and test execution confirm that the requested functionality is already implemented and passing, invoke the immediate skip protocol directly rather than spending multiple turns que
-- Keep pre-implementation analysis concise and transition promptly to file scaffolding rather than enumerating exhaustive theoretical edge cases in reasoning, preventing completion token exhaustion (`fi
+- When implementing CLI options that accept option strings (arguments starting with &#x27;-&#x27;), require and document the `--option=VALUE` syntax or use nargs/custom parsing up front to prevent argparse from t
+- Avoid executing the full repository test suite (`scripts/run_all_tests.py`) on resource-constrained hosts; rely strictly on targeted companion pytests and targeted caller grep checks to prevent 60-sec
+- When running commands wrapped with bash &#x27;timeout &lt;N&gt;&#x27; that exceed 60 seconds, supply the tool argument &#x27;timeout&#x27;: &lt;N&gt; to the exec call so the executor harness does not terminate the command at its 60-
+
+## Previous attempts for this task
+- Attempt 1 (2026-09-17 02:03 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/detect_repetitive_outputs.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-17 00:28 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Record 5-8 turn inspection cap and transition rule in lessons/bounded_inspection_turns.md
+Title: Add alternating command sequence detection to scripts/detect_repetitive_outputs.py
 
 
-Documents the operational rule to cease shell inspection within 5-8 turns once target file behavior is confirmed, resolving cycle-c31553ae8485&#x27;s redundant 77-turn search loop.
+Evidence in cycle-c31553ae8485 shows the agent repeated two alternating commands across dozens of turns. Extending detect_repetitive_outputs.py to detect alternating repeating cycles identifies loops that single-step consecutive checks miss.
 
-Target path: lessons/bounded_inspection_turns.md
+Target path: scripts/detect_repetitive_outputs.py
 
-## Expected outcome (frozen claim from the proposal — informational)
-Lesson file documenting the 5-8 turn inspection limit exists.
+## Concrete task to implement
+Implement and commit: Add alternating command sequence detection to scripts/detect_repetitive_outputs.py (target: scripts/detect_repetitive_outputs.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5926,7 +5915,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 02:30:56 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 05:08:07 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 02:44:39 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 05:08:07 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
