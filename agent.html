@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.1%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 19:39:29 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.6%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="28">data: 28s old &middot; generated 17:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="33">data: 33s old &middot; generated 17:26 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ffffd15f803f</span>
+      <span class="cycle-pill">cycle-0e9996ba5a69</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1318,14 +1318,14 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Tier 2 Reachable Knowledge</span>
-      <span class="kpi-value">~988.6 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-value">~988.7 <span class="kpi-unit">KB</span></span>
       <span class="kpi-sub">198 files reachable via read_file</span>
     </div>
   </div>
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 16:47:34.763838 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 17:05:35.699558 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 37,829 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 41,897 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 37,829 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,887c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 41,897 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,307c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1934,9 +1934,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,887 chars &bull; ~1,971 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add line-based YAML list parser stripping inline comments to scripts/parse_yaml_list.py
-Request ID: llm-proposer-cycle-ffffd15f803f
-Cycle ID: cycle-ffffd15f803f
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,307 chars &bull; ~2,076 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/detect_off_target_reads.py to flag file read sequences outside target and companion test paths
+Request ID: llm-proposer-cycle-0e9996ba5a69
+Cycle ID: cycle-0e9996ba5a69
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1951,62 +1951,69 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 32ec0f78 merge: integrate selfevo/cycle-cycle-ffffd15f803f
+- 979debb8 feat(parse_yaml_list): add line-based YAML list parser stripping inline comments
 - c445b8c3 merge: integrate selfevo/cycle-cycle-e04f3ce872f2
 - 33aee9c2 feat(validate_test_existence): surface companion test path in isolated --target reports
 - 78d1e6cd merge: integrate selfevo/cycle-cycle-ae88c092f575
 - 7ecca0bd feat(inspect_cycle_diff): summarize modified files and test cases from a git commit or diff
 - 4ca95195 merge: integrate selfevo/cycle-cycle-29891423d05e
 - 3fb835de feat(detect_chained_git_commands): flag compound commands chaining test runs with git staging/commit
-- a9322ce9 merge: integrate selfevo/cycle-cycle-633da6d9a806
-- 2d11e6d3 docs: propose stem-dissimilarity weighting for existence-index dedup
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ffffd15f803f.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-0e9996ba5a69.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add line-based YAML list parser stripping inline comments to scripts/parse_yaml_list.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;cycle-88abdad89fc2 failed on models.yaml entries with inline comments like &#x27;- model # note&#x27;; adding a utility to strip comments and whitespace fixes this line-based parsing defect.\n\nTarget path: scripts/parse_yaml_list.py&quot;,
+    &quot;title&quot;: &quot;Add scripts/detect_off_target_reads.py to flag file read sequences outside target and companion test paths&quot;,
+    &quot;backlog_instructions&quot;: &quot;Addresses cycle fallback-c8057e396b07 where 75 turns were spent reading unrelated callers instead of modifying the target script, by providing a bounded utility to detect read calls drifting outside the designated target and test scope.\n\nTarget path: scripts/detect_off_target_reads.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add line-based YAML list parser stripping inline comments to scripts/parse_yaml_list.py (target: scripts/parse_yaml_list.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/detect_off_target_reads.py to flag file read sequences outside target and companion test paths (target: scripts/detect_off_target_reads.py)&quot;,
+  &quot;expected_outcome&quot;: {
+    &quot;claim&quot;: &quot;detect_off_target_reads flags read paths that deviate from the assigned target and companion test files&quot;,
+    &quot;check&quot;: {
+      &quot;kind&quot;: &quot;script_exit_zero&quot;,
+      &quot;command&quot;: &quot;python3 scripts/detect_off_target_reads.py --self-test&quot;
+    }
+  }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+ID: ERR-20260907-bd9c0bed  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Add self-test suite and CLI execution entry point to scripts/approval_truth.py
 Root cause: 
 Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/inspect_cli_signatures_before_invocation.md  Title: Inspect CLI Parser Signatures Before Script Invocation
-Problem: Read lessons/inspect_cli_signatures_before_invocation.md: **Probe the parser signature, not just the help text, for any script not invoked earlier in the same session.** `grep -n &quot;add_argument&quot; &lt;script&gt;` reveals the positional/named split that a `--help` usage line only hints at; use `--help`
+ID: lessons/companion_cycle_test_verification.md  Title: Companion Cycle Verification Before Proposing Test Additions
+Problem: Read lessons/companion_cycle_test_verification.md: Treat &quot;did a companion cycle already add these tests?&quot; as a mandatory pre-proposal check for any reflection demand whose deliverable is a test file.
 Solution: 
-If you apply this lesson, cite [Lesson lessons/inspect_cli_signatures_before_invocation.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/companion_cycle_test_verification.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When checking CLI behavior for specific runner arguments (like `--suite pytest`), inspect the parser choices or docstrings first to confirm valid argument semantics before debugging target discovery p
-- Bound internal reasoning length and transition to concrete tool actions (such as drafting stubs or running edits) early rather than evaluating extensive hypothetical implementation questions in a sing
-- When executing workspace inspection scripts that perform multiple git subprocess calls across repository modules on the i686 architecture, provide an explicit `timeout` parameter in `exec` or query ta
+- Consolidate pre-implementation checks of script entrypoint idioms and style parameters into a single step or run existing validation scripts against draft files rather than reading validator implement
+- When authoring tests for bounded search tools that use a low match limit (`--limit`), select unique identifiers rather than common repository tokens to prevent earlier alphabetical matches from satura
+- Asserted that a specific target file would appear in search results when searching for a ubiquitous repository token (`REPO_ROOT`) under `--limit 5`, which failed because alphabetically earlier files 
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 16:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
-- Attempt 2 (2026-09-17 15:11 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/inspect_cycle_diff.py, tests/test_inspect_cycle_diff.py. Reward signal will be…
+- Attempt 1 (2026-09-17 16:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/parse_yaml_list.py, tests/test_parse_yaml_list.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-17 16:35 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_test_existence.py, tests/test_validate_test_existence.py. Reward signal will…
 
 ## Concrete task to implement
 
-Title: Add line-based YAML list parser stripping inline comments to scripts/parse_yaml_list.py
+Title: Add scripts/detect_off_target_reads.py to flag file read sequences outside target and companion test paths
 
 
-cycle-88abdad89fc2 failed on models.yaml entries with inline comments like &#x27;- model # note&#x27;; adding a utility to strip comments and whitespace fixes this line-based parsing defect.
+Addresses cycle fallback-c8057e396b07 where 75 turns were spent reading unrelated callers instead of modifying the target script, by providing a bounded utility to detect read calls drifting outside the designated target and test scope.
 
-Target path: scripts/parse_yaml_list.py
+Target path: scripts/detect_off_target_reads.py
 
-## Concrete task to implement
-Implement and commit: Add line-based YAML list parser stripping inline comments to scripts/parse_yaml_list.py (target: scripts/parse_yaml_list.py)
+## Expected outcome (frozen claim from the proposal — informational)
+detect_off_target_reads flags read paths that deviate from the assigned target and companion test files
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -2056,7 +2063,7 @@ Do NOT modify: state/, goals.md, IDENTITY.md, secrets, or systemd units.
     <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
-    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~988.6 KB</strong> across <strong>198</strong> files.</p>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~988.7 KB</strong> across <strong>198</strong> files.</p>
 <div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 12353c · retained 34/34 · complete · omitted: none</div>
 <div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
 <div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>yes</td><td>yes</td><td>6</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>chained-python-execution</td><td>yes</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>check-target-completion</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>yes</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>yes</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>yes</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>yes</td><td>yes</td><td>12</td><td>10</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>yes</td><td>yes</td><td>4</td><td>2</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>yes</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>yes</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>yes</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>memory</td><td>yes</td><td>no</td><td>0</td><td>0</td><td>not on disk</td></tr><tr><td>memory-lookup</td><td>yes</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>yes</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>yes</td><td>yes</td><td>50</td><td>45</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>yes</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>skill-creator</td><td>yes</td><td>no</td><td>0</td><td>0</td><td>not on disk</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>yes</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>yes</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>yes</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>yes</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr></tbody></table>
@@ -5921,7 +5928,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 17:01:53 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 19:39:29 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 17:26:54 UTC &middot; host eeepc &middot; newest source 33s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 19:39:29 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
