@@ -1087,7 +1087,7 @@ def test_publish_to_pages_returns_one_when_gh_raises(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(subprocess, 'run', _raise_timeout)
 
-    rc = tv.publish_to_pages('<html></html>')  # must not raise
+    rc, _fp = tv.publish_to_pages('<html></html>')  # must not raise
 
     assert rc == 1
 
@@ -3107,7 +3107,7 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc = tv.publish_to_pages({'index.html': '<html>a</html>', 'cycles.html': '<html>b</html>'})
+    rc, _fp = tv.publish_to_pages({'index.html': '<html>a</html>', 'cycles.html': '<html>b</html>'})
     assert rc == 0
     assert seq['blob'] == 2
     assert seq['tree'] == 1
@@ -3425,7 +3425,20 @@ def test_issue72_day_grouping_preserved() -> None:
     assert 'Optimize prompt caching for proposer' in cyc
 
 
+def _read_archived_rows(pages: dict) -> list:
+    """Test helper: reconstruct the full newest-first archived-row list from
+    the chunked cycles-archive files (#278)."""
+    idx = json.loads(pages[tv.CYCLES_ARCHIVE_INDEX_FILE])
+    rows: list = []
+    for i in range(idx['chunk_count'] - 1, -1, -1):
+        rows.extend(json.loads(pages[tv.cycles_archive_chunk_file(i)]))
+    return rows
+
+
 def test_issue72_history_mode_full_no_cap() -> None:
+    """#278: 'no cap' now means no cycle is DROPPED, not that every row is
+    inlined -- rows beyond the visible window move to the chunked cycles
+    archive instead of being CSS-hidden-but-still-shipped in cycles.html."""
     data = _fixture()
     extra = []
     for i in range(60):
@@ -3434,8 +3447,10 @@ def test_issue72_history_mode_full_no_cap() -> None:
     data['ledger_tail'] = list(data['ledger_tail']) + extra
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     cyc = pages['cycles.html']
+    archive_text = ''.join(_read_archived_rows(pages))
     for i in range(60):
-        assert f'id="cycle-cycle-hist{i:02d}"' in cyc
+        marker = f'id="cycle-cycle-hist{i:02d}"'
+        assert marker in cyc or marker in archive_text, f'{marker} missing from both cycles.html and the archive'
 
 # ---------------------------------------------------------------------------
 # Issue #81: blob payloads go via stdin (--input -), never via argv
@@ -3471,7 +3486,7 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc = tv.publish_to_pages({'cycles.html': big_page})
+    rc, _fp = tv.publish_to_pages({'cycles.html': big_page})
     assert rc == 0
     blob_calls = [(a, t) for a, t in captured if 'git/blobs' in ' '.join(a)]
     assert blob_calls, 'blob call missing'
@@ -3481,6 +3496,179 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         assert '-f' not in args
         assert all(len(a) < 10_000 for a in args), 'argv carries payload'
         assert big_page[:100] in input_text or len(input_text) > 300_000
+
+# ---------------------------------------------------------------------------
+# Issue #278: split the published payload -- unchanged pages are not
+# re-uploaded, and cycles.html windows its overflow to a fetched archive.
+# ---------------------------------------------------------------------------
+
+
+def _fake_gh_publish_factory(calls: list):
+    def fake_gh(args, input_text=None):
+        calls.append(list(args))
+        joined = ' '.join(args)
+
+        def cp(out):
+            return subprocess.CompletedProcess(args=['gh'] + args, returncode=0, stdout=out, stderr='')
+        if 'git/blobs' in joined:
+            return cp('newblobsha')
+        if 'git/trees' in joined:
+            return cp('newtreesha')
+        if 'git/commits' in joined:
+            return cp('newcommitsha')
+        if 'git/refs/heads/gh-pages' in joined and '-X' in args:
+            return cp('')
+        if 'branches/gh-pages' in joined:
+            return cp('{"commit":{"tree":{"sha":"oldtree"}}}')
+        if 'git/ref/heads/gh-pages' in joined:
+            return cp('oldparent')
+        if '/pages' in joined:
+            return cp('{}')
+        return cp('{}')
+    return fake_gh
+
+
+def test_278_page_fingerprint_ignores_generated_at_and_source_age() -> None:
+    html_a = 'generator sha1 · generated 2026-09-17 03:00:00 UTC · newest source 5m old CONTENT'
+    html_b = 'generator sha1 · generated 2026-09-17 03:05:00 UTC · newest source 1.2h old CONTENT'
+    assert tv._page_fingerprint(html_a) == tv._page_fingerprint(html_b)
+
+
+def test_278_page_fingerprint_differs_on_real_content_change() -> None:
+    html_a = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old CONTENT A'
+    html_b = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old CONTENT B'
+    assert tv._page_fingerprint(html_a) != tv._page_fingerprint(html_b)
+
+
+def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
+    calls: list = []
+    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
+
+    unchanged_html = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old UNCHANGED'
+    changed_html_old = 'generated 2026-09-17 02:00:00 UTC · newest source 65m old CHANGED-OLD'
+    changed_html_new = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old CHANGED-NEW'
+    previous_fp = {
+        'index.html': tv._page_fingerprint(unchanged_html),
+        'cycles.html': tv._page_fingerprint(changed_html_old),
+    }
+    rc, fingerprints = tv.publish_to_pages(
+        {'index.html': unchanged_html, 'cycles.html': changed_html_new},
+        previous_fingerprints=previous_fp,
+    )
+    assert rc == 0
+    blob_calls = [c for c in calls if 'git/blobs' in ' '.join(c)]
+    assert len(blob_calls) == 1  # only cycles.html re-uploaded
+    assert fingerprints['index.html'] == previous_fp['index.html']
+    assert fingerprints['cycles.html'] != previous_fp['cycles.html']
+
+
+def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -> None:
+    calls: list = []
+    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
+
+    html = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old SAME'
+    previous_fp = {'index.html': tv._page_fingerprint(html)}
+    rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
+    assert rc == 0
+    assert not any('git/blobs' in ' '.join(c) for c in calls)
+    assert not any('git/trees' in ' '.join(c) for c in calls)
+    assert not any('git/commits' in ' '.join(c) for c in calls)
+    assert fingerprints == previous_fp
+
+
+def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> None:
+    ledger = [
+        {'phase': 'outcome', 'cycle_id': f'cycle-w{i:03d}', 'outcome': 'success', 'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+        for i in range(80)
+    ]
+    archive_out: list = []
+    html = tv.build_cycle_feed(ledger, history_mode=True, archive_out=archive_out)
+    assert len(archive_out) == 30  # 80 - 50 visible window
+    assert 'show 30 older cycles' in html
+    assert 'data-cycle-archive-index-src' in html
+    assert tv.CYCLES_ARCHIVE_INDEX_FILE in html
+    # None of the archived rows' ids are inlined in the returned HTML.
+    for row_html in archive_out:
+        import re as _re
+        m = _re.search(r'id="(cycle-cycle-w\d+)"', row_html)
+        assert m is not None
+        assert f'id="{m.group(1)}"' not in html
+
+
+def test_278_cycles_html_archive_sibling_published_in_render_pages() -> None:
+    data = _fixture()
+    data['ledger_tail'] = [
+        {'phase': 'outcome', 'cycle_id': f'cycle-p{i:03d}', 'outcome': 'success', 'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+        for i in range(80)
+    ]
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-09-17 12:00:00')
+    assert tv.CYCLES_ARCHIVE_INDEX_FILE in pages
+    archive_rows = _read_archived_rows(pages)
+    assert len(archive_rows) == 30
+    assert 'data-cycle-archive-index-src' in pages['cycles.html']
+
+
+def test_278_chunk_archive_rows_seals_full_chunks_stably() -> None:
+    """#278: chunk 0 is always the OLDEST chunk_size rows and never changes
+    again once sealed, regardless of how many more rows get archived later
+    -- only the newest (possibly partial) chunk's membership changes."""
+    rows_newest_first_a = [f'<li id="r{i}"></li>' for i in range(219, -1, -1)]  # 220 rows, ids 219..0
+    chunks_a = tv.chunk_archive_rows(rows_newest_first_a, chunk_size=100)
+    assert set(chunks_a.keys()) == {'cycles-archive-0.json', 'cycles-archive-1.json', 'cycles-archive-2.json'}
+    assert chunks_a['cycles-archive-0.json'] == [f'<li id="r{i}"></li>' for i in range(99, -1, -1)]
+    assert chunks_a['cycles-archive-1.json'] == [f'<li id="r{i}"></li>' for i in range(199, 99, -1)]
+    assert chunks_a['cycles-archive-2.json'] == [f'<li id="r{i}"></li>' for i in range(219, 199, -1)]
+
+    # 5 more rows archived later (ids 220..224 are newer than 219, so they
+    # sit at the FRONT of the newest-first list).
+    rows_newest_first_b = [f'<li id="r{i}"></li>' for i in range(224, -1, -1)]
+    chunks_b = tv.chunk_archive_rows(rows_newest_first_b, chunk_size=100)
+    assert chunks_b['cycles-archive-0.json'] == chunks_a['cycles-archive-0.json']  # sealed, unchanged
+    assert chunks_b['cycles-archive-1.json'] == chunks_a['cycles-archive-1.json']  # sealed, unchanged
+    assert chunks_b['cycles-archive-2.json'] != chunks_a['cycles-archive-2.json']  # still filling, grew
+
+
+def test_278_steady_state_publish_skips_sealed_archive_chunks(monkeypatch) -> None:
+    """The whole point of chunking (#278): once a chunk is sealed, adding
+    more cycles must not force it to be re-uploaded. Only the tail chunk,
+    cycles.html, index.html and lineage change; sealed archive chunks and
+    domain-unrelated pages (tokens/agent/lessons/hypotheses/cycle.html)
+    are skipped."""
+    calls: list = []
+    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
+
+    def make_data(n):
+        data = _fixture()
+        ledger = [
+            {'phase': 'outcome', 'cycle_id': f'cycle-r{i:04d}', 'outcome': 'success' if i % 5 else 'failed',
+             'ts': f'2026-01-{(i % 28) + 1:02d}T00:{i % 60:02d}:00Z'}
+            for i in range(n)
+        ]
+        data['ledger_tail'] = ledger
+        data['ledger_history'] = ledger
+        return data
+
+    pages1 = tv.render_pages(make_data(350), host='eeepc', generated_at='2026-09-17 03:00:00')
+    rc1, fp1 = tv.publish_to_pages(pages1)
+    assert rc1 == 0
+
+    calls.clear()
+    pages2 = tv.render_pages(make_data(351), host='eeepc', generated_at='2026-09-17 03:05:00')
+    rc2, fp2 = tv.publish_to_pages(pages2, previous_fingerprints=fp1)
+    assert rc2 == 0
+    blob_paths_uploaded = []
+    for c in calls:
+        if 'git/blobs' in ' '.join(c):
+            blob_paths_uploaded.append(c)
+    # cycles-archive-0.json (sealed at 100 rows) must NOT be among the
+    # re-uploaded blobs on this run.
+    changed_pages = {k for k in pages2 if fp2.get(k) != fp1.get(k)}
+    assert 'cycles-archive-0.json' not in changed_pages
+    assert 'tokens.html' not in changed_pages
+    assert 'agent.html' not in changed_pages
+    assert 'lessons.html' not in changed_pages
+    assert 'hypotheses.html' not in changed_pages
+    assert 'cycle.html' not in changed_pages
 
 # ---------------------------------------------------------------------------
 # Issue #73: lessons.html from lessons/lessons.yaml

@@ -3442,6 +3442,40 @@ def _load_lineage_vendor_scripts() -> dict[str, str] | None:
 
 
 LINEAGE_DETAILS_FILE = 'lineage-cycle-details.json'  # #208: published beside lineage.html, fetched on demand
+CYCLES_ARCHIVE_INDEX_FILE = 'cycles-archive-index.json'  # #278
+CYCLES_ARCHIVE_CHUNK_SIZE = 100
+# #278: overflow cycle rows are pre-rendered and published as fixed-size,
+# oldest-first-numbered chunks (cycles-archive-0.json, -1.json, ...) instead
+# of one growing file. A new cycle only ever appends to the CURRENT (newest,
+# not-yet-full) chunk -- every earlier chunk is sealed at CYCLES_ARCHIVE_
+# CHUNK_SIZE rows and never changes again, so publish_to_pages's unchanged
+# -file skip actually applies to it. One big archive file would instead
+# change on every single publish that adds a cycle (the row nearest the
+# visible/archived boundary shifts every time), defeating the whole point
+# of moving it out of cycles.html in the first place.
+
+
+def cycles_archive_chunk_file(index: int) -> str:
+    return f'cycles-archive-{index}.json'
+
+
+def chunk_archive_rows(rows_newest_first: list[str], chunk_size: int = CYCLES_ARCHIVE_CHUNK_SIZE) -> dict[str, list[str]]:
+    """Split archived (overflow) rows -- already ordered newest-first -- into
+    stable, fixed-size chunk files numbered from the OLDEST end. Chunk 0 is
+    always the oldest `chunk_size` rows in the corpus's entire history and,
+    once full, never changes again; only the highest-numbered chunk (the
+    newest-archived rows, right at the visible/archive boundary) grows as
+    more cycles complete. Returns {chunk_filename: rows (newest-first within
+    that chunk, matching the page's own display order)}."""
+    if not rows_newest_first:
+        return {}
+    oldest_first = list(reversed(rows_newest_first))
+    chunks: dict[str, list[str]] = {}
+    for start in range(0, len(oldest_first), chunk_size):
+        index = start // chunk_size
+        slice_oldest_first = oldest_first[start:start + chunk_size]
+        chunks[cycles_archive_chunk_file(index)] = list(reversed(slice_oldest_first))
+    return chunks
 
 
 def _parse_lineage_ts(ts: Any) -> str | None:
@@ -4969,6 +5003,7 @@ def build_cycle_feed(
     rendered_lesson_ids: set[str] | None = None,
     ledger_history: list[Any] | None = None,
     now: datetime | None = None,
+    archive_out: list[str] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -5289,26 +5324,80 @@ def build_cycle_feed(
         ''')
 
     if history_mode:
-        # Issue #90: bounded visible window; show-all control reveals overflow rows.
+        # Issue #90/#278: bounded visible window. When archive_out is given
+        # (cycles.html's production call), overflow rows are NOT inlined at
+        # all -- they're handed back via archive_out for the caller to
+        # publish as fixed-size chunk files (chunk_archive_rows), fetched on
+        # demand by the "show older cycles" button. This is the split that
+        # matters: ~2900 rows that essentially never change once written stop being
+        # re-uploaded on every publish, instead of merely being CSS-hidden
+        # while still shipped in every cycles.html byte-for-byte.
+        # Without archive_out (the index teaser and any other caller),
+        # overflow rows stay inlined-but-hidden exactly as before --
+        # unchanged default behaviour.
         _visible_window = 50
+        archived_count = 0
         if len(rows) > _visible_window:
             overflow = rows[_visible_window:]
-            rows = rows[:_visible_window] + [
-                r.replace('<li class="feed-row ', '<li class="feed-row feed-overflow-row ', 1)
-                for r in overflow
-            ]
+            if archive_out is not None:
+                archive_out.extend(overflow)
+                archived_count = len(overflow)
+                rows = rows[:_visible_window]
+            else:
+                rows = rows[:_visible_window] + [
+                    r.replace('<li class="feed-row ', '<li class="feed-row feed-overflow-row ', 1)
+                    for r in overflow
+                ]
         # Issue #89/#72: client-side outcome filter, state in URL hash (#f-<kind>).
         filter_buttons = ''.join(
             f'<button class="filter-btn" data-filter="{k}">{k}</button>'
             for k in ('all', 'integrated', 'failed', 'partial', 'skipped', 'running')
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
-        show_all_btn = (
-            '<button class="feed-show-all" type="button" onclick="(function(){'
-            'document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});'
-            'this.remove();}).call(this)">show all history</button>'
-            if any('feed-overflow-row' in r for r in rows) else ''
-        )
+        if archive_out is not None:
+            show_all_btn = (
+                f'<button class="feed-show-all" type="button" data-cycle-archive-index-src="{esc(CYCLES_ARCHIVE_INDEX_FILE)}">show {archived_count} older cycles</button>'
+                if archived_count else ''
+            )
+            archive_script = '''<script>
+            (function(){
+              var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
+              if (!btn) return;
+              btn.addEventListener('click', function () {
+                var indexSrc = btn.getAttribute('data-cycle-archive-index-src');
+                btn.disabled = true;
+                var original = btn.textContent;
+                btn.textContent = 'loading…';
+                function getJson(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); }); }
+                getJson(indexSrc).then(function (idx) {
+                  var count = Number(idx && idx.chunk_count || 0);
+                  var urls = [];
+                  for (var i = 0; i < count; i++) { urls.push(indexSrc.replace(/cycles-archive-index\\.json$/, 'cycles-archive-' + i + '.json')); }
+                  return Promise.all(urls.map(getJson));
+                }).then(function (chunks) {
+                  var list = document.querySelector('#panel-feed .feed-list');
+                  // Chunks are numbered oldest-first; render newest-archived-first
+                  // (chunk with the highest index) to match the page's own order.
+                  for (var i = chunks.length - 1; i >= 0; i--) {
+                    (chunks[i] || []).forEach(function (html) { list.insertAdjacentHTML('beforeend', html); });
+                  }
+                  btn.remove();
+                  window.dispatchEvent(new Event('hashchange'));
+                }).catch(function (err) {
+                  btn.disabled = false;
+                  btn.textContent = original + ' -- unavailable (' + (err && err.message || err) + ')';
+                });
+              });
+            })();
+            </script>'''
+        else:
+            show_all_btn = (
+                '<button class="feed-show-all" type="button" onclick="(function(){'
+                'document.querySelectorAll(&quot;#panel-feed .feed-overflow-row&quot;).forEach(function(r){r.classList.remove(&quot;feed-overflow-row&quot;);});'
+                'this.remove();}).call(this)">show all history</button>'
+                if any('feed-overflow-row' in r for r in rows) else ''
+            )
+            archive_script = ''
         filter_html = (
             f'<div class="filter-bar">{filter_buttons}</div>'
             f'{show_all_btn}'
@@ -5333,11 +5422,13 @@ def build_cycle_feed(
             'if(bar.querySelector("[data-filter=\'"+k+"\']")){apply(k);}});'
             '})();'
             '</script>'
+            f'{archive_script}'
         )
+        total_cycle_count = len(rows) + archived_count
         if ledger_history is None:
-            title_line = f'Cycle History (Recent {len(rows)})'
+            title_line = f'Cycle History (Recent {total_cycle_count})'
         else:
-            title_line = f'Cycle History ({len(rows)} cycles)'
+            title_line = f'Cycle History ({total_cycle_count} cycles)'
     else:
         filter_html = ''
         title_line = f'Cycle Feed (Recent {len(rows)})'
@@ -8773,6 +8864,11 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         str(lesson.get('id')) for lesson in (data.get('lessons') or [])
         if isinstance(lesson, dict) and lesson.get('id')
     }
+    # #278: archived (overflow) rows are handed back here instead of being
+    # inlined-but-hidden -- published separately as sealed, fixed-size chunk
+    # files (see chunk_archive_rows below) so cycles.html itself stops
+    # carrying ~2900 rows that essentially never change once written.
+    cycles_archive_rows: list[str] = []
     cycle_feed = build_cycle_feed(
         ledger_tail=history_source,
         demand_completed=demand_completed,
@@ -8783,6 +8879,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         history_mode=True,
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
+        archive_out=cycles_archive_rows,
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
@@ -8838,6 +8935,18 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         'hypotheses.html': _page('eeebot / hypotheses', 'hypotheses.html', hypotheses_panel),
         'techtree.html': TECHTREE_REDIRECT,
     }
+
+    # #278: archived cycle rows are split into fixed-size, oldest-first-
+    # numbered chunk files (see chunk_archive_rows) rather than one growing
+    # sibling JSON -- every chunk except the newest is sealed and therefore
+    # eligible for publish_to_pages's unchanged-file skip.
+    archive_chunks = chunk_archive_rows(cycles_archive_rows)
+    for chunk_fname, chunk_rows in archive_chunks.items():
+        pages[chunk_fname] = json.dumps(chunk_rows, ensure_ascii=True, separators=(',', ':'))
+    pages[CYCLES_ARCHIVE_INDEX_FILE] = json.dumps(
+        {'chunk_count': len(archive_chunks), 'chunk_size': CYCLES_ARCHIVE_CHUNK_SIZE, 'total_rows': len(cycles_archive_rows)},
+        ensure_ascii=True, separators=(',', ':'),
+    )
     return pages
 
 
@@ -8934,20 +9043,72 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
         )
 
 
-def publish_to_pages(pages: 'dict[str, str] | str') -> int:
-    """Issue #70: publish the multi-page site ATOMICALLY -- one gh-pages
-    commit carries every page (git Data API: blobs -> tree -> commit -> ref
-    update; any failure leaves the ref untouched). Accepts a dict
-    {filename: html}; a legacy single-page string is treated as
-    index.html. Returns 0 on success, 1 on any failure."""
+_GENERATED_AT_RE = re.compile(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}')
+_SOURCE_AGE_RE = re.compile(r'\d+(?:\.\d+)?[smhd] old')
+
+
+def _page_fingerprint(html: str) -> str:
+    """#278: sha256 over a page with its two guaranteed-every-run-volatile
+    fields -- the "generated {timestamp} UTC" footer stamp and the
+    "newest source {age} old" freshness string -- replaced by fixed
+    placeholders first.
+
+    Both change on literally every publish regardless of whether any
+    DOMAIN content did (the timestamp is wall-clock at render time; the
+    age is `now - mtime` and only stays constant if measured at the exact
+    same instant twice). Hashing the raw HTML would mean every page always
+    looks "changed" and publish_to_pages's unchanged-file skip could never
+    fire -- which is the exact defect issue #278 measured ("all 8 files
+    touched every run because shared navigation/timestamp metadata
+    invalidates every page").
+
+    Wrong-direction risk: neither pattern can occur elsewhere in rendered
+    content (other timestamps in this codebase are ISO-8601 with a literal
+    `T`/`Z`, never the bare `YYYY-MM-DD HH:MM:SS` form used only by this
+    footer; no other field is formatted as "<number><unit> old"), so this
+    cannot mistake a real content change for volatile noise. If it ever
+    did, the failure mode is bounded, not silent: the staleness floor in
+    techtree_autopublish.py already forces a full republish at least once
+    per its configured window regardless of any digest/fingerprint
+    decision, so a wrongly-skipped page cannot stay stale indefinitely."""
+    normalized = _GENERATED_AT_RE.sub('GENERATED_AT', html)
+    normalized = _SOURCE_AGE_RE.sub('SOURCE_AGE', normalized)
+    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+
+
+def publish_to_pages(
+    pages: 'dict[str, str] | str',
+    *,
+    previous_fingerprints: 'dict[str, str] | None' = None,
+) -> 'tuple[int, dict[str, str]]':
+    """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
+    gh-pages commit carries every page (git Data API: blobs -> tree ->
+    commit -> ref update; any failure leaves the ref untouched). Accepts a
+    dict {filename: html}; a legacy single-page string is treated as
+    index.html.
+
+    #278: a page whose _page_fingerprint matches `previous_fingerprints`
+    (the map this function returned last time, as persisted by the
+    caller) is not re-blobbed or re-uploaded at all -- the new tree is
+    built with `base_tree` set and simply omits that path, so it inherits
+    the OLD blob for that path unchanged (git's own tree-inheritance
+    semantics; no extra API call needed to look up the old blob sha).
+
+    Returns (rc, fingerprints): rc is 0 on success, 1 on any failure;
+    fingerprints is the fresh {filename: fingerprint} map for every page
+    passed in (whether uploaded or skipped this run) for the caller to
+    persist for next time. On any failure path, fingerprints is {} -- the
+    caller must not persist a fingerprint for a publish that didn't
+    actually complete."""
     import base64
     if isinstance(pages, str):
         pages = {'index.html': pages}
     if not pages:
         print('publish: nothing to publish', file=sys.stderr)
-        return 1
+        return 1, {}
 
     pages = dict(pages)
+    previous_fingerprints = previous_fingerprints or {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
@@ -8959,22 +9120,30 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
         if head.returncode != 0:
             print(f'publish: cannot resolve master HEAD: {head.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1
+            return 1, {}
         made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
                     '-f', f'ref=refs/heads/{PUBLISH_BRANCH}',
                     '-f', f'sha={head.stdout.strip()}'])
         if made.returncode != 0:
             print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1
+            return 1, {}
 
     head_tree = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}',
                      '--jq', '.commit.commit.tree.sha'])
     base_tree = head_tree.stdout.strip() if head_tree.returncode == 0 else None
 
-    # 1. Create a blob per page.
+    # 1. Create a blob per CHANGED page only; unchanged pages are skipped
+    # entirely (#278) -- base_tree carries their existing blob forward.
     tree_entries = []
+    fingerprints: dict[str, str] = {}
+    skipped: list[str] = []
     for fname, html in sorted(pages.items()):
+        fingerprint = _page_fingerprint(html)
+        fingerprints[fname] = fingerprint
+        if base_tree and previous_fingerprints.get(fname) == fingerprint:
+            skipped.append(fname)
+            continue
         blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
         # Issue #72: full-history cycles.html exceeds the OS argv limit —
         # pass the blob payload via stdin (JSON body) instead of -f args.
@@ -8985,12 +9154,22 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
         if blob.returncode != 0:
             print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1
+            return 1, {}
         entry = {'path': fname, 'mode': '100644', 'type': 'blob',
                  'sha': blob.stdout.strip()}
         tree_entries.append(entry)
 
-    # 2. One tree carrying every page.
+    if not tree_entries:
+        # #278: every page's normalized content matched last publish's --
+        # nothing to commit. should_publish's tree digest gate normally
+        # prevents reaching publish_to_pages at all in that case, but a
+        # manual --publish rerun (or a digest change that happens not to
+        # affect any RENDERED page) can still land here; skip the
+        # tree/commit/ref calls entirely rather than create a no-op commit.
+        print(f'publish: {len(skipped)} page(s) unchanged, nothing to publish')
+        return 0, fingerprints
+
+    # 2. One tree carrying every CHANGED page.
     import json as _json
     tree_payload = {'tree': tree_entries}
     if base_tree:
@@ -9000,7 +9179,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     if tree.returncode != 0:
         print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
               file=sys.stderr)
-        return 1
+        return 1, {}
 
     # 3. One commit.
     parent = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/{PUBLISH_BRANCH}',
@@ -9016,7 +9195,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     if commit.returncode != 0:
         print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
               file=sys.stderr)
-        return 1
+        return 1, {}
 
     # 4. Single ref update -- the atomic switch.
     ref = _gh(['api', '-X', 'PATCH', f'repos/{PUBLISH_REPO}/git/refs/heads/{PUBLISH_BRANCH}',
@@ -9024,7 +9203,7 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
     if ref.returncode != 0:
         print(f'publish: ref update failed: {ref.stderr.strip()[:300]}',
               file=sys.stderr)
-        return 1
+        return 1, {}
 
     # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
     pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
@@ -9036,8 +9215,9 @@ def publish_to_pages(pages: 'dict[str, str] | str') -> int:
             print(f'publish: Pages enable failed (page pushed anyway): '
                   f'{enable.stderr.strip()[:200]}', file=sys.stderr)
 
-    print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту)')
-    return 0
+    print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
+          f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
+    return 0, fingerprints
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -9073,7 +9253,8 @@ def main(argv: list[str] | None = None) -> int:
         webbrowser.open((out_path / 'index.html').resolve().as_uri())
 
     if args.publish:
-        return publish_to_pages(pages)
+        rc, _fingerprints = publish_to_pages(pages)
+        return rc
 
     return 0
 
