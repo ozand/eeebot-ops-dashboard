@@ -4251,6 +4251,20 @@ def build_cycle_details(
             violations = row.get('violations')
             if isinstance(violations, list):
                 out['gate_violations'] = [text(item, 500) for item in violations[:20]]
+            # #289: eeebot#1687 -- present ONLY on cycles that rolled back;
+            # deliberately no row otherwise, so absence here must stay
+            # absence (no key at all), never render as an error.
+            if row.get('phase') == 'error_card_recording':
+                ecr_status = str(row.get('status') or '')
+                if ecr_status == 'created':
+                    out['error_card_recording'] = {'status': 'created', 'card_commit': text(row.get('card_commit'), 80)}
+                elif ecr_status == 'not_created':
+                    out['error_card_recording'] = {'status': 'not_created', 'skip_reason': text(row.get('skip_reason'), 200)}
+
+    # #289: ledger_rows is None means the ledger itself was unreadable this
+    # publish, distinct from "read fine, no error_card_recording row for
+    # this cycle" (which just means the cycle didn't roll back).
+    ledger_status = 'probe_unavailable' if ledger_rows is None else 'present'
 
     if isinstance(evolution_tree, dict) and isinstance(evolution_tree.get('nodes'), dict):
         for sha, node in evolution_tree['nodes'].items():
@@ -4345,7 +4359,7 @@ def build_cycle_details(
         }
 
     for cid, out in records.items():
-        if cid == '__unjoined_subagents__':
+        if cid in ('__unjoined_subagents__', '__ledger_status__'):
             continue
         title = out.get('task_title') or (cycle_titles or {}).get(cid) or (cycle_titles or {}).get(cid.replace('cycle-', '', 1))
         if not title and out.get('files_changed'):
@@ -4355,6 +4369,14 @@ def build_cycle_details(
         # empty list is not serialised but present violations are not silently dropped.
         if not out.get('gate_violations'):
             out.pop('gate_violations', None)
+    # #289: whole-ledger read status, distinct from any one cycle's own
+    # error_card_recording presence/absence. Only added on the unreadable
+    # path -- every other value in `records` is a real cycle record (or
+    # the pre-existing __unjoined_subagents__ pseudo-entry) with a title,
+    # and callers rely on that; the readable case needs no sentinel since
+    # "no error_card_recording row" already means "no rollback" by itself.
+    if ledger_status != 'present':
+        records['__ledger_status__'] = {'status': ledger_status}
     return records
 
 
@@ -4408,6 +4430,26 @@ def build_cycle_detail_page() -> str:
         var artifacts = list('Files changed', item.files_changed) +
           line('Lesson insight', item.lesson_insight) + line('Lesson problem', item.lesson_problem) + line('Lesson solution', item.lesson_solution);
 
+        // #289: eeebot#1687 -- present ONLY on cycles that rolled back;
+        // absence here is the no-rollback signal, never rendered as an error.
+        var ecr = item.error_card_recording;
+        var ledgerStatus = (data['__ledger_status__'] || {{}}).status;
+        var errorCardHtml = '';
+        if (ecr && ecr.status === 'created') {{
+          errorCardHtml = '<div class="now-item" data-error-card-state="created"><span class="now-label">Error card recording:</span> ' +
+            '<span class="badge badge-available">created</span> ' +
+            (ecr.card_commit ? '<span class="now-sub">commit ' + esc(ecr.card_commit) + '</span>' : '') + '</div>';
+        }} else if (ecr && ecr.status === 'not_created') {{
+          errorCardHtml = '<div class="now-item" data-error-card-state="not_created"><span class="now-label">Error card recording:</span> ' +
+            '<span class="badge">not created</span> ' +
+            '<span class="now-sub">' + esc(ecr.skip_reason || 'no reason recorded') + '</span></div>';
+        }} else if (ledgerStatus === 'probe_unavailable') {{
+          errorCardHtml = '<div class="now-item" data-error-card-state="probe_unavailable"><span class="now-label">Error card recording:</span> ' +
+            '<span class="unavailable-note">ledger unreadable</span></div>';
+        }}
+        // No row and a readable ledger: this cycle did not roll back --
+        // render nothing extra, not an unavailable note.
+
         var subagentsHtml;
         if (Array.isArray(item.subagents) && item.subagents.length) {{
           subagentsHtml = '<h3>Subagent records (' + item.subagents.length + ')</h3><ul class="cycle-detail-subagent-list">' + item.subagents.map(renderSubagent).join('') + '</ul>';
@@ -4422,7 +4464,7 @@ def build_cycle_detail_page() -> str:
           promptHtml = '<p class="unavailable-note" data-cycle-detail-state="prompt-not-retained">Prompt text not retained for this cycle (short retention window; only recent cycles keep it).</p>';
         }}
 
-        body.innerHTML = head + links + artifacts + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
+        body.innerHTML = head + links + artifacts + errorCardHtml + '<h2>Subagents</h2>' + subagentsHtml + '<h2>Prompts</h2>' + promptHtml;
       }}
       var params = new URLSearchParams(window.location.search);
       var id = params.get('id') || '';
