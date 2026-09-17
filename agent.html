@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">209</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 17:11:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">38.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="29">data: 28s old &middot; generated 14:22 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 14:34 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-633da6d9a806</span>
+      <span class="cycle-pill">cycle-29891423d05e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1325,7 +1325,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 13:51:00.439562 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 14:25:56.830201 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 69,568 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 55,702 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 69,568 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,706c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 55,702 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,756c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1777,12 +1777,12 @@ Skills with available=&quot;false&quot; need dependencies installed first - you 
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;memory&lt;/name&gt;
     &lt;description&gt;Two-layer memory system with grep-based recall.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T134234Z-canonical-86be6d8f/nanobot/skills/memory/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T141813Z-canonical-0b97323d/nanobot/skills/memory/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
   &lt;skill available=&quot;true&quot; source=&quot;builtin&quot;&gt;
     &lt;name&gt;skill-creator&lt;/name&gt;
     &lt;description&gt;Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.&lt;/description&gt;
-    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T134234Z-canonical-86be6d8f/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
+    &lt;location&gt;/opt/eeepc-agent/runtimes/self-evolving-agent/releases/20260917T141813Z-canonical-0b97323d/nanobot/skills/skill-creator/SKILL.md&lt;/location&gt;
   &lt;/skill&gt;
 &lt;/skills&gt;</code></pre></div></details>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code># Memory
@@ -1934,9 +1934,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,706 chars &bull; ~1,926 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Weight stem dissimilarity in existence index deduplication to avoid false positive test collisions
-Request ID: llm-proposer-cycle-633da6d9a806
-Cycle ID: cycle-633da6d9a806
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,756 chars &bull; ~1,939 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/detect_chained_git_commands.py to flag compound test and git staging commands
+Request ID: llm-proposer-cycle-29891423d05e
+Cycle ID: cycle-29891423d05e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1951,59 +1951,62 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- a9322ce9 merge: integrate selfevo/cycle-cycle-633da6d9a806
+- 2d11e6d3 docs: propose stem-dissimilarity weighting for existence-index dedup
 - c7ad47ea merge: integrate selfevo/cycle-cycle-d0e3cb34aa23
 - 3fa9281d fix(validate_script_entrypoints): exempt library-only modules from entrypoint validation
 - 4bcd2bb0 merge: integrate selfevo/cycle-cycle-41a556e4df97
 - c337136f feat(fb_surface): add sysfs geometry inspection and timed /dev/fb0 frame writing
 - a3b4fcf1 merge: integrate selfevo/cycle-cycle-1ce341e7a32e
 - da133a40 selfevo: auto-commit uncommitted subagent work — Add scripts/check_destructive_syntax.py to detect destructive command patterns i
-- 40824aa8 feat(scripts): add check_destructive_syntax.py to flag destructive command patterns
-- 60c955d8 chore: record structured error for [cycle-2a6fd3]
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Add keyword test discovery to scripts/inventory_test_suites.py to format targeted pytest filter commands: executor_llm_error
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-633da6d9a806.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-29891423d05e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Weight stem dissimilarity in existence index deduplication to avoid false positive test collisions&quot;,
-    &quot;backlog_instructions&quot;: &quot;Update match score calculation in existence_index.py to penalize mismatching file stems, preventing false duplicate matches between distinct targets like test_validate_history_format.py and test_validate_skill_format.py.\n\nTarget path: nanobot/runtime/existence_index.py&quot;,
+    &quot;title&quot;: &quot;Add scripts/detect_chained_git_commands.py to flag compound test and git staging commands&quot;,
+    &quot;backlog_instructions&quot;: &quot;Implements a detector that flags compound shell commands chaining test execution with git staging or committing, preventing turn timeouts from breaking file staging.\n\nTarget path: scripts/detect_chained_git_commands.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Weight stem dissimilarity in existence index deduplication to avoid false positive test collisions (target: nanobot/runtime/existence_index.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add scripts/detect_chained_git_commands.py to flag compound test and git staging commands (target: scripts/detect_chained_git_commands.py)&quot;
 }
 ```
 
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260917-2a6fd33e  Title: Executor LLM call failed before cycle execution while attempting: Add keyword test discovery to scripts/inventory_test_suites.py to format targeted pytest filter commands
+Root cause: 
+Prevention: 
+
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/existence_index_duplicate.md  Title: Existence Index Duplicate Skip Mode and Mitigation
-Problem: Read lessons/existence_index_duplicate.md: **Check Existing Scripts**: Before proposing or implementing a task, search the repository (e.g., in `scripts/`, `nanobot/`, etc.) to ensure a similar script does not already exist.
+ID: lessons/safe_temp_artifacts.md  Title: Avoiding `rm -rf` in shell commands in favor of `tempfile` for temporary test artifacts
+Problem: Read lessons/safe_temp_artifacts.md: **Default to `tempfile` / `tmp_path`** for every temporary artifact in scripts and tests.
 Solution: 
-If you apply this lesson, cite [Lesson lessons/existence_index_duplicate.md] in your proposal/response.
+If you apply this lesson, cite [Lesson lessons/safe_temp_artifacts.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid exploring runtime state directories (`state/action_index`, `state/llm_calls`, etc.) when implementing analysis scripts unless explicitly asked; design the interface to take files, stdin, or list
-- Embedded a dummy placeholder import (`import pytest_shim`) in the initial file write of `scripts/detect_repetitive_outputs.py`, requiring an immediate follow-up edit to avoid a runtime ImportError.
-- When test assertions iterate broadly over an entire directory (such as `LESSONS_DIR.glob(&#x27;*.md&#x27;)`) and fail, run an inline Python check against the newly created target file to immediately isolate whe
+- When editing indented argument or function blocks in large Python scripts with `edit_file`, anchor replacements to surrounding multi-line structural boundaries to avoid leading whitespace discrepancie
+- When executing end-to-end smoke checks of test runners across large test directories on resource-constrained architectures, provide an explicit timeout parameter to accommodate pytest collection overh
+- Introduced an `IndentationError` on line 3654 of `scripts/run_all_tests.py` during an `edit_file` call due to whitespace misalignment, and required two edit iterations to re-establish the correct 4-sp
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 12:13 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/check_destructive_syntax.py,…
+- Attempt 1 (2026-09-17 13:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_script_entrypoints.py. Reward signal will be upgraded by coordinator.
+- Attempt 2 (2026-09-17 12:48 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/fb_surface.py. Reward signal will be upgraded by coordinator.
 
 ## Concrete task to implement
 
-Title: Weight stem dissimilarity in existence index deduplication to avoid false positive test collisions
+Title: Add scripts/detect_chained_git_commands.py to flag compound test and git staging commands
 
 
-Update match score calculation in existence_index.py to penalize mismatching file stems, preventing false duplicate matches between distinct targets like test_validate_history_format.py and test_validate_skill_format.py.
+Implements a detector that flags compound shell commands chaining test execution with git staging or committing, preventing turn timeouts from breaking file staging.
 
-Target path: nanobot/runtime/existence_index.py
+Target path: scripts/detect_chained_git_commands.py
 
 ## Concrete task to implement
-Implement and commit: Weight stem dissimilarity in existence index deduplication to avoid false positive test collisions (target: nanobot/runtime/existence_index.py)
+Implement and commit: Add scripts/detect_chained_git_commands.py to flag compound test and git staging commands (target: scripts/detect_chained_git_commands.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5918,7 +5921,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 14:22:34 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 17:11:54 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 14:34:02 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 17:11:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
