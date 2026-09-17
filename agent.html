@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">210</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 23:49:57 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">39.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 20:54 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="45">data: 44s old &middot; generated 21:05 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-3303af719b9b</span>
+      <span class="cycle-pill">cycle-8a74df7fc42e</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1325,7 +1325,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 20:32:06.218241 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 20:57:24.590956 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 46,623 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 70,397 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 46,623 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,281c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 70,397 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,874c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1934,9 +1934,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,281 chars &bull; ~1,820 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add symbol query filtering and line span extraction to scripts/query_ast_symbols.py
-Request ID: llm-proposer-cycle-3303af719b9b
-Cycle ID: cycle-3303af719b9b
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,874 chars &bull; ~1,968 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --target flag to scripts/run_all_tests.py to confine verification to target companion test and self-test
+Request ID: llm-proposer-cycle-8a74df7fc42e
+Cycle ID: cycle-8a74df7fc42e
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1951,55 +1951,62 @@ Completed (do not repeat): Check defect quarantine status (V1); Assert doc chang
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 157496cc merge: integrate selfevo/cycle-cycle-3303af719b9b
+- 429b6f0e feat(query_ast_symbols): add exact name filtering and find_symbol_span lookup
 - d650d88a merge: integrate selfevo/cycle-cycle-9cf2fc865aa5
 - 78db1e86 feat(tally_defects): add count_defect_occurrences to tally defect events
 - ea06be4b merge: integrate selfevo/cycle-cycle-7437799313b0
 - ad4f71f3 test(check_readonly_streak): add blank filtering and threshold-3 boundary coverage
 - 8fd83f46 merge: integrate selfevo/cycle-cycle-2e51d5453d31
 - 66f67ef0 feat(inspect_cycle_diff): flag script changes lacking companion test updates
-- 4b28d89d merge: integrate selfevo/cycle-cycle-5eeffa938655
-- fbc2f3bc feat(smoke_test_loop): add --check-syntax flag to validate runtime Python syntax via ast.parse
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-3303af719b9b.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-8a74df7fc42e.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add symbol query filtering and line span extraction to scripts/query_ast_symbols.py&quot;,
-    &quot;backlog_instructions&quot;: &quot;Reflection reflection-6c579859ba4c notes excessive sequential pagination reads when searching large files. Adding symbol name query filtering and start/end line span extraction to scripts/query_ast_symbols.py enables precise targeted symbol lookup without reading files in sequential chunks.\n\nTarget path: scripts/query_ast_symbols.py&quot;,
+    &quot;title&quot;: &quot;Add --target flag to scripts/run_all_tests.py to confine verification to target companion test and self-test&quot;,
+    &quot;backlog_instructions&quot;: &quot;Allows run_all_tests.py to confine test execution to a specific target&#x27;s companion test suite and self-test via --target, avoiding repository-wide test suite runs that fail on unrelated scripts.\n\nTarget path: scripts/run_all_tests.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add symbol query filtering and line span extraction to scripts/query_ast_symbols.py (target: scripts/query_ast_symbols.py)&quot;
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --target flag to scripts/run_all_tests.py to confine verification to target companion test and self-test (target: scripts/run_all_tests.py)&quot;
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260911-af2a878e  Title: Executor LLM call failed before cycle execution while attempting: Support zero-argument invocation in scripts/check_ast_line_count.py by defaultin
+ID: ERR-20260907-bd9c0bed  Title: Mutation-surface policy rejected a change outside the allowed files while attempting: Add self-test suite and CLI execution entry point to scripts/approval_truth.py
 Root cause: 
 Prevention: 
 
+## Proven approach for this task (from lessons/lessons.yaml)
+ID: lessons/companion_cycle_test_verification.md  Title: Companion Cycle Verification Before Proposing Test Additions
+Problem: Read lessons/companion_cycle_test_verification.md: Treat &quot;did a companion cycle already add these tests?&quot; as a mandatory pre-proposal check for any reflection demand whose deliverable is a test file.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/companion_cycle_test_verification.md] in your proposal/response.
+
 ## Recent reflections (how past cycles worked — steering hints)
-- When editing indented argument or function blocks in large Python scripts with `edit_file`, anchor replacements to surrounding multi-line structural boundaries to avoid leading whitespace discrepancie
-- Introduced an `IndentationError` on line 3654 of `scripts/run_all_tests.py` during an `edit_file` call due to whitespace misalignment, and required two edit iterations to re-establish the correct 4-sp
-- When executing end-to-end smoke checks of test runners across large test directories on resource-constrained architectures, provide an explicit timeout parameter to accommodate pytest collection overh
+- Decompose multi-part script extensions into incremental tool invocations: apply new regex patterns and classification functions in a first edit turn, verify with `--test`, and follow up with CLI flag 
+- Strictly avoid invoking directory-wide `pytest tests/` (even with `-x` or `--ignore`) on slow i686 architectures; limit pre-commit verification strictly to the new test file and targeted structural su
+- Bundle script self-tests, frozen claim assertions, and companion test suite runs into a single compound shell command during verification to minimize tool round-trips and cycle duration.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 19:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/tally_defects.py, tests/test_tally_defects.py. Reward signal will be upgraded by…
+- Attempt 1 (2026-09-17 20:45 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/query_ast_symbols.py, tests/test_query_ast_symbols.py. Reward signal will be upgraded…
+- Attempt 2 (2026-09-17 19:22 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/tally_defects.py, tests/test_tally_defects.py. Reward signal will be upgraded by…
 
 ## Concrete task to implement
 
-Title: Add symbol query filtering and line span extraction to scripts/query_ast_symbols.py
+Title: Add --target flag to scripts/run_all_tests.py to confine verification to target companion test and self-test
 
 
-Reflection reflection-6c579859ba4c notes excessive sequential pagination reads when searching large files. Adding symbol name query filtering and start/end line span extraction to scripts/query_ast_symbols.py enables precise targeted symbol lookup without reading files in sequential chunks.
+Allows run_all_tests.py to confine test execution to a specific target&#x27;s companion test suite and self-test via --target, avoiding repository-wide test suite runs that fail on unrelated scripts.
 
-Target path: scripts/query_ast_symbols.py
+Target path: scripts/run_all_tests.py
 
 ## Concrete task to implement
-Implement and commit: Add symbol query filtering and line span extraction to scripts/query_ast_symbols.py (target: scripts/query_ast_symbols.py)
+Implement and commit: Add --target flag to scripts/run_all_tests.py to confine verification to target companion test and self-test (target: scripts/run_all_tests.py)
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5914,7 +5921,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 20:54:05 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 23:49:57 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 21:05:23 UTC &middot; host eeepc &middot; newest source 44s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 23:49:57 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
