@@ -1273,7 +1273,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">213</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-17 12:30:35 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">37.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 09:33 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 10:01 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1290,7 +1290,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,244 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-7d9c9cd020aa</span>
+      <span class="cycle-pill">cycle-5dcdbec0ac58</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1319,7 +1319,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 09:07:31.244289 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>90%</strong> (21,756 / 24,000 chars)</span><span>2026-09-17 09:36:57.981680 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:90%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1337,7 +1337,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 70,564 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 54,240 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1355,8 +1355,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 70,564 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">9,280c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 54,240 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">8,819c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1928,9 +1928,9 @@ machine cannot practise at all.
 
 This file defines who you are. The immutable `goals.md` charter defines why the
 system exists and its ordered goals; do not duplicate or edit that charter.</code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">9,280 chars &bull; ~2,320 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add keyword filter flag (-k) to scripts/run_all_tests.py for fast targeted test runs
-Request ID: llm-proposer-cycle-7d9c9cd020aa
-Cycle ID: cycle-7d9c9cd020aa
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">8,819 chars &bull; ~2,204 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --scaffold-missing flag to scripts/validate_test_existence.py to generate companion test stubs
+Request ID: llm-proposer-cycle-5dcdbec0ac58
+Cycle ID: cycle-5dcdbec0ac58
 Goal ID: goal-bootstrap
 
 ## System mission (read before acting)
@@ -1945,42 +1945,42 @@ Completed (do not repeat): Filter fallback candidate paths (V1); Check defect qu
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 0b0edcdf merge: integrate selfevo/cycle-cycle-7d9c9cd020aa
+- e5e82d71 feat(run_all_tests): add -k short flag as alias for --keyword (pytest -k filter)
 - 07d33df9 merge: integrate selfevo/cycle-cycle-7d1e75d510b2
 - a60e6b84 feat(scripts): add check_readonly_streak.py to detect consecutive read-only tool calls exceeding threshold
 - 5b2a70bc merge: integrate selfevo/cycle-cycle-7957bc1dcf63
 - ddb3a733 feat(scripts): add search_workspace.py for workspace-confined pattern search
 - 83b80070 merge: integrate selfevo/cycle-cycle-c97cd8f23ca4
 - b7455b25 selfevo: auto-commit uncommitted subagent work — Add scripts/check_loop_breaker_violation.py to flag repeated tool calls after lo
-- 7f7fdee8 feat(scripts): add check_loop_breaker_violation.py to flag post-warning repeated tool calls
-- a6d9a48f merge: integrate selfevo/cycle-cycle-9c602ef44e83
 
 ## Source artifact
-Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7d9c9cd020aa.json
+Path: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-5dcdbec0ac58.json
 
 ```json
 {
   &quot;schema_version&quot;: &quot;llm-proposed-improvement-v1&quot;,
   &quot;source_artifact&quot;: &quot;llm_proposer&quot;,
   &quot;next_bounded_candidate&quot;: {
-    &quot;title&quot;: &quot;Add keyword filter flag (-k) to scripts/run_all_tests.py for fast targeted test runs&quot;,
-    &quot;backlog_instructions&quot;: &quot;Extends run_all_tests.py with a keyword filter option (-k) forwarded to pytest, enabling rapid feedback on specific feature areas before executing full monolithic suites on constrained hardware.\n\nTarget path: scripts/run_all_tests.py&quot;,
+    &quot;title&quot;: &quot;Add --scaffold-missing flag to scripts/validate_test_existence.py to generate companion test stubs&quot;,
+    &quot;backlog_instructions&quot;: &quot;Directly resolves reflection-9295bcbf7db0 where missing companion test detection triggered distraction into validator profiling by adding --scaffold-missing to validate_test_existence.py to immediately scaffold minimal tests/test_&lt;script&gt;.py stubs for unbacked scripts.\n\nTarget path: scripts/validate_test_existence.py&quot;,
     &quot;backlog_priority&quot;: null
   },
-  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add keyword filter flag (-k) to scripts/run_all_tests.py for fast targeted test runs (target: scripts/run_all_tests.py)&quot;,
+  &quot;recommended_next_action&quot;: &quot;Implement and commit: Add --scaffold-missing flag to scripts/validate_test_existence.py to generate companion test stubs (target: scripts/validate_test_existence.py)&quot;,
   &quot;expected_outcome&quot;: {
-    &quot;claim&quot;: &quot;scripts/run_all_tests.py accepts -k to filter test execution and displays the flag in --help output&quot;,
+    &quot;claim&quot;: &quot;validate_test_existence.py supports --scaffold-missing to generate companion test stubs for missing scripts&quot;,
     &quot;check&quot;: {
       &quot;kind&quot;: &quot;script_exit_zero&quot;,
-      &quot;command&quot;: &quot;python3 scripts/run_all_tests.py --help&quot;
+      &quot;command&quot;: &quot;python3 scripts/validate_test_existence.py --help&quot;
     }
   }
 }
 ```
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-2026-09-05-001  Title: python3 -m unittest collects 0 tests on suites using standalone functions without unittest.TestCase
-Root cause: unittest discovery only collects test methods inside unittest.TestCase subclasses. Test suites written as standalone functions with plain assert statements (the pytest convention) are invisible to python3 -m unittest, which silently reports 0 tests collected and exits 0, masking the fact that no tests actually ran.
-Prevention: Before choosing a test runner, inspect the test file: if it defines standalone test_* functions with plain assert statements (no unittest.TestCase), run pytest directly (python3 -m pytest &lt;path&gt;). Reserve python3 -m unittest for suites that explicitly subclass unittest.TestCase. When in doubt, prefer pytest — it handles both conventions. See also [Lesson LESS-REF-c2ab8feea257-4dc0] in lessons/less
+ID: ERR-20260913-769b714d  Title: Verification gate rejected the proposed change while attempting: Prune directory traversal and pre-filter AST parsing in scripts/validate_no_shel
+Root cause: 
+Prevention: 
 
 ## Proven approach for this task (from lessons/lessons.yaml)
 ID: LESS-REF-e13f1cd0f155  Title: When repo-wide test suites time out on the constrained eeepc host, fall back to targeted test execution (the paired test module for the changed file, or the script&#x27;s own --test flag) to validate scope
@@ -1990,26 +1990,26 @@ If you apply this lesson, cite [Lesson LESS-REF-e13f1cd0f155] in your proposal/r
 Related: LESS-REF-c2ab8feea257-4dc0
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Prefer scoped test executions (`scripts/run_all_tests.py --target &lt;name&gt;` or `--test-file &lt;path&gt;`) for targeted pre-commit verification instead of running the full test suite when operating under stri
-- Rely strictly on targeted companion pytests and scoped runner invocations (`scripts/run_all_tests.py --target &lt;script_name&gt;`) for pre-commit verification instead of running full-suite pytest or unscop
-- When navigating large source files (&gt;3,500 lines) for specific blocks such as main() or CLI handlers, locate target definitions via targeted grep commands before issuing large sequential read_file cal
+- Verify the semantic conventions of metadata flags (such as `truncated`) in existing sibling functions before implementing new meta functions and test assertions.
+- Dispatch write_file calls for both the new utility script and its companion test file in parallel within a single turn to save execution steps during file scaffolding.
+- When checking for potential repository test runner or style sweep regressions before adding a new script, inspect `scripts/check_style.py` or test discovery in `scripts/run_all_tests.py` directly rath
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 08:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_readonly_streak.py, tests/test_check_readonly_streak.py. Reward signal will be…
-- Attempt 2 (2026-09-17 08:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_workspace.py, tests/test_search_workspace.py. Reward signal will be upgraded…
-- Attempt 3 (2026-09-17 07:48 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/confirmation_status.json, memory/repeat_failures.json,…
+- Attempt 1 (2026-09-17 09:25 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py. Reward signal will be upgraded by…
+- Attempt 2 (2026-09-17 08:55 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_readonly_streak.py, tests/test_check_readonly_streak.py. Reward signal will be…
+- Attempt 3 (2026-09-17 08:18 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_workspace.py, tests/test_search_workspace.py. Reward signal will be upgraded…
 
 ## Concrete task to implement
 
-Title: Add keyword filter flag (-k) to scripts/run_all_tests.py for fast targeted test runs
+Title: Add --scaffold-missing flag to scripts/validate_test_existence.py to generate companion test stubs
 
 
-Extends run_all_tests.py with a keyword filter option (-k) forwarded to pytest, enabling rapid feedback on specific feature areas before executing full monolithic suites on constrained hardware.
+Directly resolves reflection-9295bcbf7db0 where missing companion test detection triggered distraction into validator profiling by adding --scaffold-missing to validate_test_existence.py to immediately scaffold minimal tests/test_&lt;script&gt;.py stubs for unbacked scripts.
 
-Target path: scripts/run_all_tests.py
+Target path: scripts/validate_test_existence.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/run_all_tests.py accepts -k to filter test execution and displays the flag in --help output
+validate_test_existence.py supports --scaffold-missing to generate companion test stubs for missing scripts
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5924,7 +5924,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 09:33:32 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 12:30:35 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-17 10:01:43 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-17 12:30:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
