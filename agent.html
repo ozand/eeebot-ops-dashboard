@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">194</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 20:55:03 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">43.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="26">data: 26s old &middot; generated 18:21 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 19:09 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1321,17 +1321,17 @@
       <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
     </div>
     <div class="context-header-badges">
-      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+3,026 chars spare)</span>
+      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+4,137 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-656c8fc4033f</span>
+      <span class="cycle-pill">cycle-f3fbfa246645</span>
     </div>
   </div>
   <div class="context-kpis">
     <div class="context-kpi-card">
       <span class="kpi-label">Capped Prompt Load</span>
-      <span class="kpi-value">20,974 <span class="kpi-unit">capped chars</span></span>
-      <span class="kpi-sub">~5,243 est. tokens under builder cap</span>
-      <span class="kpi-sub"><strong>Actual System Message:</strong> 20,974 chars received by model</span>
+      <span class="kpi-value">19,863 <span class="kpi-unit">capped chars</span></span>
+      <span class="kpi-sub">~4,965 est. tokens under builder cap</span>
+      <span class="kpi-sub"><strong>Actual System Message:</strong> 19,863 chars received by model</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Context Budget Cap</span>
@@ -1340,21 +1340,21 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Remaining Headroom</span>
-      <span class="kpi-value"><span class="stat-good">+3,026 chars (12.6%)</span></span>
+      <span class="kpi-value"><span class="stat-good">+4,137 chars (17.2%)</span></span>
       <span class="kpi-sub">margin before overflow trim</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Tier 2 Reachable Knowledge</span>
-      <span class="kpi-value">~1007.1 <span class="kpi-unit">KB</span></span>
-      <span class="kpi-sub">202 files reachable via read_file</span>
+      <span class="kpi-value">~1005.7 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-sub">201 files reachable via read_file</span>
     </div>
   </div>
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>87%</strong> (20,974 / 24,000 chars)</span><span>2026-09-18 17:04:46.027594 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>82%</strong> (19,863 / 24,000 chars)</span><span>2026-09-18 18:25:04.553605 MSK</span></div>
     <div class="context-progress-bar">
-      <div class="context-progress-fill" style="width:87%;background:var(--color-warning, #d29922);"></div>
+      <div class="context-progress-fill" style="width:82%;background:var(--color-success, #2ea043);"></div>
     </div>
   </div>
   <div class="prompt-fit-events" id="prompt-fit-events">
@@ -1370,7 +1370,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 37,076 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 18,760 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1383,8 +1383,8 @@
         <div class="t1-block-item "><span class="t1-seq">3</span><span class="t1-name">goals</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">3,040c</span></div>
         <div class="t1-block-item "><span class="t1-seq">4</span><span class="t1-name">user</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,878c</span></div>
         <div class="t1-block-item "><span class="t1-seq">5</span><span class="t1-name">operating</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">4,233c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">6</span><span class="t1-name">agents</span><span class="t1-owner t1-owner-instance">instance</span><span class="t1-sz">3,989c</span></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">7</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">4,022c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 31 Skills in Tier 2 (151.6 KB)</a></div>
+        <div class="t1-block-item "><span class="t1-seq">6</span><span class="t1-name">agents</span><span class="t1-owner t1-owner-instance">instance</span><span class="t1-sz">2,975c</span></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">7</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">3,925c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 30 Skills in Tier 2 (150.2 KB)</a></div>
         <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">8</span><span class="t1-name">memory</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">532c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 62 files in Tier 2</a></div>
         <div class="t1-block-item "><span class="t1-seq">9</span><span class="t1-name">runtime</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">390c</span></div>
         <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 8 &times; "
@@ -1392,8 +1392,8 @@
 ---
 
 " Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 37,076 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,330c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 18,760 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,999c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1401,13 +1401,13 @@
         <span class="bridge-arrow">&#10132;</span>
         <strong>On-Demand Access</strong>
         <p>read_file · search_memory · exec</p>
-        <span class="bridge-cost">Tier 1 index costs: catalogue 4,022c · memory 532c · exec path unavailable</span>
+        <span class="bridge-cost">Tier 1 index costs: catalogue 3,925c · memory 532c · exec path unavailable</span>
       </div>
     </div>
     <div class="tier-col tier2-col">
       <div class="tier-col-header"><span class="tier-tag tag-t2">TIER 2</span><div><h3>Reachable on Disk (Zero Base Context)</h3><p>Full instructions, lessons, and memory records.</p></div></div>
       <div class="tier2-targets-list">
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 31 skills</strong><span class="t2-size">151.6 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 30 skills</strong><span class="t2-size">150.2 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
         <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 109 lessons</strong><span class="t2-size">412.3 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
         <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">443.2 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
       </div>
@@ -1645,93 +1645,67 @@ Your final response MUST be this JSON, and nothing else (no markdown wrapping):
 - **exec** has a 60-second default timeout and a 10,000-character output cap; long-running or high-output commands must be scoped or piped through a bound (`head`, `tail`, `wc -l`) before you run them, not after they truncate.
 - **Read-only for every tool:** everything named under Mutation surface&#x27;s &quot;Do NOT modify&quot; list above. Reading those paths to understand context is fine; writing, staging, or committing to them is not.
 </code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">agents</strong><span class="block-label"><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code> &bull; cap 4,000c</span><span class="block-preview">AGENTS.md</span><span class="block-meta">3,989 chars &bull; ~997 tokens <span class="badge-flag badge-flag-truncated">TRUNCATED</span></span></summary><div class="block-body"><pre><code>## AGENTS.md
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">agents</strong><span class="block-label"><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code> &bull; cap 4,000c</span><span class="block-preview">AGENTS.md</span><span class="block-meta">2,975 chars &bull; ~743 tokens &mdash;</span></summary><div class="block-body"><pre><code>## AGENTS.md
 
 # Instance Agent Instructions
 
-## Identity
+## Working knowledge
 
-You are the self-evolving agent instance on the `eeepc` host: i386 Debian 12,
-2 GB RAM, Python 3.11. This workspace is the instance repository, not the eeebot
-product repository. A bounded executor proposes one scoped change per cycle.
-Cycle scripts must remain Python-stdlib-only and fit the host&#x27;s constraints.
+- Memory is `memory/index.md` (catalog) + `memory/facts/` (read a specific fact with `read_file`); `memory/HISTORY.md` is append-only—read the last N lines with `offset`/`limit`; create a new fact file and add its line to the index.
+- `lessons/` records failures, causes, and reusable learning.
+- `skills/` holds reusable procedures. Creating, improving, and using skills is
+  valuable work, including meta-skills that improve other skills and wrappers
+  for repeated actions that reduce tool calls.
+- `docs/` is the reference library: read `docs/index.md` before mutating this
+  file or creating/improving a skill (`docs/agents/` covers AGENTS.md practice,
+  `docs/skills/` covers skill authoring).
 
-## Charter
+## Lesson markdown schema (required headers)
 
-The charter is injected into your system prompt under
-`# Immutable operator charter`; it is not a file in this repo. Never edit or
-copy it.
+Every markdown lesson file you author under `lessons/` (top-level `*.md` and
+cards under `lessons/errors/`) must conform to the schema enforced by
+`tests/test_lessons_integrity.py`, or the gate will reject it:
 
-## Cycle contract
+1. **Title.** The file must start with a level 1 header: `# &lt;Title&gt;`.
+2. **Symptom/Description.** A level 2 header `## Symptom` or `## Description`.
+3. **Root Cause.** A level 2 header `## Root Cause` (or `## Root Causes`).
+4. **Fix Applied/Approach.** A level 2 header `## Fix Applied` (or
+   `## Recovery Procedures` / `## Approach`).
+5. **Prevention.** A level 2 header `## Prevention` (or
+   `## Prevention Mechanisms` / `## Reusable Insight`), followed by at least
+   10 characters of actionable content — an empty or one-line stub fails.
 
-Work only on the cycle branch created by the harness. Make a scoped change,
-validate it, and commit it on that branch. Never checkout `main` and never push
-to `main`; the harness owns integration. Its gate compiles changed scripts and
-runs affected tests. A cycle that is not integrated is a normal outcome, not an
-error to bypass.
+Write new lessons with these headers in place so they pass the integrity
+checks on first commit; do not author a lesson and retrofit the schema later.
 
-## Immediate skip protocol
+## Canonical skill path layout
 
-Before any edit, confirm the target work is not already complete: check the
-&quot;Recent activity&quot; list and the codebase (a targeted `grep`/`git log` for the
-target path or task title). If inspection confirms the task is already done or
-not applicable, stop immediately and report `outcome: skipped` — do not
-re-implement, do not make a bookkeeping commit, and do not spend further tool
-calls. A skip is a valid, complete outcome, not a failure to work around.
+Every skill lives at the canonical path `skills/&lt;name&gt;/SKILL.md`, where
+`&lt;name&gt;` is a lowercase, hyphen-separated identifier (e.g.
+`skills/memory-lookup/SKILL.md`). Supporting files (scripts, references,
+assets) belong inside the same `skills/&lt;name&gt;/` directory.
 
-## Staging protocol (target paths only)
+- Never create a flat `skills/&lt;name&gt;.md` file; if one is referenced or
+  found, normalize it to `skills/&lt;name&gt;/SKILL.md` (move the file into the
+  directory and rename it) in the same cycle.
+- When a task, lesson, or reflection references a skill by path, resolve it
+  to the canonical `skills/&lt;name&gt;/SKILL.md` form before reading, editing, or
+  staging it.
+- Staging a skill means staging files under `skills/&lt;name&gt;/` only; a
+  top-level `skills/&lt;name&gt;.md` is a layout defect, not a valid target.
 
-Stage only the files the task designates as targets. Never use `git add -A`
-or `git add .`; always pass explicit paths (`git add &lt;file&gt;`). Before
-committing, run `git status --porcelain` and confirm every staged path is a
-designated target inside an allowed surface (`surfaces/`, `scripts/`,
-`memory/`, `lessons/`, `docs/`, `tests/`, `skills/`, `AGENTS.md`). Live
-runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
-they show as modified or untracked. If a non-target path appears staged,
-unstage it (`git restore --staged &lt;path&gt;`) before committing.
+Improve this file through ordinary gated cycles when your working practice
+changes. Keep it short: procedures belong in skills, not in standing context.
 
-## Forbidden operational paths (control plane)
+## Script contract
 
-The live runtime tree is the control plane of the harness, not part of this
-repository&#x27;s mutation surface. These paths are forbidden to stage, commit,
-edit, or delete in any cycle:
+Scripts must follow the harness invocation contract documented in the product
+repository&#x27;s `docs/INITIAL_VALIDATOR_ROADMAP.md`: no arguments, no
+interactivity, bounded output, and meaningful exit codes.
 
-- `ops/` — live operational artifacts (run logs, operator-facing state).
-- `state/` — harness runtime state (demand rotation, ledger, reflector
-  output, LLM call records). Read-only for you; see the lookup table above.
-- `systemd/` — live unit files and timers; changes here affect the running
-  host and bypass the gate entirely.
-- `goals.md`, `IDENTITY.md` — live in the release tree, not in this repo; the
-  gate rejects any commit that creates or touches them.
-
-If a task prompt or a verification run ever seems to require touching one of
-these paths, treat it as a defect in the task, not an instruction: report it
-in `concrete_next_action` and keep your commit inside the allowed surfaces.
-
-## Execution protocol (no diagnosis-only cycles)
-
-Once you have reproduced or diagnosed a defect, immediately proceed to the
-file edit that fixes it, then verify and commit in the same session. Do not
-end a cycle after diagnosis without an edit, a test, or a commit. If the fix
-is not feasible within the remaining tool budget, commit the smallest
-verifiable step (a failing test or a scoped partial fix) so the next cycle
-starts from a concrete artifact, not a re-diagnosis.
-
-## Cycle termination (no trailing placeholder calls)
-
-Once final verification passes and the commit is made, the cycle is over:
-emit the structured final response immediately. Do not issue trailing
-placeholder tool calls (`echo done`, `git status` re-checks, no-op reads,
-&quot;just in case&quot; greps) after the commit — they burn iterations, add no
-information, and can truncate the final response. The commit plus the final
-JSON response is the complete, terminal action of the cycle.
-
-## Out-of-scope verification defects (handoff, don&#x27;t fix)
-
-
-
-[AGENTS.md truncated at 4000 chars; read the file for the rest]</code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">skills_catalogue</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code> &bull; cap dynamic</span><span class="block-preview">Skills</span><span class="block-meta">4,022 chars &bull; ~1,005 tokens &mdash;</span></summary><div class="block-body"><pre><code># Skills
+Never commit secrets, credentials, authentication state, or live runtime state.
+</code></pre></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">skills_catalogue</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code> &bull; cap dynamic</span><span class="block-preview">Skills</span><span class="block-meta">3,925 chars &bull; ~981 tokens &mdash;</span></summary><div class="block-body"><pre><code># Skills
 
 The following skills extend your capabilities. To use a skill, read the skill&#x27;s SKILL.md file using the read_file tool.
 Skills with available=&quot;false&quot; need dependencies installed first - you can try installing them with apt/brew.
@@ -1760,7 +1734,6 @@ Skills live at skills/&lt;name&gt;/SKILL.md; read one with read_file when its de
 - recursive-unittest-testsuite-traversal: Trigger: Flattening a nested unittest.TestSuite (from TestLoader.discover) into leaf TestCase instances.
 - run-tests: Trigger: Run bounded verification tests via scripts/run_all_tests.py before committing.
 - secret-verification-scoping: Trigger: Verifying a change has no secrets — scope the scan to git diff, not a full-file grep.
-- standard-test-runner-unittest-over-pytest: Trigger: Use unittest instead of pytest in scripts.
 - sync-agents-sections-in-structural-tests: Trigger: Before adding an AGENTS.md section, confirm it isn&#x27;t already registered in REQUIRED_SECTIONS.
 - target-git-log-history-inspection-single-file-fixes: Trigger: When reading single-file git logs to extract a patch before editing.
 - targeted-test-validation-legacy-glob-suites: Trigger: Running glob-based legacy suites.
@@ -1796,15 +1769,15 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
       <table class="reconciliation-table">
         <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>
-        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,040</td><td class="num">3,200c</td><td>&mdash;</td><td>~760 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">1,878</td><td class="num">4,000c</td><td>&mdash;</td><td>~469 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">4,233</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,058 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">3,989</td><td class="num">4,000c</td><td><span class="badge-flag badge-flag-truncated">TRUNCATED</span></td><td>~997 tokens</td></tr><tr class=""><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">4,022</td><td class="num">dynamic</td><td>&mdash;</td><td>~1,005 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">dynamic</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>20,918</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>56</strong></td><td colspan="2"></td><td>8 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>20,974</strong></td><td colspan="2"></td><td><strong>Recorded chars: 20,974</strong> (actual system message received by model)</td></tr></tbody>
+        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,040</td><td class="num">3,200c</td><td>&mdash;</td><td>~760 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">1,878</td><td class="num">4,000c</td><td>&mdash;</td><td>~469 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">4,233</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,058 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">2,975</td><td class="num">4,000c</td><td>&mdash;</td><td>~743 tokens</td></tr><tr class=""><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">3,925</td><td class="num">dynamic</td><td>&mdash;</td><td>~981 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">dynamic</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>19,807</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>56</strong></td><td colspan="2"></td><td>8 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>19,863</strong></td><td colspan="2"></td><td><strong>Recorded chars: 19,863</strong> (actual system message received by model)</td></tr></tbody>
       </table>
-      <p class="rec-note">Formula: &sum;(recorded sections: 20,918c) + 8 separators &times; 7c (56c) = 20,974 chars, compared against actual system message received by model (20,974c).</p>
-      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,233 / parsed 4,233 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,022 / parsed 4,022 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
+      <p class="rec-note">Formula: &sum;(recorded sections: 19,807c) + 8 separators &times; 7c (56c) = 19,863 chars, compared against actual system message received by model (19,863c).</p>
+      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,233 / parsed 4,233 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 3,925 / parsed 3,925 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,330 chars &bull; ~1,082 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Document treating negative grep exit codes as conclusive search results to prevent repetitive queries
-Request ID: llm-proposer-cycle-656c8fc4033f
-Cycle ID: cycle-656c8fc4033f
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-656c8fc4033f.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,999 chars &bull; ~999 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/align_script_header.py to align script docstring and header formatting to reference scripts
+Request ID: llm-proposer-cycle-f3fbfa246645
+Cycle ID: cycle-f3fbfa246645
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-f3fbfa246645.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1812,6 +1785,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 47ea6581 docs(lessons): document treating grep exit code 1 as conclusive no-match
 - fd6fbe12 docs(lessons): document loop breaker halt protocol — immediate tool halt and final response emission
 - c8fdc9ca docs(lessons): document POSIX shell pipeline exit handling to avoid PIPESTATUS bad substitutions
 - 78a370a5 feat(check_litellm_cooldown): add evaluate_consecutive_backoff for repeated RateLimitErrors
@@ -1819,35 +1793,37 @@ Recently completed (recent commits):
 - 30d95f2a docs(lessons): document chunked read_file offset/limit usage in 50-100 line windows
 - 38b441e9 feat(run_all_tests): add --target-script companion-only test execution
 - 4948a3e5 docs(lessons): document exact token set intersection rule for similarity assertions
-- e0369c3b feat(scan_archive): add find_results_by_status record filter and --status CLI flag
+
+Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add validate_raw_json_payload to scripts/validate_json_syntax.py to verify completion text lacks preambles or fences: recent_duplicate_failure
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260904-d44ed220  Title: Stop repeated codebase searches when grep returns empty for newly requested feature terms; proceed directly to inspecting and editing the target script
-Problem: When a task requests a new feature or term that does not yet exist in the codebase, subagents repeatedly re-run grep and list_dir sweeps searching for the term, burning tool iterations on searches that will always return empty. The term is new by definition, so no existing match is possible, and each redundant search wastes a full iteration of the cycle budget.
-Solution: When a task names a new feature, term, or symbol that is not yet present in the codebase, run at most one targeted grep to confirm absence, then stop searching and proceed directly to reading the designated target file and making the edit. Do not re-run the same or similar searches expecting a different result. If the first grep returns empty, treat that as confirmation the feature is new and move
-If you apply this lesson, cite [Lesson LESS-20260904-d44ed220] in your proposal/response.
+ID: lessons/targeted_reference_reading.md  Title: Targeted Reference Script Inspection for CLI and Boilerplate Structures
+Problem: Read lessons/targeted_reference_reading.md: **Name the structural question before the first read.** &quot;What flags does this CLI accept?&quot; and &quot;where does execution start?&quot; are each answerable in one bounded probe; &quot;understand this script&quot; is not a question and triggers unbounded paging.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/targeted_reference_reading.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Run standalone validation scripts directly from the CLI (e.g. python3 scripts/check_lesson_markdown_sections.py) before attempting to import and invoke internal module functions with python3 -c, avoiding parameter signature mismatches.
-- Avoid executing scripts/validate_test_existence.py directly in cycle verification pipelines; verify test pairing by checking file existence (tests/test_&lt;name&gt;.py) and running pytest directly, as whole-repo AST scans exceed default command timeouts.
-- When writing unit tests for functions that start with early guard clauses (e.g. is_rate_limit_error), ensure test fixtures include the guard trigger text unless specifically testing the guard rejection path.
+- When checking record formats or schema conventions from existing scripts, use targeted grep or inspect a single archived JSON file directly rather than reading large multi-thousand-line scripts.
+- When parsing Python idiom ASTs (e.g., `if __name__ == &#x27;__main__&#x27;:`), reference existing AST helpers in the codebase or check node structures using ast.dump/python -c to handle variations in comparison targets and AST node attributes.
+- When embedding self-test functions within CLI scripts that test invocation flows, execute target functions directly or pass non-test argument lists to main() to avoid recursive re-entry into the self-test harness.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 16:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/loop_breaker_halt_protocol.md.
-- Attempt 2 (2026-09-18 16:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/posix_shell_pipeline_exit.md.
-- Attempt 3 (2026-09-18 15:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_litellm_cooldown.py, tests/test_check_litellm_cooldown.py.
+- Attempt 1 (2026-09-18 18:01 UTC): no commits (blocked). Task &quot;Add validate_raw_json_payload to scripts/validate_json_synta&quot; matches recently-failed/rejected proposal &quot;Add…
+- Attempt 2 (2026-09-18 17:50 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/negative_grep_conclusiveness.md.
+- Attempt 3 (2026-09-18 16:52 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/loop_breaker_halt_protocol.md.
 
 ## Concrete task to implement
 
-Title: Document treating negative grep exit codes as conclusive search results to prevent repetitive queries
+Title: Add scripts/align_script_header.py to align script docstring and header formatting to reference scripts
 
 
-In cycle fallback-3ad0b02cb832 grep exit code 1 was retried 5 times; documenting that exit code 1 indicates non-match rather than an error prevents repeating identical searches.
+Resolves reflection-9a46c5e7055e where 40+ turns were wasted testing header regexes instead of aligning to a passing reference script, by providing a script to extract and match header and docstring layout from a reference.
 
-Target path: lessons/negative_grep_conclusiveness.md
+Target path: scripts/align_script_header.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-Create lesson documenting that grep exit code 1 is conclusive and must not be retried with identical arguments.
+scripts/align_script_header.py extracts reference header conventions and validates target conformity
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1856,7 +1832,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">849</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">1,123</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">764</td></tr><tr><td>Previous attempts for this task</td><td class="num">438</td></tr><tr><td>Concrete task to implement</td><td class="num">375</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">278</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,047</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">594</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">714</td></tr><tr><td>Previous attempts for this task</td><td class="num">458</td></tr><tr><td>Concrete task to implement</td><td class="num">414</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">267</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -1872,12 +1848,12 @@ Rules: see OPERATING.md in your system prompt.
     <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
-    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1007.1 KB</strong> across <strong>202</strong> files.</p>
-<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 7048c · retained 33/33 · complete · omitted: none</div>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1005.7 KB</strong> across <strong>201</strong> files.</p>
+<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 8062c · retained 32/32 · complete · omitted: none</div>
 <div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
-<div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>6</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>12</td><td>10</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>50</td><td>45</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr></tbody></table>
+<div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>6</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>12</td><td>10</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>50</td><td>45</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>no</td><td>4</td><td>4</td><td>not on disk</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr></tbody></table>
     <div class="t2-group" id="tier2-skills-section">
-      <div class="t2-group-header"><h4>Skills Store (31 skills &bull; ~151.6 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (4,022 chars)</span></div>
+      <div class="t2-group-header"><h4>Skills Store (30 skills &bull; ~150.2 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (3,925 chars)</span></div>
       <div class="skills-card-grid">
         <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">batch-grep</span><span class="skill-card-size">6,474 B</span></div><p class="skill-card-desc">name: batch-grep</p><details class="skill-card-details"><summary>View SKILL.md (6,474 bytes)</summary><pre><code>---
 name: batch-grep
@@ -4881,38 +4857,6 @@ an in-cycle verification can run:
     python3 scripts/workspace_validation_helpers.py --repo . --audit-diff-tokens --json
 
 </code></pre></details></div>
-        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">standard-test-runner-unittest-over-pytest</span><span class="skill-card-size">1,446 B</span></div><p class="skill-card-desc">name: standard-test-runner-unittest-over-pytest</p><details class="skill-card-details"><summary>View SKILL.md (1,446 bytes)</summary><pre><code>---
-name: standard-test-runner-unittest-over-pytest
-description: Trigger: Use unittest instead of pytest in scripts.
-version: &quot;1.0.0&quot;
----
-
-# Standard test runner (unittest over pytest)
-
-## Standard test runner (unittest over pytest)
-&lt;!-- prompt-fit: droppable --&gt;
-
-The host is a constrained i386 Debian 12 box where third-party packages are
-not guaranteed to be installed. `pytest` is currently present, but it is a
-third-party dependency and may be missing in a fresh or minimal environment;
-the standard-library `unittest` runner is always available.
-
-1. **Write tests for `unittest`.** New test files must be runnable with
-   `python3 -m unittest tests.test_&lt;name&gt;`: use `unittest.TestCase` classes
-   and `unittest.main()` (or plain `assert`-based functions discovered by
-   `unittest`). Do not add `import pytest` or pytest-only fixtures/parametrize
-   to new tests.
-2. **Verify with the stdlib runner.** In-cycle verification should use
-   `python3 -m unittest tests.test_&lt;your_target&gt; -v` (or
-   `python3 -m unittest discover -s tests -p &#x27;test_&lt;your_target&gt;.py&#x27;`) so the
-   check works even where pytest is absent.
-3. **Legacy pytest tests are out of scope.** Existing pytest-style files
-   (e.g. those using `import pytest` or `unittest.mock.AsyncMock` with pytest
-   plugins) remain valid for the harness gate; do not mass-convert them in a
-   single cycle. Convert one file at a time only when it is already your
-   designated target.
-
-</code></pre></details></div>
         <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">sync-agents-sections-in-structural-tests</span><span class="skill-card-size">8,052 B</span></div><p class="skill-card-desc">name: sync-agents-sections-in-structural-tests</p><details class="skill-card-details"><summary>View SKILL.md (8,052 bytes)</summary><pre><code>---
 name: sync-agents-sections-in-structural-tests
 description: Trigger: Before adding an AGENTS.md section, confirm it isn&#x27;t already registered in REQUIRED_SECTIONS.
@@ -5355,54 +5299,47 @@ Full allocation table and rationale: `lessons/early_edit_turn_discipline.md`.
   </div>
   </div>
 </section>
-      <div class="host-identity" translate="no">eeepc · i386 · Debian 12 · 2 GB RAM · Python 3.11</div>
+      
       <div class="agent-grid">
         <div class="agent-subcol">
           <h3>AGENTS.md Charter</h3>
-          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (192 lines)</summary><div class="agent-wide-content"><pre><code># Instance Agent Instructions
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (57 lines)</summary><div class="agent-wide-content"><pre><code># Instance Agent Instructions
 
-## Identity
+## Working knowledge
 
-You are the self-evolving agent instance on the `eeepc` host: i386 Debian 12,
-2 GB RAM, Python 3.11. This workspace is the instance repository, not the eeebot
-product repository. A bounded executor proposes one scoped change per cycle.
-Cycle scripts must remain Python-stdlib-only and fit the host&#x27;s constraints.
+- Memory is `memory/index.md` (catalog) + `memory/facts/` (read a specific fact with `read_file`); `memory/HISTORY.md` is append-only—read the last N lines with `offset`/`limit`; create a new fact file and add its line to the index.
+- `lessons/` records failures, causes, and reusable learning.
+- `skills/` holds reusable procedures. Creating, improving, and using skills is
+  valuable work, including meta-skills that improve other skills and wrappers
+  for repeated actions that reduce tool calls.
+- `docs/` is the reference library: read `docs/index.md` before mutating this
+  file or creating/improving a skill (`docs/agents/` covers AGENTS.md practice,
+  `docs/skills/` covers skill authoring).
 
-## Charter
+## Lesson markdown schema (required headers)
 
-The charter is injected into your system prompt under
-`# Immutable operator charter`; it is not a file in this repo. Never edit or
-copy it.
+Every markdown lesson file you author under `lessons/` (top-level `*.md` and
+cards under `lessons/errors/`) must conform to the schema enforced by
+`tests/test_lessons_integrity.py`, or the gate will reject it:
 
-## Cycle contract
+1. **Title.** The file must start with a level 1 header: `# &lt;Title&gt;`.
+2. **Symptom/Description.** A level 2 header `## Symptom` or `## Description`.
+3. **Root Cause.** A level 2 header `## Root Cause` (or `## Root Causes`).
+4. **Fix Applied/Approach.** A level 2 header `## Fix Applied` (or
+   `## Recovery Procedures` / `## Approach`).
+5. **Prevention.** A level 2 header `## Prevention` (or
+   `## Prevention Mechanisms` / `## Reusable Insight`), followed by at least
+   10 characters of actionable content — an empty or one-line stub fails.
 
-Work only on the cycle branch created by the harness. Make a scoped change,
-validate it, and commit it on that branch. Never checkout `main` and never push
-to `main`; the harness owns integration. Its gate compiles changed scripts and
-runs affected tests. A cycle that is not integrated is a normal outcome, not an
-error to bypass.
+Write new lessons with these headers in place so they pass the integrity
+checks on first commit; do not author a lesson and retrofit the schema later.
 
-## Immediate skip protocol
+## Canonical skill path layout
 
-Before any edit, confirm the target work is not already complete: check the
-&quot;Recent activity&quot; list and the codebase (a targeted `grep`/`git log` for the
-target path or task title). If inspection confirms the task is already done or
-not applicable, stop immediately and report `outcome: skipped` — do not
-re-implement, do not make a bookkeeping commit, and do not spend further tool
-calls. A skip is a valid, complete outcome, not a failure to work around.
-
-## Staging protocol (target paths only)
-
-Stage only the files the task designates as targets. Never use `git add -A`
-or `git add .`; always pass explicit paths (`git add &lt;file&gt;`). Before
-committing, run `git status --porcelain` and confirm every staged path is a
-designated target inside an allowed surface (`surfaces/`, `scripts/`,
-`memory/`, `lessons/`, `docs/`, `tests/`, `skills/`, `AGENTS.md`). Live
-runtime directories (`ops/`, `state/`, `systemd/`) are never staged, even if
-they show as modified or untracked. If a non-target path appears staged,
-unstage it (`git restore --staged &lt;path&gt;`) before committing.
-
-## Forbidden operational paths (co...</code></pre></div></details>
+Every skill lives at the canonical path `skills/&lt;name&gt;/SKILL.md`, where
+`&lt;name&gt;` is a lowercase, hyphen-separated identifier (e.g.
+`skills/memory-lookup/SKILL.md`). Supporting files (scripts, references,
+assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></div></details>
         </div>
         <div class="agent-subcol">
           <h3>Goals Charter</h3>
@@ -5621,7 +5558,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 18:21:23 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 20:55:03 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 19:09:59 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 20:55:03 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
