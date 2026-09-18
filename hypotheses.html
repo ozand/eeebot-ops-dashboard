@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">208</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 02:27:09 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">39.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 23:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 00:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html" class="nav-current">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -2600,13 +2600,6 @@
       <div class="hypo-durable-section"><h3 class="hypo-durable-title">Strategist (hypothesis-durable-v1) backlog (20)</h3><ul class="hypo-list">
             <li class="hypo-row hypo-durable">
               <span class="badge badge-researching">CANDIDATE</span>
-              <strong class="hypo-title">Pre-proposer futile surface pruning to dissolve proposal rejection churn</strong>
-              <div class="hypo-meta"></div>
-              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing deterministic surface-level exclusion of registered futile gaps (such as host_metrics/purge_stale_feeds) at the demand selection stage prior to LLM proposer invocation will eliminate futile-surface proposer rejections and reduce tokens per integration.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Add an upstream check in the demand queue scheduler to filter out candidate demands mapping to active futile surfaces before formatting proposer prompts.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if futile_surface proposer rejections drop to 0 and tokens_per_integration decreases by at least 5%; refuted if unblocked non-futile demands show a decrease in proposal generation rate.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-06T00:00:49.138056Z</div>
-            </li>
-        
-            <li class="hypo-row hypo-durable">
-              <span class="badge badge-researching">CANDIDATE</span>
               <strong class="hypo-title">Demand failure backoff to dissolve wasted attempt and repeat failure contradiction</strong>
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Enforcing a 3-attempt backoff cooldown on repeat failing demand IDs in nanobot/runtime/demand.py will dissolve the contradiction between proposal volume (502 proposals) and cycle waste, reducing loop.wasted_attempt_rate from 0.3419 to &lt;= 0.2200 and loop.repeat_failure_rate from 0.1573 to &lt;= 0.1000 over 25 cycles without decreasing confirmed_integrations per day below 12.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Implement a 48-hour backoff filter in nanobot/runtime/demand.py that suppresses re-queuing any demand ID with &gt;= 3 unconfirmed attempts unless new diagnostic context or a code mutation is detected.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if loop.wasted_attempt_rate drops below 0.2500 and repeat_failures drop below 75 while confirmed integrations remain &gt;= 10/day; refuted if wasted_attempt_rate remains &gt;= 0.3000 after 25 cycles.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-07T00:00:38.655068Z</div>
@@ -2737,11 +2730,18 @@
               <div class="hypo-meta"></div>
               <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Generating standalone scripts to satisfy narrow tasks increases script count (169) but degrades repo hygiene by leaving 111 out of 168 artifacts with zero static consumers and triggering enhancement_without_caller rejections; wiring uncalled standalone validation scripts directly into existing test/harness runners or retiring dead scripts will reduce zero_static_consumers to &lt;= 100 without degrading compile_clean_ratio (1.0) or heldout tests (4/4 passed).</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Execute a bounded consolidation pass identifying the top 10 oldest zero-static-consumer scripts in scripts/ to either register their validation logic directly into scripts/verify_and_proof.py or prune them.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if zero_static_consumers decreases by at least 6 while heldout.passed remains 4/4 and compile_clean_ratio stays 1.0; refuted if any heldout check fails or compile_clean_ratio drops below 1.0.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-17T00:00:43.973962Z</div>
             </li>
+        
+            <li class="hypo-row hypo-durable">
+              <span class="badge badge-researching">CANDIDATE</span>
+              <strong class="hypo-title">Caller-Coupled Integration to Halt Zero-Static-Consumer Sprawl</strong>
+              <div class="hypo-meta"></div>
+              <div class="hypo-durable-detail"><span class="hypo-label">Statement:</span> Pushing integration quantity has caused quality.retention_cost.zero_static_consumers to inflate from 110 to 122 (68% of retained artifacts), eroding owner_live_ratio from 0.7320 to 0.6881. Mandating that any new or modified utility script declare an active static caller or be registered in a harness runner dissolves the contradiction between artifact output and live inventory utility.</div><div class="hypo-durable-detail"><span class="hypo-label">Action:</span> Update scripts/verify_and_proof.py to reject proposed scripts that lack an import or call site from an active runner or workflow, and wire the top 5 orphan utilities into existing test/dispatch suites.</div><div class="hypo-durable-detail"><span class="hypo-label">Success criterion:</span> Confirmed if zero_static_consumers falls below 115 and owner_live_ratio rebounds to &gt;=0.7100 while maintaining compile_clean_ratio at 1.0; refuted if zero_static_consumers exceeds 122 or proposer_rejects increase by more than 15%.</div><div class="hypo-durable-detail"><span class="hypo-label">Created:</span> 2026-09-18T00:01:22.429485Z</div>
+            </li>
         </ul></div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 23:57:22 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 02:27:09 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 00:16:19 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 02:27:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {

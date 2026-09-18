@@ -1279,7 +1279,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">208</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 02:27:09 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">39.3%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 23:57 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 00:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1296,7 +1296,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,523 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-d7a2d5d90417</span>
+      <span class="cycle-pill">cycle-7e244bd0e726</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1325,7 +1325,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,477 / 24,000 chars)</span><span>2026-09-17 23:48:42.292875 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,477 / 24,000 chars)</span><span>2026-09-18 00:00:49.678244 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:89%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1343,7 +1343,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 11,215 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 30,009 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1361,8 +1361,8 @@
 ---
 
 " Separators</span><span class="t1-sz">21c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 11,215 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">7,124c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 30,009 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,915c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1709,10 +1709,10 @@ Workspace: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving
 Memory index: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/index.md (catalog; read facts on demand)
 History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/HISTORY.md (grep-searchable). Each entry starts with [YYYY-MM-DD HH:MM].
 </code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">7,124 chars &bull; ~1,781 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add required H2 section header to skills/jsonl-stream-filter/SKILL.md to satisfy structure test
-Request ID: llm-proposer-cycle-d7a2d5d90417
-Cycle ID: cycle-d7a2d5d90417
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d7a2d5d90417.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,915 chars &bull; ~1,728 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite verifying detection of repeated commands after safety stop in tests/test_check_loop_breaker_violation.py
+Request ID: llm-proposer-cycle-7e244bd0e726
+Cycle ID: cycle-7e244bd0e726
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7e244bd0e726.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1730,38 +1730,37 @@ Recently completed (recent commits):
 - 61a9985c feat(detect_off_target_reads): flag file read sequences outside target and companion test paths
 
 ## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260903-facedd12  Title: Test-weakening gate rejects test-isolation rewrites
-Root cause: The cycle gate verification or execution failed with test_weakening. The proposed change did not pass the gate checks (compile, test, or mutation surface validation).
-Prevention: Before committing, run the affected test suite locally and confirm the gate checks (compile, test, mutation surface) pass. Ensure the target file change is scoped to allowed mutation surfaces and does not introduce syntax errors or test regressions that would trip the gate.
+ID: ERR-2026-09-06-001  Title: Loop breaker warnings ignored — subagent re-ran the same failing test command repeatedly
+Root cause: The agent treated a repeated, identical command as a transient hiccup and retried it verbatim. Re-running a deterministic command with no change to its inputs cannot produce a different result, so the repetition was pure waste. The loop breaker warning is the harness&#x27;s explicit signal that the current approach is stuck; ignoring it means the agent is not re-evaluating its test logic or its assumpt
+Prevention: Treat a loop breaker warning as a hard stop, not a hint — immediately halt any command you are about to repeat verbatim. Before re-running a test or command, change at least one input — the runner, the target path, the arguments, or your hypothesis about why it failed — or re-read the prior output and the relevant source to form a new hypothesis. If the same command has already produced the same r
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260905-521b6562  Title: Pair every new required AGENTS.md section with a REQUIRED_SECTIONS entry in tests/test_agents_structure.py in the same cycle so the standing instruction is permanently enforced against accidental remo
-Problem: a cycle added a new required section to AGENTS.md but left REQUIRED_SECTIONS in tests/test_agents_structure.py untouched, so the new standing instruction had no structural test guarding it and could be dropped in a later cycle without any gate failure. The omission was only caught by manual review, not by the test suite.
-Solution: Whenever a new required section is introduced in AGENTS.md, add its exact heading to REQUIRED_SECTIONS in tests/test_agents_structure.py in the same commit, then run python3 -m pytest tests/test_agents_structure.py to confirm the new entry resolves to a present heading. Treat the AGENTS.md edit and the test registration as one atomic change: a section that is not registered is not yet standing pol
-If you apply this lesson, cite [Lesson LESS-20260905-521b6562] in your proposal/response.
-Related: LESS-REF-5b349fbfddd0
+ID: lessons/loop_breaker_response.md  Title: Strict Stop Rule for Loop Breaker Safety Interrupts
+Problem: Read lessons/loop_breaker_response.md: **Treat the interrupt as a hard stop, not a hint.** The instant a `loop_breaker` safety interrupt or repetition warning arrives, halt the current command stream.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/loop_breaker_response.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When writing scripts to validate embedded Markdown code blocks, target blocks using explicit header tags or block lengths rather than naively executing the first matched code fence, which may be an il
-- When verifying code blocks embedded in the markdown proposal via a shell one-liner, a naive regex selected the first python fence (a 238-char non-executable snippet from the Root cause section), trigg
-- Limit historical commit archaeology when task instructions and the target file already clearly describe the required change, focusing tool calls on locating and editing target template code.
+- Avoid placing literal dangerous command patterns (e.g., `rm -rf`, `chmod -R 777 /`, `dd if=`) in shell commands or `git commit -m` messages; use descriptive abstract terms instead to avoid tripping sa
+- Avoid executing the entire repository test suite (`pytest tests/`) on slow i686 hosts; run the newly added tests, structural pairing tests, and targeted script-enumerating validators (`test_validate_*
+- When verifying tools that parse or flag dangerous syntax, feed test fixtures via files or stdin redirection instead of embedding dangerous tokens directly into shell arguments.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-17 23:24 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-17 23:04 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-17 22:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_json_syntax.py, tests/test_validate_json_syntax.py.
+- Attempt 1 (2026-09-17 23:50 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-17 23:24 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-17 23:04 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add required H2 section header to skills/jsonl-stream-filter/SKILL.md to satisfy structure test
+Title: Add test suite verifying detection of repeated commands after safety stop in tests/test_check_loop_breaker_violation.py
 
 
-skills/jsonl-stream-filter/SKILL.md is missing an H2 section header, causing tests/test_skills_structure.py::test_body_has_at_least_one_h2_section to fail on origin/main. Adding the section header restores the test baseline.
+Validates check_loop_breaker_violation against transcripts where identical commands or tool families are repeated after a loop breaker notification, preventing repeat turns as observed in fallback-c819bc5b767a.
 
-Target path: skills/jsonl-stream-filter/SKILL.md
+Target path: tests/test_check_loop_breaker_violation.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-pytest tests/test_skills_structure.py passes without H2 section failure for jsonl-stream-filter
+tests/test_check_loop_breaker_violation.py executes and passes companion test cases for loop breaker violation detection
 
 ## Branch discipline (MANDATORY)
 This checkout is already isolated on a fresh cycle branch off origin/main.
@@ -5671,12 +5670,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add test suite verifying detection of repeated commands after safety stop in tests/test_check_loop_breaker_violation.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 1056 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr><tr><td>2026-09-11</td><td class="skill-reads">135</td><td>1.54M</td><td>30s</td></tr></tbody></table>
+        <p class="unavailable-note">no proposal decisions in the recent ledger</p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 921 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-17 23:57:22 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 02:27:09 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 00:16:19 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 02:27:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
