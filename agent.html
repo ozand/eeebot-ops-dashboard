@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">191</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 14:23:12 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">42.7%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 11:49 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="37">data: 36s old &middot; generated 11:56 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1323,7 +1323,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,632 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-b16d55647e03</span>
+      <span class="cycle-pill">cycle-bf5ba867127d</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1352,7 +1352,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 11:16:37.214822 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 11:52:46.230132 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:89%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1370,7 +1370,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 0 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 37,732 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1392,8 +1392,8 @@
 ---
 
 " Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 0 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,217c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 37,732 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,924c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1802,10 +1802,10 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <p class="rec-note">Formula: &sum;(recorded sections: 21,312c) + 8 separators &times; 7c (56c) = 21,368 chars, compared against actual system message received by model (21,368c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,335 / parsed 4,335 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,022 / parsed 4,022 chars (exact) <code>memory</code>: recorded 824 / parsed 824 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,217 chars &bull; ~1,054 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add pytest timeout directive to AGENTS.md to mandate explicit timeout argument on test suite invocations
-Request ID: llm-proposer-cycle-b16d55647e03
-Cycle ID: cycle-b16d55647e03
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b16d55647e03.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,924 chars &bull; ~981 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite in tests/test_search_subagent_archive.py verifying archive searches for errored subagent results
+Request ID: llm-proposer-cycle-bf5ba867127d
+Cycle ID: cycle-bf5ba867127d
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bf5ba867127d.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1828,30 +1828,32 @@ Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add extract_subagent_result_id to scripts/tally_defects.py to parse result IDs from error evidence: executor_llm_error
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: LESS-20260905-6d238e44  Title: Chain the script&#x27;s own CLI self-test (--test) with the paired pytest suite in a single bounded verification pass before committing
-Problem: verification ran the paired pytest suite but skipped the script&#x27;s own --test self-test, so the CLI entrypoint path (argparse wiring, exit codes, stderr/JSON separation) went unverified and the cycle had to re-run a second pass to confirm the self-test still passed.
-Solution: When a changed script exposes a --test self-test flag, run it first (python3 scripts/&lt;name&gt;.py --test) and immediately chain the paired pytest suite (python3 -m pytest tests/test_&lt;name&gt;.py) in the same bounded exec call, so both the internal self-test and the external suite are verified in one pass before committing.
-If you apply this lesson, cite [Lesson LESS-20260905-6d238e44] in your proposal/response.
-Related: LESS-REF-e13f1cd0f155, LESS-REF-c2ab8feea257-4dc0
+ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
+Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- Avoid executing `python3 scripts/run_all_tests.py` without filters on host hardware; target specific pytest test files directly to stay within the 60-second command timeout.
-- When assigned steering directives while AGENTS.md has recent failed/rejected attempts, target lessons/ or skills/ to document the operational protocol rather than targeting AGENTS.md directly.
-- The proposer selected AGENTS.md as target_path despite an active recent failure on AGENTS.md recorded in the recent history window, triggering the recent_duplicate_failure dedup filter and aborting the cycle before execution.
+- Introduce an endpoint health pre-flight check or backoff pause before dispatching consecutive cycle retry attempts when the inference backend is unreachable.
+- Introduce an endpoint health pre-flight check or backoff pause before dispatching consecutive cycle retries when the previous attempt terminated with executor_llm_error.
+- The executor LLM call repeatedly failed with executor_llm_error across all three execution attempts (1/3, 2/3, 3/3), aborting execution before any turn processing or tool invocations could occur.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 11:12 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-18 11:19 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 - Attempt 2 (2026-09-18 10:36 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 - Attempt 3 (2026-09-18 09:45 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add pytest timeout directive to AGENTS.md to mandate explicit timeout argument on test suite invocations
+Title: Add test suite in tests/test_search_subagent_archive.py verifying archive searches for errored subagent results
 
 
-Adds an explicit instruction in AGENTS.md requiring agents to pass a timeout parameter (e.g. 120s) when running pytest suites, preventing turns from hitting the default 60-second command timeout as evidenced in cycle-53320d96aa33.
+Provide unit tests in tests/test_search_subagent_archive.py to verify searching archive records for error patterns and errored subagent statuses matching 10da88e2.json status=error, ensuring search tooling reliably indexes failure runs.
 
-Target path: AGENTS.md
+Target path: tests/test_search_subagent_archive.py
+
+## Expected outcome (frozen claim from the proposal — informational)
+tests/test_search_subagent_archive.py passes and verifies error status filtering for subagent result archives
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1860,7 +1862,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">999</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">981</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">664</td></tr><tr><td>Previous attempts for this task</td><td class="num">570</td></tr><tr><td>Concrete task to implement</td><td class="num">497</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">999</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">529</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">595</td></tr><tr><td>Previous attempts for this task</td><td class="num">570</td></tr><tr><td>Concrete task to implement</td><td class="num">442</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">276</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5625,7 +5627,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 11:49:16 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 14:23:12 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 11:56:09 UTC &middot; host eeepc &middot; newest source 36s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 14:23:12 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
