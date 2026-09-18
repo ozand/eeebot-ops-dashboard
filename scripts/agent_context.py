@@ -9,11 +9,17 @@ from __future__ import annotations
 import html
 import json
 import re
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
 MSK_TZ = timezone(timedelta(hours=3))
+
+# ozand/eeebot#1755: window-pressure threshold and lookback window. A p99
+# above this fraction of the model's own context window is flagged; the
+# healthy value is stated inline wherever this constant is rendered.
+WINDOW_PRESSURE_HOURS = 24
+WINDOW_PRESSURE_THRESHOLD_PCT = 80.0
 
 SEPARATOR = "\n\n---\n\n"
 SEPARATOR_LEN = len(SEPARATOR)  # 7 characters
@@ -77,6 +83,173 @@ def esc(s: Any) -> str:
 def estimate_tokens(chars: int) -> int:
     """Heuristic estimator: ~4 characters per token for mixed code/English prompts."""
     return max(1, chars // 4) if chars > 0 else 0
+
+
+def _flagged_names(row: dict[str, Any], key: str) -> set[str]:
+    """Block/file names a ledger row lists under ``truncated`` or ``dropped``.
+
+    Both keys have carried either a plain list of names or a list of dicts
+    (``{"name": ..., "chars": ...}``) across schema versions -- accept both,
+    never dropping a real entry just because its shape changed.
+    """
+    names: set[str] = set()
+    for item in row.get(key) or []:
+        if isinstance(item, dict):
+            name = item.get("name") or item.get("file")
+        else:
+            name = item
+        if name:
+            names.add(str(name))
+    return names
+
+
+def compute_truncation_streak(rows: list[dict[str, Any]] | None) -> dict[str, Any]:
+    """ozand/eeebot#1755 (4a): consecutive-cycle streak for truncated/dropped blocks.
+
+    ``rows`` must be ALL recorded ``phase: system_prompt`` ledger rows, oldest
+    first -- a single latest row cannot answer "how many cycles in a row".
+    For each block name present in the truncated/dropped list of the MOST
+    RECENT row, walk backward counting consecutive rows (starting at the
+    latest) that also list that name under the same key. The walk stops at
+    the first row that does not list the name: if a block was truncated, then
+    healthy for a cycle, then truncated again, the streak counts only the
+    run since it most recently started being truncated again -- it does NOT
+    add the two runs together. This is a deliberate judgment call: an
+    interrupted streak is evidence the degradation is intermittent, not a
+    50-cycle continuous failure, and inflating it would misstate severity.
+
+    Returns a dict:
+      - ``status``: "no_data" (no ledger rows read at all -- must render
+        distinctly from "0", never as a fabricated healthy zero),
+        "healthy" (rows read, latest row's truncated/dropped both empty),
+        or "alarm" (latest row has at least one truncated/dropped name).
+      - ``total_rows``: how many system_prompt rows the streak was computed
+        over (evidence for how far back "consecutive" reaches).
+      - ``entries``: list of {"kind": "truncated"|"dropped", "name", "streak"}
+        for every name present in the latest row, streak counted as above.
+    """
+    if not rows:
+        return {"status": "no_data", "total_rows": 0, "entries": []}
+    valid_rows = [row for row in rows if isinstance(row, dict)]
+    if not valid_rows:
+        return {"status": "no_data", "total_rows": 0, "entries": []}
+    total_rows = len(valid_rows)
+    latest = valid_rows[-1]
+    entries: list[dict[str, Any]] = []
+    for kind in ("truncated", "dropped"):
+        for name in sorted(_flagged_names(latest, kind)):
+            streak = 0
+            for row in reversed(valid_rows):
+                if name in _flagged_names(row, kind):
+                    streak += 1
+                else:
+                    break
+            entries.append({"kind": kind, "name": name, "streak": streak})
+    status = "alarm" if entries else "healthy"
+    return {"status": status, "total_rows": total_rows, "entries": entries}
+
+
+def _percentile(sorted_values: list[float], pct: float) -> float:
+    """Linear-interpolation percentile over an already-ascending-sorted list."""
+    if not sorted_values:
+        return 0.0
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    rank = (len(sorted_values) - 1) * (pct / 100.0)
+    lo = int(rank)
+    hi = min(lo + 1, len(sorted_values) - 1)
+    if lo == hi:
+        return sorted_values[lo]
+    frac = rank - lo
+    return sorted_values[lo] * (1 - frac) + sorted_values[hi] * frac
+
+
+def compute_window_pressure(
+    rows: list[dict[str, Any]] | None,
+    *,
+    now: datetime | None = None,
+    window_hours: int = WINDOW_PRESSURE_HOURS,
+) -> dict[str, Any]:
+    """ozand/eeebot#1755 (4b): p99 of prompt_tokens / context_window, last 24h.
+
+    ``rows`` are raw ``llm_calls`` rows (any component, any day file the
+    caller chose to read); this function does the time-window filtering
+    itself using each row's own ``ts`` (UTC ISO8601).
+
+    A row with ``context_window`` absent or ``null`` is NEVER treated as 0
+    (which would silently zero the ratio and hide real pressure) and NEVER
+    assumed to equal any fallback default -- it is excluded from the p99
+    input and counted in ``unknown_rows`` instead. Rows missing ``prompt_tokens``
+    or an unparseable ``ts`` are excluded from consideration entirely (neither
+    known nor unknown -- they are not evidence about window pressure at all).
+
+    Returns a dict:
+      - ``status``: "no_data" (no llm_calls rows fell in the window at all),
+        "unknown" (rows exist but none have a usable context_window --
+        e.g. before the harness PR lands, or for unmapped models),
+        or "measured" (at least one row has both prompt_tokens and
+        context_window).
+      - ``rows_in_window``: rows in the last `window_hours` with usable
+        prompt_tokens (known + unknown).
+      - ``known_rows`` / ``unknown_rows``: split of the above by whether
+        context_window was resolvable.
+      - ``p99_pct``: p99 of (prompt_tokens / context_window * 100) over the
+        known rows only, or None if there are no known rows.
+      - ``threshold_pct``: the healthy-vs-alarm cutoff (80.0), carried on the
+        result so renderers never hard-code it separately.
+    """
+    result = {
+        "status": "no_data",
+        "rows_in_window": 0,
+        "known_rows": 0,
+        "unknown_rows": 0,
+        "p99_pct": None,
+        "threshold_pct": WINDOW_PRESSURE_THRESHOLD_PCT,
+    }
+    if not rows:
+        return result
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=window_hours)
+    ratios: list[float] = []
+    unknown = 0
+    considered = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        ts_raw = row.get("ts")
+        if not ts_raw:
+            continue
+        try:
+            ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        if ts < cutoff or ts > now:
+            continue
+        prompt_tokens = row.get("prompt_tokens")
+        if not isinstance(prompt_tokens, (int, float)) or isinstance(prompt_tokens, bool):
+            continue
+        considered += 1
+        context_window = row.get("context_window")
+        if not isinstance(context_window, (int, float)) or isinstance(context_window, bool) or context_window <= 0:
+            # Absent/null/non-positive context_window: excluded from the
+            # ratio, counted separately -- never coerced to 0 or a guess.
+            unknown += 1
+            continue
+        ratios.append((prompt_tokens / context_window) * 100.0)
+    result["rows_in_window"] = considered
+    result["unknown_rows"] = unknown
+    result["known_rows"] = len(ratios)
+    if considered == 0:
+        result["status"] = "no_data"
+        return result
+    if not ratios:
+        result["status"] = "unknown"
+        return result
+    result["status"] = "measured"
+    result["p99_pct"] = _percentile(sorted(ratios), 99)
+    return result
 
 
 def parse_prompt_sections(
@@ -235,9 +408,12 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     state_root = Path(state_root)
     inst_path = Path(instance_repo) if instance_repo else None
 
-    # 1. Scan ledger/cycles.jsonl for latest system_prompt row
+    # 1. Scan ledger/cycles.jsonl for every system_prompt row (oldest first).
+    # ozand/eeebot#1755 (4a): the streak needs the whole recorded history in
+    # this file, not just the latest cycle -- see compute_truncation_streak.
     lpath = state_root / "ledger" / "cycles.jsonl"
-    sys_prompt_row: dict[str, Any] | None = None
+    sys_prompt_rows: list[dict[str, Any]] = []
+    ledger_read_failed = False
     if lpath.is_file():
         try:
             with lpath.open("r", encoding="utf-8", errors="replace") as fh:
@@ -250,9 +426,15 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
                     except Exception:
                         continue
                     if isinstance(obj, dict) and obj.get("phase") == "system_prompt":
-                        sys_prompt_row = obj
+                        sys_prompt_rows.append(obj)
         except Exception:
-            pass
+            ledger_read_failed = True
+    sys_prompt_row: dict[str, Any] | None = sys_prompt_rows[-1] if sys_prompt_rows else None
+    truncation_streak = (
+        {"status": "no_data", "total_rows": 0, "entries": []}
+        if ledger_read_failed
+        else compute_truncation_streak(sys_prompt_rows)
+    )
 
     prompt_text: str | None = None
     task_text: str | None = None
@@ -329,6 +511,7 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
 
     return {
         "system_prompt": sys_prompt_row,
+        "truncation_streak": truncation_streak,
         "prompt_text": prompt_text,
         "task_text": task_text,
         "tier2_skills": skills_list,
@@ -345,6 +528,88 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
             "files": memory_files[:50],
         },
     }
+
+
+def _render_truncation_streak_html(streak: dict[str, Any]) -> str:
+    """ozand/eeebot#1755 (4a): render the truncation/drop streak indicator.
+
+    Renders three distinguishable states -- "no data" must never look like a
+    healthy zero, and a live alarm must be unmissable (danger badge with the
+    block name(s) and consecutive-cycle count spelled out inline).
+    """
+    status = streak.get("status", "no_data")
+    total_rows = streak.get("total_rows", 0) or 0
+    entries = streak.get("entries") or []
+    if status == "no_data":
+        return (
+            '<div class="context-indicator-box indicator-no-data">'
+            '<span class="context-badge badge-secondary">TRUNCATION/DROP STREAK: NO DATA</span>'
+            ' <span class="indicator-note">ledger unreadable or no <code>phase: system_prompt</code> rows recorded — '
+            'not the same as a healthy 0, healthy: 0 consecutive cycles.</span></div>'
+        )
+    if status != "alarm" or not entries:
+        return (
+            '<div class="context-indicator-box indicator-healthy">'
+            '<span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span>'
+            f' <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · {total_rows:,} recorded cycle(s) checked.</span></div>'
+        )
+    kind_label = {"truncated": "TRUNCATED", "dropped": "DROPPED"}
+    pills = []
+    for entry in entries:
+        kind = entry.get("kind", "truncated")
+        name = entry.get("name", "unknown")
+        entry_streak = entry.get("streak", 0)
+        label = kind_label.get(kind, kind.upper())
+        pills.append(
+            f'<span class="dropped-pill">{esc(label)} {entry_streak:,}/{total_rows:,} consecutive cycles: {esc(name)}</span>'
+        )
+    return (
+        '<div class="context-indicator-box indicator-alarm">'
+        '<span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span>'
+        f' <span class="indicator-note">healthy: 0 consecutive cycles &bull; {total_rows:,} recorded cycle(s) checked.</span>'
+        f'<div class="indicator-pills">{" ".join(pills)}</div></div>'
+    )
+
+
+def _render_window_pressure_html(pressure: dict[str, Any]) -> str:
+    """ozand/eeebot#1755 (4b): render the 24h window-pressure indicator.
+
+    A row with no ``context_window`` is never folded into the p99 as 0 (that
+    would fake a healthy reading) and never assumed to equal any hard-coded
+    default window size -- it is counted and shown separately as
+    "window unknown: N rows".
+    """
+    status = pressure.get("status", "no_data")
+    threshold = pressure.get("threshold_pct", WINDOW_PRESSURE_THRESHOLD_PCT)
+    rows_in_window = pressure.get("rows_in_window", 0) or 0
+    unknown_rows = pressure.get("unknown_rows", 0) or 0
+    known_rows = pressure.get("known_rows", 0) or 0
+    if status == "no_data":
+        return (
+            '<div class="context-indicator-box indicator-no-data">'
+            '<span class="context-badge badge-secondary">WINDOW PRESSURE (24H): NO DATA</span>'
+            f' <span class="indicator-note">no llm_calls rows in the last {WINDOW_PRESSURE_HOURS}h — '
+            f'not the same as a healthy 0%, healthy: &le; {threshold:.0f}%.</span></div>'
+        )
+    if status == "unknown":
+        return (
+            '<div class="context-indicator-box indicator-no-data">'
+            '<span class="context-badge badge-secondary">WINDOW PRESSURE (24H): UNKNOWN</span>'
+            f' <span class="indicator-note">window pressure: unknown ({unknown_rows:,}/{rows_in_window:,} rows have no <code>context_window</code>) — '
+            f'excluded from the ratio rather than assumed 0%, healthy: &le; {threshold:.0f}%.</span></div>'
+        )
+    p99 = pressure.get("p99_pct")
+    p99_display = f"{p99:.1f}%" if isinstance(p99, (int, float)) else "unavailable"
+    is_alarm = isinstance(p99, (int, float)) and p99 > threshold
+    badge_class = "badge-danger" if is_alarm else "badge-success"
+    verdict = "OVER THRESHOLD" if is_alarm else "WITHIN BUDGET"
+    return (
+        '<div class="context-indicator-box indicator-window-pressure">'
+        f'<span class="context-badge {badge_class}">WINDOW PRESSURE (24H): {esc(verdict)} (p99 {p99_display})</span>'
+        f' <span class="indicator-note">healthy: &le; {threshold:.0f}% &bull; p99 over {known_rows:,} row(s) with a known context_window &bull; '
+        f'window unknown: {unknown_rows:,} rows (excluded, not counted as 0%) of {rows_in_window:,} total in the last {WINDOW_PRESSURE_HOURS}h.</span></div>'
+    )
+
 
 def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     """Issue #227: render the Two-Tier Agent Context Model."""
@@ -390,6 +655,15 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     rung = sys_prompt.get("rung")
     cid = sys_prompt.get("cycle_id", "")
     ts_str = str(sys_prompt.get("ts") or "")
+
+    # ozand/eeebot#1755 (4a/4b): truncation/drop streak + window pressure.
+    # Both are genuinely new indicators (see the issue) -- rendered as their
+    # own alert-style rows next to the existing rung/dropped alerts, using
+    # the same badge vocabulary as the rest of this panel.
+    truncation_streak = agent_context.get("truncation_streak") or {"status": "no_data", "total_rows": 0, "entries": []}
+    truncation_streak_html = _render_truncation_streak_html(truncation_streak)
+    window_pressure = agent_context.get("window_pressure") or {"status": "no_data", "rows_in_window": 0, "known_rows": 0, "unknown_rows": 0, "p99_pct": None, "threshold_pct": WINDOW_PRESSURE_THRESHOLD_PCT}
+    window_pressure_html = _render_window_pressure_html(window_pressure)
     prompt_fit = agent_context.get("prompt_fit") or {}
     prompt_fit_status = prompt_fit.get("source_status", "unavailable")
     prompt_fit_reader_status = prompt_fit.get("reader_status", "unavailable")
@@ -572,6 +846,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'  {rung_html}')
     if dropped_html:
         out.append(f'  {dropped_html}')
+
+    out.append(f'  {truncation_streak_html}')
+    out.append(f'  {window_pressure_html}')
 
     out.append('  <div class="prompt-fit-events" id="prompt-fit-events">')
     out.append('    <h3>Prompt Fit Event Telemetry</h3>')
@@ -1235,4 +1512,19 @@ AGENT_CONTEXT_CSS = """
 .block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
 .user-message-sections, .rule-owners-panel { margin-top: 18px; }
 .user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
+
+/* ozand/eeebot#1755: truncation/drop streak + window-pressure indicators */
+.context-indicator-box {
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.context-indicator-box .indicator-note { color: #8b949e; font-size: 12px; margin-left: 6px; }
+.context-indicator-box .indicator-note code { color: inherit; }
+.context-indicator-box .indicator-pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.indicator-no-data { background: rgba(139, 148, 158, 0.08); border: 1px solid rgba(139, 148, 158, 0.3); }
+.indicator-healthy { background: rgba(46, 160, 67, 0.08); border: 1px solid rgba(46, 160, 67, 0.3); }
+.indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
+.indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 """

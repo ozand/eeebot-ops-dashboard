@@ -54,6 +54,7 @@ try:
     from scripts.agent_context import (
         AGENT_CONTEXT_CSS,
         build_two_tier_context_html,
+        compute_window_pressure,
         read_agent_context_dict,
         read_lesson_corpus,
     )
@@ -61,6 +62,7 @@ except ImportError:
     from agent_context import (
         AGENT_CONTEXT_CSS,
         build_two_tier_context_html,
+        compute_window_pressure,
         read_agent_context_dict,
         read_lesson_corpus,
     )
@@ -1390,6 +1392,141 @@ _node_shas_for_titles = list((_tree_for_titles or {}).get("nodes", {}).keys()) i
 _cycle_titles, _cycle_files, _cycle_titles_error = extract_git_titles(_node_shas_for_titles)
 
 
+def _flagged_names(row, key):
+    names = set()
+    for item in (row.get(key) or []):
+        if isinstance(item, dict):
+            name = item.get('name') or item.get('file')
+        else:
+            name = item
+        if name:
+            names.add(str(name))
+    return names
+
+
+def compute_truncation_streak(rows):
+    """ozand/eeebot#1755 (4a): local copy of agent_context.compute_truncation_streak
+    -- REMOTE_READER_SCRIPT is a standalone script (no cross-module imports),
+    keep in sync. See that function's docstring for the streak semantics:
+    only the uninterrupted run ending at the LATEST row counts."""
+    valid_rows = [row for row in (rows or []) if isinstance(row, dict)]
+    if not valid_rows:
+        return {"status": "no_data", "total_rows": 0, "entries": []}
+    total_rows = len(valid_rows)
+    latest = valid_rows[-1]
+    entries = []
+    for kind in ("truncated", "dropped"):
+        for name in sorted(_flagged_names(latest, kind)):
+            streak = 0
+            for row in reversed(valid_rows):
+                if name in _flagged_names(row, kind):
+                    streak += 1
+                else:
+                    break
+            entries.append({"kind": kind, "name": name, "streak": streak})
+    status = "alarm" if entries else "healthy"
+    return {"status": status, "total_rows": total_rows, "entries": entries}
+
+
+def _percentile(sorted_values, pct):
+    if not sorted_values:
+        return 0.0
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    rank = (len(sorted_values) - 1) * (pct / 100.0)
+    lo = int(rank)
+    hi = min(lo + 1, len(sorted_values) - 1)
+    if lo == hi:
+        return sorted_values[lo]
+    frac = rank - lo
+    return sorted_values[lo] * (1 - frac) + sorted_values[hi] * frac
+
+
+WINDOW_PRESSURE_HOURS = 24
+WINDOW_PRESSURE_THRESHOLD_PCT = 80.0
+
+
+def compute_window_pressure(rows, now=None, window_hours=WINDOW_PRESSURE_HOURS):
+    """ozand/eeebot#1755 (4b): local copy of agent_context.compute_window_pressure
+    -- keep in sync. A row with no/null context_window is excluded from the
+    p99 input and counted in unknown_rows, never treated as 0."""
+    result = {
+        "status": "no_data", "rows_in_window": 0, "known_rows": 0,
+        "unknown_rows": 0, "p99_pct": None, "threshold_pct": WINDOW_PRESSURE_THRESHOLD_PCT,
+    }
+    if not rows:
+        return result
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=window_hours)
+    ratios = []
+    unknown = 0
+    considered = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        ts_raw = row.get("ts")
+        if not ts_raw:
+            continue
+        try:
+            ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        if ts < cutoff or ts > now:
+            continue
+        prompt_tokens = row.get("prompt_tokens")
+        if not isinstance(prompt_tokens, (int, float)) or isinstance(prompt_tokens, bool):
+            continue
+        considered += 1
+        context_window = row.get("context_window")
+        if not isinstance(context_window, (int, float)) or isinstance(context_window, bool) or context_window <= 0:
+            unknown += 1
+            continue
+        ratios.append((prompt_tokens / context_window) * 100.0)
+    result["rows_in_window"] = considered
+    result["unknown_rows"] = unknown
+    result["known_rows"] = len(ratios)
+    if considered == 0:
+        return result
+    if not ratios:
+        result["status"] = "unknown"
+        return result
+    result["status"] = "measured"
+    result["p99_pct"] = _percentile(sorted(ratios), 99)
+    return result
+
+
+def read_window_pressure(now=None):
+    """ozand/eeebot#1755 (4b): read the last 2 days of llm_calls files (covers
+    any 24h window regardless of midnight-UTC boundary crossing) and hand the
+    raw rows to compute_window_pressure. Keep in sync with read_local_state's
+    read_window_pressure_local(). `now` is exposed only so tests can pin the
+    clock -- production always calls this with the default (real time)."""
+    llm_dir = os.path.join(STATE_ROOT, 'llm_calls')
+    rows = []
+    try:
+        names = sorted(n for n in os.listdir(llm_dir) if n.endswith('.jsonl'))
+    except Exception:
+        return compute_window_pressure(None, now=now)
+    for name in names[-2:]:
+        try:
+            with open(os.path.join(llm_dir, name), encoding='utf-8', errors='replace') as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+        except Exception:
+            continue
+    return compute_window_pressure(rows, now=now)
+
+
 def read_agent_context():
     rows = []
     ledger = os.path.join(STATE_ROOT, 'ledger', 'cycles.jsonl')
@@ -1415,7 +1552,12 @@ def read_agent_context():
                 prompt = fh.read()[:150000]
         except Exception:
             pass
-    return {'system_prompt': row, 'prompt_text': prompt, 'task_text': None}
+    return {
+        'system_prompt': row,
+        'truncation_streak': compute_truncation_streak(rows),
+        'prompt_text': prompt,
+        'task_text': None,
+    }
 
 
 def read_executor_stats():
@@ -1522,6 +1664,7 @@ result = {
     "agents_md": read_file_text("AGENTS.md"),
     "agent_context": read_agent_context(),
     "executor_llm_stats": read_executor_stats(),
+    "window_pressure": read_window_pressure(),
     "compaction": read_compaction(),
     "local_ci": read_local_ci_status(),
     "executor_model_status": read_executor_model_status(),
@@ -1569,6 +1712,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
+        'window_pressure': None,
         'local_ci': None,
         'executor_model_status': None,
         'token_heatmap': None,
@@ -1624,6 +1768,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
             'skill_evals': data.get('skill_evals'),
             'executor_llm_stats': _executor_stats_from_llm_stats(data.get('llm_stats')),
             'compaction': _compaction_status_from_remote(data.get('compaction')),
+            'window_pressure': data.get('window_pressure'),
         })
 
     mtimes = data.pop('_source_mtimes', None)
@@ -1998,6 +2143,37 @@ def read_local_state(
             except OSError:
                 continue
         return latest
+
+    def read_window_pressure_local(now: datetime | None = None) -> dict[str, Any]:
+        """ozand/eeebot#1755 (4b): local mirror -- read the last 2 days of
+        llm_calls files (covers any 24h window regardless of midnight-UTC
+        boundary crossing) and hand the raw rows to the shared
+        `compute_window_pressure`, which does the actual 24h filtering and
+        p99 math. Keep in sync with REMOTE_READER_SCRIPT's read_window_pressure().
+        `now` is exposed only so tests can pin the clock."""
+        llm_dir = root / 'llm_calls'
+        rows: list[dict[str, Any]] = []
+        try:
+            names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
+        except OSError:
+            return compute_window_pressure(None, now=now)
+        for name in names[-2:]:
+            try:
+                with (llm_dir / name).open('r', encoding='utf-8', errors='replace') as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            row = json.loads(line)
+                        except Exception:  # noqa: BLE001
+                            continue
+                        if isinstance(row, dict):
+                            rows.append(row)
+                mtimes.append((llm_dir / name).stat().st_mtime)
+            except OSError:
+                continue
+        return compute_window_pressure(rows, now=now)
 
     def read_compaction_local() -> dict[str, Any]:
         """Read compaction journal with explicit never-fired semantics."""
@@ -2494,6 +2670,7 @@ def read_local_state(
             'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
             'executor_llm_stats': read_executor_stats_local(),
             'compaction': read_compaction_local(),
+            'window_pressure': read_window_pressure_local(),
         },
         'generator_sha': '',
         '_newest_source_age_seconds': None,
