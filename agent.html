@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">191</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.0%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 18:41:03 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="21">data: 21s old &middot; generated 15:44 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 24s old &middot; generated 15:53 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1323,7 +1323,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,632 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-9f38a7224716</span>
+      <span class="cycle-pill">cycle-39a2506bbfb7</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1352,7 +1352,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 15:15:08.978815 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 15:48:36.525541 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:89%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1370,7 +1370,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 48,087 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 25,167 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1392,8 +1392,8 @@
 ---
 
 " Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 48,087 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,140c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 25,167 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,879c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1802,10 +1802,10 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <p class="rec-note">Formula: &sum;(recorded sections: 21,312c) + 8 separators &times; 7c (56c) = 21,368 chars, compared against actual system message received by model (21,368c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,335 / parsed 4,335 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,022 / parsed 4,022 chars (exact) <code>memory</code>: recorded 824 / parsed 824 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,140 chars &bull; ~785 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/check_litellm_cooldown.py to parse RateLimitError cooldown messages and compute backoff pause
-Request ID: llm-proposer-cycle-9f38a7224716
-Cycle ID: cycle-9f38a7224716
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-9f38a7224716.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,879 chars &bull; ~969 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add evaluate_consecutive_backoff to scripts/check_litellm_cooldown.py to compute delay for repeated RateLimitErrors
+Request ID: llm-proposer-cycle-39a2506bbfb7
+Cycle ID: cycle-39a2506bbfb7
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-39a2506bbfb7.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1813,6 +1813,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 4853fb21 feat(check_litellm_cooldown): add pre-dispatch RateLimitError cooldown gate
 - 30d95f2a docs(lessons): document chunked read_file offset/limit usage in 50-100 line windows
 - 38b441e9 feat(run_all_tests): add --target-script companion-only test execution
 - 4948a3e5 docs(lessons): document exact token set intersection rule for similarity assertions
@@ -1820,32 +1821,37 @@ Recently completed (recent commits):
 - 276d935a chore: record structured error for [cycle-b16d55]
 - 6c96d220 chore: record structured error for [cycle-82d9db]
 - 6b05faea chore: record structured error for [cycle-8aa45b]
-- 33f45871 chore: record structured error for [cycle-6e3679]
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
 - Add rule bounding preparatory code inspection for doc and skill tasks to AGENTS.md: recent_duplicate_failure
 
+## Proven approach for this task (from lessons/lessons.yaml)
+ID: lessons/avoiding_repeated_failures.md  Title: Avoiding Repeated Task Failures by Checking Recent Cycle Outcomes
+Problem: Read lessons/avoiding_repeated_failures.md: **Verify Recent Outcomes**: Always check if the task or a closely related task has been attempted in the last 7 days by inspecting `memory/HISTORY.md`.
+Solution: 
+If you apply this lesson, cite [Lesson lessons/avoiding_repeated_failures.md] in your proposal/response.
+
 ## Recent reflections (how past cycles worked — steering hints)
-- Introduce an inference backend health pre-flight check or backoff pause prior to dispatching cycle retry attempts when the previous attempt halted due to executor_llm_error.
-- Introduce an inference backend pre-flight health check or backoff pause before dispatching retry attempts when the previous attempt halted due to executor_llm_error.
-- Introduce an inference backend pre-flight connectivity check or backoff pause before dispatching retry attempts when the previous attempt halted due to executor_llm_error.
+- Introduce an inference backend pre-flight health check or backoff pause before dispatching consecutive cycle retry attempts following an executor_llm_error abort.
+- The executor LLM invocation failed on turn 1 across all three execution attempts (1/3, 2/3, 3/3) with litellm.InternalServerError (OpenAIException - Connection error) contacting un/qwen3.8-27b-gguf, halting execution before any agent reasoning or tool calls could occur.
+- LiteLLM had no fallback model group configured for original model_group=un/qwen3.8-27b-gguf (Available Model Group Fallbacks=None), escalating transient endpoint connection drops directly into fatal cycle aborts instead of failing over to an operational model group.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 14:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/chunked_file_reading.md.
-- Attempt 2 (2026-09-18 14:21 UTC): no commits (blocked). Task &quot;Add rule bounding preparatory code inspection for doc and sk&quot; matches recently-failed/rejected proposal &quot;Add…
-- Attempt 3 (2026-09-18 14:10 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/run_all_tests.py, tests/test_run_all_tests.py.
+- Attempt 1 (2026-09-18 15:36 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_litellm_cooldown.py, tests/test_check_litellm_cooldown.py.
+- Attempt 2 (2026-09-18 14:41 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: lessons/chunked_file_reading.md.
+- Attempt 3 (2026-09-18 14:21 UTC): no commits (blocked). Task &quot;Add rule bounding preparatory code inspection for doc and sk&quot; matches recently-failed/rejected proposal &quot;Add…
 
 ## Concrete task to implement
 
-Title: Add scripts/check_litellm_cooldown.py to parse RateLimitError cooldown messages and compute backoff pause
+Title: Add evaluate_consecutive_backoff to scripts/check_litellm_cooldown.py to compute delay for repeated RateLimitErrors
 
 
-Provides a bounded check script to identify LiteLLM deployment exhaustion and RateLimitError cooldowns from failure messages, outputting required backoff seconds to prevent back-to-back dispatch failures seen in cycle-d4624f07ba56.
+Evidence shows cycle-af2a878efdb0 failed 3 consecutive times across 14 minutes from RateLimitErrors. Adding consecutive backoff evaluation calculates exponential delays to prevent immediate retries during sustained cooldowns.
 
 Target path: scripts/check_litellm_cooldown.py
 
 ## Expected outcome (frozen claim from the proposal — informational)
-scripts/check_litellm_cooldown.py accurately flags RateLimitError cooldown text and prints the extracted or fallback backoff duration
+scripts/check_litellm_cooldown.py defines evaluate_consecutive_backoff returning escalating delays for repeated failure counts
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1854,7 +1860,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">857</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">583</td></tr><tr><td>Previous attempts for this task</td><td class="num">466</td></tr><tr><td>Concrete task to implement</td><td class="num">427</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">300</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">883</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">499</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">772</td></tr><tr><td>Previous attempts for this task</td><td class="num">484</td></tr><tr><td>Concrete task to implement</td><td class="num">431</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">293</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5619,7 +5625,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 15:44:51 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 18:41:03 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 15:53:15 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 18:41:03 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
