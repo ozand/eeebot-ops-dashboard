@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">208</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 03:20:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">39.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 24s old &middot; generated 00:48 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 00:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1323,7 +1323,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,492 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-005e019194b0</span>
+      <span class="cycle-pill">cycle-da51c0a72743</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1352,7 +1352,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,508 / 24,000 chars)</span><span>2026-09-18 00:33:46.505067 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,508 / 24,000 chars)</span><span>2026-09-18 00:50:40.636497 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:89%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1370,7 +1370,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 21,808 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 20,657 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1392,8 +1392,8 @@
 ---
 
 " Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 21,808 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,287c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 20,657 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,056c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1803,10 +1803,10 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <p class="rec-note">Formula: &sum;(recorded sections: 21,452c) + 8 separators &times; 7c (56c) = 21,508 chars, compared against actual system message received by model (21,508c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,335 / parsed 4,335 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,162 / parsed 4,162 chars (exact) <code>memory</code>: recorded 824 / parsed 824 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,287 chars &bull; ~821 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add scripts/detect_formatting_pipe_churn.py to flag redundant shell formatting pipelines on search results
-Request ID: llm-proposer-cycle-005e019194b0
-Cycle ID: cycle-005e019194b0
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-005e019194b0.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,056 chars &bull; ~764 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Enforce strict terminal JSON syntax in AGENTS.md requiring completion payloads to start directly with &#x27;{&#x27;
+Request ID: llm-proposer-cycle-da51c0a72743
+Cycle ID: cycle-da51c0a72743
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-da51c0a72743.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1824,26 +1824,23 @@ Recently completed (recent commits):
 - e7035a30 selfevo: auto-commit uncommitted subagent work — Add scripts/detect_off_target_reads.py to flag file read sequences outside targe
 
 ## Recent reflections (how past cycles worked — steering hints)
+- When authoring scripts larger than ~2KB in environments with bounded tool payloads, generate files via scripted heredocs or partitioned appends from the start rather than risking silent tool payload truncations.
+- Refrain from querying state/demand and historical ledger files for demand IDs once script behavior and warnings have been reproduced directly via the target script CLI.
 - When verifying tools that parse or flag dangerous syntax, feed test fixtures via files or stdin redirection instead of embedding dangerous tokens directly into shell arguments.
-- When introducing new standalone scripts to `scripts/`, validate entrypoint compliance locally via `python3 scripts/validate_script_entrypoints.py --file &lt;path&gt; --json` before running pytest or committing.
-- When designing text or syntax detector tools, adopt the existing repository interface standard providing `--text`, `--file`, `--stdin`, `--json`, and an internal `--test` runner for self-contained validation.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 00:15 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_loop_breaker_violation.py.
-- Attempt 2 (2026-09-17 23:50 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-17 23:24 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-18 00:41 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-18 00:15 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: tests/test_check_loop_breaker_violation.py.
+- Attempt 3 (2026-09-17 23:50 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add scripts/detect_formatting_pipe_churn.py to flag redundant shell formatting pipelines on search results
+Title: Enforce strict terminal JSON syntax in AGENTS.md requiring completion payloads to start directly with &#x27;{&#x27;
 
 
-In cycle fallback-c819bc5b767a, the agent ran grep | head, cat, wc, awk, and tr across 8 turns on the same target lines. Adding detect_formatting_pipe_churn parses shell commands to flag piped search-formatting churn on identical targets.
+Update AGENTS.md instructions to explicitly require turn completion responses to start directly with the opening JSON brace &#x27;{&#x27; without conversational commentary or preamble, resolving the recurring turn 15 preamble regression seen in cycle-031c566fabce.
 
-Target path: scripts/detect_formatting_pipe_churn.py
-
-## Expected outcome (frozen claim from the proposal — informational)
-scripts/detect_formatting_pipe_churn.py identifies chained grep formatting pipelines and exits 0 on --self-test
+Target path: AGENTS.md
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1852,7 +1849,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">874</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">662</td></tr><tr><td>Previous attempts for this task</td><td class="num">524</td></tr><tr><td>Concrete task to implement</td><td class="num">441</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">278</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">874</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">629</td></tr><tr><td>Previous attempts for this task</td><td class="num">524</td></tr><tr><td>Concrete task to implement</td><td class="num">522</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5733,7 +5730,7 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 00:48:23 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 03:20:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 00:57:59 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 03:20:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
