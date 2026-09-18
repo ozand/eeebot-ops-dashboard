@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">195</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 11:31:27 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">41.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 08:35 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="30">data: 29s old &middot; generated 09:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1323,7 +1323,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+2,632 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-2d99a0276920</span>
+      <span class="cycle-pill">cycle-6e36791bda92</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1352,7 +1352,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 08:24:56.463958 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>89%</strong> (21,368 / 24,000 chars)</span><span>2026-09-18 08:53:34.655434 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:89%;background:var(--color-warning, #d29922);"></div>
     </div>
@@ -1393,7 +1393,7 @@
 
 " Separators</span><span class="t1-sz">56c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 0 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,971c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,598c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1802,10 +1802,10 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <p class="rec-note">Formula: &sum;(recorded sections: 21,312c) + 8 separators &times; 7c (56c) = 21,368 chars, compared against actual system message received by model (21,368c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,335 / parsed 4,335 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,022 / parsed 4,022 chars (exact) <code>memory</code>: recorded 824 / parsed 824 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,971 chars &bull; ~992 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add raw text pre-check to scripts/validate_open_encoding.py to skip AST parsing on files without open calls
-Request ID: llm-proposer-cycle-2d99a0276920
-Cycle ID: cycle-2d99a0276920
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-2d99a0276920.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,598 chars &bull; ~899 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add timestamp difference mode to scripts/timed_exec.py to compute elapsed time without bc
+Request ID: llm-proposer-cycle-6e36791bda92
+Cycle ID: cycle-6e36791bda92
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-6e36791bda92.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1813,6 +1813,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 33f45871 chore: record structured error for [cycle-6e3679]
 - fa91a4be chore: record structured error for [cycle-2d99a0]
 - 7852538b chore: record structured error for [cycle-cee94f]
 - 9b8c8ba5 chore: record structured error for [cycle-8415ec]
@@ -1820,37 +1821,34 @@ Recently completed (recent commits):
 - e793dd6b chore: record structured error for [cycle-cb25e0]
 - df17d288 chore: record structured error for [cycle-11b445]
 - 5a687595 chore(skills): remove redundant skills/immediate-skip-protocol
-- 5f15ec4c chore: record structured error for [cycle-95c889]
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Add timestamp difference mode to scripts/timed_exec.py to compute elapsed time without bc: executor_llm_error
 - Add raw text pre-check to scripts/validate_open_encoding.py to skip AST parsing on files without open calls: executor_llm_error
 - Add archive_errored_results to scripts/cleanup_subagent_queue.py to move errored subagent result files: executor_llm_error
 - Add format_error_summary to scripts/loop_health_report.py to display failure reasons from errored subagent runs: executor_llm_error
 
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/check_existing_tests_before_proposals.md  Title: Verify Existing Test Files and Commits Before Queuing Unit Test Proposals
-Problem: Read lessons/check_existing_tests_before_proposals.md: Treat &quot;does the target artifact already exist?&quot; as a mandatory first step for any proposal whose deliverable is a file (tests, scripts, lessons, docs).
-Solution: 
-If you apply this lesson, cite [Lesson lessons/check_existing_tests_before_proposals.md] in your proposal/response.
-
 ## Recent reflections (how past cycles worked — steering hints)
-- Introduce an endpoint health pre-check or backoff delay before re-queueing cycles that aborted due to `executor_llm_error` to prevent immediate back-to-back aborts when local inference servers are unreachable.
-- Cap regex and syntax pattern brainstorming in chain-of-thought to the target patterns explicitly requested in the task prompt (e.g., `PIPESTATUS`), then immediately dispatch tool calls to write the initial file scaffold before expanding pattern sets.
 - Limit chain-of-thought planning to deciding the immediate next tool action (such as dispatching an initial file scaffold or focused helper via edit_file) instead of attempting exhaustive in-memory design of complex command parsing rules.
+- When extending streak or tool-call analyzers, implement support for structured tool-call arguments (`args[&#x27;path&#x27;]` for `read_file`) first, deferring complex shell CLI string parsing to subsequent incremental steps.
+- Exhausted the 8,192 maximum completion token limit (`finish_reason: &#x27;length&#x27;`) entirely within the reasoning block of turn 4, terminating the cycle before emitting any tool calls or code modifications.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 08:20 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-18 07:52 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 3 (2026-09-18 07:01 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-18 08:49 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 2 (2026-09-18 08:27 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 3 (2026-09-18 07:52 UTC): no commits (blocked). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add raw text pre-check to scripts/validate_open_encoding.py to skip AST parsing on files without open calls
+Title: Add timestamp difference mode to scripts/timed_exec.py to compute elapsed time without bc
 
 
-Pre-screen file content for the substring &#x27;open&#x27; before parsing AST in validate_open_encoding.py, bypassing full AST parsing and tree walking on files without file operations to reduce per-file static analysis overhead as demonstrated in reflection-a8ad59e940ba.
+In cycle-561c7e859fad, timing calculations using bc failed because bc was not installed. Adding a --diff option to scripts/timed_exec.py allows computing elapsed time between timestamps using Python directly without relying on missing external binaries.
 
-Target path: scripts/validate_open_encoding.py
+Target path: scripts/timed_exec.py
+
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/timed_exec.py --diff computes elapsed time between two timestamps and exits 0
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1859,7 +1857,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,026</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">540</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">770</td></tr><tr><td>Previous attempts for this task</td><td class="num">570</td></tr><tr><td>Concrete task to implement</td><td class="num">556</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,138</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">726</td></tr><tr><td>Previous attempts for this task</td><td class="num">570</td></tr><tr><td>Concrete task to implement</td><td class="num">421</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">252</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5619,12 +5617,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add timestamp difference mode to scripts/timed_exec.py to compute elapsed time without bc</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 993 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-18</td><td class="skill-reads">72</td><td>830.6K</td><td>24s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr></tbody></table>
+        <p class="proposer-decision">last decision: <strong>skipped (self_dedup)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 995 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-18</td><td class="skill-reads">74</td><td>849.5K</td><td>25s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 08:35:31 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 11:31:27 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 09:04:16 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 11:31:27 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
