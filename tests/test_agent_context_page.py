@@ -5,6 +5,7 @@ from typing import Any
 
 
 from scripts import techtree_viewer as tv
+from scripts.agent_context import SEPARATOR
 
 
 def _base_fixture() -> dict[str, Any]:
@@ -193,7 +194,7 @@ def test_structural_prompt_parser_surfaces_length_mismatch():
 
 
 def test_agent_page_renders_two_tier_context_and_reconciliation():
-    """Issue #227: Tier 1 strict assembly order, arithmetic reconciliation, and Tier 2 link."""
+    """Issue #227/#301: Tier 1 recorded order, arithmetic reconciliation, and Tier 2 link."""
     fixture = _base_fixture()
     fixture['agent_context'] = {
         'system_prompt': {
@@ -213,7 +214,7 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
             'droppable_reserve_chars': 0,
             'ts': '2026-09-06T04:00:00Z',
         },
-        'prompt_text': '# nanobot 🐈\n\n---\n\n## AGENTS.md\n\n---\n\n# Skills\n\n---\n\n# Memory',
+        'prompt_text': None,
         'task_text': 'Task instructions',
         'tier2_skills': [
             {'name': 'batch_grep', 'size_bytes': 3500, 'desc': 'Search tool', 'content': '# batch_grep'},
@@ -242,23 +243,31 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
     assert 'In Active Context' in html
     assert 'Reachable on Disk' in html
 
-    # Strict assembly order: identity -> bootstrap -> active_skills -> skills_catalogue -> memory -> user
+    # #301: recorded order (no hard-coded canonical order) -- only the keys
+    # actually present in `sections` render; there is no active_skills key
+    # in this row and no block for it should appear.
     idx_id = html.find('<code>identity</code>')
     idx_boot = html.find('<code>bootstrap</code>')
-    idx_act = html.find('<code>active_skills</code>')
     idx_cat = html.find('<code>skills_catalogue</code>')
     idx_mem = html.find('<code>memory</code>')
     idx_usr = html.find('user (runtime_context + task)')
 
-    assert idx_id != -1 and idx_boot != -1 and idx_act != -1 and idx_cat != -1 and idx_mem != -1 and idx_usr != -1
-    assert idx_id < idx_boot < idx_act < idx_cat < idx_mem < idx_usr
+    assert idx_id != -1 and idx_boot != -1 and idx_cat != -1 and idx_mem != -1 and idx_usr != -1
+    assert idx_id < idx_boot < idx_cat < idx_mem < idx_usr
+    assert '<code>active_skills</code>' not in html
+
+    # #301: owner/source and cap render from the static ADR-022 map.
+    assert 't1-owner-release' in html  # identity
+    assert 't1-owner-instance' in html  # bootstrap -> AGENTS.md
+    assert 't1-owner-generated' in html  # skills_catalogue / memory
+    assert '1,500c' in html  # identity's static cap
 
     # Arithmetic reconciliation
     assert 'Arithmetic Character Reconciliation' in html
     assert '27,163' in html  # sum of sections
-    assert '21' in html      # 3 separators * 7 chars
     assert '27,184' in html  # reconciled total
     assert 'Reconciliation verified' in html
+    assert 'format: pre-ADR-022 legacy' in html
 
     # Headroom / Capacity gauge
     assert '27,184 / 30,000' in html
@@ -275,6 +284,10 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
     # Visual linkage: connector arrow / link to Tier 2
     assert 'Indexes 2 Skills in Tier 2' in html
     assert 'tier-link-origin' in html
+
+    # Rule owners panel present and clearly marked static
+    assert 'Rule Owners' in html
+    assert 'static (until harness publishes rule_owners)' in html
 
 
 def test_agent_page_subject_oriented_context_group_order_is_stable():
@@ -312,10 +325,16 @@ def test_agent_page_renders_goals_as_outside_capped_prompt_section():
 
     html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
 
-    assert 'outside capped prompt' in html
+    # #301: the legacy tail is still rendered as its own labelled block, but
+    # never claimed to be part of the recorded `sections` breakdown, and the
+    # reconciliation never claims Exact Match once the real message (which
+    # includes the tail) is longer than the recorded sections' sum.
+    assert 'legacy tail, beyond recorded sections' in html
     assert '<strong class="block-title">goals</strong>' in html
     assert 'charter body' in html
     assert 'absent (not configured/emitted)' not in html
+    assert 'Exact Match' not in html
+    assert 'Diff:' in html
 
 
 def test_agent_page_reports_capped_and_actual_system_prompt_sizes():
@@ -620,8 +639,10 @@ def test_issue234_arithmetic_reconciliation_exact_and_overflow_and_distinct_stat
     assert 'OVERFLOW (+2,922 chars over cap)' in html_ov
     assert 'Recorded chars: 26,922' in html_ov
     assert 'Exact Match' in html_ov
-    # active_skills is absent in this row
-    assert 'absent from breakdown' in html_ov
+    # #301: active_skills is simply absent from `sections` in this row --
+    # recorded order means it does not appear at all, not as a hardcoded
+    # "absent" placeholder row.
+    assert '<code>active_skills</code>' not in html_ov
 
     # 2. active_skills present-and-zero
     fixture_zero = _base_fixture()
@@ -680,4 +701,226 @@ def test_issue234_arithmetic_reconciliation_exact_and_overflow_and_distinct_stat
     pages = tv.render_pages(fixture_dropped, host='eeepc', generated_at='2026-09-06 12:00:00')
     html_dropped = pages['agent.html']
     assert '<s>active_skills</s> (1,200c)' in html_dropped
+
+
+def test_agent_page_post_migration_row_no_outside_capped_prompt():
+    """#301 acceptance 1 + 3: post-ADR-022 ledger row (ozand/eeebot#1720/#1725).
+
+    Real telemetry shape as of 2026-09-17 (host eeepc, release fa5b9926,
+    cycle-d7a2d5d90417): nine ontology/generated blocks in recorded order,
+    no tail appended after the prompt fit, and AGENTS.md flagged truncated.
+    """
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-d7a2d5d90417',
+            'chars': 21477,
+            'cap': 24000,
+            'rung': 'full',
+            'shortfall': 0,
+            'occupancy_alert': False,
+            'sections': {
+                'identity': 1244, 'soul': 1590, 'goals': 3040, 'user': 1878,
+                'operating': 4304, 'agents': 3989, 'skills_catalogue': 4162,
+                'memory': 824, 'runtime': 390,
+            },
+            'skills_catalogue': {
+                'status': 'full', 'format': 'lines', 'retained_chars': 4162,
+                'budget': 6685, 'retained_count': 34, 'omitted_count': 0,
+            },
+            'dropped': [], 'trimmed': [], 'droppable_reserve_chars': 0,
+            'missing': [], 'truncated': ['AGENTS.md'],
+            'ts': '2026-09-17T23:49:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-17 23:50:00')['agent.html']
+
+    # Acceptance 1: recorded order, owner/chars/cap/flags, no "outside capped prompt".
+    assert 'outside capped prompt' not in html
+    assert 'format: post-ADR-022 ontology' in html
+    order_names = ['identity', 'soul', 'goals', 'user', 'operating', 'agents', 'skills_catalogue', 'memory', 'runtime']
+    indices = [html.find(f'<code>{name}</code>') for name in order_names]
+    assert all(i != -1 for i in indices)
+    assert indices == sorted(indices)
+
+    # Owner classes render for release / instance / generated blocks.
+    assert 't1-owner-release' in html   # identity/soul/goals/user/operating
+    assert 't1-owner-instance' in html  # agents (AGENTS.md)
+    assert 't1-owner-generated' in html  # skills_catalogue/memory/runtime
+
+    # Reconciliation sums exactly for this row -- no diff, no tail.
+    assert '21,477' in html
+    assert 'Reconciliation verified' in html
+
+    # Acceptance 3: truncated flag renders a visible badge.
+    assert 'badge-flag-truncated' in html
+    assert 'TRUNCATED' in html
+
+
+def test_agent_page_post_migration_row_missing_file_badge():
+    """#301 acceptance 3: a `missing: ["SOUL.md"]` row badges the soul block."""
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-missing-soul',
+            'chars': 19887,
+            'cap': 24000,
+            'rung': 'full',
+            'sections': {
+                'identity': 1244, 'soul': 0, 'goals': 3040, 'user': 1878,
+                'operating': 4304, 'agents': 3989, 'skills_catalogue': 4162,
+                'memory': 824, 'runtime': 390,
+            },
+            'dropped': [], 'trimmed': [], 'droppable_reserve_chars': 0,
+            'missing': ['SOUL.md'], 'truncated': [],
+            'ts': '2026-09-17T23:49:00Z',
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-17 23:50:00')['agent.html']
+    assert 'badge-flag-missing' in html
+    assert 'MISSING' in html
+
+
+def _pad(text: str, length: int) -> str:
+    return text if len(text) >= length else text + ('x' * (length - len(text)))
+
+
+def test_agent_page_pre_migration_row_with_tail_shows_diff_not_exact_match():
+    """#301 acceptance 2: pre-migration row (current ledger shape) still
+    renders identity/bootstrap/skills_catalogue/memory plus the tail as two
+    separate labelled blocks (goals, loop_identity), and the reconciliation
+    shows the sum-versus-length difference instead of claiming Exact Match,
+    because the real message (prompt_text) is longer than the recorded
+    capped-sections sum by the tail's size.
+    """
+    identity_text = _pad('identity', 1446)
+    bootstrap_text = _pad('bootstrap', 9356)
+    skills_text = _pad('skills catalogue', 10109)
+    memory_text = _pad('memory', 824)
+    capped_join = SEPARATOR.join([identity_text, bootstrap_text, skills_text, memory_text])
+
+    marker = '\n\n# Loop agent identity\n\n'
+    charter_prefix = '# Immutable operator charter\n\n'
+    goals_text = charter_prefix + _pad('charter body', 3582 - len(charter_prefix))
+    identity_body = _pad('loop identity body', 2834 - len(marker))
+    tail = goals_text + marker + identity_body
+
+    prompt_text = capped_join + SEPARATOR + tail
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'phase': 'system_prompt',
+            'cycle_id': 'cycle-pre-migration',
+            'chars': 21756,
+            'cap': 24000,
+            'sections': {
+                'identity': 1446, 'bootstrap': 9356, 'active_skills': 0,
+                'skills_catalogue': 10109, 'memory': 824,
+            },
+            'ts': '2026-09-06T04:00:00Z',
+        },
+        'prompt_text': prompt_text,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')['agent.html']
+
+    assert 'format: pre-ADR-022 legacy' in html
+    for name in ('identity', 'bootstrap', 'skills_catalogue', 'memory'):
+        assert f'<code>{name}</code>' in html
+    # The tail renders as two separate labelled blocks.
+    assert '<strong class="block-title">goals</strong>' in html
+    assert '<strong class="block-title">loop_identity</strong>' in html
+    assert 'legacy tail, beyond recorded sections' in html
+    # Never "Exact Match" when the real message is longer than the recorded sum.
+    assert 'Exact Match' not in html
+    assert 'Diff: -6,423c' in html
+
+
+def test_agent_page_user_message_sections_lists_headings_and_flags_duplicates():
+    """#301 acceptance 4: the user-message panel lists each `## ` heading of
+    the latest recorded task text with its chars, and flags a duplicate.
+    """
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {'chars': 100, 'cap': 24000, 'sections': {'identity': 100}},
+        'prompt_text': None,
+        'task_text': '## Goals\n\nDo the thing.\n\n## Skills\n\nUse the tool.\n\n## Goals\n\nDuplicate section.\n',
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert 'User Message Sections' in html
+    assert 'Goals' in html and 'Skills' in html
+    assert 'DUPLICATE' in html
+
+
+def test_agent_page_rule_owners_panel_is_labelled_static():
+    """#301 acceptance: the static owner map is one object in the page
+    source (SECTION_OWNER_MAP), and the rule-owners panel is clearly
+    labelled static until the harness publishes `rule_owners`.
+    """
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {'chars': 100, 'cap': 24000, 'sections': {'identity': 100}},
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'Rule Owners' in html
+    assert 'static (until harness publishes rule_owners)' in html
+
+    # Published rule_owners takes precedence and drops the "static" label.
+    fixture['agent_context']['system_prompt']['rule_owners'] = {'skip': 'agents'}
+    html_published = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'published by harness' in html_published
+
+
+def test_section_owner_meta_unmapped_names_fall_through():
+    """#301: an unmapped section name never gets dropped -- its chars still render."""
+    from scripts.agent_context import section_owner_meta
+
+    meta = section_owner_meta('some_future_section')
+    assert meta['owner'] == 'unmapped'
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        'system_prompt': {
+            'chars': 150, 'cap': 24000,
+            'sections': {'identity': 100, 'some_future_section': 50},
+        },
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert '<code>some_future_section</code>' in html
+    assert 't1-owner-unmapped' in html
+    assert '50' in html
 
