@@ -18,14 +18,56 @@ MSK_TZ = timezone(timedelta(hours=3))
 SEPARATOR = "\n\n---\n\n"
 SEPARATOR_LEN = len(SEPARATOR)  # 7 characters
 
-CANONICAL_ASSEMBLY_ORDER = [
-    ("identity", "Identity & Role"),
-    ("bootstrap", "Bootstrap (AGENTS.md)"),
-    ("active_skills", "Active Skills (Always Loaded)"),
-    ("skills_catalogue", "Skills Catalogue (Index)"),
-    ("memory", "Working Memory"),
-    ("goals", "Operator Charter / Goals"),
-]
+# #301 (ADR-022, ozand/eeebot#1720): static owner map for prompt sections.
+# Source of truth: nanobot/agent/context.py `_RELEASE_BLOCK_CAPS` +
+# `MUTATION_POLICY.read_paths` (eeebot repo) — release-owned ontology files
+# (IDENTITY.md/SOUL.md/goals.md/USER.md/OPERATING.md), instance-owned
+# AGENTS.md, and the generated skills/memory/runtime blocks. Pre-migration
+# ledger rows still carry the old "bootstrap"/"active_skills" names, kept
+# here as aliases so old rows render with real owner/cap info too. Any
+# section name absent from this map falls through to "unmapped" — never
+# dropped.
+SECTION_OWNER_MAP: dict[str, dict[str, Any]] = {
+    "identity": {"file": "IDENTITY.md", "owner": "release", "cap": 1500, "label": "Identity & Role"},
+    "soul": {"file": "SOUL.md", "owner": "release", "cap": 1800, "label": "Soul"},
+    "goals": {"file": "goals.md", "owner": "release", "cap": 3200, "label": "Operator Charter / Goals"},
+    "user": {"file": "USER.md", "owner": "release", "cap": 4000, "label": "User"},
+    "operating": {"file": "OPERATING.md", "owner": "release", "cap": 5000, "label": "Operating"},
+    "agents": {"file": "AGENTS.md", "owner": "instance", "cap": 4000, "label": "Bootstrap (AGENTS.md)"},
+    "skills_catalogue": {"file": "skills index", "owner": "generated", "cap": None, "label": "Skills Catalogue (Index)"},
+    "memory": {"file": "memory index", "owner": "generated", "cap": None, "label": "Working Memory"},
+    "runtime": {"file": "runtime facts", "owner": "generated", "cap": None, "label": "Runtime"},
+    # Pre-migration aliases (old ledger rows, before ADR-022):
+    "bootstrap": {"file": "AGENTS.md", "owner": "instance", "cap": 4000, "label": "Bootstrap (AGENTS.md)"},
+    "active_skills": {"file": "active skills (loop-owned)", "owner": "generated", "cap": None, "label": "Active Skills (Always Loaded)"},
+}
+
+UNMAPPED_SECTION_META: dict[str, Any] = {"file": "unmapped", "owner": "unmapped", "cap": None, "label": None}
+
+
+def section_owner_meta(name: str) -> dict[str, Any]:
+    """Look up the static owner/file/cap for a recorded section name.
+
+    Unknown names (future sections the map hasn't caught up with yet) fall
+    through to "unmapped" with their chars still rendered — never dropped.
+    """
+    return SECTION_OWNER_MAP.get(name, UNMAPPED_SECTION_META)
+
+
+# #301: rule fingerprints the harness test tracks (see the issue's code map)
+# and which prompt block owns each rule today. Static until the harness
+# publishes a `rule_owners` telemetry field alongside the fingerprint test
+# (ozand/eeebot#1725) — the page prefers that field when present and labels
+# this table "static" otherwise so the distinction stays visible.
+RULE_OWNERS_STATIC: dict[str, str] = {
+    "skip": "agents",
+    "surface": "agents",
+    "branch": "agents",
+    "runner": "agents",
+    "identity": "identity",
+    "budget": "operating",
+    "final_json": "operating",
+}
 
 
 def esc(s: Any) -> str:
@@ -52,8 +94,12 @@ def parse_prompt_sections(
     if not prompt_text or not isinstance(recorded_sections, dict):
         return {"status": "unavailable", "sections": {}, "outside_cap": [], "mismatches": []}
 
+    # #301: chunk positions follow the RECORDED order of `sections` (however
+    # the harness named/ordered them that day), not a hard-coded canonical
+    # list — ``_join_sections`` in the harness joins non-empty sections in
+    # the order it built them, whatever that order is.
     capped_names = [
-        name for name, _label in CANONICAL_ASSEMBLY_ORDER
+        name for name in recorded_sections
         if (recorded_sections.get(name) or 0) > 0
     ]
     chunks = prompt_text.split(SEPARATOR)
@@ -95,6 +141,33 @@ def parse_prompt_sections(
         "recorded_capped_chars": expected_total,
         "actual_prompt_chars": len(prompt_text),
     }
+
+
+def build_task_sections(task_text: str | None) -> list[dict[str, Any]]:
+    """#301: the user message's own section list, built the same way
+    ``build_task`` in the harness builds it — one entry per top-level
+    ``## `` heading, with the chars of the body that follows it up to the
+    next ``## `` heading (or end of text). A heading seen more than once is
+    flagged ``duplicate`` so repeated-section defects are visible on the
+    page rather than only in a ledger dump.
+    """
+    if not task_text:
+        return []
+    matches = list(re.finditer(r"^##\s+(.+?)\s*$", task_text, re.MULTILINE))
+    if not matches:
+        return []
+    seen: dict[str, int] = {}
+    sections: list[dict[str, Any]] = []
+    for index, match in enumerate(matches):
+        heading = match.group(1).strip()
+        start = match.start()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(task_text)
+        body_chars = end - start
+        seen[heading] = seen.get(heading, 0) + 1
+        sections.append({"heading": heading, "chars": body_chars, "occurrence": seen[heading]})
+    for section in sections:
+        section["duplicate"] = seen[section["heading"]] > 1
+    return sections
 
 
 def corpus_status(path: Path, *, read_error: bool = False) -> str:
@@ -303,13 +376,15 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     overflow = sys_prompt.get("overflow", False)
     over_by = sys_prompt.get("over_by", 0)
     sections = sys_prompt.get("sections")
-    separator_count = max(
-        0,
-        sum(
-            1 for key, _label in CANONICAL_ASSEMBLY_ORDER
-            if sections and key in sections and (sections.get(key) or 0) > 0
-        ) - 1,
+    missing_files = sys_prompt.get("missing") or []
+    truncated_files = sys_prompt.get("truncated") or []
+    is_post_migration_row = isinstance(sections, dict) and any(
+        name in sections for name in ("soul", "user", "operating", "agents", "runtime")
     )
+    nonzero_section_names = [
+        name for name in (sections or {}) if (sections.get(name) or 0) > 0
+    ] if sections else []
+    separator_count = max(0, len(nonzero_section_names) - 1)
     separator_total_chars = separator_count * SEPARATOR_LEN
     dropped = sys_prompt.get("dropped") or []
     rung = sys_prompt.get("rung")
@@ -368,7 +443,6 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if details.get("text") is not None
     }
     outside_cap = parsed_prompt["outside_cap"]
-    outside_cap_by_name = {item["name"]: item for item in outside_cap}
     actual_system_chars = len(prompt_text) if prompt_text is not None else None
 
     if chars is None and sections:
@@ -437,18 +511,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if all(status == "present" for status, _ in corpus_counts)
         else "unavailable"
     )
-    active_skills_sz = sections.get("active_skills") if sections and "active_skills" in sections else None
-    active_skills_text = (
-        f"{active_skills_sz:,}c (empty under loop profile)"
-        if active_skills_sz == 0
-        else f"{active_skills_sz:,}c"
-        if active_skills_sz is not None
-        else "unavailable"
-    )
     cat_sz = sections.get("skills_catalogue", 0) if sections else len(raw_sections_text.get("skills_catalogue", ""))
     mem_sz = sections.get("memory", 0) if sections else len(raw_sections_text.get("memory", ""))
-    id_sz = sections.get("identity", 0) if sections else len(raw_sections_text.get("identity", ""))
-    boot_sz = sections.get("bootstrap", 0) if sections else len(raw_sections_text.get("bootstrap", ""))
 
     out = []
     out.append('<section class="panel context-panel">')
@@ -538,12 +602,23 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="tier-col tier1-col">')
     out.append('      <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>')
     out.append('      <div class="tier1-blocks-list">')
-    out.append(f'        <div class="t1-block-item"><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-sz">{id_sz:,}c</span></div>')
-    out.append(f'        <div class="t1-block-item"><span class="t1-seq">2</span><span class="t1-name">bootstrap (AGENTS.md)</span><span class="t1-sz">{boot_sz:,}c</span></div>')
-    active_class = "t1-empty" if active_skills_sz == 0 else ""
-    out.append(f'        <div class="t1-block-item {active_class}"><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">{active_skills_text}</span></div>')
-    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">{cat_sz:,}c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {corpus_count(skills_status, len(skills))} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
-    out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">{mem_sz:,}c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes {corpus_count(mem_corpus_status, mem_cnt)} files in Tier 2</a></div>')
+    # #301: no hard-coded section names here -- one row per entry in the
+    # ledger row's `sections`, in the RECORDED order (whatever the harness
+    # emitted that cycle). Owner/file/cap come from the static ADR-022 map;
+    # unknown names fall through to "unmapped" and still render their chars.
+    for t1_seq, sec_name in enumerate(sections or {}, start=1):
+        sec_sz = sections.get(sec_name) or 0
+        meta = section_owner_meta(sec_name)
+        is_empty = sec_sz == 0
+        empty_class = "t1-empty" if is_empty else ""
+        sz_text = f"{sec_sz:,}c (empty under loop profile)" if is_empty else f"{sec_sz:,}c"
+        owner_tag = f'<span class="t1-owner t1-owner-{esc(meta["owner"])}">{esc(meta["owner"])}</span>'
+        if sec_name == "skills_catalogue":
+            out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">{t1_seq}</span><span class="t1-name">{esc(sec_name)}</span>{owner_tag}<span class="t1-sz">{sz_text}</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes {corpus_count(skills_status, len(skills))} Skills in Tier 2 ({skills_kb:.1f} KB)</a></div>')
+        elif sec_name == "memory":
+            out.append(f'        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">{t1_seq}</span><span class="t1-name">{esc(sec_name)}</span>{owner_tag}<span class="t1-sz">{sz_text}</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes {corpus_count(mem_corpus_status, mem_cnt)} files in Tier 2</a></div>')
+        else:
+            out.append(f'        <div class="t1-block-item {empty_class}"><span class="t1-seq">{t1_seq}</span><span class="t1-name">{esc(sec_name)}</span>{owner_tag}<span class="t1-sz">{sz_text}</span></div>')
     out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
     window_budget = 98000 - 8000
     window_text = f"{window_budget:,} tokens available (98,000 − 8,000) · occupancy {history_text}"
@@ -572,63 +647,103 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  </div>')
 
     out.append('  <div class="context-detail-section">')
-    out.append('    <h3>Tier 1: Assembled Context Blocks (Strict Assembly Order)</h3>')
-    out.append('    <p class="section-sub">Blocks strictly follow context.py assembly order. Click to view exact text.</p>')
+    format_badge = (
+        '<span class="status-badge status-present">format: post-ADR-022 ontology</span>' if is_post_migration_row
+        else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections
+        else '<span class="status-badge status-missing">format: unavailable</span>'
+    )
+    out.append(f'    <h3>Tier 1: Assembled Context Blocks (Recorded Order) {format_badge}</h3>')
+    out.append('    <p class="section-sub">Blocks follow the ledger row\'s own recorded `sections` order for this cycle -- never a hard-coded assembly order. Click to view exact text.</p>')
 
     block_seq = 1
     reconciliation_rows = []
     total_sections_chars = 0
 
     if sections:
-        for key, label in CANONICAL_ASSEMBLY_ORDER:
-            sec_sz = sections.get(key)
-            # Check if key is explicitly present in sections (including 0)
-            if key in sections:
-                sec_sz = sec_sz or 0
-                sec_tokens = estimate_tokens(sec_sz)
-                total_sections_chars += sec_sz
-                sec_text = raw_sections_text.get(key, "")
-                if sec_sz == 0:
-                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num">0</td><td class="num">0</td><td>0c (empty under loop profile)</td></tr>')
-                    out.append(f'<div class="context-block-empty"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; 0 chars (empty under loop profile)</div>')
-                else:
-                    reconciliation_rows.append(f"<tr><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class=\"num\">{sec_sz:,}</td><td class=\"num\">~{sec_tokens:,}</td><td>{sec_sz:,}c</td></tr>")
-                    out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>')
-                block_seq += 1
+        for sec_name in sections:
+            sec_sz = sections.get(sec_name) or 0
+            meta = section_owner_meta(sec_name)
+            owner = meta["owner"]
+            file_name = meta["file"]
+            sec_cap = meta.get("cap")
+            cap_text = f"{sec_cap:,}c" if isinstance(sec_cap, int) else "dynamic"
+            is_missing = file_name in missing_files
+            is_truncated = file_name in truncated_files
+            flags = []
+            if is_missing:
+                flags.append('<span class="badge-flag badge-flag-missing">MISSING</span>')
+            if is_truncated:
+                flags.append('<span class="badge-flag badge-flag-truncated">TRUNCATED</span>')
+            flags_html = " ".join(flags) if flags else "&mdash;"
+            sec_tokens = estimate_tokens(sec_sz)
+            total_sections_chars += sec_sz
+            sec_text = raw_sections_text.get(sec_name, "")
+            owner_cell = f'<span class="t1-owner t1-owner-{esc(owner)}">{esc(owner)}</span> <code>{esc(file_name)}</code>'
+            reconciliation_rows.append(
+                f'<tr class="{"muted-row" if sec_sz == 0 else ""}"><td><code>{esc(sec_name)}</code></td>'
+                f'<td>{owner_cell}</td><td class="num">{sec_sz:,}</td><td class="num">{cap_text}</td>'
+                f'<td>{flags_html}</td><td>~{sec_tokens:,} tokens</td></tr>'
+            )
+            preview = ""
+            if sec_text:
+                heading_match = re.search(r"^#{1,3}\s+(.+)$", sec_text, re.MULTILINE)
+                if heading_match:
+                    preview = f'<span class="block-preview">{esc(heading_match.group(1).strip())}</span>'
+            if sec_sz == 0:
+                out.append(f'<div class="context-block-empty"><span class="block-seq">#{block_seq}</span><strong>{esc(sec_name)}</strong> {owner_cell} &mdash; 0 chars (empty under loop profile) {flags_html}</div>')
             else:
-                outside = outside_cap_by_name.get(key)
-                if outside is not None:
-                    outside_size = outside["actual_chars"]
-                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>{outside_size:,}</em></td><td class="num">~{estimate_tokens(outside_size):,}</td><td>outside capped prompt</td></tr>')
-                    out.append(f'<details class="context-block-details outside-cap-block"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">{esc(key)}</strong><span class="block-label">({esc(label)})</span><span class="block-meta">{outside_size:,} chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>')
-                else:
-                    reconciliation_rows.append(f'<tr class="muted-row"><td><code>{esc(key)}</code></td><td>{esc(label)}</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr>')
-                    out.append(f'<div class="context-block-absent"><span class="block-seq">#{block_seq}</span><strong>{esc(key)}</strong> &mdash; <em>absent</em> (not configured/emitted)</div>')
-                block_seq += 1
+                out.append(
+                    f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span>'
+                    f'<strong class="block-title">{esc(sec_name)}</strong><span class="block-label">{owner_cell} &bull; cap {cap_text}</span>'
+                    f'{preview}<span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens {flags_html}</span></summary>'
+                    f'<div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>'
+                )
+            block_seq += 1
 
         sep_count = separator_count
         sep_total_chars = separator_total_chars
         reconciled_total = total_sections_chars + sep_total_chars
 
-        reconciliation_rows.append(f'<tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>{total_sections_chars:,}</strong></td><td class="num">~{estimate_tokens(total_sections_chars):,}</td><td>&sum; section chars</td></tr>')
-        reconciliation_rows.append(f'<tr class="sep-row"><td colspan="2"><strong>Separators (\\n\\n---\\n\\n)</strong></td><td class="num"><strong>{sep_total_chars:,}</strong></td><td class="num">~{estimate_tokens(sep_total_chars):,}</td><td>{sep_count} &times; {SEPARATOR_LEN} chars</td></tr>')
-        is_match = (reconciled_total == total_chars)
-        match_badge = '<span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span>' if is_match else f'<span class="status-badge status-missing">Diff: {reconciled_total - total_chars:+d}c</span>'
+        # #301: compare the reconciled sum against the REAL message length --
+        # the actual system message the model received (`prompt_text`) when
+        # we have it, never the recorded `chars` field alone, which on
+        # pre-migration rows deliberately excludes a tail the bridge appends
+        # after the prompt fit. Falsely calling that an exact match hid the
+        # tail's existence. Only fall back to the recorded/derived total
+        # when the actual message text was not captured.
+        if actual_system_chars is not None:
+            message_length = actual_system_chars
+            message_length_label = "actual system message received by model"
+        else:
+            message_length = total_chars
+            message_length_label = "recorded chars field (actual message text unavailable)"
+
+        reconciliation_rows.append(f'<tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>{total_sections_chars:,}</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr>')
+        reconciliation_rows.append(f'<tr class="sep-row"><td colspan="2"><strong>Separators (\\n\\n---\\n\\n)</strong></td><td class="num"><strong>{sep_total_chars:,}</strong></td><td colspan="2"></td><td>{sep_count} &times; {SEPARATOR_LEN} chars</td></tr>')
+        diff = reconciled_total - message_length
+        is_match = diff == 0
+        match_badge = (
+            '<span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span>' if is_match
+            else f'<span class="status-badge status-missing">Diff: {diff:+,}c vs {esc(message_length_label)}</span>'
+        )
 
         out.append('    <div class="reconciliation-box">')
         out.append(f'      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4>{match_badge}</div>')
         out.append('      <table class="reconciliation-table">')
-        out.append('        <thead><tr><th>Key</th><th>Section</th><th class="num">Chars</th><th class="num">Est. Tokens</th><th>Formula Component</th></tr></thead>')
-        out.append(f'        <tbody>{"".join(reconciliation_rows)}<tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>{reconciled_total:,}</strong></td><td class="num"><strong>~{estimate_tokens(reconciled_total):,}</strong></td><td><strong>Recorded chars: {total_chars:,}</strong></td></tr></tbody>')
+        out.append('        <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>')
+        out.append(f'        <tbody>{"".join(reconciliation_rows)}<tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>{reconciled_total:,}</strong></td><td colspan="2"></td><td><strong>Recorded chars: {message_length:,}</strong> ({esc(message_length_label)})</td></tr></tbody>')
         out.append('      </table>')
-        out.append(f'      <p class="rec-note">Formula: &sum;(capped sections: {total_sections_chars:,}c) + {sep_count} separators &times; {SEPARATOR_LEN}c ({sep_total_chars:,}c) = {reconciled_total:,} chars. Outside-cap system context is not included.</p>')
+        out.append(f'      <p class="rec-note">Formula: &sum;(recorded sections: {total_sections_chars:,}c) + {sep_count} separators &times; {SEPARATOR_LEN}c ({sep_total_chars:,}c) = {reconciled_total:,} chars, compared against {esc(message_length_label)} ({message_length:,}c).</p>')
+        if outside_cap:
+            tail_total = sum(item["actual_chars"] for item in outside_cap)
+            out.append(f'      <p class="rec-note"><strong>Legacy tail beyond recorded sections:</strong> {tail_total:,}c across {len(outside_cap)} block(s) -- see below. Not part of the ledger `sections` map.</p>')
         if parsed_prompt["status"] == "exact":
             evidence = " ".join(
                 f'<code>{esc(name)}</code>: recorded {details["recorded_chars"]:,} / parsed {details["actual_chars"]:,} chars (exact)'
                 for name, details in parsed_prompt["sections"].items()
             )
             out.append(f'      <p class="rec-note">Structural prompt parse: {evidence}</p>')
-        else:
+        elif parsed_prompt["status"] == "mismatch":
             evidence = " ".join(
                 f'<code>{esc(item["name"])}</code>: recorded {item["recorded_chars"]} / parsed {item["actual_chars"] if item["actual_chars"] is not None else "unavailable"}'
                 for item in parsed_prompt["mismatches"]
@@ -643,15 +758,66 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if prompt_text:
             out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(prompt_text)}</code></pre></div></details>')
 
-    rendered_outside_names = {"goals"}
+    # #301: legacy tail (pre-ADR-022 rows only) -- rendered as its own
+    # labelled block(s), never folded silently into "outside capped prompt";
+    # for post-migration rows `outside_cap` is empty because the harness no
+    # longer appends anything after the prompt fit.
     for outside in outside_cap:
-        if outside["name"] in rendered_outside_names:
-            continue
-        out.append(f'<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">{esc(outside["name"])}</strong><span class="block-meta">{outside["actual_chars"]:,} chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>')
+        out.append(
+            f'<details class="context-block-details outside-cap-block"><summary class="block-summary">'
+            f'<strong class="block-title">{esc(outside["name"])}</strong>'
+            f'<span class="block-label">unmapped &bull; legacy tail, beyond recorded sections</span>'
+            f'<span class="block-meta">{outside["actual_chars"]:,} chars</span></summary>'
+            f'<div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>'
+        )
 
     if task_text:
         t_sz = len(task_text)
         out.append(f'<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">{t_sz:,} chars &bull; ~{estimate_tokens(t_sz):,} tokens</span></summary><div class="block-body"><pre><code>{esc(task_text)}</code></pre></div></details>')
+
+    # #301: the user message's own section list (`build_task` `## ` headings)
+    # for the latest recorded prompt -- makes duplicate-section defects
+    # visible on the page instead of only in a ledger dump.
+    task_sections = build_task_sections(task_text)
+    out.append('    <div class="user-message-sections">')
+    out.append('      <h4>User Message Sections (latest recorded task text)</h4>')
+    if not task_text:
+        out.append('      <p class="unavailable-note">task text unavailable for this cycle.</p>')
+    elif not task_sections:
+        out.append('      <p class="unavailable-note">no `## ` headings found in the recorded task text.</p>')
+    else:
+        rows = []
+        for section in task_sections:
+            dup_badge = ' <span class="badge-flag badge-flag-truncated">DUPLICATE</span>' if section["duplicate"] else ""
+            rows.append(f'<tr><td>{esc(section["heading"])}{dup_badge}</td><td class="num">{section["chars"]:,}</td></tr>')
+        out.append('      <table class="reconciliation-table">')
+        out.append('        <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>')
+        out.append(f'        <tbody>{"".join(rows)}</tbody>')
+        out.append('      </table>')
+    out.append('    </div>')
+
+    # #301: rule-owners panel -- which prompt block owns each rule the
+    # harness's fingerprint test tracks. Prefers a `rule_owners` telemetry
+    # field once the harness publishes one (ozand/eeebot#1725); until then
+    # this is the static ADR-022 map, clearly labelled as such.
+    rule_owners = sys_prompt.get("rule_owners")
+    rule_owners_is_static = not isinstance(rule_owners, dict) or not rule_owners
+    rule_owners_source = rule_owners if isinstance(rule_owners, dict) and rule_owners else RULE_OWNERS_STATIC
+    out.append('    <div class="rule-owners-panel">')
+    static_note = ' <span class="status-badge status-missing">static (until harness publishes rule_owners)</span>' if rule_owners_is_static else ' <span class="status-badge status-present">published by harness</span>'
+    out.append(f'      <h4>Rule Owners{static_note}</h4>')
+    rule_rows = []
+    for rule_name, owner_section in rule_owners_source.items():
+        owner_meta = section_owner_meta(owner_section)
+        rule_rows.append(
+            f'<tr><td><code>{esc(rule_name)}</code></td><td><code>{esc(owner_section)}</code></td>'
+            f'<td><span class="t1-owner t1-owner-{esc(owner_meta["owner"])}">{esc(owner_meta["owner"])}</span></td></tr>'
+        )
+    out.append('      <table class="reconciliation-table">')
+    out.append('        <thead><tr><th>Rule (fingerprint test)</th><th>Owning block</th><th>Owner class</th></tr></thead>')
+    out.append(f'        <tbody>{"".join(rule_rows)}</tbody>')
+    out.append('      </table>')
+    out.append('    </div>')
 
     out.append('  </div>')
     out.append('  </div>')
@@ -1042,4 +1208,31 @@ AGENT_CONTEXT_CSS = """
   font-family: monospace;
 }
 .pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
+
+/* #301: recorded-order Tier 1 blocks, owner badges, flags, rule owners & user-message sections */
+.t1-owner {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #30363d;
+  color: #8b949e;
+}
+.t1-owner-release { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+.t1-owner-instance { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }
+.t1-owner-generated { color: #a371f7; border-color: rgba(163, 113, 247, 0.4); }
+.t1-owner-unmapped { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
+.badge-flag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.badge-flag-missing { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+.badge-flag-truncated { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
+.user-message-sections, .rule-owners-panel { margin-top: 18px; }
+.user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
 """
