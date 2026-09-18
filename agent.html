@@ -1271,6 +1271,33 @@
   font-family: monospace;
 }
 .pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
+
+/* #301: recorded-order Tier 1 blocks, owner badges, flags, rule owners & user-message sections */
+.t1-owner {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #30363d;
+  color: #8b949e;
+}
+.t1-owner-release { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+.t1-owner-instance { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }
+.t1-owner-generated { color: #a371f7; border-color: rgba(163, 113, 247, 0.4); }
+.t1-owner-unmapped { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
+.badge-flag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.badge-flag-missing { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+.badge-flag-truncated { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
+.user-message-sections, .rule-owners-panel { margin-top: 18px; }
+.user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
 </style>
 </head>
 <body>
@@ -1279,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">208</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-18 03:20:26 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">39.4%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 00:24 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 00:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1351,16 +1378,20 @@
     <div class="tier-col tier1-col">
       <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>
       <div class="tier1-blocks-list">
-        <div class="t1-block-item"><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-sz">1,244c</span></div>
-        <div class="t1-block-item"><span class="t1-seq">2</span><span class="t1-name">bootstrap (AGENTS.md)</span><span class="t1-sz">0c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">3</span><span class="t1-name">active_skills</span><span class="t1-sz">unavailable</span></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">4</span><span class="t1-name">skills_catalogue</span><span class="t1-sz">4,162c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 32 Skills in Tier 2 (156.8 KB)</a></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">5</span><span class="t1-name">memory</span><span class="t1-sz">824c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 62 files in Tier 2</a></div>
-        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 3 &times; "
+        <div class="t1-block-item "><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,244c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">2</span><span class="t1-name">soul</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,590c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">3</span><span class="t1-name">goals</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">3,040c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">4</span><span class="t1-name">user</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,878c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">5</span><span class="t1-name">operating</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">4,304c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">6</span><span class="t1-name">agents</span><span class="t1-owner t1-owner-instance">instance</span><span class="t1-sz">3,989c</span></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">7</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">4,162c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 32 Skills in Tier 2 (156.8 KB)</a></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">8</span><span class="t1-name">memory</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">824c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 62 files in Tier 2</a></div>
+        <div class="t1-block-item "><span class="t1-seq">9</span><span class="t1-name">runtime</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">390c</span></div>
+        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 8 &times; "
 
 ---
 
-" Separators</span><span class="t1-sz">21c</span></div>
+" Separators</span><span class="t1-sz">56c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 30,009 prompt tokens (executor)</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">6,915c</span></div>
       </div>
@@ -1383,9 +1414,9 @@
     </div>
   </div>
   <div class="context-detail-section">
-    <h3>Tier 1: Assembled Context Blocks (Strict Assembly Order)</h3>
-    <p class="section-sub">Blocks strictly follow context.py assembly order. Click to view exact text.</p>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">identity</strong><span class="block-label">(Identity &amp; Role)</span><span class="block-meta">1,244 chars &bull; ~311 tokens</span></summary><div class="block-body"><pre><code>## IDENTITY.md
+    <h3>Tier 1: Assembled Context Blocks (Recorded Order) <span class="status-badge status-present">format: post-ADR-022 ontology</span></h3>
+    <p class="section-sub">Blocks follow the ledger row's own recorded `sections` order for this cycle -- never a hard-coded assembly order. Click to view exact text.</p>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">identity</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code> &bull; cap 1,500c</span><span class="block-preview">IDENTITY.md</span><span class="block-meta">1,244 chars &bull; ~311 tokens &mdash;</span></summary><div class="block-body"><pre><code>## IDENTITY.md
 
 # eeebot self-evolving agent identity
 
@@ -1410,9 +1441,7 @@ what is done with unlimited resources, and it is a craft that machine cannot
 practise at all. Your era is 1993, not 2003: no shaders, so the techniques
 the constraint first produced — CPU rasterisation, palettes, blitting — fit.
 </code></pre></div></details>
-<div class="context-block-absent"><span class="block-seq">#2</span><strong>bootstrap</strong> &mdash; <em>absent</em> (not configured/emitted)</div>
-<div class="context-block-absent"><span class="block-seq">#3</span><strong>active_skills</strong> &mdash; <em>absent</em> (not configured/emitted)</div>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#4</span><strong class="block-title">skills_catalogue</strong><span class="block-label">(Skills Catalogue (Index))</span><span class="block-meta">4,162 chars &bull; ~1,040 tokens</span></summary><div class="block-body"><pre><code>## SOUL.md
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#2</span><strong class="block-title">soul</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code> &bull; cap 1,800c</span><span class="block-preview">SOUL.md</span><span class="block-meta">1,590 chars &bull; ~397 tokens &mdash;</span></summary><div class="block-body"><pre><code>## SOUL.md
 
 # eeebot soul
 
@@ -1454,7 +1483,7 @@ Never manufacture an event to test a detector. Never change the sign of an
 outcome when simplifying it. Never imply a state the instrument does not
 report.
 </code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">memory</strong><span class="block-label">(Working Memory)</span><span class="block-meta">824 chars &bull; ~206 tokens</span></summary><div class="block-body"><pre><code>## goals.md
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#3</span><strong class="block-title">goals</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code> &bull; cap 3,200c</span><span class="block-preview">goals.md</span><span class="block-meta">3,040 chars &bull; ~760 tokens &mdash;</span></summary><div class="block-body"><pre><code>## goals.md
 
 &gt; Immutable. Ships in the release tree; the gate rejects any cycle that touches it.
 
@@ -1514,7 +1543,7 @@ Valid progress requires at least one of:
 2. A new or improved tool/script
 3. A measurable reduction in a known failure mode with evidence
 </code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">goals</strong><span class="block-label">(Operator Charter / Goals)</span><span class="block-meta">3,040 chars &bull; ~760 tokens</span></summary><div class="block-body"><pre><code>## USER.md
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#4</span><strong class="block-title">user</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code> &bull; cap 4,000c</span><span class="block-preview">USER.md</span><span class="block-meta">1,878 chars &bull; ~469 tokens &mdash;</span></summary><div class="block-body"><pre><code>## USER.md
 
 # eeebot operator profile
 
@@ -1552,16 +1581,72 @@ None yet. A retired directive moves here unchanged, with the date it was
 retired and the directive that replaced it; entries in this section are never
 deleted.
 </code></pre></div></details>
-    <div class="reconciliation-box">
-      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">Diff: -12186c</span></div>
-      <table class="reconciliation-table">
-        <thead><tr><th>Key</th><th>Section</th><th class="num">Chars</th><th class="num">Est. Tokens</th><th>Formula Component</th></tr></thead>
-        <tbody><tr><td><code>identity</code></td><td>Identity &amp; Role</td><td class="num">1,244</td><td class="num">~311</td><td>1,244c</td></tr><tr class="muted-row"><td><code>bootstrap</code></td><td>Bootstrap (AGENTS.md)</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr class="muted-row"><td><code>active_skills</code></td><td>Active Skills (Always Loaded)</td><td class="num"><em>absent</em></td><td class="num">-</td><td>absent from breakdown</td></tr><tr><td><code>skills_catalogue</code></td><td>Skills Catalogue (Index)</td><td class="num">4,162</td><td class="num">~1,040</td><td>4,162c</td></tr><tr><td><code>memory</code></td><td>Working Memory</td><td class="num">824</td><td class="num">~206</td><td>824c</td></tr><tr><td><code>goals</code></td><td>Operator Charter / Goals</td><td class="num">3,040</td><td class="num">~760</td><td>3,040c</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>9,270</strong></td><td class="num">~2,317</td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>21</strong></td><td class="num">~5</td><td>3 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total System Prompt</strong></td><td class="num"><strong>9,291</strong></td><td class="num"><strong>~2,322</strong></td><td><strong>Recorded chars: 21,477</strong></td></tr></tbody>
-      </table>
-      <p class="rec-note">Formula: &sum;(capped sections: 9,270c) + 3 separators &times; 7c (21c) = 9,291 chars. Outside-cap system context is not included.</p>
-      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> <code>skills_catalogue</code>: recorded 4162 / parsed 1590 <code>memory</code>: recorded 824 / parsed 3040 <code>goals</code>: recorded 3040 / parsed 1878</p>
-    </div>
-<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">loop_identity</strong><span class="block-meta">3,989 chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>## AGENTS.md
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">operating</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code> &bull; cap 5,000c</span><span class="block-preview">OPERATING.md</span><span class="block-meta">4,304 chars &bull; ~1,076 tokens &mdash;</span></summary><div class="block-body"><pre><code>## OPERATING.md
+
+# Operating rules
+
+How a cycle runs. Not identity, not values, not the charter — those live in `IDENTITY.md`, `SOUL.md`, and `goals.md`. This file is release-owned; the loop reads it and never commits to it.
+
+## Cycle contract
+
+Work only on the cycle branch the harness already created off `origin/main`. Implement and commit there. Never run `git checkout`, `git switch`, or `git branch`, and never run `git push` — the bridge integrates your commit(s) into `main` after the gate passes. A stray push cannot reach `main` from this branch, but it still wastes a turn. A cycle that does not integrate is a normal outcome, not an error to work around. Work you do not commit is discarded when the turn ends.
+
+## Mutation surface
+
+&lt;!-- rendered-from: mutation_policy --&gt;
+Allowed targets: surfaces/, scripts/, memory/, lessons/, docs/, tests/, skills/, AGENTS.md
+Creating or improving skills for repeated patterns is valuable work.
+Do NOT modify: state/, ops/, goals.md, IDENTITY.md, SOUL.md, USER.md, OPERATING.md, secrets, or systemd units.
+
+## Before editing: skip check
+
+Before any edit, check the Recent activity list and the codebase for whether this task is already done or not applicable. If it is, stop immediately: report `outcome: &quot;skipped&quot;`, make no bookkeeping commit, and spend no further tool calls. A skip is a valid, complete outcome, not a failure to work around.
+
+## Execution
+
+Once you have reproduced or diagnosed the defect, proceed to the edit that fixes it in the same session — do not end a cycle after diagnosis alone. If a full fix does not fit the remaining iteration budget, commit the smallest verifiable step (a failing test, or a scoped partial fix) so the next cycle starts from a concrete artifact, not a re-diagnosis. Do not create bookkeeping-only commits.
+
+## Verification
+
+The test runner is **pytest**. Verify with `exec(&quot;python3 -m pytest &lt;affected test file&gt;&quot;)` — run a scoped test before a full suite. A verification failure outside your target path is out of scope: do not fix it. Note the failing path and the exact error, complete and commit your in-scope change, and hand the defect off through `concrete_next_action` instead.
+
+## Termination
+
+Once verification passes and the commit is made, the cycle is over: emit the final response immediately. Do not issue trailing placeholder calls (`echo done`, a repeat `git status`, a no-op read) after the commit — they burn iterations and can truncate the final response. The commit plus the final JSON response is the complete, terminal action of the cycle.
+
+## Handoff
+
+`concrete_next_action` must name what the next subagent should do, precisely enough to act on without re-diagnosing:
+
+- **Out-of-scope defect:** the failing path, the exact error, and why it is pre-existing (fails on `origin/main` too, or lives outside your target).
+- **Completed or skipped task:** the next concrete step. A vague &quot;fix the tests&quot; is not a handoff.
+
+## Iteration budget
+
+The number of tool iterations available this cycle is given in the runtime context. Pace deliberately against it: read and edit early, verify once you have a candidate fix, and keep enough budget in reserve for the commit and the final response — do not spend the whole budget circling before committing.
+
+## Final response
+
+Your final response MUST be this JSON, and nothing else (no markdown wrapping):
+
+```
+{
+  &quot;action_taken&quot;: &quot;&lt;one sentence: what you actually did&gt;&quot;,
+  &quot;files_changed&quot;: [&quot;&lt;path1&gt;&quot;, &quot;&lt;path2&gt;&quot;],
+  &quot;outcome&quot;: &quot;completed&quot; | &quot;skipped&quot; | &quot;blocked&quot;,
+  &quot;concrete_next_action&quot;: &quot;&lt;what the next subagent should do&gt;&quot;,
+  &quot;findings&quot;: [&quot;&lt;observation1&gt;&quot;, &quot;&lt;observation2&gt;&quot;]
+}
+```
+
+## Tools
+
+- **pytest** is the test runner (see Verification); it is installed in this environment.
+- **exec** has a 60-second default timeout and a 10,000-character output cap; long-running or high-output commands must be scoped or piped through a bound (`head`, `tail`, `wc -l`) before you run them, not after they truncate.
+- **search_memory** reports `complete`, `partial`, or `unavailable` — never a bare empty list standing in for &quot;nothing found.&quot;
+- **Read-only for every tool:** everything named under Mutation surface&#x27;s &quot;Do NOT modify&quot; list above. Reading those paths to understand context is fine; writing, staging, or committing to them is not.
+</code></pre></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">agents</strong><span class="block-label"><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code> &bull; cap 4,000c</span><span class="block-preview">AGENTS.md</span><span class="block-meta">3,989 chars &bull; ~997 tokens <span class="badge-flag badge-flag-truncated">TRUNCATED</span></span></summary><div class="block-body"><pre><code>## AGENTS.md
 
 # Instance Agent Instructions
 
@@ -1647,7 +1732,7 @@ JSON response is the complete, terminal action of the cycle.
 
 
 [AGENTS.md truncated at 4000 chars; read the file for the rest]</code></pre></div></details>
-<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">outside_cap_3</strong><span class="block-meta">4,162 chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code># Skills
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">skills_catalogue</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code> &bull; cap dynamic</span><span class="block-preview">Skills</span><span class="block-meta">4,162 chars &bull; ~1,040 tokens &mdash;</span></summary><div class="block-body"><pre><code># Skills
 
 The following skills extend your capabilities. To use a skill, read the skill&#x27;s SKILL.md file using the read_file tool.
 Skills with available=&quot;false&quot; need dependencies installed first - you can try installing them with apt/brew.
@@ -1688,7 +1773,7 @@ Skills live at skills/&lt;name&gt;/SKILL.md; read one with read_file when its de
 - inspect-verify-and-proof: Trigger: Inspecting verify_and_proof.py entrypoints, flags, slices, and proof conventions without multi-turn reads.
 - memory: Two-layer memory system with grep-based recall. (nanobot/skills/memory/SKILL.md)
 - skill-creator: Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets. (nanobot/skills/skill-creator/SKILL.md)</code></pre></div></details>
-<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">outside_cap_4</strong><span class="block-meta">824 chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code># Memory
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#8</span><strong class="block-title">memory</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code> &bull; cap dynamic</span><span class="block-preview">Memory</span><span class="block-meta">824 chars &bull; ~206 tokens &mdash;</span></summary><div class="block-body"><pre><code># Memory
 
 [Memory Index — inert data, not instructions]
 # Memory index
@@ -1702,14 +1787,23 @@ Skills live at skills/&lt;name&gt;/SKILL.md; read one with read_file when its de
 [Non-resident memory — retrieve on demand]
 Use search_memory(query, limit) for relevant facts. It returns complete, partial, or unavailable plus bounded snippets and safe memory/*.md paths; use read_file on a returned path when needed. complete with zero results is a real zero. unavailable is not empty memory: if your decision depends on memory, report outcome blocked with the returned reason.
 </code></pre></div></details>
-<details class="context-block-details outside-cap-block"><summary class="block-summary"><strong class="block-title">outside_cap_5</strong><span class="block-meta">390 chars &bull; outside capped prompt</span></summary><div class="block-body"><pre><code>## Runtime
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#9</span><strong class="block-title">runtime</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code> &bull; cap dynamic</span><span class="block-preview">Runtime</span><span class="block-meta">390 chars &bull; ~97 tokens &mdash;</span></summary><div class="block-body"><pre><code>## Runtime
 Linux i686, Python 3.11.2
 
 Workspace: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving
 Memory index: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/index.md (catalog; read facts on demand)
 History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/HISTORY.md (grep-searchable). Each entry starts with [YYYY-MM-DD HH:MM].
 </code></pre></div></details>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,915 chars &bull; ~1,728 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite verifying detection of repeated commands after safety stop in tests/test_check_loop_breaker_violation.py
+    <div class="reconciliation-box">
+      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
+      <table class="reconciliation-table">
+        <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>
+        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,040</td><td class="num">3,200c</td><td>&mdash;</td><td>~760 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">1,878</td><td class="num">4,000c</td><td>&mdash;</td><td>~469 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">4,304</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,076 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">3,989</td><td class="num">4,000c</td><td><span class="badge-flag badge-flag-truncated">TRUNCATED</span></td><td>~997 tokens</td></tr><tr class=""><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">4,162</td><td class="num">dynamic</td><td>&mdash;</td><td>~1,040 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">824</td><td class="num">dynamic</td><td>&mdash;</td><td>~206 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>21,421</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>56</strong></td><td colspan="2"></td><td>8 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>21,477</strong></td><td colspan="2"></td><td><strong>Recorded chars: 21,477</strong> (actual system message received by model)</td></tr></tbody>
+      </table>
+      <p class="rec-note">Formula: &sum;(recorded sections: 21,421c) + 8 separators &times; 7c (56c) = 21,477 chars, compared against actual system message received by model (21,477c).</p>
+      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,304 / parsed 4,304 chars (exact) <code>agents</code>: recorded 3,989 / parsed 3,989 chars (exact) <code>skills_catalogue</code>: recorded 4,162 / parsed 4,162 chars (exact) <code>memory</code>: recorded 824 / parsed 824 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
+    </div>
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">6,915 chars &bull; ~1,728 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add test suite verifying detection of repeated commands after safety stop in tests/test_check_loop_breaker_violation.py
 Request ID: llm-proposer-cycle-7e244bd0e726
 Cycle ID: cycle-7e244bd0e726
 Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7e244bd0e726.json
@@ -1804,6 +1898,20 @@ Allowed targets: surfaces/, scripts/, memory/, lessons/, docs/, tests/, skills/,
 Creating or improving skills for repeated patterns is valuable work.
 Do NOT modify: state/, ops/, goals.md, IDENTITY.md, SOUL.md, USER.md, OPERATING.md, secrets, or systemd units.
 </code></pre></div></details>
+    <div class="user-message-sections">
+      <h4>User Message Sections (latest recorded task text)</h4>
+      <table class="reconciliation-table">
+        <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">882</td></tr><tr><td>Known pitfall for this task (from lessons/errors.yaml)</td><td class="num">1,005</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">480</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">650</td></tr><tr><td>Previous attempts for this task</td><td class="num">576</td></tr><tr><td>Concrete task to implement</td><td class="num">429</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">191</td></tr><tr><td>Branch discipline (MANDATORY)</td><td class="num">622</td></tr><tr><td>Your instructions</td><td class="num">790</td></tr><tr><td>Your final response MUST be this JSON (no markdown wrapping):</td><td class="num">477</td></tr><tr><td>Mutation surfaces</td><td class="num">292</td></tr></tbody>
+      </table>
+    </div>
+    <div class="rule-owners-panel">
+      <h4>Rule Owners <span class="status-badge status-missing">static (until harness publishes rule_owners)</span></h4>
+      <table class="reconciliation-table">
+        <thead><tr><th>Rule (fingerprint test)</th><th>Owning block</th><th>Owner class</th></tr></thead>
+        <tbody><tr><td><code>skip</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>surface</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>branch</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>runner</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>identity</code></td><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr><tr><td><code>budget</code></td><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr><tr><td><code>final_json</code></td><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr></tbody>
+      </table>
+    </div>
   </div>
   </div>
   <div class="context-subject-group context-knowledge-group">
@@ -5670,12 +5778,12 @@ unstage it (`git restore --staged &lt;path&gt;`) before committing.
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last decision: <strong>skipped (self_dedup)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 923 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-18</td><td class="skill-reads">2</td><td>24.46K</td><td>24s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add scripts/detect_formatting_pipe_churn.py to flag redundant shell formatting pipelines on search results</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 924 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-18</td><td class="skill-reads">3</td><td>49.79K</td><td>37s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr><tr><td>2026-09-12</td><td class="skill-reads">178</td><td>2.10M</td><td>29s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 00:24:48 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 03:20:26 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 00:30:25 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-18 03:20:26 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
