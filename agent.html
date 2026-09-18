@@ -1306,7 +1306,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">192</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.5%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 01:06:46 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">43.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 22:23 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 21s old &middot; generated 23:04 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1323,7 +1323,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+4,137 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-da286533696b</span>
+      <span class="cycle-pill">cycle-bc440a8ef14f</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1352,7 +1352,7 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>82%</strong> (19,863 / 24,000 chars)</span><span>2026-09-18 21:12:13.786139 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>82%</strong> (19,863 / 24,000 chars)</span><span>2026-09-18 22:26:51.024431 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:82%;background:var(--color-success, #2ea043);"></div>
     </div>
@@ -1370,7 +1370,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 38,037 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 65,101 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1392,8 +1392,8 @@
 ---
 
 " Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 38,037 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,304c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 65,101 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,187c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1774,10 +1774,10 @@ History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memor
       <p class="rec-note">Formula: &sum;(recorded sections: 19,807c) + 8 separators &times; 7c (56c) = 19,863 chars, compared against actual system message received by model (19,863c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,233 / parsed 4,233 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 3,925 / parsed 3,925 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,304 chars &bull; ~826 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add get_file_diff_against_ref to scripts/inspect_cycle_diff.py to query diffs against a base ref without git checkout
-Request ID: llm-proposer-cycle-da286533696b
-Cycle ID: cycle-da286533696b
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-da286533696b.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,187 chars &bull; ~1,046 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add --isolated-stash flag to scripts/run_all_tests.py to test baseline failures via safe git stash
+Request ID: llm-proposer-cycle-bc440a8ef14f
+Cycle ID: cycle-bc440a8ef14f
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-bc440a8ef14f.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1785,6 +1785,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 207cc988 selfevo: auto-commit uncommitted subagent work — Add get_file_diff_against_ref to scripts/inspect_cycle_diff.py to query diffs ag
 - 8b04cf41 chore: record structured error for [cycle-d593c7]
 - 0f165577 selfevo: auto-commit uncommitted subagent work — Add detect_static_date_literals to scripts/validate_timezone_aware_datetime.py
 - 0beeb3a7 docs(agents): AGENTS.md is repository layout only (eeebot#1752)
@@ -1792,29 +1793,35 @@ Recently completed (recent commits):
 - fd6fbe12 docs(lessons): document loop breaker halt protocol — immediate tool halt and final response emission
 - c8fdc9ca docs(lessons): document POSIX shell pipeline exit handling to avoid PIPESTATUS bad substitutions
 - 78a370a5 feat(check_litellm_cooldown): add evaluate_consecutive_backoff for repeated RateLimitErrors
-- 4853fb21 feat(check_litellm_cooldown): add pre-dispatch RateLimitError cooldown gate
 
 Recently rejected / no-commit (proxy signal, not exhaustive):
+- Exclude catalog files like index.md from lesson card section checks in test_lessons_integrity.py: existence_index_duplicate
 - Add broad git checkout and reset pattern detection to scripts/check_destructive_syntax.py: fitness_sidecar_tamper
 
+## Proven approach for this task (from lessons/lessons.yaml)
+ID: LESS-REF-1094c6ba84b4-be5c  Title: When encountering test failures in ancillary test suites during feature verification, use git stashing or baseline checks to verify whether they are pre-existing before attempting out-of-scope fixes.
+Problem: the agent verified that failures in tests/test_lessons_integrity.py were pre-existing on origin/main using git stash and documented the root cause for future cycles.
+Solution: When encountering test failures in ancillary test suites during feature verification, use git stashing or baseline checks to verify whether they are pre-existing before attempting out-of-scope fixes.
+If you apply this lesson, cite [Lesson LESS-REF-1094c6ba84b4-be5c] in your proposal/response.
+
 ## Recent reflections (how past cycles worked — steering hints)
-- When a task proposing a specific helper function on a script fails, avoid proposing synonymous helper names on the same file; instead, shift approach or reply with no_valuable_task if no viable bounded alternative exists.
-- Target live runtime state directories using absolute paths or standard environment variables rather than relative paths like &#x27;find state&#x27; when running inside the repo checkout.
-- When implementing steering or workflow bounds for documentation and skill tasks, target lessons/ or skills/ (such as creating a workflow lesson or updating relevant skill files) rather than AGENTS.md.
+- When introducing new static analysis lint rules, evaluate repository baseline exposure across the codebase to ensure rules that would cause widespread legacy failures are opt-in.
+- Maintain the &#x27;git stash -u -q&#x27; differential testing pattern to rapidly confirm whether test failures in shared test suites are pre-existing without needing to build worktrees in /tmp or inspect commit logs.
+- Bound preparatory reconnaissance turns for lesson creation tasks by drafting after inspecting one template lesson and verifying target absence, rather than reading multiple unrelated lessons and recent commit logs.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-18 21:01 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
-- Attempt 2 (2026-09-18 20:33 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/validate_timezone_aware_datetime.py, tests/test_validate_timezone_aware_datetime.py.
-- Attempt 3 (2026-09-18 19:33 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
+- Attempt 1 (2026-09-18 22:13 UTC): no commits (blocked). Task &quot;Exclude catalog files like index.md from lesson card section&quot; matched an existing artifact…
+- Attempt 2 (2026-09-18 22:02 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/inspect_cycle_diff.py, tests/test_inspect_cycle_diff.py.
+- Attempt 3 (2026-09-18 21:01 UTC): no commits (completed). Subagent completed without new commits. Possible causes: (1) task already done, (2) instructions unclear, (3) subagent…
 
 ## Concrete task to implement
 
-Title: Add get_file_diff_against_ref to scripts/inspect_cycle_diff.py to query diffs against a base ref without git checkout
+Title: Add --isolated-stash flag to scripts/run_all_tests.py to test baseline failures via safe git stash
 
 
-Resolves reflection-af6f5c67f990 where checking out origin/main caused stashing failures and lost changes by providing get_file_diff_against_ref to safely inspect file differences against a base git ref without checkout.
+Provides an automated, safe --isolated-stash execution mode in run_all_tests.py that stashes tracked changes before running tests and pops them in a finally block, avoiding destructive git checkouts when isolating baseline test failures.
 
-Target path: scripts/inspect_cycle_diff.py
+Target path: scripts/run_all_tests.py
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1823,7 +1830,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,021</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">671</td></tr><tr><td>Previous attempts for this task</td><td class="num">573</td></tr><tr><td>Concrete task to implement</td><td class="num">520</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,201</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">780</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">672</td></tr><tr><td>Previous attempts for this task</td><td class="num">521</td></tr><tr><td>Concrete task to implement</td><td class="num">513</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5549,7 +5556,7 @@ assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-18 22:23:24 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 01:06:46 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-18 23:04:14 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 01:06:46 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
