@@ -1321,15 +1321,15 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">190</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">68.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 03:47:03 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">43.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 01:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 26s old &middot; generated 01:14 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (3175 cycles)</h2>
-      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3125 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <h2 class="panel-title">Cycle History (3176 cycles)</h2>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3126 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
             (function(){
               var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
               if (!btn) return;
@@ -1364,6 +1364,21 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-19 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-54741e0a789c">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup</span>
+            <strong class="feed-title">rejected: self_dedup</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-54741e0a789c)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-54741e0a789c">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-19T01:13:44.965527Z">04:13 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 9.81K tok &middot; dur 12s</div>
+        </li>
+        
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a3ba5c987711">
           <div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
@@ -1376,7 +1391,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">hypothesis-b9012ac632a6</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           <div class="feed-files">&#128193; scripts/filter_quarantined_demands.py, tests/test_filter_quarantined_demands.py</div>
-          <div class="feed-cost">&#9889; 16 calls &middot; 684.4K tok &middot; dur 7m52s</div>
+          <div class="feed-cost">&#9889; 17 calls &middot; 708.2K tok &middot; dur 8m6s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-1ef9bc283637">
@@ -1391,7 +1406,7 @@
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-edc7869eba50</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           <div class="feed-files">&#128193; scripts/check_target_completion.py, tests/test_check_target_completion.py</div>
-          <div class="feed-cost">&#9889; 39 calls &middot; 1.67M tok &middot; dur 44m51s</div>
+          <div class="feed-cost">&#9889; 40 calls &middot; 1.70M tok &middot; dur 45m13s</div>
         </li>
         
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-73f97e6091c5">
@@ -2100,26 +2115,11 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.77K tok &middot; dur 26s</div>
         </li>
         
-        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-8aa45b435df4">
-          <div class="feed-header">
-            <span class="badge badge-failed">FAILED: executor_llm_error</span>
-            <strong class="feed-title">failed: executor_llm_error</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-8aa45b435df4)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-8aa45b435df4">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-18T09:24:37.036120Z">Sep 18 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-f7107e37e7a8</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/subagent_result_error_handling.md (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 9 calls &middot; 122.5K tok &middot; dur 9m52s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 01:06:01 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 03:47:03 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 01:14:38 UTC &middot; host eeepc &middot; newest source 26s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 03:47:03 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
