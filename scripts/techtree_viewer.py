@@ -6113,6 +6113,158 @@ def build_cycle_feed(
     '''
 
 
+#: Issue #1772: mirrors nanobot.runtime.usage_evidence.HARNESS_SIGNALS'
+#: fallback set (nanobot/runtime/scorecard.py:_harness_signals) -- this repo
+#: cannot import the harness package, so the confirmed-in-use gate is
+#: replicated here rather than trusted from a foreign `signal` value on a
+#: `confirmed: true` entry (the same 2026-07-17 reward-hack the harness
+#: guard itself was built against).
+DIGEST_HARNESS_SIGNALS = frozenset({"pycache", "output", "benchmark", "reference"})
+#: Issue #1772: how many days of the digest to render by default (history
+#: page renders the full ledger_tail window regardless).
+DIGEST_DEFAULT_DAYS = 14
+
+
+def build_daily_digest(
+    ledger_tail: list[dict[str, Any]] | None,
+    demand_completed: dict[str, Any] | None = None,
+    evolution_tree: dict[str, Any] | None = None,
+    *,
+    days: int = DIGEST_DEFAULT_DAYS,
+    now: datetime | None = None,
+) -> str:
+    """Issue #1772: one row per day listing every integration into the
+    instance repository that day -- cycle id, sha, changed paths, change
+    tier, confirmed-in-use -- so a bad day's output can be identified
+    without reconstructing it from `git log` by hand.
+
+    Three-state reporting, the same convention as `_index_teasers` (Issue
+    #175, techtree_viewer.py): `ledger_tail is None` -> 'unavailable'; a
+    readable ledger with zero success rows in the window -> a real, present
+    "no integrations" panel, never confused with unavailable.
+
+    `confirmed` per row is `True` (a demand/completed.json entry exists,
+    `confirmed: true`, and its `signal` is harness-authored --
+    DIGEST_HARNESS_SIGNALS), `False` (an entry exists but isn't confirmed
+    that way), or `None` (no completed.json entry for this cycle at all --
+    untracked / pending-confirmation). A failed join renders as "untracked",
+    never as a false "not confirmed".
+    """
+    if not isinstance(ledger_tail, list):
+        return unavailable_panel('Daily Digest', 'ledger unavailable')
+
+    ref_now = now or datetime.now(timezone.utc)
+    if ref_now.tzinfo is None:
+        ref_now = ref_now.replace(tzinfo=timezone.utc)
+    cutoff = ref_now - timedelta(days=days)
+
+    # cycle_id -> merge sha, from evolution_tree nodes (same join as build_cycle_feed).
+    sha_by_cycle: dict[str, str] = {}
+    if isinstance(evolution_tree, dict):
+        nodes = evolution_tree.get('nodes')
+        if isinstance(nodes, dict):
+            for sha, node in nodes.items():
+                if isinstance(node, dict) and node.get('cycle_id'):
+                    sha_by_cycle[str(node.get('cycle_id'))] = str(sha)
+
+    # cycle_id -> confirmed (True/False), only for cycles WITH a completed.json entry.
+    confirmed_by_cycle: dict[str, bool] = {}
+    if isinstance(demand_completed, dict):
+        entries = demand_completed.get('entries')
+        if isinstance(entries, dict):
+            for entry in entries.values():
+                if not isinstance(entry, dict) or not entry.get('cycle_id'):
+                    continue
+                cid = str(entry.get('cycle_id'))
+                is_confirmed = (
+                    entry.get('confirmed') is True
+                    and str(entry.get('signal') or '') in DIGEST_HARNESS_SIGNALS
+                )
+                confirmed_by_cycle[cid] = is_confirmed or confirmed_by_cycle.get(cid, False)
+
+    days_map: dict[str, list[dict[str, Any]]] = {}
+    seen_cycles: set[str] = set()
+    for row in ledger_tail:
+        if not isinstance(row, dict) or row.get('phase') != 'outcome':
+            continue
+        if str(row.get('outcome') or '').strip().lower() != 'success':
+            continue
+        cid = str(row.get('cycle_id') or '').strip()
+        if not cid or cid in seen_cycles:
+            continue
+        dt = _parse_iso_ts(row.get('ts'))
+        if dt is None or dt < cutoff:
+            continue
+        sha = sha_by_cycle.get(cid)
+        if not sha:
+            continue  # nothing to show a commit link for
+        seen_cycles.add(cid)
+        day_key = dt.astimezone(timezone.utc).strftime('%Y-%m-%d')
+        files = row.get('files_changed')
+        if cid in confirmed_by_cycle:
+            confirmed: bool | None = confirmed_by_cycle[cid]
+        else:
+            confirmed = None
+        days_map.setdefault(day_key, []).append({
+            'cycle_id': cid,
+            'sha': sha,
+            'ts': dt,
+            'files': files if isinstance(files, list) else [],
+            'tier': row.get('change_tier'),
+            'confirmed': confirmed,
+        })
+
+    if not days_map:
+        return '''
+    <section class="panel panel-digest" id="panel-digest">
+      <h2 class="panel-title">Daily Digest</h2>
+      <p class="unavailable-note">no integrations in this window</p>
+    </section>
+    '''
+
+    def _confirmed_badge(value: bool | None) -> str:
+        if value is None:
+            return '<span class="digest-confirmed digest-confirmed-untracked" title="no demand/completed.json entry for this cycle">untracked</span>'
+        if value:
+            return '<span class="digest-confirmed digest-confirmed-yes">confirmed</span>'
+        return '<span class="digest-confirmed digest-confirmed-no">unconfirmed</span>'
+
+    def _tier_badge(tier: Any) -> str:
+        label = str(tier) if tier else 'unknown'
+        return f'<span class="digest-tier digest-tier-{esc(label)}">{esc(label)}</span>'
+
+    day_sections = []
+    for day_key in sorted(days_map.keys(), reverse=True):
+        rows_for_day = sorted(days_map[day_key], key=lambda r: r['ts'], reverse=True)
+        row_html = []
+        for r in rows_for_day:
+            paths = ', '.join(esc(p) for p in r['files'][:6]) + (', …' if len(r['files']) > 6 else '')
+            row_html.append(f'''
+        <tr>
+          <td class="digest-sha copyable" translate="no">{short_sha(r['sha'])}</td>
+          <td class="digest-cycle">{esc(r['cycle_id'])}</td>
+          <td>{_tier_badge(r['tier'])}</td>
+          <td>{_confirmed_badge(r['confirmed'])}</td>
+          <td class="digest-paths">{paths or '<span class="unavailable-note">no paths recorded</span>'}</td>
+        </tr>''')
+        day_sections.append(f'''
+      <div class="digest-day">
+        <h3 class="digest-day-heading">{esc(day_key)} <span class="digest-day-count">({len(rows_for_day)} integration(s))</span></h3>
+        <table class="digest-table">
+          <thead><tr><th>sha</th><th>cycle</th><th>tier</th><th>confirmed in use</th><th>changed paths</th></tr></thead>
+          <tbody>{''.join(row_html)}</tbody>
+        </table>
+      </div>''')
+
+    return f'''
+    <section class="panel panel-digest" id="panel-digest">
+      <h2 class="panel-title">Daily Digest</h2>
+      <p class="panel-subtitle">Every integration into the instance repository, by day -- the operator's undo affordance for a bad day of loop output (issue #1772).</p>
+      {''.join(day_sections)}
+    </section>
+    '''
+
+
 def _scorecard_value(value: Any) -> str:
     if value is None:
         return '<span class="unavailable-note">unavailable</span>'
@@ -9015,6 +9167,51 @@ CSS = '''
     .footer-computed {
       color: #7d8aa3;
     }
+    /* Issue #1772: the daily digest -- the operator's undo affordance. */
+    .panel-digest .panel-subtitle {
+      color: #7d8aa3;
+      font-size: 0.85em;
+      margin: 0 0 12px;
+    }
+    .digest-day { margin-bottom: 18px; }
+    .digest-day-heading {
+      font-size: 0.95em;
+      color: #c9d6e3;
+      margin: 0 0 6px;
+    }
+    .digest-day-count { color: #7d8aa3; font-weight: normal; }
+    .digest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+    }
+    .digest-table th {
+      text-align: left;
+      color: #7d8aa3;
+      font-weight: normal;
+      border-bottom: 1px solid #2a3a4a;
+      padding: 4px 8px;
+    }
+    .digest-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #1c2733;
+      vertical-align: top;
+    }
+    .digest-sha { font-family: 'Consolas', monospace; }
+    .digest-paths {
+      font-family: 'Consolas', monospace;
+      color: #9fb3c8;
+      word-break: break-all;
+    }
+    .digest-tier, .digest-confirmed {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .digest-confirmed-yes { background: #1c3a2a; color: #56d364; }
+    .digest-confirmed-no { background: #3a2a1c; color: #d9a656; }
+    .digest-confirmed-untracked { background: #2a2a3a; color: #9d9db3; }
 '''
 
 PAGE_TEMPLATE = '''<!doctype html>
@@ -9033,6 +9230,7 @@ PAGE_TEMPLATE = '''<!doctype html>
 {now_panel}
 {canvas}
 {cycle_feed}
+{daily_digest}
 {hypotheses_panel}
 {agent_panel}
 </main>
@@ -9180,6 +9378,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         '<a href="#panel-now">now</a> &middot; '
         '<a href="#panel-lineage">lineage</a> &middot; '
         '<a href="#panel-feed">feed</a> &middot; '
+        '<a href="#panel-digest">digest</a> &middot; '
         '<a href="#panel-hypotheses">hypotheses</a> &middot; '
         '<a href="#panel-agent">agent</a>'
         '</nav>'
@@ -9238,6 +9437,11 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         llm_stats=data.get('llm_stats'),
         rendered_lesson_ids=rendered_lesson_ids,
     )
+    daily_digest = build_daily_digest(
+        ledger_tail=ledger_tail,
+        demand_completed=demand_completed,
+        evolution_tree=evolution_tree,
+    )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
         feed_cycles=feed_cycles,
@@ -9265,6 +9469,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         now_panel=now_panel,
         canvas=canvas_html,
         cycle_feed=cycle_feed,
+        daily_digest=daily_digest,
         hypotheses_panel=hypotheses_panel,
         agent_panel=agent_panel,
         generated_at=esc(generated_at),
