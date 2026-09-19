@@ -7243,6 +7243,25 @@ def _build_provenance_badge(scorecard: dict[str, Any] | None) -> str:
     return f'<span class="provenance-badge provenance-anomaly" title="{anomaly_str}">&#x26a0;&#xfe0f; data inputs: {anomaly_str}</span>'
 
 
+def _paused_supplier_stat(loop: dict[str, Any]) -> str:
+    """Issue #1765: 'N cycle(s) / duration' when both counters are readable
+    numbers (0 is a real, displayable zero); 'unavailable' when the scorecard
+    ledger window could not be read; 'n/a' only when the scorecard predates
+    this field entirely (both keys absent) -- three distinct unknowns never
+    collapsed into one, and never fabricated as a zero."""
+    outcomes = loop.get('paused_supplier_outcomes')
+    seconds = loop.get('paused_supplier_seconds')
+    if outcomes is None and seconds is None:
+        return 'n/a'
+    if outcomes == 'unavailable' or seconds == 'unavailable':
+        return 'unavailable'
+    if not isinstance(outcomes, (int, float)) or isinstance(outcomes, bool):
+        return 'n/a'
+    if not isinstance(seconds, (int, float)) or isinstance(seconds, bool):
+        return 'n/a'
+    return f'{esc(fmt_compact(outcomes))} cycle(s) / {esc(humanize_age(float(seconds)))}'
+
+
 def build_empire_stats_strip(
     scorecard: dict[str, Any] | None,
     age_seconds: float | None = None,
@@ -7265,6 +7284,12 @@ def build_empire_stats_strip(
         ('repeat failure rate · scorecard', humanize_ratio(loop.get('repeat_failure_rate'))),
         ('tokens / integration', humanize_number(cost.get('tokens_per_integration'))),
         ('held-out', f"{esc(heldout.get('passed', 'n/a'))}/{esc(heldout.get('checked', 'n/a'))}"),
+        # Issue #1765: supplier outages (gateway/model-provider could not
+        # serve us) get their own line, distinct from repeat failure rate —
+        # they are explicitly excluded from that metric upstream. "n/a"
+        # (scorecard predates this field) and "unavailable" (ledger window
+        # unreadable) are both distinguishable from a real zero.
+        ('supplier-paused', _paused_supplier_stat(loop)),
     ]
 
     computed_ts = ''
@@ -7284,6 +7309,11 @@ def build_empire_stats_strip(
         'held-out': (
             'held-out validation: pass rate on tasks excluded from the agent\'s own '
             'selection and training; X/Y = passed/checked'
+        ),
+        'supplier-paused': (
+            'issue #1765: cycles where the LLM gateway/model provider could not serve us '
+            '(outage), excluded from repeat failure rate and wasted attempts; '
+            'source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds'
         ),
     }
 

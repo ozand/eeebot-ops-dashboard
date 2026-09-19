@@ -5022,6 +5022,37 @@ def test_issue188_provenance_badge_three_state() -> None:
     assert 'data inputs: host_metrics: stale' in html_anomaly
     assert 'provenance-anomaly' in html_anomaly
 
+
+def test_issue1765_supplier_paused_stat_distinguishes_no_data_from_zero() -> None:
+    # Scorecard predates the field entirely (both keys absent): n/a, not 0.
+    assert tv._paused_supplier_stat({}) == 'n/a'
+
+    # Ledger window unreadable: unavailable, not 0 -- distinct from both a
+    # real zero and a missing-field scorecard.
+    assert tv._paused_supplier_stat({
+        'paused_supplier_outcomes': 'unavailable',
+        'paused_supplier_seconds': 'unavailable',
+    }) == 'unavailable'
+
+    # A real zero (no outages this window) reads as a real, displayed zero.
+    assert tv._paused_supplier_stat({
+        'paused_supplier_outcomes': 0,
+        'paused_supplier_seconds': 0,
+    }) == '0 cycle(s) / 0s'
+
+    # A real, non-zero reading.
+    assert tv._paused_supplier_stat({
+        'paused_supplier_outcomes': 3,
+        'paused_supplier_seconds': 5400,
+    }) == '3 cycle(s) / 1.5h'
+
+    html = tv.build_empire_stats_strip({
+        'loop': {'paused_supplier_outcomes': 2, 'paused_supplier_seconds': 120},
+    })
+    assert 'supplier-paused' in html
+    assert '2 cycle(s) / 2m' in html
+    assert 'issue #1765' in html  # the tooltip carries the source citation
+
 def test_issue190_now_panel_failed_bridge_exits_three_state() -> None:
     # 1. When bridge_exits is None or empty / all successful: section is absent (clean render, no empty noise)
     p_none = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exits=None)
