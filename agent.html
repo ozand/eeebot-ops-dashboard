@@ -963,6 +963,51 @@
     .footer-computed {
       color: #7d8aa3;
     }
+    /* Issue #1772: the daily digest -- the operator's undo affordance. */
+    .panel-digest .panel-subtitle {
+      color: #7d8aa3;
+      font-size: 0.85em;
+      margin: 0 0 12px;
+    }
+    .digest-day { margin-bottom: 18px; }
+    .digest-day-heading {
+      font-size: 0.95em;
+      color: #c9d6e3;
+      margin: 0 0 6px;
+    }
+    .digest-day-count { color: #7d8aa3; font-weight: normal; }
+    .digest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+    }
+    .digest-table th {
+      text-align: left;
+      color: #7d8aa3;
+      font-weight: normal;
+      border-bottom: 1px solid #2a3a4a;
+      padding: 4px 8px;
+    }
+    .digest-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #1c2733;
+      vertical-align: top;
+    }
+    .digest-sha { font-family: 'Consolas', monospace; }
+    .digest-paths {
+      font-family: 'Consolas', monospace;
+      color: #9fb3c8;
+      word-break: break-all;
+    }
+    .digest-tier, .digest-confirmed {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .digest-confirmed-yes { background: #1c3a2a; color: #56d364; }
+    .digest-confirmed-no { background: #3a2a1c; color: #d9a656; }
+    .digest-confirmed-untracked { background: #2a2a3a; color: #9d9db3; }
 
 
 /* Issue #227: Two-tier agent context visualization styling */
@@ -1321,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">187</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 13:52:28 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">45.0%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 10:56 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="44">data: 43s old &middot; generated 12:25 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1336,17 +1381,17 @@
       <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
     </div>
     <div class="context-header-badges">
-      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+14,432 chars spare)</span>
+      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+14,163 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-7a4057ffe5fd</span>
+      <span class="cycle-pill">cycle-d7bac543382f</span>
     </div>
   </div>
   <div class="context-kpis">
     <div class="context-kpi-card">
       <span class="kpi-label">Capped Prompt Load</span>
-      <span class="kpi-value">20,568 <span class="kpi-unit">capped chars</span></span>
-      <span class="kpi-sub">~5,142 est. tokens under builder cap</span>
-      <span class="kpi-sub"><strong>Actual System Message:</strong> 20,568 chars received by model</span>
+      <span class="kpi-value">20,837 <span class="kpi-unit">capped chars</span></span>
+      <span class="kpi-sub">~5,209 est. tokens under builder cap</span>
+      <span class="kpi-sub"><strong>Actual System Message:</strong> 20,837 chars received by model</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Context Budget Cap</span>
@@ -1355,7 +1400,7 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Remaining Headroom</span>
-      <span class="kpi-value"><span class="stat-good">+14,432 chars (41.2%)</span></span>
+      <span class="kpi-value"><span class="stat-good">+14,163 chars (40.5%)</span></span>
       <span class="kpi-sub">margin before overflow trim</span>
     </div>
     <div class="context-kpi-card">
@@ -1367,13 +1412,13 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>58%</strong> (20,568 / 35,000 chars)</span><span>2026-09-19 10:34:56.348139 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>59%</strong> (20,837 / 35,000 chars)</span><span>2026-09-19 11:34:48.501882 MSK</span></div>
     <div class="context-progress-bar">
-      <div class="context-progress-fill" style="width:58%;background:var(--color-success, #2ea043);"></div>
+      <div class="context-progress-fill" style="width:59%;background:var(--color-success, #2ea043);"></div>
     </div>
   </div>
-  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 13 recorded cycle(s) checked.</span></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 74.9%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 238 row(s) with a known context_window &bull; window unknown: 613 rows (excluded, not counted as 0%) of 851 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 15 recorded cycle(s) checked.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 76.8%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 312 row(s) with a known context_window &bull; window unknown: 581 rows (excluded, not counted as 0%) of 893 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-19T10:34:56.348139Z · source: published</p>
@@ -1387,7 +1432,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 31,947 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 66,666 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1404,13 +1449,14 @@
         <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">7</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">3,925c</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 30 Skills in Tier 2 (150.2 KB)</a></div>
         <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">8</span><span class="t1-name">memory</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">532c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 62 files in Tier 2</a></div>
         <div class="t1-block-item "><span class="t1-seq">9</span><span class="t1-name">runtime</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">390c</span></div>
-        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 8 &times; "
+        <div class="t1-block-item "><span class="t1-seq">10</span><span class="t1-name">scorecard</span><span class="t1-owner t1-owner-unmapped">unmapped</span><span class="t1-sz">262c</span></div>
+        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 9 &times; "
 
 ---
 
-" Separators</span><span class="t1-sz">56c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 31,947 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,426c</span></div>
+" Separators</span><span class="t1-sz">63c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 66,666 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,172c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1787,19 +1833,23 @@ Workspace: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving
 Memory index: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/index.md (catalog; read facts on demand)
 History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/HISTORY.md (grep-searchable). Each entry starts with [YYYY-MM-DD HH:MM].
 </code></pre></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">scorecard</strong><span class="block-label"><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code> &bull; cap dynamic</span><span class="block-preview">How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T10:52:28.464181Z)</span><span class="block-meta">262 chars &bull; ~65 tokens &mdash;</span></summary><div class="block-body"><pre><code>## How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T10:52:28.464181Z)
+Changes that reached main: 187. Confirmed in use by something else: 107 (70%).
+Attempts that produced nothing: 518 of 752.
+Cost of one integrated change: 37 model calls.</code></pre></div></details>
     <div class="reconciliation-box">
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
       <table class="reconciliation-table">
         <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>
-        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,040</td><td class="num">3,200c</td><td>&mdash;</td><td>~760 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">1,878</td><td class="num">4,000c</td><td>&mdash;</td><td>~469 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">4,938</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,234 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">2,975</td><td class="num">4,000c</td><td>&mdash;</td><td>~743 tokens</td></tr><tr class=""><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">3,925</td><td class="num">dynamic</td><td>&mdash;</td><td>~981 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">dynamic</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>20,512</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>56</strong></td><td colspan="2"></td><td>8 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>20,568</strong></td><td colspan="2"></td><td><strong>Recorded chars: 20,568</strong> (actual system message received by model)</td></tr></tbody>
+        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,040</td><td class="num">3,200c</td><td>&mdash;</td><td>~760 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">1,878</td><td class="num">4,000c</td><td>&mdash;</td><td>~469 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">4,938</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,234 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">2,975</td><td class="num">4,000c</td><td>&mdash;</td><td>~743 tokens</td></tr><tr class=""><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">3,925</td><td class="num">dynamic</td><td>&mdash;</td><td>~981 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">dynamic</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class=""><td><code>scorecard</code></td><td><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code></td><td class="num">262</td><td class="num">dynamic</td><td>&mdash;</td><td>~65 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>20,774</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>63</strong></td><td colspan="2"></td><td>9 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>20,837</strong></td><td colspan="2"></td><td><strong>Recorded chars: 20,837</strong> (actual system message received by model)</td></tr></tbody>
       </table>
-      <p class="rec-note">Formula: &sum;(recorded sections: 20,512c) + 8 separators &times; 7c (56c) = 20,568 chars, compared against actual system message received by model (20,568c).</p>
-      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,938 / parsed 4,938 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 3,925 / parsed 3,925 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact)</p>
+      <p class="rec-note">Formula: &sum;(recorded sections: 20,774c) + 9 separators &times; 7c (63c) = 20,837 chars, compared against actual system message received by model (20,837c).</p>
+      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,938 / parsed 4,938 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 3,925 / parsed 3,925 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact) <code>scorecard</code>: recorded 262 / parsed 262 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,426 chars &bull; ~1,106 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add detect_recurrent_failure_signatures to scripts/analyze_repeat_failures.py to group repeated failure modes
-Request ID: llm-proposer-cycle-7a4057ffe5fd
-Cycle ID: cycle-7a4057ffe5fd
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-7a4057ffe5fd.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,172 chars &bull; ~793 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add run_staged_integrity_and_stash to scripts/run_all_tests.py to package staged pytest and stash rollback
+Request ID: llm-proposer-cycle-d7bac543382f
+Cycle ID: cycle-d7bac543382f
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-d7bac543382f.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1807,6 +1857,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- fd7bcfb4 selfevo: auto-commit uncommitted subagent work — Add detect_recurrent_failure_signatures to scripts/analyze_repeat_failures.py to
 - 0980b4c7 chore(summarize_failure_outcomes): mark archived and emit runtime deprecation warning
 - 08082be5 feat(search_subagent_archive): add query_git_log_for_incident to recover commit details by cycle/incident ID when archive records lack output bodies
 - a4957c23 feat(scan_archive): add extract_error_records to isolate failed subagent result entries
@@ -1814,40 +1865,25 @@ Recently completed (recent commits):
 - a38933db feat(check_repeat_failures): add has_consecutive_result_errors to detect consecutive subagent result error streaks
 - df370e50 feat(assert_doc_only): add has_code_bearing_files to verify changes include code surfaces
 - 39783c33 selfevo: auto-commit uncommitted subagent work — Add has_repeated_target_failure to scripts/check_repeat_failures.py to detect re
-- 4b7b29f6 test(filter_fallback_targets): add filter_candidate_paths alias and unit tests for Priority 43 spec name
-
-Recently rejected / no-commit (proxy signal, not exhaustive):
-- Exclude index.md from schema checks in tests/test_lessons_integrity.py: existence_index_duplicate
-
-## Known pitfall for this task (from lessons/errors.yaml)
-ID: ERR-20260829-c871bf9a  Title: Gate failure rejects target-file history validation
-Root cause: The cycle gate verification or execution failed with gate_failed. The proposed change did not pass the gate checks.
-Prevention: Before committing, verify that the change passes all gate checks (compile, test, mutation surface). Ensure the target file change is scoped to allowed mutation surfaces and does not introduce regressions that would trip the gate_failed check.
-
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/avoiding_repeat_failures.md  Title: Avoiding Repeat Failures
-Problem: Read lessons/avoiding_repeat_failures.md: We prevent repeat failures by following correct archival procedures, verifying changes before committing, and targeting mutation surfaces.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/avoiding_repeat_failures.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When assigned an agent/executor behavioral demand while documentation targets are budget-exhausted and AGENTS.md has failed, emit no_valuable_task instead of contriving synthetic script validators that do not affect runtime execution and risk target dedup rejection.
-- When assigned a prompt/agent behavioral reflection demand while documentation was frozen by the 5-doc daily budget, the proposer contrivedly proposed a script utility in scripts/validate_json_syntax.py rather than emitting no_valuable_task.
-- When introducing new static analysis lint rules, evaluate repository baseline exposure across the codebase to ensure rules that would cause widespread legacy failures are opt-in.
+- Maintain the &#x27;git stash -u -q&#x27; differential testing pattern to rapidly confirm whether test failures in shared test suites are pre-existing without needing to build worktrees in /tmp or inspect commit logs.
+- Bound preparatory reconnaissance turns for lesson creation tasks by drafting after inspecting one template lesson and verifying target absence, rather than reading multiple unrelated lessons and recent commit logs.
+- Bypass exploratory searches in state/ for historical reflection files when the proposal backlog instructions already summarize the issue context and target behavior.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-19 10:06 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/summarize_failure_outcomes.py, tests/test_summarize_failure_outcomes.py.
-- Attempt 2 (2026-09-19 09:37 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
-- Attempt 3 (2026-09-19 09:13 UTC): no commits (blocked). Task &quot;Exclude index.md from schema checks in tests/test_lessons_in&quot; matched an existing artifact…
+- Attempt 1 (2026-09-19 10:48 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: memory/repeat_failures.json.
+- Attempt 2 (2026-09-19 10:06 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/summarize_failure_outcomes.py, tests/test_summarize_failure_outcomes.py.
+- Attempt 3 (2026-09-19 09:37 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
 
 ## Concrete task to implement
 
-Title: Add detect_recurrent_failure_signatures to scripts/analyze_repeat_failures.py to group repeated failure modes
+Title: Add run_staged_integrity_and_stash to scripts/run_all_tests.py to package staged pytest and stash rollback
 
 
-Addresses repeat_failure_rate by adding a helper to cluster historical failure entries by target and error type, identifying recurring defect signatures that exceed repetition thresholds.
+Packages the recurring procedure observed across 13 cycles by adding run_staged_integrity_and_stash to run lesson integrity pre-checks, execute the full pytest suite, and stash changes on failure.
 
-Target path: scripts/analyze_repeat_failures.py
+Target path: scripts/run_all_tests.py
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1856,7 +1892,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,190</td></tr><tr><td>Known pitfall for this task (from lessons/errors.yaml)</td><td class="num">528</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">439</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">758</td></tr><tr><td>Previous attempts for this task</td><td class="num">516</td></tr><tr><td>Concrete task to implement</td><td class="num">484</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,052</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">659</td></tr><tr><td>Previous attempts for this task</td><td class="num">473</td></tr><tr><td>Concrete task to implement</td><td class="num">480</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -1873,7 +1909,7 @@ Rules: see OPERATING.md in your system prompt.
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
     <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1022.4 KB</strong> across <strong>201</strong> files.</p>
-<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 18357c · retained 32/32 · complete · omitted: none</div>
+<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget 18088c · retained 32/32 · complete · omitted: none</div>
 <div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
 <div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>6</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>12</td><td>10</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>50</td><td>45</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>no</td><td>4</td><td>4</td><td>not on disk</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>3</td><td>2</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr></tbody></table>
     <div class="t2-group" id="tier2-skills-section">
@@ -5582,7 +5618,7 @@ assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 10:56:23 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 13:52:28 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 12:25:50 UTC &middot; host eeepc &middot; newest source 43s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 13:52:28 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
