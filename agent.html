@@ -1366,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">188</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 17:04:25 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="27">data: 27s old &middot; generated 14:08 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 14:21 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1383,7 +1383,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+14,163 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-b38a8e51d5d0</span>
+      <span class="cycle-pill">cycle-156fdecd75c2</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1412,13 +1412,13 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>59%</strong> (20,837 / 35,000 chars)</span><span>2026-09-19 13:38:26.853996 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>59%</strong> (20,837 / 35,000 chars)</span><span>2026-09-19 14:12:23.366919 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:59%;background:var(--color-success, #2ea043);"></div>
     </div>
   </div>
-  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 19 recorded cycle(s) checked.</span></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 76.9%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 404 row(s) with a known context_window &bull; window unknown: 478 rows (excluded, not counted as 0%) of 882 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 20 recorded cycle(s) checked.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 76.7%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 414 row(s) with a known context_window &bull; window unknown: 478 rows (excluded, not counted as 0%) of 892 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-19T13:38:26.853996Z · source: published</p>
@@ -1432,7 +1432,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 41,666 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 16,991 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1455,8 +1455,8 @@
 ---
 
 " Separators</span><span class="t1-sz">63c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 41,666 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,044c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 16,991 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,594c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1833,9 +1833,9 @@ Workspace: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving
 Memory index: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/index.md (catalog; read facts on demand)
 History log: /var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving/memory/HISTORY.md (grep-searchable). Each entry starts with [YYYY-MM-DD HH:MM].
 </code></pre></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">scorecard</strong><span class="block-label"><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code> &bull; cap dynamic</span><span class="block-preview">How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T13:14:10.855279Z)</span><span class="block-meta">262 chars &bull; ~65 tokens &mdash;</span></summary><div class="block-body"><pre><code>## How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T13:14:10.855279Z)
-Changes that reached main: 187. Confirmed in use by something else: 107 (70%).
-Attempts that produced nothing: 515 of 746.
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">scorecard</strong><span class="block-label"><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code> &bull; cap dynamic</span><span class="block-preview">How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T14:04:25.012044Z)</span><span class="block-meta">262 chars &bull; ~65 tokens &mdash;</span></summary><div class="block-body"><pre><code>## How the last 7 days went (2026-09-12 to 2026-09-19, computed 2026-09-19T14:04:25.012044Z)
+Changes that reached main: 188. Confirmed in use by something else: 109 (71%).
+Attempts that produced nothing: 513 of 745.
 Cost of one integrated change: 38 model calls.</code></pre></div></details>
     <div class="reconciliation-box">
       <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
@@ -1846,10 +1846,10 @@ Cost of one integrated change: 38 model calls.</code></pre></div></details>
       <p class="rec-note">Formula: &sum;(recorded sections: 20,774c) + 9 separators &times; 7c (63c) = 20,837 chars, compared against actual system message received by model (20,837c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,938 / parsed 4,938 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 3,925 / parsed 3,925 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact) <code>scorecard</code>: recorded 262 / parsed 262 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,044 chars &bull; ~1,011 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add extract_incident_id to scripts/search_subagent_archive.py to parse incident hashes from defect strings
-Request ID: llm-proposer-cycle-b38a8e51d5d0
-Cycle ID: cycle-b38a8e51d5d0
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-b38a8e51d5d0.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,594 chars &bull; ~898 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add classify_defect_event to scripts/tally_defects.py to categorize defect descriptions by failure type
+Request ID: llm-proposer-cycle-156fdecd75c2
+Cycle ID: cycle-156fdecd75c2
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-156fdecd75c2.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1857,6 +1857,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 2646b4ba feat(search_subagent_archive): add extract_incident_id to parse incident hashes from defect strings
 - ae773be1 feat(filter_fallback_targets): add filter_doc_targets to prune doc paths when doc budget exhausted
 - 2dbecc09 selfevo: auto-commit uncommitted subagent work — Add filter_steering_notice_errors to scripts/scan_archive.py to isolate records
 - 3d82de54 feat(scan_archive): add filter_steering_notice_errors to isolate steering-notice policy blocks from operational crashes
@@ -1864,13 +1865,6 @@ Recently completed (recent commits):
 - fd7bcfb4 selfevo: auto-commit uncommitted subagent work — Add detect_recurrent_failure_signatures to scripts/analyze_repeat_failures.py to
 - 0980b4c7 chore(summarize_failure_outcomes): mark archived and emit runtime deprecation warning
 - 08082be5 feat(search_subagent_archive): add query_git_log_for_incident to recover commit details by cycle/incident ID when archive records lack output bodies
-- a4957c23 feat(scan_archive): add extract_error_records to isolate failed subagent result entries
-
-## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/subagent_result_error_handling.md  Title: Subagent Result Error Triage and Recovery
-Problem: Read lessons/subagent_result_error_handling.md: **Triage from the result file, not by re-running.** On any `status: &quot;error&quot;` subagent result, the first action is to read `state/subagents/archive/&lt;id&gt;.json` and classify using the table above.
-Solution: 
-If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
 - When assigned a defect demand noting a subagent failure (e.g. status=error), avoid proposing peripheral parser functions on defect tallying scripts and instead target the root execution issue or return no_valuable_task if not actionable within a bounded code change.
@@ -1878,18 +1872,21 @@ If you apply this lesson, cite [Lesson lessons/subagent_result_error_handling.md
 - The proposer generated a task that closely mirrored a recently failed cycle on scripts/tally_defects.py, triggering a skipped_recent_failure gate rejection before execution began.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-19 13:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_fallback_targets.py, tests/test_filter_fallback_targets.py.
-- Attempt 2 (2026-09-19 13:10 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/scan_archive.py, tests/test_scan_archive.py.
-- Attempt 3 (2026-09-19 12:44 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
+- Attempt 1 (2026-09-19 14:00 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
+- Attempt 2 (2026-09-19 13:27 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/filter_fallback_targets.py, tests/test_filter_fallback_targets.py.
+- Attempt 3 (2026-09-19 13:10 UTC): 2 commit(s) pushed ✓. Committed 2 change(s) to: memory/repeat_failures.json, scripts/scan_archive.py, tests/test_scan_archive.py.
 
 ## Concrete task to implement
 
-Title: Add extract_incident_id to scripts/search_subagent_archive.py to parse incident hashes from defect strings
+Title: Add classify_defect_event to scripts/tally_defects.py to categorize defect descriptions by failure type
 
 
-Defect defect-f7107e37e7a8 reports subagent result error 4531c5af. Adding extract_incident_id to scripts/search_subagent_archive.py allows automated extraction of incident hex identifiers from error messages and evidence strings to query logs and locate archived failure records.
+Enables scripts/tally_defects.py to identify and categorize subagent result error defects such as c05de1c7 into canonical failure types for structured defect counting.
 
-Target path: scripts/search_subagent_archive.py
+Target path: scripts/tally_defects.py
+
+## Expected outcome (frozen claim from the proposal — informational)
+classify_defect_event maps subagent result error defect strings to subagent_result_error and unrecognized strings to unknown
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1898,7 +1895,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,083</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">529</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">831</td></tr><tr><td>Previous attempts for this task</td><td class="num">520</td></tr><tr><td>Concrete task to implement</td><td class="num">573</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">1,095</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">831</td></tr><tr><td>Previous attempts for this task</td><td class="num">520</td></tr><tr><td>Concrete task to implement</td><td class="num">352</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">291</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5624,7 +5621,7 @@ assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 14:08:54 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 17:04:25 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 14:21:58 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 17:04:25 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
