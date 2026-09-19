@@ -1366,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">192</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 22:50:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.9%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="25">data: 25s old &middot; generated 20:20 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="46">data: 46s old &middot; generated 20:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1383,7 +1383,7 @@
     <div class="context-header-badges">
       <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+14,040 chars spare)</span>
       <span class="context-badge badge-success">Prompt fit: full</span>
-      <span class="cycle-pill">cycle-ed3a359dcd82</span>
+      <span class="cycle-pill">cycle-92d924f1d5ce</span>
     </div>
   </div>
   <div class="context-kpis">
@@ -1412,13 +1412,13 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>59%</strong> (20,960 / 35,000 chars)</span><span>2026-09-19 19:58:44.434944 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>59%</strong> (20,960 / 35,000 chars)</span><span>2026-09-19 20:23:55.743553 MSK</span></div>
     <div class="context-progress-bar">
       <div class="context-progress-fill" style="width:59%;background:var(--color-success, #2ea043);"></div>
     </div>
   </div>
-  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 30 recorded cycle(s) checked.</span></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 77.5%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 596 row(s) with a known context_window &bull; window unknown: 395 rows (excluded, not counted as 0%) of 991 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-healthy"><span class="context-badge badge-success">TRUNCATION/DROP STREAK: HEALTHY (0)</span> <span class="indicator-note">0 consecutive cycles truncated or dropped, healthy: 0 · 31 recorded cycle(s) checked.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 77.5%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 610 row(s) with a known context_window &bull; window unknown: 393 rows (excluded, not counted as 0%) of 1,003 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-19T19:23:23.021981Z · source: published</p>
@@ -1432,7 +1432,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 48,927 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 28,980 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1455,8 +1455,8 @@
 ---
 
 " Separators</span><span class="t1-sz">63c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 48,927 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,746c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 28,980 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">4,495c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1847,10 +1847,10 @@ Cost of one integrated change: 38 model calls.</code></pre></div></details>
       <p class="rec-note">Formula: &sum;(recorded sections: 20,897c) + 9 separators &times; 7c (63c) = 20,960 chars, compared against actual system message received by model (20,960c).</p>
       <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,040 / parsed 3,040 chars (exact) <code>user</code>: recorded 1,878 / parsed 1,878 chars (exact) <code>operating</code>: recorded 4,938 / parsed 4,938 chars (exact) <code>agents</code>: recorded 2,975 / parsed 2,975 chars (exact) <code>skills_catalogue</code>: recorded 4,048 / parsed 4,048 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact) <code>scorecard</code>: recorded 262 / parsed 262 chars (exact)</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,746 chars &bull; ~936 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Add has_required_sections to verify required heading sections in markdown text
-Request ID: llm-proposer-cycle-ed3a359dcd82
-Cycle ID: cycle-ed3a359dcd82
-Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-ed3a359dcd82.json
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">4,495 chars &bull; ~1,123 tokens</span></summary><div class="block-body"><pre><code>Task: Implement and commit: Implement should_quarantine_demand to check failure threshold for demand candidates
+Request ID: llm-proposer-cycle-92d924f1d5ce
+Cycle ID: cycle-92d924f1d5ce
+Source artifact: /var/lib/eeepc-agent/self-evolving-agent/state/improvements/llm-proposed-cycle-92d924f1d5ce.json
 
 ## System mission (read before acting)
 Full operator charter: see system context (already loaded above).
@@ -1858,6 +1858,7 @@ This task is not an operator priority; priorities are handled by the proposer.
 
 ## Recent activity (do not repeat)
 Recently completed (recent commits):
+- 707d6b65 feat(verify_doc_sections): add has_required_sections to verify required heading sections in markdown text
 - a233f99f feat(search_subagent_archive): add resolve_incident_record to unify incident lookup and error extraction
 - 253569c9 chore: record structured error for [cycle-dc7aaa]
 - e7924018 feat(check_repeat_failures): add count_consecutive_status_errors to tally trailing subagent error results
@@ -1865,32 +1866,39 @@ Recently completed (recent commits):
 - 69ddbe7a feat(loop_health_report): add format_subagent_error_entry to summarize failed result files
 - bd7fc18f selfevo: auto-commit uncommitted subagent work — Add locate_result_file to scripts/search_subagent_archive.py to find result json
 - a89fea97 feat(skills): package verify-lessons-integrity skill and companion tests
-- 31150e0c feat(assert_doc_only): add parse_steering_notice_budget to extract budget limit and target surfaces
+
+## Known pitfall for this task (from lessons/errors.yaml)
+ID: ERR-20260829-c871bf9a  Title: Gate failure rejects target-file history validation
+Root cause: The cycle gate verification or execution failed with gate_failed. The proposed change did not pass the gate checks.
+Prevention: Before committing, verify that the change passes all gate checks (compile, test, mutation surface). Ensure the target file change is scoped to allowed mutation surfaces and does not introduce regressions that would trip the gate_failed check.
 
 ## Proven approach for this task (from lessons/lessons.yaml)
-ID: lessons/enforcing_agents_sections_in_structural_tests.md  Title: Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py
-Problem: Read lessons/enforcing_agents_sections_in_structural_tests.md: **Rule of thumb:** if you add a `## ` section to `AGENTS.md` that states a standing instruction (a protocol, a ban, a required behavior), the same commit must add its entry to `REQUIRED_SECTIONS` in `tests/test_agents_structure.py`, plus a
-Solution: 
-If you apply this lesson, cite [Lesson lessons/enforcing_agents_sections_in_structural_tests.md] in your proposal/response.
+ID: LESS-REF-2782e96c24a8  Title: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to 
+Problem: `prevent_repeat_failures.py` was extended to provide `--demand-dedup-threshold` and `--target-dedup-threshold` with non-zero exit codes on repeat targets, enabling early deduplication.
+Solution: Integrate the new demand and target path deduplication thresholds from `scripts/prevent_repeat_failures.py` into the preflight proposer check to automatically block duplicate cycle proposals prior to dispatch.
+If you apply this lesson, cite [Lesson LESS-REF-2782e96c24a8] in your proposal/response.
 
 ## Recent reflections (how past cycles worked — steering hints)
-- When adding runtime deprecation warnings to CLI scripts supporting JSON mode, ensure test assertions verify stdout remains valid parseable JSON while stderr receives warning text.
-- When forced to propose work on a demand whose primary test target is duplicate-blocked by the existence index, route the change through a preflight validation script rather than modifying the test suite directly.
-- The demand selector assigned reflection-40c9061776f8 despite its prior skipped-duplicate outcome, while the harness prompt simultaneously prohibited no_valuable_task, forcing the proposer into an unavoidable duplicate rejection.
+- Terminate immediately upon confirming a successful git commit rather than executing trailing post-commit verification commands.
+- Continue the practice of verifying diagnostic and archive utilities against both positive historical archive records and negative non-existent record cases.
+- The executor exhausted its maximum completion budget (8,192 tokens, finish_reason: length) entirely inside reasoning_content by debating header alias nuances between multiple modules instead of dispatching edit_file or executing code, repeating the exact failure mode from cycle-1754331b86f2.
 
 ## Previous attempts for this task
-- Attempt 1 (2026-09-19 19:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
-- Attempt 2 (2026-09-19 18:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_repeat_failures.py, tests/test_check_repeat_failures.py.
-- Attempt 3 (2026-09-19 17:54 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
+- Attempt 1 (2026-09-19 20:10 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/verify_doc_sections.py, tests/test_verify_doc_sections.py.
+- Attempt 2 (2026-09-19 19:46 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/search_subagent_archive.py, tests/test_search_subagent_archive.py.
+- Attempt 3 (2026-09-19 18:57 UTC): 1 commit(s) pushed ✓. Committed 1 change(s) to: scripts/check_repeat_failures.py, tests/test_check_repeat_failures.py.
 
 ## Concrete task to implement
 
-Title: Add has_required_sections to verify required heading sections in markdown text
+Title: Implement should_quarantine_demand to check failure threshold for demand candidates
 
 
-Implement has_required_sections in scripts/verify_doc_sections.py to parse markdown heading lines starting with hash characters and confirm case-insensitive presence of all required section titles, returning False on empty inputs.
+Implements should_quarantine_demand in scripts/demand_quarantine.py to evaluate whether demand candidate failures meet or exceed the threshold, handling empty, missing, or invalid IDs safely in under 40 lines.
 
-Target path: scripts/verify_doc_sections.py
+Target path: scripts/demand_quarantine.py
+
+## Expected outcome (frozen claim from the proposal — informational)
+scripts/demand_quarantine.py exists and exports should_quarantine_demand
 
 Iteration budget this cycle: 80 tool iterations.
 Rules: see OPERATING.md in your system prompt.
@@ -1899,7 +1907,7 @@ Rules: see OPERATING.md in your system prompt.
       <h4>User Message Sections (latest recorded task text)</h4>
       <table class="reconciliation-table">
         <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
-        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">909</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">663</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">693</td></tr><tr><td>Previous attempts for this task</td><td class="num">509</td></tr><tr><td>Concrete task to implement</td><td class="num">492</td></tr></tbody>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">915</td></tr><tr><td>Known pitfall for this task (from lessons/errors.yaml)</td><td class="num">528</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">800</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">649</td></tr><tr><td>Previous attempts for this task</td><td class="num">501</td></tr><tr><td>Concrete task to implement</td><td class="num">378</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">239</td></tr></tbody>
       </table>
     </div>
     <div class="rule-owners-panel">
@@ -5708,7 +5716,7 @@ assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 20:20:06 UTC &middot; host eeepc &middot; newest source 25s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 22:50:16 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 20:30:10 UTC &middot; host eeepc &middot; newest source 46s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 22:50:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
