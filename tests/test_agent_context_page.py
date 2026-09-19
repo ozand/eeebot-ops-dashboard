@@ -924,3 +924,211 @@ def test_section_owner_meta_unmapped_names_fall_through():
     assert 't1-owner-unmapped' in html
     assert '50' in html
 
+
+# ---------------------------------------------------------------------------
+# ozand/eeebot#1755: 4a (truncation/drop streak) and 4b (window pressure).
+# ---------------------------------------------------------------------------
+
+
+def _minimal_agent_context_fixture(**overrides: Any) -> dict[str, Any]:
+    fixture = {
+        'system_prompt': {'chars': 100, 'cap': 24000, 'sections': {'identity': 100}},
+        'prompt_text': None,
+        'task_text': None,
+        'tier2_skills': [],
+        'tier2_lessons': {'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    fixture.update(overrides)
+    return fixture
+
+
+def test_compute_truncation_streak_no_data_is_distinct_from_healthy():
+    from scripts.agent_context import compute_truncation_streak
+
+    assert compute_truncation_streak(None) == {'status': 'no_data', 'total_rows': 0, 'entries': []}
+    assert compute_truncation_streak([]) == {'status': 'no_data', 'total_rows': 0, 'entries': []}
+
+
+def test_compute_truncation_streak_healthy_when_latest_row_is_clean():
+    from scripts.agent_context import compute_truncation_streak
+
+    rows = [
+        {'phase': 'system_prompt', 'cycle_id': 'c1', 'truncated': ['AGENTS.md'], 'dropped': []},
+        {'phase': 'system_prompt', 'cycle_id': 'c2', 'truncated': [], 'dropped': []},
+    ]
+    result = compute_truncation_streak(rows)
+    assert result['status'] == 'healthy'
+    assert result['entries'] == []
+    assert result['total_rows'] == 2
+
+
+def test_compute_truncation_streak_counts_consecutive_cycles_from_latest():
+    from scripts.agent_context import compute_truncation_streak
+
+    # 49 consecutive rows all truncating AGENTS.md -- issue's headline case.
+    rows = [{'phase': 'system_prompt', 'cycle_id': f'c{i}', 'truncated': ['AGENTS.md'], 'dropped': []} for i in range(49)]
+    result = compute_truncation_streak(rows)
+    assert result['status'] == 'alarm'
+    assert result['total_rows'] == 49
+    assert result['entries'] == [{'kind': 'truncated', 'name': 'AGENTS.md', 'streak': 49}]
+
+
+def test_compute_truncation_streak_restarts_after_a_healthy_gap():
+    """A block truncated, then healthy, then truncated again counts only the
+    run since it most recently started -- the two runs are never summed."""
+    from scripts.agent_context import compute_truncation_streak
+
+    rows = [
+        {'cycle_id': 'c1', 'truncated': ['AGENTS.md']},
+        {'cycle_id': 'c2', 'truncated': ['AGENTS.md']},
+        {'cycle_id': 'c3', 'truncated': []},  # healthy gap
+        {'cycle_id': 'c4', 'truncated': ['AGENTS.md']},
+        {'cycle_id': 'c5', 'truncated': ['AGENTS.md']},
+        {'cycle_id': 'c6', 'truncated': ['AGENTS.md']},
+    ]
+    result = compute_truncation_streak(rows)
+    assert result['status'] == 'alarm'
+    assert result['total_rows'] == 6
+    assert result['entries'] == [{'kind': 'truncated', 'name': 'AGENTS.md', 'streak': 3}]
+
+
+def test_compute_truncation_streak_handles_dropped_and_dict_shaped_entries():
+    from scripts.agent_context import compute_truncation_streak
+
+    rows = [
+        {'cycle_id': 'c1', 'dropped': [{'name': 'memory', 'chars': 400}]},
+        {'cycle_id': 'c2', 'dropped': [{'name': 'memory', 'chars': 200}]},
+    ]
+    result = compute_truncation_streak(rows)
+    assert result['status'] == 'alarm'
+    assert result['entries'] == [{'kind': 'dropped', 'name': 'memory', 'streak': 2}]
+
+
+def test_compute_window_pressure_no_data_vs_unknown_vs_measured():
+    from scripts.agent_context import compute_window_pressure
+
+    now = __import__('datetime').datetime(2026, 9, 18, 12, 0, 0, tzinfo=__import__('datetime').timezone.utc)
+
+    # No rows at all in the window -- must not be confused with 0% pressure.
+    assert compute_window_pressure([], now=now)['status'] == 'no_data'
+    assert compute_window_pressure(None, now=now)['status'] == 'no_data'
+
+    old_row = {'ts': '2026-09-10T12:00:00Z', 'prompt_tokens': 50000, 'context_window': 98304}
+    assert compute_window_pressure([old_row], now=now)['status'] == 'no_data'
+
+    # Rows present but every one lacks context_window -- "unknown", never 0%.
+    unknown_rows = [
+        {'ts': '2026-09-18T11:00:00Z', 'prompt_tokens': 40000},
+        {'ts': '2026-09-18T10:00:00Z', 'prompt_tokens': 50000, 'context_window': None},
+    ]
+    result = compute_window_pressure(unknown_rows, now=now)
+    assert result['status'] == 'unknown'
+    assert result['rows_in_window'] == 2
+    assert result['unknown_rows'] == 2
+    assert result['known_rows'] == 0
+    assert result['p99_pct'] is None
+
+    # Mixed known/unknown -- unknown rows excluded from the ratio, counted separately.
+    mixed_rows = unknown_rows + [
+        {'ts': '2026-09-18T09:00:00Z', 'prompt_tokens': 79000, 'context_window': 98304},
+        {'ts': '2026-09-18T08:00:00Z', 'prompt_tokens': 10000, 'context_window': 98304},
+    ]
+    measured = compute_window_pressure(mixed_rows, now=now)
+    assert measured['status'] == 'measured'
+    assert measured['rows_in_window'] == 4
+    assert measured['known_rows'] == 2
+    assert measured['unknown_rows'] == 2
+    assert measured['p99_pct'] > 0
+
+
+def test_agent_page_truncation_streak_alarm_reads_as_49_of_49():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        truncation_streak={
+            'status': 'alarm', 'total_rows': 49,
+            'entries': [{'kind': 'truncated', 'name': 'AGENTS.md', 'streak': 49}],
+        },
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'TRUNCATION/DROP STREAK: ALARM' in html
+    assert 'TRUNCATED 49/49 consecutive cycles: AGENTS.md' in html
+    assert 'healthy: 0' in html
+
+
+def test_agent_page_truncation_streak_healthy_after_deduplication():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        truncation_streak={'status': 'healthy', 'total_rows': 12, 'entries': []},
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'TRUNCATION/DROP STREAK: HEALTHY (0)' in html
+    assert '0 consecutive cycles truncated or dropped, healthy: 0' in html
+    assert 'ALARM' not in html.split('TRUNCATION/DROP STREAK')[1][:200]
+
+
+def test_agent_page_truncation_streak_no_data_is_not_a_fabricated_zero():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        truncation_streak={'status': 'no_data', 'total_rows': 0, 'entries': []},
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'TRUNCATION/DROP STREAK: NO DATA' in html
+    assert 'not the same as a healthy 0' in html
+
+
+def test_agent_page_window_pressure_flags_over_80_percent():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        window_pressure={
+            'status': 'measured', 'rows_in_window': 10, 'known_rows': 8,
+            'unknown_rows': 2, 'p99_pct': 91.3, 'threshold_pct': 80.0,
+        },
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'WINDOW PRESSURE (24H): OVER THRESHOLD (p99 91.3%)' in html
+    assert 'healthy: &le; 80%' in html
+    assert 'window unknown: 2 rows' in html
+
+
+def test_agent_page_window_pressure_within_budget_is_not_flagged():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        window_pressure={
+            'status': 'measured', 'rows_in_window': 5, 'known_rows': 5,
+            'unknown_rows': 0, 'p99_pct': 42.0, 'threshold_pct': 80.0,
+        },
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'WINDOW PRESSURE (24H): WITHIN BUDGET (p99 42.0%)' in html
+    assert 'badge-danger">WINDOW PRESSURE' not in html
+
+
+def test_agent_page_window_pressure_all_unknown_before_harness_lands():
+    """Before the harness PR adds `context_window`, every row is null/absent
+    -- must render as explicitly unknown, never a fabricated 0% or 100%."""
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        window_pressure={
+            'status': 'unknown', 'rows_in_window': 30, 'known_rows': 0,
+            'unknown_rows': 30, 'p99_pct': None, 'threshold_pct': 80.0,
+        },
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'WINDOW PRESSURE (24H): UNKNOWN' in html
+    assert 'window pressure: unknown (30/30 rows have no' in html
+    assert 'context_window' in html
+
+
+def test_agent_page_window_pressure_no_data_distinct_from_zero():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _minimal_agent_context_fixture(
+        window_pressure={
+            'status': 'no_data', 'rows_in_window': 0, 'known_rows': 0,
+            'unknown_rows': 0, 'p99_pct': None, 'threshold_pct': 80.0,
+        },
+    )
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'WINDOW PRESSURE (24H): NO DATA' in html
+    assert 'not the same as a healthy 0%' in html
+

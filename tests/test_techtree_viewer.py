@@ -5795,3 +5795,122 @@ def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
 def test_issue277_defect5_legacy_details_auto_open_script_present() -> None:
     html = tv.build_lessons_panel([_LEGACY_LESSON])
     assert 'legacyDetails.open = legacyMatch;' in html
+
+
+# ---------------------------------------------------------------------------
+# ozand/eeebot#1755: truncation/drop streak (4a) + window pressure (4b) --
+# local-mirror integration and REMOTE_READER_SCRIPT parity. The two read
+# paths must agree (see the module-level "keep in sync" comments).
+# ---------------------------------------------------------------------------
+
+
+def _write_jsonl(path: Path, rows: list[dict[str, object]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('\n'.join(json.dumps(row) for row in rows) + '\n', encoding='utf-8')
+
+
+def test_1755_local_mirror_truncation_streak_restarts_after_healthy_gap(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    _write_jsonl(state / 'ledger' / 'cycles.jsonl', [
+        {'phase': 'system_prompt', 'cycle_id': 'c1', 'truncated': ['AGENTS.md']},
+        {'phase': 'system_prompt', 'cycle_id': 'c2', 'truncated': ['AGENTS.md']},
+        {'phase': 'system_prompt', 'cycle_id': 'c3', 'truncated': []},
+        {'phase': 'system_prompt', 'cycle_id': 'c4', 'truncated': ['AGENTS.md']},
+    ])
+    result = tv.read_local_state(str(state))
+    streak = result['agent_context']['truncation_streak']
+    assert streak['status'] == 'alarm'
+    assert streak['total_rows'] == 4
+    assert streak['entries'] == [{'kind': 'truncated', 'name': 'AGENTS.md', 'streak': 1}]
+
+
+def test_1755_local_mirror_truncation_streak_no_data_when_ledger_missing(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    state.mkdir()
+    result = tv.read_local_state(str(state))
+    assert result['agent_context']['truncation_streak'] == {'status': 'no_data', 'total_rows': 0, 'entries': []}
+
+
+def test_1755_local_mirror_window_pressure_excludes_null_context_window(tmp_path: Path) -> None:
+    # Uses real "now" (rather than a pinned clock) so the rows always fall
+    # inside the last-24h window `read_local_state` computes internally --
+    # it does not expose a way to inject a fixed clock from outside.
+    state = tmp_path / 'state'
+    now = datetime.now(timezone.utc)
+    recent = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+    day_file = state / 'llm_calls' / (now.strftime('%Y-%m-%d') + '.jsonl')
+    _write_jsonl(day_file, [
+        {'ts': recent, 'component': 'executor', 'prompt_tokens': 79804, 'context_window': 98304},
+        {'ts': recent, 'component': 'executor', 'prompt_tokens': 50000},  # no context_window key at all
+        {'ts': recent, 'component': 'executor', 'prompt_tokens': 40000, 'context_window': None},
+    ])
+    result = tv.read_local_state(str(state))
+    pressure = result['agent_context']['window_pressure']
+    assert pressure['status'] == 'measured'
+    assert pressure['rows_in_window'] == 3
+    assert pressure['known_rows'] == 1
+    assert pressure['unknown_rows'] == 2
+    assert pressure['p99_pct'] == pytest.approx(79804 / 98304 * 100.0)
+
+
+def test_1755_remote_reader_script_mirrors_truncation_streak_and_window_pressure(tmp_path: Path) -> None:
+    """The self-contained REMOTE_READER_SCRIPT cannot import agent_context.py
+    -- it carries its own copy of the streak/window-pressure math. Exec it
+    against a temp STATE_ROOT (same pattern as test_271) and confirm both
+    new indicators come out identical to the local mirror's."""
+    import contextlib
+    import io
+
+    state = tmp_path / 'state'
+    _write_jsonl(state / 'ledger' / 'cycles.jsonl', [
+        {'phase': 'system_prompt', 'cycle_id': f'c{i}', 'truncated': ['AGENTS.md']} for i in range(3)
+    ])
+    now = datetime(2026, 9, 18, 12, 0, 0, tzinfo=timezone.utc)
+    recent = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+    _write_jsonl(state / 'llm_calls' / (now.strftime('%Y-%m-%d') + '.jsonl'), [
+        {'ts': recent, 'component': 'executor', 'prompt_tokens': 79804, 'context_window': 98304},
+        {'ts': recent, 'component': 'executor', 'prompt_tokens': 50000, 'context_window': None},
+    ])
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(state)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+
+    agent_context = namespace['read_agent_context']()
+    assert agent_context['truncation_streak'] == {
+        'status': 'alarm', 'total_rows': 3,
+        'entries': [{'kind': 'truncated', 'name': 'AGENTS.md', 'streak': 3}],
+    }
+
+    pressure = namespace['read_window_pressure'](now=now)
+    assert pressure['status'] == 'measured'
+    assert pressure['known_rows'] == 1
+    assert pressure['unknown_rows'] == 1
+    assert pressure['p99_pct'] == pytest.approx(79804 / 98304 * 100.0)
+
+
+def test_1755_compute_window_pressure_remote_copy_matches_local_module() -> None:
+    """The duplicated compute_window_pressure inside REMOTE_READER_SCRIPT
+    must behave identically to scripts.agent_context.compute_window_pressure
+    for the same input -- both are exercised here on the same rows."""
+    import contextlib
+    import io
+
+    from scripts.agent_context import compute_window_pressure as local_compute
+
+    now = datetime(2026, 9, 18, 12, 0, 0, tzinfo=timezone.utc)
+    recent = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+    rows = [
+        {'ts': recent, 'prompt_tokens': 79804, 'context_window': 98304},
+        {'ts': recent, 'prompt_tokens': 40000},
+        {'ts': recent, 'prompt_tokens': 71229, 'context_window': 98304},
+    ]
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(tv.REMOTE_READER_SCRIPT, namespace)
+    remote_result = namespace['compute_window_pressure'](rows, now=now)
+    local_result = local_compute(rows, now=now)
+    assert remote_result == local_result
