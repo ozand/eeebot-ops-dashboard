@@ -2060,6 +2060,55 @@ def test_local_ci_item_four_states() -> None:
     assert 'exit=1' in failed
 
 
+def test_1769_artifact_graph_item_states() -> None:
+    """eeebot#1769/ADR-024: artifacts/ready/leaves + named oldest leaves,
+    read exactly as published -- unavailable (missing scorecard, missing
+    quality section, missing field, or status != "complete") must render
+    the same `unavailable-note` the rest of this panel uses, never a zero
+    graph presented as "no dependencies"."""
+    assert 'unavailable-note' in tv._build_artifact_graph_item(None)
+    assert 'unavailable-note' in tv._build_artifact_graph_item({})
+    assert 'unavailable-note' in tv._build_artifact_graph_item({'quality': {}})
+    assert 'unavailable-note' in tv._build_artifact_graph_item(
+        {'quality': {'artifact_graph': None}}
+    )
+    assert 'unavailable-note' in tv._build_artifact_graph_item(
+        {'quality': {'artifact_graph': {'status': 'unavailable'}}}
+    )
+
+    complete = tv._build_artifact_graph_item({
+        'quality': {
+            'artifact_graph': {
+                'status': 'complete',
+                'counts': {'artifacts': 219, 'components': 44, 'leaves': 175, 'unresolved': 0},
+                'unit_scan_status': 'scanned',
+                'oldest_leaves': [
+                    {'id': 'scripts/old_one', 'path': 'scripts/old_one.py'},
+                    {'id': 'scripts/old_two', 'path': 'scripts/old_two.py'},
+                ],
+            },
+        },
+    })
+    assert '219 artifacts' in complete
+    assert '44 ready' in complete
+    assert '175 leaves' in complete
+    assert 'scripts/old_one.py' in complete
+    assert 'scripts/old_two.py' in complete
+    assert 'systemd units: unavailable' not in complete
+
+    unit_unscanned = tv._build_artifact_graph_item({
+        'quality': {
+            'artifact_graph': {
+                'status': 'complete',
+                'counts': {'artifacts': 1, 'components': 0, 'leaves': 1, 'unresolved': 0},
+                'unit_scan_status': 'unavailable',
+                'oldest_leaves': [],
+            },
+        },
+    })
+    assert 'systemd units: unavailable' in unit_unscanned
+
+
 def test_298_systemd_drift_item_states() -> None:
     """#298: eeebot#1701/PR#1717 -- two separate four-state verdicts must
     never collapse into one: this reader's own read outcome (absent/
