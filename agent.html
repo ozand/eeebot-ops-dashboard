@@ -1319,9 +1319,9 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">186</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">70.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 10:08:17 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.1%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">187</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">69.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 10:57:16 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.2%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="24">data: 23s old &middot; generated 07:53 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 23s old &middot; generated 08:02 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1376,14 +1376,14 @@
   <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 74.0%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 174 row(s) with a known context_window &bull; window unknown: 545 rows (excluded, not counted as 0%) of 719 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
-    <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-19T07:03:19.056758Z · source: published</p>
+    <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-19T07:29:31.602991Z · source: published</p>
     <div class="prompt-fit-event-grid">
       <div class="prompt-fit-event-item"><strong>Rung</strong><span>full</span></div>
       <div class="prompt-fit-event-item"><strong>Dropped</strong><span>0 sections / 0 chars</span></div>
       <div class="prompt-fit-event-item"><strong>Trimmed</strong><span>0 sections / 0 chars</span></div>
       <div class="prompt-fit-event-item"><strong>Recent rows with drops</strong><span>0 / 25</span></div>
       <div class="prompt-fit-event-item"><strong>Recent rows with trims</strong><span>0 / 25</span></div>
-      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Event window</strong><span>25/25 rows · newest_system_prompt_rows · 90d · 2026-09-18T12:33:11.961460Z → 2026-09-19T07:03:19.056758Z</span></div>
+      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Event window</strong><span>25/25 rows · newest_system_prompt_rows · 90d · 2026-09-18T12:55:57.085528Z → 2026-09-19T07:29:31.602991Z</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
@@ -5580,12 +5580,12 @@ assets) belong inside the same `skills/&lt;name&gt;/` director...</code></pre></
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Add has_consecutive_result_errors to scripts/check_repeat_failures.py to detect repeated subagent result errors</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 981 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-19</td><td class="skill-reads">82</td><td>1.13M</td><td>23s</td></tr><tr><td>2026-09-18</td><td class="skill-reads">156</td><td>1.68M</td><td>22s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr></tbody></table>
+        <p class="proposer-decision">last proposal: <strong>Add validate_doc_budget_compliance to scripts/assert_doc_only.py to verify code surfaces on budget exhaustion</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 983 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-19</td><td class="skill-reads">84</td><td>1.19M</td><td>24s</td></tr><tr><td>2026-09-18</td><td class="skill-reads">156</td><td>1.68M</td><td>22s</td></tr><tr><td>2026-09-17</td><td class="skill-reads">137</td><td>1.52M</td><td>20s</td></tr><tr><td>2026-09-16</td><td class="skill-reads">100</td><td>1.02M</td><td>26s</td></tr><tr><td>2026-09-15</td><td class="skill-reads">141</td><td>1.45M</td><td>33s</td></tr><tr><td>2026-09-14</td><td class="skill-reads">132</td><td>1.23M</td><td>32s</td></tr><tr><td>2026-09-13</td><td class="skill-reads">233</td><td>2.38M</td><td>25s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 07:53:51 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 10:08:17 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 08:02:36 UTC &middot; host eeepc &middot; newest source 23s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 10:57:16 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
