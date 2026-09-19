@@ -1366,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">188</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">71.2%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-19 17:04:25 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">44.8%</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="22">data: 22s old &middot; generated 14:21 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-age-seconds="23">data: 22s old &middot; generated 14:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1378,7 +1378,7 @@
         <section class="health-verdict health-healthy" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>FEEDS OK</strong> <span class="health-verdict-reason">all signals within thresholds across 5 monitored feeds (heldout, host_metrics, llm_calls, usage, validator_harness_parent)</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">futile-surface-filtering-in-fallback-pro</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em></span></div>
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>feat(tally_defects): add classify_defect_event to categorize defect descriptions by failure type</strong> <span class="now-sub">(cycle-156fdecd75c2 [11618b75])</span></div>
-        <div class="now-item now-item-demand-queue" data-demand-queue-state="present"><span class="now-label">Next Up:</span> <span class="now-sub">2 ranked items, published 2026-09-19T14:11:35.456928Z</span><p class="demand-queue-head-reason">Head: self-derived &middot; vector V1 &mdash; provenance(operator&lt;self-derived), then vector(V1&lt;V2), as demand._priority_items</p><ol class="demand-queue-list"><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Assert doc integration structure</strong> <span class="now-sub">vector V1</span><div class="demand-queue-summary">Priority 45 — Assert doc integration structure (V1)</div></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Validate skill name format</strong> <span class="now-sub">vector V1</span><div class="demand-queue-summary">Priority 47 — Validate skill name format (V1)</div></li></ol><p class="demand-queue-rule-note">Ranked by provenance (operator &lt; self-derived), then vector. Selection (eeebot#1708/#1711) takes the eligible operator item first, else LRU rotation (#902) -- the presented order above may differ from what is picked next.</p></div>
+        <div class="now-item now-item-demand-queue" data-demand-queue-state="present"><span class="now-label">Next Up:</span> <span class="now-sub">2 ranked items, published 2026-09-19T14:24:58.277509Z</span><p class="demand-queue-head-reason">Head: self-derived &middot; vector V1 &mdash; provenance(operator&lt;self-derived), then vector(V1&lt;V2), as demand._priority_items</p><ol class="demand-queue-list"><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Assert doc integration structure</strong> <span class="now-sub">vector V1</span><div class="demand-queue-summary">Priority 45 — Assert doc integration structure (V1)</div></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Validate skill name format</strong> <span class="now-sub">vector V1</span><div class="demand-queue-summary">Priority 47 — Validate skill name format (V1)</div></li></ol><p class="demand-queue-rule-note">Ranked by provenance (operator &lt; self-derived), then vector. Selection (eeebot#1708/#1711) takes the eligible operator item first, else LRU rotation (#902) -- the presented order above may differ from what is picked next.</p></div>
         <div class="now-item now-item-charter"><span class="now-label">Charter:</span><div class="charter-split"><div class="charter-operator"><h4>Operator Charter</h4><p class="now-sub">source: goal_text_json</p><blockquote class="charter-text">eeebot is a resource-aware, self-evolving autonomous agent on an old, slow eeepc host. Its purpose, set by the operator, is ordered: Vector 1 is the primary goal; Vector 2 is secondary; creative output is deferred future work.
 
 Vector 1 (PRIMARY) — Self-Improvement of the Agent System: make the agent system itself more effective and higher-quality at running its own improvement cycles. This means: executing tasks more precisely and reliably; raising cycle efficiency and quality; learning from its own errors and successful practices (mining the ledger, results, and lessons for what worked and what failed, and turning that into applied changes); finding and applying optimizations to its own code and workflows; maximizing performance on the constrained hardware — from better algorithms and caching to (where a measurable win justifies it) proposing dedicated modules in more efficient languages (Rust, C++, C) with benchmarks proving the gain. Every optimization claim must come with a before/after measurement.
@@ -1392,7 +1392,7 @@ Valid progress requires at least one of: (1) a git commit with real code/config 
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 4.2h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 42s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 5.7h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="badge badge-available">cap reached (5/5 24h, 0 pending doc proposals of 20)</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-19T00:01:46 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
-        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-09-19T14:21:45.216546Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-09-19 15:52:32 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-09-19 17:21:24 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-09-19 17:10:27 MSK</li></ul></div>
+        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-09-19T14:28:45.224258Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-09-19 15:52:32 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-09-19 17:21:24 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-09-19 17:23:31 MSK</li></ul></div>
         <div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">9 defect(s), scanned 2026-09-19 02:00:04 MSK</span><ul class="systemd-drift-findings"><li>installed, not in release: <code>eeebot-techtree-publish.service</code> (owner: dashboard)</li><li class="systemd-drift-defect">installed, not in release: <code>eeebot-techtree-publish.service.d/10-state-read.conf</code> (owner: unknown)</li><li>installed, not in release: <code>eeebot-techtree-publish.service.d/sync.conf</code> (owner: dashboard)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-agent-workspace-export@.service</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-agent-workspace-export@.timer</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-monitor.service</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-monitor.timer</code> (owner: unknown)</li><li>installed, not in release: <code>eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf</code> (owner: dashboard)</li><li>installed, not in release: <code>eeepc-self-evolving-subagent-bridge.timer.d/preset.conf</code> (owner: preset)</li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-agent-health.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-agent.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-subagent-bridge.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-strong-reflection.service.bak-20260817-880</code></li></ul></div>
         <div class="now-item"><span class="now-label">Local CI:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">pass: 78 passed in 51.19s</span></div>
         <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub"><strong class="health-alert-text">fallback: openai/un/qwen3.8-27b-gguf (self_hosted)</strong> -- executor/harness expected self_hosted, 1682 recent calls checked</span></div>
@@ -1411,7 +1411,7 @@ Valid progress requires at least one of: (1) a git commit with real code/config 
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 70 cycles in full history</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 71 cycles in full history</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
         <li><a href="tokens.html">tokens</a> &mdash; 2.12B across 54 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 134 active / 15 answered + 20 strategist durable</li>
@@ -1425,6 +1425,21 @@ Valid progress requires at least one of: (1) a git commit with real code/config 
       
       <ul class="feed-list">
         
+        
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c72764bd8205">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">cycle-c72764bd8205</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-c72764bd8205)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-c72764bd8205">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-19T14:28:21.129432Z">17:28 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-06401333b076</span> &middot; <a class="lesson-link" href="lessons.html#q-lessons/preventing_turn_limit_exhaustion.md">lesson:lessons/preventing_turn_limit_exhaustion.md</a></div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 14.50K tok &middot; dur 29s</div>
+        </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-156fdecd75c2">
           <div class="feed-header">
@@ -1456,26 +1471,11 @@ Valid progress requires at least one of: (1) a git commit with real code/config 
           <div class="feed-cost">&#9889; 32 calls &middot; 1.21M tok &middot; dur 19m43s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-97425c136e26">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">feat(filter_fallback_targets): add filter_doc_targets to prune doc paths when doc budget exhausted</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-97425c136e26)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-97425c136e26">details</a>
-            
-            <a href="lineage.html#node-467a0dc" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-19T13:18:27.609294Z">16:18 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-18a88c71b139</span></div>
-          <div class="feed-files">&#128193; scripts/filter_fallback_targets.py, tests/test_filter_fallback_targets.py</div>
-          <div class="feed-cost">&#9889; 21 calls &middot; 421.7K tok &middot; dur 4m25s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-19 14:21:58 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 17:04:25 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-19 14:28:56 UTC &middot; host eeepc &middot; newest source 22s old &middot; <span class="footer-computed">scorecard computed 2026-09-19 17:04:25 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
