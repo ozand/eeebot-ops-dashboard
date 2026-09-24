@@ -336,12 +336,12 @@ def health_verdict(
             return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
     streak = 0
     for outcome in reversed(recent_outcomes):
-        if outcome in {'failed', 'partial'}:
+        if outcome in {'failed', 'partial', 'model_call_incomplete'}:
             streak += 1
         else:
             break
     if streak >= HEALTH_FAILURE_STREAK_LENGTH:
-        return 'investigate', f'{streak} consecutive failed or partial cycles'
+        return 'investigate', f'{streak} consecutive failed, partial, or incomplete-model-call cycles'
     # An unavailable age is not a fresh age. Do not let a failed source read
     # skip the staleness check and fall through to a reassuring verdict.
     if age_seconds is None:
@@ -3771,6 +3771,8 @@ def _safe_node_dom_id(node_id: str) -> str:
 
 
 def _leaf_outcome(row: dict[str, Any]) -> str:
+    if row.get('outcome') == 'model_call_incomplete' or row.get('status') == 'model_call_incomplete':
+        return 'model_call_incomplete'
     if row.get('outcome') in {'failed', 'fail'} or row.get('status') in {'failed', 'fail'}:
         return 'failed'
     if row.get('outcome') == 'partial':
@@ -5767,6 +5769,8 @@ def build_cycle_feed(
                 outcome_status = st
                 if st in ('success', 'integrated'):
                     outcome_kind = 'integrated'
+                elif st == 'model_call_incomplete':
+                    outcome_kind = 'model_call_incomplete'
                 elif st in ('fail', 'failed'):
                     outcome_kind = 'failed'
                     if p.get('reason'):
@@ -5849,6 +5853,9 @@ def build_cycle_feed(
                 # not its own filter bucket -- with the delay/attempts noted.
                 attempts_note = f', {push_attempts} attempt(s)' if push_attempts else ''
                 outcome_label = f'INTEGRATED (late{attempts_note})'
+        elif outcome_kind == 'model_call_incomplete':
+            badge_class = 'badge-failed'
+            outcome_label = f'MODEL CALL INCOMPLETE{(": " + reason) if reason else ""}'
         elif outcome_kind == 'failed':
             badge_class = 'badge-failed'
             outcome_label = f'FAILED{(": " + reason) if reason else ""}'
