@@ -336,12 +336,12 @@ def health_verdict(
             return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
     streak = 0
     for outcome in reversed(recent_outcomes):
-        if outcome in {'failed', 'partial'}:
+        if outcome in {'failed', 'partial', 'model_call_incomplete'}:
             streak += 1
         else:
             break
     if streak >= HEALTH_FAILURE_STREAK_LENGTH:
-        return 'investigate', f'{streak} consecutive failed or partial cycles'
+        return 'investigate', f'{streak} consecutive failed, partial, or incomplete-model-call cycles'
     # An unavailable age is not a fresh age. Do not let a failed source read
     # skip the staleness check and fall through to a reassuring verdict.
     if age_seconds is None:
