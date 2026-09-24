@@ -7482,6 +7482,15 @@ def _paused_supplier_stat(loop: dict[str, Any]) -> str:
     return f'{esc(fmt_compact(outcomes))} cycle(s) / {esc(humanize_age(float(seconds)))}'
 
 
+def _breakdown_value(loop: dict[str, Any], prefix: str) -> str:
+    events = loop.get(f'{prefix}_events')
+    tasks = loop.get(f'{prefix}_tasks')
+    share = loop.get(f'{prefix}_share')
+    if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in (events, tasks, share)):
+        return 'no data'
+    return f'{events} events · {tasks} tasks · {humanize_ratio(share)}'
+
+
 def build_empire_stats_strip(
     scorecard: dict[str, Any] | None,
     age_seconds: float | None = None,
@@ -7494,6 +7503,8 @@ def build_empire_stats_strip(
     cost = scorecard.get('cost') if isinstance(scorecard.get('cost'), dict) else {}
     heldout = scorecard.get('heldout') if isinstance(scorecard.get('heldout'), dict) else {}
 
+    legacy_rate = humanize_ratio(loop.get('repeat_failure_rate'))
+    new_rate = humanize_ratio(loop.get('repeat_failure_rate_new'))
     stats = [
         ('integrations', esc(loop.get('integrations', 'n/a'))),
         ('confirmed integration ratio', humanize_ratio(loop.get('confirmed_integration_ratio'))),
@@ -7501,7 +7512,14 @@ def build_empire_stats_strip(
         # computations of failure rate (scorecard snapshot vs last cycle
         # measurement). Annotate the source visibly + via tooltip instead of
         # recomputing anything dashboard-side.
-        ('repeat failure rate · scorecard', humanize_ratio(loop.get('repeat_failure_rate'))),
+        ('repeat failure rate · scorecard', legacy_rate),
+        ('old repeat failure rate · keep 7d', legacy_rate),
+        ('execution failures', _breakdown_value(loop, 'execution_failure')),
+        ('model unavailable (known)', _breakdown_value(loop, 'model_unavailable')),
+        ('model call incomplete', _breakdown_value(loop, 'model_call_incomplete')),
+        ('failure cause unknown', _breakdown_value(loop, 'unknown_failure_cause')),
+        ('self_dedup rejections', _breakdown_value(loop, 'self_dedup')),
+        ('repeat failure rate · new', new_rate + (' · снижение из-за #1785(а)' if new_rate != 'n/a' else '')),
         ('tokens / integration', humanize_number(cost.get('tokens_per_integration'))),
         ('held-out', f"{esc(heldout.get('passed', 'n/a'))}/{esc(heldout.get('checked', 'n/a'))}"),
         # Issue #1765: supplier outages (gateway/model-provider could not
@@ -7544,6 +7562,7 @@ def build_empire_stats_strip(
         'integrations': 'integrations',
         'confirmed integration ratio': 'confirmed_integration_ratio',
         'repeat failure rate · scorecard': 'repeat_failure_rate',
+        'repeat failure rate · new': 'repeat_failure_rate_new',
         'tokens / integration': 'tokens_per_integration',
         'held-out': 'heldout',
     }
