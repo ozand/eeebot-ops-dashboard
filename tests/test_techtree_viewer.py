@@ -2692,7 +2692,8 @@ def test_batch3_issue48_meta_refresh_and_freshness_badge() -> None:
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert '<meta http-equiv="refresh" content="600">' in html_out
     assert 'freshness-fresh' in html_out
-    assert 'data-age-seconds="120"' in html_out
+    assert 'data-data-epoch="' in html_out
+    assert 'data-age-seconds=' not in html_out
     assert 'data: 2m old' in html_out
     assert 'generated 12:00 UTC' in html_out
 
@@ -2710,6 +2711,17 @@ def test_batch3_issue48_very_stale_level() -> None:
     data['_newest_source_age_seconds'] = 30000.0
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'freshness-very-stale' in html_out
+
+
+def test_batch3_issue1905_freshness_uses_absolute_epoch() -> None:
+    data = _fixture()
+    data['_newest_source_age_seconds'] = 600.0
+    html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
+    assert 'data-data-epoch="' in html_out
+    assert 'Date.now() / 1000 - epoch' in html_out
+    assert "a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale'" in html_out
+    assert 'data-age-seconds' not in html_out
+    assert 'data-render-age-seconds="600"' in html_out
 
 
 def test_batch3_issue48_header_footer_same_timestamp() -> None:

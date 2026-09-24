@@ -7568,6 +7568,7 @@ def build_empire_stats_strip(
     # Issue #48: visible freshness badge in the header. Age is real
     # (collected mtime) or explicitly unknown -- never fabricated.
     if isinstance(age_seconds, (int, float)) and not isinstance(age_seconds, bool):
+        source_epoch = datetime.strptime(generated_at, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc).timestamp() - float(age_seconds)
         if age_seconds < 3600:
             level = 'fresh'
         elif age_seconds < 21600:
@@ -7576,7 +7577,7 @@ def build_empire_stats_strip(
             level = 'very-stale'
         gen_hhmm = generated_at[11:16] if generated_at and len(generated_at) >= 16 else ''
         freshness_html = (
-            f'<span class="freshness freshness-{level}" data-age-seconds="{float(age_seconds):.0f}">'
+            f'<span class="freshness freshness-{level}" data-data-epoch="{source_epoch:.3f}" data-render-age-seconds="{float(age_seconds):.0f}">'
             f'data: {esc(humanize_age(float(age_seconds)))} old'
             + (f' &middot; generated {esc(gen_hhmm)} UTC' if gen_hhmm else '')
             + '</span>'
@@ -9315,15 +9316,22 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 </script>
 <script>
 (function () {{
-  var el = document.querySelector('.freshness[data-age-seconds]');
+  var el = document.querySelector('.freshness[data-data-epoch]');
   if (!el) return;
-  var t0 = Date.now();
-  var a0 = parseFloat(el.getAttribute('data-age-seconds'));
-  setInterval(function () {{
-    var a = a0 + (Date.now() - t0) / 1000;
+  var epoch = parseFloat(el.getAttribute('data-data-epoch'));
+  var renderAge = parseFloat(el.getAttribute('data-render-age-seconds'));
+  function updateFreshness() {{
+    var a = Math.max(0, Date.now() / 1000 - epoch);
+    if (!Number.isFinite(a)) a = renderAge;
+    var level = a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale';
+    el.classList.remove('freshness-fresh', 'freshness-stale', 'freshness-very-stale');
+    el.classList.add('freshness-' + level);
     var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
     el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
-  }}, 30000);
+    el.setAttribute('data-render-age-seconds', String(a));
+  }}
+  updateFreshness();
+  setInterval(updateFreshness, 30000);
 }})();
 </script>
 </body>
@@ -9594,15 +9602,22 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 </script>
 <script>
 (function () {{
-  var el = document.querySelector('.freshness[data-age-seconds]');
+  var el = document.querySelector('.freshness[data-data-epoch]');
   if (!el) return;
-  var t0 = Date.now();
-  var a0 = parseFloat(el.getAttribute('data-age-seconds'));
-  setInterval(function () {{
-    var a = a0 + (Date.now() - t0) / 1000;
+  var epoch = parseFloat(el.getAttribute('data-data-epoch'));
+  var renderAge = parseFloat(el.getAttribute('data-render-age-seconds'));
+  function updateFreshness() {{
+    var a = Math.max(0, Date.now() / 1000 - epoch);
+    if (!Number.isFinite(a)) a = renderAge;
+    var level = a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale';
+    el.classList.remove('freshness-fresh', 'freshness-stale', 'freshness-very-stale');
+    el.classList.add('freshness-' + level);
     var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
     el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
-  }}, 30000);
+    el.setAttribute('data-render-age-seconds', String(a));
+  }}
+  updateFreshness();
+  setInterval(updateFreshness, 30000);
 }})();
 </script>
 </body>
