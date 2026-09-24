@@ -1741,6 +1741,10 @@ def test_health_verdict_investigate_by_failure_streak() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['failed', 'partial', 'failed'], False, '2026-09-01T02:00:00Z')[0] == 'investigate'
 
 
+def test_lineage_leaf_classifies_model_call_incomplete():
+    assert tv._leaf_outcome({"outcome": "model_call_incomplete"}) == "model_call_incomplete"
+
+
 def test_health_verdict_counts_model_call_incomplete_in_failure_streak() -> None:
     verdict, reason = tv.health_verdict(
         120, '2026-09-01T01:50:00Z',
