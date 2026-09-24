@@ -5561,6 +5561,11 @@ def build_now_panel(
     next_up_html = _build_next_up_item(derived_view)
     charter_html = _build_charter_item(derived_view)
 
+    # 13. Artifact dependency graph (eeebot#1769, ADR-024) -- published at
+    # scorecard.quality.artifact_graph; read as published, never recomputed
+    # here (this dashboard has no instance-repo checkout to scan).
+    artifact_graph_html = _build_artifact_graph_item(scorecard)
+
     return f'''
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
@@ -5578,6 +5583,7 @@ def build_now_panel(
         {systemd_drift_html}
         {local_ci_html}
         {executor_model_html}
+        {artifact_graph_html}
         {_render_failed_bridge_exits(bridge_exits)}
         {demand_history_html}
       </div>
@@ -7228,6 +7234,68 @@ def _build_monitored_feed_ages_item(scorecard):
         + ' '.join(badges)
         + '</div>'
     )
+
+
+def _build_artifact_graph_item(scorecard):
+    """eeebot#1769 / ADR-024: artifacts / ready / leaves, oldest leaves named.
+
+    Read exactly as published at ``scorecard.quality.artifact_graph`` --
+    this dashboard has no instance-repo checkout, so it never recomputes
+    the graph itself. ``status != "complete"`` (missing input, an
+    unreadable repo, or a harness release that predates this field) is
+    rendered as the same ``unavailable-note`` the rest of this panel uses
+    for absent data, never as a graph of zero artifacts (the harness side's
+    own AC: an unavailable graph must never be presented as "no
+    dependencies").
+    """
+    label = '<span class="now-label">Artifact Graph:</span> '
+    if not isinstance(scorecard, dict):
+        return f'<div class="now-item">{label}<span class="unavailable-note">unavailable</span></div>'
+    quality = scorecard.get('quality')
+    if not isinstance(quality, dict):
+        return f'<div class="now-item">{label}<span class="unavailable-note">unavailable</span></div>'
+    graph = quality.get('artifact_graph')
+    if not isinstance(graph, dict) or graph.get('status') != 'complete':
+        return f'<div class="now-item">{label}<span class="unavailable-note">unavailable</span></div>'
+    counts = graph.get('counts')
+    if not isinstance(counts, dict):
+        return f'<div class="now-item">{label}<span class="unavailable-note">unavailable</span></div>'
+    artifacts = counts.get('artifacts')
+    ready = counts.get('components')
+    leaves = counts.get('leaves')
+    if not all(isinstance(v, int) for v in (artifacts, ready, leaves)):
+        return f'<div class="now-item">{label}<span class="unavailable-note">unavailable</span></div>'
+
+    summary = (
+        f'<span class="badge badge-available">{artifacts} artifacts</span> '
+        f'<span class="badge badge-available">{ready} ready</span> '
+        f'<span class="badge badge-available">{leaves} leaves</span>'
+    )
+
+    oldest = graph.get('oldest_leaves')
+    oldest_html = ''
+    if isinstance(oldest, list) and oldest:
+        names = []
+        for entry in oldest[:5]:
+            if isinstance(entry, dict) and entry.get('path'):
+                names.append(esc(str(entry['path'])))
+        if names:
+            oldest_html = (
+                '<div class="now-sub">oldest leaves: '
+                + ', '.join(f'<code>{n}</code>' for n in names)
+                + '</div>'
+            )
+
+    unit_scan_status = graph.get('unit_scan_status')
+    unit_note = ''
+    if unit_scan_status != 'scanned':
+        unit_note = (
+            '<div class="now-sub" title="Host-only systemd units never committed to '
+            'host/eeepc/systemd/ in the harness repo are a structural blind spot, not '
+            'counted above.">systemd units: unavailable</div>'
+        )
+
+    return f'<div class="now-item">{label}{summary}{oldest_html}{unit_note}</div>'
 
 
 
