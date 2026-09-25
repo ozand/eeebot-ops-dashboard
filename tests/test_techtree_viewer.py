@@ -6045,3 +6045,159 @@ def test_1755_compute_window_pressure_remote_copy_matches_local_module() -> None
     remote_result = namespace['compute_window_pressure'](rows, now=now)
     local_result = local_compute(rows, now=now)
     assert remote_result == local_result
+
+
+# ---------------------------------------------------------------------------
+# Issue #311: a cycle run without a terminal row is not running if its
+# bridge unit has already finished (killed/timeout in runs.jsonl or wall-clock
+# ceiling exceeded)
+# ---------------------------------------------------------------------------
+
+
+def test_311_cycle_without_terminal_row_killed_by_runs_jsonl() -> None:
+    """Exact reproduction of cycle-4c03177c1be8 from 2026-09-23:
+    Re-run multiple times ending with outcome: paused-supplier.
+    Last attempt has started at 21:46:07Z, planning_session, system_prompt,
+    and NO terminal row after that.
+    Bridge runs.jsonl records the run finished with unit_timeout / TERM / systemd.
+    Must render as KILLED / INCOMPLETE, never running, never paused-supplier.
+    """
+    cid = "cycle-4c03177c1be8"
+    task_title = "Extend raw-json-final-turn skill with payload validation and fence-stripping formatting rules"
+    ledger = [
+        {"phase": "proposed", "cycle_id": cid, "task_title": task_title, "ts": "2026-09-23T16:59:20Z"},
+        # Run 8 ending in paused-supplier
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-23T21:39:40Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "malformed", "ts": "2026-09-23T21:41:13Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "paused-supplier", "reason": "llm_supplier_paused", "ts": "2026-09-23T21:41:52Z"},
+        # Run 9 (the last run) killed by systemd timeout -- NO outcome row
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-23T21:46:07Z"},
+        {"phase": "diary_open_entry", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-23T21:46:14Z"},
+        {"phase": "dedup", "cycle_id": cid, "decision": "proceeded", "ts": "2026-09-23T21:46:31Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "malformed", "ts": "2026-09-23T21:54:35Z"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-23T21:54:54Z"},
+    ]
+    # Real format from state/bridge/runs-2026-09-23.jsonl.gz on eeepc
+    real_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-2e29943c1c354a50",
+            "started_at": "2026-09-23T21:45:31.075488Z",
+            "finished_at": "2026-09-23T22:40:23.677412Z",
+            "duration_s": 3292.602,
+            "classification": "unit_timeout",
+            "outcome": "interrupted",
+            "exit_status": "TERM",
+            "source": "systemd",
+        }
+    ]
+    ref_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        task_titles={cid: task_title},
+        history_mode=True,
+        bridge_runs=real_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'badge-failed' in row
+    assert 'data-outcome="incomplete"' in html_out
+    # Must NOT combine lack of terminal row into 'running'
+    assert 'running' not in row
+    # Must NOT combine previous attempt's outcome into title or badge
+    assert 'paused-supplier' not in row
+    # Title from proposed / task_titles survives
+    assert task_title in row
+
+
+def test_311_post_1908_killed_by_cycle_id_in_runs_jsonl() -> None:
+    """Post-#1908 killed run: runs.jsonl explicitly carries cycle_id."""
+    cid = "cycle-20634d6019f1"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T19:30:00Z"},
+    ]
+    # Real format from state/bridge/runs.jsonl on eeepc from 2026-09-25
+    real_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-bc9bb5aa2dcd4384",
+            "started_at": "2026-09-25T19:26:39.607816Z",
+            "finished_at": "2026-09-25T20:21:33.346570Z",
+            "duration_s": 3293.739,
+            "classification": "unit_timeout",
+            "outcome": "interrupted",
+            "exit_status": "TERM",
+            "source": "systemd",
+            "cycle_id": cid,
+            "request_id": f"llm-proposer-{cid}",
+        }
+    ]
+    ref_now = datetime(2026, 9, 25, 21, 0, 0, tzinfo=timezone.utc)
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        bridge_runs=real_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'badge-failed' in row
+    assert 'running' not in row
+
+
+def test_311_genuinely_running_cycle_still_renders_running() -> None:
+    """A cycle that started 5 minutes ago and has no finished bridge run
+    is genuinely running and must still render with 'running' badge."""
+    cid = "cycle-live-now-1"
+    ref_now = datetime(2026, 9, 25, 22, 0, 0, tzinfo=timezone.utc)
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+    ]
+    bridge_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-old",
+            "started_at": "2026-09-25T20:00:00Z",
+            "finished_at": "2026-09-25T20:30:00Z",
+            "classification": "completion",
+            "outcome": "success",
+            "cycle_id": "cycle-old",
+        }
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        bridge_runs=bridge_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'badge-available' in row
+    assert 'KILLED' not in row
+    assert 'INCOMPLETE' not in row
+
+
+def test_311_wall_clock_timeout_threshold_from_config(monkeypatch) -> None:
+    """Threshold comes from BRIDGE_UNIT_TIMEOUT_SECONDS (configurable),
+    not a hardcoded literal."""
+    cid = "cycle-stale-poweroff"
+    # Started 40 minutes ago
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:00:00Z"},
+    ]
+    ref_now = datetime(2026, 9, 25, 21, 40, 0, tzinfo=timezone.utc)
+
+    # 1. Under default 55-minute (3300s) timeout: 40 min is not yet timed out
+    html_under = tv.build_cycle_feed(ledger_tail=ledger, bridge_runs=[], now=ref_now)
+    assert 'running' in html_under
+
+    # 2. Configured lower threshold (e.g. 1800s / 30m): 40 min is timed out
+    monkeypatch.setattr(tv, "BRIDGE_UNIT_TIMEOUT_SECONDS", 1800)
+    html_over = tv.build_cycle_feed(ledger_tail=ledger, bridge_runs=[], now=ref_now)
+    row = html_over.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
