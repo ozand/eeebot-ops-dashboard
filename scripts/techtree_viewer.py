@@ -4555,13 +4555,12 @@ def build_cycle_details(
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
             continue
         out = record(str(reflection['cycle_id']))
-        payload = {'summary': text(reflection.get('summary'))}
+        # ADR-036 rule 3: the reflector's output is model text -- public
+        # records carry only its shape (sizes and counts), never the words.
+        payload: dict[str, Any] = {'summary_chars': len(str(reflection.get('summary') or ''))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
-            if isinstance(value, list):
-                payload[key] = [text(item) for item in value[:20]]
-            elif value:
-                payload[key] = [text(value)]
+            payload[f'{key}_count'] = len(value) if isinstance(value, list) else (1 if value else 0)
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -4584,11 +4583,12 @@ def build_cycle_details(
             'status': text(rec.get('status'), 40),
             'started_at': rec.get('started_at'),
             'finished_at': rec.get('finished_at'),
-            'task_excerpt': text(rec.get('task_excerpt'), 400),
+            # ADR-036 rule 3: task/summary/result text of a subagent is call
+            # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'summary_excerpt': text(rec.get('summary_excerpt'), 400),
-            'result_excerpt': text(rec.get('result_excerpt'), 400),
+            'summary_chars': len(str(rec.get('summary_excerpt') or '')),
+            'result_chars': len(str(rec.get('result_excerpt') or '')),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:

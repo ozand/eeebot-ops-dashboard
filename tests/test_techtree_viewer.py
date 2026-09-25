@@ -286,9 +286,11 @@ def test_cycle_details_join_and_bound_fields() -> None:
     assert record['title'] == 'Ship panel'
     assert record['files_changed'] == [f'f{i}' for i in range(20)]
     assert record['lesson_insight'] == 'lesson insight'
-    assert record['reflection']['summary'] == 'reflection summary'
-    assert len(record['reflection']['findings']) == 1
-    assert len(record['reflection']['recommendations']) == 1
+    # ADR-036 rule 3: public records carry the reflection's size, not its text.
+    assert record['reflection']['summary_chars'] == len('reflection summary')
+    assert 'summary' not in record['reflection']
+    assert record['reflection']['findings_count'] == 1
+    assert record['reflection']['recommendations_count'] == 1
     assert len(json.dumps(details)) < 20_000
 
 
@@ -4894,8 +4896,8 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
-        'result_excerpt': 'r', 'iteration_count': 2,
+        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
     assert details['__unjoined_subagents__']['subagents'][0]['subagent_id'] == 'orphan'
@@ -6077,3 +6079,20 @@ def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
         for marker in markers:
             assert marker not in body, (name, marker)
     assert '"prompt":' not in pages[tv.LINEAGE_DETAILS_FILE]
+
+
+def test_adr036_subagent_and_reflector_text_stay_off_public_details() -> None:
+    """ADR-036 rule 3: subagent task/summary/result text and reflector output
+    are model text; the public cycle-details records keep only their sizes."""
+    markers = ['ADR036-SA-TASK-1e2d', 'ADR036-SA-SUMMARY-77ab', 'ADR036-SA-RESULT-3c9f', 'ADR036-REFL-SUMMARY-5d10', 'ADR036-REFL-FINDING-8e42']
+    subagents = [{
+        'cycle_id': 'cycle-x', 'subagent_id': 's1', 'label': 'exec', 'status': 'ok',
+        'task_excerpt': markers[0], 'summary_excerpt': markers[1], 'result_excerpt': markers[2],
+    }]
+    reflections = [{'cycle_id': 'cycle-x', 'summary': markers[3], 'findings': [markers[4]]}]
+    details = tv.build_cycle_details([], None, None, reflections, subagent_records=subagents)
+    blob = json.dumps(details)
+    for marker in markers:
+        assert marker not in blob, marker
+    assert details['cycle-x']['subagents'][0]['summary_chars'] == len(markers[1])
+    assert details['cycle-x']['reflection']['findings_count'] == 1
