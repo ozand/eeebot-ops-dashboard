@@ -170,6 +170,7 @@ def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkey
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **_: (0, {}))
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -190,6 +191,7 @@ def test_278_run_persists_page_fingerprints_after_publish(tmp_path: Path, monkey
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     fake_fp = {'index.html': 'fp1', 'cycles.html': 'fp2'}
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kw: (0, fake_fp))
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -214,6 +216,7 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
         return 0, {}
 
     monkeypatch.setattr(ap.tv, 'publish_to_pages', fake_publish)
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
     assert captured['previous_fingerprints'] == {'index.html': 'prev-fp'}
@@ -244,6 +247,7 @@ def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch:
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
     args = ap.parse_args([
@@ -387,6 +391,7 @@ def test_missing_tree_source_file_still_publishes(
     state_dir = tmp_path / 'techtree-state'
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     published: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
@@ -508,6 +513,7 @@ def test_refusal_then_recovery_clears_refusing_since(
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
 
@@ -552,6 +558,7 @@ def test_refusal_past_freeze_limit_publishes_fail_soft_page(
     (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')  # still torn
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     published: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
@@ -713,6 +720,7 @@ def test_run_publishes_on_backward_clock_jump_even_with_unchanged_digest(
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])

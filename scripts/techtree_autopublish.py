@@ -37,6 +37,7 @@ from typing import Any
 # /opt/eeebot-techtree/).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import techtree_viewer as tv  # noqa: E402
+import two_sinks as sinks  # noqa: E402
 
 DEFAULT_STATE_DIR = '/var/lib/eeebot-techtree'
 STATE_FILENAME = 'publish_state.json'
@@ -368,6 +369,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f'publish even on an unchanged digest once the last publish is older than this many hours (default: {DEFAULT_STALENESS_FLOOR_HOURS})',
     )
     parser.add_argument(
+        '--site-root', default=os.environ.get('EEEBOT_SITE_ROOT', '/var/lib/eeebot-techtree/site'),
+        help='host snapshot directory (default: /var/lib/eeebot-techtree/site)',
+    )
+    parser.add_argument('--serve', action='store_true', help='serve the current host snapshot')
+    parser.add_argument('--bind-address', default=os.environ.get('EEEBOT_DASHBOARD_BIND_ADDRESS', sinks.DEFAULT_BIND_ADDRESS))
+    parser.add_argument('--bind-port', type=int, default=int(os.environ.get('EEEBOT_DASHBOARD_BIND_PORT', sinks.DEFAULT_BIND_PORT)))
+    parser.add_argument(
         '--host-label', default='eeepc',
         help='host label shown in the rendered page footer (default: eeepc)',
     )
@@ -414,6 +422,7 @@ def run(args: argparse.Namespace) -> int:
 
     instance_repo = args.instance_repo or str(state_root.parent / 'eeebot-self-evolving')
     data = tv.read_local_state(str(state_root), instance_repo=instance_repo)
+    public_data, private_data = sinks.split_render_inputs(data)
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()
@@ -422,7 +431,13 @@ def run(args: argparse.Namespace) -> int:
     source_problem = _unreadable_tree_source(data, state_root)
 
     if args.dry_run:
-        pages = tv.render_pages(data, args.host_label)
+        pages = tv.render_public_pages(public_data, args.host_label)
+        pages = sinks.add_snapshot_version(pages, f"dry-run-{int(now)}")
+        try:
+            sinks.validate_publish_allowlist(pages)
+        except ValueError as exc:
+            print(f'[dry-run] publish refused: {exc}', file=sys.stderr)
+            return 1
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
                 state, staleness_floor_seconds, now,
@@ -516,7 +531,11 @@ def run(args: argparse.Namespace) -> int:
     # page; no-op bridge cycles therefore avoid six network calls. The same
     # in-memory observation is passed to every rendered page.
     data['ci_freshness'] = tv.read_ci_freshness()
-    pages = tv.render_pages(data, args.host_label)
+    public_data['ci_freshness'] = data['ci_freshness']
+    public_pages = tv.render_public_pages(public_data, args.host_label)
+    private_pages = sinks.render_private_pages(private_data, args.host_label)
+    version = f"{int(now)}-{digest[:12]}"
+    public_pages = sinks.add_snapshot_version(public_pages, version)
 
     if not os.environ.get('GH_TOKEN'):
         print(
@@ -536,9 +555,18 @@ def run(args: argparse.Namespace) -> int:
     # any page whose normalized content (timestamp/age stripped) matches
     # what was published last time -- this is the mechanism that stops
     # re-uploading all 8 files in full on every run.
-    rc, fingerprints = tv.publish_to_pages(
-        pages, previous_fingerprints=state.get('page_fingerprints'),
-    )
+    sink_root = Path(args.site_root)
+    try:
+        result = sinks.publish_ordered(
+            sink_root, public_pages, private_pages, version,
+            lambda payload: tv.publish_to_pages(payload, previous_fingerprints=state.get('page_fingerprints')),
+        )
+    except Exception as exc:
+        print(f'techtree-autopublish: snapshot/publish failed ({type(exc).__name__})', file=sys.stderr)
+        return 1
+    if result is None:
+        return 1
+    rc, fingerprints = result
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
@@ -550,6 +578,9 @@ def run(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.serve:
+        sinks.serve_site(Path(args.site_root), args.bind_address, args.bind_port)
+        return 0
     return run(args)
 
 

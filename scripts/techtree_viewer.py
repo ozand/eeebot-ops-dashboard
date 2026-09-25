@@ -9780,6 +9780,11 @@ def _last_cycles_subset(ledger_tail: list[Any] | None, want: int = 3) -> list[An
     return [r for r in ledger_tail if isinstance(r, dict) and str(r.get('cycle_id') or '') in keep]
 
 
+def render_public_pages(data: dict[str, Any], host: str, generated_at: str | None = None) -> dict[str, str]:
+    """ADR-036 public entry point; caller supplies only public-safe data."""
+    return render_pages(data, host, generated_at)
+
+
 def render_pages(data: dict[str, Any], host: str, generated_at: str | None = None) -> dict[str, str]:
     """Issue #70: render the multi-page site. Returns {filename: html} with
     keys index/lineage/cycles/lessons/agent/hypotheses/techtree .html. All
