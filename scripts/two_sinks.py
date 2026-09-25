@@ -49,7 +49,11 @@ def scan_built_tree(root: Path) -> None:
 
 
 def validate_publish_allowlist(pages: dict[str, str]) -> None:
-    unlisted = sorted(name for name in pages if name not in PUBLIC_PAGES and not re.fullmatch(r"cycles-archive-[0-9]+\.json", name))
+    unlisted = sorted(
+        name for name in pages
+        if name not in PUBLIC_PAGES
+        and not re.fullmatch(r"cycles-archive-[0-9]+\.json", name)
+    )
     if unlisted:
         raise ValueError(f"ADR-036 unlisted publish paths: {', '.join(unlisted)}")
 
@@ -60,9 +64,39 @@ def add_snapshot_version(pages: dict[str, str], version: str) -> dict[str, str]:
 
 
 def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
-    """D1 boundary seam; private cycle rendering is deliberately deferred to D2."""
-    del private_data, host
-    return {}
+    """ADR-036 D2 private-only cycle renderer; never included in gh-pages."""
+    del host
+    from cycle_detail import render_cycle_page
+
+    raw = private_data.get("private_cycle_details")
+    known = private_data.get("cycle_details")
+    cycle_ids = set(raw) if isinstance(raw, dict) else set()
+    if isinstance(known, dict):
+        cycle_ids.update(known)
+    return {
+        f"cycles/{cycle_id}.html": render_cycle_page(
+            str(cycle_id), raw.get(cycle_id) if isinstance(raw, dict) else None,
+        )
+        for cycle_id in sorted(cycle_ids)
+    }
+
+
+def build_private_cycle_pages(private_data: dict, state_root: Path, host: str, *, cycle_ids: set[str] | None = None) -> dict[str, str]:
+    """Bind private pages to observed IDs and read their host-local sources."""
+    from cycle_detail import load_cycle_detail
+
+    known = set(cycle_ids or ())
+    ledger = private_data.get("ledger_tail")
+    if isinstance(ledger, list):
+        known.update(str(row["cycle_id"]) for row in ledger if isinstance(row, dict) and row.get("cycle_id"))
+    if isinstance(private_data.get("cycle_details"), dict):
+        known.update(map(str, private_data["cycle_details"]))
+    return {
+        f"cycles/{cycle_id}.html": render_private_pages(
+            {"private_cycle_details": {cycle_id: load_cycle_detail(state_root, cycle_id)}}, host,
+        )[f"cycles/{cycle_id}.html"]
+        for cycle_id in sorted(known)
+    }
 
 
 def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -> Path:
