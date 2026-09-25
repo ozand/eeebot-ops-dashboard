@@ -449,12 +449,11 @@ def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
     fixture['agents_md'] = '# Agent Guide\n<script>alert("xss")</script>'
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
-    # AGENTS.md escaped
+    # ADR-036 rule 3: AGENTS.md and the goal charter are LAN-only text.
     assert '<script>alert' not in html_out
-    assert '&lt;script&gt;alert' in html_out
-
-    # Goals charter
-    assert 'Autonomously improve code quality' in html_out
+    assert '&lt;script&gt;alert' not in html_out
+    assert 'Autonomously improve code quality' not in html_out
+    assert 'text on the LAN site only' in html_out
 
     # Skill reads table
     assert 'test-driven-development' in html_out
@@ -6045,3 +6044,36 @@ def test_1755_compute_window_pressure_remote_copy_matches_local_module() -> None
     remote_result = namespace['compute_window_pressure'](rows, now=now)
     local_result = local_compute(rows, now=now)
     assert remote_result == local_result
+
+
+def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
+    """ADR-036 rule 3: executor prompt text (system and task) is call text.
+
+    The reader still collects it, but no public page or published JSON
+    (lineage-cycle-details.json included) may contain it.
+    """
+    marker_system = 'ADR036-SYSTEM-MARKER-7f3c9e'
+    marker_task = 'ADR036-TASK-MARKER-41b2d8'
+    state = tmp_path / 'state'
+    (state / 'prompts').mkdir(parents=True)
+    (state / 'prompts' / 'cycle-leak.system.txt').write_text(f'system {marker_system}', encoding='utf-8')
+    (state / 'prompts' / 'cycle-leak.task.txt').write_text(f'task {marker_task}', encoding='utf-8')
+    repo = tmp_path / 'repo'
+    (repo / 'skills' / 'leak-skill').mkdir(parents=True)
+    marker_agents = 'ADR036-AGENTSMD-MARKER-c05a11'
+    marker_skill = 'ADR036-SKILL-MARKER-9d7e21'
+    (repo / 'AGENTS.md').write_text(f'# Agents\n\n{marker_agents}\n', encoding='utf-8')
+    (repo / 'skills' / 'leak-skill' / 'SKILL.md').write_text(f'---\nname: leak-skill\n---\n{marker_skill}\n', encoding='utf-8')
+    data = tv.read_local_state(str(state), str(repo))
+    assert marker_system in data['cycle_prompts']['cycle-leak']['system']['text']
+    collected = json.dumps(data, default=str)
+    assert marker_agents in collected  # the reader sees it; only rendering must drop it
+    markers = [marker_system, marker_task, marker_agents] + ([marker_skill] if marker_skill in collected else [])
+
+    pages = tv.render_pages(data, 'eeepc')
+    assert tv.LINEAGE_DETAILS_FILE in pages
+    single = tv.render_page(data, 'eeepc')
+    for name, body in list(pages.items()) + [('render_page', single)]:
+        for marker in markers:
+            assert marker not in body, (name, marker)
+    assert '"prompt":' not in pages[tv.LINEAGE_DETAILS_FILE]

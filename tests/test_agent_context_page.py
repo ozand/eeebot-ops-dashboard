@@ -331,7 +331,9 @@ def test_agent_page_renders_goals_as_outside_capped_prompt_section():
     # includes the tail) is longer than the recorded sections' sum.
     assert 'legacy tail, beyond recorded sections' in html
     assert '<strong class="block-title">goals</strong>' in html
-    assert 'charter body' in html
+    # ADR-036 rule 3: section text is LAN-only; the block shows its size.
+    assert 'charter body' not in html
+    assert 'text on the LAN site only' in html
     assert 'absent (not configured/emitted)' not in html
     assert 'Exact Match' not in html
     assert 'Diff:' in html

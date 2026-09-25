@@ -611,6 +611,14 @@ def _render_window_pressure_html(pressure: dict[str, Any]) -> str:
     )
 
 
+def _lan_only(text: Any) -> str:
+    """ADR-036 rule 3: the text of a call (prompt sections, task text,
+    SKILL.md bodies) belongs to the private LAN set only. Public pages show
+    its size, never its content."""
+    size = len(text) if isinstance(text, str) else 0
+    return f'<p class="unavailable-note lan-only-note">text on the LAN site only ({size:,} chars)</p>'
+
+
 def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     """Issue #227: render the Two-Tier Agent Context Model."""
     if not agent_context:
@@ -973,7 +981,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                     f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span>'
                     f'<strong class="block-title">{esc(sec_name)}</strong><span class="block-label">{owner_cell} &bull; cap {cap_text}</span>'
                     f'{preview}<span class="block-meta">{sec_sz:,} chars &bull; ~{sec_tokens:,} tokens {flags_html}</span></summary>'
-                    f'<div class="block-body"><pre><code>{esc(sec_text if sec_text else "(section text not captured in prompt file)")}</code></pre></div></details>'
+                    f'<div class="block-body">{_lan_only(sec_text)}</div></details>'
                 )
             block_seq += 1
 
@@ -1033,7 +1041,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; This cycle row was recorded prior to structured section logging (#1379). Recorded total chars: <strong>{total_chars:,}</strong>. Per honesty rules, section sizes are not reconstructed.</p>')
         out.append('    </div>')
         if prompt_text:
-            out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body"><pre><code>{esc(prompt_text)}</code></pre></div></details>')
+            out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body">{_lan_only(prompt_text)}</div></details>')
 
     # #301: legacy tail (pre-ADR-022 rows only) -- rendered as its own
     # labelled block(s), never folded silently into "outside capped prompt";
@@ -1045,12 +1053,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             f'<strong class="block-title">{esc(outside["name"])}</strong>'
             f'<span class="block-label">unmapped &bull; legacy tail, beyond recorded sections</span>'
             f'<span class="block-meta">{outside["actual_chars"]:,} chars</span></summary>'
-            f'<div class="block-body"><pre><code>{esc(outside["text"])}</code></pre></div></details>'
+            f'<div class="block-body">{_lan_only(outside["text"])}</div></details>'
         )
 
     if task_text:
         t_sz = len(task_text)
-        out.append(f'<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">{t_sz:,} chars &bull; ~{estimate_tokens(t_sz):,} tokens</span></summary><div class="block-body"><pre><code>{esc(task_text)}</code></pre></div></details>')
+        out.append(f'<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">{t_sz:,} chars &bull; ~{estimate_tokens(t_sz):,} tokens</span></summary><div class="block-body">{_lan_only(task_text)}</div></details>')
 
     # #301: the user message's own section list (`build_task` `## ` headings)
     # for the latest recorded prompt -- makes duplicate-section defects
@@ -1145,7 +1153,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         s_bytes = s.get("size_bytes", 0)
         s_desc = s.get("desc", "")
         s_content = s.get("content", "")
-        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><p class="skill-card-desc">{esc(s_desc if s_desc else "No description line found.")}</p><details class="skill-card-details"><summary>View SKILL.md ({s_bytes:,} bytes)</summary><pre><code>{esc(s_content)}</code></pre></details></div>')
+        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><p class="skill-card-desc">{esc(s_desc if s_desc else "No description line found.")}</p><details class="skill-card-details"><summary>View SKILL.md ({s_bytes:,} bytes)</summary>{_lan_only(s_content)}</details></div>')
     out.append('      </div>')
     out.append('    </div>')
 

@@ -7084,13 +7084,13 @@ def build_agent_panel(
     # 1. AGENTS.md
     if agents_md is not None:
         md_text = agents_md.strip()
-        md_body = esc(md_text[:2000]) + ('...' if len(md_text) > 2000 else '')
+        # ADR-036 rule 3: AGENTS.md is system-prompt text -- LAN only.
         # Issue #44: capped scroll boxes are scroll-traps; native <details>
         # keeps the page one scrolling document, closed by default.
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><pre><code>{md_body}</code></pre></div></details>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(md_text):,} chars)</p></div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -7099,11 +7099,11 @@ def build_agent_panel(
     goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
     if isinstance(goal_text, dict):
         g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-        g_body = esc(str(g_text)[:1500])
+        # ADR-036 rule 3: the operator's goal text is private -- LAN only.
         goals_html = (
             f'<details class="charter-details goal-text-box">'
             f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><pre><code>{g_body}</code></pre></div></details>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(str(g_text)):,} chars)</p></div></details>'
         )
 
     # 3. Skills fitness table
@@ -9430,7 +9430,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        cycle_prompts=data.get('cycle_prompts'),
+        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
+        # cycle_prompts is read but deliberately not passed to this renderer.
     )
 
     error_note = ''
@@ -9812,7 +9813,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        cycle_prompts=data.get('cycle_prompts'),
+        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
+        # cycle_prompts is read but deliberately not passed to this renderer.
     )
 
     error_note = ''
