@@ -4460,6 +4460,30 @@ def _build_day_bucketed_lineage(
     return _build_unified_lineage(ledger_rows, fallback_tree, task_titles, now, cycle_details)
 
 
+_PUBLIC_CODE_RE = re.compile(r'^[a-z0-9_:.-]{1,64}$')
+_PATH_TOKEN_RE = re.compile(r'(?<![\w/.-])((?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8})(?![\w/])')
+
+
+def _public_code_or_size(value: Any) -> str:
+    """ADR-036 rule 3: a vocabulary code is public; free text is LAN-only."""
+    raw = str(value or '')
+    if _PUBLIC_CODE_RE.match(raw):
+        return raw
+    return f'reason text, {len(raw)} chars (LAN)'
+
+
+def _public_gate_violation(value: Any) -> str:
+    """ADR-036 rule 3: a gate violation shows its rule and path publicly;
+    any free text (test output, excerpts, wording) is reduced to its size."""
+    raw = str(value or '')
+    stripped = raw.strip()
+    prefixed = re.match(r'^([a-z0-9_.-]{1,64})\s*:', stripped)
+    rule = stripped if _PUBLIC_CODE_RE.match(stripped) else (prefixed.group(1) if prefixed else None)
+    paths = [m.group(1) for m in _PATH_TOKEN_RE.finditer(raw)][:3]
+    parts = [rule or 'violation'] + ([', '.join(paths)] if paths else []) + [f'text {len(raw)} chars (LAN)']
+    return ' · '.join(parts)
+
+
 def build_cycle_details(
     ledger_rows: list[Any] | None,
     evolution_tree: dict[str, Any] | None,
@@ -4486,15 +4510,17 @@ def build_cycle_details(
     for cid, rows in rows_by_cycle.items():
         out = record(cid)
         for row in rows:
-            for key in ('task_title', 'target_path', 'serves', 'demand_id', 'outcome', 'reason', 'ts', 'sha', 'parent_sha', 'branch'):
+            for key in ('task_title', 'target_path', 'serves', 'demand_id', 'outcome', 'ts', 'sha', 'parent_sha', 'branch'):
                 if row.get(key) not in (None, ''):
                     out[key] = text(row[key])
+            if row.get('reason') not in (None, ''):
+                out['reason'] = _public_code_or_size(row['reason'])
             files = row.get('files_changed')
             if isinstance(files, list):
                 out['files_changed'] = [text(item, 300) for item in files[:20]]
             violations = row.get('violations')
             if isinstance(violations, list):
-                out['gate_violations'] = [text(item, 500) for item in violations[:20]]
+                out['gate_violations'] = [_public_gate_violation(item) for item in violations[:20]]
             # #289: eeebot#1687 -- present ONLY on cycles that rolled back;
             # deliberately no row otherwise, so absence here must stay
             # absence (no key at all), never render as an error.
@@ -4513,7 +4539,7 @@ def build_cycle_details(
                 elif ecr_status == 'not_created':
                     ecr = {'status': 'not_created', 'skip_reason': text(row.get('skip_reason'), 200)}
                     if row.get('skip_reason') == 'write_failed' and row.get('error'):
-                        ecr['error'] = text(row.get('error'), 200)
+                        ecr['error'] = _public_code_or_size(row.get('error'))
                 if ecr is not None:
                     # #292: the attempt number (e.g. "2/3") rides along on
                     # any status when the rollback is an executor_llm_error
@@ -4543,25 +4569,26 @@ def build_cycle_details(
             continue
         out = record(str(lesson['cycle_id']))
         insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
+        # ADR-036 rule 3: lesson bodies are instance-repo content -- LAN only;
+        # public records keep their size.
         if insight:
-            out['lesson_insight'] = text(insight)
+            out['lesson_insight_chars'] = len(str(insight))
         # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
-            out['lesson_problem'] = text(lesson['problem'])
+            out['lesson_problem_chars'] = len(str(lesson['problem']))
         if lesson.get('solution'):
-            out['lesson_solution'] = text(lesson['solution'])
+            out['lesson_solution_chars'] = len(str(lesson['solution']))
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
             continue
         out = record(str(reflection['cycle_id']))
-        payload = {'summary': text(reflection.get('summary'))}
+        # ADR-036 rule 3: the reflector's output is model text -- public
+        # records carry only its shape (sizes and counts), never the words.
+        payload: dict[str, Any] = {'summary_chars': len(str(reflection.get('summary') or ''))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
-            if isinstance(value, list):
-                payload[key] = [text(item) for item in value[:20]]
-            elif value:
-                payload[key] = [text(value)]
+            payload[f'{key}_count'] = len(value) if isinstance(value, list) else (1 if value else 0)
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -4584,11 +4611,12 @@ def build_cycle_details(
             'status': text(rec.get('status'), 40),
             'started_at': rec.get('started_at'),
             'finished_at': rec.get('finished_at'),
-            'task_excerpt': text(rec.get('task_excerpt'), 400),
+            # ADR-036 rule 3: task/summary/result text of a subagent is call
+            # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'summary_excerpt': text(rec.get('summary_excerpt'), 400),
-            'result_excerpt': text(rec.get('result_excerpt'), 400),
+            'summary_chars': len(str(rec.get('summary_excerpt') or '')),
+            'result_chars': len(str(rec.get('result_excerpt') or '')),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -5217,7 +5245,9 @@ def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
         label = esc(item.get('label') or item.get('id') or '')
         vector = esc(item.get('vector') or '')
         summary = str(item.get('summary') or '')
-        summary_html = f'<div class="demand-queue-summary">{esc(summary[:300])}</div>' if summary else ''
+        # ADR-036 rule 3: a priority's summary may quote the operator's goal
+        # text -- LAN only. Public form: number, label, vector, source.
+        summary_html = ''
         rows.append(
             f'<li class="demand-queue-row" data-demand-provenance="{esc(provenance)}">'
             f'<span class="badge badge-researching" translate="no">{kind}</span> '
@@ -6934,13 +6964,14 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
-        problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:400])}{"..." if len(problem) > 400 else ""}</div>' if problem else ''
-        solution_html = f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:400])}{"..." if len(solution) > 400 else ""}</div>' if solution else ''
+        # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
+        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({len(problem):,} chars)</div>' if problem else ''
+        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({len(solution):,} chars)</div>' if solution else ''
 
         title = str(l.get('title') or '')
         title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
         search_text = esc((' '.join([
-            l.get('id') or '', title, str(l.get('task_id') or ''), problem, solution,
+            l.get('id') or '', title, str(l.get('task_id') or ''),
             kind, severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
@@ -6968,18 +6999,18 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
             if cid else '<span class="lesson-cycle">n/a</span>'
         )
         result = str(l.get('result') or '')
-        result_body = esc(result[:400]) + ('...' if len(result) > 400 else '')
+        # ADR-036 rule 3: legacy result/insight text is LAN-only.
         result_html = (
-            f'<details class="lesson-result"><summary>result</summary>'
-            f'<pre>{result_body}</pre></details>' if result else ''
+            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({len(result):,} chars)</div>'
+            if result else ''
         )
         insight = str(l.get('insight') or '')
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight">{esc(insight[:300])}</div>' if insight else ''
+        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({len(insight):,} chars)</div>' if insight else ''
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
-            result, insight, cid,
+            cid,
         ])).lower())
         legacy_rows.append(
             f'<li class="lesson-row" data-text="{search_text}"{item_anchor}>'
@@ -7084,13 +7115,13 @@ def build_agent_panel(
     # 1. AGENTS.md
     if agents_md is not None:
         md_text = agents_md.strip()
-        md_body = esc(md_text[:2000]) + ('...' if len(md_text) > 2000 else '')
+        # ADR-036 rule 3: AGENTS.md is system-prompt text -- LAN only.
         # Issue #44: capped scroll boxes are scroll-traps; native <details>
         # keeps the page one scrolling document, closed by default.
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><pre><code>{md_body}</code></pre></div></details>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(md_text):,} chars)</p></div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -7099,11 +7130,11 @@ def build_agent_panel(
     goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
     if isinstance(goal_text, dict):
         g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-        g_body = esc(str(g_text)[:1500])
+        # ADR-036 rule 3: the operator's goal text is private -- LAN only.
         goals_html = (
             f'<details class="charter-details goal-text-box">'
             f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><pre><code>{g_body}</code></pre></div></details>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(str(g_text)):,} chars)</p></div></details>'
         )
 
     # 3. Skills fitness table
@@ -9430,7 +9461,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        cycle_prompts=data.get('cycle_prompts'),
+        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
+        # cycle_prompts is read but deliberately not passed to this renderer.
     )
 
     error_note = ''
@@ -9817,7 +9849,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        cycle_prompts=data.get('cycle_prompts'),
+        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
+        # cycle_prompts is read but deliberately not passed to this renderer.
     )
 
     error_note = ''
