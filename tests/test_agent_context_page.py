@@ -1134,3 +1134,13 @@ def test_agent_page_window_pressure_no_data_distinct_from_zero():
     assert 'WINDOW PRESSURE (24H): NO DATA' in html
     assert 'not the same as a healthy 0%' in html
 
+
+def test_adr036_unknown_task_section_heading_is_lan_only() -> None:
+    """ADR-036 rule 3: only headings from the fixed task template are public;
+    a dynamic heading (marker inside) renders as "section N (LAN)"."""
+    from scripts.agent_context import build_task_sections, public_section_heading
+
+    task = "## Concrete task to implement\nbody\n## Fix ADR036-SECTION-MARKER-ab12 now\nmore\n"
+    sections = build_task_sections(task)
+    shown = [public_section_heading(s["heading"], i) for i, s in enumerate(sections, start=1)]
+    assert shown == ["Concrete task to implement", "section 2 (LAN)"]

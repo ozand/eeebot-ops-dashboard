@@ -316,6 +316,43 @@ def parse_prompt_sections(
     }
 
 
+# ADR-036 rule 3: task-section headings are public only when they are
+# names from the harness's fixed task template (eeebot build_task). Any other
+# heading may be dynamic (a task title, a priority's wording) and renders as
+# "section N (LAN)".
+KNOWN_TASK_SECTIONS = frozenset({
+    'System mission (read before acting)',
+    'Recent activity (do not repeat)',
+    'Known pitfall for this task (from lessons/errors.yaml)',
+    'Proven approach for this task (from lessons/lessons.yaml)',
+    'Recent reflections (how past cycles worked — steering hints)',
+    'Recent reflections (steering hints)',
+    'Previous attempts for this task',
+    'Previous attempts',
+    'Concrete task to implement',
+    'Expected outcome (frozen claim from the proposal — informational)',
+    'Repair context — tests failed after your last commit',
+    'Recent integration history (most recent last)',
+    'Scorecard snapshot (last 7 days)',
+    'Derived priorities (source: derived; already accepted by past reviews)',
+    'Goal vectors (verbatim)',
+    'Evidence (cite exactly one id per priority)',
+    'Turn budget checkpoints',
+    'Cycle termination',
+    'Staging protocol',
+    'Forbidden operational paths',
+    'Execution protocol',
+    'Immediate skip protocol',
+    'Identity',
+    'Cycle contract',
+    'Charter',
+})
+
+
+def public_section_heading(heading: str, index: int) -> str:
+    return heading if heading in KNOWN_TASK_SECTIONS else f"section {index} (LAN)"
+
+
 def build_task_sections(task_text: str | None) -> list[dict[str, Any]]:
     """#301: the user message's own section list, built the same way
     ``build_task`` in the harness builds it — one entry per top-level
@@ -1070,9 +1107,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append('      <p class="unavailable-note">no `## ` headings found in the recorded task text.</p>')
     else:
         rows = []
-        for section in task_sections:
+        for section_index, section in enumerate(task_sections, start=1):
             dup_badge = ' <span class="badge-flag badge-flag-truncated">DUPLICATE</span>' if section["duplicate"] else ""
-            rows.append(f'<tr><td>{esc(section["heading"])}{dup_badge}</td><td class="num">{section["chars"]:,}</td></tr>')
+            shown = public_section_heading(section["heading"], section_index)
+            rows.append(f'<tr><td>{esc(shown)}{dup_badge}</td><td class="num">{section["chars"]:,}</td></tr>')
         out.append('      <table class="reconciliation-table">')
         out.append('        <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>')
         out.append(f'        <tbody>{"".join(rows)}</tbody>')
