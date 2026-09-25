@@ -970,10 +970,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                 f'<td>{flags_html}</td><td>~{sec_tokens:,} tokens</td></tr>'
             )
             preview = ""
-            if sec_text:
-                heading_match = re.search(r"^#{1,3}\s+(.+)$", sec_text, re.MULTILINE)
-                if heading_match:
-                    preview = f'<span class="block-preview">{esc(heading_match.group(1).strip())}</span>'
+            # ADR-036 rule 3: no preview -- a heading inside a section is
+            # still section text (a goals heading can quote a priority).
             if sec_sz == 0:
                 out.append(f'<div class="context-block-empty"><span class="block-seq">#{block_seq}</span><strong>{esc(sec_name)}</strong> {owner_cell} &mdash; 0 chars (empty under loop profile) {flags_html}</div>')
             else:
@@ -1151,9 +1149,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     for s in skills:
         s_name = s.get("name", "")
         s_bytes = s.get("size_bytes", 0)
-        s_desc = s.get("desc", "")
         s_content = s.get("content", "")
-        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><p class="skill-card-desc">{esc(s_desc if s_desc else "No description line found.")}</p><details class="skill-card-details"><summary>View SKILL.md ({s_bytes:,} bytes)</summary>{_lan_only(s_content)}</details></div>')
+        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><details class="skill-card-details"><summary>View SKILL.md ({s_bytes:,} bytes)</summary>{_lan_only(s_content)}</details></div>')
     out.append('      </div>')
     out.append('    </div>')
 

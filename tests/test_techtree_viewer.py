@@ -6073,6 +6073,9 @@ def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
     assert marker_agents in collected  # the reader sees it; only rendering must drop it
     markers = [marker_system, marker_task, marker_agents] + ([marker_skill] if marker_skill in collected else [])
 
+    marker_goal = 'ADR036-GOAL-MARKER-f00d'
+    data['goal_text'] = {'charter': f'charter {marker_goal}'}
+    markers.append(marker_goal)
     pages = tv.render_pages(data, 'eeepc')
     assert tv.LINEAGE_DETAILS_FILE in pages
     single = tv.render_page(data, 'eeepc')
