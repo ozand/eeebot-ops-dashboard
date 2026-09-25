@@ -7526,7 +7526,7 @@ def build_empire_stats_strip(
         ('model call incomplete', _breakdown_value(loop, 'model_call_incomplete')),
         ('failure cause unknown', _breakdown_value(loop, 'unknown_failure_cause')),
         ('self_dedup rejections', _breakdown_value(loop, 'self_dedup')),
-        ('repeat failure rate · new', new_rate + (' · снижение из-за #1785(а)' if new_rate != 'n/a' else '')),
+        ('repeat failure rate · new', new_rate + (' · новая формула без self_dedup (#1765); не улучшение работы' if new_rate != 'n/a' else '')),
         ('tokens / integration', humanize_number(cost.get('tokens_per_integration'))),
         ('held-out', f"{esc(heldout.get('passed', 'n/a'))}/{esc(heldout.get('checked', 'n/a'))}"),
         # Issue #1765: supplier outages (gateway/model-provider could not
