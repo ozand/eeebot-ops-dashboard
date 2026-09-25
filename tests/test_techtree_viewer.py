@@ -4554,6 +4554,38 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
     assert missing != unavailable != present_empty
 
 
+def test_cycle_feed_normalizes_lesson_reference_path_and_prefix() -> None:
+    html = tv.build_cycle_feed(
+        [{'phase': 'outcome', 'cycle_id': 'cycle-path', 'outcome': 'success',
+          'lessons_context': ['lesson:lessons/subagent_result_error_handling.md']}],
+        rendered_lesson_ids={'subagent_result_error_handling'},
+    )
+    assert 'href="lessons.html#q-subagent_result_error_handling"' in html
+    assert '(unavailable)' not in html
+
+
+def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
+    rows = [
+        {'phase': 'proposed', 'cycle_id': 'cycle-title', 'task_title': 'Implement diary filter'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-title', 'outcome': 'success', 'files_changed': ['src/filter.py']},
+        {'phase': 'outcome', 'cycle_id': 'cycle-empty', 'outcome': 'success', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Implement diary filter</strong>' in html
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
+    assert '<strong class="feed-title">success</strong>' not in html
+
+
+def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
+    residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
+    checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
+    assert tv._is_non_work_commit_message("diary: record entry")
+    assert tv._is_non_work_commit_message(residual)
+    assert tv._is_non_work_commit_message("selfevo: checkpoint state")
+    assert tv._is_non_work_commit_message(checkpoint)
+    assert not tv._is_non_work_commit_message("selfevo: Implement requested task")
+
+
 def test_274_cycle_lesson_link_shown_as_unavailable_not_dropped() -> None:
     cycles = tv.build_cycle_feed(
         [{'phase': 'outcome', 'cycle_id': 'cycle-x', 'outcome': 'success', 'ts': '2026-09-16T00:00:00Z',
