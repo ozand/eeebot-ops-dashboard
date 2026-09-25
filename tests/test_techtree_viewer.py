@@ -2706,12 +2706,23 @@ def test_issue1765_breakdown_is_no_data_for_legacy_scorecard() -> None:
     assert html.count('no data') >= 5
     assert 'old repeat failure rate' in html
     assert 'repeat failure rate · new' in html
-    assert 'снижение из-за #1785(а)' not in html
+    assert 'новая формула без self_dedup' not in html
+    assert '#1785' not in html
     assert 'execution failures' in html
     assert 'model unavailable (known)' in html
     assert 'model call incomplete' in html
     assert 'failure cause unknown' in html
     assert 'self_dedup rejections' in html
+
+
+def test_issue1765_new_rate_caption_names_the_formula_change() -> None:
+    html = tv.build_empire_stats_strip({'loop': {
+        'repeat_failure_rate': 0.42,
+        'repeat_failure_rate_new': 0.132,
+    }})
+    assert '13.2%' in html
+    assert 'новая формула без self_dedup (#1765); не улучшение работы' in html
+    assert '#1785' not in html
 
 
 def test_batch3_issue48_meta_refresh_and_freshness_badge() -> None:
