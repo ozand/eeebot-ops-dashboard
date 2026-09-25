@@ -285,7 +285,7 @@ def test_cycle_details_join_and_bound_fields() -> None:
     record = details['cycle-a']
     assert record['title'] == 'Ship panel'
     assert record['files_changed'] == [f'f{i}' for i in range(20)]
-    assert record['lesson_insight'] == 'lesson insight'
+    assert record['lesson_insight_chars'] == len('lesson insight')  # ADR-036 rule 3
     # ADR-036 rule 3: public records carry the reflection's size, not its text.
     assert record['reflection']['summary_chars'] == len('reflection summary')
     assert 'summary' not in record['reflection']
@@ -4423,7 +4423,7 @@ def test_issue73_entries_render_with_cycle_links() -> None:
     assert 'cycles.html#cycle-cycle-a' in les
     assert 'LESS-20260825-aaaa' in les
     assert 'Wire validator into suite' in les
-    assert 'validators pay off' in les
+    assert 'validators pay off' not in les  # ADR-036 rule 3: lesson body is LAN-only
 
 
 def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
@@ -4629,8 +4629,8 @@ def test_issue96_v2_lesson_renders_as_card() -> None:
     # v2 card class present
     assert 'lesson-row-v2' in les
     # problem and solution rendered
-    assert 'Proposer skips well-scoped tasks' in les
-    assert 'Tighten dedup fingerprint' in les
+    assert 'Proposer skips well-scoped tasks' not in les  # ADR-036 rule 3: lesson body is LAN-only
+    assert 'Tighten dedup fingerprint' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # tags rendered
     assert 'lesson-tag' in les
     assert 'dedup' in les
@@ -4666,7 +4666,7 @@ def test_issue96_mixed_v2_and_legacy_split_correctly() -> None:
 
     # v2 section present
     assert 'lesson-row-v2' in les
-    assert 'Proposer skips well-scoped tasks' in les
+    assert 'Proposer skips well-scoped tasks' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # legacy folded
     assert 'legacy (pre-v2, frozen)' in les
     # counts in heading
@@ -4729,8 +4729,8 @@ def test_issue96_v2_no_severity_or_seen_or_tags_graceful() -> None:
     les = pages['lessons.html']
 
     assert 'lesson-row-v2' in les
-    assert 'Missing dependency' in les
-    assert 'Add dep to pyproject.toml' in les
+    assert 'Missing dependency' not in les  # ADR-036 rule 3: lesson body is LAN-only
+    assert 'Add dep to pyproject.toml' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # no severity/seen chip elements injected when fields absent
     assert 'class="lesson-severity' not in les
     assert 'class="lesson-seen"' not in les
@@ -4754,8 +4754,9 @@ def test_issue130_duplicate_real_shape_lessons_render_all_with_warning():
     assert html.count('duplicate id on disk') == 2
     assert html.count('<h3 class="lesson-title">When introducing new default-enabled') == 1
     assert html.count('<h3 class="lesson-title">When executing subprocess calls') == 1
-    assert html.count('When introducing new default-enabled') == 2
-    assert html.count('When executing subprocess calls') == 2
+    # ADR-036 rule 3: the problem body (here identical to the title) is LAN-only.
+    assert html.count('When introducing new default-enabled') == 1
+    assert html.count('When executing subprocess calls') == 1
 
 
 def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
@@ -4786,7 +4787,7 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     assert '0 cycles with status' in cycles
     assert '0 results for' in lessons
     assert 'data-filter-empty' in lessons
-    assert 'needle' in lessons
+    assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only
 
 
 def test_issue130_duplicate_lessons_get_unique_anchors():
@@ -5010,7 +5011,7 @@ def test_292_not_created_write_failed_carries_error_detail() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None)
     assert details['cycle-rb4']['error_card_recording'] == {
         'status': 'not_created', 'skip_reason': 'write_failed',
-        'error': 'PermissionError:/repo/lessons/errors.yaml',
+        'error': f'reason text, {len("PermissionError:/repo/lessons/errors.yaml")} chars (LAN)',
     }
 
 
@@ -5498,7 +5499,7 @@ def test_issue215_gate_violations_present_are_retained() -> None:
         'gate_violations must be present when violations are in the ledger row; '
         f'keys present: {list(rec)}'
     )
-    assert rec['gate_violations'] == ['budget exceeded', 'no tests added'], (
+    assert rec['gate_violations'] == ['violation · text 15 chars (LAN)', 'violation · text 14 chars (LAN)'], (
         f'gate_violations content wrong: {rec["gate_violations"]}'
     )
 
@@ -5582,7 +5583,7 @@ def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
     assert 'gate_violations' in rec, (
         f'gate_violations lost in render_pages pipeline; keys: {list(rec)}'
     )
-    assert 'tests must pass' in rec['gate_violations'], (
+    assert rec['gate_violations'] and all('chars (LAN)' in v for v in rec['gate_violations']), (
         f'violation text missing: {rec["gate_violations"]}'
     )
 
@@ -6096,3 +6097,36 @@ def test_adr036_subagent_and_reflector_text_stay_off_public_details() -> None:
         assert marker not in blob, marker
     assert details['cycle-x']['subagents'][0]['summary_chars'] == len(markers[1])
     assert details['cycle-x']['reflection']['findings_count'] == 1
+
+
+def test_adr036_reason_code_is_public_free_text_is_not() -> None:
+    """ADR-036 rule 3 (architect, 2026-09-26): a vocabulary code passes; an
+    executor's phrase is replaced by its size."""
+    rows = [
+        {'cycle_id': 'cycle-code', 'reason': 'no_plan'},
+        {'cycle_id': 'cycle-text', 'reason': 'The executor said ADR036-REASON-MARKER-aa01 here'},
+    ]
+    details = tv.build_cycle_details(rows, None, None, None)
+    assert details['cycle-code']['reason'] == 'no_plan'
+    assert 'ADR036-REASON-MARKER-aa01' not in json.dumps(details)
+    assert details['cycle-text']['reason'].endswith('chars (LAN)')
+
+
+def test_adr036_gate_violations_keep_rule_and_path_only() -> None:
+    rows = [{'cycle_id': 'cycle-g', 'violations': ['test_regression: tests/test_x.py ADR036-GATE-MARKER-bb02 output']}]
+    details = tv.build_cycle_details(rows, None, None, None)
+    [shown] = details['cycle-g']['gate_violations']
+    assert 'ADR036-GATE-MARKER-bb02' not in shown
+    assert shown.startswith('test_regression')
+    assert 'tests/test_x.py' in shown
+
+
+def test_adr036_lesson_bodies_and_priority_summary_stay_off_public_pages() -> None:
+    """Lesson problem/solution/insight text and a priority's summary are
+    LAN-only; titles, tags and the compact priority form stay public."""
+    lessons = [{'cycle_id': 'cycle-l', 'problem': 'ADR036-LESSON-PROBLEM-cc03', 'solution': 'ADR036-LESSON-SOLUTION-dd04', 'insight': 'ADR036-LESSON-INSIGHT-ee05'}]
+    details = tv.build_cycle_details([], None, lessons, None)
+    blob = json.dumps(details)
+    for marker in ('ADR036-LESSON-PROBLEM-cc03', 'ADR036-LESSON-SOLUTION-dd04', 'ADR036-LESSON-INSIGHT-ee05'):
+        assert marker not in blob
+    assert details['cycle-l']['lesson_problem_chars'] == len('ADR036-LESSON-PROBLEM-cc03')
