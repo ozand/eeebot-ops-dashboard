@@ -613,6 +613,34 @@ def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:
     assert session["model_calls"] == 1
 
 
+def test_repeated_seq_durations_preserve_all_prompt_rows(tmp_path: Path) -> None:
+    import json
+    from datetime import datetime, timezone
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    run = root / "bridge" / "runs.jsonl"
+    run.parent.mkdir(parents=True)
+    run.write_text(json.dumps({"run_id": "run-repeat", "cycle_id": "c-repeat", "classification": "completed"}) + "\n", encoding="utf-8")
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    rows = [
+        {"cycle_id": "c-repeat", "component": "executor", "seq": 1, "messages": [{"role": "user", "content": "first"}]},
+        {"cycle_id": "c-repeat", "component": "executor", "seq": 1, "messages": [{"role": "user", "content": "second"}]},
+    ]
+    (prompts / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    (root / "llm_calls" / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in [
+        {"cycle_id": "c-repeat", "component": "executor", "seq": 1, "ts": "2026-09-25T10:00:00Z", "duration_ms": 11},
+        {"cycle_id": "c-repeat", "component": "executor", "seq": 1, "ts": "2026-09-25T10:01:00Z", "duration_ms": 22},
+    ]), encoding="utf-8")
+    rows[0]["ts"] = "2026-09-25T10:00:00Z"
+    rows[1]["ts"] = "2026-09-25T10:01:00Z"
+    (prompts / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-repeat"]
+    model_steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"] if step.get("kind") == "model"]
+    assert [step["duration"] for step in model_steps] == [11, 22]
+
+
 def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path: Path) -> None:
     """F8: associate records by time window, dedupe cumulative tools, don't invent duration seqs."""
     from scripts import cycle_detail as cd
