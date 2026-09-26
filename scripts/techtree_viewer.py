@@ -10133,7 +10133,7 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> None:
+def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | dict[str, str]) -> None:
     """ADR-036 rule 3: verify full target tree recursively (fail-closed)."""
     import base64
     import json as _json
@@ -10180,7 +10180,7 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
             sha = item.get('sha')
-            if path and sha and path not in pages:
+            if path and sha and path not in uploaded_paths:
                 b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
                 if b_res.returncode != 0:
                     raise PublicationScanError(
@@ -10201,6 +10201,88 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
                     ) from exc
     if inherited_pages:
         scan_pages(inherited_pages)
+
+
+def _dry_run_pages(
+    pages: dict[str, str],
+    previous_fingerprints: dict[str, str] | None,
+) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: inspect dry run without remote mutation."""
+    import json as _json
+    try:
+        from scripts.publish_scan import PublicationScanError
+    except ImportError:
+        from publish_scan import PublicationScanError
+
+    branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+    if branch_probe.returncode != 0:
+        print(f'publish: [dry-run] {PUBLISH_BRANCH} does not exist yet; target tree is clean')
+        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+    try:
+        head_data = _json.loads(branch_probe.stdout)
+        probe_tree = head_data['commit']['commit']['tree']['sha']
+    except Exception as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
+        ) from exc
+    prev_fp = previous_fingerprints or {}
+    uploaded = {
+        fname for fname, html in pages.items()
+        if prev_fp.get(fname) != _page_fingerprint(html)
+    }
+    _inspect_and_scan_inherited_tree(probe_tree, uploaded)
+    return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+
+
+def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: bootstrap gh-pages from clean orphan tree, never master."""
+    import base64
+    import json as _json
+    tree_entries = []
+    fingerprints: dict[str, str] = {}
+    for fname, html in sorted(pages.items()):
+        fingerprints[fname] = _page_fingerprint(html)
+        blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
+        blob_body = _json.dumps({'content': blob_b64, 'encoding': 'base64'})
+        blob = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/blobs',
+                    '--input', '-', '--jq', '.sha'], input_text=blob_body)
+        if blob.returncode != 0:
+            print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}', file=sys.stderr)
+            return 1, {}
+        tree_entries.append({
+            'path': fname, 'mode': '100644', 'type': 'blob', 'sha': blob.stdout.strip()
+        })
+
+    tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees', '--input', '-'],
+               input_text=_json.dumps({'tree': tree_entries}))
+    if tree.returncode != 0:
+        print(f'publish: initial tree creation failed: {tree.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        tree_sha = _json.loads(tree.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial tree response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits', '--input', '-'],
+                 input_text=_json.dumps({'tree': tree_sha, 'message': 'publish: initial site', 'parents': []}))
+    if commit.returncode != 0:
+        print(f'publish: initial commit failed: {commit.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        commit_sha = _json.loads(commit.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial commit response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
+                '-f', f'ref=refs/heads/{PUBLISH_BRANCH}', '-f', f'sha={commit_sha}'])
+    if made.returncode != 0:
+        print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+
+    print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
+    return 0, fingerprints
 
 
 def publish_to_pages(
@@ -10247,39 +10329,13 @@ def publish_to_pages(
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
-    # Branch may not exist yet: bootstrap it from the default branch HEAD.
+    if dry_run:
+        return _dry_run_pages(pages, previous_fingerprints)
+
+    # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
-        head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
-                    '--jq', '.object.sha'])
-        if head.returncode != 0:
-            print(f'publish: cannot resolve master HEAD: {head.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-        made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
-                    '-f', f'ref=refs/heads/{PUBLISH_BRANCH}',
-                    '-f', f'sha={head.stdout.strip()}'])
-        if made.returncode != 0:
-            print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-
-    if dry_run:
-        probe = branch_probe if branch_probe.returncode == 0 else _gh(['api', f'repos/{PUBLISH_REPO}/branches/master'])
-        if probe.returncode != 0:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): cannot read branch for dry-run inspection: {probe.stderr.strip()[:200]}"
-            )
-        try:
-            import json as _json
-            head_data = _json.loads(probe.stdout)
-            probe_tree = head_data['commit']['commit']['tree']['sha']
-        except Exception as exc:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
-            ) from exc
-        _inspect_and_scan_inherited_tree(probe_tree, pages)
-        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        return _bootstrap_clean_branch(pages)
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10354,7 +10410,8 @@ def publish_to_pages(
             ) from exc
 
         # ADR-036 rule 3: scan base_tree for this attempt unconditionally
-        _inspect_and_scan_inherited_tree(base_tree, pages)
+        uploaded_paths = {entry['path'] for entry in tree_entries}
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',

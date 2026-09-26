@@ -500,12 +500,14 @@ def test_adr036_bootstrap_gh_pages_from_clean_tree_never_inherits_master(monkeyp
         if "git/blobs" in joined:
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"blob1"}', stderr="")
         if "git/trees" in joined:
-            if "input" in kwargs:
-                tree_payloads.append(kwargs["input"])
+            payload = kwargs.get("input_text") or kwargs.get("input")
+            if payload:
+                tree_payloads.append(payload)
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"tree1"}', stderr="")
         if "git/commits" in joined:
-            if "input" in kwargs:
-                commit_payloads.append(kwargs["input"])
+            payload = kwargs.get("input_text") or kwargs.get("input")
+            if payload:
+                commit_payloads.append(payload)
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"com1"}', stderr="")
         if "git/refs" in joined:
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
