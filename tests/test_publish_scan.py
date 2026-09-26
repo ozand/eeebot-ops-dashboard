@@ -828,7 +828,7 @@ def test_adr036_scans_all_concatenated_gzip_members(monkeypatch: pytest.MonkeyPa
     import base64
     import gzip
     import json
-    compressed_members = gzip.compress(b"safe first member") + gzip.compress(
+    compressed_members = gzip.compress(b"safe first member ") + gzip.compress(
         b"sk-proj-supersecretkey1234567890abcdef"
     )
     encoded = base64.b64encode(compressed_members).decode("ascii")

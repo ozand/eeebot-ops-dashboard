@@ -10228,13 +10228,8 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                                             f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
                                         )
                                     chunks.append(tail)
-                                    if decompressor.unused_data:
-                                        total += 1
-                                        if total > max_decompressed_bytes:
-                                            raise PublicationScanError(
-                                                f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                            )
-                                        chunks.append(b'\n')
+                                    # Gzip members concatenate byte-for-byte; do not insert
+                                    # separators that could split a credential across lines.
                                     if not decompressor.eof:
                                         raise PublicationScanError(
                                             f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
