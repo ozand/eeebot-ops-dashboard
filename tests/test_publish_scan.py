@@ -484,3 +484,42 @@ def test_adr036_dry_run_never_creates_gh_pages_branch(monkeypatch: pytest.Monkey
     rc, fp = tv.publish_to_pages({"index.html": "<html>clean content</html>"}, dry_run=True)
     assert rc == 0
     assert not post_calls, f"dry_run must not make POST calls, but made: {post_calls}"
+
+
+def test_adr036_bootstrap_gh_pages_from_clean_tree_never_inherits_master(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: When gh-pages does not exist, bootstrap from a clean tree, never inheriting master."""
+    calls = []
+    tree_payloads = []
+    commit_payloads = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        calls.append(joined)
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="Not found")
+        if "git/blobs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"blob1"}', stderr="")
+        if "git/trees" in joined:
+            if "input" in kwargs:
+                tree_payloads.append(kwargs["input"])
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"tree1"}', stderr="")
+        if "git/commits" in joined:
+            if "input" in kwargs:
+                commit_payloads.append(kwargs["input"])
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"com1"}', stderr="")
+        if "git/refs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    rc, fp = tv.publish_to_pages({"index.html": "<html>clean content</html>"})
+    assert rc == 0
+    assert not any("heads/master" in c or "branches/master" in c for c in calls)
+    assert tree_payloads
+    import json
+    tree_data = json.loads(tree_payloads[0])
+    assert "base_tree" not in tree_data or tree_data["base_tree"] is None
+    assert commit_payloads
+    com_data = json.loads(commit_payloads[0])
+    assert com_data.get("parents") == []
