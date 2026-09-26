@@ -134,14 +134,19 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
                 m["tool_calls"] = calls
         elif role == "tool":
             cid = m.get("tool_call_id")
-            content = str(m.get("content") or "")
+            raw_content = m.get("content")
+            content = raw_content if isinstance(raw_content, str) else json.dumps(raw_content, ensure_ascii=False)
             args = pending_tool_args.pop(str(cid), "") if cid else pending_tool_args.pop("__latest_idless_env_call__", "")
             if is_env_path(args) or is_env_path(content):
                 m["content"] = "[env file contents withheld]"
-            else:
+            elif isinstance(raw_content, str):
                 m["content"] = redact_text(content)
+            else:
+                m["content"] = _sanitize_nested_value(raw_content)
         elif "content" in m and isinstance(m["content"], str):
             m["content"] = redact_text(m["content"])
+        elif "content" in m:
+            m["content"] = _sanitize_nested_value(m["content"])
         cleaned.append(m)
     return cleaned
 

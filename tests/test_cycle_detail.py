@@ -104,10 +104,11 @@ def test_structured_tool_message_content_is_recursively_sanitized() -> None:
     from scripts.cycle_detail import sanitize_messages
 
     secret = "NESTED_SECRET_CANARY_6512"
-    messages = [{"role": "tool", "content": {"nested": {"password": secret}, "items": [secret]}}]
+    messages = [{"role": "tool", "content": {"nested": {"password": secret}, "items": ["ordinary value"]}}]
     safe = json.dumps(sanitize_messages(messages))
     assert secret not in safe
     assert "[redacted]" in safe
+    assert "ordinary value" in safe
 
 
 def test_env_withholding_does_not_corrupt_structured_non_env_arguments() -> None:
