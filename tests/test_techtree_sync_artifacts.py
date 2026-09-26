@@ -229,14 +229,14 @@ def _make_test_sync_script(dest: Path) -> Path:
 
 def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
     dest = tmp_path / "dest"
-    dest.mkdir()
+    dest.mkdir(exist_ok=True)
     # newline="\n": the host manifest is LF, and on Windows a default write_text
     # emits CRLF, which `read -r` keeps -- the fake curl then sees
     # "scripts/foo.py\r" and answers 404 for a file it serves.
     (dest / "sync-manifest.txt").write_text(initial_manifest, encoding="utf-8", newline="\n")
 
     bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
+    bin_dir.mkdir(exist_ok=True)
     mode_file = tmp_path / "mode.txt"
     mode_file.write_text(mode, encoding="utf-8", newline="\n")
     _write_fake_curl(bin_dir, mode_file)
@@ -469,7 +469,7 @@ def test_sync_records_generator_sha_and_viewer_renders_it_in_footer(
     )
     assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
     assert "installed 2 manifest file(s)" in result.stdout
-    assert "master revision is c0ffee1234567890abcdef1234567890abcdef12" in result.stdout
+    assert "pinned download to master revision c0ffee1234567890abcdef1234567890abcdef12" in result.stdout
 
     sha_file = result.dest / "GENERATOR_SHA"
     assert sha_file.exists()
@@ -482,7 +482,16 @@ def test_sync_records_generator_sha_and_viewer_renders_it_in_footer(
     html = tv.render_page({}, host="eeepc")
     assert "generator c0ffee1" in html
 
-    # 3. When GENERATOR_SHA is missing and running outside git, reports 'unknown'
+    # 3. An unversioned sync invalidates existing GENERATOR_SHA so stale revision does not persist (#325)
+    result_unversioned = _run_sync(
+        tmp_path, mode="commits-404",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result_unversioned.returncode == 0
+    assert not (result_unversioned.dest / "GENERATOR_SHA").exists()
+    assert "invalidated stale revision metadata" in result_unversioned.stdout
+
+    # 4. When GENERATOR_SHA is missing and running outside git, reports 'unknown'
     missing_sha = result.dest / "NONEXISTENT_SHA"
     monkeypatch.setenv("GENERATOR_SHA_FILE", str(missing_sha))
     monkeypatch.setattr(tv, "_BAKED_GENERATOR_SHA", "")
