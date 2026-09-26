@@ -6196,6 +6196,28 @@ def test_311_malformed_latest_start_does_not_reuse_older_attempt() -> None:
     assert 'KILLED / INCOMPLETE' not in row
 
 
+def test_311_live_malformed_start_is_newer_than_archived_valid_attempt() -> None:
+    """Live rows precede archives, so index order cannot date malformed starts."""
+    cid = "cycle-live-malformed-over-archive"
+    # This is read_ledger_history order: current cycles.jsonl first, then
+    # rotated archive rows. The live retry has no parseable start timestamp;
+    # the older archive still has a valid start and terminal failure.
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-26T20:00:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-20T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-20T19:10:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'FAILED' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
 def test_311_missing_latest_start_timestamp_does_not_reuse_older_attempt() -> None:
     cid = "cycle-missing-latest-start"
     ledger = [
