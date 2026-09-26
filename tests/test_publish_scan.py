@@ -427,3 +427,19 @@ def test_adr036_html_entity_encoded_call_markers_and_secrets_trigger_rejection()
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": encoded_password})
+
+
+def test_adr036_quoted_values_in_secret_assignments_trigger_rejection() -> None:
+    """ADR-036 rule 3: Double-quoted and single-quoted values in secret assignments must be rejected."""
+    quoted_double = 'DB_PASSWORD="actual-secret-123"'
+    quoted_single = "API_KEY='actual-secret-123'"
+    quoted_with_spaces = 'ADMIN_TOKEN="actual secret with space 123"'
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": quoted_double})
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": quoted_single})
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": quoted_with_spaces})
