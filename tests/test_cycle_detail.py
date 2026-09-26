@@ -83,6 +83,17 @@ def test_env_file_content_in_tool_arguments_is_withheld_everywhere() -> None:
     assert canary not in rendered
 
 
+def test_env_withholding_does_not_corrupt_structured_non_env_arguments() -> None:
+    from scripts.cycle_detail import sanitize_messages
+
+    message = {"role": "assistant", "tool_calls": [{"id": "ordinary", "function": {
+        "name": "read_file", "arguments": json.dumps({"path": "/tmp/data.json"}),
+    }}]}
+    sanitized = sanitize_messages([message])
+    args = json.loads(sanitized[0]["tool_calls"][0]["function"]["arguments"])
+    assert args == {"path": "/tmp/data.json"}
+
+
 def test_tool_step_reading_env_file_withholds_content():
     """ADR-036 Decision 1 (a): reading /etc/eeepc-agent/*.env withholds contents unconditionally."""
     dummy_secret = "CANARY_SECRET_VAL_7711"
