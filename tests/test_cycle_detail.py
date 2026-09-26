@@ -519,7 +519,7 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
         if tool_result:
             msgs.append({"role": "tool", "tool_call_id": "tool-1", "content": "done"})
         return {"cycle_id": "c-f8", "component": "executor", "seq": seq, "ts": ts, "messages": msgs}
-    records = [prompt("2026-09-25T10:01:00Z", 1), prompt("2026-09-25T10:02:00Z", 2, True), prompt("2026-09-25T10:11:00Z", 1)]
+    records = [prompt("2026-09-25T10:01:00Z", 1), prompt("2026-09-25T10:02:00Z", 2, True), prompt("2026-09-25T10:11:00Z", 1, True)]
     (pdir / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in records), encoding="utf-8")
     (tmp_path / "llm_calls" / "2026-09-25.jsonl").write_text(
         json.dumps({"cycle_id": "c-f8", "component": "executor", "ts": "2026-09-25T10:01:00Z", "duration_ms": 1234}) + "\n",

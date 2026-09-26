@@ -349,6 +349,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         capture_state = "truncated" if has_truncation else "complete"
 
         reconstruction_state = "complete"
+        cycle_reconstruction_incomplete = False
         if read_state != "ok":
             reconstruction_state = "unknown"
         elif not c_prompts and c_runs:
@@ -367,8 +368,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 reconstruction_state = "incomplete"
+                cycle_reconstruction_incomplete = True
             if (p.get("finish_reason") == "tool_calls" and p is c_prompts[-1]) or p.get("tool_calls"):
                 reconstruction_state = "incomplete"
+                cycle_reconstruction_incomplete = True
             sanitized_msgs = sanitize_messages(p.get("messages"))
             model_step = {
                 "kind": "model",
@@ -383,6 +386,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             sessions_by_role[role].extend(tools)
             steps_by_prompt[id(p)] = [model_step, *tools]
 
+        cycle_reconstruction_incomplete = cycle_reconstruction_incomplete or any(
+            run.get("classification") in {"unit_timeout", "killed"} for run in c_runs
+        )
         attempts = []
         assigned_prompts: set[int] = set()
         seen_tool_ids_cycle: set[str] = set()
@@ -405,14 +411,31 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                         role_steps[role].append(tool)
                         if tool_id:
                             seen_tool_ids_cycle.add(tool_id)
-            att_sessions = [{"role": role, "history_complete": not killed and reconstruction_state == "complete",
+            attempt_prompts = [prompt for prompt in c_prompts if started is not None and finished is not None
+                               and (stamp := _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))) is not None
+                               and started <= stamp <= finished]
+            if len(c_runs) == 1 and not attempt_prompts:
+                attempt_prompts = list(c_prompts)
+            attempt_complete = (
+                not killed
+                and read_state == "ok"
+                and not any(compaction.get("reason") == "compacted" or "compact" in str(compaction.get("reason", "")) for compaction in c_compactions)
+                and bool(attempt_prompts)
+                and all(
+                    not prompt.get("truncated")
+                    and not (prompt.get("finish_reason") == "tool_calls" and prompt is c_prompts[-1])
+                    and not any(step.get("status") in {"incomplete", "pending"} for step in extract_tool_steps(prompt))
+                    for prompt in attempt_prompts
+                )
+            )
+            att_sessions = [{"role": role, "history_complete": attempt_complete,
                              "model_calls": sum(step.get("kind") == "model" for step in steps), "steps": steps}
                             for role, steps in sorted(role_steps.items())]
             if killed:
                 reconstruction_state = "incomplete"
             attempts.append({"run_id": rid, "classification": r.get("classification") or "unknown",
                              "model_call_count": len(attributed), "sessions": att_sessions,
-                             "history_complete": not killed and reconstruction_state == "complete"})
+                             "history_complete": attempt_complete})
         unassigned = [p for p in c_prompts if id(p) not in assigned_prompts]
         if unassigned:
             unassigned_steps = []
@@ -426,6 +449,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             read_state == "ok"
             and capture_state == "complete"
             and reconstruction_state == "complete"
+            and not any(a["classification"] in {"unit_timeout", "killed"} for a in attempts)
             and bool(attempts)
             and bool(c_prompts)
         )
