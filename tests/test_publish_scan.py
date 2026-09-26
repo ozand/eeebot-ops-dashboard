@@ -659,6 +659,36 @@ def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pyte
     assert len(calls) == 1 and "git/trees/tree-sha" in calls[0]
 
 
+def test_inherited_blob_approval_written_and_read_with_decoder_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    import base64
+    import json
+
+    sha = "a" * 40
+    cache: dict[str, bool] = {}
+    blob_fetches: list[str] = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        if "git/trees/tree-sha" in joined:
+            stdout = json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": sha}], "truncated": False})
+        elif f"git/blobs/{sha}" in joined:
+            blob_fetches.append(sha)
+            stdout = json.dumps({"content": base64.b64encode(b"clean inherited text").decode(), "encoding": "base64"})
+        else:
+            raise AssertionError(f"unexpected gh call: {joined}")
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache=cache)
+    tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache=cache)
+
+    assert len(blob_fetches) == 1, "second pass must use the exact versioned approval written by the first"
+    expected = ps.clean_cache_key(
+        sha, extra_version=tv._INHERITED_BLOB_DECODER_VERSION, mode="html"
+    )
+    assert cache.get(expected) is True
+
+
 def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
     """ADR-036 rule 3: Any inherited path not in allowlist must be rejected, even without secret markers."""
     import json
