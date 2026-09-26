@@ -6,8 +6,7 @@
 set -eu
 
 DEST=/opt/eeebot-techtree
-RAW_BASE_ROOT=${SYNC_RAW_ROOT:-https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard}
-RAW_BASE="$RAW_BASE_ROOT/master"
+RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master
 COMMITS_URL=${SYNC_COMMITS_URL:-https://api.github.com/repos/ozand/eeebot-ops-dashboard/commits/master}
 # Permanent backups kept per installed file. The publish unit fires every few
 # minutes and each run replaced every manifest file, so an unbounded keep-all
@@ -146,7 +145,7 @@ if [ -f "$TMP_ROOT/rev.remote" ]; then
     case "$cand" in
         [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*)
             echo "$cand" > "$REV_TMP"
-            RAW_BASE="$RAW_BASE_ROOT/$cand"
+            RAW_BASE="https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/$cand"
             echo "techtree sync: pinned download to master revision $cand"
             ;;
         *)
