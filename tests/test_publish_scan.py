@@ -557,6 +557,12 @@ def test_adr036_rejects_entities_still_changing_after_round_limit() -> None:
     deeply_nested = '"messages": []'
     for _ in range(6):
         deeply_nested = html.escape(deeply_nested, quote=True)
+    # Verify the test input itself has six real escaping layers and is not merely
+    # a run of adjacent entities that stabilizes early.
+    decoded = deeply_nested
+    for _ in range(5):
+        decoded = html.unescape(decoded)
+    assert html.unescape(decoded) != decoded
     with pytest.raises(ps.PublicationScanError, match="entity.*limit|unescape.*limit|decode.*limit"):
         ps.scan_pages({"index.html": deeply_nested})
 
@@ -657,6 +663,13 @@ def test_adr036_single_quoted_keys_and_values_trigger_rejection() -> None:
         ps.scan_pages({"index.html": single_json_3})
 
 
+def test_adr036_encoded_html_markup_is_parsed_before_scanning() -> None:
+    """HTML-escaped tag delimiters must be unescaped before parser tokenization."""
+    encoded_markup = "ghp_&lt;span&gt;abcdefghijklmnop123456&lt;/span&gt;"
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": encoded_markup})
+
+
 def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -> None:
     """ADR-036: Scanner inspects parsed text and attribute values, not just raw markup."""
     split_github_token = '<div>ghp_<span data-fragment="abcdefghijklmnop123456"></span></div>'
@@ -667,6 +680,14 @@ def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -
 
     with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
         ps.scan_pages({"index.html": split_assignment})
+
+
+def test_adr036_raw_text_element_markup_is_scanned_as_html_fragment() -> None:
+    """Tag-split credentials inside script/style/textarea/title data remain visible when executed/rendered."""
+    for element in ("script", "style", "textarea", "title"):
+        page = f"<{element}>document.body.innerHTML='ghp_<span>abcdefghijklmnop123456</span>'</{element}>"
+        with pytest.raises(ps.PublicationScanError, match="github_token"):
+            ps.scan_pages({"index.html": page})
 
 
 def test_adr036_single_quoted_structural_markers_trigger_rejection() -> None:
