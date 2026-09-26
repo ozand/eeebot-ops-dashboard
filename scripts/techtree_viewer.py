@@ -9398,15 +9398,36 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 def _generator_sha() -> str:
     """Return the generator's git short SHA.
 
-    Preference order (issue #101):
-    1. Module-level ``_BAKED_GENERATOR_SHA`` — non-empty when set at deploy
-       time via ``sed -i``, so no git repo is required on the host.
-    2. ``git rev-parse --short HEAD`` — works when running directly from the
+    Preference order:
+    1. File ``GENERATOR_SHA`` written by eeebot-techtree-sync.sh (issue #325).
+    2. Module-level ``_BAKED_GENERATOR_SHA`` — legacy sentinel (issue #101),
+       non-empty when set at deploy time via ``sed -i``.
+    3. ``git rev-parse --short HEAD`` — works when running directly from the
        repo (operator workstation / CI).
-    3. ``'unknown'`` — neither source is available.
+    4. ``'unknown'`` — none available.
     """
+    candidates: list[Path] = []
+    import os
+    env_file = os.environ.get("GENERATOR_SHA_FILE")
+    if env_file:
+        candidates.append(Path(env_file))
+    here = Path(__file__).resolve()
+    candidates.append(here.parent.parent / "GENERATOR_SHA")
+    candidates.append(here.parent / "GENERATOR_SHA")
+    candidates.append(Path("/opt/eeebot-techtree/GENERATOR_SHA"))
+
+    for path in candidates:
+        try:
+            if path.is_file():
+                raw = path.read_text(encoding="utf-8").strip()
+                if re.fullmatch(r"[0-9a-fA-F]{40}", raw):
+                    return raw[:7]
+                continue
+        except Exception:
+            pass
+
     if _BAKED_GENERATOR_SHA:
-        return _BAKED_GENERATOR_SHA
+        return _BAKED_GENERATOR_SHA[:7]
     try:
         repo_dir = Path(__file__).resolve().parent.parent
         result = subprocess.run(
@@ -9416,7 +9437,7 @@ def _generator_sha() -> str:
             timeout=5,
             cwd=str(repo_dir),
         )
-        return result.stdout.strip() if result.returncode == 0 else 'unknown'
+        return result.stdout.strip()[:7] if result.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'
 
@@ -9610,7 +9631,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
-        generator_sha=generator_sha or 'unknown',
+        generator_sha=esc(str(generator_sha or 'unknown')[:7]),
     )
 
 
@@ -9962,7 +9983,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
-                          computed_note, error_note, titles_note, generator_sha or 'unknown')
+                          computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
 
     teaser_html = _index_teasers(data, ledger_tail, evolution_tree, hypotheses)
     teaser_feed = build_cycle_feed(

@@ -138,18 +138,36 @@ def test_sync_script_and_dropin_contract() -> None:
 _FAKE_CURL_BODY = r"""#!/bin/sh
 url=""
 outfile=""
+printf '%s\\n' "$@" > "$FAKE_CURL_ARGV_FILE"
 # Consume the value-taking flags the real script passes explicitly, so the URL
 # is the only positional left whatever order the flags come in.
 while [ $# -gt 0 ]; do
     case "$1" in
         -o) outfile="$2"; shift 2 ;;
-        --proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
+        -K)
+            if [ "$2" = "-" ]; then shift 2; cat >/dev/null; else shift 2; fi
+            ;;
+        -H|--header|--proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
         -*) shift ;;
         *) url="$1"; shift ;;
     esac
 done
 mode="$(cat "$FAKE_CURL_MODE_FILE" 2>/dev/null || echo ok)"
 case "$url" in
+    */commits/master|*/commits/*)
+        if [ "$mode" = "commits-404" ]; then
+            echo "curl: (22) The requested URL returned error: 404" >&2
+            exit 22
+        fi
+        case "$mode" in
+            commits-multiple) printf '%s' '{"sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","commit":{"tree":{"sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}}' > "$outfile" ;;
+            commits-short) printf '%s' 'abcdef123' > "$outfile" ;;
+            commits-garbage) printf '%s' '12345678-not-a-sha' > "$outfile" ;;
+            commits-41) printf '%s' 'c0ffee1234567890abcdef1234567890abcdef123' > "$outfile" ;;
+            *) printf '%s\n' "c0ffee1234567890abcdef1234567890abcdef12" > "$outfile" ;;
+        esac
+        exit 0
+        ;;
     */deploy/sync-manifest.txt)
         if [ "$mode" = "manifest-404" ]; then
             echo "curl: (22) The requested URL returned error: 404" >&2
@@ -203,7 +221,7 @@ def _write_fake_curl(bin_dir: Path, mode_file: Path) -> None:
     curl_path.chmod(curl_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def _make_test_sync_script(dest: Path) -> Path:
+def _make_test_sync_script(dest: Path, extra_env: dict[str, str] | None = None) -> Path:
     """A copy of the real, shipped script with only DEST repointed at a
     throwaway directory -- everything else, including the manifest-fetch
     and self-heal logic under test, is byte-identical to what ships."""
@@ -212,6 +230,14 @@ def _make_test_sync_script(dest: Path) -> Path:
     # Windows, dest contains backslashes, which re.sub's replacement-string
     # parser interprets as escape sequences (\T is not a valid one).
     patched = text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
+    extra_env = extra_env or {}
+    if extra_env.get("TEST_SYNC_NONROOT") == "1":
+        patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if false; then')
+        patched = patched.replace('    chown root:root "$REV_TMP"', '    : # chown suppressed for non-root branch test')
+    if extra_env.get("TEST_SYNC_ROOT") == "1":
+        patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if true; then')
+        patched = patched.replace('        chown root:root "$REV_TMP"', '        "$FAKE_CHOWN" root:root "$REV_TMP"')
+        assert '"$FAKE_CHOWN" root:root "$REV_TMP"' in patched
     assert patched != text, "could not locate DEST= line to redirect for the test"
     script_path = dest.parent / "eeebot-techtree-sync-under-test.sh"
     script_path.write_text(patched, encoding="utf-8")
@@ -220,22 +246,26 @@ def _make_test_sync_script(dest: Path) -> Path:
 
 
 def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     dest = tmp_path / "dest"
-    dest.mkdir()
+    dest.mkdir(exist_ok=True)
     # newline="\n": the host manifest is LF, and on Windows a default write_text
     # emits CRLF, which `read -r` keeps -- the fake curl then sees
     # "scripts/foo.py\r" and answers 404 for a file it serves.
     (dest / "sync-manifest.txt").write_text(initial_manifest, encoding="utf-8", newline="\n")
 
     bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
+    bin_dir.mkdir(exist_ok=True)
     mode_file = tmp_path / "mode.txt"
     mode_file.write_text(mode, encoding="utf-8", newline="\n")
     _write_fake_curl(bin_dir, mode_file)
 
-    script_path = _make_test_sync_script(dest)
+    script_path = _make_test_sync_script(dest, extra_env)
     env = dict(os.environ)
     env.pop("SYNC_MANIFEST", None)  # a developer's own override must not steer the test
+    env.pop("GH_TOKEN", None)
+    env["FAKE_CURL_ARGV_FILE"] = _sh_path(tmp_path / "curl-argv.txt")
+    env["FAKE_CHOWN_LOG"] = _sh_path(tmp_path / "chown-args.txt")
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     env.update(extra_env or {})
     result = subprocess.run(
@@ -440,3 +470,135 @@ def test_successful_master_sync_heals_the_local_manifest_copy(tmp_path: Path, sh
     assert "local manifest copy updated from master" in result.stdout
     healed = (result.dest / "sync-manifest.txt").read_text(encoding="utf-8")
     assert healed == "scripts/foo.py\nassets/vendor/bar.js\n"
+
+
+def test_sync_records_generator_sha_and_viewer_renders_it_in_footer(
+    tmp_path: Path, sh_available: bool, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #325: the sync records the master revision it downloaded to
+    GENERATOR_SHA atomically together with the files. The viewer reads that
+    file and renders the revision in the page footer, falling back to
+    'unknown' only when the file is absent."""
+    if not sh_available:
+        pytest.skip("sh not available")
+
+    from scripts import techtree_viewer as tv
+
+    # 1. Run sync against fake master (fake curl returns c0ffee1234567890abcdef1234567890abcdef12)
+    result = _run_sync(
+        tmp_path, mode="ok",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout
+    assert "pinned download to master revision c0ffee1234567890abcdef1234567890abcdef12" in result.stdout
+
+    sha_file = result.dest / "GENERATOR_SHA"
+    assert sha_file.exists()
+    assert sha_file.read_text(encoding="utf-8").strip() == "c0ffee1234567890abcdef1234567890abcdef12"
+    if os.name == "posix":
+        assert (sha_file.stat().st_mode & 0o777) == 0o644
+
+    # 2. Viewer reads this file and renders the revision in the footer
+    monkeypatch.setenv("GENERATOR_SHA_FILE", str(sha_file))
+    assert tv._generator_sha() == "c0ffee1"
+
+    html = tv.render_page({}, host="eeepc")
+    assert "generator c0ffee1" in html
+
+    # 3. An unversioned sync invalidates existing GENERATOR_SHA so stale revision does not persist (#325)
+    result_unversioned = _run_sync(
+        tmp_path, mode="commits-404",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result_unversioned.returncode == 0
+    assert not (result_unversioned.dest / "GENERATOR_SHA").exists()
+    assert "invalidated stale revision metadata" in result_unversioned.stdout
+
+    # 4. When GENERATOR_SHA is missing and running outside git, reports 'unknown'
+    missing_sha = result.dest / "NONEXISTENT_SHA"
+    monkeypatch.setenv("GENERATOR_SHA_FILE", str(missing_sha))
+    monkeypatch.setattr(tv, "_BAKED_GENERATOR_SHA", "")
+
+    orig_run = subprocess.run
+    def mock_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and len(cmd) > 0 and cmd[0] == "git":
+            return subprocess.CompletedProcess(cmd, returncode=128, stdout="", stderr="fatal: not a git repository")
+        return orig_run(cmd, *args, **kwargs)
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    assert tv._generator_sha() == "unknown"
+    html_unknown = tv.render_page({}, host="eeepc")
+    assert "generator unknown" in html_unknown
+
+
+def test_generator_sha_rejects_invalid_file_and_escapes_footer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts import techtree_viewer as tv
+
+    sha_file = tmp_path / "GENERATOR_SHA"
+    sha_file.write_text("<img src=x onerror=alert(1)>", encoding="utf-8")
+    monkeypatch.setenv("GENERATOR_SHA_FILE", str(sha_file))
+    monkeypatch.setattr(tv, "_BAKED_GENERATOR_SHA", "")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a[0], 128, "", ""))
+    assert tv._generator_sha() == "unknown"
+    rendered = tv.render_page({}, host="eeepc")
+    assert "<img src=x onerror=alert(1)>" not in rendered
+    assert "generator unknown" in rendered
+
+
+def test_revision_parser_contract_rejects_invalid_sha_and_auth_argv(
+    tmp_path: Path, sh_available: bool,
+) -> None:
+    if not sh_available:
+        pytest.skip("sh not available")
+    for mode in ("commits-short", "commits-garbage", "commits-41"):
+        result = _run_sync(tmp_path / mode, mode=mode, initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n")
+        assert result.returncode == 0, result.stderr
+        assert not (result.dest / "GENERATOR_SHA").exists()
+    multiple = _run_sync(tmp_path / "multiple", mode="commits-multiple", initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n")
+    assert multiple.returncode == 0, multiple.stderr
+    assert (multiple.dest / "GENERATOR_SHA").read_text().strip() == "a" * 40
+    stale = _run_sync(tmp_path / "stale", mode="commits-short", initial_manifest="scripts/foo.py\n")
+    (stale.dest / "GENERATOR_SHA").write_text("b" * 40)
+    stale = _run_sync(tmp_path / "stale", mode="commits-short", initial_manifest="scripts/foo.py\n")
+    assert stale.returncode == 0
+    assert not (stale.dest / "GENERATOR_SHA").exists()
+
+
+def test_generator_sha_ownership_branches(tmp_path: Path, sh_available: bool) -> None:
+    if not sh_available:
+        pytest.skip("sh not available")
+
+    nonroot = _run_sync(tmp_path / "nonroot", mode="ok", initial_manifest="scripts/foo.py\n", extra_env={"TEST_SYNC_NONROOT": "1"})
+    assert nonroot.returncode == 0, nonroot.stderr
+    assert "not root, ownership of GENERATOR_SHA unchanged" in nonroot.stderr
+    assert (nonroot.dest / "GENERATOR_SHA").is_file()
+
+    fake_chown = tmp_path / "fake-chown.sh"
+    fake_chown.write_text('#!/bin/sh\nprintf "%s\\n" "$*" > "$FAKE_CHOWN_LOG"\n', encoding="utf-8")
+    fake_chown.chmod(fake_chown.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    result = _run_sync(
+        tmp_path / "root", mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={
+            "TEST_SYNC_ROOT": "1",
+            "FAKE_CHOWN": _sh_path(fake_chown),
+            "FAKE_CHOWN_LOG": _sh_path(tmp_path / "root" / "chown-args.txt"),
+            "ROOT_MOCK_MARKER": "true",
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    args = (tmp_path / "root" / "chown-args.txt").read_text(encoding="utf-8").strip().split()
+    assert args[0] == "root:root"
+    assert args[1].endswith("/GENERATOR_SHA")
+
+
+def test_sync_never_passes_token_in_curl_argv(tmp_path: Path, sh_available: bool) -> None:
+    if not sh_available:
+        pytest.skip("sh not available")
+    token = "test-token-that-is-not-secret"
+    result = _run_sync(tmp_path, mode="ok", initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n", extra_env={"GH_TOKEN": token})
+    assert result.returncode == 0, result.stderr
+    argv = (tmp_path / "curl-argv.txt").read_text(encoding="utf-8")
+    assert token not in argv
