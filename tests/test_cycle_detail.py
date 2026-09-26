@@ -10,6 +10,33 @@ from scripts.cycle_detail import display_text, format_model_step, format_tool_st
 from scripts.two_sinks import PUBLIC_PAGES, validate_publish_allowlist
 
 
+def test_render_model_step_rejects_raw_unsanitized_strings() -> None:
+    import pytest
+    from scripts.cycle_detail import SanitizedText, format_model_step
+
+    with pytest.raises(TypeError, match="SanitizedText"):
+        format_model_step({"kind": "model", "answer": "raw secret-bearing input"})
+    rendered = format_model_step({"kind": "model", "answer": SanitizedText("safe sanitized output")})
+    assert "safe sanitized output" in rendered
+    with pytest.raises(TypeError, match="SanitizedText"):
+        format_tool_step({"kind": "model", "arguments": SanitizedText("safe args"), "result": "raw tool result"})
+
+
+def test_structural_json_walker_sanitizes_nested_and_legacy_tool_calls() -> None:
+    from scripts.cycle_detail import sanitize_messages
+
+    secret = "ghp_" + "SYNTHETICNESTEDTOKEN123456"
+    result = sanitize_messages([{
+        "role": "assistant",
+        "function_call": {"name": "read", "arguments": json.dumps({"password": secret})},
+        "tool_calls": [{"function": {"name": "read", "arguments": json.dumps({"nested": [{"token": secret}]})}}],
+        "content": [{"type": "text", "text": secret}],
+    }])
+    serialized = json.dumps(result)
+    assert secret not in serialized
+    assert "[redacted]" in serialized
+
+
 def test_attempts_are_rows_with_per_attempt_counts():
     """ADR-036 §4: attempts remain distinct rows with their own counts."""
     page = render_cycle_page("cycle-synthetic", {"attempts": [
@@ -23,8 +50,12 @@ def test_attempts_are_rows_with_per_attempt_counts():
 
 def test_model_and_tool_steps_render_readably():
     """ADR-036 §4: D2 formatting primitives keep model/tool labels and no tool tokens."""
+    from scripts.cycle_detail import SanitizedText
     model = {"kind": "model", "messages": "synthetic ask", "answer": "synthetic answer", "tools": "search(query: demo)", "reasoning": "collapsed", "tokens": 12, "duration": "2s"}
     tool = {"kind": "tool", "name": "search", "arguments": "query: demo", "result": "synthetic result", "status": "ok", "tokens": None}
+    model = {key: SanitizedText(value) if isinstance(value, str) and key in {"messages", "answer", "tools", "reasoning"} else value for key, value in model.items()}
+    from scripts.cycle_detail import SanitizedText
+    tool = {**tool, "arguments": SanitizedText(tool["arguments"]), "result": SanitizedText(tool["result"])}
     rendered = format_model_step(model) + format_tool_step(tool)
     assert "synthetic ask" in rendered and "synthetic answer" in rendered
     assert "Tools:" in rendered and "collapsed" in rendered and "Tokens: 12" in rendered

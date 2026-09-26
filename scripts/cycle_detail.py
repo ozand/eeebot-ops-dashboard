@@ -9,37 +9,48 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts.publish_scan import STANDALONE_PATTERNS
+
 DEFAULT_DISPLAY_LIMIT = 4000
 
-SECRET_PATTERNS = (
-    # Key=value anywhere on a line where key contains KEY, TOKEN, SECRET, PASSWORD, PASS, AUTH
-    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
-    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS)[A-Za-z0-9_]*\s*:\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
-    # Basic Auth
-    (re.compile(r'(?i)\bAuthorization:\s*Basic\s+[A-Za-z0-9+/=]+'), 'Authorization: Basic [redacted: basic-auth]'),
-    (re.compile(r'(?i)\bBasic\s+[A-Za-z0-9+/=]{8,}'), '[redacted: basic-auth]'),
-    # user:pass@ in URLs
-    (re.compile(r'(?i)([a-z0-9+.-]+://[^/:\s]+):[^/@\s]+(@)'), r'\g<1>:[redacted]\g<2>'),
-    # JSON secret fields (including hyphenated names such as api-key)
-    (re.compile(r'(?i)("(?:[\w-]*_)?(?:password|token|api[_-]?key|secret)[\w-]*"\s*:\s*)"(?:[^"\\]|\\.)*"'), r'\g<1>"[redacted]"'),
-    # Specific API key tokens
-    (re.compile(r'\bsk-[A-Za-z0-9_-]{8,}\b'), '[redacted: api-key]'),
-    (re.compile(r'(?i)\b(?:ghp_|gho_|ghs_|ghu_|github_pat_)[A-Za-z0-9_]+'), '[redacted: token]'),
-    (re.compile(r'(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+'), 'Bearer [redacted: bearer]'),
-    (re.compile(r'\bAKIA[A-Z0-9]{16}\b'), '[redacted: aws-key]'),
-    (re.compile(r'(?i)\bxox[baprs]-[A-Za-z0-9-]+'), '[redacted: slack-token]'),
-    (re.compile(r'-----BEGIN (?:[A-Z0-9_-]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9_-]+ )*PRIVATE KEY-----'), '[redacted: private-key]'),
-)
+REDACTION_REPLACEMENTS = {
+    "eeepc_agent_path": "[internal path]",
+    "openai_secret_key": "[redacted: api-key]",
+    "github_token": "[redacted: token]",
+    "bearer_token": "Bearer [redacted: bearer]",
+    "aws_access_key": "[redacted: aws-key]",
+    "slack_token": "[redacted: slack-token]",
+    "basic_auth": "[redacted: basic-auth]",
+    "url_credentials": "[redacted: url-credentials]",
+    "private_key_header": "[redacted: private-key]",
+    "structural_reasoning_content": "[redacted field]",
+    "structural_messages": "[redacted field]",
+    "structural_prompt": "[redacted field]",
+    "json_secret_field": "[redacted]",
+    "env_secret_kv": "[redacted]",
+    "openai_secret_key_short": "[redacted: api-key]",
+}
+
+class SanitizedText(str):
+    """Text that has passed the private-detail sanitizer."""
 
 def _escape(value: str) -> str:
     return html.escape(value, quote=True)
 
 
-def redact_text(value: str) -> str:
+def _replace_secret_fields(value: str) -> str:
+    value = re.sub(r'(?i)(["\']?[\w-]*(?:password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)[\w-]*["\']?\s*:\s*)(["\'])(.*?)(\2)', lambda match: f"{match.group(1)}{match.group(2)}[redacted]{match.group(2)}", value)
+    value = re.sub(r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*:\s*)([^\s\r\n]+)', lambda match: f"{match.group(1)}[redacted]", value)
+    return re.sub(r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)([^\s\r\n]+)', lambda match: f"{match.group(1)}[redacted]", value)
+
+
+def redact_text(value: str) -> SanitizedText:
     result = value
-    for pattern, repl in SECRET_PATTERNS:
-        result = pattern.sub(repl, result)
-    return result
+    for rule in STANDALONE_PATTERNS:
+        replacement = REDACTION_REPLACEMENTS.get(rule.name)
+        if replacement:
+            result = rule.pattern.sub(replacement, result)
+    return SanitizedText(_replace_secret_fields(result))
 
 
 def is_env_path(path_str: str) -> bool:
@@ -50,17 +61,22 @@ def is_env_path(path_str: str) -> bool:
     )
 
 
-def sanitize_tool_arguments(arguments: str) -> str:
+def sanitize_tool_arguments(arguments: str) -> SanitizedText:
     try:
         parsed = json.loads(arguments)
     except (json.JSONDecodeError, TypeError):
-        return "[env file contents withheld]" if is_env_path(arguments) else redact_text(arguments)
-    if isinstance(parsed, dict) and any(
-        key in {"path", "file", "filename"} and isinstance(value, str) and is_env_path(value)
-        for key, value in parsed.items()
-    ):
-        return "[env file contents withheld]"
-    return json.dumps(_sanitize_nested_value(parsed), ensure_ascii=False)
+        return SanitizedText("[env file contents withheld]" if is_env_path(arguments) else redact_text(arguments))
+    if _contains_env_path(parsed):
+        return SanitizedText("[env file contents withheld]")
+    return SanitizedText(json.dumps(_sanitize_nested_value(parsed), ensure_ascii=False))
+
+
+def _contains_env_path(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any((str(key).lower() in {"path", "file", "filename"} and isinstance(item, str) and is_env_path(item)) or _contains_env_path(item) for key, item in value.items())
+    if isinstance(value, list):
+        return any(_contains_env_path(item) for item in value)
+    return False
 
 
 def _sanitize_nested_value(value: Any) -> Any:
@@ -69,29 +85,29 @@ def _sanitize_nested_value(value: Any) -> Any:
         for key, item in value.items():
             key_text = str(key)
             if re.search(r"(?i)(password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)", key_text):
-                sanitized[key] = "[redacted]"
+                sanitized[key] = SanitizedText("[redacted]")
             else:
                 sanitized[key] = _sanitize_nested_value(item)
         return sanitized
     if isinstance(value, list):
-        return [_sanitize_nested_value(item) for item in value]
+        return [item if isinstance(item, SanitizedText) else _sanitize_nested_value(item) for item in value]
     if isinstance(value, str):
         return redact_text(value)
     return value
 
 
-def sanitize_tool_output(args: str, result: str) -> str:
+def sanitize_tool_output(args: str, result: str) -> SanitizedText:
     if is_env_path(args) or is_env_path(result):
-        return "[env file contents withheld]"
+        return SanitizedText("[env file contents withheld]")
     return redact_text(result)
 
 
-def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> str:
+def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> SanitizedText:
     """Redact and truncate only the display copy, with explicit omitted length."""
     safe = redact_text(value)
     if len(safe) <= limit:
-        return safe
-    return f"{safe[:limit]}… {len(safe) - limit} characters not shown"
+        return SanitizedText(safe)
+    return SanitizedText(f"{safe[:limit]}… {len(safe) - limit} characters not shown")
 
 
 def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
@@ -138,17 +154,49 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
             content = raw_content if isinstance(raw_content, str) else json.dumps(raw_content, ensure_ascii=False)
             args = pending_tool_args.pop(str(cid), "") if cid else pending_tool_args.pop("__latest_idless_env_call__", "")
             if is_env_path(args) or is_env_path(content):
-                m["content"] = "[env file contents withheld]"
+                m["content"] = SanitizedText("[env file contents withheld]")
             elif isinstance(raw_content, str):
                 m["content"] = redact_text(content)
             else:
                 m["content"] = _sanitize_nested_value(raw_content)
-        elif "content" in m and isinstance(m["content"], str):
-            m["content"] = redact_text(m["content"])
+        elif "content" in m:
+            m["content"] = _sanitize_nested_value(m["content"])
         if role == "assistant" and isinstance(m.get("content"), str):
             m["content"] = redact_text(m["content"])
         if "content" in m and not isinstance(m["content"], str):
             m["content"] = _sanitize_nested_value(m["content"])
+        if isinstance(m.get("content"), list):
+            m["content"] = _sanitize_nested_value(m["content"])
+        if isinstance(m.get("function_call"), dict):
+            fn_call = dict(m["function_call"])
+            args = fn_call.get("arguments")
+            if isinstance(args, (dict, list)):
+                args = json.dumps(args, ensure_ascii=False)
+            if isinstance(args, str):
+                fn_call["arguments"] = sanitize_tool_arguments(args)
+            m["function_call"] = fn_call
+        if isinstance(m.get("tool_calls"), list):
+            safe_calls = []
+            for item in m["tool_calls"]:
+                if not isinstance(item, dict):
+                    safe_calls.append(item)
+                    continue
+                call = dict(item)
+                fn = dict(item.get("function") or item)
+                args = fn.get("arguments")
+                if isinstance(args, (dict, list)):
+                    args = json.dumps(args, ensure_ascii=False)
+                if isinstance(args, str):
+                    fn["arguments"] = sanitize_tool_arguments(args)
+                if "function" in item:
+                    call["function"] = fn
+                else:
+                    call.update(fn)
+                safe_calls.append(call)
+            m["tool_calls"] = safe_calls
+        for key, item in list(m.items()):
+            if key != "content" and isinstance(item, (dict, list)):
+                m[key] = _sanitize_nested_value(item)
         cleaned.append(m)
     return cleaned
 
@@ -236,7 +284,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                         "kind": "tool",
                         "tool_call_id": str(cid),
                         "name": str(fn.get("name") or "tool"),
-                        "arguments": str(args),
+                        "arguments": sanitize_tool_arguments(str(args)),
                         "result": None,
                         "source": source,
                         "status": "pending",
@@ -278,8 +326,8 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                 "kind": "tool",
                 "tool_call_id": str(tc.get("id") or ""),
                 "name": str(fn.get("name") or "tool"),
-                "arguments": str(args),
-                "result": "[no next request: final tool call without next prompt]",
+                "arguments": sanitize_tool_arguments(str(args)),
+                "result": SanitizedText("[no next request: final tool call without next prompt]"),
                 "source": source,
                 "status": "incomplete",
                 "duration": None,
@@ -389,7 +437,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             if duration_row is not None:
                 used_duration_ids.add(id(duration_row))
             dur = duration_row.get("duration_ms") if duration_row is not None else None
-            tools = extract_tool_steps(p)
+            sanitized_prompt = dict(p)
+            sanitized_prompt["messages"] = sanitize_messages(p.get("messages"))
+            tools = extract_tool_steps(sanitized_prompt)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
@@ -397,11 +447,14 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
             sanitized_msgs = sanitize_messages(p.get("messages"))
+            response_tools = _sanitize_nested_value(p.get("tool_calls")) if p.get("tool_calls") else None
+            legacy_call = _sanitize_nested_value(p.get("function_call")) if p.get("function_call") else None
             model_step = {
                 "kind": "model",
-                "messages": json.dumps(_strip_tool_ids(sanitized_msgs), ensure_ascii=False) if sanitized_msgs else None,
+                "messages": SanitizedText(redact_text(json.dumps(_strip_tool_ids(sanitized_msgs), ensure_ascii=False))) if sanitized_msgs else None,
                 "answer": redact_text(str(p.get("content"))) if p.get("content") is not None else None,
-                "tools": json.dumps(p.get("tool_calls"), ensure_ascii=False) if p.get("tool_calls") else None,
+                "tools": SanitizedText(redact_text(json.dumps(response_tools, ensure_ascii=False))) if response_tools else None,
+                "function_call": SanitizedText(redact_text(json.dumps(legacy_call, ensure_ascii=False))) if legacy_call else None,
                 "reasoning": redact_text(str(p.get("reasoning_content"))) if p.get("reasoning_content") is not None else None,
                 "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
                 "duration": dur if dur is not None else "unknown",
@@ -518,9 +571,13 @@ def mark_incomplete_history(record: dict[str, Any]) -> dict[str, Any]:
 
 def format_model_step(step: dict[str, Any]) -> str:
     parts = ["<div class=\"step-model\"><h4>Model step</h4>"]
-    for label in ("messages", "answer", "tools", "reasoning"):
+    for label in ("messages", "answer", "tools", "function_call", "reasoning"):
         if step.get(label) is not None:
-            parts.append(f"<p><b>{label.title()}:</b> {_escape(display_text(str(step[label])))}</p>")
+            value = step[label]
+            if not isinstance(value, SanitizedText):
+                raise TypeError(f"{label} must be SanitizedText")
+            safe_value = value
+            parts.append(f"<p><b>{label.title()}:</b> {_escape(str(display_text(safe_value)))}</p>")
     if step.get("tokens") is not None:
         parts.append(f"<p>Tokens: {step['tokens']}</p>")
     if step.get("duration") is not None:
@@ -531,10 +588,18 @@ def format_model_step(step: dict[str, Any]) -> str:
 
 def format_tool_step(step: dict[str, Any]) -> str:
     name = display_text(str(step.get("name", "unavailable")))
-    raw_args = str(step.get("arguments", "unavailable"))
-    args = "[env file contents withheld]" if is_env_path(raw_args) else display_text(raw_args)
+    raw_args = step.get("arguments", SanitizedText("unavailable"))
+    if not isinstance(raw_args, SanitizedText):
+        if "arguments" in step and step.get("kind") == "model":
+            raise TypeError("arguments must be SanitizedText")
+        raw_args = sanitize_tool_arguments(str(raw_args))
+    args = display_text(raw_args)
     res_val = step.get("result")
-    result = display_text(sanitize_tool_output(args, str(res_val))) if res_val is not None else "unavailable"
+    if res_val is not None and not isinstance(res_val, SanitizedText):
+        if step.get("kind") == "model":
+            raise TypeError("result must be SanitizedText")
+        res_val = sanitize_tool_output(str(raw_args), str(res_val))
+    result = display_text(sanitize_tool_output(str(raw_args), str(res_val))) if res_val is not None else SanitizedText("unavailable")
     dur_val = step.get("duration")
     duration = display_text(str(dur_val)) if dur_val is not None else "unknown"
     source = display_text(str(step.get("source", "reconstructed from request")))
