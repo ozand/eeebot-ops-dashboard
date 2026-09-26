@@ -549,3 +549,28 @@ def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
     assert "FAILURES_AND_TEST_OUTPUT_CANARY_54321" not in pub_json
     assert "DERIVED_PUBLIC_LABEL_OK" in pub_json
     assert "CANARY_PUBLIC_CHARTER_OK" in pub_json
+
+
+def test_f10_current_alias_redirects_and_swap_preserves_old_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """External review F10: /current/... must redirect to /<version>/... to prevent reader snapshot skew."""
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "v1", "data.json": "{}"}, "v1")
+
+    class MockHandler(SnapshotHTTPRequestHandler):
+        def __init__(self, path):
+            self.path = path
+            self.site_root = root
+            self.response_code = None
+            self.headers_sent = {}
+        def send_response(self, code):
+            self.response_code = code
+        def send_header(self, k, v):
+            self.headers_sent[k] = v
+        def end_headers(self):
+            pass
+
+    h = MockHandler("/current/data.json")
+    h.do_GET()
+    assert h.response_code == 302
+    assert h.headers_sent.get("Location") == "/v1/data.json"
