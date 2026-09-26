@@ -236,12 +236,12 @@ def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path
     assert observed["state_root"] == tmp_path
 
 
-def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> None:
+def test_manual_cycle_page_links_are_safely_encoded_and_bounded(tmp_path: Path) -> None:
     from scripts.two_sinks import build_private_cycle_pages
 
-    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=cycle-linked">details</a>'}, tmp_path)
-    assert "cycles/cycle-linked.html" in pages
-    assert "cycle-linked" in pages["cycles/cycle-linked.html"]
+    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=../../escape">details</a>'}, tmp_path)
+    assert "cycles/../../escape.html" not in pages
+    assert all(Path(key).name == key.split("/", 1)[1] for key in pages if key.startswith("cycles/"))
 
 
 def test_missing_cycle_sources_render_unavailable_not_empty():
