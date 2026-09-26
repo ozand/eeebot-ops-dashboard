@@ -147,45 +147,46 @@ def _combined_pattern(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
     return _compile_scanner_patterns(patterns)
 
 
-@lru_cache(maxsize=4)
-def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...]:
-    # Candidate detection is a skip optimization only; a hit is always followed
-    # by the full merged scanner over the complete representation.
-    fixed = {
-        "/etc/eeepc-agent", "sk-", "ghp_", "gho_", "ghs_", "ghu_", "github_pat_",
-        "bearer ", "akia", "xox", "authorization:", "http://", "https://",
-        "private key", "'reasoning_content'", '"reasoning_content"',
-        "'messages'", '"messages"', "'prompt'", '"prompt"',
-        '"password"', "'password'", '"secret"', "'secret'", '"api_key"', "'api_key'",
-        '"api-key"', "'api-key'", '"access_token"', "'access_token'",
-        '"auth_token"', "'auth_token'", '"token"', "'token'", "_password=", "_password:", "_secret=", "_secret:",
-        "_token=", "_token:", "_key=", "_key:", "password=", "password:",
-        "secret=", "secret:", "token=", "token:", "api_key=", "api_key:",
-    }
-    dynamic = {
-        rule.pattern.pattern.lower()
-        for rule in patterns
-        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{8,}", rule.pattern.pattern)
-    }
-    # Keep in sync with the full environment / JSON secret-key regexes. These
-    # candidates are intentionally broad: any matching key shape triggers the
-    # full scan, which still applies exclusions and secret-value checks.
-    fixed.update({"_pass=", "_pass:", "_auth=", "_auth:", "auth=", "auth:"})
-    # JSON key regex accepts arbitrary prefixes/suffixes around secret terms.
-    return tuple(fixed | dynamic)
+# Required literal anchors per scanner rule. A rule may have multiple
+# alternatives; every successful alternative must contain at least one anchor.
+SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
+    "eeepc_agent_path": ("/etc/eeepc-agent",),
+    "openai_secret_key": ("sk-",),
+    "github_token": ("ghp_", "gho_", "ghs_", "ghu_", "github_pat_"),
+    "bearer_token": ("bearer",),
+    "aws_access_key": ("akia",),
+    "slack_token": ("xox",),
+    "basic_auth": ("basic",),
+    "url_credentials": ("http://", "https://"),
+    "private_key_header": ("-----begin", "private key-----"),
+    "structural_reasoning_content": ("reasoning_content",),
+    "structural_messages": ("messages",),
+    "structural_prompt": ("prompt",),
+}
 
 
-_JSON_CANDIDATE_RE = re.compile(
-    r"(?i:[\"'][a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*[\"']\s*:)"
-)
+def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...] | None:
+    """Build prefilter literals from per-pattern anchors; None means scan all."""
+    needles: set[str] = set()
+    for rule in patterns:
+        anchors = SCANNER_ANCHORS.get(rule.name)
+        if not anchors or any(not isinstance(anchor, str) or not anchor for anchor in anchors):
+            return None
+        insensitive = bool(rule.pattern.flags & re.IGNORECASE) or rule.pattern.pattern.startswith("(?i)")
+        needles.update(anchor.lower() if insensitive else anchor for anchor in anchors)
+    # Env and JSON recognizers are scanner rules too. Their full key families
+    # are covered by suffix/quote anchors, not a hand-maintained credential list.
+    needles.update(("key", "token", "secret", "password", "pass", "auth"))
+    needles.update(("password", "secret", "api_key", "api-key", "access_token", "auth_token", "token"))
+    return tuple(needles)
 
 
 def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
+    needles = _candidate_needles(patterns)
+    if needles is None:
+        return True
     lowered = text.lower()
-    return (
-        any(lowered.find(needle) >= 0 for needle in _candidate_needles(patterns))
-        or _JSON_CANDIDATE_RE.search(text) is not None
-    )
+    return any((needle.lower() if needle.islower() else needle) in lowered for needle in needles)
 
 
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
