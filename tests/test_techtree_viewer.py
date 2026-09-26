@@ -6178,6 +6178,42 @@ def test_311_completed_previous_attempt_does_not_kill_active_retry() -> None:
     assert 'KILLED / INCOMPLETE' not in row
 
 
+def test_311_malformed_latest_start_does_not_reuse_older_attempt() -> None:
+    cid = "cycle-malformed-latest-start"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-25T19:10:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T19:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'failed' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_missing_latest_start_timestamp_does_not_reuse_older_attempt() -> None:
+    cid = "cycle-missing-latest-start"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-25T19:10:00Z"},
+        {"phase": "started", "cycle_id": cid},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T19:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'failed' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
 def test_311_finished_run_must_overlap_ledger_attempt_start() -> None:
     cid = "cycle-quick-retry-same-id"
     ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]

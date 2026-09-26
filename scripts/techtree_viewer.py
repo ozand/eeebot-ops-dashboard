@@ -5960,8 +5960,17 @@ def build_cycle_feed(
             if isinstance(p, dict) and p.get('phase') == 'started'
         ]
         valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
-        if valid_starts:
-            last_started_idx, latest_start = max(valid_starts, key=lambda item: item[1])
+        malformed_starts = [i for i, ts in started_rows if ts is None]
+        latest_valid = max(valid_starts, key=lambda item: item[1]) if valid_starts else None
+        # A later started row with an unparseable timestamp is still an attempt
+        # boundary. Do not silently fall back to an older valid start and inherit
+        # its terminal outcome; timestamp ordering cannot safely classify rows
+        # across that boundary, so retain input order from the malformed start.
+        if malformed_starts and (latest_valid is None or malformed_starts[-1] > latest_valid[0]):
+            last_started_idx = malformed_starts[-1]
+            attempt_phases = phases[last_started_idx:]
+        elif latest_valid is not None:
+            last_started_idx, latest_start = latest_valid
             timestamped_attempt_phases = []
             for p in phases:
                 phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
