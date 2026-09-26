@@ -70,6 +70,9 @@ ProtectSystem=strict
 # StateDirectory= removes the trap at the source instead of papering over it.
 StateDirectory=eeebot-techtree
 StateDirectoryMode=0700
+# ADR-036 D1 host snapshot sink: allow writing to the static dashboard site root
+# under ProtectSystem=strict.
+ReadWritePaths=/var/lib/eeebot-site
 
 # Precautionary, not smoke-tested on the host (issue #27 review, blocker
 # B9): eeebot-publish is a system user created with --no-create-home, so
