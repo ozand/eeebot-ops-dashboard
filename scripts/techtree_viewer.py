@@ -7114,14 +7114,17 @@ def build_agent_panel(
     context_html = build_two_tier_context_html(agent_context)
     # 1. AGENTS.md
     if agents_md is not None:
-        md_text = agents_md.strip()
-        # ADR-036 rule 3: AGENTS.md is system-prompt text -- LAN only.
-        # Issue #44: capped scroll boxes are scroll-traps; native <details>
-        # keeps the page one scrolling document, closed by default.
+        if isinstance(agents_md, dict) and "lines" in agents_md and "chars" in agents_md:
+            md_lines = agents_md["lines"]
+            md_chars = agents_md["chars"]
+        else:
+            md_text = str(agents_md).strip()
+            md_lines = len(md_text.splitlines())
+            md_chars = len(md_text)
         agents_html = (
             f'<details class="charter-details agents-md-box">'
-            f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(md_text):,} chars)</p></div></details>'
+            f'<summary>AGENTS.md charter ({md_lines} lines)</summary>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({md_chars:,} chars)</p></div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -7129,12 +7132,17 @@ def build_agent_panel(
     # 2. Goals charter
     goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
     if isinstance(goal_text, dict):
-        g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-        # ADR-036 rule 3: the operator's goal text is private -- LAN only.
+        if "lines" in goal_text and "chars" in goal_text:
+            g_lines = goal_text["lines"]
+            g_chars = goal_text["chars"]
+        else:
+            g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
+            g_lines = len(str(g_text).splitlines())
+            g_chars = len(str(g_text))
         goals_html = (
             f'<details class="charter-details goal-text-box">'
-            f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(str(g_text)):,} chars)</p></div></details>'
+            f'<summary>Goals charter ({g_lines} lines)</summary>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
         )
 
     # 3. Skills fitness table
@@ -9449,8 +9457,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_text')
-    agents_md = data.get('agents_md')
+    goal_text = data.get('goal_meta') or data.get('goal_text')
+    agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
@@ -9837,8 +9845,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_text')
-    agents_md = data.get('agents_md')
+    goal_text = data.get('goal_meta') or data.get('goal_text')
+    agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
@@ -10107,34 +10115,15 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
 
 _GENERATED_AT_RE = re.compile(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}')
 _SOURCE_AGE_RE = re.compile(r'\d+(?:\.\d+)?[smhd] old')
+_SNAPSHOT_META_RE = re.compile(r'<meta name="snapshot-version" content="[^"]*">')
+_SNAPSHOT_FOOTER_RE = re.compile(r'<footer class="snapshot-meta">.*?</footer>', re.DOTALL)
 
 
 def _page_fingerprint(html: str) -> str:
-    """#278: sha256 over a page with its two guaranteed-every-run-volatile
-    fields -- the "generated {timestamp} UTC" footer stamp and the
-    "newest source {age} old" freshness string -- replaced by fixed
-    placeholders first.
-
-    Both change on literally every publish regardless of whether any
-    DOMAIN content did (the timestamp is wall-clock at render time; the
-    age is `now - mtime` and only stays constant if measured at the exact
-    same instant twice). Hashing the raw HTML would mean every page always
-    looks "changed" and publish_to_pages's unchanged-file skip could never
-    fire -- which is the exact defect issue #278 measured ("all 8 files
-    touched every run because shared navigation/timestamp metadata
-    invalidates every page").
-
-    Wrong-direction risk: neither pattern can occur elsewhere in rendered
-    content (other timestamps in this codebase are ISO-8601 with a literal
-    `T`/`Z`, never the bare `YYYY-MM-DD HH:MM:SS` form used only by this
-    footer; no other field is formatted as "<number><unit> old"), so this
-    cannot mistake a real content change for volatile noise. If it ever
-    did, the failure mode is bounded, not silent: the staleness floor in
-    techtree_autopublish.py already forces a full republish at least once
-    per its configured window regardless of any digest/fingerprint
-    decision, so a wrongly-skipped page cannot stay stale indefinitely."""
     normalized = _GENERATED_AT_RE.sub('GENERATED_AT', html)
     normalized = _SOURCE_AGE_RE.sub('SOURCE_AGE', normalized)
+    normalized = _SNAPSHOT_META_RE.sub('', normalized)
+    normalized = _SNAPSHOT_FOOTER_RE.sub('', normalized)
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 

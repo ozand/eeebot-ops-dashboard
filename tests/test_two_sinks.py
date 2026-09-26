@@ -28,7 +28,11 @@ def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", lambda pages: order.append(("gh", pages)))
     assert (tmp_path / "site/current").resolve().name == "v1"
     assert 'content="v1"' in (tmp_path / "site/v1/index.html").read_text()
-    assert order == [("gh", PUBLIC)]
+    assert len(order) == 1
+    assert order[0][0] == "gh"
+    assert 'content="v1"' in order[0][1]["index.html"]
+    assert "Snapshot v1" in order[0][1]["index.html"]
+    assert "cycle.html" not in order[0][1]
 
 
 def test_publish_allowlist_refuses_unlisted_pages(tmp_path: Path):
@@ -42,7 +46,9 @@ def test_private_pages_never_reach_gh_pages(tmp_path: Path):
     sent = []
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", sent.append)
     assert "cycle.html" in {p.name for p in (tmp_path / "site/v1").iterdir()}
-    assert sent == [PUBLIC]
+    assert len(sent) == 1
+    assert "index.html" in sent[0]
+    assert "cycle.html" not in sent[0]
 
 
 def test_public_pages_carry_no_call_content(tmp_path: Path):
@@ -314,5 +320,60 @@ def test_host_failure_does_not_block_gh_pages_publish(tmp_path: Path):
     with pytest.raises(HostSnapshotError) as exc_info:
         publish_ordered(bad_root, PUBLIC, PRIVATE, "v1", mock_publisher)
 
-    assert published == [PUBLIC]
+    assert len(published) == 1
+    assert "index.html" in published[0]
+    assert "cycle.html" not in published[0]
     assert exc_info.value.publish_result == (0, {})
+
+
+def test_server_unit_file_contains_required_security_directives():
+    """ADR-036 B4: server systemd unit file has all required isolation directives."""
+    unit_path = Path(__file__).resolve().parent.parent / "deploy" / "eeebot-dashboard-server.service"
+    assert unit_path.is_file()
+    content = unit_path.read_text(encoding="utf-8")
+    required = [
+        "DynamicUser=yes",
+        "ReadOnlyPaths=/var/lib/eeebot-site",
+        "ProtectSystem=strict",
+        "ProtectHome=yes",
+        "NoNewPrivileges=yes",
+        "PrivateTmp=yes",
+        "RestrictAddressFamilies=AF_INET AF_INET6",
+        "InaccessiblePaths=/var/lib/eeebot-techtree /etc/eeepc-agent",
+    ]
+    for directive in required:
+        assert directive in content, f"Missing directive {directive} in unit file"
+
+
+def test_directory_listing_disabled_in_snapshot_server(tmp_path: Path):
+    """ADR-036: directory listing returns 404 in SnapshotHTTPRequestHandler."""
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "hello"}, "v1")
+
+    class MockHandler(SnapshotHTTPRequestHandler):
+        def __init__(self):
+            self.site_root = root
+            self.error_code = None
+        def send_error(self, code, message=None):
+            self.error_code = code
+
+    h = MockHandler()
+    res = h.list_directory(root / "v1")
+    assert res is None
+    assert h.error_code == 404
+
+
+def test_unchanged_pages_produce_zero_uploads_across_runs():
+    """ADR-036 B2: normalized fingerprints strip volatile snapshot metadata; unchanged pages produce 0 uploads."""
+    from scripts import techtree_viewer as tv
+    from scripts.two_sinks import add_snapshot_version
+
+    base_html = "<html><head><title>Test</title></head><body><h1>Content</h1></body></html>"
+    p1 = add_snapshot_version({"index.html": base_html}, "v1", generated_at="2026-09-26T00:00:00Z")
+    fp1 = tv._page_fingerprint(p1["index.html"])
+
+    p2 = add_snapshot_version({"index.html": base_html}, "v2", generated_at="2026-09-26T00:05:00Z")
+    fp2 = tv._page_fingerprint(p2["index.html"])
+
+    assert fp1 == fp2, "Fingerprints must match across different snapshot versions if content is unchanged"
