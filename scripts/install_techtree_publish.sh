@@ -60,7 +60,6 @@ run mkdir -p "$OPT_DIR"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_viewer.py" "$OPT_DIR/techtree_viewer.py"
 run install -o root -g root -m 0644 "$ROOT/scripts/techtree_autopublish.py" "$OPT_DIR/techtree_autopublish.py"
 run install -o root -g root -m 0644 "$ROOT/scripts/about_page.py" "$OPT_DIR/about_page.py"
-run install -o root -g root -m 0644 "$ROOT/scripts/publish_scan.py" "$OPT_DIR/publish_scan.py"
 
 # 3. The publisher's own state dir (digest + last-publish timestamp) is
 #    NOT created here: eeebot-techtree-publish.service declares
