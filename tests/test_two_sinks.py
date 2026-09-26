@@ -478,3 +478,10 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     meta_no_prio = pub_no_prio["goal_meta"]
     assert meta_no_prio["state"] == "present"
     assert meta_no_prio["priority_count"] is None
+
+
+def test_publisher_service_unit_declares_site_root_writable() -> None:
+    """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
+    unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
+    text = unit_path.read_text(encoding="utf-8")
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
