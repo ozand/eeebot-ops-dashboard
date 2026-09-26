@@ -122,6 +122,9 @@ HEALTH_FAILURE_STREAK_LENGTH = 3
 # if its bridge run finished (via runs.jsonl), or the time elapsed since its last ledger
 # activity exceeds this ceiling. Configurable via environment variable.
 BRIDGE_UNIT_TIMEOUT_SECONDS = int(os.environ.get('EEEBOT_BRIDGE_TIMEOUT_SECONDS', '3300'))
+# Bridge process setup precedes its first ledger `started` row; allow bounded
+# timestamp skew while rejecting records from earlier same-cycle attempts.
+BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS = 120
 
 
 def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
@@ -5773,7 +5776,10 @@ def is_cycle_run_ended(
             matches_cycle = bool(run_cid and (
                 run_cid == cid or run_cid == cid.replace("cycle-", "", 1)
             ))
-            belongs_to_attempt = bool(r_start and s_dt and r_start >= s_dt)
+            belongs_to_attempt = bool(
+                r_start and s_dt
+                and r_start >= s_dt - timedelta(seconds=BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS)
+            )
             if matches_cycle and belongs_to_attempt and (run.get("finished_at") or run.get("phase") == "run_end"):
                 if is_timeout:
                     return True, f"unit timeout ({cls})"
@@ -5955,10 +5961,12 @@ def build_cycle_feed(
         valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
         if valid_starts:
             last_started_idx, latest_start = max(valid_starts, key=lambda item: item[1])
-            attempt_phases = [
-                p for p in phases
-                if (p.get('ts') and (_parse_iso_ts(str(p.get('ts'))) or latest_start) >= latest_start)
-            ]
+            timestamped_attempt_phases = []
+            for p in phases:
+                phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                if phase_ts is not None and phase_ts >= latest_start:
+                    timestamped_attempt_phases.append((phase_ts, p))
+            attempt_phases = [p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])]
         else:
             last_started_idx = started_rows[-1][0] if started_rows else None
             attempt_phases = phases[last_started_idx:] if last_started_idx is not None else phases
