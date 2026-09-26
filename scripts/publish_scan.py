@@ -11,7 +11,6 @@ from html.parser import HTMLParser
 import hashlib
 import json
 import re
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable, NamedTuple, Pattern
 
@@ -126,23 +125,6 @@ _ENV_SECRET_KV_RE = re.compile(
 _ENV_KEY_CANDIDATE_RE = re.compile(
     r'(?i)\b[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*[:=]'
 )
-
-
-def _compile_scanner_patterns(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
-    branches = []
-    for rule in patterns:
-        source = rule.pattern.pattern
-        flags = rule.pattern.flags
-        if source.startswith("(?i)"):
-            source = source[4:]
-            flags |= re.IGNORECASE
-        inline = "(?i:" + source + ")" if flags & re.IGNORECASE else "(?:" + source + ")"
-        branches.append(f"(?P<{rule.name}>{inline})")
-    branches.extend((
-        r"(?P<json_secret>(?i:['\"])(?P<json_key>[a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)(?i:['\"])\s*:\s*(?:\"(?P<json_dval>[^\"]+)\"|'(?P<json_sval>[^']+)'|(?P<json_uval>[^,}\s]+)))",
-        r"(?P<env_secret>(?i:\b)(?P<env_key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)(?i:\s*[:=]\s*)(?:\"(?P<env_dval>[^\"]{8,})\"|'(?P<env_sval>[^']{8,})'|(?P<env_uval>[^\"'<>\s$]{8,})))",
-    ))
-    return re.compile("|".join(branches))
 
 
 # Required literal anchors per scanner rule. A rule may have multiple
