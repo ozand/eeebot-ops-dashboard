@@ -92,45 +92,11 @@ def test_adr036_pattern_env_kv_and_json_secrets_trigger_rejection() -> None:
     assert "json_secret_field" in str(exc_info.value)
 
 
-def test_scan_reference_live_size_html_within_cold_time_budget() -> None:
-    """A live-sized ~8.5 MiB HTML page should cold-scan in under five seconds."""
-    import time
-    content = '<!doctype html><html><body>' + (
-        '<p class="status">ordinary dashboard text and counters 123456</p>' * 130000
-    ) + '</body></html>'
-    size = len(content.encode("utf-8"))
-    assert 8_000_000 <= size <= 9_000_000
-
-    started = time.perf_counter()
-    ps.scan_pages({"lineage.html": content})
-    elapsed = time.perf_counter() - started
-    assert elapsed < 5.0, f"cold scan of {size} bytes took {elapsed:.3f}s"
-
-
 def _live_sized_clean_html() -> str:
     """Representative ~8.45 MB synthetic page, matching the live scan budget scale."""
     return '<!doctype html><html><body>' + (
         '<p class="status">ordinary dashboard text and counters 123456</p>' * 130000
     ) + '</body></html>'
-
-
-def test_scan_reference_live_size_html_meets_budget_and_cache_repeat_is_fast() -> None:
-    """Cold ~8.5 MiB scan has a fixed budget; clean repeat should hit the hash cache."""
-    import time
-    content = _live_sized_clean_html()
-    assert 8_000_000 <= len(content.encode("utf-8")) <= 9_000_000
-    cache: dict[str, bool] = {}
-
-    started = time.perf_counter()
-    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
-    cold = time.perf_counter() - started
-    assert cold < 5.0, f"cold 8 MiB scan took {cold:.3f}s"
-
-    started = time.perf_counter()
-    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
-    warm = time.perf_counter() - started
-    assert warm < 0.25, f"cached repeat scan took {warm:.3f}s"
-    assert cache and all(value is True for value in cache.values())
 
 
 def test_scan_cache_key_includes_scanner_version_and_only_caches_clean_content(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -158,7 +124,26 @@ def test_scan_invalid_cache_is_treated_as_empty_cache() -> None:
     bad_cache = {"not-a-hash": "clean"}
     with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
         ps.scan_pages({"index.html": content}, clean_cache=bad_cache)
-    assert bad_cache == {"not-a-hash": "clean"}
+    assert bad_cache == {}, "invalid cache must be discarded before scanning"
+
+
+def test_publish_state_roundtrip_preserves_clean_scan_hash_cache(tmp_path: Path) -> None:
+    from scripts.techtree_autopublish import load_publish_state, save_publish_state
+    cache = {"a" * 64 + ":html:" + "b" * 64: True}
+    save_publish_state(tmp_path, "digest", 1.0, clean_scan_cache=cache)
+    state = load_publish_state(tmp_path)
+    assert state["clean_scan_cache"] == cache
+
+
+def test_publish_state_corrupt_clean_scan_cache_is_discarded(tmp_path: Path) -> None:
+    import json
+    from scripts.techtree_autopublish import load_publish_state
+    path = tmp_path / "publish_state.json"
+    path.write_text(json.dumps({
+        "digest": "d", "published_at": 1.0,
+        "clean_scan_cache": {"garbage": True},
+    }), encoding="utf-8")
+    assert load_publish_state(tmp_path)["clean_scan_cache"] == {}
 
 
 def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
@@ -172,19 +157,20 @@ def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
 
 
 def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() -> None:
-    """Reference-sized 8 MiB HTML scans within budget; repeat is cache-hit fast."""
+    """Cold reference-size scan meets budget and clean repeat uses content/version cache."""
     import time
-    content = '<!doctype html><html><body>' + ('<p class="status">ordinary dashboard text and counters 123456</p>' * 130000)
+    content = _live_sized_clean_html()
     size = len(content.encode("utf-8"))
     assert 8_000_000 <= size <= 9_000_000
+    cache: dict[str, bool] = {}
 
     start = time.perf_counter()
-    assert ps.scan_text(content) == {}
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
     cold_seconds = time.perf_counter() - start
     assert cold_seconds < 5.0, f"cold scan took {cold_seconds:.3f}s for {size} bytes"
 
     start = time.perf_counter()
-    assert ps.scan_text(content) == {}
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
     warm_seconds = time.perf_counter() - start
     assert warm_seconds < 0.25, f"cached repeat took {warm_seconds:.3f}s"
 
