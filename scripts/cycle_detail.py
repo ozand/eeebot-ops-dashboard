@@ -442,7 +442,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             for p in unassigned:
                 unassigned_steps.extend(steps_by_prompt.get(id(p), []))
             attempts.append({"run_id": "unassigned", "classification": "unknown", "model_call_count": len(unassigned),
-                             "sessions": [{"role": "unassigned", "history_complete": False, "model_calls": len(unassigned_steps), "steps": unassigned_steps}],
+                             "sessions": [{"role": "unassigned", "history_complete": False,
+                                          "model_calls": sum(step.get("kind") == "model" for step in unassigned_steps),
+                                          "steps": unassigned_steps}],
                              "history_complete": False})
 
         history_complete = (
