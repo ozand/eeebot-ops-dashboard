@@ -99,8 +99,18 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
         cleaned.append(m)
     return cleaned
 
-def _read_jsonl(paths: list[Path]) -> tuple[list[dict[str, Any]], bool]:
+class ReadResult(tuple):
+    broken: bool
+
+    def __new__(cls, rows: list[dict[str, Any]], ok: bool, broken: bool = False):
+        instance = super().__new__(cls, (rows, ok))
+        instance.broken = broken
+        return instance
+
+
+def _read_jsonl(paths: list[Path]) -> ReadResult:
     rows: list[dict[str, Any]] = []
+    broken = False
     for path in paths:
         try:
             opener = gzip.open if path.name.endswith(".gz") else open
@@ -112,12 +122,13 @@ def _read_jsonl(paths: list[Path]) -> tuple[list[dict[str, Any]], bool]:
                     try:
                         row = json.loads(line)
                     except (json.JSONDecodeError, TypeError):
+                        broken = True
                         continue
                     if isinstance(row, dict):
                         rows.append(row)
         except OSError:
-            return rows, False
-    return rows, True
+            return ReadResult(rows, False, broken=broken)
+    return ReadResult(rows, True, broken=broken)
 
 def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
     seq = prompt.get("seq", 1)
@@ -227,6 +238,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
+    read_state = "ok" if all_reads_ok else "unavailable"
 
     dur_by_seq = {(str(r.get("cycle_id")), str(r.get("component")), str(r.get("seq"))): r for r in durations}
     all_cycle_ids = {str(r.get("cycle_id")) for r in runs if r.get("cycle_id")}
@@ -238,16 +250,27 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         c_prompts = [p for p in raw_prompts if str(p.get("cycle_id")) == cid]
         c_compactions = [c for c in compactions if str(c.get("cycle_id")) == cid]
         has_compaction = any(c.get("reason") == "compacted" or "compact" in str(c.get("reason", "")) for c in c_compactions)
+        has_truncation = any(bool(p.get("truncated")) for p in c_prompts)
+        capture_state = "truncated" if has_truncation else "complete"
+
+        reconstruction_state = "complete"
+        if read_state != "ok":
+            reconstruction_state = "unknown"
+        elif not c_prompts and c_runs:
+            reconstruction_state = "incomplete"
+        elif not all_reads_ok or has_compaction:
+            reconstruction_state = "incomplete"
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
-        history_complete = not has_compaction and all_reads_ok
         for p in c_prompts:
             role = str(p.get("component") or "executor")
             seq = p.get("seq", 1)
             dur = dur_by_seq.get((cid, role, str(seq)), {}).get("duration_ms")
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
-                history_complete = False
+                reconstruction_state = "incomplete"
+            if p.get("finish_reason") == "tool_calls" and (p is c_prompts[-1] or p.get("tool_calls")):
+                reconstruction_state = "incomplete"
             sanitized_msgs = sanitize_messages(p.get("messages"))
             model_step = {
                 "kind": "model",
@@ -265,12 +288,20 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         for r in c_runs:
             killed = r.get("classification") in {"unit_timeout", "killed"}
             if killed:
-                history_complete = False
+                reconstruction_state = "incomplete"
             attempts.append({
                 "run_id": r.get("run_id") or "unavailable",
                 "classification": r.get("classification") or "unknown",
-                "history_complete": not killed and history_complete,
+                "history_complete": not killed and (reconstruction_state == "complete"),
             })
+
+        history_complete = (
+            read_state == "ok"
+            and capture_state == "complete"
+            and reconstruction_state == "complete"
+            and bool(attempts)
+            and bool(c_prompts)
+        )
 
         sessions = []
         for role, steps in sorted(sessions_by_role.items()):
@@ -287,7 +318,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             "attempts": attempts,
             "sessions": sessions,
             "total_model_calls": len(c_prompts),
-            "history_complete": history_complete and bool(attempts),
+            "read": read_state,
+            "capture": capture_state,
+            "reconstruction": reconstruction_state,
+            "history_complete": history_complete,
             "multiple_attempts": len(attempts) > 1,
         }
     return index
