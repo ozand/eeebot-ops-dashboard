@@ -168,7 +168,7 @@ case "$url" in
         esac
         exit 0
         ;;
-    */eeebot-techtree-sync.sh|*/same-sync.sh|*/different-sync.sh)
+    */eeebot-techtree-sync.sh|*/same-sync.sh|*/different-sync.sh|*/dest/eeebot-techtree-sync.sh|DRIFT_TEST_REPO_SYNC)
         if [ "$mode" = "drift-fetch-404" ] || [ "$mode" = "drift-fetch-fail" ]; then
             echo "curl: (22) The requested URL returned error: 404" >&2
             exit 22
@@ -178,14 +178,6 @@ case "$url" in
         else
             cp "$FAKE_CURL_MODE_FILE" "$outfile"
         fi
-        exit 0
-        ;;
-    */eeebot-techtree-sync.sh)
-        if [ "$mode" = "drift-fetch-404" ] || [ "$mode" = "drift-fetch-fail" ]; then
-            echo "curl: (22) The requested URL returned error: 404" >&2
-            exit 22
-        fi
-        if [ -n "$FAKE_REPO_SYNC_SCRIPT" ]; then cp "$FAKE_REPO_SYNC_SCRIPT" "$outfile"; else cp "$FAKE_CURL_MODE_FILE" "$outfile"; fi
         exit 0
         ;;
     */sync-manifest.txt|*/deploy/sync-manifest.txt)
@@ -259,7 +251,6 @@ def _make_test_sync_script(dest: Path, extra_env: dict[str, str] | None = None) 
     if extra_env.get("TEST_SYNC_NONROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if false; then')
         patched = patched.replace('        chown root:root "$REV_TMP"', '        : # chown suppressed for non-root branch test')
-        patched = patched.replace('chown root:root "$TMP_ROOT/SYNC_DRIFT"', ': # chown suppressed for non-root branch test')
     if extra_env.get("TEST_SYNC_ROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if true; then')
         patched = patched.replace('        chown root:root "$REV_TMP"', '        "$FAKE_CHOWN" root:root "$REV_TMP"')
@@ -647,6 +638,18 @@ def test_sync_script_drift_match_mismatch_and_unknown(tmp_path: Path, sh_availab
     if os.name == "posix":
         assert (marker.stat().st_mode & 0o777) == 0o644
     assert SYNC.read_bytes() == original
+
+    nonroot_mismatch = _run_sync(
+        tmp_path / "nonroot-mismatch", mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={
+            "TEST_SYNC_NONROOT": "1",
+            "FAKE_REPO_SYNC_SCRIPT": _sh_path(repo_script),
+        },
+    )
+    assert nonroot_mismatch.returncode == 0, nonroot_mismatch.stderr
+    assert "techtree sync: sync script drift: installed " in nonroot_mismatch.stdout
+    assert (nonroot_mismatch.dest / "SYNC_DRIFT").is_file()
+    assert "not root, ownership of SYNC_DRIFT unchanged" in nonroot_mismatch.stderr
 
     unknown = _run_sync(tmp_path / "unknown", mode="drift-fetch-fail", initial_manifest="scripts/foo.py\n")
     assert unknown.returncode == 0, unknown.stderr

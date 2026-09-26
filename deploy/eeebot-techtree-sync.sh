@@ -163,7 +163,11 @@ if [ -n "$revision" ] && curl --fail --location --silent --show-error --proto '=
         drift_record="installed $installed_sha, repo $repo_sha (revision $revision)"
         echo "techtree sync: sync script drift: $drift_record"
         printf '%s\n' "$drift_record" > "$TMP_ROOT/SYNC_DRIFT"
-        chown root:root "$TMP_ROOT/SYNC_DRIFT"
+        if [ "$(id -u)" -eq 0 ]; then
+            chown root:root "$TMP_ROOT/SYNC_DRIFT"
+        else
+            echo "techtree sync: not root, ownership of SYNC_DRIFT unchanged" >&2
+        fi
         chmod 0644 "$TMP_ROOT/SYNC_DRIFT"
         mv -f "$TMP_ROOT/SYNC_DRIFT" "$DEST/SYNC_DRIFT"
     fi
