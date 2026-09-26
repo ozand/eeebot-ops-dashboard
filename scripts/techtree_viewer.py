@@ -10206,32 +10206,40 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                         if raw_bytes.startswith(b'\x1f\x8b'):
                             import zlib
                             try:
-                                decompressor = zlib.decompressobj(wbits=31)
                                 max_decompressed_bytes = 20 * 1024 * 1024
                                 chunks = []
                                 total = 0
-                                for offset in range(0, len(raw_bytes), 64 * 1024):
+                                remaining = raw_bytes
+                                while remaining:
+                                    decompressor = zlib.decompressobj(wbits=31)
                                     chunk = decompressor.decompress(
-                                        raw_bytes[offset:offset + 64 * 1024],
-                                        max_decompressed_bytes - total + 1,
+                                        remaining, max_decompressed_bytes - total + 1
                                     )
                                     total += len(chunk)
-                                    if total > max_decompressed_bytes:
+                                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
                                         raise PublicationScanError(
                                             f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
                                         )
                                     chunks.append(chunk)
-                                tail = decompressor.flush(max_decompressed_bytes - total + 1)
-                                total += len(tail)
-                                if total > max_decompressed_bytes:
-                                    raise PublicationScanError(
-                                        f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                    )
-                                chunks.append(tail)
-                                if not decompressor.eof:
-                                    raise PublicationScanError(
-                                        f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
-                                    )
+                                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                                    total += len(tail)
+                                    if total > max_decompressed_bytes:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(tail)
+                                    if decompressor.unused_data:
+                                        total += 1
+                                        if total > max_decompressed_bytes:
+                                            raise PublicationScanError(
+                                                f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                            )
+                                        chunks.append(b'\n')
+                                    if not decompressor.eof:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                                        )
+                                    remaining = decompressor.unused_data
                                 raw_bytes = b''.join(chunks)
                             except PublicationScanError:
                                 raise
