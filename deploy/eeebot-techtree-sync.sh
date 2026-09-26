@@ -125,10 +125,12 @@ manifest_source=local
 # downloaded assets match the recorded GENERATOR_SHA revision.
 REV_TMP="$TMP_ROOT/GENERATOR_SHA"
 if [ -n "${GH_TOKEN:-}" ]; then
+    # Keep the token out of curl argv and logs; pass config only through stdin.
     # shellcheck disable=SC2086
-    curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
-        -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github.sha" \
-        "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null || true
+    { printf 'header = "Authorization: token %s"\n' "$GH_TOKEN"; \
+      printf '%s\n' 'header = "Accept: application/vnd.github.sha"'; } |
+        curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
+            -K - "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null || true
 else
     # shellcheck disable=SC2086
     curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
@@ -136,22 +138,14 @@ else
         "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null || true
 fi
 if [ -f "$TMP_ROOT/rev.remote" ]; then
-    cand=$(tr -d '\r\n' < "$TMP_ROOT/rev.remote")
-    case "$cand" in
-        *[!0-9a-fA-F]*|"")
-            cand=$(sed -n -E 's/.*"sha":\s*"([0-9a-fA-F]+)".*/\1/p' "$TMP_ROOT/rev.remote" | head -n 1)
-            ;;
-    esac
-    case "$cand" in
-        [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*)
-            echo "$cand" > "$REV_TMP"
-            RAW_BASE="https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/$cand"
-            echo "techtree sync: pinned download to master revision $cand"
-            ;;
-        *)
-            echo "techtree sync: warning: invalid revision response from $COMMITS_URL" >&2
-            ;;
-    esac
+    cand=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["sha"] if isinstance(d,dict) else "")' < "$TMP_ROOT/rev.remote" 2>/dev/null || tr -d '\r\n' < "$TMP_ROOT/rev.remote")
+    if [ "${#cand}" -eq 40 ] && printf '%s' "$cand" | grep -Eq '^[0-9a-fA-F]{40}$'; then
+        printf '%s\n' "$cand" > "$REV_TMP"
+        RAW_BASE="https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/$cand"
+        echo "techtree sync: pinned download to master revision $cand"
+    else
+        echo "techtree sync: warning: invalid revision response from $COMMITS_URL" >&2
+    fi
 fi
 
 # shellcheck disable=SC2086  # CURL_OPTS is deliberately word-split
@@ -240,6 +234,8 @@ if [ -f "$REV_TMP" ]; then
         permanent_backup="$destination.bak.$stamp"
         cp -p "$destination" "$backup"
     fi
+    chown root:root "$REV_TMP"
+    chmod 0644 "$REV_TMP"
     if ! mv -f "$REV_TMP" "$destination"; then
         echo "techtree sync: replace failed: GENERATOR_SHA" >&2
         exit 1

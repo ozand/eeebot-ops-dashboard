@@ -144,7 +144,10 @@ printf '%s\\n' "$@" > "$FAKE_CURL_ARGV_FILE"
 while [ $# -gt 0 ]; do
     case "$1" in
         -o) outfile="$2"; shift 2 ;;
-        -H|--header|--proto|--proto-redir|--connect-timeout|--max-time|-K) shift 2 ;;
+        -K)
+            if [ "$2" = "-" ]; then shift 2; cat >/dev/null; else shift 2; fi
+            ;;
+        -H|--header|--proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
         -*) shift ;;
         *) url="$1"; shift ;;
     esac
@@ -227,6 +230,8 @@ def _make_test_sync_script(dest: Path) -> Path:
     # Windows, dest contains backslashes, which re.sub's replacement-string
     # parser interprets as escape sequences (\T is not a valid one).
     patched = text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
+    if os.name != "posix":
+        patched = patched.replace("chown root:root", ": # chown mocked on non-posix")
     assert patched != text, "could not locate DEST= line to redirect for the test"
     script_path = dest.parent / "eeebot-techtree-sync-under-test.sh"
     script_path.write_text(patched, encoding="utf-8")
@@ -548,6 +553,11 @@ def test_revision_parser_contract_rejects_invalid_sha_and_auth_argv(
     multiple = _run_sync(tmp_path / "multiple", mode="commits-multiple", initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n")
     assert multiple.returncode == 0, multiple.stderr
     assert (multiple.dest / "GENERATOR_SHA").read_text().strip() == "a" * 40
+    stale = _run_sync(tmp_path / "stale", mode="commits-short", initial_manifest="scripts/foo.py\n")
+    (stale.dest / "GENERATOR_SHA").write_text("b" * 40)
+    stale = _run_sync(tmp_path / "stale", mode="commits-short", initial_manifest="scripts/foo.py\n")
+    assert stale.returncode == 0
+    assert not (stale.dest / "GENERATOR_SHA").exists()
 
 
 def test_sync_never_passes_token_in_curl_argv(tmp_path: Path, sh_available: bool) -> None:
