@@ -573,3 +573,95 @@ def test_adr036_account_password_not_exempted_by_count_substring() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
         ps.scan_pages({"index.html": account_key})
+
+
+def test_adr036_inherited_tree_refuses_malformed_schemas_and_scans_compressed_blobs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Malformed tree schemas ({}, {"tree":{}}) and compressed blobs must be refused/scanned."""
+    import base64
+    import gzip
+    import json
+
+    # Test 1: tree is a dict {"tree": {}} instead of a list
+    def fake_gh_dict_tree(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": {}}')
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh_dict_tree)
+    with pytest.raises(ps.PublicationScanError, match="schema|list|invalid"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+    # Test 2: blob response is missing "content" key ({})
+    def fake_gh_missing_content(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob1"}]}')
+        if "blobs/blob1" in joined:
+            return cp('{}')
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh_missing_content)
+    with pytest.raises(ps.PublicationScanError, match="missing content|malformed"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+    # Test 3: blob contains gzip compressed sensitive data
+    gz_secret = gzip.compress(b'{"reasoning_content": "compressed secret"}')
+    gz_b64 = base64.b64encode(gz_secret).decode("ascii")
+
+    def fake_gh_gzip_blob(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob_gz"}]}')
+        if "blobs/blob_gz" in joined:
+            return cp(json.dumps({"content": gz_b64, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh_gzip_blob)
+    with pytest.raises(ps.PublicationScanError):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+
+def test_adr036_single_quoted_keys_and_values_trigger_rejection() -> None:
+    """ADR-036 rule 3: Single-quoted keys and values in JSON-like structures must be detected."""
+    single_json_1 = "{'api_key': 'secret123456'}"
+    single_json_2 = "'auth_token': 'mysecretvalue'"
+    single_json_3 = "{'password': 'secret123456'}"
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"index.html": single_json_1})
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"index.html": single_json_2})
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"index.html": single_json_3})
+
+
+def test_adr036_iterative_html_unescape_double_encoded_entities() -> None:
+    """ADR-036 rule 3: Double-encoded HTML entities must be decoded until stabilization."""
+    double_encoded_msg = "<div>{&amp;quot;messages&amp;quot;: []}</div>"
+    double_encoded_pass = "<code>{&amp;#34;password&amp;#34;: &amp;#34;secret123456&amp;#34;}</code>"
+
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"index.html": double_encoded_msg})
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"index.html": double_encoded_pass})
+
+
+def test_adr036_multiline_quoted_secrets() -> None:
+    """ADR-036 rule 3: Multiline secrets inside quotes must be detected."""
+    multiline_env = 'PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA0Y\n-----END RSA PRIVATE KEY-----"'
+
+    with pytest.raises(ps.PublicationScanError):
+        ps.scan_pages({"index.html": multiline_env})
