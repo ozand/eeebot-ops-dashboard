@@ -130,6 +130,30 @@ def _read_jsonl(paths: list[Path]) -> ReadResult:
             return ReadResult(rows, False, broken=broken)
     return ReadResult(rows, True, broken=broken)
 
+def _strip_tool_ids(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cleaned = []
+    for message in messages:
+        item = dict(message)
+        if item.get("role") == "assistant" and isinstance(item.get("tool_calls"), list):
+            item["tool_calls"] = [
+                {**call, "id": "[tool call]"} if isinstance(call, dict) else call
+                for call in item["tool_calls"]
+            ]
+        if item.get("role") == "tool":
+            item.pop("tool_call_id", None)
+        cleaned.append(item)
+    return cleaned
+
+
+def _parse_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
     seq = prompt.get("seq", 1)
     source = f"reconstructed from request seq {seq}"
@@ -155,6 +179,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                         args = json.dumps(args)
                     step = {
                         "kind": "tool",
+                        "tool_call_id": str(cid),
                         "name": str(fn.get("name") or "tool"),
                         "arguments": str(args),
                         "result": None,
@@ -192,6 +217,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                 args = json.dumps(args)
             steps.append({
                 "kind": "tool",
+                "tool_call_id": str(tc.get("id") or ""),
                 "name": str(fn.get("name") or "tool"),
                 "arguments": str(args),
                 "result": "[no next request: final tool call without next prompt]",
@@ -221,7 +247,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     durations_result = _read_jsonl(duration_paths)
     raw_runs, runs_ok = runs_result
     raw_prompts, prompts_ok = prompts_result
-    durations, durations_ok = durations_result
+    _, durations_ok = durations_result
     broken_runs = getattr(runs_result, "broken", False)
     broken_prompts = getattr(prompts_result, "broken", False)
     broken_dur = getattr(durations_result, "broken", False)
@@ -249,7 +275,6 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
     read_state = "ok" if all_reads_ok else "unavailable"
 
-    dur_by_seq = {(str(r.get("cycle_id")), str(r.get("component")), str(r.get("seq"))): r for r in durations}
     all_cycle_ids = {str(r.get("cycle_id")) for r in runs if r.get("cycle_id")}
     all_cycle_ids.update(str(p.get("cycle_id")) for p in raw_prompts if p.get("cycle_id"))
 
@@ -273,38 +298,67 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             reconstruction_state = "incomplete"
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
+        steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
         for p in c_prompts:
             role = str(p.get("component") or "executor")
-            seq = p.get("seq", 1)
-            dur = dur_by_seq.get((cid, role, str(seq)), {}).get("duration_ms")
+            dur = None
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 reconstruction_state = "incomplete"
-            if p.get("finish_reason") == "tool_calls" and (p is c_prompts[-1] or p.get("tool_calls")):
+            if (p.get("finish_reason") == "tool_calls" and p is c_prompts[-1]) or p.get("tool_calls"):
                 reconstruction_state = "incomplete"
             sanitized_msgs = sanitize_messages(p.get("messages"))
             model_step = {
                 "kind": "model",
-                "messages": json.dumps(sanitized_msgs, ensure_ascii=False) if sanitized_msgs else None,
+                "messages": json.dumps(_strip_tool_ids(sanitized_msgs), ensure_ascii=False) if sanitized_msgs else None,
                 "answer": redact_text(str(p.get("content"))) if p.get("content") is not None else None,
                 "tools": json.dumps(p.get("tool_calls"), ensure_ascii=False) if p.get("tool_calls") else None,
                 "reasoning": redact_text(str(p.get("reasoning_content"))) if p.get("reasoning_content") is not None else None,
                 "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
-                "duration": dur,
+                "duration": dur if dur is not None else "unknown",
             }
             sessions_by_role.setdefault(role, []).append(model_step)
             sessions_by_role[role].extend(tools)
+            steps_by_prompt[id(p)] = [model_step, *tools]
 
         attempts = []
+        assigned_prompts: set[int] = set()
+        seen_tool_ids_cycle: set[str] = set()
         for r in c_runs:
+            rid = str(r.get("run_id") or "unavailable")
             killed = r.get("classification") in {"unit_timeout", "killed"}
+            started = _parse_timestamp(r.get("started_at") or r.get("start_time"))
+            finished = _parse_timestamp(r.get("finished_at") or r.get("end_time"))
+            attributed = [p for p in c_prompts if started is not None and finished is not None
+                          and (stamp := _parse_timestamp(p.get("ts") or p.get("timestamp"))) is not None
+                          and started <= stamp <= finished]
+            assigned_prompts.update(id(p) for p in attributed)
+            role_steps: dict[str, list[dict[str, Any]]] = {}
+            for p in attributed:
+                role = str(p.get("component") or "unassigned")
+                role_steps.setdefault(role, []).extend(steps_by_prompt.get(id(p), [])[:1])
+                for tool in steps_by_prompt.get(id(p), [])[1:]:
+                    tool_id = str(tool.get("tool_call_id") or "")
+                    if not tool_id or tool_id not in seen_tool_ids_cycle:
+                        role_steps[role].append(tool)
+                        if tool_id:
+                            seen_tool_ids_cycle.add(tool_id)
+            att_sessions = [{"role": role, "history_complete": not killed and reconstruction_state == "complete",
+                             "model_calls": sum(step.get("kind") == "model" for step in steps), "steps": steps}
+                            for role, steps in sorted(role_steps.items())]
             if killed:
                 reconstruction_state = "incomplete"
-            attempts.append({
-                "run_id": r.get("run_id") or "unavailable",
-                "classification": r.get("classification") or "unknown",
-                "history_complete": not killed and (reconstruction_state == "complete"),
-            })
+            attempts.append({"run_id": rid, "classification": r.get("classification") or "unknown",
+                             "model_call_count": len(attributed), "sessions": att_sessions,
+                             "history_complete": not killed and reconstruction_state == "complete"})
+        unassigned = [p for p in c_prompts if id(p) not in assigned_prompts]
+        if unassigned:
+            unassigned_steps = []
+            for p in unassigned:
+                unassigned_steps.extend(steps_by_prompt.get(id(p), []))
+            attempts.append({"run_id": "unassigned", "classification": "unknown", "model_call_count": len(unassigned),
+                             "sessions": [{"role": "unassigned", "history_complete": False, "model_calls": len(unassigned_steps), "steps": unassigned_steps}],
+                             "history_complete": False})
 
         history_complete = (
             read_state == "ok"
@@ -314,15 +368,11 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             and bool(c_prompts)
         )
 
-        sessions = []
-        for role, steps in sorted(sessions_by_role.items()):
-            sessions.append({
-                "role": role,
-                "history_complete": history_complete,
-                "model_calls": sum(1 for s in steps if s.get("kind") == "model"),
-                "steps": steps,
-            })
-
+        sessions = [
+            {"role": role, "history_complete": history_complete,
+             "model_calls": sum(step.get("kind") == "model" for step in steps), "steps": steps}
+            for role, steps in sorted(sessions_by_role.items())
+        ]
         index[cid] = {
             "cycle_id": cid,
             "available": True,
@@ -396,13 +446,20 @@ def render_cycle_page(cycle_id: str, data: dict[str, Any] | None) -> str:
     for att in attempts:
         att_marked = mark_incomplete_history(att)
         calls_text = f"<p>Model calls: {att['model_call_count']}</p>" if att.get("model_call_count") is not None else ""
-        rows.append(f'<article class="attempt-row"><h3>Attempt {_escape(str(att.get("run_id", "unavailable")))}</h3>{calls_text}<p>Classification: {_escape(str(att.get("classification", "unknown")))}</p><p>{att_marked["history_state"]}</p></article>')
+        rows.append(f'<article class="attempt-row"><h3>Attempt {_escape(str(att.get("run_id", "unavailable")))}</h3>{calls_text}<p>Classification: {_escape(str(att.get("classification", "unknown")))}</p><p>{att_marked["history_state"]}</p>')
+        for sess in att.get("sessions") or []:
+            rows.append(f'<section class="attempt-session"><h4>Session {_escape(str(sess.get("role", "unassigned")))}</h4><p>Model calls: {sess.get("model_calls", 0)}</p>')
+            for step in sess.get("steps") or []:
+                rows.append(format_tool_step(step) if step.get("kind") == "tool" else format_model_step(step))
+            rows.append('</section>')
+        rows.append('</article>')
     rows.append('</section>')
 
-    rows.append('<section class="sessions-section"><h2>Sessions</h2>')
-    if not sessions:
+    if not attempts:
+        rows.append('<section class="sessions-section"><h2>Sessions</h2>')
+    if not attempts and not sessions:
         rows.append('<p class="unavailable">No session records found.</p>')
-    for sess in sessions:
+    for sess in sessions if not attempts else []:
         role = sess.get("role", "unknown")
         sess_marked = mark_incomplete_history(sess)
         rows.append(f'<article class="session-block"><h3>Session {_escape(role)}</h3><p>Model calls: {sess.get("model_calls", 0)}</p><p>{sess_marked["history_state"]}</p>')
@@ -412,5 +469,7 @@ def render_cycle_page(cycle_id: str, data: dict[str, Any] | None) -> str:
             else:
                 rows.append(format_model_step(step))
         rows.append('</article>')
-    rows.append('</section></main>')
+    if not attempts:
+        rows.append('</section>')
+    rows.append('</main>')
     return "".join(rows)
