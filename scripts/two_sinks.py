@@ -137,6 +137,8 @@ def _sanitize_public_value(key: str, value: object) -> object:
                 if "recommendations" in r:
                     r["recommendations_count"] = len(r["recommendations"]) if isinstance(r["recommendations"], list) else 0
                     r["recommendations"] = []
+                if "input_fit" in r:
+                    r["input_fit"] = {}
                 refs.append(r)
             else:
                 refs.append(rec)
@@ -306,10 +308,79 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
     return updated
 
 
-def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
-    """D1 boundary seam; private cycle rendering is deliberately deferred to D2."""
-    del private_data, host
-    return {}
+def render_private_pages(private_data: dict, host: str, state_root: Path | None = None) -> dict[str, str]:
+    """ADR-036 D2 private-only cycle renderer; never included in gh-pages."""
+    if state_root is not None:
+        return build_private_cycle_pages(private_data, state_root, host)
+
+    from cycle_detail import render_cycle_page
+
+    raw = private_data.get("private_cycle_details")
+    known = private_data.get("cycle_details")
+    cycle_ids = set(raw) if isinstance(raw, dict) else set()
+    if isinstance(known, dict):
+        cycle_ids.update(known)
+    return {
+        f"cycles/{cycle_id}.html": render_cycle_page(
+            str(cycle_id), raw.get(cycle_id) if isinstance(raw, dict) else None,
+        )
+        for cycle_id in sorted(cycle_ids)
+    }
+
+
+def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = "eeepc", *, cycle_ids: set[str] | None = None) -> dict[str, str]:
+    """Bind private pages to observed IDs and read their host-local sources via single-pass index."""
+    try:
+        from cycle_detail import build_cycle_index, render_cycle_page
+    except ImportError:
+        from scripts.cycle_detail import build_cycle_index, render_cycle_page
+
+    known = set(cycle_ids or ())
+    detail_records = private_data.get("cycle_details")
+    if isinstance(detail_records, dict):
+        known.update(map(str, detail_records))
+    ledger = private_data.get("ledger_tail") or []
+    if isinstance(ledger, list):
+        known.update(str(row["cycle_id"]) for row in ledger if isinstance(row, dict) and row.get("cycle_id"))
+    history = private_data.get("ledger_history") or []
+    if isinstance(history, list):
+        known.update(str(row["cycle_id"]) for row in history if isinstance(row, dict) and row.get("cycle_id"))
+    if isinstance(private_data.get("cycle_details"), dict):
+        known.update(map(str, private_data["cycle_details"]))
+    for key in ("reflections", "lessons"):
+        rows = private_data.get(key)
+        if isinstance(rows, list):
+            known.update(str(row["cycle_id"]) for row in rows if isinstance(row, dict) and row.get("cycle_id"))
+    known.update(_private_cycle_links(private_data))
+
+    index = build_cycle_index(state_root)
+    known.update(index.keys())
+    known = {cid for cid in known if _safe_cycle_id(cid)}
+
+    return {
+        f"cycles/{cid}.html": render_cycle_page(
+            str(cid), index.get(cid) or (detail_records or {}).get(cid)
+        )
+        for cid in sorted(known)
+    }
+
+
+def _safe_cycle_id(cycle_id: str) -> bool:
+    return bool(cycle_id) and cycle_id not in {".", ".."} and not any(
+        char in cycle_id for char in ("/", "\\", "\x00")
+    )
+
+
+def _private_cycle_links(data: dict) -> set[str]:
+    import re
+
+    links = set()
+    for value in data.values():
+        if not isinstance(value, str):
+            continue
+        for match in re.finditer(r'href=["\']cycle\.html\?id=([^"\']+)', value):
+            links.add(match.group(1))
+    return links
 
 
 def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -> Path:

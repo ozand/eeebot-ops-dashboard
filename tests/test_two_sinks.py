@@ -550,6 +550,11 @@ def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monke
     assert 0o644 in file_chmods
 
 
+def test_render_private_pages_with_state_root_preserves_host(tmp_path: Path) -> None:
+    """Codex comment 4109820847: render_private_pages must not raise UnboundLocalError when state_root is passed."""
+    from scripts.two_sinks import render_private_pages
+    res = render_private_pages({}, "myhost", state_root=tmp_path)
+    assert isinstance(res, dict)
 def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
     """External review F1: operator priority label and local_ci output must not leak into public projection or HTML."""
     raw_data = {
