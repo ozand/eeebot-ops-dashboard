@@ -5962,13 +5962,44 @@ def build_cycle_feed(
         valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
         malformed_starts = [i for i, ts in started_rows if ts is None]
         latest_valid = max(valid_starts, key=lambda item: item[1]) if valid_starts else None
-        # A later started row with an unparseable timestamp is still an attempt
-        # boundary. Do not silently fall back to an older valid start and inherit
-        # its terminal outcome; timestamp ordering cannot safely classify rows
-        # across that boundary, so retain input order from the malformed start.
-        if malformed_starts and (latest_valid is None or malformed_starts[-1] > latest_valid[0]):
-            last_started_idx = malformed_starts[-1]
-            attempt_phases = phases[last_started_idx:]
+        # Source order is not recency: read_ledger_history appends live rows
+        # before archives. Estimate each malformed boundary's recency from the
+        # first parseable phase timestamp after it, never from its concatenated
+        # list index. This lets a malformed live start outrank a valid older
+        # archived start while preserving same-source malformed retry behavior.
+        malformed_recency = []
+        for start_idx in malformed_starts:
+            following_ts = next((
+                _parse_iso_ts(str(p.get('ts') or ""))
+                for p in phases[start_idx + 1:]
+                if isinstance(p, dict) and _parse_iso_ts(str(p.get('ts') or "")) is not None
+            ), None)
+            malformed_recency.append((start_idx, following_ts))
+        latest_malformed = max(
+            malformed_recency,
+            key=lambda item: item[1] or datetime.min.replace(tzinfo=timezone.utc),
+        ) if malformed_recency else None
+        if latest_malformed is not None and (
+            latest_valid is None
+            or latest_malformed[1] is None
+            or latest_malformed[1] >= latest_valid[1]
+        ):
+            last_started_idx = latest_malformed[0]
+            malformed_ts = latest_malformed[1]
+            if malformed_ts is None:
+                attempt_phases = phases[last_started_idx:]
+            else:
+                # The malformed start has a later event time than the archive
+                # start, so select the latest attempt by that evidence, then
+                # keep only timestamped phases from that boundary onward.
+                timestamped_attempt_phases = []
+                for p in phases[last_started_idx:]:
+                    phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                    if phase_ts is not None and phase_ts >= malformed_ts:
+                        timestamped_attempt_phases.append((phase_ts, p))
+                attempt_phases = [
+                    p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])
+                ]
         elif latest_valid is not None:
             last_started_idx, latest_start = latest_valid
             timestamped_attempt_phases = []
