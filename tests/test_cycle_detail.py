@@ -153,6 +153,17 @@ def test_incomplete_history_is_marked():
     assert "history incomplete" in render_cycle_page("c", {"attempts": [marked]})
 
 
+def test_response_tool_arguments_are_sanitized_before_display() -> None:
+    from scripts.cycle_detail import extract_tool_steps
+
+    secret = "TOP_LEVEL_ARGS_SECRET_5190"
+    steps = extract_tool_steps({"seq": 2, "tool_calls": [{
+        "id": "response-call", "function": {"name": "update", "arguments": {"password": secret}},
+    }]})
+    assert len(steps) == 1
+    assert secret not in steps[0]["arguments"]
+
+
 def test_mismatched_tool_response_id_does_not_complete_pending_call() -> None:
     from scripts.cycle_detail import extract_tool_steps
 
