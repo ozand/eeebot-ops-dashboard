@@ -234,7 +234,11 @@ if [ -f "$REV_TMP" ]; then
         permanent_backup="$destination.bak.$stamp"
         cp -p "$destination" "$backup"
     fi
-    chown root:root "$REV_TMP"
+    if [ "$(id -u)" -eq 0 ]; then
+        chown root:root "$REV_TMP"
+    else
+        echo "techtree sync: not root, ownership of GENERATOR_SHA unchanged" >&2
+    fi
     chmod 0644 "$REV_TMP"
     if ! mv -f "$REV_TMP" "$destination"; then
         echo "techtree sync: replace failed: GENERATOR_SHA" >&2
