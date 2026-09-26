@@ -6,6 +6,7 @@ Used by publish_to_pages and autopublish dry-run; reused by D2 masking.
 """
 from __future__ import annotations
 
+import html as _html
 import re
 from typing import NamedTuple, Pattern
 
@@ -79,29 +80,53 @@ _ENV_SECRET_KV_RE = re.compile(
 def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
-    for rule in STANDALONE_PATTERNS:
-        matches = rule.pattern.findall(content)
-        if matches:
-            findings[rule.name] = len(matches)
+    unescaped = _html.unescape(content)
+    has_entities = unescaped != content
 
-    json_hits = 0
+    for rule in STANDALONE_PATTERNS:
+        raw_count = len(rule.pattern.findall(content))
+        une_count = len(rule.pattern.findall(unescaped)) if has_entities else 0
+        total = max(raw_count, une_count)
+        if total:
+            findings[rule.name] = total
+
+    json_raw = 0
     for match in _JSON_SECRET_KEY_RE.finditer(content):
         key, val = match.group(1).lower(), match.group(2)
         if any(sub in key for sub in EXCLUDED_NAME_SUBSTRINGS) or key in EXCLUDED_EXACT_NAMES:
             continue
         if is_secret_value(val):
-            json_hits += 1
+            json_raw += 1
+    json_une = 0
+    if has_entities:
+        for match in _JSON_SECRET_KEY_RE.finditer(unescaped):
+            key, val = match.group(1).lower(), match.group(2)
+            if any(sub in key for sub in EXCLUDED_NAME_SUBSTRINGS) or key in EXCLUDED_EXACT_NAMES:
+                continue
+            if is_secret_value(val):
+                json_une += 1
+    json_hits = max(json_raw, json_une)
     if json_hits:
         findings["json_secret_field"] = json_hits
 
-    env_hits = 0
+    env_raw = 0
     for match in _ENV_SECRET_KV_RE.finditer(content):
         key, val = match.group(1), match.group(2)
         key_lower = key.lower()
         if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
             continue
         if is_secret_value(val):
-            env_hits += 1
+            env_raw += 1
+    env_une = 0
+    if has_entities:
+        for match in _ENV_SECRET_KV_RE.finditer(unescaped):
+            key, val = match.group(1), match.group(2)
+            key_lower = key.lower()
+            if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
+                continue
+            if is_secret_value(val):
+                env_une += 1
+    env_hits = max(env_raw, env_une)
     if env_hits:
         findings["env_secret_kv"] = env_hits
 

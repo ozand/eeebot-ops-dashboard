@@ -419,11 +419,11 @@ def test_adr036_html_entity_encoded_call_markers_and_secrets_trigger_rejection()
     encoded_reasoning = "<pre>{&quot;reasoning_content&quot;: &quot;thinking&quot;}</pre>"
     encoded_password = "<code>{&quot;password&quot;: &quot;secret12345&quot;}</code>"
 
-    with pytest.raises(ps.PublicationScanError, match="call marker messages"):
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
         ps.scan_pages({"index.html": encoded_messages})
 
-    with pytest.raises(ps.PublicationScanError, match="call marker reasoning_content"):
+    with pytest.raises(ps.PublicationScanError, match="structural_reasoning_content"):
         ps.scan_pages({"index.html": encoded_reasoning})
 
-    with pytest.raises(ps.PublicationScanError, match="json_secret_password"):
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": encoded_password})
