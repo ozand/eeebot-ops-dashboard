@@ -821,3 +821,29 @@ def test_adr036_gzip_bomb_exceeds_inherited_blob_limit(monkeypatch: pytest.Monke
     monkeypatch.setattr(tv, "_gh", fake_gh)
     with pytest.raises(ps.PublicationScanError, match="limit|exceed|large"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+
+def test_adr036_scans_all_concatenated_gzip_members(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036: A secret in a later concatenated gzip member must be scanned."""
+    import base64
+    import gzip
+    import json
+    compressed_members = gzip.compress(b"safe first member") + gzip.compress(
+        b"sk-proj-supersecretkey1234567890abcdef"
+    )
+    encoded = base64.b64encode(compressed_members).decode("ascii")
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob1"}]}')
+        if "blobs/blob1" in joined:
+            return cp(json.dumps({"content": encoded, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    with pytest.raises(ps.PublicationScanError, match="openai_secret_key"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
