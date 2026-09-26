@@ -301,3 +301,35 @@ def test_jsonl_read_failure_marks_history_incomplete(tmp_path: Path, monkeypatch
 
     assert detail["available"] is True
     assert detail["history_complete"] is False
+
+
+def test_unresolved_pending_tool_call_marks_history_incomplete(tmp_path: Path) -> None:
+    """Codex comment 4109820844: Unresolved pending tool call without tool response must mark history incomplete."""
+    root = tmp_path / "state"
+    run_file = root / "bridge" / "runs.jsonl"
+    run_file.parent.mkdir(parents=True, exist_ok=True)
+    run_file.write_text('{"run_id": "r1", "cycle_id": "c-pending-tool", "classification": "completed"}\n', encoding="utf-8")
+
+    prompt_file = root / "llm_calls" / "prompts" / "2026-09-25.jsonl"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_data = {
+        "cycle_id": "c-pending-tool",
+        "component": "executor",
+        "seq": 1,
+        "messages": [
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {"id": "call_1", "function": {"name": "bash", "arguments": "echo hi"}}
+                ]
+            }
+        ]
+    }
+    prompt_file.write_text(json.dumps(prompt_data) + "\n", encoding="utf-8")
+
+    from scripts import cycle_detail as cd
+    fixed_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+    detail = cd.load_cycle_detail(root, "c-pending-tool", now=fixed_now)
+
+    assert detail["available"] is True
+    assert detail["history_complete"] is False
