@@ -285,10 +285,12 @@ def test_cycle_details_join_and_bound_fields() -> None:
     record = details['cycle-a']
     assert record['title'] == 'Ship panel'
     assert record['files_changed'] == [f'f{i}' for i in range(20)]
-    assert record['lesson_insight'] == 'lesson insight'
-    assert record['reflection']['summary'] == 'reflection summary'
-    assert len(record['reflection']['findings']) == 1
-    assert len(record['reflection']['recommendations']) == 1
+    assert record['lesson_insight_chars'] == len('lesson insight')  # ADR-036 rule 3
+    # ADR-036 rule 3: public records carry the reflection's size, not its text.
+    assert record['reflection']['summary_chars'] == len('reflection summary')
+    assert 'summary' not in record['reflection']
+    assert record['reflection']['findings_count'] == 1
+    assert record['reflection']['recommendations_count'] == 1
     assert len(json.dumps(details)) < 20_000
 
 
@@ -449,12 +451,11 @@ def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
     fixture['agents_md'] = '# Agent Guide\n<script>alert("xss")</script>'
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
-    # AGENTS.md escaped
+    # ADR-036 rule 3: AGENTS.md and the goal charter are LAN-only text.
     assert '<script>alert' not in html_out
-    assert '&lt;script&gt;alert' in html_out
-
-    # Goals charter
-    assert 'Autonomously improve code quality' in html_out
+    assert '&lt;script&gt;alert' not in html_out
+    assert 'Autonomously improve code quality' not in html_out
+    assert 'text on the LAN site only' in html_out
 
     # Skill reads table
     assert 'test-driven-development' in html_out
@@ -1197,10 +1198,8 @@ def test_task3_issue37_hypothesis_evidence_anchors() -> None:
     assert '<a href="#cycle-absent">' not in html_out
 
 
-# ===========================================================================
-# Batch 2 Data UX Tests (Issues #40, #41, #42)
-# ===========================================================================
-
+# ====================================================================# Batch 2 Data UX Tests (Issues #40, #41, #42)
+# ====================================================================
 def test_hypotheses_panel_dedupe_by_title_keeps_newest() -> None:
     data = {
         'entries': {
@@ -2421,10 +2420,8 @@ def test_issue42_evo_fitness_compact() -> None:
     assert 'r:1.23M' in html
 
 
-# =========================================================================
-# Issue 43: Strip horizontal computed timestamp (moved to footer)
-# =========================================================================
-
+# ==================================================================# Issue 43: Strip horizontal computed timestamp (moved to footer)
+# ==================================================================
 def test_issue43_empire_stats_strip_has_no_computed_timestamp() -> None:
     scorecard = {
         'loop': {'integrations': 42},
@@ -2456,10 +2453,8 @@ def test_issue43_render_page_omits_scorecard_computed_when_missing() -> None:
     assert 'scorecard computed' not in html
 
 
-# =========================================================================
-# Issue 44: Research mint column right border + no era-grid-line
-# =========================================================================
-
+# ==================================================================# Issue 44: Research mint column right border + no era-grid-line
+# ==================================================================
 def test_issue44_mint_column_has_right_border_rect() -> None:
     portfolio = {
         'current': 'root',
@@ -2482,10 +2477,8 @@ def test_issue44_canvas_has_no_era_grid_lines() -> None:
     assert 'era-grid-line' not in html
 
 
-# =========================================================================
-# Issue 45: Hypotheses lifecycle collapsible section
-# =========================================================================
-
+# ==================================================================# Issue 45: Hypotheses lifecycle collapsible section
+# ==================================================================
 def test_issue45_answered_hypotheses_in_details_element() -> None:
     hl = {
         'entries': {
@@ -2525,10 +2518,8 @@ def test_issue45_no_answered_hypotheses_no_details() -> None:
     assert 'Active Hypo' in html
 
 
-# =========================================================================
-# Issue 47: Feed integrated cycles have tree links
-# =========================================================================
-
+# ==================================================================# Issue 47: Feed integrated cycles have tree links
+# ==================================================================
 def test_issue47_feed_integrated_cycle_has_tree_link() -> None:
     ledger_tail = [
         {'phase': 'outcome', 'cycle_id': 'cycle-evo1', 'status': 'success'},
@@ -2570,10 +2561,8 @@ def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
     assert 'feed-tree-link' not in html
 
 
-# =========================================================================
-# Issue 48: Multi-column agent panel with Skills table
-# =========================================================================
-
+# ==================================================================# Issue 48: Multi-column agent panel with Skills table
+# ==================================================================
 def test_issue97_confirmed_usage_and_eval_source() -> None:
     html = tv.build_agent_panel(
         agents_md=None,
@@ -3574,8 +3563,10 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
             seq['blob'] += 1
             return cp(f'blosha{seq["blob"]}')
         if 'git/trees' in joined:
-            seq['tree'] += 1
-            return cp('tresha1')
+            if '-X' in args or input_text is not None:
+                seq['tree'] += 1
+                return cp('tresha1')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             seq['commit'] += 1
             return cp('comsha1')
@@ -3619,7 +3610,9 @@ def test_270_no_race_single_attempt_no_retry_message(monkeypatch, capsys) -> Non
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            return cp('treesha-new')
+            if '-X' in args or input_text is not None:
+                return cp('treesha-new')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             return cp('commitsha-new')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -3672,8 +3665,10 @@ def test_270_concurrent_commit_between_read_and_write_is_retried_not_lost(monkey
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            payloads['tree'].append(json.loads(input_text))
-            return cp(f'treesha-attempt{branch_reads["n"]}')
+            if input_text is not None:
+                payloads['tree'].append(json.loads(input_text))
+                return cp(f'treesha-attempt{branch_reads["n"]}')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             payloads['commit'].append(json.loads(input_text))
             return cp(f'commitsha-attempt{branch_reads["n"]}')
@@ -3723,7 +3718,9 @@ def test_270_retries_bounded_and_fails_loudly_on_exhaustion(monkeypatch, capsys)
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            return cp('treesha')
+            if '-X' in args or input_text is not None:
+                return cp('treesha')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             return cp('commitsha')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -4101,7 +4098,9 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         if 'git/blobs' in joined:
             return cp('blosha81')
         if 'git/trees' in joined:
-            return cp('tresha81')
+            if '-X' in args or input_text is not None:
+                return cp('tresha81')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             return cp('comsha81')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -4140,7 +4139,9 @@ def _fake_gh_publish_factory(calls: list):
         if 'git/blobs' in joined:
             return cp('newblobsha')
         if 'git/trees' in joined:
-            return cp('newtreesha')
+            if '-X' in args or input_text is not None:
+                return cp('newtreesha')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             return cp('newcommitsha')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -4422,7 +4423,7 @@ def test_issue73_entries_render_with_cycle_links() -> None:
     assert 'cycles.html#cycle-cycle-a' in les
     assert 'LESS-20260825-aaaa' in les
     assert 'Wire validator into suite' in les
-    assert 'validators pay off' in les
+    assert 'validators pay off' not in les  # ADR-036 rule 3: lesson body is LAN-only
 
 
 def test_issue73_rotation_archive_truncated_head_parsed(tmp_path) -> None:
@@ -4628,8 +4629,8 @@ def test_issue96_v2_lesson_renders_as_card() -> None:
     # v2 card class present
     assert 'lesson-row-v2' in les
     # problem and solution rendered
-    assert 'Proposer skips well-scoped tasks' in les
-    assert 'Tighten dedup fingerprint' in les
+    assert 'Proposer skips well-scoped tasks' not in les  # ADR-036 rule 3: lesson body is LAN-only
+    assert 'Tighten dedup fingerprint' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # tags rendered
     assert 'lesson-tag' in les
     assert 'dedup' in les
@@ -4665,7 +4666,7 @@ def test_issue96_mixed_v2_and_legacy_split_correctly() -> None:
 
     # v2 section present
     assert 'lesson-row-v2' in les
-    assert 'Proposer skips well-scoped tasks' in les
+    assert 'Proposer skips well-scoped tasks' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # legacy folded
     assert 'legacy (pre-v2, frozen)' in les
     # counts in heading
@@ -4728,8 +4729,8 @@ def test_issue96_v2_no_severity_or_seen_or_tags_graceful() -> None:
     les = pages['lessons.html']
 
     assert 'lesson-row-v2' in les
-    assert 'Missing dependency' in les
-    assert 'Add dep to pyproject.toml' in les
+    assert 'Missing dependency' not in les  # ADR-036 rule 3: lesson body is LAN-only
+    assert 'Add dep to pyproject.toml' not in les  # ADR-036 rule 3: lesson body is LAN-only
     # no severity/seen chip elements injected when fields absent
     assert 'class="lesson-severity' not in les
     assert 'class="lesson-seen"' not in les
@@ -4753,8 +4754,9 @@ def test_issue130_duplicate_real_shape_lessons_render_all_with_warning():
     assert html.count('duplicate id on disk') == 2
     assert html.count('<h3 class="lesson-title">When introducing new default-enabled') == 1
     assert html.count('<h3 class="lesson-title">When executing subprocess calls') == 1
-    assert html.count('When introducing new default-enabled') == 2
-    assert html.count('When executing subprocess calls') == 2
+    # ADR-036 rule 3: the problem body (here identical to the title) is LAN-only.
+    assert html.count('When introducing new default-enabled') == 1
+    assert html.count('When executing subprocess calls') == 1
 
 
 def test_issue130_single_real_shape_lesson_has_no_duplicate_warning():
@@ -4785,7 +4787,7 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     assert '0 cycles with status' in cycles
     assert '0 results for' in lessons
     assert 'data-filter-empty' in lessons
-    assert 'needle' in lessons
+    assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only
 
 
 def test_issue130_duplicate_lessons_get_unique_anchors():
@@ -4895,8 +4897,8 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
-        'result_excerpt': 'r', 'iteration_count': 2,
+        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
     assert details['__unjoined_subagents__']['subagents'][0]['subagent_id'] == 'orphan'
@@ -5009,7 +5011,7 @@ def test_292_not_created_write_failed_carries_error_detail() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None)
     assert details['cycle-rb4']['error_card_recording'] == {
         'status': 'not_created', 'skip_reason': 'write_failed',
-        'error': 'PermissionError:/repo/lessons/errors.yaml',
+        'error': f'reason text, {len("PermissionError:/repo/lessons/errors.yaml")} chars (LAN)',
     }
 
 
@@ -5497,7 +5499,7 @@ def test_issue215_gate_violations_present_are_retained() -> None:
         'gate_violations must be present when violations are in the ledger row; '
         f'keys present: {list(rec)}'
     )
-    assert rec['gate_violations'] == ['budget exceeded', 'no tests added'], (
+    assert rec['gate_violations'] == ['violation · text 15 chars (LAN)', 'violation · text 14 chars (LAN)'], (
         f'gate_violations content wrong: {rec["gate_violations"]}'
     )
 
@@ -5581,7 +5583,7 @@ def test_issue215_gate_violations_survive_render_pages_to_json() -> None:
     assert 'gate_violations' in rec, (
         f'gate_violations lost in render_pages pipeline; keys: {list(rec)}'
     )
-    assert 'tests must pass' in rec['gate_violations'], (
+    assert rec['gate_violations'] and all('chars (LAN)' in v for v in rec['gate_violations']), (
         f'violation text missing: {rec["gate_violations"]}'
     )
 
@@ -6201,3 +6203,87 @@ def test_311_wall_clock_timeout_threshold_from_config(monkeypatch) -> None:
     row = html_over.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
     assert 'KILLED / INCOMPLETE' in row
     assert 'running' not in row
+def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
+    """ADR-036 rule 3: executor prompt text (system and task) is call text.
+
+    The reader still collects it, but no public page or published JSON
+    (lineage-cycle-details.json included) may contain it.
+    """
+    marker_system = 'ADR036-SYSTEM-MARKER-7f3c9e'
+    marker_task = 'ADR036-TASK-MARKER-41b2d8'
+    state = tmp_path / 'state'
+    (state / 'prompts').mkdir(parents=True)
+    (state / 'prompts' / 'cycle-leak.system.txt').write_text(f'system {marker_system}', encoding='utf-8')
+    (state / 'prompts' / 'cycle-leak.task.txt').write_text(f'task {marker_task}', encoding='utf-8')
+    repo = tmp_path / 'repo'
+    (repo / 'skills' / 'leak-skill').mkdir(parents=True)
+    marker_agents = 'ADR036-AGENTSMD-MARKER-c05a11'
+    marker_skill = 'ADR036-SKILL-MARKER-9d7e21'
+    (repo / 'AGENTS.md').write_text(f'# Agents\n\n{marker_agents}\n', encoding='utf-8')
+    (repo / 'skills' / 'leak-skill' / 'SKILL.md').write_text(f'---\nname: leak-skill\n---\n{marker_skill}\n', encoding='utf-8')
+    data = tv.read_local_state(str(state), str(repo))
+    assert marker_system in data['cycle_prompts']['cycle-leak']['system']['text']
+    collected = json.dumps(data, default=str)
+    assert marker_agents in collected  # the reader sees it; only rendering must drop it
+    markers = [marker_system, marker_task, marker_agents] + ([marker_skill] if marker_skill in collected else [])
+
+    marker_goal = 'ADR036-GOAL-MARKER-f00d'
+    data['goal_text'] = {'charter': f'charter {marker_goal}'}
+    markers.append(marker_goal)
+    pages = tv.render_pages(data, 'eeepc')
+    assert tv.LINEAGE_DETAILS_FILE in pages
+    single = tv.render_page(data, 'eeepc')
+    for name, body in list(pages.items()) + [('render_page', single)]:
+        for marker in markers:
+            assert marker not in body, (name, marker)
+    assert '"prompt":' not in pages[tv.LINEAGE_DETAILS_FILE]
+
+
+def test_adr036_subagent_and_reflector_text_stay_off_public_details() -> None:
+    """ADR-036 rule 3: subagent task/summary/result text and reflector output
+    are model text; the public cycle-details records keep only their sizes."""
+    markers = ['ADR036-SA-TASK-1e2d', 'ADR036-SA-SUMMARY-77ab', 'ADR036-SA-RESULT-3c9f', 'ADR036-REFL-SUMMARY-5d10', 'ADR036-REFL-FINDING-8e42']
+    subagents = [{
+        'cycle_id': 'cycle-x', 'subagent_id': 's1', 'label': 'exec', 'status': 'ok',
+        'task_excerpt': markers[0], 'summary_excerpt': markers[1], 'result_excerpt': markers[2],
+    }]
+    reflections = [{'cycle_id': 'cycle-x', 'summary': markers[3], 'findings': [markers[4]]}]
+    details = tv.build_cycle_details([], None, None, reflections, subagent_records=subagents)
+    blob = json.dumps(details)
+    for marker in markers:
+        assert marker not in blob, marker
+    assert details['cycle-x']['subagents'][0]['summary_chars'] == len(markers[1])
+    assert details['cycle-x']['reflection']['findings_count'] == 1
+
+
+def test_adr036_reason_code_is_public_free_text_is_not() -> None:
+    """ADR-036 rule 3 (architect, 2026-09-26): a vocabulary code passes; an
+    executor's phrase is replaced by its size."""
+    rows = [
+        {'cycle_id': 'cycle-code', 'reason': 'no_plan'},
+        {'cycle_id': 'cycle-text', 'reason': 'The executor said ADR036-REASON-MARKER-aa01 here'},
+    ]
+    details = tv.build_cycle_details(rows, None, None, None)
+    assert details['cycle-code']['reason'] == 'no_plan'
+    assert 'ADR036-REASON-MARKER-aa01' not in json.dumps(details)
+    assert details['cycle-text']['reason'].endswith('chars (LAN)')
+
+
+def test_adr036_gate_violations_keep_rule_and_path_only() -> None:
+    rows = [{'cycle_id': 'cycle-g', 'violations': ['test_regression: tests/test_x.py ADR036-GATE-MARKER-bb02 output']}]
+    details = tv.build_cycle_details(rows, None, None, None)
+    [shown] = details['cycle-g']['gate_violations']
+    assert 'ADR036-GATE-MARKER-bb02' not in shown
+    assert shown.startswith('test_regression')
+    assert 'tests/test_x.py' in shown
+
+
+def test_adr036_lesson_bodies_and_priority_summary_stay_off_public_pages() -> None:
+    """Lesson problem/solution/insight text and a priority's summary are
+    LAN-only; titles, tags and the compact priority form stay public."""
+    lessons = [{'cycle_id': 'cycle-l', 'problem': 'ADR036-LESSON-PROBLEM-cc03', 'solution': 'ADR036-LESSON-SOLUTION-dd04', 'insight': 'ADR036-LESSON-INSIGHT-ee05'}]
+    details = tv.build_cycle_details([], None, lessons, None)
+    blob = json.dumps(details)
+    for marker in ('ADR036-LESSON-PROBLEM-cc03', 'ADR036-LESSON-SOLUTION-dd04', 'ADR036-LESSON-INSIGHT-ee05'):
+        assert marker not in blob
+    assert details['cycle-l']['lesson_problem_chars'] == len('ADR036-LESSON-PROBLEM-cc03')
