@@ -129,13 +129,13 @@ def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_load_publish_state_missing_file_reads_as_never_published(tmp_path: Path) -> None:
     state_dir = tmp_path / 'does-not-exist-yet'
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
@@ -151,7 +151,7 @@ def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
     stray.write_text('{"digest": "half-written', encoding='utf-8')  # deliberately truncated/invalid JSON
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

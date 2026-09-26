@@ -8,8 +8,12 @@ from __future__ import annotations
 
 import html as _html
 from html.parser import HTMLParser
+import hashlib
+import json
 import re
-from typing import Iterable, NamedTuple, Pattern
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Iterable, NamedTuple, Pattern
 
 
 class PublicationScanError(Exception):
@@ -121,15 +125,67 @@ _ENV_SECRET_KV_RE = re.compile(
 )
 
 
+def _compile_scanner_patterns(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
+    branches = []
+    for rule in patterns:
+        source = rule.pattern.pattern
+        flags = rule.pattern.flags
+        if source.startswith("(?i)"):
+            source = source[4:]
+            flags |= re.IGNORECASE
+        inline = "(?i:" + source + ")" if flags & re.IGNORECASE else "(?:" + source + ")"
+        branches.append(f"(?P<{rule.name}>{inline})")
+    branches.extend((
+        r"(?P<json_secret>(?i:['\"])(?P<json_key>[a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)(?i:['\"])\s*:\s*(?:\"(?P<json_dval>[^\"]+)\"|'(?P<json_sval>[^']+)'|(?P<json_uval>[^,}\s]+)))",
+        r"(?P<env_secret>(?i:\b)(?P<env_key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)(?i:\s*[:=]\s*)(?:\"(?P<env_dval>[^\"]{8,})\"|'(?P<env_sval>[^']{8,})'|(?P<env_uval>[^\"'<>\s$]{8,})))",
+    ))
+    return re.compile("|".join(branches))
+
+
+@lru_cache(maxsize=4)
+def _combined_pattern(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
+    return _compile_scanner_patterns(patterns)
+
+
+@lru_cache(maxsize=4)
+def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...]:
+    # Candidate detection is a skip optimization only; a hit is always followed
+    # by the full merged scanner over the complete representation.
+    fixed = {
+        "/etc/eeepc-agent", "sk-", "ghp_", "gho_", "ghs_", "ghu_", "github_pat_",
+        "bearer ", "akia", "xox", "authorization:", "http://", "https://",
+        "private key", "'reasoning_content'", '"reasoning_content"',
+        "'messages'", '"messages"', "'prompt'", '"prompt"',
+        '"password"', "'password'", '"secret"', "'secret'", '"api_key"', "'api_key'",
+        '"api-key"', "'api-key'", '"access_token"', "'access_token'",
+        '"auth_token"', "'auth_token'", '"token"', "'token'", "_password=", "_password:", "_secret=", "_secret:",
+        "_token=", "_token:", "_key=", "_key:", "password=", "password:",
+        "secret=", "secret:", "token=", "token:", "api_key=", "api_key:",
+    }
+    dynamic = {
+        rule.pattern.pattern.lower()
+        for rule in patterns
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{8,}", rule.pattern.pattern)
+    }
+    return tuple(fixed | dynamic)
+
+
+def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
+    lowered = text.lower()
+    return any(lowered.find(needle) >= 0 for needle in _candidate_needles(patterns))
+
+
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
     """Unescape entities with a bound; refuse if another decode round is needed."""
     current = text
     for _ in range(max_rounds):
+        if "&" not in current:
+            return current
         decoded = _html.unescape(current)
         if decoded == current:
             return current
         current = decoded
-    if _html.unescape(current) != current:
+    if "&" in current and _html.unescape(current) != current:
         raise PublicationScanError(
             f"Publication rejected (ADR-036 rule 3): HTML entity decoding exceeds {max_rounds} round limit"
         )
@@ -172,75 +228,116 @@ class _ScanHTMLParser(HTMLParser):
 
 
 def _html_scan_variants(markup: str) -> list[str]:
-    """Return independently scanned text and attribute streams from one HTML fragment."""
+    """Return text and attribute streams; raw-text markup is parsed only when present."""
     parser = _ScanHTMLParser()
-    raw_parser = _ScanHTMLParser(collect_raw_text=True)
     try:
         parser.feed(markup)
         parser.close()
-        raw_parser.feed(markup)
-        raw_parser.close()
     except Exception:
-        # Malformed HTML is still scanned as source; discard partial parser output.
-        return []
+        return []  # scan source itself on malformed markup
 
-    variants = [
-        _unescape_until_stable("".join(parser.text_parts)),
-        *(_unescape_until_stable(value) for value in parser.attribute_values),
-    ]
-    for fragment in raw_parser.raw_text_parts:
-        # Raw-text nodes may contain JS strings that assemble HTML. Parse the
-        # fragment with the same separation between text and attributes.
-        variants.extend(_html_scan_variants(fragment))
+    variants = []
+    text_stream = _unescape_until_stable("".join(parser.text_parts))
+    if text_stream:
+        variants.append(text_stream)
+    # Newlines delimit values: matches cannot be fabricated across attributes.
+    attr_stream = "\x00".join(_unescape_until_stable(v) for v in parser.attribute_values)
+    if attr_stream:
+        variants.append(attr_stream)
+    for fragment in parser.raw_text_parts:
+        if "<" in fragment:
+            variants.extend(_html_scan_variants(fragment))
     return variants
 
 
-def scan_text(content: str) -> dict[str, int]:
-    """Scan string content and return counts of all matched leak patterns."""
+def _json_strings(value: Any) -> Iterable[str]:
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, list):
+        for item in value:
+            yield from _json_strings(item)
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            if isinstance(key, str):
+                yield key
+            yield from _json_strings(item)
+
+
+def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) -> dict[str, int]:
+    """Scan text and return rule hit counts; parser work is selected by artifact type."""
     findings: dict[str, int] = {}
-    unescaped = _unescape_until_stable(content)
-    # Parse unescaped markup so entity-encoded tag delimiters become markup
-    # before tokenization. Keep raw-text bodies separately: browsers may execute
-    # markup assembled from strings inside script/style/textarea/title content.
-    variants = list(dict.fromkeys([content, unescaped, *_html_scan_variants(unescaped)]))
+    source_variants = [content, _unescape_until_stable(content)]
+    if json_mode:
+        try:
+            decoded = json.loads(content)
+        except (json.JSONDecodeError, UnicodeError):
+            pass  # malformed JSON: scan raw and decoded source fail-closed
+        else:
+            strings = [_unescape_until_stable(value) for value in _json_strings(decoded)]
+            if strings:
+                source_variants.append("\x00".join(strings))
+    elif html_mode:
+        source_variants.extend(_html_scan_variants(source_variants[-1]))
+    variants = list(dict.fromkeys(source_variants))
 
-    for rule in STANDALONE_PATTERNS:
-        total = max(len(rule.pattern.findall(v)) for v in variants)
-        if total:
-            findings[rule.name] = total
-
-    json_hits = 0
-    for v in variants:
-        hits = 0
-        for match in _JSON_SECRET_KEY_RE.finditer(v):
-            key = match.group(1).lower()
-            val = match.group(2) or match.group(3) or ""
-            if is_excluded_key_name(key):
-                continue
-            if is_secret_value(val):
-                hits += 1
-        json_hits = max(json_hits, hits)
-    if json_hits:
-        findings["json_secret_field"] = json_hits
-
-    env_hits = 0
-    for v in variants:
-        hits = 0
-        for match in _ENV_SECRET_KV_RE.finditer(v):
-            key = match.group(1)
-            val = match.group(2) or match.group(3) or match.group(4) or ""
-            if is_excluded_key_name(key):
-                continue
-            if is_secret_value(val):
-                hits += 1
-        env_hits = max(env_hits, hits)
-    if env_hits:
-        findings["env_secret_kv"] = env_hits
-
+    pattern_signature = tuple(
+        SecretPattern(rule.name, rule.pattern, rule.description)
+        for rule in STANDALONE_PATTERNS
+    )
+    combined = _combined_pattern(pattern_signature)
+    standalone_names = {rule.name for rule in pattern_signature}
+    # One regex traversal over every representation that contains a candidate
+    # marker; ordinary prose/pages avoid a costly no-hit regex walk. If the
+    # inexpensive literal guard matches, the full content still gets scanned.
+    scan_variants = [variant for variant in variants if _has_scan_candidate(variant, pattern_signature)]
+    if scan_variants:
+        # Scan content and each parser-derived stream independently. Null
+        # joining would prevent boundary-spanning matches but still causes a
+        # regex engine to revisit the whole multi-megabyte body per variant.
+        matches = (match for variant in scan_variants for match in combined.finditer(variant))
+    else:
+        matches = ()
+    for match in matches:
+        json_key = match.group("json_key")
+        if json_key is not None:
+            val = match.group("json_dval") or match.group("json_sval") or match.group("json_uval") or ""
+            if not is_excluded_key_name(json_key) and is_secret_value(val):
+                findings["json_secret_field"] = findings.get("json_secret_field", 0) + 1
+            continue
+        env_key = match.group("env_key")
+        if env_key is not None:
+            val = match.group("env_dval") or match.group("env_sval") or match.group("env_uval") or ""
+            if not is_excluded_key_name(env_key) and is_secret_value(val):
+                findings["env_secret_kv"] = findings.get("env_secret_kv", 0) + 1
+            continue
+        for name in standalone_names:
+            if match.group(name) is not None:
+                findings[name] = findings.get(name, 0) + 1
+                break
     return findings
 
 
-def scan_pages(pages: dict[str, str]) -> None:
+_CACHE_KEY_RE = re.compile(r"^[0-9a-f]{64}:(?:html|json):(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+
+
+def validate_clean_cache(value: Any) -> dict[str, bool]:
+    """Return a safe cache or empty mapping; any malformed entry invalidates all."""
+    if not isinstance(value, dict):
+        return {}
+    if len(value) > 256 or any(
+        not isinstance(key, str) or not _CACHE_KEY_RE.fullmatch(key) or clean is not True
+        for key, clean in value.items()
+    ):
+        return {}
+    return dict(value)
+
+
+def scan_pages(
+    pages: dict[str, str],
+    *,
+    clean_cache: dict[str, bool] | None = None,
+    inherited_blob_shas: dict[str, str] | None = None,
+) -> None:
     """Scan all output pages destined for public pages before upload.
 
     Raises PublicationScanError if any sensitive internal path, credential,
@@ -249,11 +346,26 @@ def scan_pages(pages: dict[str, str]) -> None:
     the secret value itself is NEVER included.
     """
     validate_publish_allowlist(pages.keys())
+    cache = clean_cache if isinstance(clean_cache, dict) else None
+    if cache is not None:
+        validated = validate_clean_cache(cache)
+        cache.clear()
+        cache.update(validated)
+    version = scanner_version()
     violations: list[str] = []
+    clean_keys: list[str] = []
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
-        findings = scan_text(content)
+        is_json = fname.lower().endswith(".json")
+        mode = "json" if is_json else "html"
+        blob_sha = (inherited_blob_shas or {}).get(fname)
+        content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
+        cache_key = clean_cache_key(content_sha, version, mode=mode)
+        clean_keys.append(cache_key)
+        if cache is not None and cache.get(cache_key) is True:
+            continue
+        findings = scan_text(content, html_mode=not is_json, json_mode=is_json)
         if findings:
             summary = ", ".join(f"{rule}: {cnt}" for rule, cnt in sorted(findings.items()))
             violations.append(f"{fname}: {summary}")
@@ -263,3 +375,37 @@ def scan_pages(pages: dict[str, str]) -> None:
         raise PublicationScanError(
             f"Publication rejected (ADR-036 rule 3): sensitive markers detected in {len(violations)} file(s): {details}"
         )
+    if cache is not None:
+        for key in clean_keys:
+            cache[key] = True
+        # The cache is metadata only and bounded across content churn.
+        current_prefix = f"{version}:"
+        current_keys = [key for key in cache if key.startswith(current_prefix)]
+        cache.clear()
+        for key in current_keys[-256:]:
+            cache[key] = True
+
+
+def scanner_version() -> str:
+    """Content-address scanner implementation and patterns to invalidate old cache entries."""
+    try:
+        source = Path(__file__).read_bytes()
+    except OSError as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot fingerprint scanner version: {exc}"
+        ) from exc
+    patterns = "\n".join(f"{r.name}:{r.pattern.pattern}:{r.pattern.flags}" for r in STANDALONE_PATTERNS)
+    return hashlib.sha256(source + patterns.encode("utf-8")).hexdigest()
+
+
+def clean_cache_key(
+    content_sha: str, version: str | None = None, *, mode: str = "html"
+) -> str:
+    return f"{version or scanner_version()}:{mode}:{content_sha}"
+
+
+def cache_contains_clean(
+    cache: Any, content_sha: str, version: str | None = None, *, mode: str = "html"
+) -> bool:
+    safe_cache = validate_clean_cache(cache)
+    return safe_cache.get(clean_cache_key(content_sha, version, mode=mode)) is True

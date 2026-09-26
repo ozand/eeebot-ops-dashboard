@@ -10152,14 +10152,28 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | dict[str, str]) -> None:
+def _inspect_and_scan_inherited_tree(
+    base_tree: str,
+    uploaded_paths: set[str] | dict[str, str],
+    scan_cache: dict[str, bool] | None = None,
+) -> None:
     """ADR-036 rule 3: verify full target tree recursively (fail-closed)."""
     import base64
     import json as _json
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
+        from scripts.publish_scan import (
+            PublicationScanError,
+            cache_contains_clean,
+            is_allowed_publish_path,
+            scan_pages,
+        )
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
+        from publish_scan import (
+            PublicationScanError,
+            cache_contains_clean,
+            is_allowed_publish_path,
+            scan_pages,
+        )
 
     if not base_tree:
         raise PublicationScanError(
@@ -10199,6 +10213,7 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
         )
 
     inherited_pages = {}
+    inherited_blob_shas: dict[str, str] = {}
     for item in entries:
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
@@ -10209,6 +10224,10 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                         f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
                     )
             if path and sha and path not in uploaded_paths:
+                if cache_contains_clean(scan_cache, sha, mode="json" if path.lower().endswith(".json") else "html"):
+                    # The blob SHA is content-addressed and cache key includes
+                    # scanner version; avoid fetching it again only after a clean scan.
+                    continue
                 b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
                 if b_res.returncode != 0:
                     raise PublicationScanError(
@@ -10272,6 +10291,7 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                     else:
                         txt = raw
                     inherited_pages[path] = txt
+                    inherited_blob_shas[path] = sha
                 except PublicationScanError:
                     raise
                 except Exception as exc:
@@ -10279,7 +10299,7 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
-        scan_pages(inherited_pages)
+        scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
 
 
 def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
@@ -10304,6 +10324,7 @@ def _ensure_pages_enabled() -> bool:
 def _dry_run_pages(
     pages: dict[str, str],
     previous_fingerprints: dict[str, str] | None,
+    scan_cache: dict[str, bool] | None = None,
 ) -> tuple[int, dict[str, str]]:
     """ADR-036 rule 3: inspect dry run without remote mutation."""
     import json as _json
@@ -10332,7 +10353,7 @@ def _dry_run_pages(
         fname for fname, html in pages.items()
         if prev_fp.get(fname) != _page_fingerprint(html)
     }
-    _inspect_and_scan_inherited_tree(probe_tree, uploaded)
+    _inspect_and_scan_inherited_tree(probe_tree, uploaded, scan_cache)
     return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
 
 
@@ -10393,6 +10414,7 @@ def publish_to_pages(
     pages: 'dict[str, str] | str',
     *,
     previous_fingerprints: 'dict[str, str] | None' = None,
+    scan_cache: 'dict[str, bool] | None' = None,
     dry_run: bool = False,
 ) -> 'tuple[int, dict[str, str]]':
     """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
@@ -10428,13 +10450,13 @@ def publish_to_pages(
 
     pages = dict(pages)
     # ADR-036 rule 3: scan new pages unconditionally before blob creation
-    scan_pages(pages)
+    scan_pages(pages, clean_cache=scan_cache)
     previous_fingerprints = previous_fingerprints or {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
     if dry_run:
-        return _dry_run_pages(pages, previous_fingerprints)
+        return _dry_run_pages(pages, previous_fingerprints, scan_cache)
 
     # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
@@ -10492,7 +10514,7 @@ def publish_to_pages(
             raise PublicationScanError(
                 f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
             ) from exc
-        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths=set())
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths=set(), scan_cache=scan_cache)
 
         # #278: every page's normalized content matched last publish's --
         # nothing to commit. should_publish's tree digest gate normally
@@ -10535,7 +10557,7 @@ def publish_to_pages(
 
         # ADR-036 rule 3: scan base_tree for this attempt unconditionally
         uploaded_paths = {entry['path'] for entry in tree_entries}
-        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths)
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths, scan_cache)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',

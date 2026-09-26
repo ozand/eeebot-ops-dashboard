@@ -10,6 +10,9 @@ Verifies that:
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from scripts import publish_scan as ps
