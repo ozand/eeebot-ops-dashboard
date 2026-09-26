@@ -73,7 +73,7 @@ _JSON_SECRET_KEY_RE = re.compile(
     r'(?i)"([a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)"\s*:\s*"([^"]+)"'
 )
 _ENV_SECRET_KV_RE = re.compile(
-    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*["\']?([^"\'<>\s$]{8,})["\']?'
+    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*(?:"([^"\r\n]{8,})"|\'([^\'\r\n]{8,})\'|([^"\'<>\s$]{8,}))'
 )
 
 
@@ -111,7 +111,8 @@ def scan_text(content: str) -> dict[str, int]:
 
     env_raw = 0
     for match in _ENV_SECRET_KV_RE.finditer(content):
-        key, val = match.group(1), match.group(2)
+        key = match.group(1)
+        val = match.group(2) or match.group(3) or match.group(4) or ""
         key_lower = key.lower()
         if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
             continue
@@ -120,7 +121,8 @@ def scan_text(content: str) -> dict[str, int]:
     env_une = 0
     if has_entities:
         for match in _ENV_SECRET_KV_RE.finditer(unescaped):
-            key, val = match.group(1), match.group(2)
+            key = match.group(1)
+            val = match.group(2) or match.group(3) or match.group(4) or ""
             key_lower = key.lower()
             if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
                 continue
