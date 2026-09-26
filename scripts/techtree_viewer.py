@@ -1309,6 +1309,21 @@ def _read_lessons_archive(lessons_dir):
     return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
+def _is_non_work_commit_subject(subject):
+    normalized = subject.strip().lower()
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
+
+
+def _is_non_work_commit_message(message):
+    lines = message.splitlines()
+    trailers = {line.strip().lower() for line in lines[1:]}
+    return (
+        (bool(lines) and _is_non_work_commit_subject(lines[0]))
+        or "selfevo-residual: true" in trailers
+        or "selfevo-checkpoint: true" in trailers
+    )
+
+
 def extract_git_titles(node_shas=None):
     titles = {}
     cycle_files = {}
@@ -5729,6 +5744,9 @@ def build_cycle_feed(
         proposed_title = next((
             str(p.get('task_title')).strip() for p in phases
             if p.get('phase') == 'proposed' and p.get('task_title')
+        ), '') or next((
+            str(p.get('task_title')).strip() for p in phases
+            if p.get('task_title') and str(p.get('task_title')).strip()
         ), '')
 
         # Outcome derivation from phases
