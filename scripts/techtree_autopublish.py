@@ -37,6 +37,10 @@ from typing import Any
 # /opt/eeebot-techtree/).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import techtree_viewer as tv  # noqa: E402
+try:
+    from scripts.publish_scan import scan_pages
+except ImportError:
+    from publish_scan import scan_pages  # type: ignore  # noqa: E402
 
 DEFAULT_STATE_DIR = '/var/lib/eeebot-techtree'
 STATE_FILENAME = 'publish_state.json'
@@ -423,6 +427,7 @@ def run(args: argparse.Namespace) -> int:
 
     if args.dry_run:
         pages = tv.render_pages(data, args.host_label)
+        scan_pages(pages)
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
                 state, staleness_floor_seconds, now,
