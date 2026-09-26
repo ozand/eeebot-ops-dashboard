@@ -411,3 +411,19 @@ def test_adr036_publish_to_pages_scans_moved_head_on_attempt_one(monkeypatch) ->
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
     assert "sub/leak.html" in str(exc_info.value)
     assert not commits_made
+
+
+def test_adr036_html_entity_encoded_call_markers_and_secrets_trigger_rejection() -> None:
+    """ADR-036 rule 3: HTML entity encoded call markers and json keys must be rejected."""
+    encoded_messages = "<div>{&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;}]}</div>"
+    encoded_reasoning = "<pre>{&quot;reasoning_content&quot;: &quot;thinking&quot;}</pre>"
+    encoded_password = "<code>{&quot;password&quot;: &quot;secret12345&quot;}</code>"
+
+    with pytest.raises(ps.PublicationScanError, match="call marker messages"):
+        ps.scan_pages({"index.html": encoded_messages})
+
+    with pytest.raises(ps.PublicationScanError, match="call marker reasoning_content"):
+        ps.scan_pages({"index.html": encoded_reasoning})
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_password"):
+        ps.scan_pages({"index.html": encoded_password})
