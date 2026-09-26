@@ -687,11 +687,15 @@ def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -
 
 
 def test_adr036_raw_text_element_markup_is_scanned_as_html_fragment() -> None:
-    """Tag-split credentials inside script/style/textarea/title data remain visible when executed/rendered."""
+    """Tag-split credentials in raw-text elements are parsed with text and attributes separate."""
     for element in ("script", "style", "textarea", "title"):
         page = f"<{element}>document.body.innerHTML='ghp_<span>abcdefghijklmnop123456</span>'</{element}>"
         with pytest.raises(ps.PublicationScanError, match="github_token"):
             ps.scan_pages({"index.html": page})
+
+    attributed_fragment = '<script>document.body.innerHTML=\'ghp_<span class="red box">abcdefghijklmnop123456</span>\'</script>'
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": attributed_fragment})
 
 
 def test_adr036_single_quoted_structural_markers_trigger_rejection() -> None:
