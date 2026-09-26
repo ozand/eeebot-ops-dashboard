@@ -205,7 +205,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             seq = p.get("seq", 1)
             dur = dur_by_seq.get((cid, role, str(seq)), {}).get("duration_ms")
             tools = extract_tool_steps(p)
-            if any(t.get("status") == "incomplete" for t in tools):
+            if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 history_complete = False
             model_step = {
                 "kind": "model",
