@@ -190,6 +190,14 @@ def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> N
     assert "cycle-linked" in pages["cycles/cycle-linked.html"]
 
 
+def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> None:
+    from scripts.two_sinks import build_private_cycle_pages
+
+    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=cycle-linked">details</a>'}, tmp_path)
+    assert "cycles/cycle-linked.html" in pages
+    assert "cycle-linked" in pages["cycles/cycle-linked.html"]
+
+
 def test_missing_cycle_sources_render_unavailable_not_empty():
 
     """ADR-036 §3: missing private source data is visibly unavailable."""
