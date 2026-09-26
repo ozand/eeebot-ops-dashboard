@@ -346,3 +346,52 @@ def test_tool_result_applies_display_limit_truncation() -> None:
     }
     rendered = format_tool_step(step)
     assert "characters not shown" in rendered
+
+
+def test_f6_env_sanitization_and_inline_assignment_redaction(tmp_path: Path) -> None:
+    """External review F6: env content withheld in model step copy, inline assignments masked, dotenv matched."""
+    from scripts import cycle_detail as cd
+
+    # 1. is_env_path on /tmp/.env
+    assert cd.is_env_path("/tmp/.env") is True
+    assert cd.is_env_path(".env") is True
+
+    # 2. inline assignment redaction
+    redacted = cd.redact_text("command output: GH_TOKEN=abcdefghijklmnop")
+    assert "abcdefghijklmnop" not in redacted
+    assert "GH_TOKEN=[redacted]" in redacted
+
+    # 3. model step messages copy must not leak env file content
+    root = tmp_path / "state"
+    run_file = root / "bridge" / "runs.jsonl"
+    run_file.parent.mkdir(parents=True, exist_ok=True)
+    run_file.write_text('{"run_id": "r1", "cycle_id": "c-f6-env", "classification": "completed"}\n', encoding="utf-8")
+
+    prompt_file = root / "llm_calls" / "prompts" / "2026-09-25.jsonl"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_data = {
+        "cycle_id": "c-f6-env",
+        "component": "executor",
+        "seq": 1,
+        "messages": [
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {"id": "call_1", "function": {"name": "read_file", "arguments": json.dumps({"path": "/etc/eeepc-agent/config.env"})}}
+                ],
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "call_1",
+                "content": "OTHER=ENV_FILE_CANARY_SECRET_123",
+            },
+        ],
+    }
+    prompt_file.write_text(json.dumps(prompt_data) + "\n", encoding="utf-8")
+
+    fixed_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+    detail = cd.load_cycle_detail(root, "c-f6-env", now=fixed_now)
+    page_html = cd.render_cycle_page("c-f6-env", detail)
+
+    assert "ENV_FILE_CANARY_SECRET_123" not in page_html
+    assert "[env file contents withheld]" in page_html
