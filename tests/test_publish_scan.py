@@ -745,6 +745,35 @@ def test_adr036_bootstrap_clean_branch_enables_pages(monkeypatch: pytest.MonkeyP
     assert any("-X" in call and "POST" in call for call in pages_calls)
 
 
+def test_adr036_regular_publish_pages_enable_failure_returns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036: Pages activation failure after a regular ref update must fail the publish."""
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0, err="": subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [], "truncated": false}')
+        if "git/blobs" in joined:
+            return cp('{"sha":"blob1"}')
+        if "git/trees" in joined and "-X" in args:
+            return cp("tree2")
+        if "git/commits" in joined:
+            return cp("commit2")
+        if "git/refs/heads/gh-pages" in joined and "PATCH" in args:
+            return cp("{}")
+        if "pages" in joined and "-X" in args:
+            return cp("", rc=1, err="HTTP 403 Forbidden")
+        if "pages" in joined:
+            return cp("", rc=1, err="404 Not Found")
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    rc, fingerprints = tv.publish_to_pages({"index.html": "<html>updated</html>"})
+    assert rc != 0
+    assert fingerprints == {}
+
+
 def test_adr036_bootstrap_pages_enable_failure_returns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """ADR-036: A failed Pages activation must not report bootstrap publication success."""
     def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
