@@ -92,6 +92,21 @@ def test_adr036_pattern_env_kv_and_json_secrets_trigger_rejection() -> None:
     assert "json_secret_field" in str(exc_info.value)
 
 
+def test_scan_reference_live_size_html_within_cold_time_budget() -> None:
+    """A live-sized ~8.5 MiB HTML page should cold-scan in under five seconds."""
+    import time
+    content = '<!doctype html><html><body>' + (
+        '<p class="status">ordinary dashboard text and counters 123456</p>' * 130000
+    ) + '</body></html>'
+    size = len(content.encode("utf-8"))
+    assert 8_000_000 <= size <= 9_000_000
+
+    started = time.perf_counter()
+    ps.scan_pages({"lineage.html": content})
+    elapsed = time.perf_counter() - started
+    assert elapsed < 5.0, f"cold scan of {size} bytes took {elapsed:.3f}s"
+
+
 def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
     """ADR-036: Numeric counters and placeholders must not trigger false positives."""
     clean_payload = {
