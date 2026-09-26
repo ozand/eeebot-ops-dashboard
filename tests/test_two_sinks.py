@@ -574,3 +574,44 @@ def test_f10_current_alias_redirects_and_swap_preserves_old_link(tmp_path: Path,
     h.do_GET()
     assert h.response_code == 302
     assert h.headers_sent.get("Location") == "/v1/data.json"
+
+
+def test_f12_host_catches_any_exception_and_reports_cleanup_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """External review F12: host sink must catch Exception (not only OSError), and cleanup failure must not be swallowed."""
+    from scripts.two_sinks import HostSnapshotError
+    root = tmp_path / "site"
+
+    # Part 1: non-OSError in host snapshot must still run publisher and raise HostSnapshotError
+    publisher_called = []
+    def fake_publisher(pages):
+        publisher_called.append(pages)
+        return 0, {"index.html": "sha"}
+
+    def failing_swap(*args, **kwargs):
+        raise UnicodeEncodeError("utf-8", "lone surrogate", 0, 1, "test surrogate error")
+
+    monkeypatch.setattr("scripts.two_sinks.atomic_snapshot_swap", failing_swap)
+
+    with pytest.raises(HostSnapshotError):
+        publish_ordered(
+            root,
+            {"index.html": "public"},
+            {"cycle.html": "private"},
+            "v1",
+            publisher=fake_publisher,
+        )
+    assert len(publisher_called) == 1
+
+    # Part 2: cleanup failure in atomic_snapshot_swap must not be silently swallowed
+    import shutil
+    def failing_rmtree(path, *args, **kwargs):
+        raise PermissionError(f"denied deletion of {path}")
+
+    monkeypatch.undo()
+    monkeypatch.setattr(shutil, "rmtree", failing_rmtree)
+
+    atomic_snapshot_swap(root, {"index.html": "v1"}, "v1")
+    atomic_snapshot_swap(root, {"index.html": "v2"}, "v2")
+    with pytest.raises(Exception) as exc_info:
+        atomic_snapshot_swap(root, {"index.html": "v3"}, "v3")
+    assert "cleanup" in str(exc_info.value).lower() or "pruning" in str(exc_info.value).lower()
