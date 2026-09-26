@@ -167,12 +167,25 @@ def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...]:
         for rule in patterns
         if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{8,}", rule.pattern.pattern)
     }
+    # Keep in sync with the full environment / JSON secret-key regexes. These
+    # candidates are intentionally broad: any matching key shape triggers the
+    # full scan, which still applies exclusions and secret-value checks.
+    fixed.update({"_pass=", "_pass:", "_auth=", "_auth:", "auth=", "auth:"})
+    # JSON key regex accepts arbitrary prefixes/suffixes around secret terms.
     return tuple(fixed | dynamic)
+
+
+_JSON_CANDIDATE_RE = re.compile(
+    r"(?i:[\"'][a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*[\"']\s*:)"
+)
 
 
 def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
     lowered = text.lower()
-    return any(lowered.find(needle) >= 0 for needle in _candidate_needles(patterns))
+    return (
+        any(lowered.find(needle) >= 0 for needle in _candidate_needles(patterns))
+        or _JSON_CANDIDATE_RE.search(text) is not None
+    )
 
 
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
