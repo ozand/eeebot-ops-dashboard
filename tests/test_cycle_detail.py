@@ -623,6 +623,27 @@ def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:
     assert session["model_calls"] == 1
 
 
+def test_duplicate_daily_prompt_compression_is_counted_once(tmp_path: Path) -> None:
+    import gzip
+    import json
+    from datetime import datetime, timezone
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    (root / "bridge" / "runs.jsonl").write_text(json.dumps({"run_id": "r", "cycle_id": "c-dup", "classification": "completed"}) + "\n", encoding="utf-8")
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    row = {"cycle_id": "c-dup", "component": "executor", "seq": 1, "ts": "2026-09-25T10:00:00Z", "messages": []}
+    plain = json.dumps(row) + "\n"
+    (prompts / "2026-09-25.jsonl").write_text(plain, encoding="utf-8")
+    with gzip.open(prompts / "2026-09-25.jsonl.gz", "wt", encoding="utf-8") as stream:
+        stream.write(plain)
+
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-dup"]
+    assert detail["total_model_calls"] == 1
+
+
 def test_repeated_seq_durations_preserve_all_prompt_rows(tmp_path: Path) -> None:
     import json
     from datetime import datetime, timezone
