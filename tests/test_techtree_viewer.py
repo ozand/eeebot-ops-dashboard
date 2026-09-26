@@ -6114,19 +6114,25 @@ def test_adr036_subagent_and_reflector_text_stay_off_public_details() -> None:
     assert details['cycle-x']['reflection']['findings_count'] == 1
 
 
-def test_build_cycle_details_uses_preserved_v2_projection_metrics() -> None:
+def test_build_cycle_details_uses_preserved_v2_lesson_projection_metrics() -> None:
     from scripts.two_sinks import _sanitize_public_value
 
     lesson = _sanitize_public_value('lessons', [{
         'cycle_id': 'cycle-projected', 'problem': 'private problem', 'solution': 'private fix',
     }])[0]
+    details = tv.build_cycle_details([], None, [lesson], [])
+    assert details['cycle-projected']['lesson_problem_chars'] == len('private problem')
+    assert details['cycle-projected']['lesson_solution_chars'] == len('private fix')
+
+
+def test_build_cycle_details_uses_preserved_reflection_projection_metrics() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
     reflection = _sanitize_public_value('reflections', [{
         'cycle_id': 'cycle-projected', 'summary': 'private summary',
         'findings': ['finding'], 'recommendations': ['recommendation'],
     }])[0]
-    details = tv.build_cycle_details([], None, [lesson], [reflection])
-    assert details['cycle-projected']['lesson_problem_chars'] == len('private problem')
-    assert details['cycle-projected']['lesson_solution_chars'] == len('private fix')
+    details = tv.build_cycle_details([], None, [], [reflection])
     assert details['cycle-projected']['reflection'] == {
         'summary_chars': len('private summary'), 'findings_count': 1, 'recommendations_count': 1,
     }
