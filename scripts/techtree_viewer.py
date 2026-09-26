@@ -419,9 +419,8 @@ LEDGER_SCAN_WINDOW = 20000
 LEDGER_HISTORY_DAYS = 90
 
 # Baked-in generator SHA (issue #101).
-# This sentinel is replaced with the real short git SHA by deploy_generator.sh
-# at deploy time (via `sed -i`).  When running directly from the repo the value
-# is empty and _generator_sha() falls back to `git rev-parse --short HEAD`.
+# When running directly from the repo the value is empty and _generator_sha()
+# falls back to `git rev-parse --short HEAD`.
 # Format: exactly 7 hex chars, no surrounding whitespace.  Never edit manually.
 _BAKED_GENERATOR_SHA: str = ''
 
@@ -9416,9 +9415,8 @@ def _generator_sha() -> str:
     """Return the generator's git short SHA.
 
     Preference order (issue #101):
-    1. Module-level ``_BAKED_GENERATOR_SHA`` — set by deploy_generator.sh at
-       deploy time via ``sed -i``; non-empty when running from /opt, so no
-       git repo is required on the host.
+    1. Module-level ``_BAKED_GENERATOR_SHA`` — non-empty when set at deploy
+       time via ``sed -i``, so no git repo is required on the host.
     2. ``git rev-parse --short HEAD`` — works when running directly from the
        repo (operator workstation / CI).
     3. ``'unknown'`` — neither source is available.
@@ -10047,6 +10045,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         '--state-root', default=STATE_ROOT,
         help=f'local state root to read when --local is set (default: {STATE_ROOT})',
     )
+    parser.add_argument('--site-root', default='/var/lib/eeebot-site', help='local host snapshot root used with --publish')
     parser.add_argument(
         '--publish', action='store_true',
         help='also publish the page to GitHub Pages (gh-pages branch of '
@@ -10135,14 +10134,14 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> None:
+def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | dict[str, str]) -> None:
     """ADR-036 rule 3: verify full target tree recursively (fail-closed)."""
     import base64
     import json as _json
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
 
     if not base_tree:
         raise PublicationScanError(
@@ -10176,13 +10175,22 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
         raise PublicationScanError(
             "Publication rejected (ADR-036 rule 3): target tree object is null or missing"
         )
+    if not isinstance(entries, list):
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): target tree is not a list (invalid schema): {type(entries).__name__}"
+        )
 
     inherited_pages = {}
     for item in entries:
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
             sha = item.get('sha')
-            if path and sha and path not in pages:
+            if path:
+                if not is_allowed_publish_path(path):
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
+                    )
+            if path and sha and path not in uploaded_paths:
                 b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
                 if b_res.returncode != 0:
                     raise PublicationScanError(
@@ -10190,19 +10198,177 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
                     )
                 try:
                     b_json = _json.loads(b_res.stdout)
+                    if not isinstance(b_json, dict) or "content" not in b_json or b_json["content"] is None:
+                        raise PublicationScanError(
+                            f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
+                        )
                     raw = b_json.get('content', '')
                     enc = b_json.get('encoding', '')
                     if enc == 'base64':
-                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                        raw_bytes = base64.b64decode(raw)
+                        if raw_bytes.startswith(b'\x1f\x8b'):
+                            import zlib
+                            try:
+                                max_decompressed_bytes = 20 * 1024 * 1024
+                                chunks = []
+                                total = 0
+                                remaining = raw_bytes
+                                while remaining:
+                                    decompressor = zlib.decompressobj(wbits=31)
+                                    chunk = decompressor.decompress(
+                                        remaining, max_decompressed_bytes - total + 1
+                                    )
+                                    total += len(chunk)
+                                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(chunk)
+                                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                                    total += len(tail)
+                                    if total > max_decompressed_bytes:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(tail)
+                                    # Gzip members concatenate byte-for-byte; do not insert
+                                    # separators that could split a credential across lines.
+                                    if not decompressor.eof:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                                        )
+                                    remaining = decompressor.unused_data
+                                raw_bytes = b''.join(chunks)
+                            except PublicationScanError:
+                                raise
+                            except Exception as gz_exc:
+                                raise PublicationScanError(
+                                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
+                                ) from gz_exc
+                        try:
+                            txt = raw_bytes.decode('utf-8')
+                        except UnicodeDecodeError as u_exc:
+                            raise PublicationScanError(
+                                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {u_exc}"
+                            ) from u_exc
                     else:
                         txt = raw
                     inherited_pages[path] = txt
+                except PublicationScanError:
+                    raise
                 except Exception as exc:
                     raise PublicationScanError(
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
         scan_pages(inherited_pages)
+
+
+def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
+    """Return True if GitHub API explicitly confirmed the branch is missing (404 / Not Found)."""
+    msg = f"{res.stderr} {res.stdout}".lower()
+    return "404" in msg or "not found" in msg or "branch not found" in msg
+
+
+def _ensure_pages_enabled() -> bool:
+    """Enable Pages on gh-pages if not already; return False if activation failed."""
+    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
+    if pages_enabled.returncode != 0:
+        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
+                      '--input', '-'],
+                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
+        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
+            print(f'publish: Pages enable failed: {enable.stderr.strip()[:200]}', file=sys.stderr)
+            return False
+    return True
+
+
+def _dry_run_pages(
+    pages: dict[str, str],
+    previous_fingerprints: dict[str, str] | None,
+) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: inspect dry run without remote mutation."""
+    import json as _json
+    try:
+        from scripts.publish_scan import PublicationScanError
+    except ImportError:
+        from publish_scan import PublicationScanError
+
+    branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+    if branch_probe.returncode != 0:
+        if _is_confirmed_not_found(branch_probe):
+            print(f'publish: [dry-run] {PUBLISH_BRANCH} does not exist yet; target tree is clean')
+            return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot probe {PUBLISH_BRANCH} during dry-run (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}"
+        )
+    try:
+        head_data = _json.loads(branch_probe.stdout)
+        probe_tree = head_data['commit']['commit']['tree']['sha']
+    except Exception as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
+        ) from exc
+    prev_fp = previous_fingerprints or {}
+    uploaded = {
+        fname for fname, html in pages.items()
+        if prev_fp.get(fname) != _page_fingerprint(html)
+    }
+    _inspect_and_scan_inherited_tree(probe_tree, uploaded)
+    return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+
+
+def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: bootstrap gh-pages from clean orphan tree, never master."""
+    import base64
+    import json as _json
+    tree_entries = []
+    fingerprints: dict[str, str] = {}
+    for fname, html in sorted(pages.items()):
+        fingerprints[fname] = _page_fingerprint(html)
+        blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
+        blob_body = _json.dumps({'content': blob_b64, 'encoding': 'base64'})
+        blob = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/blobs',
+                    '--input', '-', '--jq', '.sha'], input_text=blob_body)
+        if blob.returncode != 0:
+            print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}', file=sys.stderr)
+            return 1, {}
+        tree_entries.append({
+            'path': fname, 'mode': '100644', 'type': 'blob', 'sha': blob.stdout.strip()
+        })
+
+    tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees', '--input', '-'],
+               input_text=_json.dumps({'tree': tree_entries}))
+    if tree.returncode != 0:
+        print(f'publish: initial tree creation failed: {tree.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        tree_sha = _json.loads(tree.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial tree response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits', '--input', '-'],
+                 input_text=_json.dumps({'tree': tree_sha, 'message': 'publish: initial site', 'parents': []}))
+    if commit.returncode != 0:
+        print(f'publish: initial commit failed: {commit.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        commit_sha = _json.loads(commit.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial commit response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
+                '-f', f'ref=refs/heads/{PUBLISH_BRANCH}', '-f', f'sha={commit_sha}'])
+    if made.returncode != 0:
+        print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+
+    if not _ensure_pages_enabled():
+        return 1, {}
+    print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
+    return 0, fingerprints
 
 
 def publish_to_pages(
@@ -10232,9 +10398,9 @@ def publish_to_pages(
     actually complete."""
     import base64
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
 
     if isinstance(pages, str):
         pages = {'index.html': pages}
@@ -10243,15 +10409,15 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
-    # ADR-036 rule 3: scan new pages unconditionally before blob creation
+    # Match master #326: direct callers receive scanner/allowlist refusals.
     scan_pages(pages)
     previous_fingerprints = previous_fingerprints or {}
 
     try:
         try:
-            from two_sinks import scan_pages, validate_publish_allowlist
+            from two_sinks import validate_publish_allowlist
         except ImportError:
-            from scripts.two_sinks import scan_pages, validate_publish_allowlist
+            from scripts.two_sinks import validate_publish_allowlist
         validate_publish_allowlist(pages)
         scan_pages(pages)
     except Exception as exc:
@@ -10260,39 +10426,17 @@ def publish_to_pages(
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
-    # Branch may not exist yet: bootstrap it from the default branch HEAD.
+    if dry_run:
+        return _dry_run_pages(pages, previous_fingerprints)
+
+    # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
-        head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
-                    '--jq', '.object.sha'])
-        if head.returncode != 0:
-            print(f'publish: cannot resolve master HEAD: {head.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-        made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
-                    '-f', f'ref=refs/heads/{PUBLISH_BRANCH}',
-                    '-f', f'sha={head.stdout.strip()}'])
-        if made.returncode != 0:
-            print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-
-    if dry_run:
-        probe = branch_probe if branch_probe.returncode == 0 else _gh(['api', f'repos/{PUBLISH_REPO}/branches/master'])
-        if probe.returncode != 0:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): cannot read branch for dry-run inspection: {probe.stderr.strip()[:200]}"
-            )
-        try:
-            import json as _json
-            head_data = _json.loads(probe.stdout)
-            probe_tree = head_data['commit']['commit']['tree']['sha']
-        except Exception as exc:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
-            ) from exc
-        _inspect_and_scan_inherited_tree(probe_tree, pages)
-        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        if _is_confirmed_not_found(branch_probe):
+            return _bootstrap_clean_branch(pages)
+        print(f'publish: cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}',
+              file=sys.stderr)
+        return 1, {}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10327,6 +10471,22 @@ def publish_to_pages(
         tree_entries.append(entry)
 
     if not tree_entries:
+        # ADR-036: Scan base_tree even when 0 pages changed ('nothing to publish')
+        import json as _json
+        head = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+        if head.returncode != 0:
+            print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1, {}
+        try:
+            head_data = _json.loads(head.stdout)
+            base_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
+            ) from exc
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths=set())
+
         # #278: every page's normalized content matched last publish's --
         # nothing to commit. should_publish's tree digest gate normally
         # prevents reaching publish_to_pages at all in that case, but a
@@ -10367,7 +10527,8 @@ def publish_to_pages(
             ) from exc
 
         # ADR-036 rule 3: scan base_tree for this attempt unconditionally
-        _inspect_and_scan_inherited_tree(base_tree, pages)
+        uploaded_paths = {entry['path'] for entry in tree_entries}
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
@@ -10409,16 +10570,8 @@ def publish_to_pages(
         print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
               f're-reading and retrying', file=sys.stderr)
 
-    # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
-    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
-    if pages_enabled.returncode != 0:
-        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
-                      '--input', '-'],
-                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
-        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
-            print(f'publish: Pages enable failed (page pushed anyway): '
-                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
-
+    if not _ensure_pages_enabled():
+        return 1, {}
     print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
           f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
     return 0, fingerprints
@@ -10458,9 +10611,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.publish:
         try:
-            from scripts.two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs
         except ImportError:
-            from two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+            from two_sinks import publish_ordered, render_private_pages, split_render_inputs
 
         public_data, private_data = split_render_inputs(data)
         public_pages = render_public_pages(public_data, args.host)
@@ -10469,7 +10622,7 @@ def main(argv: list[str] | None = None) -> int:
         version = f"{int(now_ts)}-manual"
         stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
         rc, _ = publish_ordered(
-            Path(DEFAULT_SITE_ROOT),
+            Path(args.site_root),
             public_pages,
             private_pages,
             version,

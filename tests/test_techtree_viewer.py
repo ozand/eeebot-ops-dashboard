@@ -4209,7 +4209,7 @@ def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -
     rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
     assert rc == 0
     assert not any('git/blobs' in ' '.join(c) for c in calls)
-    assert not any('git/trees' in ' '.join(c) for c in calls)
+    assert not any('-X' in c and 'POST' in c and 'git/trees' in ' '.join(c) for c in calls)
     assert not any('git/commits' in ' '.join(c) for c in calls)
     assert fingerprints == previous_fp
 

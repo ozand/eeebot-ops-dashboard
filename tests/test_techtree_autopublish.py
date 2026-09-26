@@ -132,6 +132,15 @@ def test_parse_args_state_dir_defaults_to_first_segment_of_env_var(
 
 # --- state file persistence (acceptance tests 4, 5) -------------------------
 
+def test_refusal_save_preserves_host_failure_state(tmp_path: Path) -> None:
+    state_dir = tmp_path / "state"
+    ap.save_publish_state(state_dir, "digest", 1000.0, host_snapshot_failed_since=900.0, last_host_error="synthetic host failure")
+    ap.save_publish_state(state_dir, "digest", 1001.0, refusing_since=1001.0)
+    loaded = ap.load_publish_state(state_dir)
+    assert loaded["host_snapshot_failed_since"] == 900.0
+    assert loaded["last_host_error"] == "synthetic host failure"
+
+
 def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     state_dir = tmp_path / 'techtree-state'
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)
@@ -228,6 +237,31 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
     assert captured['previous_fingerprints'] == {'index.html': 'prev-fp'}
+
+
+def test_scanner_refusal_returns_failure_without_saving_fingerprints_but_keeps_host_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts.publish_scan import PublicationScanError
+
+    root = tmp_path / "state"
+    _write_state_root(root)
+    state_dir = tmp_path / "techtree-state"
+    site_root = tmp_path / "site"
+    prior_fingerprints = {"index.html": "prior-fingerprint"}
+    ap.save_publish_state(state_dir, "old-digest", 1000.0, page_fingerprints=prior_fingerprints)
+    monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+
+    def refuse(_pages, **_kwargs):
+        raise PublicationScanError("synthetic scan refusal")
+
+    monkeypatch.setattr(ap.tv, "publish_to_pages", refuse)
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
+
+    assert ap.run(args) == 1
+    assert (site_root / "current" / "index.html").is_file()
+    assert ap.load_publish_state(state_dir)["page_fingerprints"] == prior_fingerprints
 
 
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
