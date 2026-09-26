@@ -443,3 +443,15 @@ def test_adr036_quoted_values_in_secret_assignments_trigger_rejection() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
         ps.scan_pages({"index.html": quoted_with_spaces})
+
+
+def test_adr036_punctuation_bearing_credentials_trigger_rejection() -> None:
+    """ADR-036 rule 3: Credentials with base64 padding or password punctuation must not be exempted."""
+    base64_padded = "API_KEY=abcde==fghij"
+    semicolon_password = '{"password":"Tr0ub4dor;correct"}'
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": base64_padded})
+
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"index.html": semicolon_password})
