@@ -342,6 +342,7 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
         known.update(str(row["cycle_id"]) for row in history if isinstance(row, dict) and row.get("cycle_id"))
     if isinstance(private_data.get("cycle_details"), dict):
         known.update(map(str, private_data["cycle_details"]))
+    known.update(_private_cycle_links(private_data))
 
     index = build_cycle_index(state_root)
     known.update(index.keys())
@@ -350,6 +351,18 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
         f"cycles/{cid}.html": render_cycle_page(str(cid), index.get(cid))
         for cid in sorted(known)
     }
+
+
+def _private_cycle_links(data: dict) -> set[str]:
+    import re
+
+    links = set()
+    for value in data.values():
+        if not isinstance(value, str):
+            continue
+        for match in re.finditer(r'href=["\']cycle\.html\?id=([^"\']+)', value):
+            links.add(match.group(1))
+    return links
 
 
 def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -> Path:
