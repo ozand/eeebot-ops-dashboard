@@ -310,14 +310,13 @@ def test_host_snapshot_written_even_without_gh_token(tmp_path: Path, monkeypatch
 
 
 def test_publish_to_pages_enforces_allowlist_and_scans_base_tree():
-    """ADR-036 B1: publish_to_pages enforces allowlist directly and rejects unlisted pages."""
+    """Direct scanner refusal follows master contract: raise PublicationScanError."""
+    from scripts import publish_scan as ps
     from scripts import techtree_viewer as tv
 
-    rc, _ = tv.publish_to_pages({"forbidden.json": "{}"})
-    assert rc == 1
-
-    with pytest.raises(Exception, match=r"(?i)sensitive markers|rejected|leak"):
-        tv.publish_to_pages({"index.html": "token=sk-1234567890123456"})
+    for pages in ({"forbidden.json": "{}"}, {"index.html": "token=sk-1234567890123456"}):
+        with pytest.raises(ps.PublicationScanError):
+            tv.publish_to_pages(pages)
 
 
 def test_host_failure_does_not_block_gh_pages_publish(tmp_path: Path):

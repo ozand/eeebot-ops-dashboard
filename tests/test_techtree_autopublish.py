@@ -239,6 +239,31 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
     assert captured['previous_fingerprints'] == {'index.html': 'prev-fp'}
 
 
+def test_scanner_refusal_returns_failure_without_saving_fingerprints_but_keeps_host_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts.publish_scan import PublicationScanError
+
+    root = tmp_path / "state"
+    _write_state_root(root)
+    state_dir = tmp_path / "techtree-state"
+    site_root = tmp_path / "site"
+    prior_fingerprints = {"index.html": "prior-fingerprint"}
+    ap.save_publish_state(state_dir, "old-digest", 1000.0, page_fingerprints=prior_fingerprints)
+    monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+
+    def refuse(_pages, **_kwargs):
+        raise PublicationScanError("synthetic scan refusal")
+
+    monkeypatch.setattr(ap.tv, "publish_to_pages", refuse)
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
+
+    assert ap.run(args) == 1
+    assert (site_root / "current" / "index.html").is_file()
+    assert ap.load_publish_state(state_dir)["page_fingerprints"] == prior_fingerprints
+
+
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     root = tmp_path / 'state'
     _write_state_root(root)

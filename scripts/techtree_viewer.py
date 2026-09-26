@@ -10409,10 +10409,8 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
-    # Preserve the direct-call scanner contract for sensitive content; path
-    # allowlisting below reports a refused publication as a nonzero result.
-    if all(is_allowed_publish_path(name) for name in pages):
-        scan_pages(pages)
+    # Match master #326: direct callers receive scanner/allowlist refusals.
+    scan_pages(pages)
     previous_fingerprints = previous_fingerprints or {}
 
     try:
