@@ -684,3 +684,31 @@ def test_adr036_branch_probe_transient_error_refuses_fail_closed(monkeypatch: py
 
     with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+
+def test_adr036_nothing_to_publish_scans_inherited_tree(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Even when 0 pages changed ('nothing to publish'), inherited tree must be scanned."""
+    import base64
+    import json
+    clean_index = "<html>clean index</html>"
+    leaked_remote_index = base64.b64encode(b"<div>sk-proj-supersecretkey1234567890abcdef</div>").decode("ascii")
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"base-tree-1"}}}}')
+        if "git/trees/base-tree-1" in joined:
+            return cp(json.dumps({"tree": [
+                {"path": "index.html", "type": "blob", "sha": "remote-index-sha"},
+            ], "truncated": False}))
+        if "blobs/remote-index-sha" in joined:
+            return cp(json.dumps({"content": leaked_remote_index, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    prev_fps = {"index.html": tv._page_fingerprint(clean_index)}
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": clean_index}, previous_fingerprints=prev_fps)
+    assert "openai_secret_key" in str(exc_info.value)
