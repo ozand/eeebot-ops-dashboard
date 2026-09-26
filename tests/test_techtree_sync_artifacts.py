@@ -221,7 +221,7 @@ def _write_fake_curl(bin_dir: Path, mode_file: Path) -> None:
     curl_path.chmod(curl_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def _make_test_sync_script(dest: Path) -> Path:
+def _make_test_sync_script(dest: Path, extra_env: dict[str, str] | None = None) -> Path:
     """A copy of the real, shipped script with only DEST repointed at a
     throwaway directory -- everything else, including the manifest-fetch
     and self-heal logic under test, is byte-identical to what ships."""
@@ -230,8 +230,13 @@ def _make_test_sync_script(dest: Path) -> Path:
     # Windows, dest contains backslashes, which re.sub's replacement-string
     # parser interprets as escape sequences (\T is not a valid one).
     patched = text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
-    if os.name != "posix":
-        patched = patched.replace("chown root:root", ": # chown mocked on non-posix")
+    extra_env = extra_env or {}
+    if extra_env.get("TEST_SYNC_NONROOT") == "1":
+        patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if false; then')
+    if extra_env.get("TEST_SYNC_ROOT") == "1":
+        patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if true; then')
+        patched = patched.replace('        chown root:root "$REV_TMP"', '        "$FAKE_CHOWN" root:root "$REV_TMP"')
+        assert '"$FAKE_CHOWN" root:root "$REV_TMP"' in patched
     assert patched != text, "could not locate DEST= line to redirect for the test"
     script_path = dest.parent / "eeebot-techtree-sync-under-test.sh"
     script_path.write_text(patched, encoding="utf-8")
@@ -254,11 +259,12 @@ def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: di
     mode_file.write_text(mode, encoding="utf-8", newline="\n")
     _write_fake_curl(bin_dir, mode_file)
 
-    script_path = _make_test_sync_script(dest)
+    script_path = _make_test_sync_script(dest, extra_env)
     env = dict(os.environ)
     env.pop("SYNC_MANIFEST", None)  # a developer's own override must not steer the test
     env.pop("GH_TOKEN", None)
     env["FAKE_CURL_ARGV_FILE"] = _sh_path(tmp_path / "curl-argv.txt")
+    env["FAKE_CHOWN_LOG"] = _sh_path(tmp_path / "chown-args.txt")
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     env.update(extra_env or {})
     result = subprocess.run(
@@ -558,6 +564,33 @@ def test_revision_parser_contract_rejects_invalid_sha_and_auth_argv(
     stale = _run_sync(tmp_path / "stale", mode="commits-short", initial_manifest="scripts/foo.py\n")
     assert stale.returncode == 0
     assert not (stale.dest / "GENERATOR_SHA").exists()
+
+
+def test_generator_sha_ownership_branches(tmp_path: Path, sh_available: bool) -> None:
+    if not sh_available:
+        pytest.skip("sh not available")
+
+    nonroot = _run_sync(tmp_path / "nonroot", mode="ok", initial_manifest="scripts/foo.py\n", extra_env={"TEST_SYNC_NONROOT": "1"})
+    assert nonroot.returncode == 0, nonroot.stderr
+    assert "not root, ownership of GENERATOR_SHA unchanged" in nonroot.stderr
+    assert (nonroot.dest / "GENERATOR_SHA").is_file()
+
+    fake_chown = tmp_path / "fake-chown.sh"
+    fake_chown.write_text('#!/bin/sh\nprintf "%s\\n" "$*" > "$FAKE_CHOWN_LOG"\n', encoding="utf-8")
+    fake_chown.chmod(fake_chown.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    result = _run_sync(
+        tmp_path / "root", mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={
+            "TEST_SYNC_ROOT": "1",
+            "FAKE_CHOWN": _sh_path(fake_chown),
+            "FAKE_CHOWN_LOG": _sh_path(tmp_path / "root" / "chown-args.txt"),
+            "ROOT_MOCK_MARKER": "true",
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    args = (tmp_path / "root" / "chown-args.txt").read_text(encoding="utf-8").strip().split()
+    assert args[0] == "root:root"
+    assert args[1].endswith("/GENERATOR_SHA")
 
 
 def test_sync_never_passes_token_in_curl_argv(tmp_path: Path, sh_available: bool) -> None:
