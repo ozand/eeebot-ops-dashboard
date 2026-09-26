@@ -175,6 +175,30 @@ def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() ->
     assert warm_seconds < 0.25, f"cached repeat took {warm_seconds:.3f}s"
 
 
+def test_json_scanning_unescapes_values_without_html_parser(monkeypatch: pytest.MonkeyPatch) -> None:
+    """JSON artifacts scan every decoded string but do not instantiate the HTML parser."""
+    monkeypatch.setattr(ps, "_html_scan_variants", lambda _value: (_ for _ in ()).throw(AssertionError("HTML parser called for JSON")))
+    payload = '{"excerpt":"{&quot;messages&quot;: []}"}'
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"cycles-archive-1.json": payload})
+
+
+def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A previously clean inherited blob SHA reuses approval only for same scanner version."""
+    cache: dict[str, bool] = {}
+    sha = "a" * 40
+    ps.scan_pages({"index.html": "safe inherited content"}, clean_cache=cache,
+                  inherited_blob_shas={"index.html": sha})
+    first_keys = set(cache)
+    assert first_keys
+
+    def fail_scan(*_args, **_kwargs):
+        raise AssertionError("clean blob cache should skip repeated byte scan")
+    monkeypatch.setattr(ps, "scan_text", fail_scan)
+    ps.scan_pages({"index.html": "same blob bytes"}, clean_cache=cache,
+                  inherited_blob_shas={"index.html": sha})
+
+
 def test_adr036_structural_call_markers_trigger_rejection() -> None:
     """ADR-036: Structural LLM call markers must trigger rejection."""
     with pytest.raises(ps.PublicationScanError) as exc_info:
@@ -599,6 +623,24 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
         tv.publish_to_pages(pages, previous_fingerprints=prev_fps)
     assert "index.html" in str(exc_info.value)
     assert "openai_secret_key" in str(exc_info.value)
+
+
+def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+    cache = {ps.clean_cache_key("a" * 40, mode="html"): True}
+    calls = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(" ".join(args))
+        return subprocess.CompletedProcess(
+            args=["gh"] + list(args), returncode=0,
+            stdout=json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": "a" * 40}], "truncated": False}),
+            stderr="",
+        )
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache=cache)
+    assert len(calls) == 1 and "git/trees/tree-sha" in calls[0]
 
 
 def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
