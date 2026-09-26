@@ -137,6 +137,8 @@ def _sanitize_public_value(key: str, value: object) -> object:
                 if "recommendations" in r:
                     r["recommendations_count"] = len(r["recommendations"]) if isinstance(r["recommendations"], list) else 0
                     r["recommendations"] = []
+                if "input_fit" in r:
+                    r["input_fit"] = {}
                 refs.append(r)
             else:
                 refs.append(rec)

@@ -4584,10 +4584,16 @@ def build_cycle_details(
         out = record(str(reflection['cycle_id']))
         # ADR-036 rule 3: the reflector's output is model text -- public
         # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': len(str(reflection.get('summary') or ''))}
+        payload: dict[str, Any] = {
+            'summary_chars': reflection.get('summary_chars', len(str(reflection.get('summary') or ''))),
+        }
         for key in ('findings', 'recommendations'):
-            value = reflection.get(key)
-            payload[f'{key}_count'] = len(value) if isinstance(value, list) else (1 if value else 0)
+            count_key = f'{key}_count'
+            if isinstance(reflection.get(count_key), int):
+                payload[count_key] = reflection[count_key]
+            else:
+                value = reflection.get(key)
+                payload[count_key] = len(value) if isinstance(value, list) else (1 if value else 0)
         if any(payload.values()):
             out['reflection'] = payload
 
