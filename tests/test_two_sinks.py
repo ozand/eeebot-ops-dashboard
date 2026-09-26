@@ -110,7 +110,7 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     rdir = state / "reflector"
     rdir.mkdir()
     (rdir / "reflections.jsonl").write_text(
-        json.dumps({"cycle_id": "c1", "summary": markers['reflections'], "findings": [markers['reflections']]}) + "\n",
+        json.dumps({"cycle_id": "c1", "summary": markers['reflections'], "findings": [markers['reflections']], "recommendations": [markers['reflections']], "input_fit": {"status": "complete", "transcript": {"chars": 10, "recorder_truncated_chars": 0, "dropped_chars": 2}}, "transcript_coverage": 0.8333, "partial_view": True}) + "\n",
         encoding="utf-8",
     )
 
@@ -131,6 +131,12 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     pub_str = json.dumps(public_data, default=str)
     for k, m in markers.items():
         assert m not in pub_str, f"Marker {k} ({m}) found in public_data"
+    public_reflection = public_data["reflections"][0]
+    assert public_reflection["findings_count"] == 1
+    assert public_reflection["recommendations_count"] == 1
+    assert public_reflection["summary_chars"] > 0
+    assert public_reflection["transcript_coverage"] == 0.8333
+    assert public_reflection["partial_view"] is True
 
     pages = tv.render_pages(public_data, "eeepc")
     for fname, content in pages.items():
