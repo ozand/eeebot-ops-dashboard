@@ -431,4 +431,6 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
     prompt_file.write_text('{"cycle_id": "c-broken-line", "seq": 1}\n{not-valid-json\n', encoding="utf-8")
     detail3 = cd.load_cycle_detail(root, "c-broken-line", now=fixed_now)
     assert detail3["history_complete"] is False
+    assert detail3.get("read") == "ok"
+    assert detail3.get("capture") == "complete"
     assert detail3.get("reconstruction") == "incomplete"
