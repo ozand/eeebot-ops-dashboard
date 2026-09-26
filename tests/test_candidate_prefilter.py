@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from scripts import publish_scan as ps
@@ -20,6 +22,19 @@ def test_all_secret_key_shapes_are_candidates_before_full_scan():
         assert ps._has_scan_candidate(sample, ps.STANDALONE_PATTERNS), sample
         with pytest.raises(ps.PublicationScanError):
             ps.scan_pages({"index.html": sample})
+
+
+def test_missing_anchor_fails_closed(monkeypatch):
+    from scripts.publish_scan import SecretPattern
+    unknown = SecretPattern("unanchored_rule", re.compile(r"CREDENTIAL_[A-Z]+"), "test")
+    assert ps._candidate_needles((*ps.STANDALONE_PATTERNS, unknown)) is None
+    assert ps._has_scan_candidate("ordinary clean text", (*ps.STANDALONE_PATTERNS, unknown))
+
+
+def test_each_scanner_rule_has_declared_anchor():
+    rules = (*ps.STANDALONE_PATTERNS,)
+    for rule in rules:
+        assert ps.SCANNER_ANCHORS.get(rule.name), rule.name
 
 
 def test_candidate_guard_has_no_false_negatives_for_known_pattern_corpus():
