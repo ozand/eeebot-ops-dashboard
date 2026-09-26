@@ -10457,7 +10457,25 @@ def main(argv: list[str] | None = None) -> int:
         webbrowser.open((out_path / 'index.html').resolve().as_uri())
 
     if args.publish:
-        rc, _fingerprints = publish_to_pages(pages)
+        try:
+            from scripts.two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+        except ImportError:
+            from two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+
+        public_data, private_data = split_render_inputs(data)
+        public_pages = render_public_pages(public_data, args.host)
+        private_pages = render_private_pages(private_data, args.host)
+        now_ts = time.time()
+        version = f"{int(now_ts)}-manual"
+        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
+        rc, _ = publish_ordered(
+            Path(DEFAULT_SITE_ROOT),
+            public_pages,
+            private_pages,
+            version,
+            publisher=lambda p: publish_to_pages(p),
+            generated_at=stamp,
+        )
         return rc
 
     return 0

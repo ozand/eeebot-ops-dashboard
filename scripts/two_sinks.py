@@ -56,7 +56,7 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         clean_path = self.path.split("?", 1)[0].split("#", 1)[0]
-        if clean_path in {"", "/", "/index.html"}:
+        if clean_path in {"", "/", "/index.html"} or clean_path == "/current" or clean_path.startswith("/current/"):
             current = self.site_root / "current"
             if current.is_symlink():
                 try:
@@ -66,8 +66,13 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
             else:
                 versions = [p.name for p in self.site_root.iterdir() if p.is_dir() and not p.is_symlink()]
                 target_version = sorted(versions)[-1] if versions else "current"
+            if clean_path.startswith("/current/"):
+                subpath = clean_path[len("/current/"):]
+                dest = f"/{target_version}/{subpath}"
+            else:
+                dest = f"/{target_version}/"
             self.send_response(302)
-            self.send_header("Location", f"/{target_version}/")
+            self.send_header("Location", dest)
             self.end_headers()
             return
         super().do_GET()
@@ -156,6 +161,52 @@ def _sanitize_public_value(key: str, value: object) -> object:
             else:
                 les.append(rec)
         return les
+    if key == "derived_view" and isinstance(value, dict):
+        proj: dict[str, Any] = {}
+        for field in ("status", "reason", "schema_version", "generated_at_utc", "sort", "derived_status"):
+            if field in value:
+                proj[field] = value[field]
+        if isinstance(value.get("charter"), dict):
+            c = value["charter"]
+            proj["charter"] = {k: c[k] for k in ("source", "merged", "text") if k in c}
+        if isinstance(value.get("derived_priorities"), list):
+            proj["derived_priorities"] = [
+                {k: p[k] for k in ("number", "label", "vector", "direction", "added_utc") if k in p}
+                for p in value["derived_priorities"] if isinstance(p, dict)
+            ]
+        if isinstance(value.get("priority_items"), list):
+            items = []
+            for it in value["priority_items"]:
+                if not isinstance(it, dict):
+                    continue
+                prov = str(it.get("provenance") or "")
+                item_proj = {
+                    k: it[k] for k in ("rank", "id", "kind", "number", "vector", "provenance", "direction", "evidence")
+                    if k in it
+                }
+                if prov == "operator":
+                    num = it.get("number")
+                    item_proj["label"] = f"Priority #{num}" if num is not None else "Operator priority"
+                else:
+                    if "label" in it:
+                        item_proj["label"] = it["label"]
+                items.append(item_proj)
+            proj["priority_items"] = items
+        return proj
+    if key == "local_ci" and isinstance(value, dict):
+        l_proj: dict[str, Any] = {
+            k: value[k] for k in ("probe", "reason", "state", "exit_code", "ts_utc", "targets_checked")
+            if k in value
+        }
+        state = value.get("state")
+        if state == "targets_missing":
+            l_proj["summary"] = "targets missing"
+        elif state == "ran":
+            code = value.get("exit_code")
+            l_proj["summary"] = "passed" if code == 0 else (f"failed (exit {code})" if code is not None else "failed")
+        elif "summary" in value and value.get("probe") in ("absent", "probe_unavailable"):
+            l_proj["summary"] = str(value.get("reason") or "unavailable")
+        return l_proj
     return value
 
 
@@ -333,18 +384,24 @@ def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -
         try:
             os.replace(link_tmp, current_link)
         except OSError:
-            if current_link.is_symlink():
-                current_link.unlink()
-            os.replace(link_tmp, current_link)
+            if os.name == "nt":
+                if current_link.is_symlink():
+                    current_link.unlink()
+                os.replace(link_tmp, current_link)
+            else:
+                raise
         keep_dirs = {destination.resolve()}
         if previous and previous.is_dir():
             keep_dirs.add(previous)
+        cleanup_failures = []
         for old in site_root.iterdir():
             if old.is_dir() and not old.is_symlink() and old.resolve() not in keep_dirs:
                 try:
                     shutil.rmtree(old)
-                except OSError:
-                    pass
+                except Exception as exc:
+                    cleanup_failures.append(f"{old.name}: {exc}")
+        if cleanup_failures:
+            raise HostSnapshotError(f"Snapshot cleanup failed: {'; '.join(cleanup_failures)}")
         return destination
     except BaseException:
         if staging.exists():
@@ -379,7 +436,7 @@ def publish_ordered(
     host_error = None
     try:
         atomic_snapshot_swap(site_root, host_pages, version)
-    except OSError as exc:
+    except Exception as exc:
         host_error = exc
 
     publish_result = publisher(versioned_public)
