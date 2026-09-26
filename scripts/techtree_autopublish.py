@@ -370,8 +370,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f'publish even on an unchanged digest once the last publish is older than this many hours (default: {DEFAULT_STALENESS_FLOOR_HOURS})',
     )
     parser.add_argument(
-        '--site-root', default=os.environ.get('EEEBOT_SITE_ROOT', '/var/lib/eeebot-techtree/site'),
-        help='host snapshot directory (default: /var/lib/eeebot-techtree/site)',
+        '--site-root', default=os.environ.get('EEEBOT_SITE_ROOT', sinks.DEFAULT_SITE_ROOT),
+        help=f'host snapshot directory (default: {sinks.DEFAULT_SITE_ROOT})',
     )
     parser.add_argument('--serve', action='store_true', help='serve the current host snapshot')
     parser.add_argument('--bind-address', default=os.environ.get('EEEBOT_DASHBOARD_BIND_ADDRESS', sinks.DEFAULT_BIND_ADDRESS))
@@ -540,36 +540,30 @@ def run(args: argparse.Namespace) -> int:
     stamp = datetime.fromtimestamp(now, timezone.utc).isoformat()
 
     sink_root = Path(args.site_root)
-    host_error = None
-    try:
-        host_pages = {
-            **sinks.add_snapshot_version(public_pages, version, generated_at=stamp),
-            **sinks.add_snapshot_version(private_pages, version, generated_at=stamp),
-        }
-        sinks.atomic_snapshot_swap(sink_root, host_pages, version)
-    except Exception as exc:
-        host_error = exc
-        print(f'techtree-autopublish: host snapshot failed ({type(exc).__name__}: {exc})', file=sys.stderr)
 
-    if not os.environ.get('GH_TOKEN'):
-        print(
-            'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
-            file=sys.stderr,
+    def gh_publisher(pages_to_pub):
+        if not os.environ.get('GH_TOKEN'):
+            print(
+                'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
+                file=sys.stderr,
+            )
+            return 1, {}
+        return tv.publish_to_pages(pages_to_pub, previous_fingerprints=state.get('page_fingerprints'))
+
+    try:
+        rc, fingerprints = sinks.publish_ordered(
+            sink_root,
+            public_pages,
+            private_pages,
+            version,
+            publisher=gh_publisher,
+            generated_at=stamp,
         )
+    except sinks.HostSnapshotError as exc:
+        print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
         return 1
-
-    try:
-        sinks.validate_publish_allowlist(public_pages)
-        sinks.scan_pages(public_pages)
-    except ValueError as exc:
-        print(f'techtree-autopublish: publish validation failed ({type(exc).__name__}: {exc})', file=sys.stderr)
-        return 1
-
-    rc, fingerprints = tv.publish_to_pages(
-        public_pages, previous_fingerprints=state.get('page_fingerprints'),
-    )
-    if host_error is not None:
-        print('techtree-autopublish: host snapshot had failed; returning exit 1', file=sys.stderr)
+    except Exception as exc:
+        print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         return 1
 
     if rc != 0:

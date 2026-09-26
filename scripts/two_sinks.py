@@ -36,13 +36,14 @@ PUBLIC_DATA_KEYS = frozenset({
     "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
     "reflections", "bridge_exit_streak", "bridge_exits", "strategist_decisions",
-    "demand_futility", "systemd_drift", "goal_text", "agents_md", "agent_context",
+    "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
     "generator_sha", "_newest_source_age_seconds", "_error",
 })
 
 PRIVATE_DATA_KEYS = frozenset({
-    "cycle_prompts",
+    "cycle_prompts", "goal_text", "agents_md",
 })
+DEFAULT_SITE_ROOT = "/var/lib/eeebot-site"
 DEFAULT_BIND_ADDRESS = "0.0.0.0"
 DEFAULT_BIND_PORT = 8080
 
@@ -55,6 +56,10 @@ def parse_bind_settings(address: str = DEFAULT_BIND_ADDRESS, port: int = DEFAULT
 
 class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
     site_root: Path
+
+    def list_directory(self, path: str | os.PathLike) -> Any:
+        self.send_error(404, "Directory listing disabled")
+        return None
 
     def do_GET(self) -> None:
         clean_path = self.path.split("?", 1)[0].split("#", 1)[0]
@@ -90,22 +95,7 @@ def serve_site(site_root: Path, address: str = DEFAULT_BIND_ADDRESS, port: int =
     ThreadingHTTPServer((address, port), Handler).serve_forever()
 
 
-def _blank_lines(text: str) -> str:
-    lines = text.splitlines(keepends=True)
-    if not lines:
-        return ""
-    return "".join(" " * (len(line) - 1) + "\n" if line.endswith("\n") else " " * len(line) for line in lines)
-
-
 def _sanitize_public_value(key: str, value: object) -> object:
-    if key == "agents_md" and isinstance(value, str):
-        return _blank_lines(value)
-    if key == "goal_text" and isinstance(value, dict):
-        sanitized = dict(value)
-        for field in ("charter", "goal_text", "text"):
-            if isinstance(sanitized.get(field), str):
-                sanitized[field] = _blank_lines(sanitized[field])
-        return sanitized
     if key == "agent_context" and isinstance(value, dict):
         ctx = copy.deepcopy(value)
         ctx["prompt_text"] = None
@@ -177,12 +167,34 @@ def _sanitize_public_value(key: str, value: object) -> object:
 
 
 def split_render_inputs(data: dict) -> tuple[dict, dict]:
-    """Allowlist public fields and reduce text-bearing values to metadata."""
+    """Allowlist public fields and replace private text with derived metadata."""
     public = {
         key: _sanitize_public_value(key, value)
         for key, value in data.items()
         if key in PUBLIC_DATA_KEYS and key not in PRIVATE_DATA_KEYS
     }
+    raw_agents = data.get("agents_md")
+    if isinstance(raw_agents, str):
+        public["agents_meta"] = {
+            "present": True,
+            "lines": len(raw_agents.strip().splitlines()),
+            "chars": len(raw_agents.strip()),
+        }
+    elif raw_agents is not None:
+        public["agents_meta"] = {"present": False, "lines": 0, "chars": 0}
+
+    raw_goal = data.get("goal_text")
+    if isinstance(raw_goal, dict):
+        g_text = str(raw_goal.get("charter") or raw_goal.get("goal_text") or raw_goal.get("text") or "")
+        public["goal_meta"] = {
+            "present": True,
+            "lines": len(g_text.strip().splitlines()) if g_text else 0,
+            "chars": len(g_text.strip()) if g_text else 0,
+            "priority_count": len(raw_goal.get("priorities", [])) if isinstance(raw_goal.get("priorities"), list) else 0,
+        }
+    elif raw_goal is not None:
+        public["goal_meta"] = {"present": False, "lines": 0, "chars": 0, "priority_count": 0}
+
     private = dict(data)
     return public, private
 
@@ -333,13 +345,17 @@ def publish_ordered(
     private_pages: dict[str, str],
     version: str,
     publisher: Callable[[dict[str, str]], tuple[int, dict[str, str]]],
+    generated_at: str | None = None,
 ) -> tuple[int, dict[str, str]]:
-    validate_publish_allowlist(public_pages)
-    scan_pages(public_pages)
+    versioned_public = add_snapshot_version(public_pages, version, generated_at=generated_at)
+    versioned_private = add_snapshot_version(private_pages, version, generated_at=generated_at)
+
+    validate_publish_allowlist(versioned_public)
+    scan_pages(versioned_public)
 
     host_pages = {
-        **add_snapshot_version(public_pages, version),
-        **add_snapshot_version(private_pages, version),
+        **versioned_public,
+        **versioned_private,
     }
     host_error = None
     try:
@@ -347,7 +363,7 @@ def publish_ordered(
     except OSError as exc:
         host_error = exc
 
-    publish_result = publisher(public_pages)
+    publish_result = publisher(versioned_public)
     if host_error is not None:
         raise HostSnapshotError(f"ADR-036 host snapshot failed: {type(host_error).__name__}", publish_result)
     return publish_result
