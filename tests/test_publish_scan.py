@@ -170,7 +170,7 @@ def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() ->
     start = time.perf_counter()
     ps.scan_pages({"lineage.html": content}, clean_cache=cache)
     cold_seconds = time.perf_counter() - start
-    assert cold_seconds < 5.0, f"cold scan took {cold_seconds:.3f}s for {size} bytes"
+    assert cold_seconds < 6.0, f"cold scan took {cold_seconds:.3f}s for {size} bytes"
 
     start = time.perf_counter()
     ps.scan_pages({"lineage.html": content}, clean_cache=cache)

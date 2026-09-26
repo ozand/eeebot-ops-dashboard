@@ -123,6 +123,9 @@ _JSON_SECRET_KEY_RE = re.compile(
 _ENV_SECRET_KV_RE = re.compile(
     r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*(?:"([^"]{8,})"|\'([^\']{8,})\'|([^"\'<>\s$]{8,}))'
 )
+_ENV_KEY_CANDIDATE_RE = re.compile(
+    r'(?i)\b[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*[:=]'
+)
 
 
 def _compile_scanner_patterns(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
@@ -142,11 +145,6 @@ def _compile_scanner_patterns(patterns: tuple[SecretPattern, ...]) -> re.Pattern
     return re.compile("|".join(branches))
 
 
-@lru_cache(maxsize=4)
-def _combined_pattern(patterns: tuple[SecretPattern, ...]) -> re.Pattern[str]:
-    return _compile_scanner_patterns(patterns)
-
-
 # Required literal anchors per scanner rule. A rule may have multiple
 # alternatives; every successful alternative must contain at least one anchor.
 SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
@@ -154,11 +152,11 @@ SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
     "openai_secret_key": ("sk-",),
     "github_token": ("ghp_", "gho_", "ghs_", "ghu_", "github_pat_"),
     "bearer_token": ("bearer",),
-    "aws_access_key": ("akia",),
+    "aws_access_key": ("AKIA",),
     "slack_token": ("xox",),
     "basic_auth": ("basic",),
     "url_credentials": ("http://", "https://"),
-    "private_key_header": ("-----begin", "private key-----"),
+    "private_key_header": ("-----BEGIN", "PRIVATE KEY-----"),
     "structural_reasoning_content": ("'reasoning_content'", '"reasoning_content"'),
     "structural_messages": ("'messages'", '"messages"'),
     "structural_prompt": ("'prompt'", '"prompt"'),
@@ -167,40 +165,9 @@ SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...] | None:
-    """Build prefilter literals from per-pattern anchors; None means scan all."""
-    needles: set[str] = set()
-    all_rules = (*patterns, SecretPattern("_env_secret_kv", _ENV_SECRET_KV_RE, "env secret key"),
-                 SecretPattern("_json_secret_key", _JSON_SECRET_KEY_RE, "JSON secret key"))
-    for rule in all_rules:
-        anchors = SCANNER_ANCHORS.get(rule.name)
-        if not anchors or any(not isinstance(anchor, str) or not anchor for anchor in anchors):
-            return None
-        insensitive = bool(rule.pattern.flags & re.IGNORECASE) or rule.pattern.pattern.startswith("(?i)")
-        needles.update(anchor.lower() if insensitive else anchor for anchor in anchors)
-    return tuple(needles)
-
-
 _JSON_CANDIDATE_RE = re.compile(
     r"(?i:[\"'][a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*[\"']\s*:)"
 )
-
-
-def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
-    needles = _candidate_needles(patterns)
-    if needles is None:
-        return True
-    lowered = text.lower()
-    if any((needle.lower() if needle.islower() else needle) in lowered for needle in needles):
-        return True
-    if _JSON_CANDIDATE_RE.search(text) is not None:
-        return True
-    return any(
-        not is_excluded_key_name(match.group(1)) and is_secret_value(
-            match.group(2) or match.group(3) or match.group(4) or ""
-        )
-        for match in _ENV_SECRET_KV_RE.finditer(text)
-    )
 
 
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
@@ -308,42 +275,55 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
         source_variants.extend(_html_scan_variants(source_variants[-1]))
     variants = list(dict.fromkeys(source_variants))
 
-    pattern_signature = tuple(
-        SecretPattern(rule.name, rule.pattern, rule.description)
-        for rule in STANDALONE_PATTERNS
-    )
-    combined = _combined_pattern(pattern_signature)
-    standalone_names = {rule.name for rule in pattern_signature}
-    # One regex traversal over every representation that contains a candidate
-    # marker; ordinary prose/pages avoid a costly no-hit regex walk. If the
-    # inexpensive literal guard matches, the full content still gets scanned.
-    scan_variants = [variant for variant in variants if _has_scan_candidate(variant, pattern_signature)]
-    if scan_variants:
-        # Scan content and each parser-derived stream independently. Null
-        # joining would prevent boundary-spanning matches but still causes a
-        # regex engine to revisit the whole multi-megabyte body per variant.
-        matches = (match for variant in scan_variants for match in combined.finditer(variant))
-    else:
-        matches = ()
-    for match in matches:
-        json_key = match.group("json_key")
-        if json_key is not None:
-            val = match.group("json_dval") or match.group("json_sval") or match.group("json_uval") or ""
-            if not is_excluded_key_name(json_key) and is_secret_value(val):
-                findings["json_secret_field"] = findings.get("json_secret_field", 0) + 1
-            continue
-        env_key = match.group("env_key")
-        if env_key is not None:
-            val = match.group("env_dval") or match.group("env_sval") or match.group("env_uval") or ""
-            if not is_excluded_key_name(env_key) and is_secret_value(val):
-                findings["env_secret_kv"] = findings.get("env_secret_kv", 0) + 1
-            continue
-        for name in standalone_names:
-            if match.group(name) is not None:
-                findings[name] = findings.get(name, 0) + 1
-                break
+    lower_cache: dict[str, str] = {}
+    for rule in STANDALONE_PATTERNS:
+        anchors = SCANNER_ANCHORS.get(rule.name)
+        for variant in variants:
+            insensitive = bool(rule.pattern.flags & re.IGNORECASE) or rule.pattern.pattern.startswith("(?i)")
+            lowered = lower_cache.setdefault(variant, variant.lower()) if insensitive else None
+            if anchors and not _text_has_rule_anchor(variant, anchors, rule.pattern, lowered):
+                continue
+            count = sum(1 for _ in rule.pattern.finditer(variant))
+            if count:
+                findings[rule.name] = max(findings.get(rule.name, 0), count)
+
+    json_count = 0
+    env_count = 0
+    for variant in variants:
+        if _JSON_CANDIDATE_RE.search(variant):
+            hits = 0
+            for match in _JSON_SECRET_KEY_RE.finditer(variant):
+                key = match.group(1)
+                value = match.group(2) or match.group(3) or ""
+                if not is_excluded_key_name(key) and is_secret_value(value):
+                    hits += 1
+            json_count = max(json_count, hits)
+        if _ENV_KEY_CANDIDATE_RE.search(variant):
+            hits = 0
+            for match in _ENV_SECRET_KV_RE.finditer(variant):
+                key = match.group(1)
+                value = match.group(2) or match.group(3) or match.group(4) or ""
+                if not is_excluded_key_name(key) and is_secret_value(value):
+                    hits += 1
+            env_count = max(env_count, hits)
+    if json_count:
+        findings["json_secret_field"] = json_count
+    if env_count:
+        findings["env_secret_kv"] = env_count
     return findings
 
+
+def _text_has_rule_anchor(
+    text: str,
+    anchors: tuple[str, ...],
+    pattern: re.Pattern[str],
+    lowered: str | None = None,
+) -> bool:
+    insensitive = bool(pattern.flags & re.IGNORECASE) or pattern.pattern.startswith("(?i)")
+    if insensitive:
+        normalized = lowered if lowered is not None else text.lower()
+        return any(anchor.lower() in normalized for anchor in anchors)
+    return any(anchor in text for anchor in anchors)
 
 _CACHE_KEY_RE = re.compile(r"^[0-9a-f]{64}:(?:html|json):(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 

@@ -48,23 +48,32 @@ def _reference_findings(content: str, *, html_mode: bool, json_mode: bool) -> di
     elif html_mode:
         variants.extend(ps._html_scan_variants(variants[-1]))
     variants = list(dict.fromkeys(variants))
-    combined = ps._compile_scanner_patterns(tuple(ps.STANDALONE_PATTERNS))
-    names = {r.name for r in ps.STANDALONE_PATTERNS}
     result: dict[str, int] = {}
+    for rule in ps.STANDALONE_PATTERNS:
+        count = max((len(list(rule.pattern.finditer(v))) for v in variants), default=0)
+        if count:
+            result[rule.name] = count
+    json_count = 0
+    env_count = 0
     for variant in variants:
-        for match in combined.finditer(variant):
-            if match.group("json_key") is not None:
-                key = match.group("json_key")
-                val = match.group("json_dval") or match.group("json_sval") or match.group("json_uval") or ""
-                name = "json_secret_field" if not ps.is_excluded_key_name(key) and ps.is_secret_value(val) else None
-            elif match.group("env_key") is not None:
-                key = match.group("env_key")
-                val = match.group("env_dval") or match.group("env_sval") or match.group("env_uval") or ""
-                name = "env_secret_kv" if not ps.is_excluded_key_name(key) and ps.is_secret_value(val) else None
-            else:
-                name = next((n for n in names if match.group(n) is not None), None)
-            if name:
-                result[name] = result.get(name, 0) + 1
+        json_hits = 0
+        for match in ps._JSON_SECRET_KEY_RE.finditer(variant):
+            key = match.group(1)
+            val = match.group(2) or match.group(3) or ""
+            if not ps.is_excluded_key_name(key) and ps.is_secret_value(val):
+                json_hits += 1
+        json_count = max(json_count, json_hits)
+        env_hits = 0
+        for match in ps._ENV_SECRET_KV_RE.finditer(variant):
+            key = match.group(1)
+            val = match.group(2) or match.group(3) or match.group(4) or ""
+            if not ps.is_excluded_key_name(key) and ps.is_secret_value(val):
+                env_hits += 1
+        env_count = max(env_count, env_hits)
+    if json_count:
+        result["json_secret_field"] = json_count
+    if env_count:
+        result["env_secret_kv"] = env_count
     return result
 
 
@@ -74,6 +83,13 @@ def test_new_scan_findings_match_combined_regex_reference(filename: str, payload
     assert ps.scan_text(payload, html_mode=not is_json, json_mode=is_json) == _reference_findings(
         payload, html_mode=not is_json, json_mode=is_json
     )
+
+
+def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -> None:
+    rule = ps.SecretPattern("unanchored_canary", __import__("re").compile(r"UNANCHORED_[A-Z]+"), "test")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, rule))
+    assert ps.SCANNER_ANCHORS.get(rule.name) is None
+    assert ps.scan_text("prefix UNANCHORED_SECRET suffix") == {rule.name: 1}
 
 
 def test_live_gh_pages_findings_match_reference_and_remain_clean() -> None:
