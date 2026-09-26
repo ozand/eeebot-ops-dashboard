@@ -4603,6 +4603,27 @@ def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
     assert 'integrated · no files' not in html
 
 
+def test_remote_reader_script_defines_commit_classifier() -> None:
+    """Codex P2: REMOTE_READER_SCRIPT must define _is_non_work_commit_message inside its scope."""
+    ns: dict = {}
+    exec(compile(tv.REMOTE_READER_SCRIPT, '<remote_script>', 'exec'), ns)
+    assert "_is_non_work_commit_message" in ns
+    assert ns["_is_non_work_commit_message"]("diary: test")
+    assert ns["_is_non_work_commit_message"]("merge: sync")
+    assert not ns["_is_non_work_commit_message"]("selfevo: real task")
+
+
+def test_cycle_feed_falls_back_to_task_title_from_any_phase() -> None:
+    """Codex P2: task_title on non-proposed phases (e.g. outcome) must be used as fallback title."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-only-outcome', 'outcome': 'success',
+         'task_title': 'Task from outcome row', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Task from outcome row</strong>' in html
+    assert 'integrated · no files' not in html
+
+
 def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
     residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
     checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
