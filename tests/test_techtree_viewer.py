@@ -6178,6 +6178,24 @@ def test_311_completed_previous_attempt_does_not_kill_active_retry() -> None:
     assert 'KILLED / INCOMPLETE' not in row
 
 
+def test_311_finished_run_must_overlap_ledger_attempt_start() -> None:
+    cid = "cycle-quick-retry-same-id"
+    ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]
+    prior_run = {
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-25T19:25:10Z",
+        "finished_at": "2026-09-25T19:26:20Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[prior_run],
+        now=datetime(2026, 9, 25, 19, 27, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
 def test_311_same_attempt_run_start_slightly_before_ledger_start_matches() -> None:
     cid = "cycle-run-start-boundary"
     ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]

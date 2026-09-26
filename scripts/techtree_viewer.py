@@ -5779,6 +5779,7 @@ def is_cycle_run_ended(
             belongs_to_attempt = bool(
                 r_start and s_dt
                 and r_start >= s_dt - timedelta(seconds=BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS)
+                and (r_end is None or r_end >= s_dt)
             )
             if matches_cycle and belongs_to_attempt and (run.get("finished_at") or run.get("phase") == "run_end"):
                 if is_timeout:
