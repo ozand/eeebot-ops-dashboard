@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import os
 import hashlib
 import html
 import json
@@ -115,6 +116,15 @@ CI_TOTAL_BUDGET_SECONDS = 45
 HEALTH_STALE_SECONDS = 3600
 HEALTH_INTEGRATION_RECENCY_SECONDS = 6 * 3600
 HEALTH_FAILURE_STREAK_LENGTH = 3
+
+# Issue #311: wall-clock ceiling for subagent bridge runs (systemd TimeoutStartSec = 55min).
+# When a cycle has no terminal outcome in the ledger, it is treated as killed/incomplete
+# if its bridge run finished (via runs.jsonl), or the time elapsed since its last ledger
+# activity exceeds this ceiling. Configurable via environment variable.
+BRIDGE_UNIT_TIMEOUT_SECONDS = int(os.environ.get('EEEBOT_BRIDGE_TIMEOUT_SECONDS', '3300'))
+# Bridge process setup precedes its first ledger `started` row; allow bounded
+# timestamp skew while rejecting records from earlier same-cycle attempts.
+BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS = 120
 
 
 def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
@@ -960,6 +970,48 @@ def read_ledger_history():
                 matched.append(obj)
     return matched
 
+def read_bridge_runs():
+    """Issue #311: read bridge runs from state/bridge/runs.jsonl and daily
+    runs-YYYY-MM-DD.jsonl.gz archives for detecting killed/timeout runs."""
+    bdir = os.path.join(STATE_ROOT, "bridge")
+    cutoff = time.time() - LEDGER_HISTORY_DAYS * 86400
+    files = []
+    try:
+        for name in os.listdir(bdir):
+            if name == "runs.jsonl":
+                files.append((None, os.path.join(bdir, name)))
+            elif name.startswith("runs-") and name.endswith(".jsonl.gz"):
+                day = name[len("runs-"):-len(".jsonl.gz")]
+                try:
+                    ts = time.mktime(time.strptime(day, "%Y-%m-%d"))
+                except ValueError:
+                    continue
+                if ts >= cutoff:
+                    files.append((day, os.path.join(bdir, name)))
+    except Exception:
+        return []
+    files.sort(key=lambda item: item[0] or "9999", reverse=True)
+    runs = []
+    for _day, path in files:
+        try:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                runs.append(obj)
+    return runs
+
 
 def read_file_text(relpath):
     path = os.path.join(INSTANCE_REPO, relpath)
@@ -1656,6 +1708,8 @@ result = {
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
     "bridge_exits": read_jsonl("bridge/exits.jsonl"),
+    "bridge_runs": read_bridge_runs(),
+    "bridge_active_run": read_json("bridge/run.json"),
     "strategist_decisions": read_jsonl("strategist/decisions.jsonl"),
     "demand_futility": read_json("demand/futility.json"),
     "systemd_drift": read_systemd_drift(),
@@ -1718,6 +1772,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'bridge_runs': None,
+        'bridge_active_run': None,
         'strategist_decisions': None,
         'demand_futility': None,
         'systemd_drift': None,
@@ -1944,6 +2000,8 @@ def read_local_state(
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'bridge_runs': None,
+        'bridge_active_run': None,
         'strategist_decisions': None,
         'demand_futility': None,
         'systemd_drift': {'status': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2064,6 +2122,57 @@ def read_local_state(
                 if isinstance(obj, dict) and obj.get('phase') in LEDGER_PHASES:
                     matched.append(obj)
         return matched
+
+    def read_bridge_runs_local() -> list[dict[str, Any]]:
+        """Issue #311: read bridge runs from state/bridge/runs.jsonl and daily
+        runs-YYYY-MM-DD.jsonl.gz archives for detecting killed/timeout runs."""
+        bridge_dir = root / 'bridge'
+        try:
+            names = sorted(p.name for p in bridge_dir.iterdir())
+        except OSError:
+            return []
+        cutoff = 0.0
+        try:
+            cutoff = time.mktime(time.strptime(
+                (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime('%Y-%m-%d'),
+                '%Y-%m-%d'))
+        except Exception:
+            cutoff = 0.0
+        runs: list[dict[str, Any]] = []
+        for name in reversed(names):
+            lines: list[str] = []
+            path = bridge_dir / name
+            try:
+                if name == 'runs.jsonl':
+                    with path.open('r', encoding='utf-8', errors='replace') as fh:
+                        lines = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                elif name.startswith('runs-') and name.endswith('.jsonl.gz'):
+                    day = name[len('runs-'):-len('.jsonl.gz')]
+                    try:
+                        file_ts = time.mktime(time.strptime(day, '%Y-%m-%d'))
+                    except Exception:
+                        continue
+                    if file_ts < cutoff:
+                        continue
+                    with gzip.open(path, 'rt', encoding='utf-8', errors='replace') as fh:
+                        lines = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                else:
+                    continue
+            except Exception:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if isinstance(obj, dict):
+                        runs.append(obj)
+                except Exception:
+                    continue
+        return runs
 
     def read_llm_stats_local() -> dict[str, Any]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
@@ -2654,6 +2763,8 @@ def read_local_state(
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
         'bridge_exits': read_jsonl('bridge/exits.jsonl'),
+        'bridge_runs': read_bridge_runs_local(),
+        'bridge_active_run': read_json('bridge/run.json'),
         'strategist_decisions': read_jsonl('strategist/decisions.jsonl'),
         'demand_futility': read_json('demand/futility.json'),
         'systemd_drift': read_systemd_drift_local(),
@@ -5622,6 +5733,98 @@ def build_now_panel(
     '''
 
 
+def is_cycle_run_ended(
+    cid: str,
+    started_ts: str,
+    max_phase_ts: str,
+    bridge_runs: list[dict[str, Any]] | None,
+    ref_now: datetime,
+    *,
+    bridge_active_run: dict[str, Any] | None = None,
+    timeout_seconds: int = BRIDGE_UNIT_TIMEOUT_SECONDS,
+    explicit_now: bool = False,
+) -> tuple[bool, str]:
+    """Issue #311: a cycle run without a terminal row is not running if its
+    bridge unit has already finished (recorded killed/timeout in runs.jsonl,
+    subsequent run completed, or wall-clock ceiling exceeded)."""
+    s_dt = _parse_iso_ts(started_ts) if started_ts else None
+    if s_dt is not None and s_dt.tzinfo is None:
+        s_dt = s_dt.replace(tzinfo=timezone.utc)
+
+    if bridge_runs:
+        for run in bridge_runs:
+            if not isinstance(run, dict):
+                continue
+            run_cid = str(run.get("cycle_id") or "")
+            cls = str(run.get("classification") or run.get("outcome") or "ended")
+            exit_status = str(run.get("exit_status") or "")
+            is_timeout = (
+                cls in ("unit_timeout", "killed", "loop_breaker_abort")
+                or exit_status in ("TERM", "KILL")
+            )
+
+            r_start = _parse_iso_ts(str(run.get("started_at") or ""))
+            r_end = _parse_iso_ts(str(run.get("finished_at") or ""))
+            if r_start is not None and r_start.tzinfo is None:
+                r_start = r_start.replace(tzinfo=timezone.utc)
+            if r_end is not None and r_end.tzinfo is None:
+                r_end = r_end.replace(tzinfo=timezone.utc)
+
+            # A run belongs to this attempt only if it began at or after the
+            # attempt's started row. This prevents a completed retry with the
+            # same cycle_id from making a newer attempt look ended.
+            matches_cycle = bool(run_cid and (
+                run_cid == cid or run_cid == cid.replace("cycle-", "", 1)
+            ))
+            belongs_to_attempt = bool(
+                r_start and s_dt
+                and r_start >= s_dt - timedelta(seconds=BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS)
+                and (r_end is None or r_end >= s_dt)
+            )
+            if matches_cycle and belongs_to_attempt and (run.get("finished_at") or run.get("phase") == "run_end"):
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
+
+            # Legacy records lacked cycle_id; correlate them by time overlap.
+            if not run_cid and r_start and r_end and s_dt and r_start <= s_dt <= r_end:
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
+
+            # 3. Subsequent bridge run completed
+            if r_start and s_dt:
+                if r_start.tzinfo is None:
+                    r_start = r_start.replace(tzinfo=timezone.utc)
+                if r_start > s_dt:
+                    if run.get("finished_at") or run.get("phase") == "run_end":
+                        return True, "subsequent bridge run completed"
+
+    if bridge_active_run and isinstance(bridge_active_run, dict):
+        act_cid = str(bridge_active_run.get("cycle_id") or "")
+        if act_cid and act_cid != cid and act_cid != cid.replace("cycle-", "", 1):
+            act_start = _parse_iso_ts(str(bridge_active_run.get("started_at") or ""))
+            if act_start and s_dt:
+                if act_start.tzinfo is None:
+                    act_start = act_start.replace(tzinfo=timezone.utc)
+                if act_start > s_dt:
+                    return True, "subsequent bridge run active"
+
+    # 4. Wall-clock ceiling (systemd TimeoutStartSec) is measured from the
+    # attempt start, not the most recent ledger activity. Later phases do not
+    # extend the systemd unit's deadline.
+    if bridge_runs is not None or explicit_now:
+        act_dt = s_dt
+        if act_dt is not None:
+            if ref_now.tzinfo is None:
+                ref_now = ref_now.replace(tzinfo=timezone.utc)
+            age = (ref_now - act_dt).total_seconds()
+            if age > timeout_seconds:
+                return True, f"wall-clock timeout ({int(age // 60)}m > {timeout_seconds // 60}m ceiling)"
+
+    return False, ""
+
+
 def build_cycle_feed(
     ledger_tail: list[dict[str, Any]] | None,
     demand_completed: dict[str, Any] | None = None,
@@ -5634,6 +5837,8 @@ def build_cycle_feed(
     ledger_history: list[Any] | None = None,
     now: datetime | None = None,
     archive_out: list[str] | None = None,
+    bridge_runs: list[dict[str, Any]] | None = None,
+    bridge_active_run: dict[str, Any] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -5747,6 +5952,66 @@ def build_cycle_feed(
 
         files_changed = all_files
 
+        # Issue #311: select the latest attempt chronologically. Ledger readers
+        # may concatenate active and rotated rows in non-chronological order.
+        started_rows = [
+            (i, _parse_iso_ts(str(p.get('ts') or "")))
+            for i, p in enumerate(phases)
+            if isinstance(p, dict) and p.get('phase') == 'started'
+        ]
+        valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
+        malformed_starts = [i for i, ts in started_rows if ts is None]
+        latest_valid = max(valid_starts, key=lambda item: item[1]) if valid_starts else None
+        # Source order is not recency: read_ledger_history appends live rows
+        # before archives. Estimate each malformed boundary's recency from the
+        # first parseable phase timestamp after it, never from its concatenated
+        # list index. This lets a malformed live start outrank a valid older
+        # archived start while preserving same-source malformed retry behavior.
+        malformed_recency = []
+        for start_idx in malformed_starts:
+            following_ts = next((
+                _parse_iso_ts(str(p.get('ts') or ""))
+                for p in phases[start_idx + 1:]
+                if isinstance(p, dict) and _parse_iso_ts(str(p.get('ts') or "")) is not None
+            ), None)
+            malformed_recency.append((start_idx, following_ts))
+        latest_malformed = max(
+            malformed_recency,
+            key=lambda item: item[1] or datetime.min.replace(tzinfo=timezone.utc),
+        ) if malformed_recency else None
+        if latest_malformed is not None and (
+            latest_valid is None
+            or latest_malformed[1] is None
+            or latest_malformed[1] >= latest_valid[1]
+        ):
+            last_started_idx = latest_malformed[0]
+            malformed_ts = latest_malformed[1]
+            if malformed_ts is None:
+                attempt_phases = phases[last_started_idx:]
+            else:
+                # The malformed start has a later event time than the archive
+                # start, so select the latest attempt by that evidence, then
+                # keep only timestamped phases from that boundary onward.
+                timestamped_attempt_phases = []
+                for p in phases[last_started_idx:]:
+                    phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                    if phase_ts is not None and phase_ts >= malformed_ts:
+                        timestamped_attempt_phases.append((phase_ts, p))
+                attempt_phases = [
+                    p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])
+                ]
+        elif latest_valid is not None:
+            last_started_idx, latest_start = latest_valid
+            timestamped_attempt_phases = []
+            for p in phases:
+                phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                if phase_ts is not None and phase_ts >= latest_start:
+                    timestamped_attempt_phases.append((phase_ts, p))
+            attempt_phases = [p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])]
+        else:
+            last_started_idx = started_rows[-1][0] if started_rows else None
+            attempt_phases = phases[last_started_idx:] if last_started_idx is not None else phases
+
         # Scan phases for most decisive outcome and reason
         # Precedence: outcome > gate fail > proposer_reject > dedup > idle > started
         gate_fail_reason = ''
@@ -5759,7 +6024,7 @@ def build_cycle_feed(
         push_attempts: str | None = None
         pushed_late = False
 
-        for p in phases:
+        for p in attempt_phases:
             if not ts_val and p.get('ts'):
                 ts_val = str(p.get('ts'))
             phase_name = p.get('phase')
@@ -5851,10 +6116,30 @@ def build_cycle_feed(
                     if p.get('reason'):
                         outcome_reason = str(p.get('reason'))
                         reason = outcome_reason
+                elif st in ('paused-supplier', 'paused_supplier'):
+                    outcome_kind = 'failed'
+                    outcome_reason = str(p.get('reason') or 'paused-supplier')
+                    reason = outcome_reason
                 if p.get('delta') is not None:
                     metric_delta = str(p.get('delta'))
                 elif p.get('metric_delta') is not None:
                     metric_delta = str(p.get('metric_delta'))
+
+        # Issue #311: check if an in-progress cycle run without a terminal row has already ended
+        if outcome_kind == 'in_progress':
+            started_ts = ''
+            if last_started_idx is not None and phases[last_started_idx].get('ts'):
+                started_ts = str(phases[last_started_idx]['ts'])
+            max_phase_ts = _max_ts(attempt_phases) or ts_val or started_ts
+            is_ended, ended_reason = is_cycle_run_ended(
+                cid, started_ts, max_phase_ts, bridge_runs, ref_now,
+                bridge_active_run=bridge_active_run,
+                timeout_seconds=BRIDGE_UNIT_TIMEOUT_SECONDS,
+                explicit_now=(now is not None),
+            )
+            if is_ended:
+                outcome_kind = 'incomplete'
+                reason = ended_reason
 
         # In Lane B, nodes can be referenced by cycle_id or sha
         tree_node_match = tree_by_cycle.get(cid) or tree_by_sha.get(cid)
@@ -5920,10 +6205,20 @@ def build_cycle_feed(
             # its own neutral pill.
             badge_class = 'badge-abandoned'
             outcome_label = f'ABANDONED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'incomplete':
+            badge_class = 'badge-failed'
+            outcome_label = f'KILLED / INCOMPLETE{(": " + reason) if reason else ""}'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:
-            if outcome_status:
+            for p in phases:
+                if isinstance(p, dict) and p.get('phase') == 'proposed' and p.get('task_title'):
+                    title = str(p['task_title']).strip()
+                    break
+        if not title:
+            if outcome_kind == 'incomplete':
+                derived_title = f"killed: {reason}" if reason else "killed / incomplete: no terminal row"
+            elif outcome_status:
                 if outcome_reason:
                     derived_title = f"{outcome_status}: {outcome_reason}"
                 elif outcome_status == 'partial':
@@ -6060,7 +6355,7 @@ def build_cycle_feed(
                 # #297: pushed_late folds into 'integrated' above (a delayed
                 # success, not its own bucket) -- no chip for it. superseded
                 # and abandoned are their own neutral outcomes.
-                'superseded', 'abandoned', 'running',
+                'superseded', 'abandoned', 'incomplete', 'running',
             )
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
@@ -8621,6 +8916,7 @@ CSS = '''
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {
       display: flex;
@@ -9246,6 +9542,7 @@ CSS = '''
     .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
     .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
     .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-incomplete { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
@@ -9589,6 +9886,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
         rendered_lesson_ids=rendered_lesson_ids,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
     daily_digest = build_daily_digest(
         ledger_tail=ledger_tail,
@@ -9839,6 +10138,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     digest (computed over all sources) still triggers on any input change."""
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    now_dt = _parse_iso_ts(str(generated_at)) or datetime.now(timezone.utc)
 
     portfolio = data.get('portfolio')
     scorecard = data.get('scorecard')
@@ -9955,6 +10255,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
         archive_out=cycles_archive_rows,
+        now=now_dt,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
@@ -9993,6 +10296,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        now=now_dt,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
 
     pages: dict[str, str] = {
