@@ -341,7 +341,7 @@ def scan_pages(
         validated = validate_clean_cache(cache)
         cache.clear()
         cache.update(validated)
-    version = scanner_version()
+    version = scanner_version(extra_version=inherited_blob_decoder_version())
     violations: list[str] = []
     clean_keys: list[str] = []
     for fname, content in sorted(pages.items()):
@@ -376,6 +376,29 @@ def scan_pages(
             cache[key] = True
 
 
+def inherited_blob_decoder_version() -> str:
+    """Version of the external inherited-blob decode/interpretation pipeline.
+
+    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
+    artifact-mode handling before inherited content reaches scan_pages.
+    """
+    try:
+        from scripts import techtree_viewer
+    except ImportError:
+        try:
+            import techtree_viewer
+        except ImportError as exc:
+            raise PublicationScanError(
+                "Publication rejected (ADR-036 rule 3): inherited blob decoder version unavailable"
+            ) from exc
+    version = getattr(techtree_viewer, "_INHERITED_BLOB_DECODER_VERSION", None)
+    if not isinstance(version, str) or not version:
+        raise PublicationScanError(
+            "Publication rejected (ADR-036 rule 3): inherited blob decoder version is missing"
+        )
+    return version
+
+
 def scanner_version(*, extra_version: str = "") -> str:
     """Content-address scanner plus upstream decoders that gate inherited approval."""
     try:
@@ -389,9 +412,16 @@ def scanner_version(*, extra_version: str = "") -> str:
 
 
 def clean_cache_key(
-    content_sha: str, version: str | None = None, *, mode: str = "html", extra_version: str = ""
+    content_sha: str,
+    version: str | None = None,
+    *,
+    mode: str = "html",
+    extra_version: str | None = None,
 ) -> str:
-    return f"{version or scanner_version(extra_version=extra_version)}:{mode}:{content_sha}"
+    if version is None:
+        extra_version = inherited_blob_decoder_version() if extra_version is None else extra_version
+        version = scanner_version(extra_version=extra_version)
+    return f"{version}:{mode}:{content_sha}"
 
 
 def cache_contains_clean(
