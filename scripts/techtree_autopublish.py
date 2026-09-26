@@ -269,6 +269,11 @@ def save_publish_state(
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
         }
+        previous_state = load_publish_state(state_dir)
+        if host_snapshot_failed_since is None:
+            host_snapshot_failed_since = previous_state.get('host_snapshot_failed_since')
+        if last_host_error is None:
+            last_host_error = previous_state.get('last_host_error')
         if host_snapshot_failed_since is not None:
             payload['host_snapshot_failed_since'] = host_snapshot_failed_since
         if last_host_error is not None:
@@ -510,6 +515,8 @@ def run(args: argparse.Namespace) -> int:
                     state_dir, state.get('digest'), state.get('published_at'),
                     refusing_since=refusing_since,
                     page_fingerprints=state.get('page_fingerprints'),
+                    host_snapshot_failed_since=state.get('host_snapshot_failed_since'),
+                    last_host_error=state.get('last_host_error'),
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '

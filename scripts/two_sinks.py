@@ -5,22 +5,26 @@ import argparse
 import copy
 import json
 import os
-import re
 import shutil
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Callable, Mapping
 
-PUBLIC_PAGES = frozenset({
-    "index.html", "lineage.html", "cycles.html", "tokens.html", "lessons.html",
-    "agent.html", "hypotheses.html", "about.html", "techtree.html", "cycle.html",
-    "cycles-archive-index.json", "lineage-cycle-details.json",
-})
 try:
-    from scripts.publish_scan import scan_pages as _publish_scan_pages, PublicationScanError
+    from scripts.publish_scan import (
+        PUBLIC_PAGE_PATHS as PUBLIC_PAGES,
+        PublicationScanError,
+        is_allowed_publish_path,
+        scan_pages as _publish_scan_pages,
+    )
 except ImportError:
-    from publish_scan import scan_pages as _publish_scan_pages, PublicationScanError  # type: ignore
+    from publish_scan import (
+        PUBLIC_PAGE_PATHS as PUBLIC_PAGES,
+        PublicationScanError,
+        is_allowed_publish_path,
+        scan_pages as _publish_scan_pages,
+    )  # type: ignore
 
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
@@ -276,13 +280,12 @@ def scan_built_tree(root: Path) -> None:
 
 
 def validate_publish_allowlist(pages: Mapping[str, str]) -> None:
-    unlisted = sorted(
-        name for name in pages
-        if name not in PUBLIC_PAGES
-        and not re.fullmatch(r"cycles-archive-[0-9]+\.json", name)
-    )
-    if unlisted:
-        raise ValueError(f"ADR-036 unlisted publish paths: {', '.join(unlisted)}")
+    try:
+        for name in pages:
+            if not is_allowed_publish_path(name):
+                raise PublicationScanError(f"ADR-036 unlisted publish path: {name}")
+    except PublicationScanError:
+        raise
 
 
 def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str | None = None) -> dict[str, str]:

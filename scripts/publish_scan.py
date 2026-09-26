@@ -11,7 +11,7 @@ import re
 from typing import Iterable, NamedTuple, Pattern
 
 
-class PublicationScanError(Exception):
+class PublicationScanError(ValueError):
     """Raised when publication is rejected due to leaked secrets or call text."""
 
 

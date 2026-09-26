@@ -132,6 +132,15 @@ def test_parse_args_state_dir_defaults_to_first_segment_of_env_var(
 
 # --- state file persistence (acceptance tests 4, 5) -------------------------
 
+def test_refusal_save_preserves_host_failure_state(tmp_path: Path) -> None:
+    state_dir = tmp_path / "state"
+    ap.save_publish_state(state_dir, "digest", 1000.0, host_snapshot_failed_since=900.0, last_host_error="synthetic host failure")
+    ap.save_publish_state(state_dir, "digest", 1001.0, refusing_since=1001.0)
+    loaded = ap.load_publish_state(state_dir)
+    assert loaded["host_snapshot_failed_since"] == 900.0
+    assert loaded["last_host_error"] == "synthetic host failure"
+
+
 def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     state_dir = tmp_path / 'techtree-state'
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)

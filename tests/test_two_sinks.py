@@ -35,6 +35,22 @@ def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     assert "cycle.html" not in order[0][1]
 
 
+def test_d1_allowlist_is_the_canonical_publish_scan_allowlist() -> None:
+    """ADR-036: two-sinks must use publish_scan's single path allowlist."""
+    from scripts.publish_scan import PUBLIC_PAGE_PATHS, is_allowed_publish_path
+    from scripts.two_sinks import PUBLIC_PAGES
+
+    assert PUBLIC_PAGES is PUBLIC_PAGE_PATHS
+    assert is_allowed_publish_path("cycles-archive-12.json")
+    assert not is_allowed_publish_path("private.bin")
+
+
+def test_manual_publish_site_root_is_configurable() -> None:
+    from scripts.techtree_viewer import parse_args
+
+    assert parse_args(["--site-root", "/tmp/snapshot"]).site_root == "/tmp/snapshot"
+
+
 def test_publish_allowlist_refuses_unlisted_pages(tmp_path: Path):
     """ADR-036 §3: unexpected publication paths fail loudly."""
     with pytest.raises(ValueError, match="unlisted"):
@@ -480,11 +496,19 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert meta_no_prio["priority_count"] is None
 
 
+def test_publisher_state_directories_create_root_with_server_access() -> None:
+    unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
+    text = unit_path.read_text(encoding="utf-8")
+    assert "StateDirectory=eeebot-site" in text
+    assert "StateDirectoryMode=0755" in text
+
+
 def test_publisher_service_unit_declares_site_root_writable() -> None:
     """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
-    assert "ReadWritePaths=/var/lib/eeebot-site" in text
+    assert "StateDirectory=eeebot-site" in text
+    assert "StateDirectoryMode=0755" in text
 
 
 def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

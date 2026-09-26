@@ -10045,6 +10045,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         '--state-root', default=STATE_ROOT,
         help=f'local state root to read when --local is set (default: {STATE_ROOT})',
     )
+    parser.add_argument('--site-root', default='/var/lib/eeebot-site', help='local host snapshot root used with --publish')
     parser.add_argument(
         '--publish', action='store_true',
         help='also publish the page to GitHub Pages (gh-pages branch of '
@@ -10397,9 +10398,9 @@ def publish_to_pages(
     actually complete."""
     import base64
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
 
     if isinstance(pages, str):
         pages = {'index.html': pages}
@@ -10408,15 +10409,17 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
-    # ADR-036 rule 3: scan new pages unconditionally before blob creation
-    scan_pages(pages)
+    # Preserve the direct-call scanner contract for sensitive content; path
+    # allowlisting below reports a refused publication as a nonzero result.
+    if all(is_allowed_publish_path(name) for name in pages):
+        scan_pages(pages)
     previous_fingerprints = previous_fingerprints or {}
 
     try:
         try:
-            from two_sinks import scan_pages, validate_publish_allowlist
+            from two_sinks import validate_publish_allowlist
         except ImportError:
-            from scripts.two_sinks import scan_pages, validate_publish_allowlist
+            from scripts.two_sinks import validate_publish_allowlist
         validate_publish_allowlist(pages)
         scan_pages(pages)
     except Exception as exc:
@@ -10610,9 +10613,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.publish:
         try:
-            from scripts.two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs
         except ImportError:
-            from two_sinks import DEFAULT_SITE_ROOT, publish_ordered, render_private_pages, split_render_inputs
+            from two_sinks import publish_ordered, render_private_pages, split_render_inputs
 
         public_data, private_data = split_render_inputs(data)
         public_pages = render_public_pages(public_data, args.host)
@@ -10621,7 +10624,7 @@ def main(argv: list[str] | None = None) -> int:
         version = f"{int(now_ts)}-manual"
         stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
         rc, _ = publish_ordered(
-            Path(DEFAULT_SITE_ROOT),
+            Path(args.site_root),
             public_pages,
             private_pages,
             version,
