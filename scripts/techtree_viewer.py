@@ -4572,6 +4572,10 @@ def build_cycle_details(
         # public records keep their size.
         if insight:
             out['lesson_insight_chars'] = len(str(insight))
+        elif lesson.get('insight_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['insight_chars'])
+        elif lesson.get('result_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['result_chars'])
         # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
@@ -4619,8 +4623,9 @@ def build_cycle_details(
             # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'summary_chars': len(str(rec.get('summary_excerpt') or '')),
-            'result_chars': len(str(rec.get('result_excerpt') or '')),
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:

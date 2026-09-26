@@ -4909,7 +4909,7 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
         'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
@@ -6123,6 +6123,42 @@ def test_build_cycle_details_uses_preserved_v2_lesson_projection_metrics() -> No
     details = tv.build_cycle_details([], None, [lesson], [])
     assert details['cycle-projected']['lesson_problem_chars'] == len('private problem')
     assert details['cycle-projected']['lesson_solution_chars'] == len('private fix')
+
+
+def test_cycle_detail_projection_consumes_all_preserved_text_lengths() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
+    agents = _sanitize_public_value("agent_context", {
+        "prompt_text": "private prompt", "task_text": "private task",
+        "tier2_skills": [{"content": "private skill content", "desc": "private skill description"}],
+        "tier2_memory": {"files": [{"content": "private memory"}]},
+    })
+    subagents = _sanitize_public_value("subagent_records", [{
+        "cycle_id": "cycle-lengths", "task": "private task", "summary": "private summary", "result": "private result",
+        "task_excerpt": "private task excerpt", "summary_excerpt": "private summary excerpt", "result_excerpt": "private result excerpt",
+    }])
+    lesson = _sanitize_public_value("lessons", [{
+        "cycle_id": "cycle-lengths", "problem": "private problem", "solution": "private solution",
+        "insight": "private insight", "result": "private result",
+    }])[0]
+
+    details = tv.build_cycle_details([], None, [lesson], [], subagent_records=subagents)
+    record = details["cycle-lengths"]
+    assert "private prompt" not in json.dumps(agents)
+    assert "private task excerpt" not in json.dumps(subagents)
+    assert "private problem" not in json.dumps(lesson)
+    assert record["lesson_problem_chars"] == len("private problem")
+    assert record["lesson_solution_chars"] == len("private solution")
+    assert record["lesson_insight_chars"] == len("private insight")
+    assert record["subagents"][0]["task_chars"] == len("private task excerpt")
+    assert record["subagents"][0]["summary_chars"] == len("private summary excerpt")
+    assert record["subagents"][0]["result_chars"] == len("private result excerpt")
+    assert agents["prompt_text"] is None and agents["task_text"] is None
+    assert agents["prompt_text_chars"] == len("private prompt")
+    assert agents["task_text_chars"] == len("private task")
+    assert agents["tier2_skills"][0]["content_chars"] == len("private skill content")
+    assert agents["tier2_skills"][0]["desc_chars"] == len("private skill description")
+    assert agents["tier2_memory"]["files"][0]["content_chars"] == len("private memory")
 
 
 def test_build_cycle_details_uses_preserved_reflection_projection_metrics() -> None:
