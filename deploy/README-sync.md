@@ -53,14 +53,18 @@ preflight has already passed and the first replacement remains valid; the
 next service invocation retries both. No source file is replaced after a
 failed download or compile.
 
-## Apply after merge
+## Host steps (D4, orchestrator)
 
-From a checkout containing the merged repository artifacts, install and enable
-both publisher and dashboard server units. The server unit runs with
-`DynamicUser=yes`; the publisher's `StateDirectory=eeebot-site` creates and
-owns the shared root with mode 0755 before the first publish.
+D1 only provides the server unit file; it does not install or enable it. The
+orchestrator performs the host cutover after D3 gate #1978: stop the legacy
+`eeebot-dashboard.service` first, then install and enable
+`eeebot-dashboard-server.service`. Never run both servers simultaneously;
+they bind the same `:8080` port. The publisher unit's root `ExecStartPre`
+creates `/var/lib/eeebot-site` as `eeebot-publish:0755`, preserving the
+publisher's private `StateDirectory=eeebot-techtree` mode `0700`.
 
 ```bash
+sudo systemctl stop eeebot-dashboard.service
 sudo install -o root -g root -m 0644 deploy/eeebot-dashboard-server.service /etc/systemd/system/eeebot-dashboard-server.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now eeebot-dashboard-server.service

@@ -507,19 +507,19 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert meta_no_prio["priority_count"] is None
 
 
-def test_publisher_state_directories_create_root_with_server_access() -> None:
+def test_publisher_service_creates_shared_site_root_without_relaxing_private_state() -> None:
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
-    assert "StateDirectory=eeebot-site" in text
-    assert "StateDirectoryMode=0755" in text
+    assert "StateDirectory=eeebot-techtree" in text
+    assert "StateDirectoryMode=0700" in text
+    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
 
 
 def test_publisher_service_unit_declares_site_root_writable() -> None:
     """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
-    assert "StateDirectory=eeebot-site" in text
-    assert "StateDirectoryMode=0755" in text
+    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
 
 
 def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
