@@ -517,6 +517,29 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
     assert detail3.get("reconstruction") == "incomplete"
 
 
+def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    bridge = tmp_path / "bridge"
+    bridge.mkdir()
+    (bridge / "runs.jsonl").write_text(json.dumps({"run_id": "run-legacy", "cycle_id": "cycle-unassigned", "classification": "completed"}) + "\n", encoding="utf-8")
+    prompts = tmp_path / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    (prompts / "2026-09-25.jsonl").write_text(json.dumps({
+        "cycle_id": "cycle-unassigned", "component": "executor", "seq": 1,
+        "ts": "2026-09-25T10:00:00Z", "messages": [
+            {"role": "assistant", "tool_calls": [
+                {"function": {"name": "one", "arguments": "{}"}},
+                {"function": {"name": "two", "arguments": "{}"}},
+            ]},
+        ],
+    }) + "\n", encoding="utf-8")
+    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["cycle-unassigned"]
+    unassigned = next(attempt for attempt in detail["attempts"] if attempt["run_id"] == "unassigned")
+    session = unassigned["sessions"][0]
+    assert session["model_calls"] == 1
+
+
 def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path: Path) -> None:
     """F8: associate records by time window, dedupe cumulative tools, don't invent duration seqs."""
     from scripts import cycle_detail as cd
