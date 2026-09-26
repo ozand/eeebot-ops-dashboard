@@ -438,7 +438,7 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
 
 def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path: Path) -> None:
     """F8: associate records by time window, dedupe cumulative tools, don't invent duration seqs."""
-    from scripts.cycle_detail import build_cycle_index
+    from scripts import cycle_detail as cd
 
     bridge = tmp_path / "bridge"
     bridge.mkdir()
@@ -461,9 +461,14 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
         encoding="utf-8",
     )
 
-    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-f8"]
+    detail = cd.build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-f8"]
     assert [a["model_call_count"] for a in detail["attempts"]] == [2, 1]
     assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
     steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
     assert sum(step.get("kind") == "tool" for step in steps) == 1
-    assert all(step.get("duration") is None for step in steps if step.get("kind") == "model")
+    assert all(step.get("duration") == "unknown" for step in steps if step.get("kind") == "model")
+    page = cd.render_cycle_page("c-f8", detail)
+    assert page.count('class="attempt-row"') == 2
+    assert "Session executor" in page
+    assert page.count("tool-1") <= 1
+    assert "Duration: unknown" in page
