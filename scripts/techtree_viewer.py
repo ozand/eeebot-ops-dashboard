@@ -10389,9 +10389,9 @@ def publish_to_pages(
     if branch_probe.returncode != 0:
         if _is_confirmed_not_found(branch_probe):
             return _bootstrap_clean_branch(pages)
-        raise PublicationScanError(
-            f"Publication rejected (ADR-036 rule 3): cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}"
-        )
+        print(f'publish: cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}',
+              file=sys.stderr)
+        return 1, {}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.

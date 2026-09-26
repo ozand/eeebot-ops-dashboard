@@ -682,8 +682,9 @@ def test_adr036_branch_probe_transient_error_refuses_fail_closed(monkeypatch: py
     with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"}, dry_run=True)
 
-    with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
-        tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    rc, fp = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    assert rc == 1
+    assert fp == {}
 
 
 def test_adr036_nothing_to_publish_scans_inherited_tree(monkeypatch: pytest.MonkeyPatch) -> None:
