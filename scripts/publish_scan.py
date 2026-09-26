@@ -7,6 +7,7 @@ Used by publish_to_pages and autopublish dry-run; reused by D2 masking.
 from __future__ import annotations
 
 import html as _html
+from html.parser import HTMLParser
 import re
 from typing import Iterable, NamedTuple, Pattern
 
@@ -106,9 +107,9 @@ STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
     SecretPattern("basic_auth", re.compile(r"(?i)\bAuthorization\s*:\s*Basic\s+[A-Za-z0-9+/=]{10,}\b|\bBasic\s+[A-Za-z0-9+/=]{16,}\b"), "Basic Auth header"),
     SecretPattern("url_credentials", re.compile(r"https?://[^:\s/\"']+:[^@\s/\"']+@[^/\s\"']+"), "URL containing embedded credentials"),
     SecretPattern("private_key_header", re.compile(r"-----BEGIN (?:[A-Z0-9_-]+ )?PRIVATE KEY-----"), "private key header"),
-    SecretPattern("structural_reasoning_content", re.compile(r'"reasoning_content"'), "call marker reasoning_content"),
-    SecretPattern("structural_messages", re.compile(r'"messages"\s*:'), "call marker messages"),
-    SecretPattern("structural_prompt", re.compile(r'"prompt"\s*:\s*\{'), "call marker prompt object"),
+    SecretPattern("structural_reasoning_content", re.compile(r"['\"]reasoning_content['\"]"), "call marker reasoning_content"),
+    SecretPattern("structural_messages", re.compile(r"['\"]messages['\"]\s*:"), "call marker messages"),
+    SecretPattern("structural_prompt", re.compile(r"['\"]prompt['\"]\s*:\s*\{"), "call marker prompt object"),
 )
 
 
@@ -121,27 +122,53 @@ _ENV_SECRET_KV_RE = re.compile(
 
 
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
-    """Iteratively unescape HTML entities until string stabilizes (handles &amp;quot;, &amp;#34;)."""
+    """Unescape entities with a bound; refuse if another decode round is needed."""
     current = text
     for _ in range(max_rounds):
         decoded = _html.unescape(current)
         if decoded == current:
-            break
+            return current
         current = decoded
+    if _html.unescape(current) != current:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): HTML entity decoding exceeds {max_rounds} round limit"
+        )
     return current
+
+
+class _ScanHTMLParser(HTMLParser):
+    """Collect rendered text and attribute values to catch markup-split secrets."""
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.parts.extend(value or "" for _name, value in attrs)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
 
 
 def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
     unescaped = _unescape_until_stable(content)
-    tag_stripped = re.sub(r'<[^>]+>', '', unescaped)
+    parser = _ScanHTMLParser()
+    try:
+        parser.feed(content)
+        parser.close()
+    except Exception:
+        # Malformed HTML is still scanned raw; parser output is supplemental.
+        parser.parts = []
+    parsed_text = _unescape_until_stable("".join(parser.parts))
 
     variants = [content]
-    if unescaped != content:
-        variants.append(unescaped)
-    if tag_stripped != unescaped and tag_stripped != content:
-        variants.append(tag_stripped)
+    for variant in (unescaped, parsed_text):
+        if variant not in variants:
+            variants.append(variant)
 
     for rule in STANDALONE_PATTERNS:
         total = max(len(rule.pattern.findall(v)) for v in variants)
