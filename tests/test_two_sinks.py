@@ -505,3 +505,47 @@ def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monke
     file_chmods = [mode for path, mode in chmod_calls if path.name == "index.html"]
     assert 0o755 in dir_chmods
     assert 0o644 in file_chmods
+
+
+def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
+    """External review F1: operator priority label and local_ci output must not leak into public projection or HTML."""
+    raw_data = {
+        "derived_view": {
+            "status": "present",
+            "schema_version": "derived-view-v1",
+            "generated_at_utc": "2026-09-25T00:00:00Z",
+            "charter": {"source": "release_goals_md", "merged": False, "text": "CANARY_PUBLIC_CHARTER_OK"},
+            "derived_status": "present",
+            "derived_priorities": [
+                {"number": 1, "label": "DERIVED_PUBLIC_LABEL_OK", "vector": "V1", "direction": "shrink"},
+            ],
+            "priority_items": [
+                {
+                    "rank": 1, "id": "p-op", "number": 42,
+                    "label": "OPERATOR_SECRET_GOAL_CANARY_9876",
+                    "provenance": "operator", "kind": "bug", "vector": "V1",
+                    "summary": "OPERATOR_SUMMARY_CANARY_555",
+                },
+                {
+                    "rank": 2, "id": "p-derived", "number": 1,
+                    "label": "DERIVED_PUBLIC_LABEL_OK",
+                    "provenance": "self-derived", "kind": "feature", "vector": "V1",
+                },
+            ],
+        },
+        "local_ci": {
+            "probe": "ok",
+            "state": "ran",
+            "exit_code": 1,
+            "summary": "FAILURES_AND_TEST_OUTPUT_CANARY_54321",
+            "ts_utc": "2026-09-25T00:00:00Z",
+        },
+    }
+
+    public, _ = split_render_inputs(raw_data)
+    pub_json = json.dumps(public)
+    assert "OPERATOR_SECRET_GOAL_CANARY_9876" not in pub_json
+    assert "OPERATOR_SUMMARY_CANARY_555" not in pub_json
+    assert "FAILURES_AND_TEST_OUTPUT_CANARY_54321" not in pub_json
+    assert "DERIVED_PUBLIC_LABEL_OK" in pub_json
+    assert "CANARY_PUBLIC_CHARTER_OK" in pub_json
