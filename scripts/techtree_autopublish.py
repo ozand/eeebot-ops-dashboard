@@ -228,11 +228,6 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             data = json.load(fh)
         if isinstance(data, dict) and 'digest' in data and 'published_at' in data:
             data.setdefault('refusing_since', None)
-            # #278: a state file written before per-page fingerprinting
-            # existed simply lacks this key -- treat that the same as "no
-            # page has a known-unchanged fingerprint yet", which is exactly
-            # correct: every page uploads fresh on the first run after this
-            # field is introduced, same as day one.
             data.setdefault('page_fingerprints', {})
             return data
     except Exception:  # noqa: BLE001
@@ -244,6 +239,8 @@ def save_publish_state(
     state_dir: Path, digest: str | None, published_at: float | None,
     refusing_since: float | None = None,
     page_fingerprints: dict[str, str] | None = None,
+    host_snapshot_failed_since: float | None = None,
+    last_host_error: str | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -272,6 +269,10 @@ def save_publish_state(
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
         }
+        if host_snapshot_failed_since is not None:
+            payload['host_snapshot_failed_since'] = host_snapshot_failed_since
+        if last_host_error is not None:
+            payload['last_host_error'] = last_host_error
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
             fh.flush()
@@ -561,6 +562,15 @@ def run(args: argparse.Namespace) -> int:
         )
     except sinks.HostSnapshotError as exc:
         print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
+        gh_rc, gh_fps = exc.publish_result or (1, {})
+        if gh_rc == 0 and gh_fps:
+            failed_since = state.get('host_snapshot_failed_since') or now
+            save_publish_state(
+                state_dir, digest, now,
+                page_fingerprints=gh_fps,
+                host_snapshot_failed_since=failed_since,
+                last_host_error=str(exc),
+            )
         return 1
     except Exception as exc:
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
@@ -571,7 +581,12 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
-    save_publish_state(state_dir, digest, now, page_fingerprints=fingerprints)
+    save_publish_state(
+        state_dir, digest, now,
+        page_fingerprints=fingerprints,
+        host_snapshot_failed_since=None,
+        last_host_error=None,
+    )
     return 0
 
 

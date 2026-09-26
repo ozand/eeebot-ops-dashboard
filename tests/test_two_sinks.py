@@ -411,9 +411,13 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
         fp = {k: ap.tv._page_fingerprint(v) for k, v in pages.items()}
         return 0, fp
 
+    monkeypatch.setattr(ap.tv, "render_public_pages", lambda *a, **kw: {"index.html": "<html>fixed content</html>"})
     monkeypatch.setattr(ap.tv, "publish_to_pages", fake_publish)
 
-    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(bad_site)])
+    args = ap.parse_args([
+        "--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(bad_site),
+        "--staleness-floor-hours", "0.0001",
+    ])
 
     rc1 = ap.run(args)
     assert rc1 == 1
@@ -424,7 +428,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     first_failed_since = state1["host_snapshot_failed_since"]
     assert len(published_batches[0]) > 0
 
-    monkeypatch.setattr(time, "time", lambda: first_failed_since + 30000.0)
+    time.sleep(1)
     rc2 = ap.run(args)
     assert rc2 == 1
     state2 = ap.load_publish_state(state_dir)
