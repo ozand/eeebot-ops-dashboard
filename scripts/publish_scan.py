@@ -171,6 +171,30 @@ class _ScanHTMLParser(HTMLParser):
         self.handle_endtag(tag)
 
 
+def _html_scan_variants(markup: str) -> list[str]:
+    """Return independently scanned text and attribute streams from one HTML fragment."""
+    parser = _ScanHTMLParser()
+    raw_parser = _ScanHTMLParser(collect_raw_text=True)
+    try:
+        parser.feed(markup)
+        parser.close()
+        raw_parser.feed(markup)
+        raw_parser.close()
+    except Exception:
+        # Malformed HTML is still scanned as source; discard partial parser output.
+        return []
+
+    variants = [
+        _unescape_until_stable("".join(parser.text_parts)),
+        *(_unescape_until_stable(value) for value in parser.attribute_values),
+    ]
+    for fragment in raw_parser.raw_text_parts:
+        # Raw-text nodes may contain JS strings that assemble HTML. Parse the
+        # fragment with the same separation between text and attributes.
+        variants.extend(_html_scan_variants(fragment))
+    return variants
+
+
 def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
@@ -178,39 +202,7 @@ def scan_text(content: str) -> dict[str, int]:
     # Parse unescaped markup so entity-encoded tag delimiters become markup
     # before tokenization. Keep raw-text bodies separately: browsers may execute
     # markup assembled from strings inside script/style/textarea/title content.
-    parser = _ScanHTMLParser()
-    raw_parser = _ScanHTMLParser(collect_raw_text=True)
-    try:
-        parser.feed(unescaped)
-        parser.close()
-        raw_parser.feed(unescaped)
-        raw_parser.close()
-    except Exception:
-        # Malformed HTML is still scanned raw; parser output is supplemental.
-        parser.parts = []
-        parser.raw_text_parts = []
-        raw_parser.raw_text_parts = []
-    parsed_text = _unescape_until_stable("".join(parser.text_parts))
-    attribute_values = [
-        _unescape_until_stable(value)
-        for value in parser.attribute_values
-    ]
-    raw_text_fragments = []
-    for fragment in raw_parser.raw_text_parts:
-        fragment_parser = _ScanHTMLParser(collect_raw_text=False)
-        try:
-            fragment_parser.feed(fragment)
-            fragment_parser.close()
-            raw_text_fragments.append(
-                _unescape_until_stable("".join(fragment_parser.parts))
-            )
-        except Exception:
-            raw_text_fragments.append(_unescape_until_stable(fragment))
-
-    variants = [content]
-    for variant in (unescaped, parsed_text, *attribute_values, *raw_text_fragments):
-        if variant not in variants:
-            variants.append(variant)
+    variants = list(dict.fromkeys([content, unescaped, *_html_scan_variants(unescaped)]))
 
     for rule in STANDALONE_PATTERNS:
         total = max(len(rule.pattern.findall(v)) for v in variants)
