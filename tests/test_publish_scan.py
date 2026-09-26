@@ -463,3 +463,24 @@ def test_adr036_lowercase_bearer_token_triggers_rejection() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="bearer_token"):
         ps.scan_pages({"index.html": lowercase_bearer})
+
+
+def test_adr036_dry_run_never_creates_gh_pages_branch(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: dry_run must never create gh-pages or call any mutating POST endpoints."""
+    post_calls = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        if "-X" in args and "POST" in args:
+            post_calls.append(args)
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            # Branch does not exist
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="Branch not found")
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    rc, fp = tv.publish_to_pages({"index.html": "<html>clean content</html>"}, dry_run=True)
+    assert rc == 0
+    assert not post_calls, f"dry_run must not make POST calls, but made: {post_calls}"
