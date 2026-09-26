@@ -70,6 +70,13 @@ def test_tool_arguments_with_env_path_are_withheld() -> None:
     assert "[env file contents withheld]" in rendered
 
 
+def test_tool_arguments_with_env_path_are_withheld() -> None:
+    step = {"name": "read_file", "arguments": json.dumps({"path": "/tmp/.env"}), "result": "not shown"}
+    rendered = format_tool_step(step)
+    assert "/tmp/.env" not in rendered
+    assert "[env file contents withheld]" in rendered
+
+
 def test_tool_step_reading_env_file_withholds_content():
     """ADR-036 Decision 1 (a): reading /etc/eeepc-agent/*.env withholds contents unconditionally."""
     dummy_secret = "CANARY_SECRET_VAL_7711"
