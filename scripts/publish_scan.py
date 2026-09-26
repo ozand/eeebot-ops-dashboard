@@ -137,36 +137,69 @@ def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
 
 
 class _ScanHTMLParser(HTMLParser):
-    """Collect rendered text and attribute values to catch markup-split secrets."""
-    def __init__(self) -> None:
+    """Collect text, attributes and raw-text bodies for security scanning."""
+    RAW_TEXT_TAGS = {"script", "style", "textarea", "title"}
+
+    def __init__(self, *, collect_raw_text: bool = True) -> None:
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
+        self.raw_text_parts: list[str] = []
+        self.collect_raw_text = collect_raw_text
+        self._raw_text_tag: str | None = None
 
     def handle_data(self, data: str) -> None:
         self.parts.append(data)
+        if self.collect_raw_text and self._raw_text_tag:
+            self.raw_text_parts.append(data)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self.parts.extend(value or "" for _name, value in attrs)
+        if tag.lower() in self.RAW_TEXT_TAGS:
+            self._raw_text_tag = tag.lower()
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._raw_text_tag == tag.lower():
+            self._raw_text_tag = None
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self.handle_starttag(tag, attrs)
+        self.handle_endtag(tag)
 
 
 def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
     unescaped = _unescape_until_stable(content)
+    # Parse unescaped markup so entity-encoded tag delimiters become markup
+    # before tokenization. Keep raw-text bodies separately: browsers may execute
+    # markup assembled from strings inside script/style/textarea/title content.
     parser = _ScanHTMLParser()
+    raw_parser = _ScanHTMLParser(collect_raw_text=True)
     try:
-        parser.feed(content)
+        parser.feed(unescaped)
         parser.close()
+        raw_parser.feed(unescaped)
+        raw_parser.close()
     except Exception:
         # Malformed HTML is still scanned raw; parser output is supplemental.
         parser.parts = []
+        parser.raw_text_parts = []
+        raw_parser.raw_text_parts = []
     parsed_text = _unescape_until_stable("".join(parser.parts))
+    raw_text_fragments = []
+    for fragment in raw_parser.raw_text_parts:
+        fragment_parser = _ScanHTMLParser(collect_raw_text=False)
+        try:
+            fragment_parser.feed(fragment)
+            fragment_parser.close()
+            raw_text_fragments.append(
+                _unescape_until_stable("".join(fragment_parser.parts))
+            )
+        except Exception:
+            raw_text_fragments.append(_unescape_until_stable(fragment))
 
     variants = [content]
-    for variant in (unescaped, parsed_text):
+    for variant in (unescaped, parsed_text, *raw_text_fragments):
         if variant not in variants:
             variants.append(variant)
 
