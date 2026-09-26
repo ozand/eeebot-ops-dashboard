@@ -164,9 +164,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     prompt_paths = [p for date in dates for p in (state_root / "llm_calls" / "prompts" / f"{date}.jsonl", state_root / "llm_calls" / "prompts" / f"{date}.jsonl.gz") if p.is_file()]
     duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
 
-    raw_runs, _ = _read_jsonl(run_paths)
-    raw_prompts, _ = _read_jsonl(prompt_paths)
-    durations, _ = _read_jsonl(duration_paths)
+    raw_runs, runs_ok = _read_jsonl(run_paths)
+    raw_prompts, prompts_ok = _read_jsonl(prompt_paths)
+    durations, durations_ok = _read_jsonl(duration_paths)
 
     seen_run_ids = set()
     runs = []
@@ -179,10 +179,13 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         runs.append(r)
 
     compactions = []
+    compactions_ok = True
     c_path = state_root / "compaction" / "journal.jsonl"
     if c_path.is_file():
-        c_rows, _ = _read_jsonl([c_path])
+        c_rows, compactions_ok = _read_jsonl([c_path])
         compactions = c_rows
+
+    all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
 
     dur_by_seq = {(str(r.get("cycle_id")), str(r.get("component")), str(r.get("seq"))): r for r in durations}
     all_cycle_ids = {str(r.get("cycle_id")) for r in runs if r.get("cycle_id")}
@@ -196,7 +199,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         has_compaction = any(c.get("reason") == "compacted" or "compact" in str(c.get("reason", "")) for c in c_compactions)
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
-        history_complete = not has_compaction
+        history_complete = not has_compaction and all_reads_ok
         for p in c_prompts:
             role = str(p.get("component") or "executor")
             seq = p.get("seq", 1)
