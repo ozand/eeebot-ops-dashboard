@@ -5758,28 +5758,32 @@ def is_cycle_run_ended(
             is_timeout = (
                 cls in ("unit_timeout", "killed", "loop_breaker_abort")
                 or exit_status in ("TERM", "KILL")
-                or run.get("source") == "systemd"
             )
 
-            # 1. Exact cycle_id match (recorded post-#1908)
-            if run_cid and (run_cid == cid or run_cid == cid.replace("cycle-", "", 1)):
-                if run.get("finished_at") or run.get("phase") == "run_end":
-                    if is_timeout:
-                        return True, f"unit timeout ({cls})"
-                    return True, f"bridge unit ended ({cls})"
-
-            # 2. Timestamp overlap match (pre-#1908 runs where cycle_id was omitted)
             r_start = _parse_iso_ts(str(run.get("started_at") or ""))
             r_end = _parse_iso_ts(str(run.get("finished_at") or ""))
-            if r_start and r_end and s_dt:
-                if r_start.tzinfo is None:
-                    r_start = r_start.replace(tzinfo=timezone.utc)
-                if r_end.tzinfo is None:
-                    r_end = r_end.replace(tzinfo=timezone.utc)
-                if r_start <= s_dt <= r_end:
-                    if is_timeout:
-                        return True, f"unit timeout ({cls})"
-                    return True, f"bridge unit ended ({cls})"
+            if r_start is not None and r_start.tzinfo is None:
+                r_start = r_start.replace(tzinfo=timezone.utc)
+            if r_end is not None and r_end.tzinfo is None:
+                r_end = r_end.replace(tzinfo=timezone.utc)
+
+            # A run belongs to this attempt only if it began at or after the
+            # attempt's started row. This prevents a completed retry with the
+            # same cycle_id from making a newer attempt look ended.
+            matches_cycle = bool(run_cid and (
+                run_cid == cid or run_cid == cid.replace("cycle-", "", 1)
+            ))
+            belongs_to_attempt = bool(r_start and s_dt and r_start >= s_dt)
+            if matches_cycle and belongs_to_attempt and (run.get("finished_at") or run.get("phase") == "run_end"):
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
+
+            # Legacy records lacked cycle_id; correlate them by time overlap.
+            if not run_cid and r_start and r_end and s_dt and r_start <= s_dt <= r_end:
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
 
             # 3. Subsequent bridge run completed
             if r_start and s_dt:
@@ -5799,13 +5803,12 @@ def is_cycle_run_ended(
                 if act_start > s_dt:
                     return True, "subsequent bridge run active"
 
-    # 4. Wall-clock ceiling (systemd TimeoutStartSec)
+    # 4. Wall-clock ceiling (systemd TimeoutStartSec) is measured from the
+    # attempt start, not the most recent ledger activity. Later phases do not
+    # extend the systemd unit's deadline.
     if bridge_runs is not None or explicit_now:
-        activity_ts = max_phase_ts or started_ts
-        act_dt = _parse_iso_ts(activity_ts) if activity_ts else None
+        act_dt = s_dt
         if act_dt is not None:
-            if act_dt.tzinfo is None:
-                act_dt = act_dt.replace(tzinfo=timezone.utc)
             if ref_now.tzinfo is None:
                 ref_now = ref_now.replace(tzinfo=timezone.utc)
             age = (ref_now - act_dt).total_seconds()
@@ -5942,12 +5945,23 @@ def build_cycle_feed(
 
         files_changed = all_files
 
-        # Issue #311: evaluate the latest attempt's phases if there are multiple started events
-        last_started_idx = None
-        for i, p in enumerate(phases):
-            if isinstance(p, dict) and p.get('phase') == 'started':
-                last_started_idx = i
-        attempt_phases = phases[last_started_idx:] if last_started_idx is not None else phases
+        # Issue #311: select the latest attempt chronologically. Ledger readers
+        # may concatenate active and rotated rows in non-chronological order.
+        started_rows = [
+            (i, _parse_iso_ts(str(p.get('ts') or "")))
+            for i, p in enumerate(phases)
+            if isinstance(p, dict) and p.get('phase') == 'started'
+        ]
+        valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
+        if valid_starts:
+            last_started_idx, latest_start = max(valid_starts, key=lambda item: item[1])
+            attempt_phases = [
+                p for p in phases
+                if (p.get('ts') and (_parse_iso_ts(str(p.get('ts'))) or latest_start) >= latest_start)
+            ]
+        else:
+            last_started_idx = started_rows[-1][0] if started_rows else None
+            attempt_phases = phases[last_started_idx:] if last_started_idx is not None else phases
 
         # Scan phases for most decisive outcome and reason
         # Precedence: outcome > gate fail > proposer_reject > dedup > idle > started
