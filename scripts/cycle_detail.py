@@ -296,7 +296,15 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         for p in (state_root / "bridge" / f"runs-{date}.jsonl", state_root / "bridge" / f"runs-{date}.jsonl.gz"):
             if p.is_file():
                 run_paths.append(p)
-    prompt_paths = [p for date in dates for p in (state_root / "llm_calls" / "prompts" / f"{date}.jsonl", state_root / "llm_calls" / "prompts" / f"{date}.jsonl.gz") if p.is_file()]
+    prompt_paths = [
+        plain if plain.is_file() else compressed
+        for date in dates
+        for plain, compressed in ((
+            state_root / "llm_calls" / "prompts" / f"{date}.jsonl",
+            state_root / "llm_calls" / "prompts" / f"{date}.jsonl.gz",
+        ),)
+        if plain.is_file() or compressed.is_file()
+    ]
     duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
 
     runs_result = _read_jsonl(run_paths)
