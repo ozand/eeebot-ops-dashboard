@@ -70,11 +70,17 @@ def test_tool_arguments_with_env_path_are_withheld() -> None:
     assert "[env file contents withheld]" in rendered
 
 
-def test_tool_arguments_with_env_path_are_withheld() -> None:
-    step = {"name": "read_file", "arguments": json.dumps({"path": "/tmp/.env"}), "result": "not shown"}
-    rendered = format_tool_step(step)
-    assert "/tmp/.env" not in rendered
-    assert "[env file contents withheld]" in rendered
+def test_env_file_content_in_tool_arguments_is_withheld_everywhere() -> None:
+    from scripts import cycle_detail as cd
+
+    canary = "OTHER=ENV_ARGUMENT_CANARY_8221"
+    messages = [{"role": "assistant", "tool_calls": [{"id": "read-env", "function": {
+        "name": "write_file", "arguments": json.dumps({"path": "/tmp/.env", "content": canary}),
+    }}]}]
+    cleaned = cd.sanitize_messages(messages)
+    assert canary not in json.dumps(cleaned)
+    rendered = cd.format_tool_step({"name": "write_file", "arguments": messages[0]["tool_calls"][0]["function"]["arguments"], "result": "ok"})
+    assert canary not in rendered
 
 
 def test_tool_step_reading_env_file_withholds_content():
