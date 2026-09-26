@@ -264,6 +264,24 @@ def test_scanner_refusal_returns_failure_without_saving_fingerprints_but_keeps_h
     assert ap.load_publish_state(state_dir)["page_fingerprints"] == prior_fingerprints
 
 
+def test_successful_publish_clears_host_snapshot_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "state"
+    _write_state_root(root)
+    state_dir = tmp_path / "techtree-state"
+    ap.save_publish_state(state_dir, "old", 1000.0, page_fingerprints={"old": "fp"},
+                         host_snapshot_failed_since=900.0, last_host_error="prior")
+    monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+    monkeypatch.setattr(ap.tv, "publish_to_pages", lambda *_args, **_kwargs: (0, {"index.html": "new-fp"}))
+    monkeypatch.setattr(ap.sinks, "publish_ordered", lambda *_args, **kwargs: (0, {"index.html": "new-fp"}))
+
+    assert ap.run(ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(tmp_path / "site")])) == 0
+    saved = ap.load_publish_state(state_dir)
+    assert saved["page_fingerprints"] == {"index.html": "new-fp"}
+    assert saved.get("host_snapshot_failed_since") is None
+    assert saved.get("last_host_error") is None
+
+
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     root = tmp_path / 'state'
     _write_state_root(root)

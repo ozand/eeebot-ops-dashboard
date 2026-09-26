@@ -241,6 +241,7 @@ def save_publish_state(
     page_fingerprints: dict[str, str] | None = None,
     host_snapshot_failed_since: float | None = None,
     last_host_error: str | None = None,
+    clear_host_failure: bool = False,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -270,10 +271,11 @@ def save_publish_state(
             'page_fingerprints': page_fingerprints or {},
         }
         previous_state = load_publish_state(state_dir)
-        if host_snapshot_failed_since is None:
-            host_snapshot_failed_since = previous_state.get('host_snapshot_failed_since')
-        if last_host_error is None:
-            last_host_error = previous_state.get('last_host_error')
+        if not clear_host_failure:
+            if host_snapshot_failed_since is None:
+                host_snapshot_failed_since = previous_state.get('host_snapshot_failed_since')
+            if last_host_error is None:
+                last_host_error = previous_state.get('last_host_error')
         if host_snapshot_failed_since is not None:
             payload['host_snapshot_failed_since'] = host_snapshot_failed_since
         if last_host_error is not None:
@@ -595,6 +597,7 @@ def run(args: argparse.Namespace) -> int:
         page_fingerprints=fingerprints,
         host_snapshot_failed_since=None,
         last_host_error=None,
+        clear_host_failure=True,
     )
     return 0
 

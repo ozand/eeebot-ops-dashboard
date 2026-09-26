@@ -55,7 +55,19 @@ failed download or compile.
 
 ## Apply after merge
 
-From a checkout containing the merged repository artifacts:
+From a checkout containing the merged repository artifacts, install and enable
+both publisher and dashboard server units. The server unit runs with
+`DynamicUser=yes`; the publisher's `StateDirectory=eeebot-site` creates and
+owns the shared root with mode 0755 before the first publish.
+
+```bash
+sudo install -o root -g root -m 0644 deploy/eeebot-dashboard-server.service /etc/systemd/system/eeebot-dashboard-server.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now eeebot-dashboard-server.service
+sudo systemctl status eeebot-dashboard-server.service
+```
+
+Then install the publisher sync drop-in from a checkout containing the merged repository artifacts:
 
 ```bash
 scp deploy/eeebot-techtree-sync.sh ozand@eeepc-lan:/tmp/eeebot-techtree-sync.sh

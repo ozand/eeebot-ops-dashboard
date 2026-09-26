@@ -184,6 +184,16 @@ def test_snapshot_cleanup_prunes_older_than_previous(tmp_path: Path):
     assert {p.name for p in root.iterdir() if p.is_dir() and not p.is_symlink()} == {"v2", "v3"}
 
 
+def test_snapshot_version_metadata_changes_github_fingerprint() -> None:
+    from scripts.two_sinks import add_snapshot_version
+    from scripts.techtree_viewer import _page_fingerprint
+
+    page = "<html><head></head><body>same</body></html>"
+    v1 = add_snapshot_version({"index.html": page}, "v1", generated_at="2026-09-26T00:00:00Z")["index.html"]
+    v2 = add_snapshot_version({"index.html": page}, "v2", generated_at="2026-09-26T00:01:00Z")["index.html"]
+    assert _page_fingerprint(v1) == _page_fingerprint(v2)
+
+
 def test_snapshot_version_and_footer_rendered_on_pages():
     """ADR-036 S1: version and generation timestamp appear on page footer, meta not duplicated."""
     from scripts.two_sinks import add_snapshot_version
