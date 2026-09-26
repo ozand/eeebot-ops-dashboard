@@ -452,12 +452,12 @@ def test_jsonl_read_failure_marks_history_incomplete(tmp_path: Path, monkeypatch
     from scripts import cycle_detail as cd
     orig_read = cd._read_jsonl
 
-    def mock_read(paths, *, with_errors=False):
+    def mock_read(paths):
         # Simulate partial/failed read for prompt paths
         if any("prompts" in str(p) for p in paths):
-            result = orig_read(paths, with_errors=with_errors)
-            return (result[0], False, {"*"}) if with_errors else cd.ReadResult(result[0], False)
-        return orig_read(paths, with_errors=with_errors)
+            rows, _ = orig_read(paths)
+            return cd.ReadResult(rows, False, {"*"})
+        return orig_read(paths)
 
     monkeypatch.setattr(cd, "_read_jsonl", mock_read)
     fixed_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
@@ -592,7 +592,7 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
 
     # Case 3: Broken JSON line in prompts file
     run_file.write_text('{"run_id": "r3", "cycle_id": "c-broken-line", "classification": "completed"}\n', encoding="utf-8")
-    prompt_file.write_text('{"cycle_id": "c-broken-line", "seq": 1}\n{not-valid-json\n', encoding="utf-8")
+    prompt_file.write_text('{"cycle_id": "c-broken-line", "seq": 1}\n{"cycle_id": "c-broken-line",BROKEN\n', encoding="utf-8")
     detail3 = cd.load_cycle_detail(root, "c-broken-line", now=fixed_now)
     assert detail3["history_complete"] is False
     assert detail3.get("read") == "ok"
@@ -610,19 +610,24 @@ def test_only_affected_source_marks_matching_cycle_incomplete(tmp_path: Path) ->
     bridge.mkdir()
     (bridge / "runs.jsonl").write_text(
         json.dumps({"run_id": "r1", "cycle_id": "c-a", "classification": "completed"}) + "\n"
-        + json.dumps({"run_id": "r2", "cycle_id": "c-b", "classification": "completed"}) + "\n",
+        + json.dumps({"run_id": "r2", "cycle_id": "c-b", "classification": "completed"}) + "\n"
+        + json.dumps({"run_id": "r3", "cycle_id": "c-c", "classification": "completed"}) + "\n"
+        + json.dumps({"run_id": "r4", "cycle_id": "c-d", "classification": "completed"}) + "\n",
         encoding="utf-8",
     )
     prompt_dir = root / "llm_calls" / "prompts"
     prompt_dir.mkdir(parents=True)
     valid = {"cycle_id": "c-a", "component": "executor", "seq": 1, "messages": []}
     bad = {"cycle_id": "c-b", "component": "executor", "seq": 1, "messages": []}
+    unrelated = {"cycle_id": "c-c", "component": "executor", "seq": 1, "messages": []}
     (prompt_dir / "2026-09-25.jsonl").write_text(
-        json.dumps(valid) + "\n" + json.dumps(bad) + "\n{" + json.dumps({"cycle_id": "c-b"})[1:] + "BROKEN\n", encoding="utf-8",
+        json.dumps(valid) + "\n" + json.dumps(bad) + "\n{" + json.dumps({"cycle_id": "c-b"})[1:] + "BROKEN\n" + json.dumps(unrelated) + "\n{" + json.dumps({"cycle_id": "c-d"})[1:] + "BROKEN\n", encoding="utf-8",
     )
     index = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
     assert index["c-a"]["reconstruction"] == "complete"
     assert index["c-b"]["reconstruction"] == "incomplete"
+    assert index["c-c"]["reconstruction"] == "complete"
+    assert index["c-d"]["reconstruction"] == "incomplete"
 
 
 def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:

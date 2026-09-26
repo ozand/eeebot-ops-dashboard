@@ -98,7 +98,7 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
     if isinstance(raw_messages, str):
         try:
             raw_messages = json.loads(raw_messages)
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             return []
     if not isinstance(raw_messages, list):
         return []
@@ -153,15 +153,15 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
     return cleaned
 
 class ReadResult(tuple):
-    broken: bool
+    broken: set[str]
 
-    def __new__(cls, rows: list[dict[str, Any]], ok: bool, broken: bool = False):
+    def __new__(cls, rows: list[dict[str, Any]], ok: bool, broken: set[str] | None = None):
         instance = super().__new__(cls, (rows, ok))
-        instance.broken = broken
+        instance.broken = broken or set()
         return instance
 
 
-def _read_jsonl(paths: list[Path], *, with_errors: bool = False):
+def _read_jsonl(paths: list[Path]) -> ReadResult:
     rows: list[dict[str, Any]] = []
     broken: set[str] = set()
     for path in paths:
@@ -182,10 +182,8 @@ def _read_jsonl(paths: list[Path], *, with_errors: bool = False):
                         rows.append(row)
         except (OSError, EOFError):
             broken.add("*")
-            return (rows, False, broken) if with_errors else ReadResult(rows, False, broken=bool(broken))
-    if broken and not with_errors:
-        raise ValueError("malformed JSONL row")
-    return (rows, True, broken) if with_errors else ReadResult(rows, True, broken=bool(broken))
+            return ReadResult(rows, False, broken=broken)
+    return ReadResult(rows, True, broken=broken)
 
 def _strip_tool_ids(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     cleaned = []
@@ -218,7 +216,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(messages, str):
         try:
             messages = json.loads(messages)
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             messages = []
     steps: list[dict[str, Any]] = []
     pending_calls: dict[str, dict[str, Any]] = {}
@@ -311,9 +309,15 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     ]
     duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
 
-    raw_runs, runs_ok, broken_runs = _read_jsonl(run_paths, with_errors=True)
-    raw_prompts, prompts_ok, broken_prompts = _read_jsonl(prompt_paths, with_errors=True)
-    durations, durations_ok, broken_dur = _read_jsonl(duration_paths, with_errors=True)
+    runs_result = _read_jsonl(run_paths)
+    prompts_result = _read_jsonl(prompt_paths)
+    durations_result = _read_jsonl(duration_paths)
+    raw_runs, runs_ok = runs_result
+    raw_prompts, prompts_ok = prompts_result
+    durations, durations_ok = durations_result
+    broken_runs = runs_result.broken
+    broken_prompts = prompts_result.broken
+    broken_dur = durations_result.broken
 
     seen_run_ids = set()
     runs = []
@@ -330,7 +334,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     c_path = state_root / "compaction" / "journal.jsonl"
     broken_comp: set[str] = set()
     if c_path.is_file():
-        c_rows, compactions_ok, broken_comp = _read_jsonl([c_path], with_errors=True)
+        compaction_result = _read_jsonl([c_path])
+        c_rows, compactions_ok = compaction_result
+        broken_comp = compaction_result.broken
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
@@ -348,6 +354,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     for cid in all_cycle_ids:
         c_runs = [r for r in runs if str(r.get("cycle_id")) == cid]
         c_prompts = [p for p in raw_prompts if str(p.get("cycle_id")) == cid]
+        cycle_broken = any(cid in errors for errors in (broken_runs, broken_prompts, broken_dur, broken_comp))
         c_compactions = [c for c in compactions if str(c.get("cycle_id")) == cid]
         has_compaction = any(c.get("reason") == "compacted" or "compact" in str(c.get("reason", "")) for c in c_compactions)
         has_truncation = any(bool(p.get("truncated")) for p in c_prompts)
@@ -361,7 +368,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             reconstruction_state = "incomplete"
         elif not all_reads_ok:
             reconstruction_state = "unknown"
-        elif any(cid in errors or "*" in errors for errors in (broken_runs, broken_prompts, broken_dur, broken_comp)) or has_compaction:
+        elif cycle_broken or has_compaction:
             reconstruction_state = "incomplete"
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
@@ -436,6 +443,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             attempt_complete = (
                 not killed
                 and read_state == "ok"
+                and not cycle_broken
                 and not any(compaction.get("reason") == "compacted" or "compact" in str(compaction.get("reason", "")) for compaction in c_compactions)
                 and bool(attempt_prompts)
                 and all(
