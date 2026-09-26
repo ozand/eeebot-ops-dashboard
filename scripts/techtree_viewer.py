@@ -10127,10 +10127,81 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
+def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> None:
+    """ADR-036 rule 3: verify full target tree recursively (fail-closed)."""
+    import base64
+    import json as _json
+    try:
+        from scripts.publish_scan import scan_pages, PublicationScanError
+    except ImportError:
+        from publish_scan import scan_pages, PublicationScanError
+
+    if not base_tree:
+        raise PublicationScanError(
+            "Publication rejected (ADR-036 rule 3): target tree sha is missing or null"
+        )
+
+    res = _gh(['api', f'repos/{PUBLISH_REPO}/git/trees/{base_tree}?recursive=1'])
+    if res.returncode != 0:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot inspect inherited tree (API returncode {res.returncode}): {res.stderr.strip()[:200]}"
+        )
+    try:
+        tree_data = _json.loads(res.stdout)
+    except Exception as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unparseable tree inspection response: {exc}"
+        ) from exc
+
+    if not isinstance(tree_data, dict):
+        raise PublicationScanError(
+            "Publication rejected (ADR-036 rule 3): target tree response is not a valid JSON object"
+        )
+
+    if tree_data.get("truncated") is True:
+        raise PublicationScanError(
+            "Publication rejected (ADR-036 rule 3): inherited tree is truncated by GitHub API"
+        )
+
+    entries = tree_data.get("tree")
+    if entries is None:
+        raise PublicationScanError(
+            "Publication rejected (ADR-036 rule 3): target tree object is null or missing"
+        )
+
+    inherited_pages = {}
+    for item in entries:
+        if isinstance(item, dict) and item.get('type') == 'blob':
+            path = item.get('path')
+            sha = item.get('sha')
+            if path and sha and path not in pages:
+                b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
+                if b_res.returncode != 0:
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): cannot fetch inherited blob {path} (exit {b_res.returncode})"
+                    )
+                try:
+                    b_json = _json.loads(b_res.stdout)
+                    raw = b_json.get('content', '')
+                    enc = b_json.get('encoding', '')
+                    if enc == 'base64':
+                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                    else:
+                        txt = raw
+                    inherited_pages[path] = txt
+                except Exception as exc:
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
+                    ) from exc
+    if inherited_pages:
+        scan_pages(inherited_pages)
+
+
 def publish_to_pages(
     pages: 'dict[str, str] | str',
     *,
     previous_fingerprints: 'dict[str, str] | None' = None,
+    dry_run: bool = False,
 ) -> 'tuple[int, dict[str, str]]':
     """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
     gh-pages commit carries every page (git Data API: blobs -> tree ->
@@ -10152,6 +10223,11 @@ def publish_to_pages(
     caller must not persist a fingerprint for a publish that didn't
     actually complete."""
     import base64
+    try:
+        from scripts.publish_scan import scan_pages, PublicationScanError
+    except ImportError:
+        from publish_scan import scan_pages, PublicationScanError
+
     if isinstance(pages, str):
         pages = {'index.html': pages}
     if not pages:
@@ -10159,6 +10235,8 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
+    # ADR-036 rule 3: scan new pages unconditionally before blob creation
+    scan_pages(pages)
     previous_fingerprints = previous_fingerprints or {}
 
     try:
@@ -10190,6 +10268,23 @@ def publish_to_pages(
             print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
                   file=sys.stderr)
             return 1, {}
+
+    if dry_run:
+        probe = branch_probe if branch_probe.returncode == 0 else _gh(['api', f'repos/{PUBLISH_REPO}/branches/master'])
+        if probe.returncode != 0:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): cannot read branch for dry-run inspection: {probe.stderr.strip()[:200]}"
+            )
+        try:
+            import json as _json
+            head_data = _json.loads(probe.stdout)
+            probe_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
+            ) from exc
+        _inspect_and_scan_inherited_tree(probe_tree, pages)
+        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10259,8 +10354,12 @@ def publish_to_pages(
             parent_sha = head_data['commit']['sha']
             base_tree = head_data['commit']['commit']['tree']['sha']
         except Exception as exc:
-            print(f'publish: unreadable {PUBLISH_BRANCH} HEAD: {exc}', file=sys.stderr)
-            return 1, {}
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
+            ) from exc
+
+        # ADR-036 rule 3: scan base_tree for this attempt unconditionally
+        _inspect_and_scan_inherited_tree(base_tree, pages)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',

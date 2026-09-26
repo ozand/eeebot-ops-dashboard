@@ -39,6 +39,10 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import techtree_viewer as tv  # noqa: E402
 import two_sinks as sinks  # noqa: E402
+try:
+    from scripts.publish_scan import scan_pages
+except ImportError:
+    from publish_scan import scan_pages  # type: ignore  # noqa: E402
 
 DEFAULT_STATE_DIR = '/var/lib/eeebot-techtree'
 STATE_FILENAME = 'publish_state.json'
@@ -434,12 +438,8 @@ def run(args: argparse.Namespace) -> int:
     if args.dry_run:
         pages = tv.render_public_pages(public_data, args.host_label)
         pages = sinks.add_snapshot_version(pages, f"dry-run-{int(now)}")
-        try:
-            sinks.validate_publish_allowlist(pages)
-            sinks.scan_pages(pages)
-        except ValueError as exc:
-            print(f'[dry-run] publish refused: {exc}', file=sys.stderr)
-            return 1
+        sinks.validate_publish_allowlist(pages)
+        scan_pages(pages)
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
                 state, staleness_floor_seconds, now,
