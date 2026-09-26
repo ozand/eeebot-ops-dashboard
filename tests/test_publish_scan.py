@@ -455,3 +455,11 @@ def test_adr036_punctuation_bearing_credentials_trigger_rejection() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": semicolon_password})
+
+
+def test_adr036_lowercase_bearer_token_triggers_rejection() -> None:
+    """ADR-036 rule 3: Bearer authentication schemes must be matched case-insensitively."""
+    lowercase_bearer = "authorization: bearer abcdefghijklmnop"
+
+    with pytest.raises(ps.PublicationScanError, match="bearer_token"):
+        ps.scan_pages({"index.html": lowercase_bearer})
