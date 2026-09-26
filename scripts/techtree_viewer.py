@@ -1354,7 +1354,7 @@ def extract_git_titles(node_shas=None):
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^1..{commit_sha}^2", "-n", "5", "--format=%B%x00"]
+                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^1..{commit_sha}^2", "--format=%B%x00"]
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
                         for commit_message in res_title.stdout.split("\x00"):
@@ -1836,7 +1836,7 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^1..{commit_sha}^2', '-n', '5', '--format=%B%x00']
+                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^1..{commit_sha}^2', '--format=%B%x00']
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
                         for commit_message in res_title.stdout.split("\x00"):

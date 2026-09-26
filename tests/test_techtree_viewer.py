@@ -519,6 +519,33 @@ def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Pa
     assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
 
 
+def test_extract_git_titles_searches_past_five_non_work_commits(tmp_path: Path) -> None:
+    """A run of diary commits cannot hide an earlier real work commit."""
+    repo = tmp_path / 'long_diary_branch'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-long'], check=True, capture_output=True)
+    (repo / 'work.txt').write_text('real work', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement actual cycle work'], check=True, capture_output=True)
+    for i in range(6):
+        (repo / f'diary-{i}.txt').write_text('diary', encoding='utf-8')
+        subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(repo), 'commit', '-m', f'diary: entry {i}'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-long', '-m',
+                    'merge: integrate selfevo/cycle-cycle-long'], check=True, capture_output=True)
+
+    titles, _files, error = tv.extract_git_titles_local(repo)
+    assert error is None
+    assert titles.get('cycle-long') == 'Implement actual cycle work'
+
+
 def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
     not_repo = tmp_path / 'not_a_repo'
     not_repo.mkdir()
