@@ -84,6 +84,14 @@ def test_should_not_publish_when_digest_unchanged_and_fresh() -> None:
     assert publish is False
 
 
+def test_should_publish_retries_immediately_if_host_snapshot_failed() -> None:
+    """Codex comment 4109822811: Prior host snapshot failure must retry before staleness floor."""
+    state = {'digest': 'same', 'published_at': 1000.0, 'host_snapshot_failed_since': 1000.0}
+    publish, reason = ap.should_publish('same', state, staleness_floor_seconds=3600, now=1010.0)
+    assert publish is True
+    assert 'host snapshot failed' in reason.lower()
+
+
 def test_staleness_floor_triggers_publish_on_unchanged_digest() -> None:
     state = {'digest': 'same', 'published_at': 1000.0}
     floor = 3600.0

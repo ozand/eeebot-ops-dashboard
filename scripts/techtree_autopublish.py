@@ -309,6 +309,8 @@ def should_publish(
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
+    if state.get('host_snapshot_failed_since') is not None:
+        return True, 'prior host snapshot failed; retrying host sink'
     if prev_digest != current_digest:
         return True, 'tree digest changed'
     if not isinstance(prev_published_at, (int, float)):

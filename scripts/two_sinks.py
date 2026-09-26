@@ -312,10 +312,22 @@ def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -
         raise FileExistsError(destination)
     staging = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=site_root))
     try:
+        try:
+            os.chmod(staging, 0o755)
+        except OSError:
+            pass
         for name, contents in pages.items():
             target = staging / name
             target.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.chmod(target.parent, 0o755)
+            except OSError:
+                pass
             target.write_text(contents, encoding="utf-8")
+            try:
+                os.chmod(target, 0o644)
+            except OSError:
+                pass
         os.replace(staging, destination)
         link_tmp = site_root / f".current-{version}"
         link_tmp.symlink_to(version, target_is_directory=True)

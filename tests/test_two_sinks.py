@@ -478,3 +478,30 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     meta_no_prio = pub_no_prio["goal_meta"]
     assert meta_no_prio["state"] == "present"
     assert meta_no_prio["priority_count"] is None
+
+
+def test_publisher_service_unit_declares_site_root_writable() -> None:
+    """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
+    unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
+    text = unit_path.read_text(encoding="utf-8")
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
+
+
+def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex comment 4109822806: Staging directory and written files must be readable by DynamicUser server."""
+    import os
+    chmod_calls = []
+    orig_chmod = os.chmod
+
+    def fake_chmod(path, mode, *args, **kwargs):
+        chmod_calls.append((Path(path), mode))
+        return orig_chmod(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(os, "chmod", fake_chmod)
+    site_root = tmp_path / "site"
+    atomic_snapshot_swap(site_root, {"index.html": "content"}, "v1")
+
+    dir_chmods = [mode for path, mode in chmod_calls if path.name == "v1" or ".v1." in path.name]
+    file_chmods = [mode for path, mode in chmod_calls if path.name == "index.html"]
+    assert 0o755 in dir_chmods
+    assert 0o644 in file_chmods
