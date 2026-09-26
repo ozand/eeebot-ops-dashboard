@@ -13,7 +13,8 @@ DEFAULT_DISPLAY_LIMIT = 4000
 
 SECRET_PATTERNS = (
     # Key=value anywhere on a line where key contains KEY, TOKEN, SECRET, PASSWORD, PASS, AUTH
-    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*[:=]\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
+    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
+    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS)[A-Za-z0-9_]*\s*:\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
     # Basic Auth
     (re.compile(r'(?i)\bAuthorization:\s*Basic\s+[A-Za-z0-9+/=]+'), 'Authorization: Basic [redacted: basic-auth]'),
     (re.compile(r'(?i)\bBasic\s+[A-Za-z0-9+/=]{8,}'), '[redacted: basic-auth]'),
