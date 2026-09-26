@@ -142,7 +142,7 @@ def test_adr036_publish_to_pages_direct_call_rejects_leak() -> None:
 
 
 def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -> None:
-    """ADR-036: Contaminated inherited file in base_tree (e.g. private-dump.json) causes refusal."""
+    """ADR-036: Contaminated inherited file in subdirectory (e.g. sub/leak.html) causes refusal."""
     import base64
     import json
 
@@ -154,8 +154,8 @@ def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
-        if "graphql" in joined:
-            return cp(json.dumps({"data": {"repository": {"object": {"entries": [{"name": "private-dump.json", "type": "blob", "oid": "leakblob1"}]}}}}))
+        if "git/trees/oldtree" in joined:
+            return cp(json.dumps({"tree": [{"path": "sub/leak.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
         if "blobs/leakblob1" in joined:
             return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
         if "git/blobs" in joined:
@@ -166,7 +166,7 @@ def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -
 
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
-    assert "private-dump.json" in str(exc_info.value)
+    assert "sub/leak.html" in str(exc_info.value)
     assert "structural_reasoning_content" in str(exc_info.value)
 
 
@@ -213,8 +213,8 @@ def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> No
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
-        if "graphql" in joined:
-            return cp(json.dumps({"data": {"repository": {"object": {"entries": [{"name": "private-dump.json", "type": "blob", "oid": "leakblob1"}]}}}}))
+        if "git/trees/oldtree" in joined:
+            return cp(json.dumps({"tree": [{"path": "sub/leak.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
         if "blobs/leakblob1" in joined:
             return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
         return cp("{}")
@@ -223,7 +223,7 @@ def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> No
 
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"}, dry_run=True)
-    assert "private-dump.json" in str(exc_info.value)
+    assert "sub/leak.html" in str(exc_info.value)
     assert "structural_reasoning_content" in str(exc_info.value)
 
 
@@ -235,7 +235,7 @@ def test_adr036_publish_to_pages_fail_closed_on_tree_api_error(monkeypatch) -> N
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
-        if "graphql" in joined:
+        if "git/trees/oldtree" in joined:
             return cp("", rc=1, err="HTTP 502 Bad Gateway")
         return cp("{}")
 
@@ -256,8 +256,8 @@ def test_adr036_publish_to_pages_fail_closed_on_blob_fetch_error(monkeypatch) ->
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
-        if "graphql" in joined:
-            return cp(json.dumps({"data": {"repository": {"object": {"entries": [{"name": "file.txt", "type": "blob", "oid": "blob1"}]}}}}))
+        if "git/trees/oldtree" in joined:
+            return cp(json.dumps({"tree": [{"path": "file.txt", "type": "blob", "sha": "blob1"}], "truncated": False}))
         if "blobs/blob1" in joined:
             return cp("", rc=1, err="HTTP 404 Blob not found")
         return cp("{}")
@@ -267,3 +267,45 @@ def test_adr036_publish_to_pages_fail_closed_on_blob_fetch_error(monkeypatch) ->
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
     assert "cannot fetch inherited blob" in str(exc_info.value)
+
+
+def test_adr036_publish_to_pages_rejects_truncated_tree(monkeypatch) -> None:
+    """ADR-036: Fail-closed if git/trees response is marked truncated."""
+    import json
+
+    def fake_gh(args, input_text=None):
+        joined = " ".join(args)
+        def cp(out, rc=0, err=""):
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
+        if "branches/gh-pages" in joined:
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
+        if "git/trees/oldtree" in joined:
+            return cp(json.dumps({"tree": [], "truncated": True}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": "<html>clean page</html>"})
+    assert "truncated" in str(exc_info.value)
+
+
+def test_adr036_publish_to_pages_rejects_null_tree_object(monkeypatch) -> None:
+    """ADR-036: Fail-closed if tree response has null tree object."""
+    import json
+
+    def fake_gh(args, input_text=None):
+        joined = " ".join(args)
+        def cp(out, rc=0, err=""):
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
+        if "branches/gh-pages" in joined:
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
+        if "git/trees/oldtree" in joined:
+            return cp(json.dumps({"tree": None, "truncated": False}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": "<html>clean page</html>"})
+    assert "null or missing" in str(exc_info.value)

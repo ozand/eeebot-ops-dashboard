@@ -3575,8 +3575,10 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
             seq['blob'] += 1
             return cp(f'blosha{seq["blob"]}')
         if 'git/trees' in joined:
-            seq['tree'] += 1
-            return cp('tresha1')
+            if '-X' in args or input_text is not None:
+                seq['tree'] += 1
+                return cp('tresha1')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             seq['commit'] += 1
             return cp('comsha1')
@@ -3620,7 +3622,9 @@ def test_270_no_race_single_attempt_no_retry_message(monkeypatch, capsys) -> Non
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            return cp('treesha-new')
+            if '-X' in args or input_text is not None:
+                return cp('treesha-new')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             return cp('commitsha-new')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -3673,8 +3677,10 @@ def test_270_concurrent_commit_between_read_and_write_is_retried_not_lost(monkey
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            payloads['tree'].append(json.loads(input_text))
-            return cp(f'treesha-attempt{branch_reads["n"]}')
+            if input_text is not None:
+                payloads['tree'].append(json.loads(input_text))
+                return cp(f'treesha-attempt{branch_reads["n"]}')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             payloads['commit'].append(json.loads(input_text))
             return cp(f'commitsha-attempt{branch_reads["n"]}')
@@ -3724,7 +3730,9 @@ def test_270_retries_bounded_and_fails_loudly_on_exhaustion(monkeypatch, capsys)
         if 'git/blobs' in joined:
             return cp('blobsha1')
         if 'git/trees' in joined:
-            return cp('treesha')
+            if '-X' in args or input_text is not None:
+                return cp('treesha')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined and '-X' in args:
             return cp('commitsha')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -4102,7 +4110,9 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         if 'git/blobs' in joined:
             return cp('blosha81')
         if 'git/trees' in joined:
-            return cp('tresha81')
+            if '-X' in args or input_text is not None:
+                return cp('tresha81')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             return cp('comsha81')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
@@ -4141,7 +4151,9 @@ def _fake_gh_publish_factory(calls: list):
         if 'git/blobs' in joined:
             return cp('newblobsha')
         if 'git/trees' in joined:
-            return cp('newtreesha')
+            if '-X' in args or input_text is not None:
+                return cp('newtreesha')
+            return cp('{"tree": [], "truncated": false}')
         if 'git/commits' in joined:
             return cp('newcommitsha')
         if 'git/refs/heads/gh-pages' in joined and '-X' in args:
