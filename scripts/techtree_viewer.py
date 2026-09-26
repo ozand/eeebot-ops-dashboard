@@ -10152,6 +10152,10 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
+# Increment when inherited base64/gzip/UTF-8 decoding semantics change.
+_INHERITED_BLOB_DECODER_VERSION = "1"
+
+
 def _inspect_and_scan_inherited_tree(
     base_tree: str,
     uploaded_paths: set[str] | dict[str, str],
@@ -10224,7 +10228,12 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
                     )
             if path and sha and path not in uploaded_paths:
-                if cache_contains_clean(scan_cache, sha, mode="json" if path.lower().endswith(".json") else "html"):
+                if cache_contains_clean(
+                    scan_cache,
+                    sha,
+                    mode="json" if path.lower().endswith(".json") else "html",
+                    extra_version=_INHERITED_BLOB_DECODER_VERSION,
+                ):
                     # The blob SHA is content-addressed and cache key includes
                     # scanner version; avoid fetching it again only after a clean scan.
                     continue

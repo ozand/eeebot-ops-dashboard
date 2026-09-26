@@ -186,6 +186,15 @@ def test_json_scanning_unescapes_values_without_html_parser(monkeypatch: pytest.
         ps.scan_pages({"cycles-archive-1.json": payload})
 
 
+def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.techtree_viewer as viewer
+    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v2", raising=False)
+    before = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
+    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v3", raising=False)
+    after = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
+    assert after != before
+
+
 def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: pytest.MonkeyPatch) -> None:
     """A previously clean inherited blob SHA reuses approval only for same scanner version."""
     cache: dict[str, bool] = {}
@@ -630,7 +639,11 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
 
 def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pytest.MonkeyPatch) -> None:
     import json
-    cache = {ps.clean_cache_key("a" * 40, mode="html"): True}
+    cache = {
+        ps.clean_cache_key(
+            "a" * 40, extra_version=tv._INHERITED_BLOB_DECODER_VERSION, mode="html"
+        ): True
+    }
     calls = []
 
     def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:

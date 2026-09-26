@@ -376,8 +376,8 @@ def scan_pages(
             cache[key] = True
 
 
-def scanner_version() -> str:
-    """Content-address scanner implementation and patterns to invalidate old cache entries."""
+def scanner_version(*, extra_version: str = "") -> str:
+    """Content-address scanner plus upstream decoders that gate inherited approval."""
     try:
         source = Path(__file__).read_bytes()
     except OSError as exc:
@@ -385,17 +385,24 @@ def scanner_version() -> str:
             f"Publication rejected (ADR-036 rule 3): cannot fingerprint scanner version: {exc}"
         ) from exc
     patterns = "\n".join(f"{r.name}:{r.pattern.pattern}:{r.pattern.flags}" for r in STANDALONE_PATTERNS)
-    return hashlib.sha256(source + patterns.encode("utf-8")).hexdigest()
+    return hashlib.sha256(source + patterns.encode("utf-8") + extra_version.encode("utf-8")).hexdigest()
 
 
 def clean_cache_key(
-    content_sha: str, version: str | None = None, *, mode: str = "html"
+    content_sha: str, version: str | None = None, *, mode: str = "html", extra_version: str = ""
 ) -> str:
-    return f"{version or scanner_version()}:{mode}:{content_sha}"
+    return f"{version or scanner_version(extra_version=extra_version)}:{mode}:{content_sha}"
 
 
 def cache_contains_clean(
-    cache: Any, content_sha: str, version: str | None = None, *, mode: str = "html"
+    cache: Any,
+    content_sha: str,
+    version: str | None = None,
+    *,
+    mode: str = "html",
+    extra_version: str = "",
 ) -> bool:
     safe_cache = validate_clean_cache(cache)
-    return safe_cache.get(clean_cache_key(content_sha, version, mode=mode)) is True
+    return safe_cache.get(
+        clean_cache_key(content_sha, version, mode=mode, extra_version=extra_version)
+    ) is True
