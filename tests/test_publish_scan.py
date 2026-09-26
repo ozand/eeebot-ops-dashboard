@@ -551,6 +551,13 @@ def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: 
         tv.publish_to_pages({"index.html": "<html>clean index</html>"})
 
 
+def test_adr036_rejects_entities_still_changing_after_round_limit() -> None:
+    """ADR-036: If a bounded unescape still changes, do not scan a partially decoded value as clean."""
+    deeply_nested = "&amp;" * 6 + "quot;messages&amp;" + "quot;: []"
+    with pytest.raises(ps.PublicationScanError, match="entity.*limit|unescape.*limit|decode.*limit"):
+        ps.scan_pages({"index.html": deeply_nested})
+
+
 def test_adr036_tag_stripped_secrets_and_markers_trigger_rejection() -> None:
     """ADR-036 rule 3: Secrets and markers split across HTML tags must be detected."""
     split_token = "<code>ghp_<span>abcdefghijklmnop123456</span></code>"
@@ -645,6 +652,26 @@ def test_adr036_single_quoted_keys_and_values_trigger_rejection() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": single_json_3})
+
+
+def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -> None:
+    """ADR-036: Scanner inspects parsed text and attribute values, not just raw markup."""
+    split_github_token = '<div>ghp_<span data-fragment="abcdefghijklmnop123456"></span></div>'
+    split_assignment = '<p>API_KEY=abc<span data-fragment="def12345"></span></p>'
+
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": split_github_token})
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": split_assignment})
+
+
+def test_adr036_single_quoted_structural_markers_trigger_rejection() -> None:
+    """ADR-036: Single-quoted call structures are still call markers and must be rejected."""
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"index.html": "{'messages': [{'role': 'user'}]}"})
+    with pytest.raises(ps.PublicationScanError, match="structural_reasoning_content"):
+        ps.scan_pages({"index.html": "{'reasoning_content': 'private'}"})
 
 
 def test_adr036_iterative_html_unescape_double_encoded_entities() -> None:
