@@ -220,6 +220,22 @@ def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> N
     assert "cycle-linked" in pages["cycles/cycle-linked.html"]
 
 
+def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import techtree_viewer as tv
+    from scripts import two_sinks as sinks
+
+    monkeypatch.setattr(tv, "read_local_state", lambda *args, **kwargs: {"ledger_history": [{"cycle_id": "cycle-manual"}], "ledger_tail": []})
+    monkeypatch.setattr(tv, "render_pages", lambda *_args: {"index.html": "local"})
+    monkeypatch.setattr(tv, "render_public_pages", lambda *_args: {"index.html": "public"})
+    observed = {}
+    monkeypatch.setattr(sinks, "publish_ordered", lambda site, public, private, version, **kwargs: (observed.update(site=site, private=private) or (0, {})))
+    monkeypatch.setattr(sinks, "render_private_pages", lambda data, host, state_root=None: observed.update(state_root=state_root) or {})
+
+    out = tmp_path / "index.html"
+    assert tv.main(["--local", "--state-root", str(tmp_path), "--out", str(out), "--publish"]) == 0
+    assert observed["state_root"] == tmp_path
+
+
 def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> None:
     from scripts.two_sinks import build_private_cycle_pages
 
