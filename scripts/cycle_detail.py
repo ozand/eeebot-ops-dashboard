@@ -49,6 +49,19 @@ def is_env_path(path_str: str) -> bool:
     )
 
 
+def sanitize_tool_arguments(arguments: str) -> str:
+    try:
+        parsed = json.loads(arguments)
+    except (json.JSONDecodeError, TypeError):
+        return "[env file contents withheld]" if is_env_path(arguments) else redact_text(arguments)
+    if isinstance(parsed, dict) and any(
+        key in {"path", "file", "filename"} and isinstance(value, str) and is_env_path(value)
+        for key, value in parsed.items()
+    ):
+        return "[env file contents withheld]"
+    return redact_text(json.dumps(parsed, ensure_ascii=False))
+
+
 def sanitize_tool_output(args: str, result: str) -> str:
     if is_env_path(args) or is_env_path(result):
         return "[env file contents withheld]"
@@ -79,17 +92,32 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
         m = dict(msg)
         role = m.get("role")
         if role == "assistant":
+            calls = []
             for tc in m.get("tool_calls") or []:
-                if isinstance(tc, dict):
-                    cid = tc.get("id")
-                    fn = tc.get("function") or tc
-                    args = str(fn.get("arguments") or "")
-                    if cid:
-                        pending_tool_args[cid] = args
+                if not isinstance(tc, dict):
+                    calls.append(tc)
+                    continue
+                call = dict(tc)
+                fn = dict(tc.get("function") or tc)
+                args = str(fn.get("arguments") or "")
+                safe_args = sanitize_tool_arguments(args)
+                fn["arguments"] = safe_args
+                if "function" in tc:
+                    call["function"] = fn
+                else:
+                    call.update(fn)
+                calls.append(call)
+                cid = tc.get("id")
+                if cid:
+                    pending_tool_args[str(cid)] = args
+                elif is_env_path(args):
+                    pending_tool_args["__latest_idless_env_call__"] = args
+            if "tool_calls" in m:
+                m["tool_calls"] = calls
         elif role == "tool":
             cid = m.get("tool_call_id")
             content = str(m.get("content") or "")
-            args = pending_tool_args.get(str(cid), "")
+            args = pending_tool_args.pop(str(cid), "") if cid else pending_tool_args.pop("__latest_idless_env_call__", "")
             if is_env_path(args) or is_env_path(content):
                 m["content"] = "[env file contents withheld]"
             else:
