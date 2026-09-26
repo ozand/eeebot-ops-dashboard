@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -435,6 +436,7 @@ def run(args: argparse.Namespace) -> int:
         pages = sinks.add_snapshot_version(pages, f"dry-run-{int(now)}")
         try:
             sinks.validate_publish_allowlist(pages)
+            sinks.scan_pages(pages)
         except ValueError as exc:
             print(f'[dry-run] publish refused: {exc}', file=sys.stderr)
             return 1
@@ -535,38 +537,41 @@ def run(args: argparse.Namespace) -> int:
     public_pages = tv.render_public_pages(public_data, args.host_label)
     private_pages = sinks.render_private_pages(private_data, args.host_label)
     version = f"{int(now)}-{digest[:12]}"
-    public_pages = sinks.add_snapshot_version(public_pages, version)
+    stamp = datetime.fromtimestamp(now, timezone.utc).isoformat()
+
+    sink_root = Path(args.site_root)
+    host_error = None
+    try:
+        host_pages = {
+            **sinks.add_snapshot_version(public_pages, version, generated_at=stamp),
+            **sinks.add_snapshot_version(private_pages, version, generated_at=stamp),
+        }
+        sinks.atomic_snapshot_swap(sink_root, host_pages, version)
+    except Exception as exc:
+        host_error = exc
+        print(f'techtree-autopublish: host snapshot failed ({type(exc).__name__}: {exc})', file=sys.stderr)
 
     if not os.environ.get('GH_TOKEN'):
         print(
-            'techtree-autopublish: GH_TOKEN is not set -- create '
-            '/etc/eeepc-agent/techtree-publish.env (root-owned, 0600) with a '
-            'GH_TOKEN=<token> line',
+            'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
             file=sys.stderr,
         )
         return 1
 
-    # publish_to_pages already returns 1 (rather than raising) on any API
-    # failure and never writes anything on that path -- so a failed publish
-    # here simply skips save_publish_state below and leaves gh-pages as it
-    # was, ready to retry next cycle.
-    #
-    # #278: previous_fingerprints lets publish_to_pages skip re-uploading
-    # any page whose normalized content (timestamp/age stripped) matches
-    # what was published last time -- this is the mechanism that stops
-    # re-uploading all 8 files in full on every run.
-    sink_root = Path(args.site_root)
     try:
-        result = sinks.publish_ordered(
-            sink_root, public_pages, private_pages, version,
-            lambda payload: tv.publish_to_pages(payload, previous_fingerprints=state.get('page_fingerprints')),
-        )
-    except Exception as exc:
-        print(f'techtree-autopublish: snapshot/publish failed ({type(exc).__name__})', file=sys.stderr)
+        sinks.validate_publish_allowlist(public_pages)
+        sinks.scan_pages(public_pages)
+    except ValueError as exc:
+        print(f'techtree-autopublish: publish validation failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         return 1
-    if result is None:
+
+    rc, fingerprints = tv.publish_to_pages(
+        public_pages, previous_fingerprints=state.get('page_fingerprints'),
+    )
+    if host_error is not None:
+        print('techtree-autopublish: host snapshot had failed; returning exit 1', file=sys.stderr)
         return 1
-    rc, fingerprints = result
+
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
