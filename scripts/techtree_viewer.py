@@ -10323,6 +10323,19 @@ def publish_to_pages(
         print(f'publish: {len(skipped)} page(s) unchanged, nothing to publish')
         return 0, fingerprints
 
+    # 2-4. One tree, one commit, one ref update -- retried as a whole
+    # against a fresh read on a concurrent-write rejection (#270). The
+    # publisher used to read base_tree once, long before this point, then
+    # force-update the ref: a commit landed on gh-pages between that read
+    # and the write took its files out from under it, silently, because the
+    # stale base_tree became this commit's entire tree and the force push
+    # never checked whether the ref had moved. Closing that race means:
+    # base_tree and the commit's parent must come from the SAME read, taken
+    # immediately before building the tree (not cached from earlier), and
+    # the ref update must be non-forcing so a ref that moved after that
+    # read is rejected by GitHub (422, "not a fast forward") instead of
+    # overwritten -- the fix retries the whole read/tree/commit cycle
+    # against the new head rather than forcing the stale one through.
     import json as _json
     max_attempts = 3
     for attempt in range(1, max_attempts + 1):
