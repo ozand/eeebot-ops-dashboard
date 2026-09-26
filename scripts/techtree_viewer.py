@@ -10206,9 +10206,37 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                     if enc == 'base64':
                         raw_bytes = base64.b64decode(raw)
                         if raw_bytes.startswith(b'\x1f\x8b'):
-                            import gzip
+                            import zlib
                             try:
-                                raw_bytes = gzip.decompress(raw_bytes)
+                                decompressor = zlib.decompressobj(wbits=31)
+                                max_decompressed_bytes = 20 * 1024 * 1024
+                                chunks = []
+                                total = 0
+                                for offset in range(0, len(raw_bytes), 64 * 1024):
+                                    chunk = decompressor.decompress(
+                                        raw_bytes[offset:offset + 64 * 1024],
+                                        max_decompressed_bytes - total + 1,
+                                    )
+                                    total += len(chunk)
+                                    if total > max_decompressed_bytes:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(chunk)
+                                tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                                total += len(tail)
+                                if total > max_decompressed_bytes:
+                                    raise PublicationScanError(
+                                        f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                    )
+                                chunks.append(tail)
+                                if not decompressor.eof:
+                                    raise PublicationScanError(
+                                        f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                                    )
+                                raw_bytes = b''.join(chunks)
+                            except PublicationScanError:
+                                raise
                             except Exception as gz_exc:
                                 raise PublicationScanError(
                                     f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
@@ -10238,16 +10266,17 @@ def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
     return "404" in msg or "not found" in msg or "branch not found" in msg
 
 
-def _ensure_pages_enabled() -> None:
-    """Enable Pages on gh-pages if not already (idempotent; 409 = already on)."""
+def _ensure_pages_enabled() -> bool:
+    """Enable Pages on gh-pages if not already; return False if activation failed."""
     pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
     if pages_enabled.returncode != 0:
         enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
                       '--input', '-'],
                      input_text='{"source":{"branch":"gh-pages","path":"/"}}')
         if enable.returncode != 0 and '409' not in (enable.stderr or ''):
-            print(f'publish: Pages enable failed (page pushed anyway): '
-                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
+            print(f'publish: Pages enable failed: {enable.stderr.strip()[:200]}', file=sys.stderr)
+            return False
+    return True
 
 
 def _dry_run_pages(
@@ -10332,7 +10361,8 @@ def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]
         print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
         return 1, {}
 
-    _ensure_pages_enabled()
+    if not _ensure_pages_enabled():
+        return 1, {}
     print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
     return 0, fingerprints
 
