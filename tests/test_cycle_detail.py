@@ -272,3 +272,32 @@ def test_d2_connected_end_to_end_from_state_tree_to_host_snapshot(tmp_path: Path
     gh_pages = published_to_gh[0]
     assert "cycles/c-end-to-end.html" not in gh_pages
     assert "index.html" in gh_pages
+
+
+def test_jsonl_read_failure_marks_history_incomplete(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex comment 4109820842: Read failure on any history file must mark history incomplete."""
+    root = tmp_path / "state"
+    run_file = root / "bridge" / "runs.jsonl"
+    run_file.parent.mkdir(parents=True, exist_ok=True)
+    run_file.write_text('{"run_id": "r1", "cycle_id": "c-failed-read", "classification": "completed"}\n', encoding="utf-8")
+
+    prompt_file = root / "llm_calls" / "prompts" / "2026-09-25.jsonl"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_file.write_text('{"cycle_id": "c-failed-read", "component": "executor", "seq": 1, "messages": []}\n', encoding="utf-8")
+
+    from scripts import cycle_detail as cd
+    orig_read = cd._read_jsonl
+
+    def mock_read(paths):
+        # Simulate partial/failed read for prompt paths
+        if any("prompts" in str(p) for p in paths):
+            rows, _ = orig_read(paths)
+            return rows, False
+        return orig_read(paths)
+
+    monkeypatch.setattr(cd, "_read_jsonl", mock_read)
+    fixed_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+    detail = cd.load_cycle_detail(root, "c-failed-read", now=fixed_now)
+
+    assert detail["available"] is True
+    assert detail["history_complete"] is False
