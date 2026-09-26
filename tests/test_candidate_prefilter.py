@@ -32,8 +32,11 @@ def test_missing_anchor_fails_closed(monkeypatch):
 
 
 def test_each_scanner_rule_has_declared_anchor():
-    rules = (*ps.STANDALONE_PATTERNS,)
-    rules = (*ps.STANDALONE_PATTERNS, ps.SecretPattern("_env_secret_kv", ps._ENV_SECRET_KV_RE, "env"), ps.SecretPattern("_json_secret_key", ps._JSON_SECRET_KEY_RE, "json"))
+    rules = (
+        *ps.STANDALONE_PATTERNS,
+        ps.SecretPattern("_env_secret_kv", ps._ENV_SECRET_KV_RE, "env"),
+        ps.SecretPattern("_json_secret_key", ps._JSON_SECRET_KEY_RE, "json"),
+    )
     for rule in rules:
         anchors = ps.SCANNER_ANCHORS.get(rule.name)
         assert anchors, rule.name
@@ -59,7 +62,9 @@ def _positive_samples(name):
         "structural_reasoning_content": ['"reasoning_content"', "'reasoning_content'"],
         "structural_messages": ['"messages":', "'messages':"],
         "structural_prompt": ['"prompt": {', "'prompt': {"],
-        "_env_secret_kv": ["DB_PASS=abcdefghijk", "AUTH=abcdefghijk", "ACCOUNT_KEY=abcdefghijk", "GH_TOKEN=abcdefghijk"],
+        "_env_secret_kv": [
+            "DB_PASS=abcdefghijk", "AUTH=abcdefghijk", "ACCOUNT_KEY=abcdefghijk", "GH_TOKEN=abcdefghijk",
+        ],
         "_json_secret_key": ['{"my_token_value":"abcdefghijk"}'],
     }[name]
 
