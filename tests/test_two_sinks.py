@@ -377,3 +377,104 @@ def test_unchanged_pages_produce_zero_uploads_across_runs():
     fp2 = tv._page_fingerprint(p2["index.html"])
 
     assert fp1 == fp2, "Fingerprints must match across different snapshot versions if content is unchanged"
+
+
+def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp_path: Path, monkeypatch):
+    """ADR-036: Host failure preserves gh-pages fingerprints, records host_snapshot_failed_since (not overwritten), and skips uploads on run 2."""
+    import time
+    from scripts import techtree_autopublish as ap
+
+    root = tmp_path / "state"
+    state_dir = tmp_path / "state_dir"
+    bad_site = tmp_path / "bad_site"
+    bad_site.write_text("not a directory")
+
+    for rel, content in {
+        "evolution/tree.json": '{"current_sha": "a", "nodes": {}}',
+        "tech_tree/portfolio.json": '{"current": null, "nodes": {}}',
+        "hypotheses/lifecycle.json": '{"entries": {}}',
+        "scorecard/latest.json": '{"computed_at_utc": "2026-08-18T00:00:00Z"}',
+        "ledger/cycles.jsonl": '{"phase": "outcome", "cycle_id": "c1", "outcome": "success", "ts": "2026-09-25T10:00:00Z"}\n',
+    }.items():
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content, encoding="utf-8")
+
+    monkeypatch.setenv("GH_TOKEN", "mock-token")
+    monkeypatch.setenv("EEEBOT_SITE_ROOT", str(bad_site))
+
+    published_batches = []
+    def fake_publish(pages, **kw):
+        prev = kw.get("previous_fingerprints") or {}
+        changed = {k: v for k, v in pages.items() if prev.get(k) != ap.tv._page_fingerprint(v)}
+        published_batches.append(changed)
+        fp = {k: ap.tv._page_fingerprint(v) for k, v in pages.items()}
+        return 0, fp
+
+    monkeypatch.setattr(ap.tv, "render_public_pages", lambda *a, **kw: {"index.html": "<html>fixed content</html>"})
+    monkeypatch.setattr(ap.tv, "publish_to_pages", fake_publish)
+
+    args = ap.parse_args([
+        "--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(bad_site),
+        "--staleness-floor-hours", "0.0001",
+    ])
+
+    rc1 = ap.run(args)
+    assert rc1 == 1
+    state1 = ap.load_publish_state(state_dir)
+    assert state1.get("host_snapshot_failed_since") is not None
+    assert state1.get("last_host_error") is not None
+    assert len(state1.get("page_fingerprints", {})) > 0
+    first_failed_since = state1["host_snapshot_failed_since"]
+    assert len(published_batches[0]) > 0
+
+    time.sleep(1)
+    rc2 = ap.run(args)
+    assert rc2 == 1
+    state2 = ap.load_publish_state(state_dir)
+    assert state2.get("host_snapshot_failed_since") == first_failed_since
+    assert len(published_batches) == 2
+    assert len(published_batches[1]) == 0
+
+
+def test_goal_meta_three_states_and_rendering(tmp_path: Path):
+    """ADR-036: goal_meta has absent / unexpected_shape / present states; priority_count/lines/chars null when not present."""
+    from scripts.two_sinks import split_render_inputs
+    from scripts import techtree_viewer as tv
+
+    pub_absent, _ = split_render_inputs({"other": 1})
+    meta_absent = pub_absent["goal_meta"]
+    assert meta_absent["state"] == "absent"
+    assert meta_absent["priority_count"] is None
+    assert meta_absent["lines"] is None
+    assert meta_absent["chars"] is None
+    panel_absent = tv.build_agent_panel(None, meta_absent, None)
+    assert "0 lines" not in panel_absent
+    assert "0 chars" not in panel_absent
+    assert "goals charter absent" in panel_absent
+
+    pub_shape, _ = split_render_inputs({"goal_text": "plain string not a dict"})
+    meta_shape = pub_shape["goal_meta"]
+    assert meta_shape["state"] == "unexpected_shape"
+    assert meta_shape["priority_count"] is None
+    assert meta_shape["lines"] is None
+    assert meta_shape["chars"] is None
+    panel_shape = tv.build_agent_panel(None, meta_shape, None)
+    assert "0 lines" not in panel_shape
+    assert "0 chars" not in panel_shape
+    assert "unexpected shape" in panel_shape
+
+    pub_pres, _ = split_render_inputs({"goal_text": {"charter": "c1\nc2", "priorities": ["p1", "p2"]}})
+    meta_pres = pub_pres["goal_meta"]
+    assert meta_pres["state"] == "present"
+    assert meta_pres["priority_count"] == 2
+    assert meta_pres["lines"] == 2
+    assert meta_pres["chars"] == 5
+    panel_pres = tv.build_agent_panel(None, meta_pres, None)
+    assert "Goals charter (2 lines)" in panel_pres
+    assert "5 chars" in panel_pres
+
+    pub_no_prio, _ = split_render_inputs({"goal_text": {"charter": "line1"}})
+    meta_no_prio = pub_no_prio["goal_meta"]
+    assert meta_no_prio["state"] == "present"
+    assert meta_no_prio["priority_count"] is None

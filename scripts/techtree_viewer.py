@@ -7130,20 +7130,28 @@ def build_agent_panel(
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
 
     # 2. Goals charter
-    goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
+    goals_html = '<p class="unavailable-note">goals charter absent</p>'
     if isinstance(goal_text, dict):
-        if "lines" in goal_text and "chars" in goal_text:
-            g_lines = goal_text["lines"]
-            g_chars = goal_text["chars"]
+        g_state = goal_text.get("state")
+        if g_state == "absent":
+            goals_html = '<p class="unavailable-note">goals charter absent</p>'
+        elif g_state == "unexpected_shape":
+            goals_html = '<p class="unavailable-note">goals charter unexpected shape</p>'
+        elif g_state == "present" or g_state is None:
+            if "lines" in goal_text and "chars" in goal_text and goal_text["lines"] is not None:
+                g_lines = goal_text["lines"]
+                g_chars = goal_text["chars"]
+            else:
+                g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
+                g_lines = len(str(g_text).splitlines())
+                g_chars = len(str(g_text))
+            goals_html = (
+                f'<details class="charter-details goal-text-box">'
+                f'<summary>Goals charter ({g_lines} lines)</summary>'
+                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
+            )
         else:
-            g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-            g_lines = len(str(g_text).splitlines())
-            g_chars = len(str(g_text))
-        goals_html = (
-            f'<details class="charter-details goal-text-box">'
-            f'<summary>Goals charter ({g_lines} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
-        )
+            goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
 
     # 3. Skills fitness table
     skills_html = '<p class="unavailable-note">skill reads unavailable</p>'

@@ -177,16 +177,33 @@ def split_render_inputs(data: dict) -> tuple[dict, dict]:
         public["agents_meta"] = {"present": False, "lines": 0, "chars": 0}
 
     raw_goal = data.get("goal_text")
-    if isinstance(raw_goal, dict):
-        g_text = str(raw_goal.get("charter") or raw_goal.get("goal_text") or raw_goal.get("text") or "")
+    if raw_goal is None:
         public["goal_meta"] = {
+            "state": "absent",
+            "present": False,
+            "lines": None,
+            "chars": None,
+            "priority_count": None,
+        }
+    elif not isinstance(raw_goal, dict):
+        public["goal_meta"] = {
+            "state": "unexpected_shape",
+            "present": False,
+            "lines": None,
+            "chars": None,
+            "priority_count": None,
+        }
+    else:
+        g_text = str(raw_goal.get("charter") or raw_goal.get("goal_text") or raw_goal.get("text") or "")
+        p_list = raw_goal.get("priorities")
+        priority_count = len(p_list) if isinstance(p_list, list) else None
+        public["goal_meta"] = {
+            "state": "present",
             "present": True,
             "lines": len(g_text.strip().splitlines()) if g_text else 0,
             "chars": len(g_text.strip()) if g_text else 0,
-            "priority_count": len(raw_goal.get("priorities", [])) if isinstance(raw_goal.get("priorities"), list) else 0,
+            "priority_count": priority_count,
         }
-    elif raw_goal is not None:
-        public["goal_meta"] = {"present": False, "lines": 0, "chars": 0, "priority_count": 0}
 
     private = dict(data)
     return public, private
