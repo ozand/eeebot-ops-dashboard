@@ -172,6 +172,9 @@ if [ -n "$revision" ] && curl --fail --location --silent --show-error --proto '=
         mv -f "$TMP_ROOT/SYNC_DRIFT" "$DEST/SYNC_DRIFT"
     fi
 else
+    # A previous mismatch marker is no longer authoritative when this run
+    # cannot compare against the pinned repository script.
+    rm -f "$DEST/SYNC_DRIFT"
     echo "techtree sync: sync script drift: drift unknown (revision ${revision:-unknown})" >&2
 fi
 
