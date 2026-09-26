@@ -304,7 +304,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     durations_result = _read_jsonl(duration_paths)
     raw_runs, runs_ok = runs_result
     raw_prompts, prompts_ok = prompts_result
-    _, durations_ok = durations_result
+    durations, durations_ok = durations_result
     broken_runs = getattr(runs_result, "broken", False)
     broken_prompts = getattr(prompts_result, "broken", False)
     broken_dur = getattr(durations_result, "broken", False)
@@ -330,6 +330,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
+    dur_by_seq = {
+        (str(row.get("cycle_id")), str(row.get("component")), str(row.get("seq"))): row
+        for row in durations if row.get("seq") is not None
+    }
     read_state = "ok" if all_reads_ok else "unavailable"
 
     all_cycle_ids = {str(r.get("cycle_id")) for r in runs if r.get("cycle_id")}
@@ -358,7 +362,8 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
         for p in c_prompts:
             role = str(p.get("component") or "executor")
-            dur = None
+            duration_row = dur_by_seq.get((cid, role, str(p.get("seq"))))
+            dur = duration_row.get("duration_ms") if duration_row is not None else None
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 reconstruction_state = "incomplete"

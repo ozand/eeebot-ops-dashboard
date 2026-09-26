@@ -208,7 +208,7 @@ def test_load_cycle_detail_uses_inventory_paths_and_marks_missing_sources(tmp_pa
     assert result["attempts"][0]["run_id"] == "r1"
     assert result["attempts"][0]["history_complete"] is False
     assert result["sessions"][0]["role"] == "planner"
-    assert result["sessions"][0]["duration"] == 18
+    assert result["sessions"][0]["steps"][0]["duration"] == 18
     assert result["total_model_calls"] == 1
 
 
