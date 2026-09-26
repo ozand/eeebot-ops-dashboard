@@ -257,7 +257,6 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
 
 def render_private_pages(private_data: dict, host: str, state_root: Path | None = None) -> dict[str, str]:
     """ADR-036 D2 private-only cycle renderer; never included in gh-pages."""
-    del host
     if state_root is not None:
         return build_private_cycle_pages(private_data, state_root, host)
 
