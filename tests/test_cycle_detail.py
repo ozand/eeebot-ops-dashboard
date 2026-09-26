@@ -38,6 +38,11 @@ def test_redaction_covers_ghu_tokens_in_private_details() -> None:
     assert token not in redact_text(token)
 
 
+def test_redaction_covers_colon_delimited_credentials() -> None:
+    value = "password: COLON_SECRET_CANARY_7721"
+    assert "COLON_SECRET_CANARY_7721" not in redact_text(value)
+
+
 def test_redaction_covers_secret_patterns_and_env_files():
     """ADR-036 §5: redact secrets without env_contents reading; safe filename labels remain renderable."""
     raw = (
