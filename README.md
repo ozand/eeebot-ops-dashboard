@@ -108,8 +108,25 @@ The sole deployment route is auto-sync via `deploy/eeebot-techtree-sync.sh` and
 verifies compilation (`py_compile`), and atomically updates `/opt/eeebot-techtree/`.
 
 First-time setup:
-1. Ensure `/opt/eeebot-techtree/`, the `eeebot-publish` system user, and `eeebot-techtree-publish.service` exist on the host.
-2. Create `/etc/eeepc-agent/techtree-publish.env` (root-owned, 0600) with
+1. Provision the `eeebot-publish` user and directories on the host:
+   ```bash
+   sudo useradd -r -s /bin/false -d /var/lib/eeebot-techtree eeebot-publish
+   sudo mkdir -p /opt/eeebot-techtree /var/lib/eeebot-techtree
+   sudo chown -R eeebot-publish:eeebot-publish /opt/eeebot-techtree /var/lib/eeebot-techtree
+   ```
+2. Install the systemd unit:
+   ```bash
+   sudo cp systemd/eeebot-techtree-publish.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   ```
+3. Install the sync script and drop-in (see `deploy/README-sync.md`):
+   ```bash
+   sudo install -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
+   sudo mkdir -p /etc/systemd/system/eeebot-techtree-publish.service.d/
+   sudo cp deploy/eeebot-techtree-publish.service.d-sync.conf /etc/systemd/system/eeebot-techtree-publish.service.d/sync.conf
+   sudo systemctl daemon-reload
+   ```
+4. Create `/etc/eeepc-agent/techtree-publish.env` (root-owned, 0600) with
    `GH_TOKEN=<your fine-grained PAT>`.
 
 Canonical runtime assets included:

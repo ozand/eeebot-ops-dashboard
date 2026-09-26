@@ -165,11 +165,9 @@ HARNESS_UNITS: tuple[dict[str, str], ...] = (
 # systemd/drop-ins/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf
 # (this repo).
 PUBLISH_PIPELINE_NOTE = (
-    "This site itself is not generated on a timer. eeebot-techtree-publish.service "
-    "(installed from this repo's systemd/ directory) runs when "
-    "eeepc-self-evolving-subagent-bridge.service's OnSuccess= completes -- i.e. "
-    "once per bridge cycle that finishes, digest-gated so an unchanged snapshot "
-    "does not re-publish."
+    "eeebot-techtree-publish.service (installed from this repo's systemd/ directory) "
+    "runs periodically via eeebot-techtree-publish.timer (every 15 minutes, issue #1905) "
+    "and on completed cycles, digest-gated so an unchanged snapshot does not re-publish."
 )
 
 # Confirmed live (systemctl list-timers, pasted into this issue's session,
