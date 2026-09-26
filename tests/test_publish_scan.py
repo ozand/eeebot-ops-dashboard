@@ -847,3 +847,28 @@ def test_adr036_scans_all_concatenated_gzip_members(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(tv, "_gh", fake_gh)
     with pytest.raises(ps.PublicationScanError, match="openai_secret_key"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"})
+
+
+def test_adr036_detects_secret_split_at_gzip_member_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036: Concatenate gzip members byte-for-byte so split secret assignments remain detectable."""
+    import base64
+    import gzip
+    import json
+    encoded = base64.b64encode(
+        gzip.compress(b"API_KEY=abc") + gzip.compress(b"def12345")
+    ).decode("ascii")
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob1"}]}')
+        if "blobs/blob1" in joined:
+            return cp(json.dumps({"content": encoded, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
