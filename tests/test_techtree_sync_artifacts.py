@@ -233,6 +233,7 @@ def _make_test_sync_script(dest: Path, extra_env: dict[str, str] | None = None) 
     extra_env = extra_env or {}
     if extra_env.get("TEST_SYNC_NONROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if false; then')
+        patched = patched.replace('    chown root:root "$REV_TMP"', '    : # chown suppressed for non-root branch test')
     if extra_env.get("TEST_SYNC_ROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if true; then')
         patched = patched.replace('        chown root:root "$REV_TMP"', '        "$FAKE_CHOWN" root:root "$REV_TMP"')
