@@ -1,6 +1,7 @@
 scripts/agent_context.py
 scripts/techtree_viewer.py
 scripts/techtree_autopublish.py
+scripts/publish_scan.py
 scripts/two_sinks.py
 scripts/cycle_detail.py
 assets/vendor/lineage-renderer.js

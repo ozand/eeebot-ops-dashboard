@@ -17,17 +17,10 @@ PUBLIC_PAGES = frozenset({
     "agent.html", "hypotheses.html", "about.html", "techtree.html", "cycle.html",
     "cycles-archive-index.json", "lineage-cycle-details.json",
 })
-# TODO: Switch to scripts/publish_scan.py once merged in master (pF task)
-PRIVATE_MARKERS = (
-    re.compile(rb"sk-[A-Za-z0-9_-]{8,}"),
-    re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
-    re.compile(rb"(?i)\b(?:ghp_|gho_|ghs_|github_pat_)[A-Za-z0-9_]+"),
-    re.compile(rb"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+"),
-    re.compile(rb"\bAKIA[A-Z0-9]{16}\b"),
-    re.compile(rb"(?i)\bxox[baprs]-[A-Za-z0-9-]+"),
-    re.compile(rb"(?i)(?:api[_-]?key|secret|password)\s*[:=]"),
-    re.compile(rb'(?i)reasoning_content|"messages"\s*:|"prompt"\s*:\s*\{'),
-)
+try:
+    from scripts.publish_scan import scan_pages as _publish_scan_pages, PublicationScanError
+except ImportError:
+    from publish_scan import scan_pages as _publish_scan_pages, PublicationScanError  # type: ignore
 
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
@@ -199,21 +192,19 @@ def split_render_inputs(data: dict) -> tuple[dict, dict]:
     return public, private
 
 
-def scan_bytes(payload: bytes, filename: str = "payload") -> None:
-    for marker in PRIVATE_MARKERS:
-        if marker.search(payload):
-            raise ValueError(f"ADR-036 private marker in built publish tree: {filename}")
-
-
 def scan_pages(pages: Mapping[str, str]) -> None:
-    for name, content in pages.items():
-        scan_bytes(content.encode("utf-8"), filename=name)
+    """Validate pages against leak scanner (delegates to scripts/publish_scan.py)."""
+    _publish_scan_pages(dict(pages))
 
 
 def scan_built_tree(root: Path) -> None:
-    for path in root.rglob("*"):
-        if path.is_file():
-            scan_bytes(path.read_bytes(), filename=path.name)
+    """Scan all files on disk under root using scripts/publish_scan.py."""
+    pages = {
+        path.name: path.read_text(encoding="utf-8", errors="replace")
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+    _publish_scan_pages(pages)
 
 
 def validate_publish_allowlist(pages: Mapping[str, str]) -> None:
