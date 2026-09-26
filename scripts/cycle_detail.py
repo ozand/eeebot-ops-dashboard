@@ -248,7 +248,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                 call_step = pending_calls.pop(cid)
                 call_step["result"] = sanitize_tool_output(call_step["arguments"], content)
                 call_step["status"] = "ok"
-            elif steps:
+            elif not cid and steps:
                 for s in reversed(steps):
                     if s["status"] == "pending":
                         s["result"] = sanitize_tool_output(s["arguments"], content)
