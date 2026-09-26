@@ -712,3 +712,33 @@ def test_adr036_nothing_to_publish_scans_inherited_tree(monkeypatch: pytest.Monk
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": clean_index}, previous_fingerprints=prev_fps)
     assert "openai_secret_key" in str(exc_info.value)
+
+
+def test_adr036_bootstrap_clean_branch_enables_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Bootstrap clean branch must enable GitHub Pages."""
+    pages_calls = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="404 Not Found")
+        if "git/blobs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"blob1"}', stderr="")
+        if "git/trees" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"tree1"}', stderr="")
+        if "git/commits" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"com1"}', stderr="")
+        if "git/refs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+        if "pages" in joined:
+            pages_calls.append(args)
+            if "-X" in args:
+                return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="404")
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    rc, fp = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    assert rc == 0
+    assert any("-X" in call and "POST" in call for call in pages_calls)

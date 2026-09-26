@@ -10174,6 +10174,10 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
         raise PublicationScanError(
             "Publication rejected (ADR-036 rule 3): target tree object is null or missing"
         )
+    if not isinstance(entries, list):
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): target tree is not a list (invalid schema): {type(entries).__name__}"
+        )
 
     inherited_pages = {}
     for item in entries:
@@ -10193,19 +10197,57 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
                     )
                 try:
                     b_json = _json.loads(b_res.stdout)
+                    if not isinstance(b_json, dict) or "content" not in b_json or b_json["content"] is None:
+                        raise PublicationScanError(
+                            f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
+                        )
                     raw = b_json.get('content', '')
                     enc = b_json.get('encoding', '')
                     if enc == 'base64':
-                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                        raw_bytes = base64.b64decode(raw)
+                        if raw_bytes.startswith(b'\x1f\x8b'):
+                            import gzip
+                            try:
+                                raw_bytes = gzip.decompress(raw_bytes)
+                            except Exception as gz_exc:
+                                raise PublicationScanError(
+                                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
+                                ) from gz_exc
+                        try:
+                            txt = raw_bytes.decode('utf-8')
+                        except UnicodeDecodeError as u_exc:
+                            raise PublicationScanError(
+                                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {u_exc}"
+                            ) from u_exc
                     else:
                         txt = raw
                     inherited_pages[path] = txt
+                except PublicationScanError:
+                    raise
                 except Exception as exc:
                     raise PublicationScanError(
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
         scan_pages(inherited_pages)
+
+
+def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
+    """Return True if GitHub API explicitly confirmed the branch is missing (404 / Not Found)."""
+    msg = f"{res.stderr} {res.stdout}".lower()
+    return "404" in msg or "not found" in msg or "branch not found" in msg
+
+
+def _ensure_pages_enabled() -> None:
+    """Enable Pages on gh-pages if not already (idempotent; 409 = already on)."""
+    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
+    if pages_enabled.returncode != 0:
+        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
+                      '--input', '-'],
+                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
+        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
+            print(f'publish: Pages enable failed (page pushed anyway): '
+                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
 
 
 def _dry_run_pages(
@@ -10221,8 +10263,12 @@ def _dry_run_pages(
 
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
-        print(f'publish: [dry-run] {PUBLISH_BRANCH} does not exist yet; target tree is clean')
-        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        if _is_confirmed_not_found(branch_probe):
+            print(f'publish: [dry-run] {PUBLISH_BRANCH} does not exist yet; target tree is clean')
+            return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot probe {PUBLISH_BRANCH} during dry-run (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}"
+        )
     try:
         head_data = _json.loads(branch_probe.stdout)
         probe_tree = head_data['commit']['commit']['tree']['sha']
@@ -10286,6 +10332,7 @@ def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]
         print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
         return 1, {}
 
+    _ensure_pages_enabled()
     print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
     return 0, fingerprints
 
@@ -10340,7 +10387,11 @@ def publish_to_pages(
     # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
-        return _bootstrap_clean_branch(pages)
+        if _is_confirmed_not_found(branch_probe):
+            return _bootstrap_clean_branch(pages)
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}"
+        )
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10375,6 +10426,22 @@ def publish_to_pages(
         tree_entries.append(entry)
 
     if not tree_entries:
+        # ADR-036: Scan base_tree even when 0 pages changed ('nothing to publish')
+        import json as _json
+        head = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+        if head.returncode != 0:
+            print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1, {}
+        try:
+            head_data = _json.loads(head.stdout)
+            base_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
+            ) from exc
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths=set())
+
         # #278: every page's normalized content matched last publish's --
         # nothing to commit. should_publish's tree digest gate normally
         # prevents reaching publish_to_pages at all in that case, but a
@@ -10458,16 +10525,7 @@ def publish_to_pages(
         print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
               f're-reading and retrying', file=sys.stderr)
 
-    # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
-    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
-    if pages_enabled.returncode != 0:
-        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
-                      '--input', '-'],
-                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
-        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
-            print(f'publish: Pages enable failed (page pushed anyway): '
-                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
-
+    _ensure_pages_enabled()
     print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
           f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
     return 0, fingerprints
