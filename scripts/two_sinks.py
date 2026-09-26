@@ -280,12 +280,9 @@ def scan_built_tree(root: Path) -> None:
 
 
 def validate_publish_allowlist(pages: Mapping[str, str]) -> None:
-    try:
-        for name in pages:
-            if not is_allowed_publish_path(name):
-                raise PublicationScanError(f"ADR-036 unlisted publish path: {name}")
-    except PublicationScanError:
-        raise
+    for name in pages:
+        if not is_allowed_publish_path(name):
+            raise PublicationScanError(f"ADR-036 unlisted publish path: {name}")
 
 
 def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str | None = None) -> dict[str, str]:

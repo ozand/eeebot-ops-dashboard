@@ -53,7 +53,8 @@ def test_manual_publish_site_root_is_configurable() -> None:
 
 def test_publish_allowlist_refuses_unlisted_pages(tmp_path: Path):
     """ADR-036 §3: unexpected publication paths fail loudly."""
-    with pytest.raises(ValueError, match="unlisted"):
+    from scripts.publish_scan import PublicationScanError
+    with pytest.raises(PublicationScanError, match="unlisted"):
         validate_publish_allowlist({"secret.bin": "x"})
 
 
@@ -139,8 +140,9 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
 
 def test_no_private_file_of_any_kind_is_published(tmp_path: Path):
     """ADR-036 §3: allowlist is extension-independent."""
+    from scripts.publish_scan import PublicationScanError
     for name in ("calls.json", "dump.gz", "index.idx", "unexpected.bin"):
-        with pytest.raises(ValueError, match="unlisted"):
+        with pytest.raises(PublicationScanError, match="unlisted"):
             validate_publish_allowlist({name: "payload"})
 
 
