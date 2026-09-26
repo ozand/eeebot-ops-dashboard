@@ -145,7 +145,9 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
                 m["content"] = _sanitize_nested_value(raw_content)
         elif "content" in m and isinstance(m["content"], str):
             m["content"] = redact_text(m["content"])
-        elif "content" in m:
+        if role == "assistant" and isinstance(m.get("content"), str):
+            m["content"] = redact_text(m["content"])
+        if "content" in m and not isinstance(m["content"], str):
             m["content"] = _sanitize_nested_value(m["content"])
         cleaned.append(m)
     return cleaned
