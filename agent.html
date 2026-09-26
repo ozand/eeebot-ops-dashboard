@@ -1366,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">156</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">49.4%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 16:09:34 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">24.7%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">24.7%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">16 events · 11 tasks · 4.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">86 events · 5 tasks · 22.4%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">6.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790429429.811" data-render-age-seconds="12">data: 12s old &middot; generated 13:30 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790431041.457" data-render-age-seconds="31">data: 30s old &middot; generated 13:57 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1405,8 +1405,8 @@
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Tier 2 Reachable Knowledge</span>
-      <span class="kpi-value">~1134.7 <span class="kpi-unit">KB</span></span>
-      <span class="kpi-sub">220 files reachable via read_file</span>
+      <span class="kpi-value">~1139.0 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-sub">221 files reachable via read_file</span>
     </div>
   </div>
   <div class="context-subject-group context-overview-group">
@@ -1418,7 +1418,7 @@
     </div>
   </div>
   <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 19 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 19/19 consecutive cycles: AGENTS.md</span></div></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 71.9%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 959 row(s) with a known context_window &bull; window unknown: 57 rows (excluded, not counted as 0%) of 1,016 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 71.9%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 957 row(s) with a known context_window &bull; window unknown: 55 rows (excluded, not counted as 0%) of 1,012 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-26T12:57:21.828120Z · source: published</p>
@@ -1432,7 +1432,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 17,961 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 55,260 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1457,7 +1457,7 @@
 ---
 
 " Separators</span><span class="t1-sz">70c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 17,961 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 55,260 prompt tokens (executor)</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,054c</span></div>
       </div>
     </div>
@@ -1473,7 +1473,7 @@
       <div class="tier-col-header"><span class="tier-tag tag-t2">TIER 2</span><div><h3>Reachable on Disk (Zero Base Context)</h3><p>Full instructions, lessons, and memory records.</p></div></div>
       <div class="tier2-targets-list">
         <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 36 skills</strong><span class="t2-size">222.3 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
-        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 122 lessons</strong><span class="t2-size">473.4 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 123 lessons</strong><span class="t2-size">477.6 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
         <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">439.0 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
       </div>
     </div>
@@ -1523,7 +1523,7 @@
     <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
-    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1134.7 KB</strong> across <strong>220</strong> files.</p>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1139.0 KB</strong> across <strong>221</strong> files.</p>
 <div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget unavailablec · retained unavailable/unavailable · unavailable · omitted: none</div>
 <div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
 <div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>7</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>classify-python-module</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>14</td><td>12</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>6</td><td>1</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>locate-failure-logs</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>8</td><td>8</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>raw-json-final-turn</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>59</td><td>52</td><td>working</td></tr><tr><td>search-subagent-archive</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>no</td><td>4</td><td>4</td><td>not on disk</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>targeted-file-slice</td><td>unavailable</td><td>yes</td><td>4</td><td>1</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>verify-lessons-integrity</td><td>unavailable</td><td>yes</td><td>8</td><td>5</td><td>working</td></tr></tbody></table>
@@ -1570,7 +1570,7 @@
     </div>
     <div class="t2-group" id="tier2-lessons-section">
       <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-present">corpus: PRESENT</span> <span class="status-badge status-present">lessons/index.md: PRESENT</span></div>
-      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> 122 lesson records on disk (~473.4 KB total):</p><div class="lessons-pills">
+      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> 123 lesson records on disk (~477.6 KB total):</p><div class="lessons-pills">
 <span class="lesson-pill">lessons/README.md (1,798 B)</span> 
 <span class="lesson-pill">lessons/adjacent_test_suite_verification.md (5,559 B)</span> 
 <span class="lesson-pill">lessons/already_implemented_skip_emission.md (3,766 B)</span> 
@@ -1580,6 +1580,7 @@
 <span class="lesson-pill">lessons/avoiding_repeated_failures.md (2,093 B)</span> 
 <span class="lesson-pill">lessons/baseline_validator_checks.md (4,573 B)</span> 
 <span class="lesson-pill">lessons/batch-consecutive-file-edits.md (4,463 B)</span> 
+<span class="lesson-pill">lessons/batched_test_append_redirection.md (4,359 B)</span> 
 <span class="lesson-pill">lessons/blocked_file_remediation.md (3,511 B)</span> 
 <span class="lesson-pill">lessons/bounded_initial_reconnaissance.md (2,979 B)</span> 
 <span class="lesson-pill">lessons/bounded_inspection_turns.md (4,142 B)</span> 
@@ -1600,8 +1601,7 @@
 <span class="lesson-pill">lessons/coupling_agents_instructions_with_structural_tests.md (5,560 B)</span> 
 <span class="lesson-pill">lessons/dual_ledger_testing_pattern.md (6,623 B)</span> 
 <span class="lesson-pill">lessons/dual_sink_sampler_pattern.md (6,130 B)</span> 
-<span class="lesson-pill">lessons/early_edit_turn_discipline.md (8,653 B)</span> 
-<span class="lesson-pill pill-more">+92 more lessons...</span>
+<span class="lesson-pill pill-more">+93 more lessons...</span>
       </div></div>
     </div>
     <div class="t2-group" id="tier2-memory-section">
@@ -1896,7 +1896,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-26 13:30:42 UTC &middot; host eeepc &middot; newest source 12s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 16:09:34 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-26 13:57:52 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 16:09:34 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
