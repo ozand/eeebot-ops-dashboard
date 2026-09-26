@@ -1,0 +1,1929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
+<title>eeebot / agent</title>
+<style>
+    :root {
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      padding: 0 0 32px 0;
+    }
+    h1, h2, h3, .panel-title, .empire-title {
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+    }
+    a { color: #56d364; }
+
+    /* --- top strip: slim, one line --- */
+    .empire-strip {
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
+      padding: 8px 20px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      align-items: center;
+      gap: 18px;
+    }
+    .empire-title {
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
+      white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
+    }
+    .empire-stats {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 18px;
+    }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+
+    /* --- freshness badge (issue #48) --- */
+    .empire-fresh { margin-left: auto; white-space: nowrap; }
+    .freshness {
+      font-size: 0.78em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #3d6b52;
+      font-variant-numeric: tabular-nums;
+    }
+    .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
+    .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
+    .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
+    .freshness-unknown { color: #9db4a6; }
+
+    .stat-label {
+      text-transform: uppercase;
+      font-size: 0.64em;
+      letter-spacing: 1px;
+      color: #9db4a6;
+    }
+    .stat-value {
+      font-size: 1.02em;
+      color: #e2f0e6;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .canvas-outer {
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior: contain;
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .canvas-jump {
+      display: inline-block;
+      margin: 8px 12px 0;
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      text-decoration: underline;
+    }
+    .lane-label {
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+    .panel-title {
+      margin: 0 0 12px 0;
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #28503c;
+      padding-bottom: 6px;
+    }
+    .panel-unavailable {
+      text-align: center;
+      color: #7fa08d;
+    }
+    .unavailable-note {
+      color: #7fa08d;
+      font-style: italic;
+    }
+
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feed-age-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      border: 1px solid #234234;
+      background: #0d1a15;
+    }
+    .feed-badge-stale, .feed-badge-corrupt, .feed-badge-missing, .feed-badge-unreadable {
+      border-color: #8c2a2a;
+      color: #ff9999;
+      background: #2b1111;
+    }
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
+    }
+    .now-label {
+      font-weight: 700;
+      color: #9db4a6;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
+    }
+    .health-verdict {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #7f8c8d;
+      border-radius: 3px;
+      background: rgba(127, 140, 141, 0.12);
+      font-size: 0.9em;
+    }
+    .health-verdict .now-label {
+      min-width: 0;
+    }
+    .health-verdict strong {
+      letter-spacing: 1px;
+    }
+    .health-verdict-reason {
+      color: #b8d0c2;
+      font-size: 0.85em;
+    }
+    .health-healthy {
+      border-left-color: #4caf7d;
+      background: rgba(76, 175, 125, 0.12);
+    }
+    .health-healthy strong {
+      color: #6fd39b;
+    }
+    .health-degraded {
+      border-left-color: #d9a441;
+      background: rgba(217, 164, 65, 0.12);
+    }
+    .health-degraded strong {
+      color: #e8bf6a;
+    }
+    .health-investigate {
+      border-left-color: #d1544f;
+      background: rgba(209, 84, 79, 0.14);
+    }
+    .health-investigate strong {
+      color: #ea7f7a;
+    }
+    .now-detail {
+      color: #b8d0c2;
+      font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #8aa695;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #8aa695;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .feed-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #e2f0e6;
+      font-size: 0.95em;
+    }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
+    .feed-cid {
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .feed-ts {
+      color: #8aa695;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-tree-link {
+      color: #2fd3c4;
+      font-size: 0.78em;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+    /* Issue #60: per-cycle LLM cost line + budget-pressure marker. */
+    .feed-cost {
+      font-size: 0.75em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-pressure {
+      color: #d19a66;
+      font-weight: 700;
+    }
+    /* Issue #72: full-history page — day grouping + outcome filter. */
+    .feed-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+      list-style: none;
+    }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px 0;
+    }
+    .filter-btn {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75em;
+      color: #9db4a6;
+      background: rgba(8, 15, 11, 0.8);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      color: #56d364;
+      border-color: #56d364;
+    }
+    .feed-row.filtered-out { display: none; }
+    .feed-overflow-row { display: none; }
+    .feed-files > summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .feed-files-list {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files-list li { padding: 1px 0; word-break: break-all; }
+
+    /* --- panel nav + copyable ids (issue #47) --- */
+    .panel-nav {
+      padding: 6px 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      border-bottom: 1px solid #182a20;
+    }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a:hover { text-decoration: underline; }
+    /* Issue #70: multi-page site nav -- current page highlighted. */
+    .site-nav a.nav-current {
+      color: #56d364;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    /* Issue #70: index teasers. */
+    .teaser-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88em;
+    }
+    .teaser-list a { color: #2fd3c4; font-family: 'Consolas', monospace; }
+    .copyable { cursor: pointer; }
+    .copyable.copied { color: #2fd3c4; }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    .hypo-details { margin-top: 8px; }
+    .futility-empty { font-size: 0.85em; color: #9db4a6; margin: 4px 0; }
+    .futility-omitted-note { font-size: 0.8em; color: #9db4a6; font-style: italic; }
+    .futility-never-evaluated .futility-attempts { color: #9db4a6; font-weight: normal; }
+    .hypo-summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .hypo-summary:hover { color: #56d364; }
+    .hypo-details ul.hypo-list { margin-top: 6px; }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hypo-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #e2f0e6;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #8aa695;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .agent-subcol { min-width: 0; max-width: 100%; width: 100%; overflow: hidden; }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    /* Issue #63: proposer visibility block. */
+    .proposer-block {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #182a20;
+    }
+    .proposer-block h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .proposer-decision { font-size: 0.85em; margin: 0 0 8px 0; color: #dcebe1; }
+    .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
+    .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
+    .proposer-table { max-width: 480px; }
+    /* Issue #73: lessons history page. */
+    .lessons-filter {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      color: #dcebe1;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 0 10px 0;
+      width: min(420px, 100%);
+    }
+    .lessons-list { list-style: none; margin: 0; padding: 0; }
+    .lesson-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+    }
+    .lesson-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 0.85em;
+    }
+    .lesson-meta { font-size: 0.8em; color: #8aa695; }
+    .lesson-id { font-family: 'Consolas', monospace; color: #56d364; }
+    .lesson-cycle { font-family: 'Consolas', monospace; color: #2fd3c4; margin-left: 8px; }
+    .lesson-title { color: #e2f0e6; font-weight: 600; margin: 4px 0 2px; }
+    .lesson-hypothesis { color: #9db4a6; font-size: 0.92em; }
+    .lesson-result summary { cursor: pointer; color: #8aa695; font-size: 0.85em; }
+    .lesson-result pre {
+      margin: 4px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85em;
+      color: #cfe3d7;
+    }
+    .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-duplicate-warning { color: #e06c75; border: 1px solid #b23a3a; padding: 1px 5px; margin-left: 6px; font-size: .72em; text-transform: uppercase; }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #cfe3d7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .charter-details > summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .charter-details > summary:hover { color: #56d364; }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(8, 15, 11, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    .agent-wide-content { max-width: 100%; overflow-x: auto; }
+    .agent-wide-content pre, .agent-wide-content .skills-table { min-width: max-content; }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #0f2018;
+      color: #9db4a6;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1e3a2d;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #182a20;
+    }
+    .skill-high-ratio {
+      background: rgba(86, 211, 100, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #56d364;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #7d9c8a;
+      font-style: italic;
+    }
+
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
+      width: 100%;
+      height: 100%;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
+      border-radius: 8px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
+    }
+    .dir-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
+    }
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
+    .dir-lever {
+      font-variant: small-caps;
+      letter-spacing: 0.5px;
+      color: #9db4a6;
+      font-size: 0.76em;
+      margin-bottom: 6px;
+    }
+    .ribbon {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #56d364;
+      color: #04240f;
+      font-size: 0.6em;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transform: rotate(4deg);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #cfe3d7;
+    }
+    .evo-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    /* Issue #53: thick bright edge along the current node's ancestry. */
+    .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
+    .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #71: DGM archive tree. */
+    .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
+    .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
+    .arch-node { cursor: pointer; }
+    .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
+    .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
+    .lineage-filter-note { color: #d19a66; font-size: .8rem; }
+    .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
+    .lineage-filter-note[hidden] { display: none; }
+    .lineage-day-group[hidden] { display: none; }
+    .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
+    /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
+       being scaled down until r=9 circles are 4 px and the labels unreadable. */
+    .lineage-day-svg { display: block; height: auto; overflow: visible; }
+    .lineage-graph-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+    .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
+    .arch-node.arch-integrated { fill: #2fd3c4; stroke: #dcebe1; }
+    .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
+    .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
+    .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
+    .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
+    .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
+    .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
+    .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
+    .lineage-legend-title { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-legend-item { display: inline-flex; align-items: center; gap: 5px; color: #b8d0c2; }
+    .lineage-legend-swatch { display: inline-block; vertical-align: middle; }
+    .lineage-legend-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend-edge-inferred { stroke-dasharray: 6 5; }
+    .lineage-legend-node { stroke-width: 2; }
+    .lineage-legend .arch-node { cursor: default; pointer-events: none; }
+    .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
+    .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
+    .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
+    .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
+    .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-zoom-level { min-width: 5ch; text-align: center; color: #8aa695; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    /* Issue #250: on lineage.html the graph owns the viewport. The document
+       does not scroll; .lineage-graph-scroll does, on both axes. Every rule
+       here is scoped to body.page-lineage so the other six pages keep the
+       ordinary document flow. */
+    body.page-lineage { height: 100vh; height: 100dvh; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+    body.page-lineage .empire-strip,
+    body.page-lineage .site-nav,
+    body.page-lineage .page-footer { flex: 0 0 auto; }
+    /* .dashboard-main carries `margin: 0 auto`, and an auto cross-axis margin
+       cancels the flex `stretch` that would otherwise hold it to the body's
+       width -- it would size to its widest content and take the graph with it.
+       An explicit width restores the constraint; max-width still centres it. */
+    body.page-lineage .dashboard-main { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; padding-bottom: 0; }
+    body.page-lineage #panel-lineage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden; }
+    body.page-lineage .lineage-unified-graph { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
+    body.page-lineage .lineage-day-controls,
+    body.page-lineage .lineage-coverage-note,
+    body.page-lineage .lineage-legend,
+    body.page-lineage .lineage-zoom-controls { flex: 0 0 auto; }
+    body.page-lineage .lineage-graph-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+    /* Issue #252: the graph is a canvas -- the wheel zooms toward the pointer
+       and a drag moves it. The cursor is the only thing that says so, and the
+       renderer keeps these two attributes in step with the hand tool, Space,
+       and whether a drag is actually under way. */
+    .lineage-graph-scroll[data-pan-mode="hand"] { cursor: grab; }
+    .lineage-graph-scroll[data-panning="true"] { cursor: grabbing; user-select: none; }
+    /* The details panel would otherwise consume the column the graph needs,
+       so on this page it floats over the graph with its own scrollbar. */
+    body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    @media (max-width: 720px) {
+      body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+    }
+    .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
+    .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .cycle-details-panel[hidden] { display: none; }
+    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
+    .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
+    .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
+    .cycle-details-body p { margin: 4px 0; }
+    .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
+    .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
+    .arch-star { fill: #56d364; color: #56d364; font-size: 14px; }
+    .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
+    /* Issue #93: day separator lines and date labels in the archive tree. */
+    .arch-day-sep { stroke: #2f5c46; stroke-width: 1; stroke-dasharray: 4 3; }
+    .arch-day-label { fill: #5a7a68; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #93: date sub-label in evolution node meta. */
+    .evo-date { color: #5a7a68; font-size: 8px; margin-left: 4px; }
+    .arch-note {
+      font-size: 0.78em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding: 8px 12px 0;
+    }
+    .evo-fallback { color: #dcebe1; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.64em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
+    .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
+    .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+    .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
+    .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+
+    .spark { margin-bottom: 2px; }
+    .spark-top, .spark-bottom {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+    .spark-bottom { align-items: flex-start; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
+    .bar-pos { background: #56d364; }
+    .bar-neg { background: #b23a3a; }
+    .bar-placeholder { height: 0; background: transparent; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
+    /* Issue #61: scorecard-defined KPI target badge. */
+    .kpi-target {
+      font-size: 0.62em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }    .mean-pos { color: #56d364; }
+    .mean-neg { color: #d97b7b; }
+
+    footer.page-footer {
+      text-align: center;
+      color: #6f9480;
+      font-size: 0.78em;
+      margin-top: 20px;
+      padding-top: 14px;
+    }
+    .footer-computed {
+      color: #7d8aa3;
+    }
+    /* Issue #1772: the daily digest -- the operator's undo affordance. */
+    .panel-digest .panel-subtitle {
+      color: #7d8aa3;
+      font-size: 0.85em;
+      margin: 0 0 12px;
+    }
+    .digest-day { margin-bottom: 18px; }
+    .digest-day-heading {
+      font-size: 0.95em;
+      color: #c9d6e3;
+      margin: 0 0 6px;
+    }
+    .digest-day-count { color: #7d8aa3; font-weight: normal; }
+    .digest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+    }
+    .digest-table th {
+      text-align: left;
+      color: #7d8aa3;
+      font-weight: normal;
+      border-bottom: 1px solid #2a3a4a;
+      padding: 4px 8px;
+    }
+    .digest-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #1c2733;
+      vertical-align: top;
+    }
+    .digest-sha { font-family: 'Consolas', monospace; }
+    .digest-paths {
+      font-family: 'Consolas', monospace;
+      color: #9fb3c8;
+      word-break: break-all;
+    }
+    .digest-tier, .digest-confirmed {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .digest-confirmed-yes { background: #1c3a2a; color: #56d364; }
+    .digest-confirmed-no { background: #3a2a1c; color: #d9a656; }
+    .digest-confirmed-untracked { background: #2a2a3a; color: #9d9db3; }
+
+
+/* Issue #227: Two-tier agent context visualization styling */
+.context-subject-group {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #30363d;
+}
+.context-subject-group:first-of-type { margin-top: 16px; }
+.context-subject-heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #c9d1d9;
+  letter-spacing: .01em;
+}
+.context-knowledge-group .tier2-deep-section,
+.context-assembly-group .context-detail-section { margin-top: 0; }
+.context-telemetry-box { margin: 10px 0; padding: 9px 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #c9d1d9; font-size: 12px; overflow-wrap: anywhere; }
+
+.context-panel {
+  background: var(--color-bg-subtle, #161b22);
+  border: 1px solid var(--color-border-default, #30363d);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.context-header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.context-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+.badge-danger { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+.badge-secondary { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.cycle-pill { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: monospace; }
+.context-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.context-kpi-card {
+  background: var(--color-canvas-default, #0d1117);
+  border: 1px solid var(--color-border-muted, #21262d);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
+.kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
+.stat-good { color: #3fb950; }
+.stat-warn { color: #f85149; }
+.context-meter-box {
+  margin: 16px 0;
+  background: #0d1117;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+.context-progress-bar {
+  height: 10px;
+  background: #21262d;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.prompt-fit-events {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.45);
+}
+.prompt-fit-events h3 { margin: 0 0 4px; }
+.prompt-fit-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.prompt-fit-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(110, 118, 129, 0.10);
+  font-size: 13px;
+}
+.prompt-fit-event-item strong { color: var(--text-muted, #8b949e); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.prompt-fit-event-item span { overflow-wrap: anywhere; }
+.prompt-fit-event-wide { grid-column: 1 / -1; }
+
+.context-dropped-alert {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dropped-pill { background: rgba(248, 81, 73, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
+.two-tier-canvas {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.tier-col {
+  flex: 1;
+  min-width: 320px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+}
+.tier-col-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.tier-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.tag-t1 { background: #1f6feb; color: #fff; }
+.tag-t2 { background: #8957e5; color: #fff; }
+.tier-col-header h3 { font-size: 15px; margin: 0; color: #c9d1d9; }
+.tier-col-header p { font-size: 12px; color: #8b949e; margin: 2px 0 0; }
+.tier1-blocks-list { display: flex; flex-direction: column; gap: 6px; }
+.t1-block-item {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.t1-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.t1-name { font-weight: 600; color: #58a6ff; }
+.t1-sz { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.t1-desc { font-size: 11px; color: #8b949e; margin-left: 6px; }
+.t1-empty { opacity: 0.6; }
+.t1-linked { flex-direction: column; align-items: stretch; gap: 4px; }
+.t1-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tier-link-badge {
+  display: inline-block;
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid rgba(137, 87, 229, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tier-link-badge:hover { background: rgba(137, 87, 229, 0.3); text-decoration: none; }
+.t1-sep-row { background: transparent; border: 1px dashed #30363d; color: #8b949e; font-size: 11px; font-style: italic; justify-content: space-between; }
+.t1-msg { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.2); }
+.tier-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.bridge-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  max-width: 180px;
+}
+.bridge-arrow { font-size: 24px; color: #a371f7; display: block; margin-bottom: 4px; }
+.bridge-card strong { display: block; font-size: 13px; color: #c9d1d9; }
+.bridge-card p { font-size: 11px; color: #8b949e; margin: 2px 0 6px; }
+.bridge-cost { font-size: 10px; color: #a371f7; font-weight: 500; }
+.tier2-targets-list { display: flex; flex-direction: column; gap: 10px; }
+.t2-target-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.t2-card-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.t2-size { font-family: monospace; color: #a371f7; font-size: 12px; }
+.t2-target-card p { font-size: 12px; color: #8b949e; margin: 0 0 8px; }
+.t2-explore-btn { font-size: 11px; color: #58a6ff; text-decoration: none; font-weight: 500; }
+.t2-explore-btn:hover { text-decoration: underline; }
+.context-detail-section { margin-top: 32px; }
+.context-detail-section h3 { font-size: 17px; margin: 0 0 4px; color: #c9d1d9; }
+.section-sub { font-size: 13px; color: #8b949e; margin: 0 0 16px; }
+.context-block-details {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.block-summary {
+  padding: 10px 12px;
+  background: #161b22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  user-select: none;
+}
+.block-summary:hover { background: #1f242c; }
+.block-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.block-title { color: #58a6ff; }
+.block-label { color: #8b949e; font-size: 12px; }
+.block-meta { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.block-body { padding: 12px; max-height: 400px; overflow-y: auto; background: #0d1117; }
+.block-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: monospace; color: #c9d1d9; }
+.context-block-empty {
+  background: #0d1117;
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reconciliation-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-header h4 { margin: 0; font-size: 14px; color: #c9d1d9; }
+.reconciliation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reconciliation-table th, .reconciliation-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+.reconciliation-table th { color: #8b949e; font-weight: 500; }
+.reconciliation-table .num { text-align: right; font-family: monospace; }
+.reconciliation-table .sep-row { background: rgba(137, 87, 229, 0.05); color: #a371f7; }
+.reconciliation-table .muted-row { opacity: 0.6; }
+.reconciliation-table .total-row { border-top: 2px solid #30363d; font-weight: bold; background: #161b22; }
+.rec-note { font-size: 11px; color: #8b949e; margin: 8px 0 0; }
+.rec-unavailable { border-color: rgba(210, 153, 34, 0.4); background: rgba(210, 153, 34, 0.05); }
+.tier2-deep-section { margin-top: 32px; border-top: 1px solid #30363d; padding-top: 24px; }
+.t2-group { margin-bottom: 24px; }
+.t2-group-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.t2-group-header h4 { margin: 0; font-size: 15px; color: #c9d1d9; }
+.t2-group-note { font-size: 12px; color: #8b949e; }
+.skills-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skill-asset-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.skill-card-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card-name { color: #58a6ff; font-family: monospace; }
+.skill-card-size { color: #8b949e; font-size: 11px; }
+.skill-card-desc { font-size: 12px; color: #8b949e; margin: 0 0 10px; line-height: 1.4; flex-grow: 1; }
+.skill-card-details summary { font-size: 11px; color: #a371f7; cursor: pointer; user-select: none; }
+.skill-card-details pre { margin: 8px 0 0; max-height: 280px; overflow-y: auto; background: #161b22; padding: 8px; border-radius: 4px; font-size: 11px; }
+.missing-artifact-callout {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #f85149;
+}
+.callout-icon { font-size: 18px; }
+.missing-artifact-callout p { margin: 2px 0 0; font-size: 12px; color: #c9d1d9; }
+.lessons-pills, .memory-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lesson-pill, .memory-pill {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b949e;
+  font-family: monospace;
+}
+.pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
+
+/* #301: recorded-order Tier 1 blocks, owner badges, flags, rule owners & user-message sections */
+.t1-owner {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #30363d;
+  color: #8b949e;
+}
+.t1-owner-release { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+.t1-owner-instance { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }
+.t1-owner-generated { color: #a371f7; border-color: rgba(163, 113, 247, 0.4); }
+.t1-owner-unmapped { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
+.badge-flag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.badge-flag-missing { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+.badge-flag-truncated { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
+.user-message-sections, .rule-owners-panel { margin-top: 18px; }
+.user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
+
+/* ozand/eeebot#1755: truncation/drop streak + window-pressure indicators */
+.context-indicator-box {
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.context-indicator-box .indicator-note { color: #8b949e; font-size: 12px; margin-left: 6px; }
+.context-indicator-box .indicator-note code { color: inherit; }
+.context-indicator-box .indicator-pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.indicator-no-data { background: rgba(139, 148, 158, 0.08); border: 1px solid rgba(139, 148, 158, 0.3); }
+.indicator-healthy { background: rgba(46, 160, 67, 0.08); border: 1px solid rgba(46, 160, 67, 0.3); }
+.indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
+.indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
+</style>
+</head>
+<body>
+
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">160</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">53.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 03:58:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">12 events · 9 tasks · 3.0%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">131 events · 10 tasks · 32.7%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">5.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
+      <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790385365.214" data-render-age-seconds="32">data: 31s old &middot; generated 01:16 UTC</span></div>
+    </header>
+    
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<main class="dashboard-main">
+
+    <section class="panel panel-agent" id="panel-agent">
+      <h2 class="panel-title">Agent Configuration & Fitness</h2>
+      <section class="panel context-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Agent Context &amp; Working Memory</h2>
+      <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
+    </div>
+    <div class="context-header-badges">
+      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+13,657 chars spare)</span>
+      <span class="context-badge badge-success">Prompt fit: full</span>
+      <span class="cycle-pill">cycle-0bc6ca14e901</span>
+    </div>
+  </div>
+  <div class="context-kpis">
+    <div class="context-kpi-card">
+      <span class="kpi-label">Capped Prompt Load</span>
+      <span class="kpi-value">21,343 <span class="kpi-unit">capped chars</span></span>
+      <span class="kpi-sub">~5,335 est. tokens under builder cap</span>
+      <span class="kpi-sub"><strong>Actual System Message:</strong> 21,343 chars received by model</span>
+    </div>
+    <div class="context-kpi-card">
+      <span class="kpi-label">Context Budget Cap</span>
+      <span class="kpi-value">35,000 <span class="kpi-unit">chars</span></span>
+      <span class="kpi-sub">~8,750 est. tokens limit</span>
+    </div>
+    <div class="context-kpi-card">
+      <span class="kpi-label">Remaining Headroom</span>
+      <span class="kpi-value"><span class="stat-good">+13,657 chars (39.0%)</span></span>
+      <span class="kpi-sub">margin before overflow trim</span>
+    </div>
+    <div class="context-kpi-card">
+      <span class="kpi-label">Tier 2 Reachable Knowledge</span>
+      <span class="kpi-value">~1134.7 <span class="kpi-unit">KB</span></span>
+      <span class="kpi-sub">220 files reachable via read_file</span>
+    </div>
+  </div>
+  <div class="context-subject-group context-overview-group">
+    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
+  <div class="context-meter-box">
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>60%</strong> (21,343 / 35,000 chars)</span><span>2026-09-26 00:37:16.305276 MSK</span></div>
+    <div class="context-progress-bar">
+      <div class="context-progress-fill" style="width:60%;background:var(--color-success, #2ea043);"></div>
+    </div>
+  </div>
+  <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 5 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 5/5 consecutive cycles: AGENTS.md</span></div></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.0%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 1,141 row(s) with a known context_window &bull; window unknown: 52 rows (excluded, not counted as 0%) of 1,193 total in the last 24h.</span></div>
+  <div class="prompt-fit-events" id="prompt-fit-events">
+    <h3>Prompt Fit Event Telemetry</h3>
+    <p class="section-sub">Published runtime summary · latest prompt row: 2026-09-26T00:37:16.305276Z · source: published</p>
+    <div class="prompt-fit-event-grid">
+      <div class="prompt-fit-event-item"><strong>Rung</strong><span>full</span></div>
+      <div class="prompt-fit-event-item"><strong>Dropped</strong><span>0 sections / 0 chars</span></div>
+      <div class="prompt-fit-event-item"><strong>Trimmed</strong><span>0 sections / 0 chars</span></div>
+      <div class="prompt-fit-event-item"><strong>Recent rows with drops</strong><span>0 / 25</span></div>
+      <div class="prompt-fit-event-item"><strong>Recent rows with trims</strong><span>0 / 25</span></div>
+      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Event window</strong><span>25/25 rows · newest_system_prompt_rows · 90d · 2026-09-25T06:12:20.260842Z → 2026-09-26T00:37:16.305276Z</span></div>
+      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
+      <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
+    </div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> 90,000 tokens (98,000 − 8,000) · occupancy: 45,058 prompt tokens (executor) · present</div>
+  </div>
+  <div class="context-subject-group context-assembly-group">
+    <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
+  <div class="two-tier-canvas">
+    <div class="tier-col tier1-col">
+      <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>
+      <div class="tier1-blocks-list">
+        <div class="t1-block-item "><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,244c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">2</span><span class="t1-name">soul</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,590c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">3</span><span class="t1-name">goals</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">3,849c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">4</span><span class="t1-name">user</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">2,585c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">5</span><span class="t1-name">operating</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">6,103c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">6</span><span class="t1-name">agents</span><span class="t1-owner t1-owner-instance">instance</span><span class="t1-sz">3,992c</span></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">7</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">0c (empty under loop profile)</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 36 Skills in Tier 2 (222.3 KB)</a></div>
+        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">8</span><span class="t1-name">memory</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">532c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 62 files in Tier 2</a></div>
+        <div class="t1-block-item "><span class="t1-seq">9</span><span class="t1-name">runtime</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">390c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">10</span><span class="t1-name">scorecard</span><span class="t1-owner t1-owner-unmapped">unmapped</span><span class="t1-sz">261c</span></div>
+        <div class="t1-block-item "><span class="t1-seq">11</span><span class="t1-name">position</span><span class="t1-owner t1-owner-unmapped">unmapped</span><span class="t1-sz">734c</span></div>
+        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 9 &times; "
+
+---
+
+" Separators</span><span class="t1-sz">63c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">90,000 tokens available (98,000 − 8,000) · occupancy 45,058 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">3,929c</span></div>
+      </div>
+    </div>
+    <div class="tier-bridge">
+      <div class="bridge-card">
+        <span class="bridge-arrow">&#10132;</span>
+        <strong>On-Demand Access</strong>
+        <p>read_file · search_memory · exec</p>
+        <span class="bridge-cost">Tier 1 index costs: catalogue 0c · memory 532c · exec path unavailable</span>
+      </div>
+    </div>
+    <div class="tier-col tier2-col">
+      <div class="tier-col-header"><span class="tier-tag tag-t2">TIER 2</span><div><h3>Reachable on Disk (Zero Base Context)</h3><p>Full instructions, lessons, and memory records.</p></div></div>
+      <div class="tier2-targets-list">
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Skills Store: 36 skills</strong><span class="t2-size">222.3 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span></p><a href="#tier2-skills-section" class="t2-explore-btn">Inspect Skills &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Lessons Corpus: 122 lessons</strong><span class="t2-size">473.4 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-lessons-section" class="t2-explore-btn">Inspect Lessons &darr;</a></div>
+        <div class="t2-target-card"><div class="t2-card-top"><strong>Memory Store: 62 files</strong><span class="t2-size">439.0 KB</span></div><p>Corpus status: <span class="status-badge status-present">present</span>; index: <span class="status-badge status-present">present</span></p><a href="#tier2-memory-section" class="t2-explore-btn">Inspect Memory &darr;</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="context-detail-section">
+    <h3>Tier 1: Assembled Context Blocks (Recorded Order) <span class="status-badge status-present">format: post-ADR-022 ontology</span></h3>
+    <p class="section-sub">Blocks follow the ledger row's own recorded `sections` order for this cycle -- never a hard-coded assembly order. Click to view exact text.</p>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">identity</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code> &bull; cap 1,500c</span><span class="block-meta">1,244 chars &bull; ~311 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (1,244 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#2</span><strong class="block-title">soul</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code> &bull; cap 1,800c</span><span class="block-meta">1,590 chars &bull; ~397 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (1,590 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#3</span><strong class="block-title">goals</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code> &bull; cap 3,200c</span><span class="block-meta">3,849 chars &bull; ~962 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (3,849 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#4</span><strong class="block-title">user</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code> &bull; cap 4,000c</span><span class="block-meta">2,585 chars &bull; ~646 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (2,585 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">operating</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code> &bull; cap 5,000c</span><span class="block-meta">6,103 chars &bull; ~1,525 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (6,103 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">agents</strong><span class="block-label"><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code> &bull; cap 4,000c</span><span class="block-meta">3,992 chars &bull; ~998 tokens <span class="badge-flag badge-flag-truncated">TRUNCATED</span></span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (3,992 chars)</p></div></details>
+<div class="context-block-empty"><span class="block-seq">#7</span><strong>skills_catalogue</strong> <span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code> &mdash; 0 chars (empty under loop profile) &mdash;</div>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#8</span><strong class="block-title">memory</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code> &bull; cap dynamic</span><span class="block-meta">532 chars &bull; ~133 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (532 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#9</span><strong class="block-title">runtime</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code> &bull; cap dynamic</span><span class="block-meta">390 chars &bull; ~97 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (390 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">scorecard</strong><span class="block-label"><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code> &bull; cap dynamic</span><span class="block-meta">261 chars &bull; ~65 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (261 chars)</p></div></details>
+<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">position</strong><span class="block-label"><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code> &bull; cap dynamic</span><span class="block-meta">734 chars &bull; ~183 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (734 chars)</p></div></details>
+    <div class="reconciliation-box">
+      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
+      <table class="reconciliation-table">
+        <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>
+        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">1,500c</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">1,800c</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,849</td><td class="num">3,200c</td><td>&mdash;</td><td>~962 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">2,585</td><td class="num">4,000c</td><td>&mdash;</td><td>~646 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">6,103</td><td class="num">5,000c</td><td>&mdash;</td><td>~1,525 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">3,992</td><td class="num">4,000c</td><td><span class="badge-flag badge-flag-truncated">TRUNCATED</span></td><td>~998 tokens</td></tr><tr class="muted-row"><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">0</td><td class="num">dynamic</td><td>&mdash;</td><td>~0 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">dynamic</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">dynamic</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class=""><td><code>scorecard</code></td><td><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code></td><td class="num">261</td><td class="num">dynamic</td><td>&mdash;</td><td>~65 tokens</td></tr><tr class=""><td><code>position</code></td><td><span class="t1-owner t1-owner-unmapped">unmapped</span> <code>unmapped</code></td><td class="num">734</td><td class="num">dynamic</td><td>&mdash;</td><td>~183 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>21,280</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>63</strong></td><td colspan="2"></td><td>9 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>21,343</strong></td><td colspan="2"></td><td><strong>Recorded chars: 21,343</strong> (actual system message received by model)</td></tr></tbody>
+      </table>
+      <p class="rec-note">Formula: &sum;(recorded sections: 21,280c) + 9 separators &times; 7c (63c) = 21,343 chars, compared against actual system message received by model (21,343c).</p>
+      <p class="rec-note">Structural prompt parse: <code>identity</code>: recorded 1,244 / parsed 1,244 chars (exact) <code>soul</code>: recorded 1,590 / parsed 1,590 chars (exact) <code>goals</code>: recorded 3,849 / parsed 3,849 chars (exact) <code>user</code>: recorded 2,585 / parsed 2,585 chars (exact) <code>operating</code>: recorded 6,103 / parsed 6,103 chars (exact) <code>agents</code>: recorded 3,992 / parsed 3,992 chars (exact) <code>memory</code>: recorded 532 / parsed 532 chars (exact) <code>runtime</code>: recorded 390 / parsed 390 chars (exact) <code>scorecard</code>: recorded 261 / parsed 261 chars (exact) <code>position</code>: recorded 734 / parsed 734 chars (exact)</p>
+    </div>
+<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#12</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">3,929 chars &bull; ~982 tokens</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (3,929 chars)</p></div></details>
+    <div class="user-message-sections">
+      <h4>User Message Sections (latest recorded task text)</h4>
+      <table class="reconciliation-table">
+        <thead><tr><th>## Heading</th><th class="num">Chars</th></tr></thead>
+        <tbody><tr><td>System mission (read before acting)</td><td class="num">185</td></tr><tr><td>Recent activity (do not repeat)</td><td class="num">944</td></tr><tr><td>Proven approach for this task (from lessons/lessons.yaml)</td><td class="num">549</td></tr><tr><td>Recent reflections (how past cycles worked — steering hints)</td><td class="num">783</td></tr><tr><td>Previous attempts for this task</td><td class="num">535</td></tr><tr><td>Concrete task to implement</td><td class="num">352</td></tr><tr><td>Expected outcome (frozen claim from the proposal — informational)</td><td class="num">291</td></tr></tbody>
+      </table>
+    </div>
+    <div class="rule-owners-panel">
+      <h4>Rule Owners <span class="status-badge status-missing">static (until harness publishes rule_owners)</span></h4>
+      <table class="reconciliation-table">
+        <thead><tr><th>Rule (fingerprint test)</th><th>Owning block</th><th>Owner class</th></tr></thead>
+        <tbody><tr><td><code>skip</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>surface</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>branch</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>runner</code></td><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span></td></tr><tr><td><code>identity</code></td><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr><tr><td><code>budget</code></td><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr><tr><td><code>final_json</code></td><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+  <div class="context-subject-group context-knowledge-group">
+    <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
+  <div class="tier2-deep-section">
+    <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
+    <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1134.7 KB</strong> across <strong>220</strong> files.</p>
+<div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget unavailablec · retained unavailable/unavailable · unavailable · omitted: none</div>
+<div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
+<div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>7</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>classify-python-module</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>14</td><td>12</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>6</td><td>1</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>locate-failure-logs</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>8</td><td>8</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>raw-json-final-turn</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>59</td><td>52</td><td>working</td></tr><tr><td>search-subagent-archive</td><td>unavailable</td><td>yes</td><td>0</td><td>0</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>no</td><td>4</td><td>4</td><td>not on disk</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>targeted-file-slice</td><td>unavailable</td><td>yes</td><td>4</td><td>1</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>verify-lessons-integrity</td><td>unavailable</td><td>yes</td><td>8</td><td>5</td><td>working</td></tr></tbody></table>
+    <div class="t2-group" id="tier2-skills-section">
+      <div class="t2-group-header"><h4>Skills Store (36 skills &bull; ~222.3 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (0 chars)</span></div>
+      <div class="skills-card-grid">
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">batch-grep</span><span class="skill-card-size">10,087 B</span></div><details class="skill-card-details"><summary>View SKILL.md (10,087 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (10,061 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">bounded-reading-search-prevent-context-bloat</span><span class="skill-card-size">1,106 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,106 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,106 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">chained-python-execution</span><span class="skill-card-size">7,635 B</span></div><details class="skill-card-details"><summary>View SKILL.md (7,635 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (7,434 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">check-target-completion</span><span class="skill-card-size">5,633 B</span></div><details class="skill-card-details"><summary>View SKILL.md (5,633 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (5,625 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">classify-python-module</span><span class="skill-card-size">5,690 B</span></div><details class="skill-card-details"><summary>View SKILL.md (5,690 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (5,666 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">command-output-bounding-prevent-token-exhaustion</span><span class="skill-card-size">1,803 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,803 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,801 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">composite-context-inspection</span><span class="skill-card-size">4,326 B</span></div><details class="skill-card-details"><summary>View SKILL.md (4,326 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (4,302 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">demand-and-reflection-lookup-paths</span><span class="skill-card-size">1,372 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,372 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,366 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">early-implementation-transition</span><span class="skill-card-size">4,345 B</span></div><details class="skill-card-details"><summary>View SKILL.md (4,345 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (4,335 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">early-skip-evaluation</span><span class="skill-card-size">758 B</span></div><details class="skill-card-details"><summary>View SKILL.md (758 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (756 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">early-turn-direct-file-inspection-and-editing-turns-1-4</span><span class="skill-card-size">2,148 B</span></div><details class="skill-card-details"><summary>View SKILL.md (2,148 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (2,136 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">early-turn-staging</span><span class="skill-card-size">8,723 B</span></div><details class="skill-card-details"><summary>View SKILL.md (8,723 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (8,530 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">early-validation-and-commit-budgeting</span><span class="skill-card-size">14,062 B</span></div><details class="skill-card-details"><summary>View SKILL.md (14,062 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (14,036 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">eeebot-agent-work-review</span><span class="skill-card-size">11,270 B</span></div><details class="skill-card-details"><summary>View SKILL.md (11,270 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (10,589 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">fast-path-redundancy-skip</span><span class="skill-card-size">6,440 B</span></div><details class="skill-card-details"><summary>View SKILL.md (6,440 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (6,287 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">handle-loop-breaker</span><span class="skill-card-size">10,603 B</span></div><details class="skill-card-details"><summary>View SKILL.md (10,603 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (10,554 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">incremental-script-refactoring-under-step-limits</span><span class="skill-card-size">14,216 B</span></div><details class="skill-card-details"><summary>View SKILL.md (14,216 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (13,863 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">inspect-verify-and-proof</span><span class="skill-card-size">17,168 B</span></div><details class="skill-card-details"><summary>View SKILL.md (17,168 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (15,000 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">jsonl-stream-filter</span><span class="skill-card-size">1,544 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,544 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,544 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">locate-failure-logs</span><span class="skill-card-size">3,890 B</span></div><details class="skill-card-details"><summary>View SKILL.md (3,890 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (3,874 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">memory-lookup</span><span class="skill-card-size">4,747 B</span></div><details class="skill-card-details"><summary>View SKILL.md (4,747 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (4,614 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">multi-script-refactor</span><span class="skill-card-size">3,308 B</span></div><details class="skill-card-details"><summary>View SKILL.md (3,308 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (3,215 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">pair-agents-instructions-with-tests</span><span class="skill-card-size">4,628 B</span></div><details class="skill-card-details"><summary>View SKILL.md (4,628 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (4,500 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">posix-background-execution-in-sh</span><span class="skill-card-size">4,593 B</span></div><details class="skill-card-details"><summary>View SKILL.md (4,593 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (4,454 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">pure-documentation-changes-test-bypass-workflow</span><span class="skill-card-size">1,338 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,338 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,332 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">raw-json-final-turn</span><span class="skill-card-size">10,342 B</span></div><details class="skill-card-details"><summary>View SKILL.md (10,342 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (10,308 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">recursive-unittest-testsuite-traversal</span><span class="skill-card-size">9,273 B</span></div><details class="skill-card-details"><summary>View SKILL.md (9,273 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (9,032 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">run-tests</span><span class="skill-card-size">8,463 B</span></div><details class="skill-card-details"><summary>View SKILL.md (8,463 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (8,441 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">search-subagent-archive</span><span class="skill-card-size">5,992 B</span></div><details class="skill-card-details"><summary>View SKILL.md (5,992 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (5,982 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">secret-verification-scoping</span><span class="skill-card-size">1,745 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,745 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,743 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">sync-agents-sections-in-structural-tests</span><span class="skill-card-size">13,443 B</span></div><details class="skill-card-details"><summary>View SKILL.md (13,443 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (13,401 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">target-git-log-history-inspection-single-file-fixes</span><span class="skill-card-size">5,122 B</span></div><details class="skill-card-details"><summary>View SKILL.md (5,122 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (5,110 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">targeted-file-slice</span><span class="skill-card-size">11,988 B</span></div><details class="skill-card-details"><summary>View SKILL.md (11,988 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (11,954 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">targeted-test-validation-legacy-glob-suites</span><span class="skill-card-size">1,309 B</span></div><details class="skill-card-details"><summary>View SKILL.md (1,309 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (1,307 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">turn-budget-checkpoints-80-iteration-cycles</span><span class="skill-card-size">947 B</span></div><details class="skill-card-details"><summary>View SKILL.md (947 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (939 chars)</p></details></div>
+        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">verify-lessons-integrity</span><span class="skill-card-size">7,622 B</span></div><details class="skill-card-details"><summary>View SKILL.md (7,622 bytes)</summary><p class="unavailable-note lan-only-note">text on the LAN site only (7,622 chars)</p></details></div>
+      </div>
+    </div>
+    <div class="t2-group" id="tier2-lessons-section">
+      <div class="t2-group-header"><h4>Lessons Corpus</h4><span class="status-badge status-present">corpus: PRESENT</span> <span class="status-badge status-present">lessons/index.md: PRESENT</span></div>
+      <div class="lessons-compact-list"><p><strong>Corpus Files:</strong> 122 lesson records on disk (~473.4 KB total):</p><div class="lessons-pills">
+<span class="lesson-pill">lessons/README.md (1,798 B)</span> 
+<span class="lesson-pill">lessons/adjacent_test_suite_verification.md (5,559 B)</span> 
+<span class="lesson-pill">lessons/already_implemented_skip_emission.md (3,766 B)</span> 
+<span class="lesson-pill">lessons/avoid_bundled_test_executions.md (3,072 B)</span> 
+<span class="lesson-pill">lessons/avoid_state_report_inspection.md (5,331 B)</span> 
+<span class="lesson-pill">lessons/avoiding_repeat_failures.md (6,767 B)</span> 
+<span class="lesson-pill">lessons/avoiding_repeated_failures.md (2,093 B)</span> 
+<span class="lesson-pill">lessons/baseline_validator_checks.md (4,573 B)</span> 
+<span class="lesson-pill">lessons/batch-consecutive-file-edits.md (4,463 B)</span> 
+<span class="lesson-pill">lessons/blocked_file_remediation.md (3,511 B)</span> 
+<span class="lesson-pill">lessons/bounded_initial_reconnaissance.md (2,979 B)</span> 
+<span class="lesson-pill">lessons/bounded_inspection_turns.md (4,142 B)</span> 
+<span class="lesson-pill">lessons/bounded_script_reads.md (4,341 B)</span> 
+<span class="lesson-pill">lessons/canonical_cli_assertions.md (4,818 B)</span> 
+<span class="lesson-pill">lessons/chained_git_commit_workflow.md (2,572 B)</span> 
+<span class="lesson-pill">lessons/check_existing_tests_before_proposals.md (3,060 B)</span> 
+<span class="lesson-pill">lessons/chunked_file_reading.md (3,965 B)</span> 
+<span class="lesson-pill">lessons/cli_deprecation_json_stdout.md (4,902 B)</span> 
+<span class="lesson-pill">lessons/cli_subprocess_exit_codes.md (2,803 B)</span> 
+<span class="lesson-pill">lessons/cli_verification_state_isolation.md (5,564 B)</span> 
+<span class="lesson-pill">lessons/cohesive_import_edits.md (4,443 B)</span> 
+<span class="lesson-pill">lessons/compact_script_enhancement.md (4,666 B)</span> 
+<span class="lesson-pill">lessons/companion_cycle_test_verification.md (3,726 B)</span> 
+<span class="lesson-pill">lessons/companion_test_direct_lookup.md (5,540 B)</span> 
+<span class="lesson-pill">lessons/compound_verification_commands.md (6,359 B)</span> 
+<span class="lesson-pill">lessons/concise_late_turn_tool_outputs.md (5,029 B)</span> 
+<span class="lesson-pill">lessons/coupling_agents_instructions_with_structural_tests.md (5,560 B)</span> 
+<span class="lesson-pill">lessons/dual_ledger_testing_pattern.md (6,623 B)</span> 
+<span class="lesson-pill">lessons/dual_sink_sampler_pattern.md (6,130 B)</span> 
+<span class="lesson-pill">lessons/early_edit_turn_discipline.md (8,653 B)</span> 
+<span class="lesson-pill pill-more">+92 more lessons...</span>
+      </div></div>
+    </div>
+    <div class="t2-group" id="tier2-memory-section">
+      <div class="t2-group-header"><h4>Working Memory Store</h4><span class="status-badge status-present">corpus: PRESENT</span> <span class="status-badge status-present">memory/index.md: PRESENT</span></div>
+      <div class="memory-compact-list"><p>Indexed via Tier 1 <code>memory</code> block. <strong>62 files</strong> on disk (~439.0 KB total):</p><div class="memory-pills">
+<span class="memory-pill">memory/HISTORY.md (53 B)</span> 
+<span class="memory-pill">memory/MEMORY.md (196 B)</span> 
+<span class="memory-pill">memory/MEMORY_ARCHIVE.md (5,150 B)</span> 
+<span class="memory-pill">memory/archive/MEMORY-legacy.md (94,613 B)</span> 
+<span class="memory-pill">memory/archive/done-stubs.md (28,337 B)</span> 
+<span class="memory-pill">memory/archive/legacy-complete.md (95,660 B)</span> 
+<span class="memory-pill">memory/auxiliary_tool_call_discipline.md (2,388 B)</span> 
+<span class="memory-pill">memory/blocked_task_early_exit.md (5,865 B)</span> 
+<span class="memory-pill">memory/compound_task_scoping.md (5,066 B)</span> 
+<span class="memory-pill">memory/confirmation_status.json (6,454 B)</span> 
+<span class="memory-pill">memory/direct_edit_discipline.md (4,842 B)</span> 
+<span class="memory-pill">memory/facts/agents-instruction-assertions.md (321 B)</span> 
+<span class="memory-pill">memory/facts/base-test-failure-isolation.md (429 B)</span> 
+<span class="memory-pill">memory/facts/bounded-text-inspection.md (427 B)</span> 
+<span class="memory-pill">memory/facts/cli-positional-optional-for-standalone-flags.md (359 B)</span> 
+<span class="memory-pill">memory/facts/cli-stderr-json-separation.md (304 B)</span> 
+<span class="memory-pill">memory/facts/cli-test-suite-timeout.md (423 B)</span> 
+<span class="memory-pill">memory/facts/daemon-runtime-paths.md (433 B)</span> 
+<span class="memory-pill">memory/facts/decay_archival_policy.md (2,094 B)</span> 
+<span class="memory-pill">memory/facts/do-not-touch.md (1,987 B)</span> 
+<span class="memory-pill">memory/facts/doc-code-block-placeholder-normalization.md (374 B)</span> 
+<span class="memory-pill">memory/facts/doc-snippet-syntax-line-offset.md (333 B)</span> 
+<span class="memory-pill">memory/facts/error-card-gitignore-handling.md (417 B)</span> 
+<span class="memory-pill">memory/facts/feed-cache-preflight-gate.md (421 B)</span> 
+<span class="memory-pill">memory/facts/git-database-permissions.md (89 B)</span> 
+<span class="memory-pill">memory/facts/host-metrics-heartbeat-timestamp.md (313 B)</span> 
+<span class="memory-pill">memory/facts/identity.md (363 B)</span> 
+<span class="memory-pill">memory/facts/key-paths.md (475 B)</span> 
+<span class="memory-pill">memory/facts/markdown-catalog-link-integrity.md (450 B)</span> 
+<span class="memory-pill">memory/facts/markdown-structural-testing.md (411 B)</span> 
+<span class="memory-pill pill-more">+32 more files...</span>
+      </div></div>
+    </div>
+  </div>
+  </div>
+</section>
+      
+      <div class="agent-grid">
+        <div class="agent-subcol">
+          <h3>AGENTS.md Charter</h3>
+          <details class="charter-details agents-md-box"><summary>AGENTS.md charter (149 lines)</summary><div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only (7,644 chars)</p></div></details>
+        </div>
+        <div class="agent-subcol">
+          <h3>Goals Charter</h3>
+          <p class="unavailable-note">goals charter unavailable</p>
+        </div>
+        <div class="agent-subcol">
+          <h3>Skill Fitness (Reads & Usage)</h3>
+          
+                    <div class="agent-wide-content"><table class="skills-table">
+                  <thead>
+                    <tr><th>Skill</th><th>Reads (skill_fitness/reads.json)</th><th>Confirmed Usage (skill_fitness/reads.json; skill_fitness/evals.jsonl when present)</th></tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">run-tests</td>
+                      <td class="skill-reads">59</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">52 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">fast-path-redundancy-skip</td>
+                      <td class="skill-reads">14</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">12 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">pair-agents-instructions-with-tests</td>
+                      <td class="skill-reads">8</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">8 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">verify-lessons-integrity</td>
+                      <td class="skill-reads">8</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">5 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">batch-grep</td>
+                      <td class="skill-reads">7</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">5 confirmed</span> <span class="skill-eval-delta">eval delta: +1</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">inspect-verify-and-proof</td>
+                      <td class="skill-reads">6</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">eeebot-agent-work-review</td>
+                      <td class="skill-reads">5</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">memory-lookup</td>
+                      <td class="skill-reads">5</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span> <span class="skill-eval-delta">eval delta: +5</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">early-turn-staging</td>
+                      <td class="skill-reads">5</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="skill-high-ratio">
+                      <td class="skill-name">handle-loop-breaker</td>
+                      <td class="skill-reads">5</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">multi-script-refactor</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">chained-python-execution</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">early-skip-evaluation</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">standard-test-runner-unittest-over-pytest</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">early-implementation-transition</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">target-git-log-history-inspection-single-file-fixes</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">bounded-reading-search-prevent-context-bloat</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">demand-and-reflection-lookup-paths</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">4 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">check-target-completion</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">targeted-file-slice</td>
+                      <td class="skill-reads">4</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">pure-documentation-changes-test-bypass-workflow</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">early-validation-and-commit-budgeting</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">secret-verification-scoping</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">jsonl-stream-filter</td>
+                      <td class="skill-reads">3</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">3 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">targeted-test-discovery</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">incremental-script-refactoring-under-step-limits</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">early-turn-direct-file-inspection-and-editing-turns-1-4</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">turn-budget-checkpoints-80-iteration-cycles</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">command-output-bounding-prevent-token-exhaustion</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">posix-background-execution-in-sh</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">recursive-unittest-testsuite-traversal</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">targeted-test-validation-legacy-glob-suites</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">2 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">sync-agents-sections-in-structural-tests</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">immediate-skip-protocol</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">raw-json-final-turn</td>
+                      <td class="skill-reads">2</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">composite-context-inspection</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">0 confirmed</span></td>
+                    </tr>
+                    
+                    <tr class="">
+                      <td class="skill-name">locate-failure-logs</td>
+                      <td class="skill-reads">1</td>
+                      <td class="skill-usage"><span class="skill-usage-confirmed">1 confirmed</span></td>
+                    </tr>
+                    
+                  </tbody>
+                </table></div>
+                
+        </div>
+      </div>
+      <div class="proposer-block">
+        <h3>Proposer</h3>
+        <p class="proposer-decision">last proposal: <strong>Add CLI entrypoint and file inspection support to scripts/dedup_digest.py</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 360 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-09-26</td><td class="skill-reads">2</td><td>15.46K</td><td>13s</td></tr><tr><td>2026-09-25</td><td class="skill-reads">27</td><td>232.3K</td><td>16s</td></tr><tr><td>2026-09-24</td><td class="skill-reads">44</td><td>470.7K</td><td>23s</td></tr><tr><td>2026-09-23</td><td class="skill-reads">32</td><td>320.1K</td><td>33s</td></tr><tr><td>2026-09-22</td><td class="skill-reads">43</td><td>459.2K</td><td>19s</td></tr><tr><td>2026-09-21</td><td class="skill-reads">106</td><td>1.07M</td><td>16s</td></tr><tr><td>2026-09-20</td><td class="skill-reads">106</td><td>1.15M</td><td>17s</td></tr></tbody></table>
+      </div>
+    </section>
+    
+</main>
+<footer class="page-footer">generator unknown · generated 2026-09-26 01:16:37 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 03:58:20 MSK</span></footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {
+  el.addEventListener('click', function () {
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      el.classList.add('copied');
+      setTimeout(function () { el.classList.remove('copied'); }, 800);
+    });
+  });
+});
+</script>
+<script>
+(function () {
+  var el = document.querySelector('.freshness[data-data-epoch]');
+  if (!el) return;
+  var epoch = parseFloat(el.getAttribute('data-data-epoch'));
+  var renderAge = parseFloat(el.getAttribute('data-render-age-seconds'));
+  function updateFreshness() {
+    var a = Math.max(0, Date.now() / 1000 - epoch);
+    if (!Number.isFinite(a)) a = renderAge;
+    var level = a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale';
+    el.classList.remove('freshness-fresh', 'freshness-stale', 'freshness-very-stale');
+    el.classList.add('freshness-' + level);
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+    el.setAttribute('data-render-age-seconds', String(a));
+  }
+  updateFreshness();
+  setInterval(updateFreshness, 30000);
+})();
+</script>
+</body>
+</html>

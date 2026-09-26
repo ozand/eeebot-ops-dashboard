@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
+<title>eeebot / lessons</title>
+<style>
+    :root {
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      padding: 0 0 32px 0;
+    }
+    h1, h2, h3, .panel-title, .empire-title {
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+    }
+    a { color: #56d364; }
+
+    /* --- top strip: slim, one line --- */
+    .empire-strip {
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
+      padding: 8px 20px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      align-items: center;
+      gap: 18px;
+    }
+    .empire-title {
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
+      white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
+    }
+    .empire-stats {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 18px;
+    }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+
+    /* --- freshness badge (issue #48) --- */
+    .empire-fresh { margin-left: auto; white-space: nowrap; }
+    .freshness {
+      font-size: 0.78em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #3d6b52;
+      font-variant-numeric: tabular-nums;
+    }
+    .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
+    .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
+    .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
+    .freshness-unknown { color: #9db4a6; }
+
+    .stat-label {
+      text-transform: uppercase;
+      font-size: 0.64em;
+      letter-spacing: 1px;
+      color: #9db4a6;
+    }
+    .stat-value {
+      font-size: 1.02em;
+      color: #e2f0e6;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .canvas-outer {
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior: contain;
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .canvas-jump {
+      display: inline-block;
+      margin: 8px 12px 0;
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      text-decoration: underline;
+    }
+    .lane-label {
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+    .panel-title {
+      margin: 0 0 12px 0;
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #28503c;
+      padding-bottom: 6px;
+    }
+    .panel-unavailable {
+      text-align: center;
+      color: #7fa08d;
+    }
+    .unavailable-note {
+      color: #7fa08d;
+      font-style: italic;
+    }
+
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feed-age-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      border: 1px solid #234234;
+      background: #0d1a15;
+    }
+    .feed-badge-stale, .feed-badge-corrupt, .feed-badge-missing, .feed-badge-unreadable {
+      border-color: #8c2a2a;
+      color: #ff9999;
+      background: #2b1111;
+    }
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
+    }
+    .now-label {
+      font-weight: 700;
+      color: #9db4a6;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
+    }
+    .health-verdict {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #7f8c8d;
+      border-radius: 3px;
+      background: rgba(127, 140, 141, 0.12);
+      font-size: 0.9em;
+    }
+    .health-verdict .now-label {
+      min-width: 0;
+    }
+    .health-verdict strong {
+      letter-spacing: 1px;
+    }
+    .health-verdict-reason {
+      color: #b8d0c2;
+      font-size: 0.85em;
+    }
+    .health-healthy {
+      border-left-color: #4caf7d;
+      background: rgba(76, 175, 125, 0.12);
+    }
+    .health-healthy strong {
+      color: #6fd39b;
+    }
+    .health-degraded {
+      border-left-color: #d9a441;
+      background: rgba(217, 164, 65, 0.12);
+    }
+    .health-degraded strong {
+      color: #e8bf6a;
+    }
+    .health-investigate {
+      border-left-color: #d1544f;
+      background: rgba(209, 84, 79, 0.14);
+    }
+    .health-investigate strong {
+      color: #ea7f7a;
+    }
+    .now-detail {
+      color: #b8d0c2;
+      font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #8aa695;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #8aa695;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .feed-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #e2f0e6;
+      font-size: 0.95em;
+    }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
+    .feed-cid {
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .feed-ts {
+      color: #8aa695;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-tree-link {
+      color: #2fd3c4;
+      font-size: 0.78em;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+    /* Issue #60: per-cycle LLM cost line + budget-pressure marker. */
+    .feed-cost {
+      font-size: 0.75em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-pressure {
+      color: #d19a66;
+      font-weight: 700;
+    }
+    /* Issue #72: full-history page — day grouping + outcome filter. */
+    .feed-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+      list-style: none;
+    }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px 0;
+    }
+    .filter-btn {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75em;
+      color: #9db4a6;
+      background: rgba(8, 15, 11, 0.8);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      color: #56d364;
+      border-color: #56d364;
+    }
+    .feed-row.filtered-out { display: none; }
+    .feed-overflow-row { display: none; }
+    .feed-files > summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .feed-files-list {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files-list li { padding: 1px 0; word-break: break-all; }
+
+    /* --- panel nav + copyable ids (issue #47) --- */
+    .panel-nav {
+      padding: 6px 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      border-bottom: 1px solid #182a20;
+    }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a:hover { text-decoration: underline; }
+    /* Issue #70: multi-page site nav -- current page highlighted. */
+    .site-nav a.nav-current {
+      color: #56d364;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    /* Issue #70: index teasers. */
+    .teaser-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88em;
+    }
+    .teaser-list a { color: #2fd3c4; font-family: 'Consolas', monospace; }
+    .copyable { cursor: pointer; }
+    .copyable.copied { color: #2fd3c4; }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    .hypo-details { margin-top: 8px; }
+    .futility-empty { font-size: 0.85em; color: #9db4a6; margin: 4px 0; }
+    .futility-omitted-note { font-size: 0.8em; color: #9db4a6; font-style: italic; }
+    .futility-never-evaluated .futility-attempts { color: #9db4a6; font-weight: normal; }
+    .hypo-summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .hypo-summary:hover { color: #56d364; }
+    .hypo-details ul.hypo-list { margin-top: 6px; }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hypo-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #e2f0e6;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #8aa695;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .agent-subcol { min-width: 0; max-width: 100%; width: 100%; overflow: hidden; }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    /* Issue #63: proposer visibility block. */
+    .proposer-block {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #182a20;
+    }
+    .proposer-block h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .proposer-decision { font-size: 0.85em; margin: 0 0 8px 0; color: #dcebe1; }
+    .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
+    .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
+    .proposer-table { max-width: 480px; }
+    /* Issue #73: lessons history page. */
+    .lessons-filter {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      color: #dcebe1;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 0 10px 0;
+      width: min(420px, 100%);
+    }
+    .lessons-list { list-style: none; margin: 0; padding: 0; }
+    .lesson-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+    }
+    .lesson-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 0.85em;
+    }
+    .lesson-meta { font-size: 0.8em; color: #8aa695; }
+    .lesson-id { font-family: 'Consolas', monospace; color: #56d364; }
+    .lesson-cycle { font-family: 'Consolas', monospace; color: #2fd3c4; margin-left: 8px; }
+    .lesson-title { color: #e2f0e6; font-weight: 600; margin: 4px 0 2px; }
+    .lesson-hypothesis { color: #9db4a6; font-size: 0.92em; }
+    .lesson-result summary { cursor: pointer; color: #8aa695; font-size: 0.85em; }
+    .lesson-result pre {
+      margin: 4px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85em;
+      color: #cfe3d7;
+    }
+    .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-duplicate-warning { color: #e06c75; border: 1px solid #b23a3a; padding: 1px 5px; margin-left: 6px; font-size: .72em; text-transform: uppercase; }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #cfe3d7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .charter-details > summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .charter-details > summary:hover { color: #56d364; }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(8, 15, 11, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    .agent-wide-content { max-width: 100%; overflow-x: auto; }
+    .agent-wide-content pre, .agent-wide-content .skills-table { min-width: max-content; }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #0f2018;
+      color: #9db4a6;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1e3a2d;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #182a20;
+    }
+    .skill-high-ratio {
+      background: rgba(86, 211, 100, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #56d364;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #7d9c8a;
+      font-style: italic;
+    }
+
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
+      width: 100%;
+      height: 100%;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
+      border-radius: 8px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
+    }
+    .dir-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
+    }
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
+    .dir-lever {
+      font-variant: small-caps;
+      letter-spacing: 0.5px;
+      color: #9db4a6;
+      font-size: 0.76em;
+      margin-bottom: 6px;
+    }
+    .ribbon {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #56d364;
+      color: #04240f;
+      font-size: 0.6em;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transform: rotate(4deg);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #cfe3d7;
+    }
+    .evo-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    /* Issue #53: thick bright edge along the current node's ancestry. */
+    .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
+    .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #71: DGM archive tree. */
+    .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
+    .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
+    .arch-node { cursor: pointer; }
+    .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
+    .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
+    .lineage-filter-note { color: #d19a66; font-size: .8rem; }
+    .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
+    .lineage-filter-note[hidden] { display: none; }
+    .lineage-day-group[hidden] { display: none; }
+    .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
+    /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
+       being scaled down until r=9 circles are 4 px and the labels unreadable. */
+    .lineage-day-svg { display: block; height: auto; overflow: visible; }
+    .lineage-graph-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+    .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
+    .arch-node.arch-integrated { fill: #2fd3c4; stroke: #dcebe1; }
+    .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
+    .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
+    .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
+    .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
+    .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
+    .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
+    .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
+    .lineage-legend-title { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-legend-item { display: inline-flex; align-items: center; gap: 5px; color: #b8d0c2; }
+    .lineage-legend-swatch { display: inline-block; vertical-align: middle; }
+    .lineage-legend-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend-edge-inferred { stroke-dasharray: 6 5; }
+    .lineage-legend-node { stroke-width: 2; }
+    .lineage-legend .arch-node { cursor: default; pointer-events: none; }
+    .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
+    .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
+    .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
+    .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
+    .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-zoom-level { min-width: 5ch; text-align: center; color: #8aa695; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    /* Issue #250: on lineage.html the graph owns the viewport. The document
+       does not scroll; .lineage-graph-scroll does, on both axes. Every rule
+       here is scoped to body.page-lineage so the other six pages keep the
+       ordinary document flow. */
+    body.page-lineage { height: 100vh; height: 100dvh; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+    body.page-lineage .empire-strip,
+    body.page-lineage .site-nav,
+    body.page-lineage .page-footer { flex: 0 0 auto; }
+    /* .dashboard-main carries `margin: 0 auto`, and an auto cross-axis margin
+       cancels the flex `stretch` that would otherwise hold it to the body's
+       width -- it would size to its widest content and take the graph with it.
+       An explicit width restores the constraint; max-width still centres it. */
+    body.page-lineage .dashboard-main { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; padding-bottom: 0; }
+    body.page-lineage #panel-lineage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden; }
+    body.page-lineage .lineage-unified-graph { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
+    body.page-lineage .lineage-day-controls,
+    body.page-lineage .lineage-coverage-note,
+    body.page-lineage .lineage-legend,
+    body.page-lineage .lineage-zoom-controls { flex: 0 0 auto; }
+    body.page-lineage .lineage-graph-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+    /* Issue #252: the graph is a canvas -- the wheel zooms toward the pointer
+       and a drag moves it. The cursor is the only thing that says so, and the
+       renderer keeps these two attributes in step with the hand tool, Space,
+       and whether a drag is actually under way. */
+    .lineage-graph-scroll[data-pan-mode="hand"] { cursor: grab; }
+    .lineage-graph-scroll[data-panning="true"] { cursor: grabbing; user-select: none; }
+    /* The details panel would otherwise consume the column the graph needs,
+       so on this page it floats over the graph with its own scrollbar. */
+    body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    @media (max-width: 720px) {
+      body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+    }
+    .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
+    .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .cycle-details-panel[hidden] { display: none; }
+    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
+    .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
+    .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
+    .cycle-details-body p { margin: 4px 0; }
+    .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
+    .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
+    .arch-star { fill: #56d364; color: #56d364; font-size: 14px; }
+    .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
+    /* Issue #93: day separator lines and date labels in the archive tree. */
+    .arch-day-sep { stroke: #2f5c46; stroke-width: 1; stroke-dasharray: 4 3; }
+    .arch-day-label { fill: #5a7a68; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #93: date sub-label in evolution node meta. */
+    .evo-date { color: #5a7a68; font-size: 8px; margin-left: 4px; }
+    .arch-note {
+      font-size: 0.78em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding: 8px 12px 0;
+    }
+    .evo-fallback { color: #dcebe1; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.64em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
+    .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
+    .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+    .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
+    .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+
+    .spark { margin-bottom: 2px; }
+    .spark-top, .spark-bottom {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+    .spark-bottom { align-items: flex-start; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
+    .bar-pos { background: #56d364; }
+    .bar-neg { background: #b23a3a; }
+    .bar-placeholder { height: 0; background: transparent; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
+    /* Issue #61: scorecard-defined KPI target badge. */
+    .kpi-target {
+      font-size: 0.62em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }    .mean-pos { color: #56d364; }
+    .mean-neg { color: #d97b7b; }
+
+    footer.page-footer {
+      text-align: center;
+      color: #6f9480;
+      font-size: 0.78em;
+      margin-top: 20px;
+      padding-top: 14px;
+    }
+    .footer-computed {
+      color: #7d8aa3;
+    }
+    /* Issue #1772: the daily digest -- the operator's undo affordance. */
+    .panel-digest .panel-subtitle {
+      color: #7d8aa3;
+      font-size: 0.85em;
+      margin: 0 0 12px;
+    }
+    .digest-day { margin-bottom: 18px; }
+    .digest-day-heading {
+      font-size: 0.95em;
+      color: #c9d6e3;
+      margin: 0 0 6px;
+    }
+    .digest-day-count { color: #7d8aa3; font-weight: normal; }
+    .digest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+    }
+    .digest-table th {
+      text-align: left;
+      color: #7d8aa3;
+      font-weight: normal;
+      border-bottom: 1px solid #2a3a4a;
+      padding: 4px 8px;
+    }
+    .digest-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #1c2733;
+      vertical-align: top;
+    }
+    .digest-sha { font-family: 'Consolas', monospace; }
+    .digest-paths {
+      font-family: 'Consolas', monospace;
+      color: #9fb3c8;
+      word-break: break-all;
+    }
+    .digest-tier, .digest-confirmed {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .digest-confirmed-yes { background: #1c3a2a; color: #56d364; }
+    .digest-confirmed-no { background: #3a2a1c; color: #d9a656; }
+    .digest-confirmed-untracked { background: #2a2a3a; color: #9d9db3; }
+
+
+/* Issue #227: Two-tier agent context visualization styling */
+.context-subject-group {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #30363d;
+}
+.context-subject-group:first-of-type { margin-top: 16px; }
+.context-subject-heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #c9d1d9;
+  letter-spacing: .01em;
+}
+.context-knowledge-group .tier2-deep-section,
+.context-assembly-group .context-detail-section { margin-top: 0; }
+.context-telemetry-box { margin: 10px 0; padding: 9px 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #c9d1d9; font-size: 12px; overflow-wrap: anywhere; }
+
+.context-panel {
+  background: var(--color-bg-subtle, #161b22);
+  border: 1px solid var(--color-border-default, #30363d);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.context-header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.context-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+.badge-danger { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+.badge-secondary { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.cycle-pill { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: monospace; }
+.context-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.context-kpi-card {
+  background: var(--color-canvas-default, #0d1117);
+  border: 1px solid var(--color-border-muted, #21262d);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
+.kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
+.stat-good { color: #3fb950; }
+.stat-warn { color: #f85149; }
+.context-meter-box {
+  margin: 16px 0;
+  background: #0d1117;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+.context-progress-bar {
+  height: 10px;
+  background: #21262d;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.prompt-fit-events {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.45);
+}
+.prompt-fit-events h3 { margin: 0 0 4px; }
+.prompt-fit-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.prompt-fit-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(110, 118, 129, 0.10);
+  font-size: 13px;
+}
+.prompt-fit-event-item strong { color: var(--text-muted, #8b949e); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.prompt-fit-event-item span { overflow-wrap: anywhere; }
+.prompt-fit-event-wide { grid-column: 1 / -1; }
+
+.context-dropped-alert {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dropped-pill { background: rgba(248, 81, 73, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
+.two-tier-canvas {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.tier-col {
+  flex: 1;
+  min-width: 320px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+}
+.tier-col-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.tier-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.tag-t1 { background: #1f6feb; color: #fff; }
+.tag-t2 { background: #8957e5; color: #fff; }
+.tier-col-header h3 { font-size: 15px; margin: 0; color: #c9d1d9; }
+.tier-col-header p { font-size: 12px; color: #8b949e; margin: 2px 0 0; }
+.tier1-blocks-list { display: flex; flex-direction: column; gap: 6px; }
+.t1-block-item {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.t1-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.t1-name { font-weight: 600; color: #58a6ff; }
+.t1-sz { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.t1-desc { font-size: 11px; color: #8b949e; margin-left: 6px; }
+.t1-empty { opacity: 0.6; }
+.t1-linked { flex-direction: column; align-items: stretch; gap: 4px; }
+.t1-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tier-link-badge {
+  display: inline-block;
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid rgba(137, 87, 229, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tier-link-badge:hover { background: rgba(137, 87, 229, 0.3); text-decoration: none; }
+.t1-sep-row { background: transparent; border: 1px dashed #30363d; color: #8b949e; font-size: 11px; font-style: italic; justify-content: space-between; }
+.t1-msg { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.2); }
+.tier-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.bridge-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  max-width: 180px;
+}
+.bridge-arrow { font-size: 24px; color: #a371f7; display: block; margin-bottom: 4px; }
+.bridge-card strong { display: block; font-size: 13px; color: #c9d1d9; }
+.bridge-card p { font-size: 11px; color: #8b949e; margin: 2px 0 6px; }
+.bridge-cost { font-size: 10px; color: #a371f7; font-weight: 500; }
+.tier2-targets-list { display: flex; flex-direction: column; gap: 10px; }
+.t2-target-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.t2-card-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.t2-size { font-family: monospace; color: #a371f7; font-size: 12px; }
+.t2-target-card p { font-size: 12px; color: #8b949e; margin: 0 0 8px; }
+.t2-explore-btn { font-size: 11px; color: #58a6ff; text-decoration: none; font-weight: 500; }
+.t2-explore-btn:hover { text-decoration: underline; }
+.context-detail-section { margin-top: 32px; }
+.context-detail-section h3 { font-size: 17px; margin: 0 0 4px; color: #c9d1d9; }
+.section-sub { font-size: 13px; color: #8b949e; margin: 0 0 16px; }
+.context-block-details {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.block-summary {
+  padding: 10px 12px;
+  background: #161b22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  user-select: none;
+}
+.block-summary:hover { background: #1f242c; }
+.block-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.block-title { color: #58a6ff; }
+.block-label { color: #8b949e; font-size: 12px; }
+.block-meta { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.block-body { padding: 12px; max-height: 400px; overflow-y: auto; background: #0d1117; }
+.block-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: monospace; color: #c9d1d9; }
+.context-block-empty {
+  background: #0d1117;
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reconciliation-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-header h4 { margin: 0; font-size: 14px; color: #c9d1d9; }
+.reconciliation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reconciliation-table th, .reconciliation-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+.reconciliation-table th { color: #8b949e; font-weight: 500; }
+.reconciliation-table .num { text-align: right; font-family: monospace; }
+.reconciliation-table .sep-row { background: rgba(137, 87, 229, 0.05); color: #a371f7; }
+.reconciliation-table .muted-row { opacity: 0.6; }
+.reconciliation-table .total-row { border-top: 2px solid #30363d; font-weight: bold; background: #161b22; }
+.rec-note { font-size: 11px; color: #8b949e; margin: 8px 0 0; }
+.rec-unavailable { border-color: rgba(210, 153, 34, 0.4); background: rgba(210, 153, 34, 0.05); }
+.tier2-deep-section { margin-top: 32px; border-top: 1px solid #30363d; padding-top: 24px; }
+.t2-group { margin-bottom: 24px; }
+.t2-group-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.t2-group-header h4 { margin: 0; font-size: 15px; color: #c9d1d9; }
+.t2-group-note { font-size: 12px; color: #8b949e; }
+.skills-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skill-asset-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.skill-card-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card-name { color: #58a6ff; font-family: monospace; }
+.skill-card-size { color: #8b949e; font-size: 11px; }
+.skill-card-desc { font-size: 12px; color: #8b949e; margin: 0 0 10px; line-height: 1.4; flex-grow: 1; }
+.skill-card-details summary { font-size: 11px; color: #a371f7; cursor: pointer; user-select: none; }
+.skill-card-details pre { margin: 8px 0 0; max-height: 280px; overflow-y: auto; background: #161b22; padding: 8px; border-radius: 4px; font-size: 11px; }
+.missing-artifact-callout {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #f85149;
+}
+.callout-icon { font-size: 18px; }
+.missing-artifact-callout p { margin: 2px 0 0; font-size: 12px; color: #c9d1d9; }
+.lessons-pills, .memory-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lesson-pill, .memory-pill {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b949e;
+  font-family: monospace;
+}
+.pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
+
+/* #301: recorded-order Tier 1 blocks, owner badges, flags, rule owners & user-message sections */
+.t1-owner {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #30363d;
+  color: #8b949e;
+}
+.t1-owner-release { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+.t1-owner-instance { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }
+.t1-owner-generated { color: #a371f7; border-color: rgba(163, 113, 247, 0.4); }
+.t1-owner-unmapped { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
+.badge-flag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.badge-flag-missing { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+.badge-flag-truncated { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
+.user-message-sections, .rule-owners-panel { margin-top: 18px; }
+.user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
+
+/* ozand/eeebot#1755: truncation/drop streak + window-pressure indicators */
+.context-indicator-box {
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.context-indicator-box .indicator-note { color: #8b949e; font-size: 12px; margin-left: 6px; }
+.context-indicator-box .indicator-note code { color: inherit; }
+.context-indicator-box .indicator-pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.indicator-no-data { background: rgba(139, 148, 158, 0.08); border: 1px solid rgba(139, 148, 158, 0.3); }
+.indicator-healthy { background: rgba(46, 160, 67, 0.08); border: 1px solid rgba(46, 160, 67, 0.3); }
+.indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
+.indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
+</style>
+</head>
+<body>
+
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">160</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">53.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 03:58:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">12 events · 9 tasks · 3.0%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">131 events · 10 tasks · 32.7%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">5.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
+      <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790385365.214" data-render-age-seconds="32">data: 31s old &middot; generated 01:16 UTC</span></div>
+    </header>
+    
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html" class="nav-current">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<main class="dashboard-main">
+
+    <section class="panel panel-lessons" id="panel-lessons">
+      <h2 class="panel-title">Lessons History (122 retained history rows &middot; 42 v2 &middot; 80 legacy)</h2>
+      <p class="lessons-count-note">History only: 42 active v2 cards plus retained archive rows; archive rows are not on the executor retrieval path. The executor retrieval corpus includes active v2 cards and active error cards from errors.yaml.</p>
+      <p class="lessons-corpus-note">Live corpus (lessons/*.md): 122 files &mdash; same count agent.html reports.</p>
+      <input class="lessons-filter" type="text" placeholder="filter lessons...">
+      <ul class="lessons-list">
+        <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
+        <li class="lesson-day-header">unknown</li><li class="lesson-row lesson-row-v2" data-text="uniform_selftest_tuples uniform tuple structure for self-test sample collections     " id="q-uniform_selftest_tuples"><div class="lesson-meta"><span class="lesson-id" translate="no">uniform_selftest_tuples</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uniform Tuple Structure for Self-Test Sample Collections</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,613 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,727 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="uncooled_reflection_handling uncooled script reflection handling policy     " id="q-uncooled_reflection_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">uncooled_reflection_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Uncooled Script Reflection Handling Policy</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (874 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,026 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="test_scope_anomaly_handoffs capturing edge-case test anomalies and remediation handoffs     " id="q-test_scope_anomaly_handoffs"><div class="lesson-meta"><span class="lesson-id" translate="no">test_scope_anomaly_handoffs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Capturing Edge-Case Test Anomalies and Remediation Handoffs</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,310 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (3,880 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="target_scoped_inspection_protocol target-scoped repo inspection protocol     " id="q-target_scoped_inspection_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">target_scoped_inspection_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Target-Scoped Repo Inspection Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (782 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,373 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="substring_matching_boundaries_in_tests regex boundaries and distinct synthetic strings for substring test assertions     " id="q-substring_matching_boundaries_in_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">substring_matching_boundaries_in_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Regex Boundaries and Distinct Synthetic Strings for Substring Test Assertions</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (712 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,281 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="subagent_result_error_handling subagent result error triage and recovery     " id="q-subagent_result_error_handling"><div class="lesson-meta"><span class="lesson-id" translate="no">subagent_result_error_handling</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Subagent Result Error Triage and Recovery</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,159 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (18,955 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="speculative_read_prevention speculative read avoidance and existence verification protocol     " id="q-speculative_read_prevention"><div class="lesson-meta"><span class="lesson-id" translate="no">speculative_read_prevention</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Speculative Read Avoidance and Existence Verification Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,617 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,504 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="skill_validation_pitfalls operational pitfall checks for skill validation     " id="q-skill_validation_pitfalls"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_validation_pitfalls</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Operational Pitfall Checks for Skill Validation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,401 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (3,375 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="skill_composition_orchestration modular skill composition for multi-phase workflow orchestration     " id="q-skill_composition_orchestration"><div class="lesson-meta"><span class="lesson-id" translate="no">skill_composition_orchestration</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Modular Skill Composition for Multi-Phase Workflow Orchestration</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (819 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,963 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="shared_parsing_helpers shared parsing helper pattern for consistent metric derivation     " id="q-shared_parsing_helpers"><div class="lesson-meta"><span class="lesson-id" translate="no">shared_parsing_helpers</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Shared Parsing Helper Pattern for Consistent Metric Derivation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (866 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (6,568 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="secret_scan_verification_patterns refined secret-scan patterns: avoiding false alarms on documentation     " id="q-secret_scan_verification_patterns"><div class="lesson-meta"><span class="lesson-id" translate="no">secret_scan_verification_patterns</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Refined Secret-Scan Patterns: Avoiding False Alarms on Documentation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,033 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,159 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="proposal_confirmation_standards proposal confirmation standards to improve confirmation ratio     " id="q-proposal_confirmation_standards"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_standards</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Proposal Confirmation Standards to Improve Confirmation Ratio</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,601 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,962 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="proposal_confirmation_guidelines improving proposal confirmation ratio and avoiding common rejection patterns     " id="q-proposal_confirmation_guidelines"><div class="lesson-meta"><span class="lesson-id" translate="no">proposal_confirmation_guidelines</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Improving Proposal Confirmation Ratio and Avoiding Common Rejection Patterns</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,734 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,967 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="preventing_turn_limit_exhaustion preventing turn-limit exhaustion: direct read-edit-verify-commit workflow     " id="q-preventing_turn_limit_exhaustion"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_turn_limit_exhaustion</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Turn-Limit Exhaustion: Direct Read-Edit-Verify-Commit Workflow</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (970 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (6,731 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="preventing_git_checkout_failures preventing git checkout failures during autonomous cycles     " id="q-preventing_git_checkout_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">preventing_git_checkout_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Git Checkout Failures during Autonomous Cycles</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,249 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,843 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="prevent_repeat_failures repeat failures prevention guide     " id="q-prevent_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Repeat Failures Prevention Guide</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (399 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,971 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="prevent_duplicate_proposals preventing duplicate proposals and blocked file failures     " id="q-prevent_duplicate_proposals"><div class="lesson-meta"><span class="lesson-id" translate="no">prevent_duplicate_proposals</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Duplicate Proposals and Blocked File Failures</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,608 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,664 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="pre_creation_tool_chain_limits pre-creation tool chain limits and fast-path writing protocol     " id="q-pre_creation_tool_chain_limits"><div class="lesson-meta"><span class="lesson-id" translate="no">pre_creation_tool_chain_limits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Pre-Creation Tool Chain Limits and Fast-Path Writing Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (790 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (6,466 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="out_of_band_main_detected out_of_band_main_detected — root cause and remediation     " id="q-out_of_band_main_detected"><div class="lesson-meta"><span class="lesson-id" translate="no">out_of_band_main_detected</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">out_of_band_main_detected — Root Cause and Remediation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (910 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (7,987 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="mutation_surface_violation_retries preventing mutation-surface violation retries     " id="q-mutation_surface_violation_retries"><div class="lesson-meta"><span class="lesson-id" translate="no">mutation_surface_violation_retries</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Preventing Mutation-Surface Violation Retries</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (785 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,601 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="markdown_code_block_validation_protocol paired markdown format and code block validation protocol for documentation edits     " id="q-markdown_code_block_validation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">markdown_code_block_validation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Paired Markdown Format and Code Block Validation Protocol for Documentation Edits</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (960 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,861 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="lesson_checkout_main_failed checkout main failed failure mode and remediation     " id="q-lesson_checkout_main_failed"><div class="lesson-meta"><span class="lesson-id" translate="no">lesson_checkout_main_failed</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Checkout Main Failed Failure Mode and Remediation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,811 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,850 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="isolated_script_verification isolated script verification fast path     " id="q-isolated_script_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">isolated_script_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolated Script Verification Fast Path</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (719 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,667 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="idle_script_rewiring_alternatives alternative verification strategy for cooled scripts during idle rewiring     " id="q-idle_script_rewiring_alternatives"><div class="lesson-meta"><span class="lesson-id" translate="no">idle_script_rewiring_alternatives</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Alternative Verification Strategy for Cooled Scripts During Idle Rewiring</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (761 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (2,499 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="handling_push_rejections handling git push rejections (`push_rejected`)     " id="q-handling_push_rejections"><div class="lesson-meta"><span class="lesson-id" translate="no">handling_push_rejections</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Handling Git Push Rejections (`push_rejected`)</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (680 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (2,757 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="git_checkout_recovery resolving checkout_main_failed and git lock issues on constrained hosts     " id="q-git_checkout_recovery"><div class="lesson-meta"><span class="lesson-id" translate="no">git_checkout_recovery</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Resolving checkout_main_failed and Git Lock Issues on Constrained Hosts</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,348 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,678 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="existence_index_duplicate existence index duplicate skip mode and mitigation     " id="q-existence_index_duplicate"><div class="lesson-meta"><span class="lesson-id" translate="no">existence_index_duplicate</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Existence Index Duplicate Skip Mode and Mitigation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,889 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,918 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="enforcing_agents_sections_in_structural_tests enforcing agents.md sections via required_sections in tests/test_agents_structure.py     " id="q-enforcing_agents_sections_in_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">enforcing_agents_sections_in_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Enforcing AGENTS.md Sections via REQUIRED_SECTIONS in tests/test_agents_structure.py</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,472 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (3,760 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="early_turn_implementation_protocol early-turn implementation protocol     " id="q-early_turn_implementation_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">early_turn_implementation_protocol</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Implementation Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (921 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (6,100 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="early_edit_turn_discipline early-turn edit budget discipline and inspection limits     " id="q-early_edit_turn_discipline"><div class="lesson-meta"><span class="lesson-id" translate="no">early_edit_turn_discipline</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Early-Turn Edit Budget Discipline and Inspection Limits</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (598 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (7,935 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="dual_sink_sampler_pattern dual-sink output pattern for sampler migrations     " id="q-dual_sink_sampler_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_sink_sampler_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual-Sink Output Pattern for Sampler Migrations</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (639 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,377 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="dual_ledger_testing_pattern dual mock and live ledger verification protocol     " id="q-dual_ledger_testing_pattern"><div class="lesson-meta"><span class="lesson-id" translate="no">dual_ledger_testing_pattern</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Dual Mock and Live Ledger Verification Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (893 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (5,590 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="coupling_agents_instructions_with_structural_tests coupling agents.md standing instruction updates with structural test assertions     " id="q-coupling_agents_instructions_with_structural_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">coupling_agents_instructions_with_structural_tests</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Coupling AGENTS.md Standing Instruction Updates with Structural Test Assertions</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,396 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,046 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="concise_late_turn_tool_outputs late-turn concise tool execution and test output truncation     " id="q-concise_late_turn_tool_outputs"><div class="lesson-meta"><span class="lesson-id" translate="no">concise_late_turn_tool_outputs</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Late-Turn Concise Tool Execution and Test Output Truncation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (600 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,317 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="cohesive_import_edits bundle import additions with their functional logic in atomic edits     " id="q-cohesive_import_edits"><div class="lesson-meta"><span class="lesson-id" translate="no">cohesive_import_edits</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Bundle Import Additions with Their Functional Logic in Atomic Edits</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (678 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (3,655 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="cli_verification_state_isolation isolate cli verification state to prevent repo file mutation     " id="q-cli_verification_state_isolation"><div class="lesson-meta"><span class="lesson-id" translate="no">cli_verification_state_isolation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Isolate CLI Verification State to Prevent Repo File Mutation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (884 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,569 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="blocked_file_remediation blocked file present failure mode and remediation     " id="q-blocked_file_remediation"><div class="lesson-meta"><span class="lesson-id" translate="no">blocked_file_remediation</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Blocked File Present Failure Mode and Remediation</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (1,430 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (2,009 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="avoiding_repeated_failures avoiding repeated task failures by checking recent cycle outcomes     " id="q-avoiding_repeated_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeated_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeated Task Failures by Checking Recent Cycle Outcomes</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (838 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (1,169 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="avoiding_repeat_failures avoiding repeat failures     " id="q-avoiding_repeat_failures"><div class="lesson-meta"><span class="lesson-id" translate="no">avoiding_repeat_failures</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Avoiding Repeat Failures</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (528 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (6,174 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="avoid_state_report_inspection do not inspect historical state reports when verifying script capabilities     " id="q-avoid_state_report_inspection"><div class="lesson-meta"><span class="lesson-id" translate="no">avoid_state_report_inspection</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Do Not Inspect Historical State Reports When Verifying Script Capabilities</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (871 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,346 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="already_implemented_skip_emission immediate skip emission when the proposed change already exists     " id="q-already_implemented_skip_emission"><div class="lesson-meta"><span class="lesson-id" translate="no">already_implemented_skip_emission</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Immediate Skip Emission When the Proposed Change Already Exists</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (472 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (3,184 chars)</div></li><li class="lesson-row lesson-row-v2" data-text="adjacent_test_suite_verification adjacent and dependent test suite pre-commit verification protocol     " id="q-adjacent_test_suite_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">adjacent_test_suite_verification</span> <span class="lesson-cycle">n/a</span></div><h3 class="lesson-title">Adjacent and Dependent Test Suite Pre-Commit Verification Protocol</h3><div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only (881 chars)</div><div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only (4,551 chars)</div></li>
+        <li class="lesson-legacy-fold"><details class="lesson-legacy-details"><summary class="lesson-legacy-summary">legacy (pre-v2, frozen) &mdash; 80 historical protocol records</summary><ul class="lessons-list lessons-list-legacy"><li class="lesson-day-header">2026-09-06</li><li class="lesson-row" data-text="err-20260906-5445c37c   " id="q-ERR-20260906-5445c37c"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260906-5445c37c</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260906-44f3e43b   " id="q-ERR-20260906-44f3e43b"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260906-44f3e43b</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-09-05</li><li class="lesson-row" data-text="err-20260905-e539c359   " id="q-ERR-20260905-e539c359"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260905-e539c359</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260905-59bedf85   " id="q-ERR-20260905-59bedf85"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260905-59bedf85</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260905-2cbf0b52   " id="q-ERR-20260905-2cbf0b52"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260905-2cbf0b52</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260905-1c4384b0   " id="q-ERR-20260905-1c4384b0"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260905-1c4384b0</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260905-05555d5b   " id="q-ERR-20260905-05555d5b"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260905-05555d5b</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-09-03</li><li class="lesson-row" data-text="err-20260903-facedd12   " id="q-ERR-20260903-facedd12"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260903-facedd12</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260903-2e844aab   " id="q-ERR-20260903-2e844aab"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260903-2e844aab</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-09-02</li><li class="lesson-row" data-text="err-20260902-5774fcfc   " id="q-ERR-20260902-5774fcfc"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260902-5774fcfc</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-08-31</li><li class="lesson-row" data-text="err-20260831-6554c7fc   " id="q-ERR-20260831-6554c7fc"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260831-6554c7fc</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-08-30</li><li class="lesson-row" data-text="err-20260830-448fcd73   " id="q-ERR-20260830-448fcd73"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260830-448fcd73</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">2026-08-29</li><li class="lesson-row" data-text="err-20260829-c871bf9a   " id="q-ERR-20260829-c871bf9a"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260829-c871bf9a</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-20260829-025f7fee   " id="q-ERR-20260829-025f7fee"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-20260829-025f7fee</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-day-header">unknown</li><li class="lesson-row" data-text="workspace_inspection_subprocess_timeout   " id="q-workspace_inspection_subprocess_timeout"><div class="lesson-meta"><span class="lesson-id" translate="no">workspace_inspection_subprocess_timeout</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (237 chars)</div></li><li class="lesson-row" data-text="token_boundary_test_fixtures   " id="q-token_boundary_test_fixtures"><div class="lesson-meta"><span class="lesson-id" translate="no">token_boundary_test_fixtures</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (225 chars)</div></li><li class="lesson-row" data-text="test_timeout_scoping   " id="q-test_timeout_scoping"><div class="lesson-meta"><span class="lesson-id" translate="no">test_timeout_scoping</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (222 chars)</div></li><li class="lesson-row" data-text="targeted_reference_reading   " id="q-targeted_reference_reading"><div class="lesson-meta"><span class="lesson-id" translate="no">targeted_reference_reading</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (240 chars)</div></li><li class="lesson-row" data-text="state_reflection_search_avoidance   " id="q-state_reflection_search_avoidance"><div class="lesson-meta"><span class="lesson-id" translate="no">state_reflection_search_avoidance</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (193 chars)</div></li><li class="lesson-row" data-text="splitlines_trailing_newline   " id="q-splitlines_trailing_newline"><div class="lesson-meta"><span class="lesson-id" translate="no">splitlines_trailing_newline</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (133 chars)</div></li><li class="lesson-row" data-text="smoke_check_timeout   " id="q-smoke_check_timeout"><div class="lesson-meta"><span class="lesson-id" translate="no">smoke_check_timeout</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (216 chars)</div></li><li class="lesson-row" data-text="skill-subdirectory-structure   " id="q-skill-subdirectory-structure"><div class="lesson-meta"><span class="lesson-id" translate="no">skill-subdirectory-structure</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (163 chars)</div></li><li class="lesson-row" data-text="shared_helper_collision_avoidance   " id="q-shared_helper_collision_avoidance"><div class="lesson-meta"><span class="lesson-id" translate="no">shared_helper_collision_avoidance</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (238 chars)</div></li><li class="lesson-row" data-text="scoped_runner_additive_changes   " id="q-scoped_runner_additive_changes"><div class="lesson-meta"><span class="lesson-id" translate="no">scoped_runner_additive_changes</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (237 chars)</div></li><li class="lesson-row" data-text="scaffold_first_reasoning_limits   " id="q-scaffold_first_reasoning_limits"><div class="lesson-meta"><span class="lesson-id" translate="no">scaffold_first_reasoning_limits</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (66 chars)</div></li><li class="lesson-row" data-text="safe_temporary_fixtures   " id="q-safe_temporary_fixtures"><div class="lesson-meta"><span class="lesson-id" translate="no">safe_temporary_fixtures</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (107 chars)</div></li><li class="lesson-row" data-text="safe_temp_artifacts   " id="q-safe_temp_artifacts"><div class="lesson-meta"><span class="lesson-id" translate="no">safe_temp_artifacts</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (89 chars)</div></li><li class="lesson-row" data-text="reasoning_budget_action_transition   " id="q-reasoning_budget_action_transition"><div class="lesson-meta"><span class="lesson-id" translate="no">reasoning_budget_action_transition</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (217 chars)</div></li><li class="lesson-row" data-text="prefer_existing_self_tests   " id="q-prefer_existing_self_tests"><div class="lesson-meta"><span class="lesson-id" translate="no">prefer_existing_self_tests</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (168 chars)</div></li><li class="lesson-row" data-text="posix_shell_pipeline_status   " id="q-posix_shell_pipeline_status"><div class="lesson-meta"><span class="lesson-id" translate="no">posix_shell_pipeline_status</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (193 chars)</div></li><li class="lesson-row" data-text="posix_shell_pipeline_exit   " id="q-posix_shell_pipeline_exit"><div class="lesson-meta"><span class="lesson-id" translate="no">posix_shell_pipeline_exit</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (157 chars)</div></li><li class="lesson-row" data-text="persist_refactored_code_before_cycle_end   " id="q-persist_refactored_code_before_cycle_end"><div class="lesson-meta"><span class="lesson-id" translate="no">persist_refactored_code_before_cycle_end</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (176 chars)</div></li><li class="lesson-row" data-text="optional_positional_args_with_standalone_flags   " id="q-optional_positional_args_with_standalone_flags"><div class="lesson-meta"><span class="lesson-id" translate="no">optional_positional_args_with_standalone_flags</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (230 chars)</div></li><li class="lesson-row" data-text="negative_grep_conclusiveness   " id="q-negative_grep_conclusiveness"><div class="lesson-meta"><span class="lesson-id" translate="no">negative_grep_conclusiveness</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (91 chars)</div></li><li class="lesson-row" data-text="mixed_input_diagnostic_contracts   " id="q-mixed_input_diagnostic_contracts"><div class="lesson-meta"><span class="lesson-id" translate="no">mixed_input_diagnostic_contracts</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (231 chars)</div></li><li class="lesson-row" data-text="loop_breaker_response   " id="q-loop_breaker_response"><div class="lesson-meta"><span class="lesson-id" translate="no">loop_breaker_response</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (161 chars)</div></li><li class="lesson-row" data-text="loop_breaker_halt_protocol   " id="q-loop_breaker_halt_protocol"><div class="lesson-meta"><span class="lesson-id" translate="no">loop_breaker_halt_protocol</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (146 chars)</div></li><li class="lesson-row" data-text="interpreter_probe_edge_cases   " id="q-interpreter_probe_edge_cases"><div class="lesson-meta"><span class="lesson-id" translate="no">interpreter_probe_edge_cases</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (199 chars)</div></li><li class="lesson-row" data-text="inspect_script_cli_flags   " id="q-inspect_script_cli_flags"><div class="lesson-meta"><span class="lesson-id" translate="no">inspect_script_cli_flags</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (237 chars)</div></li><li class="lesson-row" data-text="inspect_cli_signatures_before_invocation   " id="q-inspect_cli_signatures_before_invocation"><div class="lesson-meta"><span class="lesson-id" translate="no">inspect_cli_signatures_before_invocation</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (235 chars)</div></li><li class="lesson-row" data-text="inspect-stdlib-attributes   " id="q-inspect-stdlib-attributes"><div class="lesson-meta"><span class="lesson-id" translate="no">inspect-stdlib-attributes</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (235 chars)</div></li><li class="lesson-row" data-text="incremental_script_modifications   " id="q-incremental_script_modifications"><div class="lesson-meta"><span class="lesson-id" translate="no">incremental_script_modifications</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (216 chars)</div></li><li class="lesson-row" data-text="git_numstat_rename_parsing   " id="q-git_numstat_rename_parsing"><div class="lesson-meta"><span class="lesson-id" translate="no">git_numstat_rename_parsing</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (122 chars)</div></li><li class="lesson-row" data-text="exploration_turn_cap   " id="q-exploration_turn_cap"><div class="lesson-meta"><span class="lesson-id" translate="no">exploration_turn_cap</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (176 chars)</div></li><li class="lesson-row" data-text="existing_feature_edge_cases   " id="q-existing_feature_edge_cases"><div class="lesson-meta"><span class="lesson-id" translate="no">existing_feature_edge_cases</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (237 chars)</div></li><li class="lesson-row" data-text="exact_token_overlap_assertions   " id="q-exact_token_overlap_assertions"><div class="lesson-meta"><span class="lesson-id" translate="no">exact_token_overlap_assertions</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (208 chars)</div></li><li class="lesson-row" data-text="early_test_scaffolding   " id="q-early_test_scaffolding"><div class="lesson-meta"><span class="lesson-id" translate="no">early_test_scaffolding</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (182 chars)</div></li><li class="lesson-row" data-text="compound_verification_commands   " id="q-compound_verification_commands"><div class="lesson-meta"><span class="lesson-id" translate="no">compound_verification_commands</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (150 chars)</div></li><li class="lesson-row" data-text="companion_test_direct_lookup   " id="q-companion_test_direct_lookup"><div class="lesson-meta"><span class="lesson-id" translate="no">companion_test_direct_lookup</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (78 chars)</div></li><li class="lesson-row" data-text="companion_cycle_test_verification   " id="q-companion_cycle_test_verification"><div class="lesson-meta"><span class="lesson-id" translate="no">companion_cycle_test_verification</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (148 chars)</div></li><li class="lesson-row" data-text="compact_script_enhancement   " id="q-compact_script_enhancement"><div class="lesson-meta"><span class="lesson-id" translate="no">compact_script_enhancement</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (197 chars)</div></li><li class="lesson-row" data-text="cli_subprocess_exit_codes   " id="q-cli_subprocess_exit_codes"><div class="lesson-meta"><span class="lesson-id" translate="no">cli_subprocess_exit_codes</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (137 chars)</div></li><li class="lesson-row" data-text="cli_deprecation_json_stdout   " id="q-cli_deprecation_json_stdout"><div class="lesson-meta"><span class="lesson-id" translate="no">cli_deprecation_json_stdout</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (234 chars)</div></li><li class="lesson-row" data-text="chunked_file_reading   " id="q-chunked_file_reading"><div class="lesson-meta"><span class="lesson-id" translate="no">chunked_file_reading</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (177 chars)</div></li><li class="lesson-row" data-text="check_existing_tests_before_proposals   " id="q-check_existing_tests_before_proposals"><div class="lesson-meta"><span class="lesson-id" translate="no">check_existing_tests_before_proposals</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (151 chars)</div></li><li class="lesson-row" data-text="chained_git_commit_workflow   " id="q-chained_git_commit_workflow"><div class="lesson-meta"><span class="lesson-id" translate="no">chained_git_commit_workflow</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (183 chars)</div></li><li class="lesson-row" data-text="canonical_cli_assertions   " id="q-canonical_cli_assertions"><div class="lesson-meta"><span class="lesson-id" translate="no">canonical_cli_assertions</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (124 chars)</div></li><li class="lesson-row" data-text="bounded_script_reads   " id="q-bounded_script_reads"><div class="lesson-meta"><span class="lesson-id" translate="no">bounded_script_reads</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (120 chars)</div></li><li class="lesson-row" data-text="bounded_inspection_turns   " id="q-bounded_inspection_turns"><div class="lesson-meta"><span class="lesson-id" translate="no">bounded_inspection_turns</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (213 chars)</div></li><li class="lesson-row" data-text="bounded_initial_reconnaissance   " id="q-bounded_initial_reconnaissance"><div class="lesson-meta"><span class="lesson-id" translate="no">bounded_initial_reconnaissance</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (237 chars)</div></li><li class="lesson-row" data-text="batch-consecutive-file-edits   " id="q-batch-consecutive-file-edits"><div class="lesson-meta"><span class="lesson-id" translate="no">batch-consecutive-file-edits</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (238 chars)</div></li><li class="lesson-row" data-text="baseline_validator_checks   " id="q-baseline_validator_checks"><div class="lesson-meta"><span class="lesson-id" translate="no">baseline_validator_checks</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (107 chars)</div></li><li class="lesson-row" data-text="avoid_bundled_test_executions   " id="q-avoid_bundled_test_executions"><div class="lesson-meta"><span class="lesson-id" translate="no">avoid_bundled_test_executions</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div><div class="lesson-insight lan-only-note">insight: text on the LAN site only (136 chars)</div></li><li class="lesson-row" data-text="readme   " id="q-README"><div class="lesson-meta"><span class="lesson-id" translate="no">README</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-auto-unknown-synthesize-next-improvement-candidate   " id="q-ERR-AUTO-unknown-synthesize-next-improvement-candidate"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-AUTO-unknown-synthesize-next-improvement-candidate</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-auto-unknown-refresh-approval-gate   " id="q-ERR-AUTO-unknown-refresh-approval-gate"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-AUTO-unknown-refresh-approval-gate</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-09-06-003   " id="q-ERR-2026-09-06-003"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-09-06-003</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-09-06-002   " id="q-ERR-2026-09-06-002"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-09-06-002</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-09-06-001   " id="q-ERR-2026-09-06-001"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-09-06-001</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-09-05-001   " id="q-ERR-2026-09-05-001"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-09-05-001</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-20-002   " id="q-ERR-2026-06-20-002"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-20-002</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-20-001   " id="q-ERR-2026-06-20-001"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-20-001</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-15-004   " id="q-ERR-2026-06-15-004"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-15-004</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-15-003   " id="q-ERR-2026-06-15-003"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-15-003</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-15-002   " id="q-ERR-2026-06-15-002"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-15-002</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-15-001   " id="q-ERR-2026-06-15-001"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-15-001</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-14-004   " id="q-ERR-2026-06-14-004"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-14-004</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-14-003   " id="q-ERR-2026-06-14-003"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-14-003</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-14-002   " id="q-ERR-2026-06-14-002"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-14-002</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li><li class="lesson-row" data-text="err-2026-06-14-001   " id="q-ERR-2026-06-14-001"><div class="lesson-meta"><span class="lesson-id" translate="no">ERR-2026-06-14-001</span> <span class="lesson-cycle">n/a</span></div><div class="lesson-title">n/a</div><div class="lesson-hypothesis"></div></li></ul></details></li>
+      </ul>
+      <script>
+      (function(){
+        var input = document.querySelector('.lessons-filter');
+        if (!input) return;
+        var rowsL = document.querySelectorAll('#panel-lessons .lesson-row');
+        function apply(q) {
+          var t = (q || '').toLowerCase();
+           var shown = 0;
+           var legacyMatch = false;
+           rowsL.forEach(function (r) {
+             var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
+             r.style.display = visible ? '' : 'none';
+             if (visible) {
+               shown += 1;
+               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
+             }
+           });
+           var legacyDetails = document.querySelector('.lesson-legacy-details');
+           if (legacyDetails && t) {
+             legacyDetails.open = legacyMatch;
+           }
+           var empty = document.querySelector('#panel-lessons [data-filter-empty]');
+           if (empty) { empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }
+          input.value = t;
+        }
+        var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
+        apply(init);
+        input.addEventListener('input', function () {
+          var q = input.value.trim();
+          if (q) { location.hash = 'q-' + encodeURIComponent(q); } else { history.replaceState(null, '', location.pathname + location.search); }
+          apply(q);
+        });
+        window.addEventListener('hashchange', function () {
+          apply(decodeURIComponent((location.hash || '').replace('#q-', '')));
+        });
+      })();
+      </script>
+    </section>
+    
+</main>
+<footer class="page-footer">generator unknown · generated 2026-09-26 01:16:37 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 03:58:20 MSK</span></footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {
+  el.addEventListener('click', function () {
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      el.classList.add('copied');
+      setTimeout(function () { el.classList.remove('copied'); }, 800);
+    });
+  });
+});
+</script>
+<script>
+(function () {
+  var el = document.querySelector('.freshness[data-data-epoch]');
+  if (!el) return;
+  var epoch = parseFloat(el.getAttribute('data-data-epoch'));
+  var renderAge = parseFloat(el.getAttribute('data-render-age-seconds'));
+  function updateFreshness() {
+    var a = Math.max(0, Date.now() / 1000 - epoch);
+    if (!Number.isFinite(a)) a = renderAge;
+    var level = a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale';
+    el.classList.remove('freshness-fresh', 'freshness-stale', 'freshness-very-stale');
+    el.classList.add('freshness-' + level);
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+    el.setAttribute('data-render-age-seconds', String(a));
+  }
+  updateFreshness();
+  setInterval(updateFreshness, 30000);
+})();
+</script>
+</body>
+</html>

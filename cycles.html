@@ -1,0 +1,2200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="600">
+<title>eeebot / cycles</title>
+<style>
+    :root {
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
+      color: #dcebe1;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      padding: 0 0 32px 0;
+    }
+    h1, h2, h3, .panel-title, .empire-title {
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+    }
+    a { color: #56d364; }
+
+    /* --- top strip: slim, one line --- */
+    .empire-strip {
+      background: linear-gradient(180deg, #0f2018 0%, #0a1811 100%);
+      border-bottom: 2px solid #56d364;
+      padding: 8px 20px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      align-items: center;
+      gap: 18px;
+    }
+    .empire-title {
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(86, 211, 100, 0.45);
+      white-space: nowrap;
+      margin: 0;
+      font-weight: 700;
+    }
+    .empire-stats {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 18px;
+    }
+    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+
+    /* --- freshness badge (issue #48) --- */
+    .empire-fresh { margin-left: auto; white-space: nowrap; }
+    .freshness {
+      font-size: 0.78em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #3d6b52;
+      font-variant-numeric: tabular-nums;
+    }
+    .freshness-fresh { color: #2fd3c4; border-color: rgba(47, 211, 196, 0.5); background: rgba(47, 211, 196, 0.08); }
+    .freshness-stale { color: #d19a66; border-color: rgba(209, 154, 102, 0.5); background: rgba(209, 154, 102, 0.08); }
+    .freshness-very-stale { color: #e06c75; border-color: rgba(224, 108, 117, 0.5); background: rgba(224, 108, 117, 0.08); }
+    .freshness-unknown { color: #9db4a6; }
+
+    .stat-label {
+      text-transform: uppercase;
+      font-size: 0.64em;
+      letter-spacing: 1px;
+      color: #9db4a6;
+    }
+    .stat-value {
+      font-size: 1.02em;
+      color: #e2f0e6;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- overall layout: column flex with nice gap --- */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .canvas-outer {
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior: contain;
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.55) 0%, rgba(8, 15, 11, 0.7) 100%);
+      padding-bottom: 4px;
+    }
+    .tech-canvas { display: block; }
+    .canvas-jump {
+      display: inline-block;
+      margin: 8px 12px 0;
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      text-decoration: underline;
+    }
+    .lane-label {
+      fill: #56d364;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .lane-note { fill: #7fa08d; font-style: italic; font-size: 11px; }
+    .lane-unavailable { fill: #7fa08d; font-style: italic; font-size: 12px; }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(15, 32, 24, 0.85) 0%, rgba(8, 15, 11, 0.9) 100%);
+      border: 1px solid #1e3a2d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+    .panel-title {
+      margin: 0 0 12px 0;
+      color: #56d364;
+      font-size: 1.05em;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #28503c;
+      padding-bottom: 6px;
+    }
+    .panel-unavailable {
+      text-align: center;
+      color: #7fa08d;
+    }
+    .unavailable-note {
+      color: #7fa08d;
+      font-style: italic;
+    }
+
+    /* --- Now panel --- */
+    .now-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feed-age-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      border: 1px solid #234234;
+      background: #0d1a15;
+    }
+    .feed-badge-stale, .feed-badge-corrupt, .feed-badge-missing, .feed-badge-unreadable {
+      border-color: #8c2a2a;
+      color: #ff9999;
+      background: #2b1111;
+    }
+    .now-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9em;
+    }
+    .now-label {
+      font-weight: 700;
+      color: #9db4a6;
+      min-width: 140px;
+      text-transform: uppercase;
+      font-size: 0.78em;
+      letter-spacing: 0.5px;
+    }
+    .health-verdict {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #7f8c8d;
+      border-radius: 3px;
+      background: rgba(127, 140, 141, 0.12);
+      font-size: 0.9em;
+    }
+    .health-verdict .now-label {
+      min-width: 0;
+    }
+    .health-verdict strong {
+      letter-spacing: 1px;
+    }
+    .health-verdict-reason {
+      color: #b8d0c2;
+      font-size: 0.85em;
+    }
+    .health-healthy {
+      border-left-color: #4caf7d;
+      background: rgba(76, 175, 125, 0.12);
+    }
+    .health-healthy strong {
+      color: #6fd39b;
+    }
+    .health-degraded {
+      border-left-color: #d9a441;
+      background: rgba(217, 164, 65, 0.12);
+    }
+    .health-degraded strong {
+      color: #e8bf6a;
+    }
+    .health-investigate {
+      border-left-color: #d1544f;
+      background: rgba(209, 84, 79, 0.14);
+    }
+    .health-investigate strong {
+      color: #ea7f7a;
+    }
+    .now-detail {
+      color: #b8d0c2;
+      font-size: 0.85em;
+      margin-left: 6px;
+    }
+    .now-sub {
+      color: #8aa695;
+      font-size: 0.85em;
+    }
+    .now-demand-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demand-subgroup {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demand-sublabel {
+      color: #8aa695;
+      font-size: 0.8em;
+      min-width: 75px;
+    }
+    .demand-chip {
+      font-size: 0.75em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid #28503c;
+      background: rgba(12, 22, 17, 0.8);
+    }
+    .demand-chip.served {
+      color: #2fd3c4;
+      border-color: rgba(47, 211, 196, 0.4);
+    }
+    .demand-chip.completed {
+      color: #56d364;
+      border-color: rgba(86, 211, 100, 0.4);
+    }
+
+    /* --- Cycle Feed --- */
+    .feed-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .feed-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feed-row:hover {
+      border-color: #2f5c46;
+      background: rgba(15, 32, 24, 0.8);
+    }
+    .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
+    .feed-outcome-failed { border-left: 4px solid #b23a3a; }
+    .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
+    .feed-outcome-rejected { border-left: 4px solid #d19a66; }
+    .feed-outcome-idle { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-partial { border-left: 4px solid #56d364; }
+    .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
+    .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88em;
+    }
+    .feed-title {
+      color: #e2f0e6;
+      font-size: 0.95em;
+    }
+    /* Issue #38: terminal-style log prefix on feed lines. */
+    .feed-title::before {
+      content: '>> ';
+      color: #56d364;
+    }
+    .feed-cid {
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+    }
+    .feed-delta {
+      color: #2fd3c4;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8em;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .feed-ts {
+      color: #8aa695;
+      font-size: 0.78em;
+      white-space: nowrap;
+    }
+    .feed-tree-link {
+      color: #2fd3c4;
+      font-size: 0.78em;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files {
+      font-size: 0.78em;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+    }
+    /* Issue #60: per-cycle LLM cost line + budget-pressure marker. */
+    .feed-cost {
+      font-size: 0.75em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-pressure {
+      color: #d19a66;
+      font-weight: 700;
+    }
+    /* Issue #72: full-history page — day grouping + outcome filter. */
+    .feed-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+      list-style: none;
+    }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 10px 0;
+    }
+    .filter-btn {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75em;
+      color: #9db4a6;
+      background: rgba(8, 15, 11, 0.8);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      color: #56d364;
+      border-color: #56d364;
+    }
+    .feed-row.filtered-out { display: none; }
+    .feed-overflow-row { display: none; }
+    .feed-files > summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .feed-files-list {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-family: 'Consolas', monospace;
+    }
+    .feed-files-list li { padding: 1px 0; word-break: break-all; }
+
+    /* --- panel nav + copyable ids (issue #47) --- */
+    .panel-nav {
+      padding: 6px 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      border-bottom: 1px solid #182a20;
+    }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a:hover { text-decoration: underline; }
+    /* Issue #70: multi-page site nav -- current page highlighted. */
+    .site-nav a.nav-current {
+      color: #56d364;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    /* Issue #70: index teasers. */
+    .teaser-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88em;
+    }
+    .teaser-list a { color: #2fd3c4; font-family: 'Consolas', monospace; }
+    .copyable { cursor: pointer; }
+    .copyable.copied { color: #2fd3c4; }
+
+    /* --- Hypotheses Panel --- */
+    .hypo-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .hypo-split { grid-template-columns: 1fr; }
+    }
+    .hypo-group h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    .hypo-details { margin-top: 8px; }
+    .futility-empty { font-size: 0.85em; color: #9db4a6; margin: 4px 0; }
+    .futility-omitted-note { font-size: 0.8em; color: #9db4a6; font-style: italic; }
+    .futility-never-evaluated .futility-attempts { color: #9db4a6; font-weight: normal; }
+    .hypo-summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .hypo-summary:hover { color: #56d364; }
+    .hypo-details ul.hypo-list { margin-top: 6px; }
+    .hypo-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hypo-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85em;
+    }
+    .hypo-title {
+      color: #e2f0e6;
+      margin-left: 6px;
+    }
+    .hypo-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8em;
+      color: #8aa695;
+      margin-top: 4px;
+    }
+    .hypo-ev a {
+      color: #2fd3c4;
+      text-decoration: underline;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* --- Agent Panel --- */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .agent-subcol { min-width: 0; max-width: 100%; width: 100%; overflow: hidden; }
+    @media (max-width: 1000px) {
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+    .agent-subcol h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid #182a20;
+      padding-bottom: 4px;
+    }
+    /* Issue #39: hardware identity line (derived from collected data only). */
+    .host-identity {
+      font-size: 0.8em;
+      color: #8aa695;
+      margin: 0 0 10px 0;
+      padding: 3px 8px;
+      border: 1px dashed #28503c;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    /* Issue #63: proposer visibility block. */
+    .proposer-block {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #182a20;
+    }
+    .proposer-block h3 {
+      font-size: 0.9em;
+      color: #9db4a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .proposer-decision { font-size: 0.85em; margin: 0 0 8px 0; color: #dcebe1; }
+    .proposer-model-line { font-size: 0.8em; color: #8aa695; margin: 0 0 8px 0; }
+    .proposer-model { color: #56d364; font-family: 'Consolas', monospace; }
+    .proposer-table { max-width: 480px; }
+    /* Issue #73: lessons history page. */
+    .lessons-filter {
+      font-family: 'Consolas', monospace;
+      font-size: 0.82em;
+      color: #dcebe1;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #28503c;
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 0 10px 0;
+      width: min(420px, 100%);
+    }
+    .lessons-list { list-style: none; margin: 0; padding: 0; }
+    .lesson-day-header {
+      font-size: 0.72em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8aa695;
+      border-top: 1px dashed #2f5c46;
+      padding: 10px 4px 2px;
+    }
+    .lesson-row {
+      background: rgba(12, 22, 17, 0.7);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 0.85em;
+    }
+    .lesson-meta { font-size: 0.8em; color: #8aa695; }
+    .lesson-id { font-family: 'Consolas', monospace; color: #56d364; }
+    .lesson-cycle { font-family: 'Consolas', monospace; color: #2fd3c4; margin-left: 8px; }
+    .lesson-title { color: #e2f0e6; font-weight: 600; margin: 4px 0 2px; }
+    .lesson-hypothesis { color: #9db4a6; font-size: 0.92em; }
+    .lesson-result summary { cursor: pointer; color: #8aa695; font-size: 0.85em; }
+    .lesson-result pre {
+      margin: 4px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85em;
+      color: #cfe3d7;
+    }
+    .lesson-insight { color: #d19a66; font-size: 0.85em; margin-top: 4px; }
+    /* Issue #96: v2 lesson card styles */
+    .lesson-row-v2 { border-color: #1e4a38; }
+    .lesson-problem {
+      color: #e2b2b2;
+      font-size: 0.87em;
+      margin: 4px 0 2px;
+    }
+    .lesson-solution {
+      color: #a8d9b2;
+      font-size: 0.87em;
+      margin: 2px 0 4px;
+    }
+    .lesson-label { font-weight: 600; color: #8aa695; }
+    .lesson-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .lesson-kind {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(40, 70, 100, 0.4);
+      border: 1px solid #2b5278;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #8bb4d9;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-tag {
+      display: inline-block;
+      font-size: 0.72em;
+      background: rgba(38, 80, 60, 0.5);
+      border: 1px solid #2f5c46;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #9db4a6;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-severity {
+      display: inline-block;
+      font-size: 0.72em;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lesson-severity-critical { background: rgba(180, 60, 60, 0.25); color: #e57373; border: 1px solid #b03030; }
+    .lesson-severity-high     { background: rgba(180, 120, 40, 0.25); color: #e0a060; border: 1px solid #a06020; }
+    .lesson-severity-medium   { background: rgba(180, 160, 40, 0.20); color: #d4c060; border: 1px solid #8a7820; }
+    .lesson-severity-low      { background: rgba(60, 120, 80, 0.20); color: #8aa695; border: 1px solid #2f5c46; }
+    .lesson-seen {
+      display: inline-block;
+      font-size: 0.72em;
+      color: #8aa695;
+      background: rgba(30, 58, 45, 0.5);
+      border: 1px solid #1e3a2d;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+    }
+    .lesson-duplicate-warning { color: #e06c75; border: 1px solid #b23a3a; padding: 1px 5px; margin-left: 6px; font-size: .72em; text-transform: uppercase; }
+    .lesson-legacy-fold { list-style: none; margin: 12px 0 0; }
+    .lesson-legacy-details > summary.lesson-legacy-summary {
+      cursor: pointer;
+      font-size: 0.78em;
+      color: #5a7a68;
+      padding: 6px 4px;
+      border-top: 1px dashed #2f5c46;
+      user-select: none;
+    }
+    .lesson-legacy-details > summary.lesson-legacy-summary:hover { color: #8aa695; }
+    .lessons-list-legacy { margin-top: 6px; }
+    .agents-md-box pre, .goal-text-box pre {
+      margin: 0;
+      background: rgba(8, 15, 11, 0.9);
+      border: 1px solid #1e3a2d;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.78em;
+      color: #cfe3d7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .charter-details > summary {
+      font-size: 0.82em;
+      color: #9db4a6;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+    }
+    .charter-details > summary:hover { color: #56d364; }
+    .skills-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8em;
+      background: rgba(8, 15, 11, 0.6);
+      border-radius: 6px;
+      overflow: hidden;
+      font-variant-numeric: tabular-nums;
+    }
+    .agent-wide-content { max-width: 100%; overflow-x: auto; }
+    .agent-wide-content pre, .agent-wide-content .skills-table { min-width: max-content; }
+    .skills-table th {
+      text-align: left;
+      padding: 6px 8px;
+      background: #0f2018;
+      color: #9db4a6;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1e3a2d;
+    }
+    .skills-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #182a20;
+    }
+    .skill-high-ratio {
+      background: rgba(86, 211, 100, 0.08);
+    }
+    .skill-reads {
+      font-weight: 700;
+      color: #56d364;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+    }
+    .skill-untracked {
+      color: #7d9c8a;
+      font-style: italic;
+    }
+
+    /* --- direction boxes (Lane A / RESEARCH) --- */
+    .dir-box {
+      width: 100%;
+      height: 100%;
+      background: rgba(12, 22, 17, 0.94);
+      border: 1px solid #28503c;
+      border-radius: 8px;
+      padding: 10px;
+      position: relative;
+      font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+      color: #dcebe1;
+    }
+    .dir-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 16px rgba(86, 211, 100, 0.65);
+    }
+    .dir-box-plateaued { opacity: 0.7; border-color: #6d3232; }
+    .dir-box-dim { opacity: 0.55; }
+    .dir-box-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .dir-glyph { font-size: 1.1em; color: #56d364; }
+    .dir-name { font-weight: 600; color: #e2f0e6; font-size: 0.92em; }
+    .dir-lever {
+      font-variant: small-caps;
+      letter-spacing: 0.5px;
+      color: #9db4a6;
+      font-size: 0.76em;
+      margin-bottom: 6px;
+    }
+    .ribbon {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #56d364;
+      color: #04240f;
+      font-size: 0.6em;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transform: rotate(4deg);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    .cooldown { font-size: 0.68em; color: #9db4a6; margin-top: 4px; }
+
+    .dir-elbow { fill: none; stroke: #2fd3c4; stroke-width: 2.2; opacity: 0.9; }
+    .mint-elbow { fill: none; stroke: #56d364; stroke-width: 2; opacity: 0.85; }
+    .mint-glyph { fill: #56d364; font-size: 15px; }
+
+    /* --- evolution boxes (Lane B / DGM LINEAGE) --- */
+    .evo-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      background: rgba(12, 22, 17, 0.9);
+      border: 1.5px solid #3d6b52;
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #cfe3d7;
+    }
+    .evo-box-current {
+      border-color: #56d364;
+      box-shadow: 0 0 12px rgba(86, 211, 100, 0.75);
+      background: rgba(47, 211, 196, 0.12);
+    }
+    .evo-box-abandoned { opacity: 0.45; }
+    .evo-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .evo-diamond { color: #56d364; font-weight: 700; }
+    .evo-box-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; color: #e2f0e6; }
+    .evo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+    .evo-dir-badge {
+      font-size: 8px;
+      text-transform: uppercase;
+      background: rgba(47, 211, 196, 0.15);
+      color: #2fd3c4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(47, 211, 196, 0.3);
+    }
+    .evo-sha { color: #8aa695; }
+    .evo-fitness { font-size: 9px; color: #b8d0c2; }
+    .evo-elbow { fill: none; stroke: #2f5c46; stroke-width: 1.6; }
+    /* Issue #53: thick bright edge along the current node's ancestry. */
+    .evo-elbow-best { fill: none; stroke: #e2f0e6; stroke-width: 3.4; opacity: 1; }
+    .evo-legend-label { fill: #8aa695; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #71: DGM archive tree. */
+    .arch-edge { stroke: #2f5c46; stroke-width: 1.4; }
+    .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
+    .arch-node { cursor: pointer; }
+    .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
+    .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
+    .lineage-filter-note { color: #d19a66; font-size: .8rem; }
+    .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
+    .lineage-filter-note[hidden] { display: none; }
+    .lineage-day-group[hidden] { display: none; }
+    .lineage-day-group h3 { color: #56d364; font-size: .8rem; margin: 4px 0; }
+    /* #208: no max-width — a wide day scrolls inside .lineage-day-group instead of
+       being scaled down until r=9 circles are 4 px and the labels unreadable. */
+    .lineage-day-svg { display: block; height: auto; overflow: visible; }
+    .lineage-graph-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+    .lineage-node { fill: #2fd3c4; stroke: #dcebe1; stroke-width: 2; }
+    .arch-node.arch-integrated { fill: #2fd3c4; stroke: #dcebe1; }
+    .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
+    .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
+    .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
+    .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
+    .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
+    .lineage-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 12px 10px; padding: 6px 10px; background: rgba(8, 17, 12, 0.6); border: 1px solid #1e3b2b; border-radius: 4px; font-size: 0.76rem; color: #8aa695; font-family: 'Consolas', monospace; }
+    .lineage-legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; max-width: 100%; }
+    .lineage-legend-title { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-legend-item { display: inline-flex; align-items: center; gap: 5px; color: #b8d0c2; }
+    .lineage-legend-swatch { display: inline-block; vertical-align: middle; }
+    .lineage-legend-edge { fill: none; stroke: #2f5c46; stroke-width: 2; }
+    .lineage-legend-edge-inferred { stroke-dasharray: 6 5; }
+    .lineage-legend-node { stroke-width: 2; }
+    .lineage-legend .arch-node { cursor: default; pointer-events: none; }
+    .lineage-hidden-parent { fill: #d19a66; font-size: 10px; }
+    .lineage-context-node { fill: #263c31 !important; stroke: #d19a66 !important; stroke-width: 3; stroke-dasharray: 2 2; opacity: .9; }
+    .lineage-context-edge { stroke: #d19a66 !important; stroke-dasharray: 4 3; opacity: .9; }
+    .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
+    .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
+    .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
+    .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
+    .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
+    .lineage-zoom-level { min-width: 5ch; text-align: center; color: #8aa695; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    /* Issue #250: on lineage.html the graph owns the viewport. The document
+       does not scroll; .lineage-graph-scroll does, on both axes. Every rule
+       here is scoped to body.page-lineage so the other six pages keep the
+       ordinary document flow. */
+    body.page-lineage { height: 100vh; height: 100dvh; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+    body.page-lineage .empire-strip,
+    body.page-lineage .site-nav,
+    body.page-lineage .page-footer { flex: 0 0 auto; }
+    /* .dashboard-main carries `margin: 0 auto`, and an auto cross-axis margin
+       cancels the flex `stretch` that would otherwise hold it to the body's
+       width -- it would size to its widest content and take the graph with it.
+       An explicit width restores the constraint; max-width still centres it. */
+    body.page-lineage .dashboard-main { flex: 1 1 auto; min-height: 0; min-width: 0; width: 100%; padding-bottom: 0; }
+    body.page-lineage #panel-lineage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden; }
+    body.page-lineage .lineage-unified-graph { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
+    body.page-lineage .lineage-day-controls,
+    body.page-lineage .lineage-coverage-note,
+    body.page-lineage .lineage-legend,
+    body.page-lineage .lineage-zoom-controls { flex: 0 0 auto; }
+    body.page-lineage .lineage-graph-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; }
+    /* Issue #252: the graph is a canvas -- the wheel zooms toward the pointer
+       and a drag moves it. The cursor is the only thing that says so, and the
+       renderer keeps these two attributes in step with the hand tool, Space,
+       and whether a drag is actually under way. */
+    .lineage-graph-scroll[data-pan-mode="hand"] { cursor: grab; }
+    .lineage-graph-scroll[data-panning="true"] { cursor: grabbing; user-select: none; }
+    /* The details panel would otherwise consume the column the graph needs,
+       so on this page it floats over the graph with its own scrollbar. */
+    body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    @media (max-width: 720px) {
+      body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+    }
+    .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
+    .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .cycle-details-panel[hidden] { display: none; }
+    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
+    .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
+    .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
+    .cycle-details-body p { margin: 4px 0; }
+    .cycle-details-body ul { margin: 4px 0 8px 20px; padding: 0; }
+    .cycle-details-links { border-top: 1px solid #1e3b2b; padding-top: 10px; }
+    .arch-star { fill: #56d364; color: #56d364; font-size: 14px; }
+    .arch-legend-label { fill: #8aa695; font-size: 10px; font-family: 'Consolas', monospace; }
+    /* Issue #93: day separator lines and date labels in the archive tree. */
+    .arch-day-sep { stroke: #2f5c46; stroke-width: 1; stroke-dasharray: 4 3; }
+    .arch-day-label { fill: #5a7a68; font-size: 9px; font-family: 'Consolas', monospace; }
+    /* Issue #93: date sub-label in evolution node meta. */
+    .evo-date { color: #5a7a68; font-size: 8px; margin-left: 4px; }
+    .arch-note {
+      font-size: 0.78em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      padding: 8px 12px 0;
+    }
+    .evo-fallback { color: #dcebe1; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.64em;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .badge-partial { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-skipped { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
+    .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
+    .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
+    .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
+    .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+    .badge-plateaued { background: rgba(178, 58, 58, 0.15); color: #d97b7b; border: 1px solid #6d3232; }
+    .badge-integrated { background: rgba(47, 211, 196, 0.2); color: #2fd3c4; border: 1px solid #2fd3c4; }
+    .badge-failed { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
+    .badge-blocked { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .badge-rejected { background: rgba(209, 154, 102, 0.2); color: #d19a66; border: 1px solid #d19a66; }
+    .verdict-supported { background: rgba(86, 211, 100, 0.18); color: #56d364; border: 1px solid #56d364; }
+    .verdict-refuted { background: rgba(178, 58, 58, 0.18); color: #d97b7b; border: 1px solid #6d3232; }
+    .verdict-inconclusive { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
+
+    .spark { margin-bottom: 2px; }
+    .spark-top, .spark-bottom {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+    .spark-bottom { align-items: flex-start; }
+    .spark-baseline { border-top: 1px dashed #2f5c46; }
+    .bar { width: 5px; border-radius: 1px; display: block; }
+    .bar-pos { background: #56d364; }
+    .bar-neg { background: #b23a3a; }
+    .bar-placeholder { height: 0; background: transparent; }
+    .spark-empty { color: #7fa08d; font-style: italic; font-size: 0.74em; margin-bottom: 4px; }
+    .spark-mean { font-size: 0.7em; margin-top: 2px; }
+    /* Issue #61: scorecard-defined KPI target badge. */
+    .kpi-target {
+      font-size: 0.62em;
+      color: #8aa695;
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }    .mean-pos { color: #56d364; }
+    .mean-neg { color: #d97b7b; }
+
+    footer.page-footer {
+      text-align: center;
+      color: #6f9480;
+      font-size: 0.78em;
+      margin-top: 20px;
+      padding-top: 14px;
+    }
+    .footer-computed {
+      color: #7d8aa3;
+    }
+    /* Issue #1772: the daily digest -- the operator's undo affordance. */
+    .panel-digest .panel-subtitle {
+      color: #7d8aa3;
+      font-size: 0.85em;
+      margin: 0 0 12px;
+    }
+    .digest-day { margin-bottom: 18px; }
+    .digest-day-heading {
+      font-size: 0.95em;
+      color: #c9d6e3;
+      margin: 0 0 6px;
+    }
+    .digest-day-count { color: #7d8aa3; font-weight: normal; }
+    .digest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82em;
+    }
+    .digest-table th {
+      text-align: left;
+      color: #7d8aa3;
+      font-weight: normal;
+      border-bottom: 1px solid #2a3a4a;
+      padding: 4px 8px;
+    }
+    .digest-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #1c2733;
+      vertical-align: top;
+    }
+    .digest-sha { font-family: 'Consolas', monospace; }
+    .digest-paths {
+      font-family: 'Consolas', monospace;
+      color: #9fb3c8;
+      word-break: break-all;
+    }
+    .digest-tier, .digest-confirmed {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .digest-confirmed-yes { background: #1c3a2a; color: #56d364; }
+    .digest-confirmed-no { background: #3a2a1c; color: #d9a656; }
+    .digest-confirmed-untracked { background: #2a2a3a; color: #9d9db3; }
+
+
+/* Issue #227: Two-tier agent context visualization styling */
+.context-subject-group {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #30363d;
+}
+.context-subject-group:first-of-type { margin-top: 16px; }
+.context-subject-heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #c9d1d9;
+  letter-spacing: .01em;
+}
+.context-knowledge-group .tier2-deep-section,
+.context-assembly-group .context-detail-section { margin-top: 0; }
+.context-telemetry-box { margin: 10px 0; padding: 9px 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #c9d1d9; font-size: 12px; overflow-wrap: anywhere; }
+
+.context-panel {
+  background: var(--color-bg-subtle, #161b22);
+  border: 1px solid var(--color-border-default, #30363d);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.context-header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.context-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-success { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+.badge-danger { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+.badge-secondary { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+.cycle-pill { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: monospace; }
+.context-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.context-kpi-card {
+  background: var(--color-canvas-default, #0d1117);
+  border: 1px solid var(--color-border-muted, #21262d);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
+.kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
+.stat-good { color: #3fb950; }
+.stat-warn { color: #f85149; }
+.context-meter-box {
+  margin: 16px 0;
+  background: #0d1117;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #21262d;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+.context-progress-bar {
+  height: 10px;
+  background: #21262d;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-progress-fill { height: 100%; transition: width 0.3s ease; }
+.prompt-fit-events {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.45);
+}
+.prompt-fit-events h3 { margin: 0 0 4px; }
+.prompt-fit-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.prompt-fit-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(110, 118, 129, 0.10);
+  font-size: 13px;
+}
+.prompt-fit-event-item strong { color: var(--text-muted, #8b949e); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.prompt-fit-event-item span { overflow-wrap: anywhere; }
+.prompt-fit-event-wide { grid-column: 1 / -1; }
+
+.context-dropped-alert {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  color: #f85149;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.dropped-pill { background: rgba(248, 81, 73, 0.2); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
+.two-tier-canvas {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.tier-col {
+  flex: 1;
+  min-width: 320px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+}
+.tier-col-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.tier-tag {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.tag-t1 { background: #1f6feb; color: #fff; }
+.tag-t2 { background: #8957e5; color: #fff; }
+.tier-col-header h3 { font-size: 15px; margin: 0; color: #c9d1d9; }
+.tier-col-header p { font-size: 12px; color: #8b949e; margin: 2px 0 0; }
+.tier1-blocks-list { display: flex; flex-direction: column; gap: 6px; }
+.t1-block-item {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.t1-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.t1-name { font-weight: 600; color: #58a6ff; }
+.t1-sz { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.t1-desc { font-size: 11px; color: #8b949e; margin-left: 6px; }
+.t1-empty { opacity: 0.6; }
+.t1-linked { flex-direction: column; align-items: stretch; gap: 4px; }
+.t1-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tier-link-badge {
+  display: inline-block;
+  background: rgba(137, 87, 229, 0.15);
+  color: #a371f7;
+  border: 1px solid rgba(137, 87, 229, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 2px;
+}
+.tier-link-badge:hover { background: rgba(137, 87, 229, 0.3); text-decoration: none; }
+.t1-sep-row { background: transparent; border: 1px dashed #30363d; color: #8b949e; font-size: 11px; font-style: italic; justify-content: space-between; }
+.t1-msg { background: rgba(88, 166, 255, 0.05); border-color: rgba(88, 166, 255, 0.2); }
+.tier-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.bridge-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  max-width: 180px;
+}
+.bridge-arrow { font-size: 24px; color: #a371f7; display: block; margin-bottom: 4px; }
+.bridge-card strong { display: block; font-size: 13px; color: #c9d1d9; }
+.bridge-card p { font-size: 11px; color: #8b949e; margin: 2px 0 6px; }
+.bridge-cost { font-size: 10px; color: #a371f7; font-weight: 500; }
+.tier2-targets-list { display: flex; flex-direction: column; gap: 10px; }
+.t2-target-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.t2-card-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.t2-size { font-family: monospace; color: #a371f7; font-size: 12px; }
+.t2-target-card p { font-size: 12px; color: #8b949e; margin: 0 0 8px; }
+.t2-explore-btn { font-size: 11px; color: #58a6ff; text-decoration: none; font-weight: 500; }
+.t2-explore-btn:hover { text-decoration: underline; }
+.context-detail-section { margin-top: 32px; }
+.context-detail-section h3 { font-size: 17px; margin: 0 0 4px; color: #c9d1d9; }
+.section-sub { font-size: 13px; color: #8b949e; margin: 0 0 16px; }
+.context-block-details {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.block-summary {
+  padding: 10px 12px;
+  background: #161b22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  user-select: none;
+}
+.block-summary:hover { background: #1f242c; }
+.block-seq { background: #30363d; color: #c9d1d9; border-radius: 3px; font-size: 10px; font-weight: bold; padding: 1px 5px; }
+.block-title { color: #58a6ff; }
+.block-label { color: #8b949e; font-size: 12px; }
+.block-meta { margin-left: auto; font-family: monospace; color: #8b949e; font-size: 12px; }
+.block-body { padding: 12px; max-height: 400px; overflow-y: auto; background: #0d1117; }
+.block-body pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: monospace; color: #c9d1d9; }
+.context-block-empty {
+  background: #0d1117;
+  border: 1px dashed #30363d;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reconciliation-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+}
+.rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-header h4 { margin: 0; font-size: 14px; color: #c9d1d9; }
+.reconciliation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reconciliation-table th, .reconciliation-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+.reconciliation-table th { color: #8b949e; font-weight: 500; }
+.reconciliation-table .num { text-align: right; font-family: monospace; }
+.reconciliation-table .sep-row { background: rgba(137, 87, 229, 0.05); color: #a371f7; }
+.reconciliation-table .muted-row { opacity: 0.6; }
+.reconciliation-table .total-row { border-top: 2px solid #30363d; font-weight: bold; background: #161b22; }
+.rec-note { font-size: 11px; color: #8b949e; margin: 8px 0 0; }
+.rec-unavailable { border-color: rgba(210, 153, 34, 0.4); background: rgba(210, 153, 34, 0.05); }
+.tier2-deep-section { margin-top: 32px; border-top: 1px solid #30363d; padding-top: 24px; }
+.t2-group { margin-bottom: 24px; }
+.t2-group-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.t2-group-header h4 { margin: 0; font-size: 15px; color: #c9d1d9; }
+.t2-group-note { font-size: 12px; color: #8b949e; }
+.skills-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.skill-asset-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.skill-card-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.skill-card-name { color: #58a6ff; font-family: monospace; }
+.skill-card-size { color: #8b949e; font-size: 11px; }
+.skill-card-desc { font-size: 12px; color: #8b949e; margin: 0 0 10px; line-height: 1.4; flex-grow: 1; }
+.skill-card-details summary { font-size: 11px; color: #a371f7; cursor: pointer; user-select: none; }
+.skill-card-details pre { margin: 8px 0 0; max-height: 280px; overflow-y: auto; background: #161b22; padding: 8px; border-radius: 4px; font-size: 11px; }
+.missing-artifact-callout {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #f85149;
+}
+.callout-icon { font-size: 18px; }
+.missing-artifact-callout p { margin: 2px 0 0; font-size: 12px; color: #c9d1d9; }
+.lessons-pills, .memory-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lesson-pill, .memory-pill {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8b949e;
+  font-family: monospace;
+}
+.pill-more { background: transparent; border-style: dashed; color: #58a6ff; font-family: sans-serif; }
+
+/* #301: recorded-order Tier 1 blocks, owner badges, flags, rule owners & user-message sections */
+.t1-owner {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #30363d;
+  color: #8b949e;
+}
+.t1-owner-release { color: #58a6ff; border-color: rgba(88, 166, 255, 0.4); }
+.t1-owner-instance { color: #d29922; border-color: rgba(210, 153, 34, 0.4); }
+.t1-owner-generated { color: #a371f7; border-color: rgba(163, 113, 247, 0.4); }
+.t1-owner-unmapped { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
+.badge-flag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.badge-flag-missing { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+.badge-flag-truncated { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.block-preview { font-size: 11px; color: #6e7681; font-style: italic; margin-left: 8px; }
+.user-message-sections, .rule-owners-panel { margin-top: 18px; }
+.user-message-sections h4, .rule-owners-panel h4 { margin: 0 0 8px; font-size: 14px; color: #c9d1d9; }
+
+/* ozand/eeebot#1755: truncation/drop streak + window-pressure indicators */
+.context-indicator-box {
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.context-indicator-box .indicator-note { color: #8b949e; font-size: 12px; margin-left: 6px; }
+.context-indicator-box .indicator-note code { color: inherit; }
+.context-indicator-box .indicator-pills { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.indicator-no-data { background: rgba(139, 148, 158, 0.08); border: 1px solid rgba(139, 148, 158, 0.3); }
+.indicator-healthy { background: rgba(46, 160, 67, 0.08); border: 1px solid rgba(46, 160, 67, 0.3); }
+.indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
+.indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
+</style>
+</head>
+<body>
+
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">160</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">53.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 03:58:20 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">35.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">12 events · 9 tasks · 3.0%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">131 events · 10 tasks · 32.7%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">5.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.0M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
+      <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790385365.214" data-render-age-seconds="32">data: 31s old &middot; generated 01:16 UTC</span></div>
+    </header>
+    
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<main class="dashboard-main">
+
+    <section class="panel panel-feed" id="panel-feed">
+      <h2 class="panel-title">Cycle History (3545 cycles)</h2>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3495 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+            (function(){
+              var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
+              if (!btn) return;
+              btn.addEventListener('click', function () {
+                var indexSrc = btn.getAttribute('data-cycle-archive-index-src');
+                btn.disabled = true;
+                var original = btn.textContent;
+                btn.textContent = 'loading…';
+                function getJson(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); }); }
+                getJson(indexSrc).then(function (idx) {
+                  var count = Number(idx && idx.chunk_count || 0);
+                  var urls = [];
+                  for (var i = 0; i < count; i++) { urls.push(indexSrc.replace(/cycles-archive-index\.json$/, 'cycles-archive-' + i + '.json')); }
+                  return Promise.all(urls.map(getJson));
+                }).then(function (chunks) {
+                  var list = document.querySelector('#panel-feed .feed-list');
+                  // Chunks are numbered oldest-first; render newest-archived-first
+                  // (chunk with the highest index) to match the page's own order.
+                  for (var i = chunks.length - 1; i >= 0; i--) {
+                    (chunks[i] || []).forEach(function (html) { list.insertAdjacentHTML('beforeend', html); });
+                  }
+                  btn.remove();
+                  window.dispatchEvent(new Event('hashchange'));
+                }).catch(function (err) {
+                  btn.disabled = false;
+                  btn.textContent = original + ' -- unavailable (' + (err && err.message || err) + ')';
+                });
+              });
+            })();
+            </script>
+      <ul class="feed-list">
+        <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
+        
+        <li class="feed-day-header">2026-09-26 MSK</li>
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-1692d73aff16">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-1692d73aff16)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-1692d73aff16">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T01:04:48.794784Z">04:04 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-d4c56a622a2a</span></div>
+          
+          <div class="feed-cost">&#9889; 13 calls &middot; 215.6K tok &middot; dur 5m3s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-0bc6ca14e901">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(detect_pipeline_status): add has_unsafe_pipeline_status for post-pipeline $? checks</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-0bc6ca14e901)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-0bc6ca14e901">details</a>
+            
+            <a href="lineage.html#node-23e560e" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-26T00:27:51.715472Z">03:27 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">priority-ce8066e4f6a2</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/posix_shell_pipeline_status.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-26.md, scripts/detect_pipeline_status.py, tests/test_detect_pipeline_status.py</div>
+          <div class="feed-cost">&#9889; 34 calls &middot; 777.3K tok &middot; dur 19m23s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6b614836ced6">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(rewrite_time_cmd): rewrite leading bare time token to /usr/bin/time</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-6b614836ced6)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-6b614836ced6">details</a>
+            
+            <a href="lineage.html#node-fb8f47b" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-25T23:52:36.448294Z">02:52 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">priority-b8980f42e2af</span></div>
+          <details class="feed-files"><summary>&#128193; diary/2026-09-25.md, lessons/posix_shell_pipeline_exit.md, scripts/rewrite_time_cmd.py +1 more</summary><ul class="feed-files-list"><li>diary/2026-09-25.md</li><li>lessons/posix_shell_pipeline_exit.md</li><li>scripts/rewrite_time_cmd.py</li><li>tests/test_rewrite_time_cmd.py</li></ul></details>
+          <div class="feed-cost">&#9889; 33 calls &middot; 729.2K tok &middot; dur 16m44s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-910534b73f03">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: mutation_surface_violation</span>
+            <strong class="feed-title">failed: mutation_surface_violation</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-910534b73f03)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-910534b73f03">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T23:19:59.729562Z">02:19 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-a909e24a3063</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/posix_shell_pipeline_status.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 28 calls &middot; 596.0K tok &middot; dur 13m36s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-78d698aacb31">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">docs(skills): connect verify-lessons-integrity to full lesson validation tooling</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-78d698aacb31)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-78d698aacb31">details</a>
+            
+            <a href="lineage.html#node-05ddd09" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-25T22:40:35.870160Z">01:40 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-21299fae3ade</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, skills/verify-lessons-integrity/SKILL.md</div>
+          <div class="feed-cost">&#9889; 34 calls &middot; 806.0K tok &middot; dur 17m36s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-f4052993a98c">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: gate_failed</span>
+            <strong class="feed-title">failed: gate_failed</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-f4052993a98c)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-f4052993a98c">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T21:37:56.993074Z">00:37 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-44bd17468510</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/avoiding_repeat_failures.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 42 calls &middot; 966.4K tok &middot; dur 34m37s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-e0ae9345a245">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">diary: record cooldown pruning cycle outcome</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-e0ae9345a245)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-e0ae9345a245">details</a>
+            
+            <a href="lineage.html#node-7674c95" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-25T21:27:13.387693Z">00:27 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-37db4ecca5cb</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, scripts/check_litellm_cooldown.py, tests/test_check_litellm_cooldown.py</div>
+          <div class="feed-cost">&#9889; 48 calls &middot; 1.84M tok &middot; dur 38m37s</div>
+        </li>
+        
+        <li class="feed-day-header">2026-09-25 MSK</li>
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-20634d6019f1">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-20634d6019f1)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-20634d6019f1">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T19:23:37.653129Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-c8cc19601f2f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 55 calls &middot; 1.69M tok &middot; dur 37m55s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b494cdefe253">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit residual state — diary/2026-09-25.md</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-b494cdefe253)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-b494cdefe253">details</a>
+            
+            <a href="lineage.html#node-5daa051" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-25T18:51:14.800172Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-7f4608db2c48</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md</div>
+          <div class="feed-cost">&#9889; 24 calls &middot; 713.3K tok &middot; dur 16m16s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-77ca3cf3580c">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">feat(validate_cycle_handoff): verify doc-only handoffs via assert_doc_only</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-77ca3cf3580c)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-77ca3cf3580c">details</a>
+            
+            <a href="lineage.html#node-6852f43" class="feed-tree-link">tree &#8599;</a>
+            <span class="feed-ts" title="2026-09-25T14:52:36.694199Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-e1b331b0f033</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, scripts/validate_cycle_handoff.py, tests/test_validate_cycle_handoff.py</div>
+          <div class="feed-cost">&#9889; 185 calls &middot; 8.00M tok &middot; dur 2h43m47s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d47e815c0ceb">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">diary: record check_runner_compat no-args exit 0 fix</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d47e815c0ceb)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-d47e815c0ceb">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T14:29:13.651268Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-b091295f4199</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-002">error:ERR-2026-09-06-002</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/cli_subprocess_exit_codes.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, scripts/check_runner_compat.py, tests/test_check_runner_compat.py</div>
+          <div class="feed-cost">&#9889; 32 calls &middot; 564.7K tok &middot; dur 8m26s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-7ef86f447cda">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">diary: cycle cycle-7ef86f447cda plan (ADR-031)</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-7ef86f447cda)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-7ef86f447cda">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T13:38:53.123415Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">decay-a8eb53e370de</span></div>
+          <details class="feed-files"><summary>&#128193; diary/2026-09-25.md, docs/SYSTEM_MAP.md, scripts/truncate_conversation.py +1 more</summary><ul class="feed-files-list"><li>diary/2026-09-25.md</li><li>docs/SYSTEM_MAP.md</li><li>scripts/truncate_conversation.py</li><li>tests/test_truncate_conversation.py</li></ul></details>
+          <div class="feed-cost">&#9889; 51 calls &middot; 1.65M tok &middot; dur 29m54s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-69652c99c4ae">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">selfevo: auto-commit residual state — diary/2026-09-25.md</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-69652c99c4ae)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-69652c99c4ae">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T12:07:11.703349Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-89c5cb1d4f06</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/markdown_code_block_validation_protocol.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md</div>
+          <div class="feed-cost">&#9889; 85 calls &middot; 3.14M tok &middot; dur 62m28s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-d5d41264ce7a">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">perf(validate_type_comparison): single read+parse per file plus marker pre-filter</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d5d41264ce7a)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-d5d41264ce7a">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T09:07:09.050241Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-09bf1f2e6ed5</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, scripts/validate_type_comparison.py, tests/test_validate_type_comparison.py</div>
+          <div class="feed-cost">&#9889; 140 calls &middot; 4.98M tok &middot; dur 2h1m43s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-091d10241fc9">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">fix(validate_script_entrypoints): record full dotted import paths in library exemption</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-091d10241fc9)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-091d10241fc9">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T08:37:59.980448Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-c4095c7ab803</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-4b4bdcf4bec7-8fd2 (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, scripts/validate_script_entrypoints.py</div>
+          <div class="feed-cost">&#9889; 33 calls &middot; 636.8K tok &middot; dur 14m7s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-65a0a1fadaf4">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">docs(lessons): add exploration turn cap to bound passive reconnaissance turns</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-65a0a1fadaf4)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-65a0a1fadaf4">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T08:01:45.424897Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-d6d6390d2a55</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/bounded_inspection_turns.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, lessons/exploration_turn_cap.md</div>
+          <div class="feed-cost">&#9889; 31 calls &middot; 952.3K tok &middot; dur 20m22s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c18462f97c1b">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">docs(lessons): document CLI deprecation stderr isolation for JSON stdout</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-c18462f97c1b)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-c18462f97c1b">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T07:30:57.441836Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-4f6fe7433243</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/lesson_checkout_main_failed.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, lessons/cli_deprecation_json_stdout.md</div>
+          <div class="feed-cost">&#9889; 31 calls &middot; 713.4K tok &middot; dur 15m</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-b840d93fd8d6">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">docs(lessons): add direct companion test lookup rule (companion_test_direct_lookup)</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-b840d93fd8d6)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-b840d93fd8d6">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T06:57:01.037074Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-1eb0a17d2140</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/avoid_bundled_test_executions.md (unavailable)</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-25.md, lessons/companion_test_direct_lookup.md</div>
+          <div class="feed-cost">&#9889; 36 calls &middot; 1.01M tok &middot; dur 17m31s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-2db76618c050">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-2db76618c050)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-2db76618c050">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T06:21:37.788069Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-6c596d6c39de</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/posix_shell_pipeline_exit.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 30 calls &middot; 841.4K tok &middot; dur 19m44s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-619bf4d14f05">
+          <div class="feed-header">
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-619bf4d14f05)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-619bf4d14f05">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T06:04:48.229805Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-b9164e25daf8</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a></div>
+          
+          <div class="feed-cost">&#9889; 21 calls &middot; 234.6K tok &middot; dur 4m54s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-d2f47c94a7f2">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-d2f47c94a7f2)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-d2f47c94a7f2">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T04:34:00.261641Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/smoke_check_timeout.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 68 calls &middot; 3.03M tok &middot; dur 60m14s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-de8d1cf54752">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-de8d1cf54752)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-de8d1cf54752">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T02:22:02.420174Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-42e7b3925240</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a></div>
+          
+          <div class="feed-cost">&#9889; 81 calls &middot; 2.48M tok &middot; dur 89m46s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-09e6f81365cf">
+          <div class="feed-header">
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-09e6f81365cf)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-09e6f81365cf">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T02:02:52.546367Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-ee6f60554b70</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 20 calls &middot; 301.1K tok &middot; dur 6m26s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-e41058c2d46e">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: mutation_surface_violation</span>
+            <strong class="feed-title">failed: mutation_surface_violation</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-e41058c2d46e)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-e41058c2d46e">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T01:25:14.942493Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-b339f826e426</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 33 calls &middot; 988.5K tok &middot; dur 21m39s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6d90e181b1bf">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-6d90e181b1bf)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-6d90e181b1bf">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T00:43:34.195079Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-7216b671b437</span></div>
+          
+          <div class="feed-cost">&#9889; 41 calls &middot; 1.22M tok &middot; dur 26m8s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-3ca027e79825">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-3ca027e79825)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-3ca027e79825">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-25T00:07:26.037019Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">priority-2b821a7594ef</span></div>
+          
+          <div class="feed-cost">&#9889; 34 calls &middot; 1.01M tok &middot; dur 20m8s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ffbb19cab419">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-ffbb19cab419)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-ffbb19cab419">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T23:32:34.485353Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">priority-ba28ea4956ef</span></div>
+          
+          <div class="feed-cost">&#9889; 48 calls &middot; 815.6K tok &middot; dur 14m45s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-61a3a3693fc5">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-61a3a3693fc5)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-61a3a3693fc5">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T22:47:31.516647Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">skill-candidate-3568c706bf44</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/subagent_result_error_handling.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 37 calls &middot; 1.20M tok &middot; dur 22m8s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-79ec5365ebb6">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-79ec5365ebb6)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-79ec5365ebb6">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T21:58:08.866246Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-e85f60803041</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/skill_composition_orchestration.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 40 calls &middot; 1.39M tok &middot; dur 28m3s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-aab5f6f086c6">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-aab5f6f086c6)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-aab5f6f086c6">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T21:14:32.618347Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-8ff3d7a61d26</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/skill_validation_pitfalls.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 47 calls &middot; 1.18M tok &middot; dur 22m7s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-48237dff05f6">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-48237dff05f6)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-48237dff05f6">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T21:05:05.254942Z">Sep 25 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-2e631ef8159d</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/skill_validation_pitfalls.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 53 calls &middot; 1.38M tok &middot; dur 26m27s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-day-header">2026-09-24 MSK</li>
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-8965407c2140">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-8965407c2140)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-8965407c2140">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T19:40:39.028924Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-a1747a296236</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 43 calls &middot; 1.17M tok &middot; dur 24m14s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-dbef2018d232">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-dbef2018d232)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-dbef2018d232">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T19:04:14.842882Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-071866fed79f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-9fff55dc (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 39 calls &middot; 701.7K tok &middot; dur 17m40s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-752bd385b711">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-752bd385b711)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-752bd385b711">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T17:08:13.974170Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/scoped_runner_additive_changes.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 99 calls &middot; 3.56M tok &middot; dur 78m31s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-b688cbd09d95">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-b688cbd09d95)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-b688cbd09d95">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T16:58:32.234103Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-ee1238d6e2f8</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/coupling_agents_instructions_with_structural_tests.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 25.18K tok &middot; dur 23s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-2e152f8891b2">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-2e152f8891b2)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-2e152f8891b2">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T16:23:56.555401Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-a48afebd51d6</span></div>
+          
+          <div class="feed-cost">&#9889; 43 calls &middot; 921.8K tok &middot; dur 17m51s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-3b509335cf32">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-3b509335cf32)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-3b509335cf32">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T16:15:51.635877Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-314adef0e80f</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/cli_verification_state_isolation.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 28.31K tok &middot; dur 34s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-7c89d75ab2a8">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-7c89d75ab2a8)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-7c89d75ab2a8">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T16:06:42.872387Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-fa3c9eb94c39</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/reasoning_budget_action_transition.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 25.50K tok &middot; dur 28s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-182106983ac3">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-182106983ac3)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-182106983ac3">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T15:26:15.616582Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-b6db6d334a98</span></div>
+          
+          <div class="feed-cost">&#9889; 42 calls &middot; 1.05M tok &middot; dur 22m56s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-f33ade5e6ea9">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-f33ade5e6ea9)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-f33ade5e6ea9">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T15:16:53.711493Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-df52d6773450</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/coupling_agents_instructions_with_structural_tests.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 26.68K tok &middot; dur 32s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-2249ee09cb52">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-2249ee09cb52)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-2249ee09cb52">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T14:13:23.196537Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-15e9154e5714</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/already_implemented_skip_emission.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 62 calls &middot; 1.95M tok &middot; dur 38m51s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-3812aa7d9e2f">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-3812aa7d9e2f)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-3812aa7d9e2f">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T13:34:41.148242Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-eadd6e9f3ed9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-260bd269 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 46 calls &middot; 1.13M tok &middot; dur 19m9s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-78be27391868">
+          <div class="feed-header">
+            <span class="badge badge-failed">FAILED: mutation_surface_violation</span>
+            <strong class="feed-title">failed: mutation_surface_violation</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-78be27391868)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-78be27391868">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T13:14:06.169796Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-e2611f6a6795</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/bounded_inspection_turns.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 27 calls &middot; 427.2K tok &middot; dur 6m39s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-9d7aa5a10258">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-9d7aa5a10258)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-9d7aa5a10258">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T12:25:21.101937Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-c8fb298e104e</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/lesson_checkout_main_failed.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 60 calls &middot; 1.51M tok &middot; dur 28m2s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-fallback-9deb748c7802">
+          <div class="feed-header">
+            <span class="badge badge-skipped">SKIPPED: skipped_duplicate</span>
+            <strong class="feed-title">skipped-duplicate</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-9deb748c7802)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-9deb748c7802">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T12:10:52.632166Z">Sep 24 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 2 calls &middot; 28.71K tok &middot; dur 38s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-e0ec84b833a8">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-e0ec84b833a8)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-e0ec84b833a8">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T11:49:41.093091Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/smoke_check_timeout.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 35 calls &middot; 580.7K tok &middot; dur 10m37s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-364bc4efad3c">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-364bc4efad3c)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-364bc4efad3c">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T11:16:59.238724Z">Sep 24 MSK</span>
+          </div>
+          
+          
+          <div class="feed-cost">&#9889; 43 calls &middot; 913.2K tok &middot; dur 16m39s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+        </li>
+        
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-d1f5e0df94d8">
+          <div class="feed-header">
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d1f5e0df94d8)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-d1f5e0df94d8">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T10:48:53.969885Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-62ccd56232f9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 23 calls &middot; 369.1K tok &middot; dur 12m24s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-f181f16be06f">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-f181f16be06f)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-f181f16be06f">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T10:23:00.317366Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-f445e4b816bf</span></div>
+          
+          <div class="feed-cost">&#9889; 30 calls &middot; 518.9K tok &middot; dur 10m42s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-405505c6ceda">
+          <div class="feed-header">
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">success</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-405505c6ceda)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-405505c6ceda">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-24T09:59:21.800791Z">Sep 24 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">reflection-1bfea2b33f5e</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/coupling_agents_instructions_with_structural_tests.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 30 calls &middot; 530.5K tok &middot; dur 7m5s</div>
+        </li>
+        
+      </ul>
+    </section>
+    
+</main>
+<footer class="page-footer">generator unknown · generated 2026-09-26 01:16:37 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 03:58:20 MSK</span></footer>
+<script>
+document.querySelectorAll('.copyable').forEach(function (el) {
+  el.addEventListener('click', function () {
+    navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+      el.classList.add('copied');
+      setTimeout(function () { el.classList.remove('copied'); }, 800);
+    });
+  });
+});
+</script>
+<script>
+(function () {
+  var el = document.querySelector('.freshness[data-data-epoch]');
+  if (!el) return;
+  var epoch = parseFloat(el.getAttribute('data-data-epoch'));
+  var renderAge = parseFloat(el.getAttribute('data-render-age-seconds'));
+  function updateFreshness() {
+    var a = Math.max(0, Date.now() / 1000 - epoch);
+    if (!Number.isFinite(a)) a = renderAge;
+    var level = a < 3600 ? 'fresh' : a < 21600 ? 'stale' : 'very-stale';
+    el.classList.remove('freshness-fresh', 'freshness-stale', 'freshness-very-stale');
+    el.classList.add('freshness-' + level);
+    var txt = a < 90 ? a.toFixed(0) + 's' : a < 5400 ? (a / 60).toFixed(0) + 'm' : a < 172800 ? (a / 3600).toFixed(0) + 'h' : (a / 86400).toFixed(0) + 'd';
+    el.textContent = el.textContent.replace(/^data: [^ ]+ old/, 'data: ' + txt + ' old');
+    el.setAttribute('data-render-age-seconds', String(a));
+  }
+  updateFreshness();
+  setInterval(updateFreshness, 30000);
+})();
+</script>
+</body>
+</html>
