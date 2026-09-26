@@ -10553,7 +10553,8 @@ def publish_to_pages(
         print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
               f're-reading and retrying', file=sys.stderr)
 
-    _ensure_pages_enabled()
+    if not _ensure_pages_enabled():
+        return 1, {}
     print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
           f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
     return 0, fingerprints
