@@ -6150,6 +6150,33 @@ def test_311_post_1908_killed_by_cycle_id_in_runs_jsonl() -> None:
     assert 'running' not in row
 
 
+def test_311_completed_previous_attempt_does_not_kill_active_retry() -> None:
+    """A completed run for the same cycle_id must not end a newer retry."""
+    cid = "cycle-retry-same-id"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+    ]
+    bridge_runs = [{
+        "schema_version": "bridge-run-v1",
+        "phase": "run_end",
+        "run_id": "run-previous",
+        "started_at": "2026-09-25T20:00:00Z",
+        "finished_at": "2026-09-25T20:30:00Z",
+        "classification": "completion",
+        "outcome": "success",
+        "source": "systemd",
+        "cycle_id": cid,
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=bridge_runs,
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
 def test_311_genuinely_running_cycle_still_renders_running() -> None:
     """A cycle that started 5 minutes ago and has no finished bridge run
     is genuinely running and must still render with 'running' badge."""
@@ -6181,6 +6208,40 @@ def test_311_genuinely_running_cycle_still_renders_running() -> None:
     assert 'badge-available' in row
     assert 'KILLED' not in row
     assert 'INCOMPLETE' not in row
+
+
+def test_311_latest_attempt_uses_timestamp_not_ledger_iteration_order() -> None:
+    """Rotated ledger rows may list the older archived start after live rows."""
+    cid = "cycle-rotated-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T20:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "reason": "old-attempt", "ts": "2026-09-25T20:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'old-attempt' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_timeout_ceiling_uses_attempt_start_not_latest_phase() -> None:
+    cid = "cycle-stale-with-fresh-phase"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T20:55:00Z"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T21:59:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
 
 
 def test_311_wall_clock_timeout_threshold_from_config(monkeypatch) -> None:
