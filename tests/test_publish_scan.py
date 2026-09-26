@@ -665,3 +665,22 @@ def test_adr036_multiline_quoted_secrets() -> None:
 
     with pytest.raises(ps.PublicationScanError):
         ps.scan_pages({"index.html": multiline_env})
+
+
+def test_adr036_branch_probe_transient_error_refuses_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Transient probe errors (500, 401, timeout) must refuse fail-closed, not bootstrap."""
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return subprocess.CompletedProcess(
+                args=["gh"] + list(args), returncode=1, stdout="", stderr="HTTP 500 Internal Server Error"
+            )
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"}, dry_run=True)
+
+    with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
