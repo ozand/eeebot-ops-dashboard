@@ -1364,17 +1364,17 @@
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">157</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">54.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 07:44:33 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">31.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">31.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">13 events · 10 tasks · 3.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">116 events · 8 tasks · 29.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">5.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
+      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">157</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">54.9%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 08:19:57 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">29.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">29.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">13 events · 10 tasks · 3.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">108 events · 7 tasks · 27.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">5.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790399756.314" data-render-age-seconds="17">data: 16s old &middot; generated 05:16 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790401363.375" data-render-age-seconds="31">data: 30s old &middot; generated 05:43 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (3570 cycles)</h2>
-      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3520 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <h2 class="panel-title">Cycle History (3576 cycles)</h2>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3526 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
             (function(){
               var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
               if (!btn) return;
@@ -1409,6 +1409,96 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-26 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-b21f9d235d37">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: self_dedup_observed</span>
+            <strong class="feed-title">rejected: self_dedup_observed</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-b21f9d235d37)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-b21f9d235d37">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:42:26.600727Z">08:42 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">goal-gap-2d9ab3aa9d09</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/smoke_check_timeout.md (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 12.04K tok &middot; dur 21s</div>
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-6ee6114c7fa0">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
+            <strong class="feed-title">rejected: llm_unavailable</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-6ee6114c7fa0)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-6ee6114c7fa0">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:34:39.838464Z">08:34 MSK</span>
+          </div>
+          
+          
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-5972d4978251">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
+            <strong class="feed-title">rejected: llm_unavailable</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-5972d4978251)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-5972d4978251">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:33:39.587440Z">08:33 MSK</span>
+          </div>
+          
+          
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-1f217caa9ac2">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
+            <strong class="feed-title">rejected: llm_unavailable</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-1f217caa9ac2)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-1f217caa9ac2">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:25:05.000240Z">08:25 MSK</span>
+          </div>
+          
+          
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-498a1eadddf8">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
+            <strong class="feed-title">rejected: llm_unavailable</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-498a1eadddf8)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-498a1eadddf8">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:24:28.714003Z">08:24 MSK</span>
+          </div>
+          
+          
+          
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-fallback-edec6a711a76">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
+            <strong class="feed-title">rejected: llm_unavailable</strong>
+            <span class="feed-cid copyable" translate="no">(fallback-edec6a711a76)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=fallback-edec6a711a76">details</a>
+            
+            
+            <span class="feed-ts" title="2026-09-26T05:15:38.836736Z">08:15 MSK</span>
+          </div>
+          
+          
+          
+        </li>
+        
         <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-9a0dc422117c">
           <div class="feed-header">
             <span class="badge badge-rejected">REJECTED: llm_unavailable</span>
@@ -2070,101 +2160,11 @@
           <div class="feed-cost">&#9889; 30 calls &middot; 841.4K tok &middot; dur 19m44s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-619bf4d14f05">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-619bf4d14f05)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-619bf4d14f05">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T06:04:48.229805Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-b9164e25daf8</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a></div>
-          
-          <div class="feed-cost">&#9889; 21 calls &middot; 234.6K tok &middot; dur 4m54s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-d2f47c94a7f2">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">success</strong>
-            <span class="feed-cid copyable" translate="no">(fallback-d2f47c94a7f2)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=fallback-d2f47c94a7f2">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T04:34:00.261641Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/smoke_check_timeout.md (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 68 calls &middot; 3.03M tok &middot; dur 60m14s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-de8d1cf54752">
-          <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-de8d1cf54752)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-de8d1cf54752">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T02:22:02.420174Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-42e7b3925240</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a></div>
-          
-          <div class="feed-cost">&#9889; 81 calls &middot; 2.48M tok &middot; dur 89m46s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-09e6f81365cf">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-09e6f81365cf)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-09e6f81365cf">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T02:02:52.546367Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-ee6f60554b70</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 20 calls &middot; 301.1K tok &middot; dur 6m26s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-e41058c2d46e">
-          <div class="feed-header">
-            <span class="badge badge-failed">FAILED: mutation_surface_violation</span>
-            <strong class="feed-title">failed: mutation_surface_violation</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-e41058c2d46e)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-e41058c2d46e">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T01:25:14.942493Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-b339f826e426</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 33 calls &middot; 988.5K tok &middot; dur 21m39s</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-6d90e181b1bf">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">success</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-6d90e181b1bf)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-6d90e181b1bf">details</a>
-            
-            
-            <span class="feed-ts" title="2026-09-25T00:43:34.195079Z">Sep 25 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-7216b671b437</span></div>
-          
-          <div class="feed-cost">&#9889; 41 calls &middot; 1.22M tok &middot; dur 26m8s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-26 05:16:13 UTC &middot; host eeepc &middot; newest source 16s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 07:44:33 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-26 05:43:14 UTC &middot; host eeepc &middot; newest source 30s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 08:19:57 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
