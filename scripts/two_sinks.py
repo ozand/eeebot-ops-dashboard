@@ -5,6 +5,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import shutil
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +26,8 @@ except ImportError:
         is_allowed_publish_path,
         scan_pages as _publish_scan_pages,
     )  # type: ignore
+
+_PUBLIC_REASON_CODE_RE = re.compile(r"^[a-z0-9_:.-]{1,64}$")
 
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
@@ -98,6 +101,18 @@ def serve_site(site_root: Path, address: str = DEFAULT_BIND_ADDRESS, port: int =
 
 
 def _sanitize_public_value(key: str, value: object) -> object:
+    if key in {"ledger_tail", "ledger_history"} and isinstance(value, list):
+        rows = []
+        for row in value:
+            if not isinstance(row, dict):
+                rows.append(row)
+                continue
+            projected = dict(row)
+            reason = projected.get("reason")
+            if isinstance(reason, str) and reason:
+                projected["reason"] = reason if _PUBLIC_REASON_CODE_RE.fullmatch(reason) else f"reason text, {len(reason)} chars (LAN)"
+            rows.append(projected)
+        return rows
     if key == "agent_context" and isinstance(value, dict):
         ctx = copy.deepcopy(value)
         for field in ("prompt_text", "task_text"):
