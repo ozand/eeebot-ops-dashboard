@@ -119,6 +119,7 @@ mkdir -p "$DEST" "$TMP_ROOT"
 CURL_OPTS="--connect-timeout 10 --max-time 60 --proto-redir =https"
 MANIFEST="$LOCAL_MANIFEST"
 manifest_source=local
+revision=
 
 # Fetch master revision before downloading files (#325).
 # Pinning RAW_BASE to this immutable commit guarantees the manifest and all
@@ -141,11 +142,33 @@ if [ -f "$TMP_ROOT/rev.remote" ]; then
     cand=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["sha"] if isinstance(d,dict) else "")' < "$TMP_ROOT/rev.remote" 2>/dev/null || tr -d '\r\n' < "$TMP_ROOT/rev.remote")
     if [ "${#cand}" -eq 40 ] && printf '%s' "$cand" | grep -Eq '^[0-9a-fA-F]{40}$'; then
         printf '%s\n' "$cand" > "$REV_TMP"
+        revision="$cand"
         RAW_BASE="https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/$cand"
         echo "techtree sync: pinned download to master revision $cand"
     else
         echo "techtree sync: warning: invalid revision response from $COMMITS_URL" >&2
     fi
+fi
+
+# Report drift for this manually installed script. It is never in the manifest
+# and is never replaced by this sync; compare with the exact pinned revision.
+DRIFT_SOURCE="$RAW_BASE/deploy/eeebot-techtree-sync.sh"
+if [ -n "$revision" ] && curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
+    "$DRIFT_SOURCE" -o "$TMP_ROOT/repo-sync.sh"; then
+    installed_sha=$(sha256sum "$0" | awk '{print $1}')
+    repo_sha=$(sha256sum "$TMP_ROOT/repo-sync.sh" | awk '{print $1}')
+    if [ "$installed_sha" = "$repo_sha" ]; then
+        rm -f "$DEST/SYNC_DRIFT"
+    else
+        drift_record="installed $installed_sha, repo $repo_sha (revision $revision)"
+        echo "techtree sync: sync script drift: $drift_record"
+        printf '%s\n' "$drift_record" > "$TMP_ROOT/SYNC_DRIFT"
+        chown root:root "$TMP_ROOT/SYNC_DRIFT"
+        chmod 0644 "$TMP_ROOT/SYNC_DRIFT"
+        mv -f "$TMP_ROOT/SYNC_DRIFT" "$DEST/SYNC_DRIFT"
+    fi
+else
+    echo "techtree sync: sync script drift: drift unknown (revision ${revision:-unknown})" >&2
 fi
 
 # shellcheck disable=SC2086  # CURL_OPTS is deliberately word-split

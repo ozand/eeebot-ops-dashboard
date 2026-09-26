@@ -168,6 +168,18 @@ case "$url" in
         esac
         exit 0
         ;;
+    */eeebot-techtree-sync.sh|*/same-sync.sh|*/different-sync.sh)
+        if [ "$mode" = "drift-fetch-404" ]; then
+            echo "curl: (22) The requested URL returned error: 404" >&2
+            exit 22
+        fi
+        if [ -n "$FAKE_REPO_SYNC_SCRIPT" ]; then
+            cp "$FAKE_REPO_SYNC_SCRIPT" "$outfile"
+        else
+            cp "$FAKE_CURL_MODE_FILE" "$outfile"
+        fi
+        exit 0
+        ;;
     */deploy/sync-manifest.txt)
         if [ "$mode" = "manifest-404" ]; then
             echo "curl: (22) The requested URL returned error: 404" >&2
@@ -231,13 +243,19 @@ def _make_test_sync_script(dest: Path, extra_env: dict[str, str] | None = None) 
     # parser interprets as escape sequences (\T is not a valid one).
     patched = text.replace("DEST=/opt/eeebot-techtree\n", f"DEST={_sh_path(dest)}\n", 1)
     extra_env = extra_env or {}
+
+    if "FAKE_REPO_SYNC_SCRIPT" in extra_env:
+        patched = patched.replace('"$RAW_BASE/deploy/eeebot-techtree-sync.sh"', f'"{extra_env["FAKE_REPO_SYNC_SCRIPT"]}"', 1)
     if extra_env.get("TEST_SYNC_NONROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if false; then')
-        patched = patched.replace('    chown root:root "$REV_TMP"', '    : # chown suppressed for non-root branch test')
+        patched = patched.replace('        chown root:root "$REV_TMP"', '        : # chown suppressed for non-root branch test')
+        patched = patched.replace('chown root:root "$TMP_ROOT/SYNC_DRIFT"', ': # chown suppressed for non-root branch test')
     if extra_env.get("TEST_SYNC_ROOT") == "1":
         patched = patched.replace('if [ "$(id -u)" -eq 0 ]; then', 'if true; then')
         patched = patched.replace('        chown root:root "$REV_TMP"', '        "$FAKE_CHOWN" root:root "$REV_TMP"')
-        assert '"$FAKE_CHOWN" root:root "$REV_TMP"' in patched
+        patched = patched.replace('chown root:root "$TMP_ROOT/SYNC_DRIFT"', '"$FAKE_CHOWN" root:root "$TMP_ROOT/SYNC_DRIFT"')
+    elif os.name != "posix":
+        patched = patched.replace('chown root:root "$TMP_ROOT/SYNC_DRIFT"', ': # chown mocked on non-posix')
     assert patched != text, "could not locate DEST= line to redirect for the test"
     script_path = dest.parent / "eeebot-techtree-sync-under-test.sh"
     script_path.write_text(patched, encoding="utf-8")
@@ -265,6 +283,7 @@ def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: di
     env.pop("SYNC_MANIFEST", None)  # a developer's own override must not steer the test
     env.pop("GH_TOKEN", None)
     env["FAKE_CURL_ARGV_FILE"] = _sh_path(tmp_path / "curl-argv.txt")
+    env.setdefault("FAKE_REPO_SYNC_SCRIPT", _sh_path(SYNC))
     env["FAKE_CHOWN_LOG"] = _sh_path(tmp_path / "chown-args.txt")
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     env.update(extra_env or {})
@@ -273,6 +292,7 @@ def _run_sync(tmp_path: Path, *, mode: str, initial_manifest: str, extra_env: di
         capture_output=True, text=True, env=env,
     )
     result.dest = dest  # type: ignore[attr-defined]
+    result.script_path = script_path  # type: ignore[attr-defined]
     return result
 
 
@@ -592,6 +612,41 @@ def test_generator_sha_ownership_branches(tmp_path: Path, sh_available: bool) ->
     args = (tmp_path / "root" / "chown-args.txt").read_text(encoding="utf-8").strip().split()
     assert args[0] == "root:root"
     assert args[1].endswith("/GENERATOR_SHA")
+
+
+def test_sync_script_drift_match_mismatch_and_unknown(tmp_path: Path, sh_available: bool) -> None:
+    if not sh_available:
+        pytest.skip("sh not available")
+
+    original = SYNC.read_bytes()
+    same_script = tmp_path / "same-sync.sh"
+    same_script.write_bytes(SYNC.read_bytes())
+    match = _run_sync(tmp_path / "match", mode="ok", initial_manifest="scripts/foo.py\\n", extra_env={"FAKE_REPO_SYNC_SCRIPT": _sh_path(SYNC)})
+    assert match.returncode == 0, match.stderr
+    assert "sync script drift:" not in match.stdout + match.stderr
+    assert not (match.dest / "SYNC_DRIFT").exists()
+    assert SYNC.read_bytes() == original
+
+    mismatch = _run_sync(tmp_path / "mismatch", mode="ok", initial_manifest="scripts/foo.py\\n")
+    repo_script = tmp_path / "different-sync.sh"
+    repo_script.write_text("#!/bin/sh\necho changed\n", encoding="utf-8")
+    repo_copy = Path(_sh_path(mismatch.dest.parent / "repo-sync.sh"))
+    repo_copy.write_bytes(repo_script.read_bytes())
+    mismatch = _run_sync(tmp_path / "mismatch", mode="ok", initial_manifest="scripts/foo.py\\n", extra_env={"FAKE_REPO_SYNC_SCRIPT": _sh_path(repo_copy)})
+    assert mismatch.returncode == 0, mismatch.stderr
+    assert "techtree sync: sync script drift: installed " in mismatch.stdout
+    assert ", repo " in mismatch.stdout and "(revision c0ffee1234567890abcdef1234567890abcdef12)" in mismatch.stdout
+    marker = mismatch.dest / "SYNC_DRIFT"
+    assert marker.is_file()
+    if os.name == "posix":
+        assert (marker.stat().st_mode & 0o777) == 0o644
+    assert SYNC.read_bytes() == original
+
+    unknown = _run_sync(tmp_path / "unknown", mode="drift-fetch-404", initial_manifest="scripts/foo.py\\n")
+    assert unknown.returncode == 0, unknown.stderr
+    assert "techtree sync: sync script drift: drift unknown" in unknown.stdout + unknown.stderr
+    assert not (unknown.dest / "SYNC_DRIFT").exists()
+    assert SYNC.read_bytes() == original
 
 
 def test_sync_never_passes_token_in_curl_argv(tmp_path: Path, sh_available: bool) -> None:
