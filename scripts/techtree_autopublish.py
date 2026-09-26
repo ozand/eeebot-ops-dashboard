@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 # techtree_viewer.py is installed as a sibling file on the host (see
-# scripts/install_techtree_publish.sh), not necessarily inside a `scripts`
+# deploy/sync-manifest.txt), not necessarily inside a `scripts`
 # package -- so import it via this file's own directory rather than
 # assuming a package layout. This works identically in the repo (both
 # files live in scripts/) and on the host (both installed flat under

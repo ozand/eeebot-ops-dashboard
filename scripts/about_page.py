@@ -163,7 +163,7 @@ HARNESS_UNITS: tuple[dict[str, str], ...] = (
 # the harness units above: not a timer, an OnSuccess= hook on the bridge
 # unit. Source: systemd/eeebot-techtree-publish.service and
 # systemd/drop-ins/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf
-# (this repo), scripts/install_techtree_publish.sh's own description.
+# (this repo).
 PUBLISH_PIPELINE_NOTE = (
     "This site itself is not generated on a timer. eeebot-techtree-publish.service "
     "(installed from this repo's systemd/ directory) runs when "

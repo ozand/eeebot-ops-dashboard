@@ -82,53 +82,33 @@ More details:
 - `docs/SHOWING_THE_DASHBOARD.md`
 - `docs/operations/2026-04-24-eeebot-ops-dashboard-baseline.md`
 
-Tech-tree publish pipeline (issue #101):
+Tech-tree publish pipeline (issue #101, #136, #323):
 
 The published GitHub Pages site (https://ozand.github.io/eeebot-ops-dashboard/)
 runs from a host copy of the generator at `/opt/eeebot-techtree/` on the `eeepc`
 host, not directly from this repo. The pipeline from source to published site is:
 
 ```
-repo master (scripts/techtree_viewer.py + techtree_autopublish.py)
+repo master (deploy/sync-manifest.txt)
     │
-    │  scripts/deploy_generator.sh --host eeepc-lan
+    │  deploy/eeebot-techtree-sync.sh (ExecStartPre on eeebot-techtree-publish.service)
     ▼
-/opt/eeebot-techtree/{techtree_viewer.py,techtree_autopublish.py}
+/opt/eeebot-techtree/
     │
-    │  eeepc-self-evolving-subagent-bridge.service OnSuccess= drop-in
-    │  (digest-gated: only publishes when tree sources change or staleness
-    │   floor exceeded — see scripts/techtree_autopublish.py)
+    │  eeebot-techtree-publish.service (periodic timer + digest-gated: only publishes
+    │  when tree sources change or staleness floor exceeded — see scripts/techtree_autopublish.py)
     ▼
 https://ozand.github.io/eeebot-ops-dashboard/  (gh-pages branch)
 ```
 
-Deploying the generator after a repo change:
+The sole deployment route is auto-sync via `deploy/eeebot-techtree-sync.sh` and
+`deploy/sync-manifest.txt` (see `deploy/README-sync.md`). On every run of
+`eeebot-techtree-publish.service`, `eeebot-techtree-sync.sh` fetches
+`deploy/sync-manifest.txt` from repository `master`, downloads every manifest entry,
+verifies compilation (`py_compile`), and atomically updates `/opt/eeebot-techtree/`.
 
-```bash
-# From the operator's workstation (key-based SSH to eeepc-lan required):
-scripts/deploy_generator.sh --host eeepc-lan
-
-# Dry-run first to preview what will happen:
-scripts/deploy_generator.sh --host eeepc-lan --dry-run
-
-# Running directly on the eeepc host (no --host needed):
-scripts/deploy_generator.sh
-```
-
-The script:
-1. Captures and prints the short git sha of the version being deployed.
-2. Backs up the prior `/opt` copy with a UTC timestamp.
-3. Copies both scripts via `scp` (or `install` when running locally).
-4. Runs `python3 -m py_compile` on the target copies — aborts on syntax error.
-5. Triggers one `eeebot-techtree-publish.service` run so the new generator
-   is exercised immediately.
-
-The published page footer displays the generator git sha. Verify deployment
-by comparing the footer sha with the source commit printed by this script.
-
-First-time setup (before running `deploy_generator.sh`):
-1. Run `scripts/install_techtree_publish.sh` (as root on the host) to create
-   `/opt/eeebot-techtree/`, the `eeebot-publish` system user, and the systemd unit.
+First-time setup:
+1. Ensure `/opt/eeebot-techtree/`, the `eeebot-publish` system user, and `eeebot-techtree-publish.service` exist on the host.
 2. Create `/etc/eeepc-agent/techtree-publish.env` (root-owned, 0600) with
    `GH_TOKEN=<your fine-grained PAT>`.
 
@@ -136,7 +116,8 @@ Canonical runtime assets included:
 - `scripts/run_web.sh`
 - `scripts/run_collector.sh`
 - `scripts/install_user_units.sh`
-- `scripts/deploy_generator.sh`
+- `deploy/eeebot-techtree-sync.sh`
+- `deploy/sync-manifest.txt`
 - `scripts/eeepc_reachability_watchdog.py`
 - `systemd/nanobot-ops-dashboard-web.service`
 - `systemd/nanobot-ops-dashboard-collector.service`
