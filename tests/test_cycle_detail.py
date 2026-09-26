@@ -45,6 +45,11 @@ def test_redaction_covers_extended_private_key_blocks() -> None:
     assert "[redacted: private-key]" in safe
 
 
+def test_redaction_covers_hyphenated_json_secret_keys() -> None:
+    value = '{"api-key":"HYPHENATED_SECRET_CANARY_4431"}'
+    assert "HYPHENATED_SECRET_CANARY_4431" not in redact_text(value)
+
+
 def test_redaction_covers_colon_delimited_credentials() -> None:
     value = "password: COLON_SECRET_CANARY_7721"
     assert "COLON_SECRET_CANARY_7721" not in redact_text(value)
