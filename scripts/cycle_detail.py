@@ -328,10 +328,11 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
-    dur_by_seq = {
-        (str(row.get("cycle_id")), str(row.get("component")), str(row.get("seq"))): row
-        for row in durations if row.get("seq") is not None
-    }
+    duration_rows: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in durations:
+        if row.get("seq") is not None:
+            key = (str(row.get("cycle_id")), str(row.get("component")), str(row.get("seq")))
+            duration_rows.setdefault(key, []).append(row)
     read_state = "ok" if all_reads_ok else "unavailable"
 
     all_cycle_ids = {str(r.get("cycle_id")) for r in runs if r.get("cycle_id")}
@@ -359,9 +360,21 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
         steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
+        used_duration_ids: set[int] = set()
         for p in c_prompts:
             role = str(p.get("component") or "executor")
-            duration_row = dur_by_seq.get((cid, role, str(p.get("seq"))))
+            duration_key = (cid, role, str(p.get("seq")))
+            candidates = duration_rows.get(duration_key, [])
+            prompt_ts = _parse_timestamp(p.get("ts") or p.get("timestamp"))
+            duration_row = min(
+                (row for row in candidates if id(row) not in used_duration_ids),
+                key=lambda row: abs((_parse_timestamp(row.get("ts") or row.get("timestamp")) - prompt_ts).total_seconds())
+                if prompt_ts is not None and _parse_timestamp(row.get("ts") or row.get("timestamp")) is not None
+                else float("inf"),
+                default=None,
+            )
+            if duration_row is not None:
+                used_duration_ids.add(id(duration_row))
             dur = duration_row.get("duration_ms") if duration_row is not None else None
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
