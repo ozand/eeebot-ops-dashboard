@@ -523,3 +523,44 @@ def test_adr036_bootstrap_gh_pages_from_clean_tree_never_inherits_master(monkeyp
     assert commit_payloads
     com_data = json.loads(commit_payloads[0])
     assert com_data.get("parents") == []
+
+
+def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Unchanged pages skipped by fingerprint must have remote blobs scanned."""
+    import base64
+    import json
+    clean_index = "<html>clean index</html>"
+    leaked_remote_index = base64.b64encode(b"<div>sk-proj-supersecretkey1234567890abcdef</div>").decode("ascii")
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"base-tree-1"}}}}')
+        if "git/trees/base-tree-1" in joined:
+            return cp(json.dumps({"tree": [
+                {"path": "index.html", "type": "blob", "sha": "remote-index-sha"},
+            ], "truncated": False}))
+        if "blobs/remote-index-sha" in joined:
+            return cp(json.dumps({"content": leaked_remote_index, "encoding": "base64"}))
+        if "git/blobs" in joined:
+            return cp('{"sha":"new-cycles-sha"}')
+        if "git/trees" in joined:
+            return cp('{"sha":"new-tree-sha"}')
+        if "git/commits" in joined:
+            return cp('{"sha":"new-commit-sha"}')
+        if "git/refs" in joined:
+            return cp("{}")
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    prev_fps = {"index.html": tv._page_fingerprint(clean_index)}
+    pages = {
+        "index.html": clean_index,
+        "cycles.html": "<html>new cycles</html>",
+    }
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages(pages, previous_fingerprints=prev_fps)
+    assert "index.html" in str(exc_info.value)
+    assert "openai_secret_key" in str(exc_info.value)
