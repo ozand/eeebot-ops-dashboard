@@ -107,6 +107,60 @@ def test_scan_reference_live_size_html_within_cold_time_budget() -> None:
     assert elapsed < 5.0, f"cold scan of {size} bytes took {elapsed:.3f}s"
 
 
+def _live_sized_clean_html() -> str:
+    """Representative ~8.45 MB synthetic page, matching the live scan budget scale."""
+    return '<!doctype html><html><body>' + (
+        '<p class="status">ordinary dashboard text and counters 123456</p>' * 130000
+    ) + '</body></html>'
+
+
+def test_scan_reference_live_size_html_meets_budget_and_cache_repeat_is_fast() -> None:
+    """Cold ~8.5 MiB scan has a fixed budget; clean repeat should hit the hash cache."""
+    import time
+    content = _live_sized_clean_html()
+    assert 8_000_000 <= len(content.encode("utf-8")) <= 9_000_000
+    cache: dict[str, bool] = {}
+
+    started = time.perf_counter()
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
+    cold = time.perf_counter() - started
+    assert cold < 5.0, f"cold 8 MiB scan took {cold:.3f}s"
+
+    started = time.perf_counter()
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
+    warm = time.perf_counter() - started
+    assert warm < 0.25, f"cached repeat scan took {warm:.3f}s"
+    assert cache and all(value is True for value in cache.values())
+
+
+def test_scan_cache_key_includes_scanner_version_and_only_caches_clean_content(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Changing a scanner rule invalidates a prior clean hash; refusals are never cached."""
+    from scripts.publish_scan import SecretPattern
+    import re
+    cache: dict[str, bool] = {}
+    content = "NEW_RULE_CANARY_value"
+    ps.scan_pages({"index.html": content}, clean_cache=cache)
+    before = set(cache)
+    assert before
+
+    monkeypatch.setattr(
+        ps, "STANDALONE_PATTERNS",
+        (*ps.STANDALONE_PATTERNS, SecretPattern("new_test_rule", re.compile(r"NEW_RULE_CANARY"), "test rule")),
+    )
+    with pytest.raises(ps.PublicationScanError, match="new_test_rule"):
+        ps.scan_pages({"index.html": content}, clean_cache=cache)
+    assert set(cache) == before, "a rejected scan must not populate the cache"
+
+
+def test_scan_invalid_cache_is_treated_as_empty_cache() -> None:
+    """Malformed cache contents cannot cause a scan to be skipped."""
+    content = "GH_TOKEN=invalid-cache-canary-123456"
+    bad_cache = {"not-a-hash": "clean"}
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": content}, clean_cache=bad_cache)
+    assert bad_cache == {"not-a-hash": "clean"}
+
+
 def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
     """ADR-036: Numeric counters and placeholders must not trigger false positives."""
     clean_payload = {
