@@ -24,15 +24,34 @@ class SecretPattern(NamedTuple):
     description: str
 
 
-EXCLUDED_NAME_SUBSTRINGS = frozenset({
-    "count", "ratio", "rate", "limit", "floor", "budget", "window",
-    "duration", "hours", "seconds", "tokens_per_integration", "prompt_tokens",
-    "completion_tokens", "total_tokens", "self_hosted_tokens", "vendor_tokens",
-})
-
 EXCLUDED_EXACT_NAMES = frozenset({
     "key", "keys", "pass", "passive", "max_tokens", "token_count",
 })
+
+_METRIC_NAME_TOKENS = frozenset({
+    "count", "ratio", "rate", "limit", "floor", "budget", "window",
+    "duration", "hours", "seconds",
+})
+
+_METRIC_SUBSTRINGS = (
+    "tokens_per_integration", "prompt_tokens", "completion_tokens",
+    "total_tokens", "self_hosted_tokens", "vendor_tokens",
+)
+
+
+def is_excluded_key_name(key: str) -> bool:
+    """True if key represents a harmless metric/counter rather than a credential."""
+    k = key.lower()
+    if k in EXCLUDED_EXACT_NAMES:
+        return True
+    parts = set(re.split(r"[_\-.]+", k))
+    if parts & _METRIC_NAME_TOKENS:
+        if any(sec in parts for sec in {"password", "secret", "pass", "auth"}):
+            return False
+        return True
+    if any(sub in k for sub in _METRIC_SUBSTRINGS):
+        return True
+    return False
 
 PUBLIC_PAGE_PATHS = frozenset({
     "index.html", "lineage.html", "cycles.html", "tokens.html", "lessons.html",
@@ -104,54 +123,43 @@ def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
     unescaped = _html.unescape(content)
-    has_entities = unescaped != content
+    tag_stripped = re.sub(r'<[^>]+>', '', unescaped)
+
+    variants = [content]
+    if unescaped != content:
+        variants.append(unescaped)
+    if tag_stripped != unescaped and tag_stripped != content:
+        variants.append(tag_stripped)
 
     for rule in STANDALONE_PATTERNS:
-        raw_count = len(rule.pattern.findall(content))
-        une_count = len(rule.pattern.findall(unescaped)) if has_entities else 0
-        total = max(raw_count, une_count)
+        total = max(len(rule.pattern.findall(v)) for v in variants)
         if total:
             findings[rule.name] = total
 
-    json_raw = 0
-    for match in _JSON_SECRET_KEY_RE.finditer(content):
-        key, val = match.group(1).lower(), match.group(2)
-        if any(sub in key for sub in EXCLUDED_NAME_SUBSTRINGS) or key in EXCLUDED_EXACT_NAMES:
-            continue
-        if is_secret_value(val):
-            json_raw += 1
-    json_une = 0
-    if has_entities:
-        for match in _JSON_SECRET_KEY_RE.finditer(unescaped):
+    json_hits = 0
+    for v in variants:
+        hits = 0
+        for match in _JSON_SECRET_KEY_RE.finditer(v):
             key, val = match.group(1).lower(), match.group(2)
-            if any(sub in key for sub in EXCLUDED_NAME_SUBSTRINGS) or key in EXCLUDED_EXACT_NAMES:
+            if is_excluded_key_name(key):
                 continue
             if is_secret_value(val):
-                json_une += 1
-    json_hits = max(json_raw, json_une)
+                hits += 1
+        json_hits = max(json_hits, hits)
     if json_hits:
         findings["json_secret_field"] = json_hits
 
-    env_raw = 0
-    for match in _ENV_SECRET_KV_RE.finditer(content):
-        key = match.group(1)
-        val = match.group(2) or match.group(3) or match.group(4) or ""
-        key_lower = key.lower()
-        if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
-            continue
-        if is_secret_value(val):
-            env_raw += 1
-    env_une = 0
-    if has_entities:
-        for match in _ENV_SECRET_KV_RE.finditer(unescaped):
+    env_hits = 0
+    for v in variants:
+        hits = 0
+        for match in _ENV_SECRET_KV_RE.finditer(v):
             key = match.group(1)
             val = match.group(2) or match.group(3) or match.group(4) or ""
-            key_lower = key.lower()
-            if any(sub in key_lower for sub in EXCLUDED_NAME_SUBSTRINGS) or key_lower in EXCLUDED_EXACT_NAMES:
+            if is_excluded_key_name(key):
                 continue
             if is_secret_value(val):
-                env_une += 1
-    env_hits = max(env_raw, env_une)
+                hits += 1
+        env_hits = max(env_hits, hits)
     if env_hits:
         findings["env_secret_kv"] = env_hits
 
