@@ -159,24 +159,31 @@ SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
     "basic_auth": ("basic",),
     "url_credentials": ("http://", "https://"),
     "private_key_header": ("-----begin", "private key-----"),
-    "structural_reasoning_content": ("reasoning_content",),
-    "structural_messages": ("messages",),
-    "structural_prompt": ("prompt",),
+    "structural_reasoning_content": ("'reasoning_content'", '"reasoning_content"'),
+    "structural_messages": ("'messages'", '"messages"'),
+    "structural_prompt": ("'prompt'", '"prompt"'),
+    "_env_secret_kv": ("_env_secret_kv",),
+    "_json_secret_key": ("_json_secret_key",),
 }
 
 
 def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...] | None:
     """Build prefilter literals from per-pattern anchors; None means scan all."""
     needles: set[str] = set()
-    for rule in patterns:
+    all_rules = (*patterns, SecretPattern("_env_secret_kv", _ENV_SECRET_KV_RE, "env secret key"),
+                 SecretPattern("_json_secret_key", _JSON_SECRET_KEY_RE, "JSON secret key"))
+    for rule in all_rules:
         anchors = SCANNER_ANCHORS.get(rule.name)
         if not anchors or any(not isinstance(anchor, str) or not anchor for anchor in anchors):
             return None
         insensitive = bool(rule.pattern.flags & re.IGNORECASE) or rule.pattern.pattern.startswith("(?i)")
         needles.update(anchor.lower() if insensitive else anchor for anchor in anchors)
-    # Env and JSON recognizers are scanner rules too. Their full key families
-    # are covered by suffix/quote anchors, not a hand-maintained credential list.
     return tuple(needles)
+
+
+_JSON_CANDIDATE_RE = re.compile(
+    r"(?i:[\"'][a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*[\"']\s*:)"
+)
 
 
 def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
@@ -184,10 +191,15 @@ def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
     if needles is None:
         return True
     lowered = text.lower()
-    return (
-        any((needle.lower() if needle.islower() else needle) in lowered for needle in needles)
-        or _ENV_SECRET_KV_RE.search(text) is not None
-        or _JSON_SECRET_KEY_RE.search(text) is not None
+    if any((needle.lower() if needle.islower() else needle) in lowered for needle in needles):
+        return True
+    if _JSON_CANDIDATE_RE.search(text) is not None:
+        return True
+    return any(
+        not is_excluded_key_name(match.group(1)) and is_secret_value(
+            match.group(2) or match.group(3) or match.group(4) or ""
+        )
+        for match in _ENV_SECRET_KV_RE.finditer(text)
     )
 
 
