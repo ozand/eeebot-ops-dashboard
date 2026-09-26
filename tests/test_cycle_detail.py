@@ -33,6 +33,11 @@ def test_model_and_tool_steps_render_readably():
     assert "duration: unknown" in format_tool_step(tool)
 
 
+def test_redaction_covers_ghu_tokens_in_private_details() -> None:
+    token = "ghu_" + "SYNTHETIC_CANARY_123456789"
+    assert token not in redact_text(token)
+
+
 def test_redaction_covers_secret_patterns_and_env_files():
     """ADR-036 §5: redact secrets without env_contents reading; safe filename labels remain renderable."""
     raw = (
@@ -56,6 +61,13 @@ def test_redaction_covers_secret_patterns_and_env_files():
     assert "secretbearer" not in safe
     assert "sk-1234567890abcdef" not in safe
     assert "litellm.env" in safe  # Safe filename reference remains visible
+
+
+def test_tool_arguments_with_env_path_are_withheld() -> None:
+    step = {"name": "read_file", "arguments": json.dumps({"path": "/tmp/.env"}), "result": "not shown"}
+    rendered = format_tool_step(step)
+    assert "/tmp/.env" not in rendered
+    assert "[env file contents withheld]" in rendered
 
 
 def test_tool_step_reading_env_file_withholds_content():
@@ -161,6 +173,14 @@ def test_load_cycle_detail_uses_inventory_paths_and_marks_missing_sources(tmp_pa
     assert result["attempts"][0]["history_complete"] is False
     assert result["sessions"][0]["role"] == "planner"
     assert result["total_model_calls"] == 1
+
+
+def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> None:
+    from scripts.two_sinks import build_private_cycle_pages
+
+    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=cycle-linked">details</a>'}, tmp_path)
+    assert "cycles/cycle-linked.html" in pages
+    assert "cycle-linked" in pages["cycles/cycle-linked.html"]
 
 
 def test_missing_cycle_sources_render_unavailable_not_empty():
@@ -460,9 +480,12 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
         json.dumps({"cycle_id": "c-f8", "component": "executor", "ts": "2026-09-25T10:01:00Z", "duration_ms": 1234}) + "\n",
         encoding="utf-8",
     )
+    (tmp_path / "llm_calls" / "prompts" / "2026-09-25.jsonl.gz").write_text("", encoding="utf-8")
 
     detail = cd.build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-f8"]
     assert [a["model_call_count"] for a in detail["attempts"]] == [2, 1]
+    assert len(detail["attempts"][0]["sessions"][0]["steps"]) == 3
+    assert len(detail["attempts"][1]["sessions"][0]["steps"]) == 1
     assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
     steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
     assert sum(step.get("kind") == "tool" for step in steps) == 1
