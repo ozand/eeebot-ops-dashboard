@@ -283,7 +283,7 @@ def format_tool_step(step: dict[str, Any]) -> str:
     name = display_text(str(step.get("name", "unavailable")))
     args = display_text(str(step.get("arguments", "unavailable")))
     res_val = step.get("result")
-    result = sanitize_tool_output(args, str(res_val)) if res_val is not None else "unavailable"
+    result = display_text(sanitize_tool_output(args, str(res_val))) if res_val is not None else "unavailable"
     dur_val = step.get("duration")
     duration = display_text(str(dur_val)) if dur_val is not None else "unknown"
     source = display_text(str(step.get("source", "reconstructed from request")))
