@@ -235,9 +235,12 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
     return updated
 
 
-def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
+def render_private_pages(private_data: dict, host: str, state_root: Path | None = None) -> dict[str, str]:
     """ADR-036 D2 private-only cycle renderer; never included in gh-pages."""
     del host
+    if state_root is not None:
+        return build_private_cycle_pages(private_data, state_root, host)
+
     from cycle_detail import render_cycle_page
 
     raw = private_data.get("private_cycle_details")
@@ -253,21 +256,29 @@ def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
     }
 
 
-def build_private_cycle_pages(private_data: dict, state_root: Path, host: str, *, cycle_ids: set[str] | None = None) -> dict[str, str]:
-    """Bind private pages to observed IDs and read their host-local sources."""
-    from cycle_detail import load_cycle_detail
+def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = "eeepc", *, cycle_ids: set[str] | None = None) -> dict[str, str]:
+    """Bind private pages to observed IDs and read their host-local sources via single-pass index."""
+    try:
+        from cycle_detail import build_cycle_index, render_cycle_page
+    except ImportError:
+        from scripts.cycle_detail import build_cycle_index, render_cycle_page
 
     known = set(cycle_ids or ())
-    ledger = private_data.get("ledger_tail")
+    ledger = private_data.get("ledger_tail") or []
     if isinstance(ledger, list):
         known.update(str(row["cycle_id"]) for row in ledger if isinstance(row, dict) and row.get("cycle_id"))
+    history = private_data.get("ledger_history") or []
+    if isinstance(history, list):
+        known.update(str(row["cycle_id"]) for row in history if isinstance(row, dict) and row.get("cycle_id"))
     if isinstance(private_data.get("cycle_details"), dict):
         known.update(map(str, private_data["cycle_details"]))
+
+    index = build_cycle_index(state_root)
+    known.update(index.keys())
+
     return {
-        f"cycles/{cycle_id}.html": render_private_pages(
-            {"private_cycle_details": {cycle_id: load_cycle_detail(state_root, cycle_id)}}, host,
-        )[f"cycles/{cycle_id}.html"]
-        for cycle_id in sorted(known)
+        f"cycles/{cid}.html": render_cycle_page(str(cid), index.get(cid))
+        for cid in sorted(known)
     }
 
 
