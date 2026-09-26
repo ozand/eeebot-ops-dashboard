@@ -20,8 +20,8 @@ SECRET_PATTERNS = (
     (re.compile(r'(?i)\bBasic\s+[A-Za-z0-9+/=]{8,}'), '[redacted: basic-auth]'),
     # user:pass@ in URLs
     (re.compile(r'(?i)([a-z0-9+.-]+://[^/:\s]+):[^/@\s]+(@)'), r'\g<1>:[redacted]\g<2>'),
-    # JSON secret fields
-    (re.compile(r'(?i)("(?:\w*_)?(?:password|token|api_key|secret)"\s*:\s*)"(?:[^"\\]|\\.)*"'), r'\g<1>"[redacted]"'),
+    # JSON secret fields (including hyphenated names such as api-key)
+    (re.compile(r'(?i)("(?:[\w-]*_)?(?:password|token|api[_-]?key|secret)[\w-]*"\s*:\s*)"(?:[^"\\]|\\.)*"'), r'\g<1>"[redacted]"'),
     # Specific API key tokens
     (re.compile(r'\bsk-[A-Za-z0-9_-]{8,}\b'), '[redacted: api-key]'),
     (re.compile(r'(?i)\b(?:ghp_|gho_|ghs_|ghu_|github_pat_)[A-Za-z0-9_]+'), '[redacted: token]'),
