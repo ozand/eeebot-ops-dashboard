@@ -191,7 +191,7 @@ def test_snapshot_version_metadata_changes_github_fingerprint() -> None:
     page = "<html><head></head><body>same</body></html>"
     v1 = add_snapshot_version({"index.html": page}, "v1", generated_at="2026-09-26T00:00:00Z")["index.html"]
     v2 = add_snapshot_version({"index.html": page}, "v2", generated_at="2026-09-26T00:01:00Z")["index.html"]
-    assert _page_fingerprint(v1) == _page_fingerprint(v2)
+    assert _page_fingerprint(v1) != _page_fingerprint(v2)
 
 
 def test_snapshot_version_and_footer_rendered_on_pages():
@@ -403,7 +403,7 @@ def test_unchanged_pages_produce_zero_uploads_across_runs():
     p2 = add_snapshot_version({"index.html": base_html}, "v2", generated_at="2026-09-26T00:05:00Z")
     fp2 = tv._page_fingerprint(p2["index.html"])
 
-    assert fp1 == fp2, "Fingerprints must match across different snapshot versions if content is unchanged"
+    assert fp1 != fp2, "Snapshot-version changes must be uploaded to keep gh-pages metadata synchronized"
 
 
 def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp_path: Path, monkeypatch):
@@ -461,7 +461,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     state2 = ap.load_publish_state(state_dir)
     assert state2.get("host_snapshot_failed_since") == first_failed_since
     assert len(published_batches) == 2
-    assert len(published_batches[1]) == 0
+    assert len(published_batches[1]) == 1  # New version metadata requires updating the inherited blob.
 
 
 def test_goal_meta_three_states_and_rendering(tmp_path: Path):
@@ -507,19 +507,21 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert meta_no_prio["priority_count"] is None
 
 
-def test_publisher_state_directories_create_root_with_server_access() -> None:
+def test_publisher_service_creates_shared_site_root_without_relaxing_private_state() -> None:
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
-    assert "StateDirectory=eeebot-site" in text
-    assert "StateDirectoryMode=0755" in text
+    assert "StateDirectory=eeebot-techtree" in text
+    assert "StateDirectoryMode=0700" in text
+    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
 
 
 def test_publisher_service_unit_declares_site_root_writable() -> None:
     """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
-    assert "StateDirectory=eeebot-site" in text
-    assert "StateDirectoryMode=0755" in text
+    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
 
 
 def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

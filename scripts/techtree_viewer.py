@@ -10129,8 +10129,8 @@ _SNAPSHOT_FOOTER_RE = re.compile(r'<footer class="snapshot-meta">.*?</footer>', 
 def _page_fingerprint(html: str) -> str:
     normalized = _GENERATED_AT_RE.sub('GENERATED_AT', html)
     normalized = _SOURCE_AGE_RE.sub('SOURCE_AGE', normalized)
-    normalized = _SNAPSHOT_META_RE.sub('SNAPSHOT_VERSION', normalized)
-    normalized = _SNAPSHOT_FOOTER_RE.sub('SNAPSHOT_FOOTER', normalized)
+    normalized = _SNAPSHOT_META_RE.sub(lambda match: f'SNAPSHOT_VERSION:{match.group(0)}', normalized)
+    normalized = _SNAPSHOT_FOOTER_RE.sub(lambda match: f'SNAPSHOT_FOOTER:{match.group(0)}', normalized)
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
