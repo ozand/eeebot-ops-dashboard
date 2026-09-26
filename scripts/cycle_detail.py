@@ -255,28 +255,21 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                         s["status"] = "ok"
                         break
     response_tools = prompt.get("tool_calls") or []
-    response_ids = {str(tc.get("id")) for tc in response_tools if isinstance(tc, dict) and tc.get("id")}
-    observed_ids = set(pending_calls)
-    if response_ids:
-        for call_id in response_ids - observed_ids:
-            response = next(tc for tc in response_tools if isinstance(tc, dict) and str(tc.get("id")) == call_id)
-            fn = response.get("function") or response
-            args = fn.get("arguments") or ""
-            steps.append({"kind": "tool", "tool_call_id": call_id,
-                          "name": str(fn.get("name") or "tool"), "arguments": str(args),
-                          "result": "[response tool call not reconciled to request history]",
-                          "source": source, "status": "incomplete", "duration": None, "tokens": None})
     if isinstance(response_tools, str):
         try:
             response_tools = json.loads(response_tools)
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             response_tools = []
+    observed_ids = set(pending_calls)
     for tc in response_tools:
         if isinstance(tc, dict):
+            if tc.get("id") and str(tc["id"]) in observed_ids:
+                continue
             fn = tc.get("function") or tc
             args = fn.get("arguments") or ""
             if isinstance(args, dict):
-                args = json.dumps(args)
+                args = json.dumps(args, ensure_ascii=False)
+            args = sanitize_tool_arguments(str(args))
             steps.append({
                 "kind": "tool",
                 "tool_call_id": str(tc.get("id") or ""),
