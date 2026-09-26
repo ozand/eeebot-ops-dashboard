@@ -615,3 +615,23 @@ def test_f12_host_catches_any_exception_and_reports_cleanup_failure(tmp_path: Pa
     with pytest.raises(Exception) as exc_info:
         atomic_snapshot_swap(root, {"index.html": "v3"}, "v3")
     assert "cleanup" in str(exc_info.value).lower() or "pruning" in str(exc_info.value).lower()
+
+
+def test_b1_viewer_main_publish_routes_through_split_and_publish_ordered(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """External review B1: techtree_viewer main --publish must route through split_render_inputs and publish_ordered."""
+    from scripts import techtree_viewer as tv
+
+    ordered_calls = []
+    def fake_publish_ordered(site_root, public_pages, private_pages, version, **kwargs):
+        ordered_calls.append((public_pages, private_pages))
+        return 0, {}
+
+    monkeypatch.setattr("scripts.two_sinks.publish_ordered", fake_publish_ordered)
+    monkeypatch.setattr(tv, "read_local_state", lambda *a, **kw: {"_error": None})
+    monkeypatch.setattr(tv, "fetch_remote_state", lambda *a, **kw: {"_error": None})
+    monkeypatch.setattr(tv, "publish_to_pages", lambda *a, **kw: pytest.fail("publish_to_pages called directly!"))
+
+    out_dir = tmp_path / "out"
+    rc = tv.main(["--local", "--state-root", str(tmp_path), "--out", str(out_dir), "--publish"])
+    assert rc == 0
+    assert len(ordered_calls) == 1
