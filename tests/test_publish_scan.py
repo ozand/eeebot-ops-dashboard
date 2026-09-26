@@ -102,6 +102,24 @@ def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
     ps.scan_pages(clean_payload)
 
 
+def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() -> None:
+    """Reference-sized 8 MiB HTML scans within budget; repeat is cache-hit fast."""
+    import time
+    content = '<!doctype html><html><body>' + ('<p class="status">ordinary dashboard text and counters 123456</p>' * 130000)
+    size = len(content.encode("utf-8"))
+    assert 8_000_000 <= size <= 9_000_000
+
+    start = time.perf_counter()
+    assert ps.scan_text(content) == {}
+    cold_seconds = time.perf_counter() - start
+    assert cold_seconds < 5.0, f"cold scan took {cold_seconds:.3f}s for {size} bytes"
+
+    start = time.perf_counter()
+    assert ps.scan_text(content) == {}
+    warm_seconds = time.perf_counter() - start
+    assert warm_seconds < 0.25, f"cached repeat took {warm_seconds:.3f}s"
+
+
 def test_adr036_structural_call_markers_trigger_rejection() -> None:
     """ADR-036: Structural LLM call markers must trigger rejection."""
     with pytest.raises(ps.PublicationScanError) as exc_info:
