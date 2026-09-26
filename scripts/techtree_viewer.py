@@ -10171,6 +10171,17 @@ def publish_to_pages(
 
     pages = dict(pages)
     previous_fingerprints = previous_fingerprints or {}
+
+    try:
+        try:
+            from two_sinks import scan_pages, validate_publish_allowlist
+        except ImportError:
+            from scripts.two_sinks import scan_pages, validate_publish_allowlist
+        validate_publish_allowlist(pages)
+        scan_pages(pages)
+    except Exception as exc:
+        print(f'publish: validation failed: {exc}', file=sys.stderr)
+        return 1, {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
