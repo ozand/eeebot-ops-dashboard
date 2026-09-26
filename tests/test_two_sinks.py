@@ -513,6 +513,7 @@ def test_publisher_service_creates_shared_site_root_without_relaxing_private_sta
     assert "StateDirectory=eeebot-techtree" in text
     assert "StateDirectoryMode=0700" in text
     assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
 
 
 def test_publisher_service_unit_declares_site_root_writable() -> None:
@@ -520,6 +521,7 @@ def test_publisher_service_unit_declares_site_root_writable() -> None:
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
     assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
+    assert "ReadWritePaths=/var/lib/eeebot-site" in text
 
 
 def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

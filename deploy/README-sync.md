@@ -61,7 +61,8 @@ orchestrator performs the host cutover after D3 gate #1978: stop the legacy
 `eeebot-dashboard-server.service`. Never run both servers simultaneously;
 they bind the same `:8080` port. The publisher unit's root `ExecStartPre`
 creates `/var/lib/eeebot-site` as `eeebot-publish:0755`, preserving the
-publisher's private `StateDirectory=eeebot-techtree` mode `0700`.
+publisher's private `StateDirectory=eeebot-techtree` mode `0700`. The host
+unit explicitly grants `ReadWritePaths=/var/lib/eeebot-site` to the publisher.
 
 ```bash
 sudo systemctl stop eeebot-dashboard.service
