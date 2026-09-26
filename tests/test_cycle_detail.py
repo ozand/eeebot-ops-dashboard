@@ -452,12 +452,12 @@ def test_jsonl_read_failure_marks_history_incomplete(tmp_path: Path, monkeypatch
     from scripts import cycle_detail as cd
     orig_read = cd._read_jsonl
 
-    def mock_read(paths):
+    def mock_read(paths, *, with_errors=False):
         # Simulate partial/failed read for prompt paths
         if any("prompts" in str(p) for p in paths):
-            rows, _ = orig_read(paths)
-            return rows, False
-        return orig_read(paths)
+            result = orig_read(paths, with_errors=with_errors)
+            return (result[0], False, {"*"}) if with_errors else cd.ReadResult(result[0], False)
+        return orig_read(paths, with_errors=with_errors)
 
     monkeypatch.setattr(cd, "_read_jsonl", mock_read)
     fixed_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
@@ -618,7 +618,7 @@ def test_only_affected_source_marks_matching_cycle_incomplete(tmp_path: Path) ->
     valid = {"cycle_id": "c-a", "component": "executor", "seq": 1, "messages": []}
     bad = {"cycle_id": "c-b", "component": "executor", "seq": 1, "messages": []}
     (prompt_dir / "2026-09-25.jsonl").write_text(
-        json.dumps(valid) + "\n" + json.dumps(bad) + "\n{broken-json-line\n", encoding="utf-8",
+        json.dumps(valid) + "\n" + json.dumps(bad) + "\n{" + json.dumps({"cycle_id": "c-b"})[1:] + "BROKEN\n", encoding="utf-8",
     )
     index = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
     assert index["c-a"]["reconstruction"] == "complete"

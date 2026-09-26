@@ -161,9 +161,9 @@ class ReadResult(tuple):
         return instance
 
 
-def _read_jsonl(paths: list[Path]) -> ReadResult:
+def _read_jsonl(paths: list[Path], *, with_errors: bool = False):
     rows: list[dict[str, Any]] = []
-    broken = False
+    broken: set[str] = set()
     for path in paths:
         try:
             opener = gzip.open if path.name.endswith(".gz") else open
@@ -175,13 +175,17 @@ def _read_jsonl(paths: list[Path]) -> ReadResult:
                     try:
                         row = json.loads(line)
                     except (json.JSONDecodeError, TypeError):
-                        broken = True
+                        cycle_match = re.search(r'"cycle_id"\s*:\s*"([^"]+)"', line)
+                        broken.add(cycle_match.group(1) if cycle_match else "*")
                         continue
                     if isinstance(row, dict):
                         rows.append(row)
-        except OSError:
-            return ReadResult(rows, False, broken=broken)
-    return ReadResult(rows, True, broken=broken)
+        except (OSError, EOFError):
+            broken.add("*")
+            return (rows, False, broken) if with_errors else ReadResult(rows, False, broken=bool(broken))
+    if broken and not with_errors:
+        raise ValueError("malformed JSONL row")
+    return (rows, True, broken) if with_errors else ReadResult(rows, True, broken=bool(broken))
 
 def _strip_tool_ids(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     cleaned = []
@@ -307,15 +311,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     ]
     duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
 
-    runs_result = _read_jsonl(run_paths)
-    prompts_result = _read_jsonl(prompt_paths)
-    durations_result = _read_jsonl(duration_paths)
-    raw_runs, runs_ok = runs_result
-    raw_prompts, prompts_ok = prompts_result
-    durations, durations_ok = durations_result
-    broken_runs = getattr(runs_result, "broken", False)
-    broken_prompts = getattr(prompts_result, "broken", False)
-    broken_dur = getattr(durations_result, "broken", False)
+    raw_runs, runs_ok, broken_runs = _read_jsonl(run_paths, with_errors=True)
+    raw_prompts, prompts_ok, broken_prompts = _read_jsonl(prompt_paths, with_errors=True)
+    durations, durations_ok, broken_dur = _read_jsonl(duration_paths, with_errors=True)
 
     seen_run_ids = set()
     runs = []
@@ -330,11 +328,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     compactions = []
     compactions_ok = True
     c_path = state_root / "compaction" / "journal.jsonl"
-    broken_comp = False
+    broken_comp: set[str] = set()
     if c_path.is_file():
-        compaction_result = _read_jsonl([c_path])
-        c_rows, compactions_ok = compaction_result
-        broken_comp = getattr(compaction_result, "broken", False)
+        c_rows, compactions_ok, broken_comp = _read_jsonl([c_path], with_errors=True)
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
@@ -365,7 +361,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             reconstruction_state = "incomplete"
         elif not all_reads_ok:
             reconstruction_state = "unknown"
-        elif broken_runs or broken_prompts or broken_dur or broken_comp or has_compaction:
+        elif any(cid in errors or "*" in errors for errors in (broken_runs, broken_prompts, broken_dur, broken_comp)) or has_compaction:
             reconstruction_state = "incomplete"
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
