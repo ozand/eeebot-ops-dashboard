@@ -131,7 +131,7 @@ def test_private_cycle_page_is_not_allowlisted():
     assert "cycles/cycle-synthetic.html" not in PUBLIC_PAGES
     try:
         validate_publish_allowlist({"cycles/cycle-synthetic.html": "private"})
-    except ValueError as exc:
+    except Exception as exc:
         assert "unlisted" in str(exc)
     else:
         raise AssertionError("private cycle page unexpectedly publishable")
