@@ -220,6 +220,23 @@ def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> N
     assert "cycle-linked" in pages["cycles/cycle-linked.html"]
 
 
+def test_cycle_detail_reflection_projection_uses_sanitized_metrics_only() -> None:
+    from scripts.techtree_viewer import build_cycle_details
+    from scripts.two_sinks import split_render_inputs
+
+    public_data, _ = split_render_inputs({"reflections": [{
+        "cycle_id": "cycle-reflection", "summary": "SYNTHETIC_REFLECTION_TEXT",
+        "findings": [{"kind": "wasted_steps", "detail": "private finding"}],
+        "recommendations": [{"kind": "good_practice", "detail": "private recommendation"}],
+    }]})
+    details = build_cycle_details([], None, None, public_data.get("reflections"))
+    record = details["cycle-reflection"]
+    assert record["reflection"]["summary_chars"] > 0
+    assert record["reflection"]["findings_count"] == 1
+    assert record["reflection"]["recommendations_count"] == 1
+    assert "SYNTHETIC_REFLECTION_TEXT" not in json.dumps(record)
+
+
 def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from scripts import techtree_viewer as tv
     from scripts import two_sinks as sinks
