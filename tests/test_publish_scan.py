@@ -566,3 +566,26 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
         tv.publish_to_pages(pages, previous_fingerprints=prev_fps)
     assert "index.html" in str(exc_info.value)
     assert "openai_secret_key" in str(exc_info.value)
+
+
+def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036 rule 3: Any inherited path not in allowlist must be rejected, even without secret markers."""
+    import json
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"base-tree-1"}}}}')
+        if "git/trees/base-tree-1" in joined:
+            return cp(json.dumps({"tree": [
+                {"path": "src/leak.py", "type": "blob", "sha": "innocent-sha"},
+            ], "truncated": False}))
+        if "blobs/innocent-sha" in joined:
+            return cp(json.dumps({"content": "print('hello world')", "encoding": "utf-8"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError, match="unlisted.*allowlist.*src/leak.py"):
+        tv.publish_to_pages({"index.html": "<html>clean index</html>"})
