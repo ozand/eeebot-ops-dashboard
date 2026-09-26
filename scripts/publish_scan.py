@@ -176,8 +176,6 @@ def _candidate_needles(patterns: tuple[SecretPattern, ...]) -> tuple[str, ...] |
         needles.update(anchor.lower() if insensitive else anchor for anchor in anchors)
     # Env and JSON recognizers are scanner rules too. Their full key families
     # are covered by suffix/quote anchors, not a hand-maintained credential list.
-    needles.update(("key", "token", "secret", "password", "pass", "auth"))
-    needles.update(("password", "secret", "api_key", "api-key", "access_token", "auth_token", "token"))
     return tuple(needles)
 
 
@@ -186,7 +184,11 @@ def _has_scan_candidate(text: str, patterns: tuple[SecretPattern, ...]) -> bool:
     if needles is None:
         return True
     lowered = text.lower()
-    return any((needle.lower() if needle.islower() else needle) in lowered for needle in needles)
+    return (
+        any((needle.lower() if needle.islower() else needle) in lowered for needle in needles)
+        or _ENV_SECRET_KV_RE.search(text) is not None
+        or _JSON_SECRET_KEY_RE.search(text) is not None
+    )
 
 
 def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
