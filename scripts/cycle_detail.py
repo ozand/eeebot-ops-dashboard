@@ -28,7 +28,7 @@ SECRET_PATTERNS = (
     (re.compile(r'(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+'), 'Bearer [redacted: bearer]'),
     (re.compile(r'\bAKIA[A-Z0-9]{16}\b'), '[redacted: aws-key]'),
     (re.compile(r'(?i)\bxox[baprs]-[A-Za-z0-9-]+'), '[redacted: slack-token]'),
-    (re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'), '[redacted: private-key]'),
+    (re.compile(r'-----BEGIN (?:[A-Z0-9_-]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9_-]+ )*PRIVATE KEY-----'), '[redacted: private-key]'),
 )
 
 def _escape(value: str) -> str:
