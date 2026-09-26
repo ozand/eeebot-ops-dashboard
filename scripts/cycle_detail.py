@@ -12,8 +12,8 @@ from typing import Any
 DEFAULT_DISPLAY_LIMIT = 4000
 
 SECRET_PATTERNS = (
-    # Line NAME=value where NAME contains KEY, TOKEN, SECRET, PASSWORD, PASS, AUTH
-    (re.compile(r'(?im)^(?P<key>[^\s#=]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[^\s#=]*\s*=\s*)(?P<val>[^\r\n]+)'), r'\g<key>[redacted]'),
+    # Key=value anywhere on a line where key contains KEY, TOKEN, SECRET, PASSWORD, PASS, AUTH
+    (re.compile(r'(?i)\b(?P<key>[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)(?P<val>[^\s\r\n"\'`]+|"[^"]*"|\'[^\']*\')'), r'\g<key>[redacted]'),
     # Basic Auth
     (re.compile(r'(?i)\bAuthorization:\s*Basic\s+[A-Za-z0-9+/=]+'), 'Authorization: Basic [redacted: basic-auth]'),
     (re.compile(r'(?i)\bBasic\s+[A-Za-z0-9+/=]{8,}'), '[redacted: basic-auth]'),
@@ -42,7 +42,11 @@ def redact_text(value: str) -> str:
 
 
 def is_env_path(path_str: str) -> bool:
-    return "/etc/eeepc-agent" in path_str or bool(re.search(r"\b[\w.-]+\.env\b", path_str))
+    return (
+        "/etc/eeepc-agent" in path_str
+        or bool(re.search(r'(?:^|[/\\ \t\'"])(?:[\w.-]*\.env|\.env(?:\.[\w.-]+)?)(?:$|[/\\ \t\'"])', path_str, re.IGNORECASE))
+        or ".env" in path_str
+    )
 
 
 def sanitize_tool_output(args: str, result: str) -> str:
@@ -57,6 +61,43 @@ def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> str:
     if len(safe) <= limit:
         return safe
     return f"{safe[:limit]}… {len(safe) - limit} characters not shown"
+
+
+def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
+    if isinstance(raw_messages, str):
+        try:
+            raw_messages = json.loads(raw_messages)
+        except Exception:
+            return []
+    if not isinstance(raw_messages, list):
+        return []
+    cleaned: list[dict[str, Any]] = []
+    pending_tool_args: dict[str, str] = {}
+    for msg in raw_messages:
+        if not isinstance(msg, dict):
+            continue
+        m = dict(msg)
+        role = m.get("role")
+        if role == "assistant":
+            for tc in m.get("tool_calls") or []:
+                if isinstance(tc, dict):
+                    cid = tc.get("id")
+                    fn = tc.get("function") or tc
+                    args = str(fn.get("arguments") or "")
+                    if cid:
+                        pending_tool_args[cid] = args
+        elif role == "tool":
+            cid = m.get("tool_call_id")
+            content = str(m.get("content") or "")
+            args = pending_tool_args.get(str(cid), "")
+            if is_env_path(args) or is_env_path(content):
+                m["content"] = "[env file contents withheld]"
+            else:
+                m["content"] = redact_text(content)
+        elif "content" in m and isinstance(m["content"], str):
+            m["content"] = redact_text(m["content"])
+        cleaned.append(m)
+    return cleaned
 
 def _read_jsonl(paths: list[Path]) -> tuple[list[dict[str, Any]], bool]:
     rows: list[dict[str, Any]] = []
@@ -207,12 +248,13 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             tools = extract_tool_steps(p)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools):
                 history_complete = False
+            sanitized_msgs = sanitize_messages(p.get("messages"))
             model_step = {
                 "kind": "model",
-                "messages": json.dumps(p.get("messages"), ensure_ascii=False) if p.get("messages") else None,
-                "answer": p.get("content"),
+                "messages": json.dumps(sanitized_msgs, ensure_ascii=False) if sanitized_msgs else None,
+                "answer": redact_text(str(p.get("content"))) if p.get("content") is not None else None,
                 "tools": json.dumps(p.get("tool_calls"), ensure_ascii=False) if p.get("tool_calls") else None,
-                "reasoning": p.get("reasoning_content"),
+                "reasoning": redact_text(str(p.get("reasoning_content"))) if p.get("reasoning_content") is not None else None,
                 "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
                 "duration": dur,
             }
