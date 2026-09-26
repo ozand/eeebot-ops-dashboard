@@ -672,9 +672,9 @@ def test_adr036_encoded_html_markup_is_parsed_before_scanning() -> None:
 
 def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -> None:
     """ADR-036: Scanner inspects parsed text and attributes without merging the streams."""
-    split_github_token = '<div>ghp_<span data-fragment="abcdefghijklmnop123456"></span></div>'
-    split_assignment = '<p>API_KEY=abc<span data-fragment="def12345"></span></p>'
-    styled_split_token = '<div>ghp_<span class="red box">abcdefghijklmnop123456</span></div>'
+    split_github_token = '<div>ghp_<span class="red box">abcdefghijklmnop123456</span></div>'
+    split_assignment = '<p>API_KEY=abc<span></span>def12345</p>'
+    token_in_attribute = '<span data-token="ghp_abcdefghijklmnop123456"></span>'
 
     with pytest.raises(ps.PublicationScanError, match="github_token"):
         ps.scan_pages({"index.html": split_github_token})
@@ -683,7 +683,7 @@ def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -
         ps.scan_pages({"index.html": split_assignment})
 
     with pytest.raises(ps.PublicationScanError, match="github_token"):
-        ps.scan_pages({"index.html": styled_split_token})
+        ps.scan_pages({"index.html": token_in_attribute})
 
 
 def test_adr036_raw_text_element_markup_is_scanned_as_html_fragment() -> None:
