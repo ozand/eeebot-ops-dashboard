@@ -129,13 +129,13 @@ def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_load_publish_state_missing_file_reads_as_never_published(tmp_path: Path) -> None:
     state_dir = tmp_path / 'does-not-exist-yet'
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
@@ -151,7 +151,7 @@ def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
     stray.write_text('{"digest": "half-written', encoding='utf-8')  # deliberately truncated/invalid JSON
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}}
+    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -234,7 +234,7 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     rc = ap.run(args)
 
     assert rc != 0
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -273,7 +273,7 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
 
 
 def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
@@ -342,9 +342,14 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
     _write_state_root(root)
     state_dir = tmp_path / 'techtree-state'
 
-    # Simulate: this digest/state pair was already published successfully.
+    # Simulate: this digest/state pair and an existing clean-scan approval were
+    # already published successfully. A later torn-source refusal must not retain
+    # the just-rendered page approvals for contaminated/untrusted state.
     good_digest = ap.compute_tree_digest(root)
-    ap.save_publish_state(state_dir, digest=good_digest, published_at=1000.0)
+    ap.save_publish_state(
+        state_dir, digest=good_digest, published_at=1000.0,
+        clean_scan_cache={"a" * 64 + ":html:" + "b" * 64: True},
+    )
 
     # Now the loop's next write is caught half-done: different raw bytes
     # (so the digest changes) but not valid JSON (so it fails to parse).
@@ -363,6 +368,7 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
     assert state['digest'] == good_digest
     assert state['published_at'] == 1000.0
     assert state['refusing_since'] is not None  # streak start recorded
+    assert state['clean_scan_cache'] == {}, "refusal must clear stale and newly-built scan approvals"
 
 
 def test_missing_tree_source_file_still_publishes(

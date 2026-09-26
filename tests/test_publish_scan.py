@@ -10,6 +10,9 @@ Verifies that:
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from scripts import publish_scan as ps
@@ -92,6 +95,60 @@ def test_adr036_pattern_env_kv_and_json_secrets_trigger_rejection() -> None:
     assert "json_secret_field" in str(exc_info.value)
 
 
+def _live_sized_clean_html() -> str:
+    """Representative ~8.45 MB synthetic page, matching the live scan budget scale."""
+    return '<!doctype html><html><body>' + (
+        '<p class="status">ordinary dashboard text and counters 123456</p>' * 130000
+    ) + '</body></html>'
+
+
+def test_scan_cache_key_includes_scanner_version_and_only_caches_clean_content(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Changing a scanner rule invalidates a prior clean hash; refusals are never cached."""
+    from scripts.publish_scan import SecretPattern
+    import re
+    cache: dict[str, bool] = {}
+    content = "NEW_RULE_CANARY_value"
+    ps.scan_pages({"index.html": content}, clean_cache=cache)
+    before = set(cache)
+    assert before
+
+    monkeypatch.setattr(
+        ps, "STANDALONE_PATTERNS",
+        (*ps.STANDALONE_PATTERNS, SecretPattern("new_test_rule", re.compile(r"NEW_RULE_CANARY"), "test rule")),
+    )
+    with pytest.raises(ps.PublicationScanError, match="new_test_rule"):
+        ps.scan_pages({"index.html": content}, clean_cache=cache)
+    assert set(cache) == before, "a rejected scan must not populate the cache"
+
+
+def test_scan_invalid_cache_is_treated_as_empty_cache() -> None:
+    """Malformed cache contents cannot cause a scan to be skipped."""
+    content = "GH_TOKEN=invalid-cache-canary-123456"
+    bad_cache = {"not-a-hash": "clean"}
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": content}, clean_cache=bad_cache)
+    assert bad_cache == {}, "invalid cache must be discarded before scanning"
+
+
+def test_publish_state_roundtrip_preserves_clean_scan_hash_cache(tmp_path: Path) -> None:
+    from scripts.techtree_autopublish import load_publish_state, save_publish_state
+    cache = {"a" * 64 + ":html:" + "b" * 64: True}
+    save_publish_state(tmp_path, "digest", 1.0, clean_scan_cache=cache)
+    state = load_publish_state(tmp_path)
+    assert state["clean_scan_cache"] == cache
+
+
+def test_publish_state_corrupt_clean_scan_cache_is_discarded(tmp_path: Path) -> None:
+    import json
+    from scripts.techtree_autopublish import load_publish_state
+    path = tmp_path / "publish_state.json"
+    path.write_text(json.dumps({
+        "digest": "d", "published_at": 1.0,
+        "clean_scan_cache": {"garbage": True},
+    }), encoding="utf-8")
+    assert load_publish_state(tmp_path)["clean_scan_cache"] == {}
+
+
 def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
     """ADR-036: Numeric counters and placeholders must not trigger false positives."""
     clean_payload = {
@@ -100,6 +157,58 @@ def test_adr036_counter_and_numeric_values_do_not_falsely_reject() -> None:
         "agent.html": 'const key = loop.confirmed_integration_ratio; passive: false; <API_KEY>; $VAR',
     }
     ps.scan_pages(clean_payload)
+
+
+def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() -> None:
+    """Cold reference-size scan meets budget and clean repeat uses content/version cache."""
+    import time
+    content = _live_sized_clean_html()
+    size = len(content.encode("utf-8"))
+    assert 8_000_000 <= size <= 9_000_000
+    cache: dict[str, bool] = {}
+
+    start = time.perf_counter()
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
+    cold_seconds = time.perf_counter() - start
+    assert cold_seconds < 6.0, f"cold scan took {cold_seconds:.3f}s for {size} bytes"
+
+    start = time.perf_counter()
+    ps.scan_pages({"lineage.html": content}, clean_cache=cache)
+    warm_seconds = time.perf_counter() - start
+    assert warm_seconds < 0.25, f"cached repeat took {warm_seconds:.3f}s"
+
+
+def test_json_scanning_unescapes_values_without_html_parser(monkeypatch: pytest.MonkeyPatch) -> None:
+    """JSON artifacts scan every decoded string but do not instantiate the HTML parser."""
+    monkeypatch.setattr(ps, "_html_scan_variants", lambda _value: (_ for _ in ()).throw(AssertionError("HTML parser called for JSON")))
+    payload = '{"excerpt":"{&quot;messages&quot;: []}"}'
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"cycles-archive-1.json": payload})
+
+
+def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.techtree_viewer as viewer
+    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v2", raising=False)
+    before = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
+    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v3", raising=False)
+    after = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
+    assert after != before
+
+
+def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A previously clean inherited blob SHA reuses approval only for same scanner version."""
+    cache: dict[str, bool] = {}
+    sha = "a" * 40
+    ps.scan_pages({"index.html": "safe inherited content"}, clean_cache=cache,
+                  inherited_blob_shas={"index.html": sha})
+    first_keys = set(cache)
+    assert first_keys
+
+    def fail_scan(*_args, **_kwargs):
+        raise AssertionError("clean blob cache should skip repeated byte scan")
+    monkeypatch.setattr(ps, "scan_text", fail_scan)
+    ps.scan_pages({"index.html": "same blob bytes"}, clean_cache=cache,
+                  inherited_blob_shas={"index.html": sha})
 
 
 def test_adr036_structural_call_markers_trigger_rejection() -> None:
@@ -526,6 +635,28 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
         tv.publish_to_pages(pages, previous_fingerprints=prev_fps)
     assert "index.html" in str(exc_info.value)
     assert "openai_secret_key" in str(exc_info.value)
+
+
+def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+    cache = {
+        ps.clean_cache_key(
+            "a" * 40, extra_version=tv._INHERITED_BLOB_DECODER_VERSION, mode="html"
+        ): True
+    }
+    calls = []
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        calls.append(" ".join(args))
+        return subprocess.CompletedProcess(
+            args=["gh"] + list(args), returncode=0,
+            stdout=json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": "a" * 40}], "truncated": False}),
+            stderr="",
+        )
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache=cache)
+    assert len(calls) == 1 and "git/trees/tree-sha" in calls[0]
 
 
 def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
