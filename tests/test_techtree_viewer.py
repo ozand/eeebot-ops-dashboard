@@ -4576,6 +4576,23 @@ def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
     assert '<strong class="feed-title">success</strong>' not in html
 
 
+def test_non_work_commit_detector_skips_chore_and_merge() -> None:
+    """Regression: chore: and merge: commits must be skipped as non-work commits."""
+    assert tv._is_non_work_commit_message("merge: sync with main")
+    assert tv._is_non_work_commit_message("chore: update dependencies")
+
+
+def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_no_files() -> None:
+    """Ledger files_changed must be read so git failures do not falsely claim 'no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-ledger-files', 'outcome': 'success',
+         'files_changed': ['src/real_file.py']},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert 'src/real_file.py' in html
+    assert 'integrated · no files' not in html
+
+
 def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
     residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
     checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
