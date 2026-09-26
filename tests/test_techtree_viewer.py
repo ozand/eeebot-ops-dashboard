@@ -6177,6 +6177,33 @@ def test_311_completed_previous_attempt_does_not_kill_active_retry() -> None:
     assert 'KILLED / INCOMPLETE' not in row
 
 
+def test_311_same_attempt_run_start_slightly_before_ledger_start_matches() -> None:
+    cid = "cycle-run-start-boundary"
+    ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]
+    runs = [{
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-25T19:26:10Z",
+        "finished_at": "2026-09-25T19:30:00Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=runs,
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
+
+    too_early = [{**runs[0], "started_at": "2026-09-25T19:23:59Z"}]
+    outside_tolerance = tv.build_cycle_feed(
+        ledger, bridge_runs=too_early,
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    early_row = outside_tolerance.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' not in early_row
+    assert 'running' in early_row
+
+
 def test_311_genuinely_running_cycle_still_renders_running() -> None:
     """A cycle that started 5 minutes ago and has no finished bridge run
     is genuinely running and must still render with 'running' badge."""
@@ -6227,6 +6254,22 @@ def test_311_latest_attempt_uses_timestamp_not_ledger_iteration_order() -> None:
     assert 'running' in row
     assert 'old-attempt' not in row
     assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_attempt_phase_transitions_are_applied_in_timestamp_order() -> None:
+    cid = "cycle-rotated-terminal-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:45:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "pushed_late", "ts": "2026-09-25T22:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "push_pending", "ts": "2026-09-25T21:50:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'INTEGRATED (late' in row
+    assert 'PUSH PENDING' not in row
 
 
 def test_311_timeout_ceiling_uses_attempt_start_not_latest_phase() -> None:
