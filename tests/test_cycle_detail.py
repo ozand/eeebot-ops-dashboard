@@ -532,6 +532,9 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
     assert len(detail["attempts"][0]["sessions"][0]["steps"]) == 3
     assert len(detail["attempts"][1]["sessions"][0]["steps"]) == 1
     assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
+    assert detail["attempts"][0]["sessions"][0]["history_complete"] is False
+    assert detail["attempts"][1]["sessions"][0]["history_complete"] is True
+    assert detail["attempts"][1]["history_complete"] is True
     steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
     assert sum(step.get("kind") == "tool" for step in steps) == 1
     assert all(step.get("duration") == "unknown" for step in steps if step.get("kind") == "model")
