@@ -49,8 +49,6 @@ def is_secret_value(value: str) -> bool:
         return False
     if not re.search(r"[A-Za-z0-9]", v):
         return False
-    if re.search(r"[;{}()\[\]]|==|!=|=>", v):
-        return False
     return True
 
 
