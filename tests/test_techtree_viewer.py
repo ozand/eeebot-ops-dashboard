@@ -560,7 +560,7 @@ def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch
                 stdout='msha123 merge: integrate selfevo/cycle-456\n',
                 stderr='',
             )
-        elif 'log' in cmd and 'msha123^2' in cmd:
+        elif 'log' in cmd and 'msha123^1..msha123^2' in cmd:
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=0,

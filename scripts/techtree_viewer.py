@@ -1354,7 +1354,7 @@ def extract_git_titles(node_shas=None):
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^2", "-n", "5", "--format=%B%x00"]
+                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^1..{commit_sha}^2", "-n", "5", "--format=%B%x00"]
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
                         for commit_message in res_title.stdout.split("\x00"):
@@ -1836,7 +1836,7 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^2', '-n', '5', '--format=%B%x00']
+                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^1..{commit_sha}^2', '-n', '5', '--format=%B%x00']
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
                         for commit_message in res_title.stdout.split("\x00"):
@@ -5789,7 +5789,7 @@ def build_cycle_feed(
                         all_files.append(f_str)
 
         if isinstance(cycle_files, dict):
-            cf = cycle_files.get(cid) or cycle_files.get(cid.replace('cycle-', ''))
+            cf = cycle_files.get(cid) if cid in cycle_files else cycle_files.get(cid.replace('cycle-', ''))
             if isinstance(cf, list):
                 has_observed_files = True
                 for f in cf:
@@ -5985,7 +5985,7 @@ def build_cycle_feed(
         # neither should say so explicitly rather than presenting bare success.
         if not title and proposed_title:
             title = proposed_title
-        if not title and outcome_kind == 'integrated':
+        if not title and outcome_kind == 'integrated' and not pushed_late:
             if has_observed_files and not files_changed:
                 title = 'integrated · no files'
             elif not has_observed_files:
