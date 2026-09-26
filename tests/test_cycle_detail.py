@@ -80,6 +80,15 @@ def test_redaction_covers_secret_patterns_and_env_files():
     assert "litellm.env" in safe  # Safe filename reference remains visible
 
 
+def test_model_assistant_content_is_sanitized_before_message_serialization() -> None:
+    from scripts.cycle_detail import sanitize_messages
+
+    canary = "ASSISTANT_MESSAGE_SECRET_CANARY_3362"
+    messages = [{"role": "assistant", "content": canary}]
+    safe = json.dumps(sanitize_messages(messages))
+    assert canary not in safe
+
+
 def test_tool_arguments_with_env_path_are_withheld() -> None:
     step = {"name": "read_file", "arguments": json.dumps({"path": "/tmp/.env"}), "result": "not shown"}
     rendered = format_tool_step(step)
