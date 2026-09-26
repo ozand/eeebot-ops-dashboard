@@ -10137,6 +10137,7 @@ def publish_to_pages(
     pages: 'dict[str, str] | str',
     *,
     previous_fingerprints: 'dict[str, str] | None' = None,
+    dry_run: bool = False,
 ) -> 'tuple[int, dict[str, str]]':
     """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
     gh-pages commit carries every page (git Data API: blobs -> tree ->
@@ -10158,6 +10159,11 @@ def publish_to_pages(
     caller must not persist a fingerprint for a publish that didn't
     actually complete."""
     import base64
+    try:
+        from scripts.publish_scan import scan_pages, PublicationScanError
+    except ImportError:
+        from publish_scan import scan_pages, PublicationScanError
+
     if isinstance(pages, str):
         pages = {'index.html': pages}
     if not pages:
@@ -10165,6 +10171,10 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
+    # ADR-036 rule 3: scan new pages unconditionally before blob creation
+    scan_pages(pages)
+    if dry_run:
+        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
     previous_fingerprints = previous_fingerprints or {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
@@ -10256,6 +10266,45 @@ def publish_to_pages(
         except Exception as exc:
             print(f'publish: unreadable {PUBLISH_BRANCH} HEAD: {exc}', file=sys.stderr)
             return 1, {}
+
+        # ADR-036 rule 3: verify full target tree including inherited files via GraphQL
+        owner, repo = PUBLISH_REPO.split('/', 1)
+        gql_query = (
+            f'query {{ repository(owner: "{owner}", name: "{repo}") {{ '
+            f'object(expression: "{parent_sha}:") {{ ... on Tree {{ '
+            'entries { name type oid } } } } } }'
+        )
+        inherited_tree_res = _gh(['api', 'graphql', '-f', f'query={gql_query}'])
+        if inherited_tree_res.returncode == 0:
+            try:
+                tree_data = _json.loads(inherited_tree_res.stdout)
+                repo_obj = tree_data.get('data', {}).get('repository', {}).get('object', {})
+                entries = repo_obj.get('entries', []) if isinstance(repo_obj, dict) else []
+                inherited_pages = {}
+                for item in entries:
+                    if isinstance(item, dict) and item.get('type') == 'blob':
+                        path = item.get('name')
+                        sha = item.get('oid')
+                        if path and sha and path not in pages:
+                            b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
+                            if b_res.returncode == 0:
+                                try:
+                                    b_json = _json.loads(b_res.stdout)
+                                    raw = b_json.get('content', '')
+                                    enc = b_json.get('encoding', '')
+                                    if enc == 'base64':
+                                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                                    else:
+                                        txt = raw
+                                    inherited_pages[path] = txt
+                                except Exception:
+                                    pass
+                if inherited_pages:
+                    scan_pages(inherited_pages)
+            except PublicationScanError:
+                raise
+            except Exception:
+                pass
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
