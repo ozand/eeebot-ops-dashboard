@@ -105,6 +105,7 @@ STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
     SecretPattern("slack_token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b"), "Slack API token"),
     SecretPattern("basic_auth", re.compile(r"(?i)\bAuthorization\s*:\s*Basic\s+[A-Za-z0-9+/=]{10,}\b|\bBasic\s+[A-Za-z0-9+/=]{16,}\b"), "Basic Auth header"),
     SecretPattern("url_credentials", re.compile(r"https?://[^:\s/\"']+:[^@\s/\"']+@[^/\s\"']+"), "URL containing embedded credentials"),
+    SecretPattern("private_key_header", re.compile(r"-----BEGIN (?:[A-Z0-9_-]+ )?PRIVATE KEY-----"), "private key header"),
     SecretPattern("structural_reasoning_content", re.compile(r'"reasoning_content"'), "call marker reasoning_content"),
     SecretPattern("structural_messages", re.compile(r'"messages"\s*:'), "call marker messages"),
     SecretPattern("structural_prompt", re.compile(r'"prompt"\s*:\s*\{'), "call marker prompt object"),
@@ -112,17 +113,28 @@ STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
 
 
 _JSON_SECRET_KEY_RE = re.compile(
-    r'(?i)"([a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)"\s*:\s*"([^"]+)"'
+    r'(?i)[\'"]([a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)[\'"]\s*:\s*(?:["\']([^"\']+)["\']|([^,}\s]+))'
 )
 _ENV_SECRET_KV_RE = re.compile(
-    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*(?:"([^"\r\n]{8,})"|\'([^\'\r\n]{8,})\'|([^"\'<>\s$]{8,}))'
+    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*(?:"([^"]{8,})"|\'([^\']{8,})\'|([^"\'<>\s$]{8,}))'
 )
+
+
+def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
+    """Iteratively unescape HTML entities until string stabilizes (handles &amp;quot;, &amp;#34;)."""
+    current = text
+    for _ in range(max_rounds):
+        decoded = _html.unescape(current)
+        if decoded == current:
+            break
+        current = decoded
+    return current
 
 
 def scan_text(content: str) -> dict[str, int]:
     """Scan string content and return counts of all matched leak patterns."""
     findings: dict[str, int] = {}
-    unescaped = _html.unescape(content)
+    unescaped = _unescape_until_stable(content)
     tag_stripped = re.sub(r'<[^>]+>', '', unescaped)
 
     variants = [content]
@@ -140,7 +152,8 @@ def scan_text(content: str) -> dict[str, int]:
     for v in variants:
         hits = 0
         for match in _JSON_SECRET_KEY_RE.finditer(v):
-            key, val = match.group(1).lower(), match.group(2)
+            key = match.group(1).lower()
+            val = match.group(2) or match.group(3) or ""
             if is_excluded_key_name(key):
                 continue
             if is_secret_value(val):
