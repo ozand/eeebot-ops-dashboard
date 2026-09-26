@@ -56,7 +56,7 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         clean_path = self.path.split("?", 1)[0].split("#", 1)[0]
-        if clean_path in {"", "/", "/index.html"}:
+        if clean_path in {"", "/", "/index.html"} or clean_path == "/current" or clean_path.startswith("/current/"):
             current = self.site_root / "current"
             if current.is_symlink():
                 try:
@@ -66,8 +66,13 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
             else:
                 versions = [p.name for p in self.site_root.iterdir() if p.is_dir() and not p.is_symlink()]
                 target_version = sorted(versions)[-1] if versions else "current"
+            if clean_path.startswith("/current/"):
+                subpath = clean_path[len("/current/"):]
+                dest = f"/{target_version}/{subpath}"
+            else:
+                dest = f"/{target_version}/"
             self.send_response(302)
-            self.send_header("Location", f"/{target_version}/")
+            self.send_header("Location", dest)
             self.end_headers()
             return
         super().do_GET()
@@ -339,9 +344,12 @@ def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -
         try:
             os.replace(link_tmp, current_link)
         except OSError:
-            if current_link.is_symlink():
-                current_link.unlink()
-            os.replace(link_tmp, current_link)
+            if os.name == "nt":
+                if current_link.is_symlink():
+                    current_link.unlink()
+                os.replace(link_tmp, current_link)
+            else:
+                raise
         keep_dirs = {destination.resolve()}
         if previous and previous.is_dir():
             keep_dirs.add(previous)
