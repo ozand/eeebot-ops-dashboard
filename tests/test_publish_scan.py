@@ -549,3 +549,27 @@ def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: 
 
     with pytest.raises(ps.PublicationScanError, match="unlisted.*allowlist.*src/leak.py"):
         tv.publish_to_pages({"index.html": "<html>clean index</html>"})
+
+
+def test_adr036_tag_stripped_secrets_and_markers_trigger_rejection() -> None:
+    """ADR-036 rule 3: Secrets and markers split across HTML tags must be detected."""
+    split_token = "<code>ghp_<span>abcdefghijklmnop123456</span></code>"
+    split_marker = "<div>{&quot;<span>messages</span>&quot;: []}</div>"
+
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": split_token})
+
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"index.html": split_marker})
+
+
+def test_adr036_account_password_not_exempted_by_count_substring() -> None:
+    """ADR-036 rule 3: ACCOUNT_PASSWORD must not be exempted merely because it contains 'count'."""
+    account_pass = "ACCOUNT_PASSWORD=abcdefghijklmnop"
+    account_key = "ACCOUNT_KEY=abcdefghijklmnop"
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": account_pass})
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": account_key})
