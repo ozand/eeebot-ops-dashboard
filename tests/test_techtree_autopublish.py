@@ -132,13 +132,20 @@ def test_parse_args_state_dir_defaults_to_first_segment_of_env_var(
 
 # --- state file persistence (acceptance tests 4, 5) -------------------------
 
-def test_refusal_save_preserves_host_failure_state(tmp_path: Path) -> None:
-    state_dir = tmp_path / "state"
-    ap.save_publish_state(state_dir, "digest", 1000.0, host_snapshot_failed_since=900.0, last_host_error="synthetic host failure")
-    ap.save_publish_state(state_dir, "digest", 1001.0, refusing_since=1001.0)
+def test_refusal_save_preserves_host_failure_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "state-root"
+    _write_state_root(root)
+    state_dir = tmp_path / "publisher-state"
+    digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest, 1000.0, host_snapshot_failed_since=900.0,
+                          last_host_error="synthetic host failure")
+    monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_args: "synthetic unavailable source")
+
+    assert ap.run(ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir)])) == 1
     loaded = ap.load_publish_state(state_dir)
     assert loaded["host_snapshot_failed_since"] == 900.0
     assert loaded["last_host_error"] == "synthetic host failure"
+    assert isinstance(loaded["refusing_since"], (int, float))
 
 
 def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
