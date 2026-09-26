@@ -6114,6 +6114,24 @@ def test_adr036_subagent_and_reflector_text_stay_off_public_details() -> None:
     assert details['cycle-x']['reflection']['findings_count'] == 1
 
 
+def test_build_cycle_details_uses_preserved_v2_projection_metrics() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
+    lesson = _sanitize_public_value('lessons', [{
+        'cycle_id': 'cycle-projected', 'problem': 'private problem', 'solution': 'private fix',
+    }])[0]
+    reflection = _sanitize_public_value('reflections', [{
+        'cycle_id': 'cycle-projected', 'summary': 'private summary',
+        'findings': ['finding'], 'recommendations': ['recommendation'],
+    }])[0]
+    details = tv.build_cycle_details([], None, [lesson], [reflection])
+    assert details['cycle-projected']['lesson_problem_chars'] == len('private problem')
+    assert details['cycle-projected']['lesson_solution_chars'] == len('private fix')
+    assert details['cycle-projected']['reflection'] == {
+        'summary_chars': len('private summary'), 'findings_count': 1, 'recommendations_count': 1,
+    }
+
+
 def test_adr036_reason_code_is_public_free_text_is_not() -> None:
     """ADR-036 rule 3 (architect, 2026-09-26): a vocabulary code passes; an
     executor's phrase is replaced by its size."""

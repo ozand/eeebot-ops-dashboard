@@ -115,6 +115,12 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     )
 
     ldir = state / "ledger"
+    lessons_dir = state / "lessons"
+    lessons_dir.mkdir()
+    (lessons_dir / "lesson.jsonl").write_text(json.dumps({
+        "id": "L-42", "cycle_id": "c1", "problem": "private", "solution": "fix",
+        "title": "lesson title", "kind": "bug", "tags": ["test"], "severity": "low",
+    }) + "\n", encoding="utf-8")
     ldir.mkdir()
     (ldir / "cycles.jsonl").write_text(
         json.dumps({"phase": "proposed", "cycle_id": "c1", "task_title": "t"}) + "\n" +
@@ -137,6 +143,10 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     assert public_reflection["summary_chars"] > 0
     assert public_reflection["transcript_coverage"] == 0.8333
     assert public_reflection["partial_view"] is True
+    preserved_reflection = {**public_reflection, "recommendations_count": 1}
+    cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
+    assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
+    assert cycle_details["c1"]["reflection"]["findings_count"] == 1
 
     pages = tv.render_pages(public_data, "eeepc")
     for fname, content in pages.items():

@@ -4575,8 +4575,12 @@ def build_cycle_details(
         # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
+        elif lesson.get('problem_chars') is not None:
+            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
+        elif lesson.get('solution_chars') is not None:
+            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
@@ -4584,10 +4588,11 @@ def build_cycle_details(
         out = record(str(reflection['cycle_id']))
         # ADR-036 rule 3: the reflector's output is model text -- public
         # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': len(str(reflection.get('summary') or ''))}
+        payload: dict[str, Any] = {'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
-            payload[f'{key}_count'] = len(value) if isinstance(value, list) else (1 if value else 0)
+            preserved_count = reflection.get(f'{key}_count')
+            payload[f'{key}_count'] = int(preserved_count) if preserved_count is not None else (len(value) if isinstance(value, list) else (1 if value else 0))
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -6858,9 +6863,8 @@ def _build_proposer_block(
 
 
 def _is_v2_lesson(lesson: dict[str, Any]) -> bool:
-    """Return True when the lesson record has a non-empty 'problem' field,
-    which is the sentinel for the v2 schema (ozand/eeebot#1071)."""
-    return bool(lesson.get('problem'))
+    """Return True when lesson data preserves the v2 schema discriminator."""
+    return bool(lesson.get('problem') or lesson.get('_v2_lesson') or lesson.get('problem_chars') is not None)
 
 
 def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: str | None = None) -> str:

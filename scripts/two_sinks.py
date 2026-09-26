@@ -161,6 +161,7 @@ def _sanitize_public_value(key: str, value: object) -> object:
                     if field in r:
                         r[f"{field}_chars"] = len(r[field]) if isinstance(r[field], str) else 0
                         r[field] = ""
+                r["_v2_lesson"] = bool(rec.get("problem"))
                 les.append(r)
             else:
                 les.append(rec)
