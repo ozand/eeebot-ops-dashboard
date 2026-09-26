@@ -600,6 +600,31 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
     assert detail3.get("reconstruction") == "incomplete"
 
 
+def test_only_affected_source_marks_matching_cycle_incomplete(tmp_path: Path) -> None:
+    import json
+    from datetime import datetime, timezone
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    bridge = root / "bridge"
+    bridge.mkdir()
+    (bridge / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "cycle_id": "c-a", "classification": "completed"}) + "\n"
+        + json.dumps({"run_id": "r2", "cycle_id": "c-b", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    prompt_dir = root / "llm_calls" / "prompts"
+    prompt_dir.mkdir(parents=True)
+    valid = {"cycle_id": "c-a", "component": "executor", "seq": 1, "messages": []}
+    bad = {"cycle_id": "c-b", "component": "executor", "seq": 1, "messages": []}
+    (prompt_dir / "2026-09-25.jsonl").write_text(
+        json.dumps(valid) + "\n" + json.dumps(bad) + "\n{broken-json-line\n", encoding="utf-8",
+    )
+    index = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
+    assert index["c-a"]["reconstruction"] == "complete"
+    assert index["c-b"]["reconstruction"] == "incomplete"
+
+
 def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:
     from scripts.cycle_detail import build_cycle_index
 
