@@ -143,13 +143,21 @@ outfile=""
 while [ $# -gt 0 ]; do
     case "$1" in
         -o) outfile="$2"; shift 2 ;;
-        --proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
+        -H|--header|--proto|--proto-redir|--connect-timeout|--max-time) shift 2 ;;
         -*) shift ;;
         *) url="$1"; shift ;;
     esac
 done
 mode="$(cat "$FAKE_CURL_MODE_FILE" 2>/dev/null || echo ok)"
 case "$url" in
+    */commits/master|*/commits/*)
+        if [ "$mode" = "commits-404" ]; then
+            echo "curl: (22) The requested URL returned error: 404" >&2
+            exit 22
+        fi
+        printf '%s\n' "c0ffee1234567890abcdef1234567890abcdef12" > "$outfile"
+        exit 0
+        ;;
     */deploy/sync-manifest.txt)
         if [ "$mode" = "manifest-404" ]; then
             echo "curl: (22) The requested URL returned error: 404" >&2
@@ -440,3 +448,52 @@ def test_successful_master_sync_heals_the_local_manifest_copy(tmp_path: Path, sh
     assert "local manifest copy updated from master" in result.stdout
     healed = (result.dest / "sync-manifest.txt").read_text(encoding="utf-8")
     assert healed == "scripts/foo.py\nassets/vendor/bar.js\n"
+
+
+def test_sync_records_generator_sha_and_viewer_renders_it_in_footer(
+    tmp_path: Path, sh_available: bool, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #325: the sync records the master revision it downloaded to
+    GENERATOR_SHA atomically together with the files. The viewer reads that
+    file and renders the revision in the page footer, falling back to
+    'unknown' only when the file is absent."""
+    if not sh_available:
+        pytest.skip("sh not available")
+
+    from scripts import techtree_viewer as tv
+
+    # 1. Run sync against fake master (fake curl returns c0ffee1234567890abcdef1234567890abcdef12)
+    result = _run_sync(
+        tmp_path, mode="ok",
+        initial_manifest="scripts/foo.py\nassets/vendor/bar.js\n",
+    )
+    assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
+    assert "installed 2 manifest file(s)" in result.stdout
+    assert "master revision is c0ffee1234567890abcdef1234567890abcdef12" in result.stdout
+
+    sha_file = result.dest / "GENERATOR_SHA"
+    assert sha_file.exists()
+    assert sha_file.read_text(encoding="utf-8").strip() == "c0ffee1234567890abcdef1234567890abcdef12"
+
+    # 2. Viewer reads this file and renders the revision in the footer
+    monkeypatch.setenv("GENERATOR_SHA_FILE", str(sha_file))
+    assert tv._generator_sha() == "c0ffee1"
+
+    html = tv.render_page({}, host="eeepc")
+    assert "generator c0ffee1" in html
+
+    # 3. When GENERATOR_SHA is missing and running outside git, reports 'unknown'
+    missing_sha = result.dest / "NONEXISTENT_SHA"
+    monkeypatch.setenv("GENERATOR_SHA_FILE", str(missing_sha))
+    monkeypatch.setattr(tv, "_BAKED_GENERATOR_SHA", "")
+
+    orig_run = subprocess.run
+    def mock_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and len(cmd) > 0 and cmd[0] == "git":
+            return subprocess.CompletedProcess(cmd, returncode=128, stdout="", stderr="fatal: not a git repository")
+        return orig_run(cmd, *args, **kwargs)
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    assert tv._generator_sha() == "unknown"
+    html_unknown = tv.render_page({}, host="eeepc")
+    assert "generator unknown" in html_unknown

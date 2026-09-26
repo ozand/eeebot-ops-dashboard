@@ -7,6 +7,7 @@ set -eu
 
 DEST=/opt/eeebot-techtree
 RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master
+COMMITS_URL=${SYNC_COMMITS_URL:-https://api.github.com/repos/ozand/eeebot-ops-dashboard/commits/master}
 # Permanent backups kept per installed file. The publish unit fires every few
 # minutes and each run replaced every manifest file, so an unbounded keep-all
 # policy reached 86 files / 11 MB in one directory (issue #155).
@@ -133,6 +134,36 @@ fi
 [ -r "$MANIFEST" ] || { echo "techtree sync: manifest missing: $MANIFEST" >&2; exit 1; }
 echo "techtree sync: using $manifest_source manifest ($MANIFEST)"
 
+# Fetch the revision of master being synced (#325)
+REV_TMP="$TMP_ROOT/GENERATOR_SHA"
+if [ "$manifest_source" = "master" ]; then
+    AUTH_OPTS=""
+    if [ -n "${GH_TOKEN:-}" ]; then
+        AUTH_OPTS="-H Authorization: token $GH_TOKEN"
+    fi
+    # shellcheck disable=SC2086
+    if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS $AUTH_OPTS \
+        -H "Accept: application/vnd.github.sha" "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null; then
+        rev_candidate=$(tr -d '\r\n' < "$TMP_ROOT/rev.remote")
+        case "$rev_candidate" in
+            *[!0-9a-fA-F]*|"")
+                rev_candidate=$(sed -n -E 's/.*"sha":\s*"([0-9a-fA-F]+)".*/\1/p' "$TMP_ROOT/rev.remote" | head -n 1)
+                ;;
+        esac
+        case "$rev_candidate" in
+            [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*)
+                echo "$rev_candidate" > "$REV_TMP"
+                echo "techtree sync: master revision is $rev_candidate"
+                ;;
+            *)
+                echo "techtree sync: warning: invalid revision response from $COMMITS_URL" >&2
+                ;;
+        esac
+    else
+        echo "techtree sync: warning: could not fetch master revision from $COMMITS_URL" >&2
+    fi
+fi
+
 # Trade recorded (#210 review): with master's manifest in use, a 404 on one
 # of ITS entries (raw CDN still catching up on a file pushed in the same
 # commit) fails this run with no retry against the local copy. That is a
@@ -193,6 +224,26 @@ while IFS='|' read -r relative tmp; do
     fi
     installed=$((installed + 1))
 done < "$FILES"
+
+# Atomically install GENERATOR_SHA if one was fetched (#325)
+if [ -f "$REV_TMP" ]; then
+    destination="$DEST/GENERATOR_SHA"
+    backup=
+    permanent_backup=
+    if [ -e "$destination" ]; then
+        backup="$TMP_ROOT/backup-generator-sha"
+        permanent_backup="$destination.bak.$stamp"
+        cp -p "$destination" "$backup"
+    fi
+    if ! mv -f "$REV_TMP" "$destination"; then
+        echo "techtree sync: replace failed: GENERATOR_SHA" >&2
+        exit 1
+    fi
+    printf '%s|%s|%s|%s\n' "GENERATOR_SHA" "$destination" "$backup" "$permanent_backup" >> "$MOVED_LIST"
+    if [ -n "$backup" ]; then
+        cp -p "$backup" "$permanent_backup"
+    fi
+fi
 
 if [ -f "$MOVED_LIST" ]; then
     prune_backups

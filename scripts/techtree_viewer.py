@@ -9399,14 +9399,34 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 def _generator_sha() -> str:
     """Return the generator's git short SHA.
 
-    Preference order (issue #101):
-    1. Module-level ``_BAKED_GENERATOR_SHA`` — set by deploy_generator.sh at
-       deploy time via ``sed -i``; non-empty when running from /opt, so no
-       git repo is required on the host.
-    2. ``git rev-parse --short HEAD`` — works when running directly from the
+    Preference order:
+    1. File ``GENERATOR_SHA`` written by eeebot-techtree-sync.sh (issue #325).
+    2. Module-level ``_BAKED_GENERATOR_SHA`` — legacy sentinel (issue #101).
+    3. ``git rev-parse --short HEAD`` — works when running directly from the
        repo (operator workstation / CI).
-    3. ``'unknown'`` — neither source is available.
+    4. ``'unknown'`` — none available.
     """
+    candidates: list[Path] = []
+    import os
+    env_file = os.environ.get("GENERATOR_SHA_FILE")
+    if env_file:
+        candidates.append(Path(env_file))
+    here = Path(__file__).resolve()
+    candidates.append(here.parent.parent / "GENERATOR_SHA")
+    candidates.append(here.parent / "GENERATOR_SHA")
+    candidates.append(Path("/opt/eeebot-techtree/GENERATOR_SHA"))
+
+    for path in candidates:
+        try:
+            if path.is_file():
+                raw = path.read_text(encoding="utf-8").strip()
+                if raw:
+                    if len(raw) >= 7 and re.match(r"^[0-9a-fA-F]+$", raw):
+                        return raw[:7]
+                    return raw
+        except Exception:
+            pass
+
     if _BAKED_GENERATOR_SHA:
         return _BAKED_GENERATOR_SHA
     try:
