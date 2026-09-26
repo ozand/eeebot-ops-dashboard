@@ -1500,6 +1500,19 @@ def test_issue153_cycle_details_panel_click_listener_delegated() -> None:
     assert "event.target.closest('.lineage-node')" in html
 
 
+def test_public_ledger_reason_is_redacted_before_html_and_json_rendering() -> None:
+    marker = "PRIVATE_LEDGER_REASON_CANARY_4197"
+    data = {
+        "ledger_tail": [{"phase": "outcome", "cycle_id": "cycle-reason", "outcome": "failed", "reason": marker, "ts": "2026-09-26T10:00:00Z"}],
+        "ledger_history": [{"phase": "outcome", "cycle_id": "cycle-reason", "outcome": "failed", "reason": marker, "ts": "2026-09-26T10:00:00Z"}],
+        "evolution_tree": {"nodes": {}}, "portfolio": {}, "scorecard": {},
+    }
+    from scripts.two_sinks import split_render_inputs
+    public_data, _ = split_render_inputs(data)
+    pages = tv.render_pages(public_data, host="test-host")
+    assert all(marker not in body for body in pages.values())
+
+
 def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
     history_row = {
         'phase': 'outcome',
