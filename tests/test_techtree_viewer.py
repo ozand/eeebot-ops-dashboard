@@ -495,6 +495,30 @@ def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
     assert 'feature_file.txt' in cycle_files.get('cycle-cycle-123', []) or 'feature_file.txt' in cycle_files.get('cycle-123', [])
 
 
+def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Path) -> None:
+    """A diary-only branch must not borrow an ordinary commit from before branch creation."""
+    repo = tmp_path / 'branch_only_repo'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'base.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+    (repo / 'diary.txt').write_text('diary', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'diary.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'diary: record cycle'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-diary', '-m',
+                    'merge: integrate selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+
+    titles, _cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
+    assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
+
+
 def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
     not_repo = tmp_path / 'not_a_repo'
     not_repo.mkdir()
@@ -4591,6 +4615,26 @@ def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_n
     html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
     assert 'src/real_file.py' in html
     assert 'integrated · no files' not in html
+
+
+def test_cycle_feed_pushed_late_uses_specific_title_fallback_without_git_or_task_title() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-late-fallback', 'outcome': 'pushed_late',
+         'push_attempts': 3},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">pushed late, 3 attempt(s)</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+def test_cycle_feed_empty_git_diff_is_preserved_as_observed_no_files() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-observed-empty-diff', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(
+        rows, task_titles={}, cycle_files={'cycle-observed-empty-diff': []}, history_mode=True
+    )
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
 
 
 def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
