@@ -10133,6 +10133,68 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
+def _inspect_and_scan_inherited_tree(parent_sha: str, pages: dict[str, str]) -> None:
+    """ADR-036 rule 3: verify full target tree including inherited files via GraphQL (fail-closed)."""
+    import base64
+    import json as _json
+    try:
+        from scripts.publish_scan import scan_pages, PublicationScanError
+    except ImportError:
+        from publish_scan import scan_pages, PublicationScanError
+
+    owner, repo = PUBLISH_REPO.split('/', 1)
+    gql_query = (
+        f'query {{ repository(owner: "{owner}", name: "{repo}") {{ '
+        f'object(expression: "{parent_sha}:") {{ ... on Tree {{ '
+        'entries { name type oid } } } } } }'
+    )
+    res = _gh(['api', 'graphql', '-f', f'query={gql_query}'])
+    if res.returncode != 0:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot inspect inherited tree (API returncode {res.returncode}): {res.stderr.strip()[:200]}"
+        )
+    try:
+        tree_data = _json.loads(res.stdout)
+    except Exception as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unparseable tree inspection response: {exc}"
+        ) from exc
+
+    if isinstance(tree_data, dict) and tree_data.get("errors"):
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): GraphQL errors during tree inspection: {tree_data['errors']}"
+        )
+
+    repo_obj = tree_data.get('data', {}).get('repository', {}).get('object', {}) if isinstance(tree_data, dict) else {}
+    entries = repo_obj.get('entries', []) if isinstance(repo_obj, dict) else []
+    inherited_pages = {}
+    for item in entries:
+        if isinstance(item, dict) and item.get('type') == 'blob':
+            path = item.get('name')
+            sha = item.get('oid')
+            if path and sha and path not in pages:
+                b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
+                if b_res.returncode != 0:
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): cannot fetch inherited blob {path} (exit {b_res.returncode})"
+                    )
+                try:
+                    b_json = _json.loads(b_res.stdout)
+                    raw = b_json.get('content', '')
+                    enc = b_json.get('encoding', '')
+                    if enc == 'base64':
+                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                    else:
+                        txt = raw
+                    inherited_pages[path] = txt
+                except Exception as exc:
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
+                    ) from exc
+    if inherited_pages:
+        scan_pages(inherited_pages)
+
+
 def publish_to_pages(
     pages: 'dict[str, str] | str',
     *,
@@ -10173,14 +10235,13 @@ def publish_to_pages(
     pages = dict(pages)
     # ADR-036 rule 3: scan new pages unconditionally before blob creation
     scan_pages(pages)
-    if dry_run:
-        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
     previous_fingerprints = previous_fingerprints or {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
     # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+    initial_parent_sha: 'str | None' = None
     if branch_probe.returncode != 0:
         head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
                     '--jq', '.object.sha'])
@@ -10195,6 +10256,19 @@ def publish_to_pages(
             print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
                   file=sys.stderr)
             return 1, {}
+        initial_parent_sha = head.stdout.strip()
+    else:
+        try:
+            import json as _json
+            initial_parent_sha = _json.loads(branch_probe.stdout).get('commit', {}).get('sha')
+        except Exception:
+            initial_parent_sha = None
+
+    if initial_parent_sha:
+        _inspect_and_scan_inherited_tree(initial_parent_sha, pages)
+
+    if dry_run:
+        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10267,44 +10341,9 @@ def publish_to_pages(
             print(f'publish: unreadable {PUBLISH_BRANCH} HEAD: {exc}', file=sys.stderr)
             return 1, {}
 
-        # ADR-036 rule 3: verify full target tree including inherited files via GraphQL
-        owner, repo = PUBLISH_REPO.split('/', 1)
-        gql_query = (
-            f'query {{ repository(owner: "{owner}", name: "{repo}") {{ '
-            f'object(expression: "{parent_sha}:") {{ ... on Tree {{ '
-            'entries { name type oid } } } } } }'
-        )
-        inherited_tree_res = _gh(['api', 'graphql', '-f', f'query={gql_query}'])
-        if inherited_tree_res.returncode == 0:
-            try:
-                tree_data = _json.loads(inherited_tree_res.stdout)
-                repo_obj = tree_data.get('data', {}).get('repository', {}).get('object', {})
-                entries = repo_obj.get('entries', []) if isinstance(repo_obj, dict) else []
-                inherited_pages = {}
-                for item in entries:
-                    if isinstance(item, dict) and item.get('type') == 'blob':
-                        path = item.get('name')
-                        sha = item.get('oid')
-                        if path and sha and path not in pages:
-                            b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
-                            if b_res.returncode == 0:
-                                try:
-                                    b_json = _json.loads(b_res.stdout)
-                                    raw = b_json.get('content', '')
-                                    enc = b_json.get('encoding', '')
-                                    if enc == 'base64':
-                                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
-                                    else:
-                                        txt = raw
-                                    inherited_pages[path] = txt
-                                except Exception:
-                                    pass
-                if inherited_pages:
-                    scan_pages(inherited_pages)
-            except PublicationScanError:
-                raise
-            except Exception:
-                pass
+        # ADR-036 rule 3: re-verify target tree if branch tip moved concurrently
+        if attempt > 1 and parent_sha != initial_parent_sha:
+            _inspect_and_scan_inherited_tree(parent_sha, pages)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',

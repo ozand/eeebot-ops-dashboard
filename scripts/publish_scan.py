@@ -72,7 +72,7 @@ _JSON_SECRET_KEY_RE = re.compile(
     r'(?i)"([a-z0-9_]*(?:password|secret|api[_-]?key|access_token|auth_token|token)[a-z0-9_]*)"\s*:\s*"([^"]+)"'
 )
 _ENV_SECRET_KV_RE = re.compile(
-    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*([^\s<"\'$]+)'
+    r'(?i)\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*)\s*[:=]\s*["\']?([^"\'<>\s$]{8,})["\']?'
 )
 
 

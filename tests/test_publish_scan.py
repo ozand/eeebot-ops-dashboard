@@ -187,3 +187,83 @@ def test_adr036_autopublish_dry_run_scans_and_rejects_leak(monkeypatch, tmp_path
     with pytest.raises(ps.PublicationScanError) as exc_info:
         ap.run(args)
     assert "eeepc_agent_path" in str(exc_info.value)
+
+
+def test_adr036_env_kv_with_quotes_triggers_rejection() -> None:
+    """ADR-036: Quoted env/kv tokens like API_KEY="..." or GH_TOKEN='...' must be caught."""
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        ps.scan_pages({"index.html": 'API_KEY="mysecrettoken12345"'})
+    assert "env_secret_kv" in str(exc_info.value)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        ps.scan_pages({"index.html": "GH_TOKEN='mysecrettoken12345'"})
+    assert "env_secret_kv" in str(exc_info.value)
+
+
+def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> None:
+    """ADR-036: publish_to_pages(dry_run=True) must inspect inherited tree before returning."""
+    import base64
+    import json
+
+    leaked_blob = base64.b64encode(b'{"reasoning_content": "private text"}').decode("ascii")
+
+    def fake_gh(args, input_text=None):
+        joined = " ".join(args)
+        def cp(out, rc=0):
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if "branches/gh-pages" in joined:
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
+        if "graphql" in joined:
+            return cp(json.dumps({"data": {"repository": {"object": {"entries": [{"name": "private-dump.json", "type": "blob", "oid": "leakblob1"}]}}}}))
+        if "blobs/leakblob1" in joined:
+            return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": "<html>clean page</html>"}, dry_run=True)
+    assert "private-dump.json" in str(exc_info.value)
+    assert "structural_reasoning_content" in str(exc_info.value)
+
+
+def test_adr036_publish_to_pages_fail_closed_on_tree_api_error(monkeypatch) -> None:
+    """ADR-036: Fail-closed on network/API failure when inspecting inherited tree."""
+    def fake_gh(args, input_text=None):
+        joined = " ".join(args)
+        def cp(out, rc=0, err=""):
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
+        if "branches/gh-pages" in joined:
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
+        if "graphql" in joined:
+            return cp("", rc=1, err="HTTP 502 Bad Gateway")
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": "<html>clean page</html>"})
+    assert "cannot inspect inherited tree" in str(exc_info.value)
+
+
+def test_adr036_publish_to_pages_fail_closed_on_blob_fetch_error(monkeypatch) -> None:
+    """ADR-036: Fail-closed when an inherited blob cannot be downloaded for verification."""
+    import json
+
+    def fake_gh(args, input_text=None):
+        joined = " ".join(args)
+        def cp(out, rc=0, err=""):
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
+        if "branches/gh-pages" in joined:
+            return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
+        if "graphql" in joined:
+            return cp(json.dumps({"data": {"repository": {"object": {"entries": [{"name": "file.txt", "type": "blob", "oid": "blob1"}]}}}}))
+        if "blobs/blob1" in joined:
+            return cp("", rc=1, err="HTTP 404 Blob not found")
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+
+    with pytest.raises(ps.PublicationScanError) as exc_info:
+        tv.publish_to_pages({"index.html": "<html>clean page</html>"})
+    assert "cannot fetch inherited blob" in str(exc_info.value)
