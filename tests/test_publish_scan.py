@@ -743,3 +743,52 @@ def test_adr036_bootstrap_clean_branch_enables_pages(monkeypatch: pytest.MonkeyP
     rc, fp = tv.publish_to_pages({"index.html": "<html>clean</html>"})
     assert rc == 0
     assert any("-X" in call and "POST" in call for call in pages_calls)
+
+
+def test_adr036_bootstrap_pages_enable_failure_returns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036: A failed Pages activation must not report bootstrap publication success."""
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="404 Not Found")
+        if "git/blobs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"blob1"}', stderr="")
+        if "git/trees" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"tree1"}', stderr="")
+        if "git/commits" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout='{"sha":"com1"}', stderr="")
+        if "git/refs" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+        if "pages" in joined and "-X" in args:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="HTTP 403 Forbidden")
+        if "pages" in joined:
+            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=1, stdout="", stderr="404 Not Found")
+        return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    rc, fingerprints = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    assert rc != 0
+    assert fingerprints == {}
+
+
+def test_adr036_gzip_bomb_exceeds_inherited_blob_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ADR-036: Refuse gzip blob exceeding 20 MiB decompressed scan limit."""
+    import base64
+    import gzip
+    import json
+    compressed_bomb = base64.b64encode(gzip.compress(b"0" * (50 * 1024 * 1024))).decode("ascii")
+
+    def fake_gh(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        joined = " ".join(args)
+        cp = lambda out="", rc=0: subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr="")
+        if f"branches/{tv.PUBLISH_BRANCH}" in joined:
+            return cp('{"commit":{"sha":"parent1","commit":{"tree":{"sha":"tree1"}}}}')
+        if "git/trees/tree1" in joined:
+            return cp('{"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob1"}]}')
+        if "blobs/blob1" in joined:
+            return cp(json.dumps({"content": compressed_bomb, "encoding": "base64"}))
+        return cp("{}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    with pytest.raises(ps.PublicationScanError, match="limit|exceed|large"):
+        tv.publish_to_pages({"index.html": "<html>clean</html>"})
