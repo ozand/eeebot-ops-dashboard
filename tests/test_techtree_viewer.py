@@ -495,6 +495,57 @@ def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
     assert 'feature_file.txt' in cycle_files.get('cycle-cycle-123', []) or 'feature_file.txt' in cycle_files.get('cycle-123', [])
 
 
+def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Path) -> None:
+    """A diary-only branch must not borrow an ordinary commit from before branch creation."""
+    repo = tmp_path / 'branch_only_repo'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'base.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+    (repo / 'diary.txt').write_text('diary', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'diary.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'diary: record cycle'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-diary', '-m',
+                    'merge: integrate selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+
+    titles, _cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
+    assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
+
+
+def test_extract_git_titles_searches_past_five_non_work_commits(tmp_path: Path) -> None:
+    """A run of diary commits cannot hide an earlier real work commit."""
+    repo = tmp_path / 'long_diary_branch'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-long'], check=True, capture_output=True)
+    (repo / 'work.txt').write_text('real work', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement actual cycle work'], check=True, capture_output=True)
+    for i in range(6):
+        (repo / f'diary-{i}.txt').write_text('diary', encoding='utf-8')
+        subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(repo), 'commit', '-m', f'diary: entry {i}'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-long', '-m',
+                    'merge: integrate selfevo/cycle-cycle-long'], check=True, capture_output=True)
+
+    titles, _files, error = tv.extract_git_titles_local(repo)
+    assert error is None
+    assert titles.get('cycle-long') == 'Implement actual cycle work'
+
+
 def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
     not_repo = tmp_path / 'not_a_repo'
     not_repo.mkdir()
@@ -536,7 +587,7 @@ def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch
                 stdout='msha123 merge: integrate selfevo/cycle-456\n',
                 stderr='',
             )
-        elif 'log' in cmd and 'msha123^2' in cmd:
+        elif 'log' in cmd and 'msha123^1..msha123^2' in cmd:
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=0,
@@ -4552,6 +4603,106 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
     assert 'present but unreadable' in unavailable
     assert 'Live corpus (lessons/*.md): 0 files' in present_empty
     assert missing != unavailable != present_empty
+
+
+def test_cycle_feed_normalizes_lesson_reference_path_and_prefix() -> None:
+    html = tv.build_cycle_feed(
+        [{'phase': 'outcome', 'cycle_id': 'cycle-path', 'outcome': 'success',
+          'lessons_context': ['lesson:lessons/subagent_result_error_handling.md']}],
+        rendered_lesson_ids={'subagent_result_error_handling'},
+    )
+    assert 'href="lessons.html#q-subagent_result_error_handling"' in html
+    assert '(unavailable)' not in html
+
+
+def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
+    rows = [
+        {'phase': 'proposed', 'cycle_id': 'cycle-title', 'task_title': 'Implement diary filter'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-title', 'outcome': 'success', 'files_changed': ['src/filter.py']},
+        {'phase': 'outcome', 'cycle_id': 'cycle-empty', 'outcome': 'success', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Implement diary filter</strong>' in html
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
+    assert '<strong class="feed-title">success</strong>' not in html
+
+
+def test_non_work_commit_detector_skips_chore_and_merge() -> None:
+    """Regression: chore: and merge: commits must be skipped as non-work commits."""
+    assert tv._is_non_work_commit_message("merge: sync with main")
+    assert tv._is_non_work_commit_message("chore: update dependencies")
+
+
+def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_no_files() -> None:
+    """Ledger files_changed must be read so git failures do not falsely claim 'no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-ledger-files', 'outcome': 'success',
+         'files_changed': ['src/real_file.py']},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert 'src/real_file.py' in html
+    assert 'integrated · no files' not in html
+
+
+def test_cycle_feed_pushed_late_uses_specific_title_fallback_without_git_or_task_title() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-late-fallback', 'outcome': 'pushed_late',
+         'push_attempts': 3},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">pushed late, 3 attempt(s)</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+def test_cycle_feed_empty_git_diff_is_preserved_as_observed_no_files() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-observed-empty-diff', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(
+        rows, task_titles={}, cycle_files={'cycle-observed-empty-diff': []}, history_mode=True
+    )
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
+
+
+def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
+    """When files were never observed, title must be 'integrated', not 'integrated · no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-no-files-field', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">integrated</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+def test_remote_reader_script_defines_commit_classifier() -> None:
+    """Codex P2: REMOTE_READER_SCRIPT must define _is_non_work_commit_message inside its scope."""
+    ns: dict = {}
+    exec(compile(tv.REMOTE_READER_SCRIPT, '<remote_script>', 'exec'), ns)
+    assert "_is_non_work_commit_message" in ns
+    assert ns["_is_non_work_commit_message"]("diary: test")
+    assert ns["_is_non_work_commit_message"]("merge: sync")
+    assert not ns["_is_non_work_commit_message"]("selfevo: real task")
+
+
+def test_cycle_feed_falls_back_to_task_title_from_any_phase() -> None:
+    """Codex P2: task_title on non-proposed phases (e.g. outcome) must be used as fallback title."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-only-outcome', 'outcome': 'success',
+         'task_title': 'Task from outcome row', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Task from outcome row</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
+    residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
+    checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
+    assert tv._is_non_work_commit_message("diary: record entry")
+    assert tv._is_non_work_commit_message(residual)
+    assert tv._is_non_work_commit_message("selfevo: checkpoint state")
+    assert tv._is_non_work_commit_message(checkpoint)
+    assert not tv._is_non_work_commit_message("selfevo: Implement requested task")
 
 
 def test_274_cycle_lesson_link_shown_as_unavailable_not_dropped() -> None:

@@ -1308,6 +1308,21 @@ def _read_lessons_archive(lessons_dir):
     return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
+def _is_non_work_commit_subject(subject):
+    normalized = subject.strip().lower()
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
+
+
+def _is_non_work_commit_message(message):
+    lines = message.splitlines()
+    trailers = {line.strip().lower() for line in lines[1:]}
+    return (
+        (bool(lines) and _is_non_work_commit_subject(lines[0]))
+        or "selfevo-residual: true" in trailers
+        or "selfevo-checkpoint: true" in trailers
+    )
+
+
 def extract_git_titles(node_shas=None):
     titles = {}
     cycle_files = {}
@@ -1331,7 +1346,7 @@ def extract_git_titles(node_shas=None):
             if len(parts) != 2:
                 continue
             commit_sha, subject = parts
-            if "merge: integrate selfevo/cycle-" in subject:
+            if subject.startswith("merge: integrate selfevo/cycle-"):
                 cycle_part = subject.split("merge: integrate selfevo/", 1)[-1].strip()
                 if cycle_part.startswith("cycle-cycle-"):
                     norm_cycle_id = "cycle-" + cycle_part[len("cycle-cycle-"):]
@@ -1339,18 +1354,16 @@ def extract_git_titles(node_shas=None):
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
+                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^1..{commit_sha}^2", "--format=%B%x00"]
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
-                        for t_line in res_title.stdout.strip().splitlines():
-                            t_line = t_line.strip()
-                            if not t_line:
+                        for commit_message in res_title.stdout.split("\x00"):
+                            t_line = commit_message.strip()
+                            if not t_line or _is_non_work_commit_message(t_line):
                                 continue
-                            if t_line.startswith("chore:") or t_line.startswith("merge:"):
-                                continue
-                            titles[cycle_part] = t_line
+                            titles[cycle_part] = t_line.splitlines()[0].strip()
                             if norm_cycle_id != cycle_part:
-                                titles[norm_cycle_id] = t_line
+                                titles[norm_cycle_id] = t_line.splitlines()[0].strip()
                             break
                 except Exception:
                     pass
@@ -1776,6 +1789,22 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
     return data
 
 
+def _is_non_work_commit_subject(subject: str) -> bool:
+    normalized = subject.strip().lower()
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
+
+
+def _is_non_work_commit_message(message: str) -> bool:
+    lines = message.splitlines()
+    trailers = {line.strip().lower() for line in lines[1:]}
+    return (
+        (bool(lines) and _is_non_work_commit_subject(lines[0]))
+        or "selfevo-residual: true" in trailers
+        or "selfevo-checkpoint: true" in trailers
+    )
+
+
+
 def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None) -> tuple[dict[str, str], dict[str, list[str]], str | None]:
     titles: dict[str, str] = {}
     cycle_files: dict[str, list[str]] = {}
@@ -1799,7 +1828,7 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
             if len(parts) != 2:
                 continue
             commit_sha, subject = parts
-            if 'merge: integrate selfevo/cycle-' in subject:
+            if subject.startswith('merge: integrate selfevo/cycle-'):
                 cycle_part = subject.split('merge: integrate selfevo/', 1)[-1].strip()
                 if cycle_part.startswith('cycle-cycle-'):
                     norm_cycle_id = 'cycle-' + cycle_part[len('cycle-cycle-'):]
@@ -1807,18 +1836,16 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^2', '-n', '5', '--format=%s']
+                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^1..{commit_sha}^2', '--format=%B%x00']
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
-                        for t_line in res_title.stdout.strip().splitlines():
-                            t_line = t_line.strip()
-                            if not t_line:
+                        for commit_message in res_title.stdout.split("\x00"):
+                            t_line = commit_message.strip()
+                            if not t_line or _is_non_work_commit_message(t_line):
                                 continue
-                            if t_line.startswith('chore:') or t_line.startswith('merge:'):
-                                continue
-                            titles[cycle_part] = t_line
+                            titles[cycle_part] = t_line.splitlines()[0].strip()
                             if norm_cycle_id != cycle_part:
-                                titles[norm_cycle_id] = t_line
+                                titles[norm_cycle_id] = t_line.splitlines()[0].strip()
                             break
                 except Exception:
                     pass
@@ -5622,6 +5649,20 @@ def build_now_panel(
     '''
 
 
+def _normalize_lesson_ref(value: Any) -> str:
+    """Map ledger lesson references to the ID used by the rendered corpus."""
+    from pathlib import PurePosixPath
+
+    reference = str(value or "").strip().replace("\\", "/")
+    if ":" in reference:
+        reference = reference.rsplit(":", 1)[-1]
+    if reference.startswith("lessons/"):
+        reference = PurePosixPath(reference).name
+        if reference.endswith(".md"):
+            reference = reference[:-3]
+    return reference
+
+
 def build_cycle_feed(
     ledger_tail: list[dict[str, Any]] | None,
     demand_completed: dict[str, Any] | None = None,
@@ -5696,8 +5737,16 @@ def build_cycle_feed(
     window = cycle_items if history_mode else cycle_items[:50]
     last_day = None
     for cid, phases in window:
-        # Determine task title
+        # Prefer the work commit subject; task_title remains a meaningful
+        # fallback when legacy integrations have no selectable work commit.
         title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', ''))
+        proposed_title = next((
+            str(p.get('task_title')).strip() for p in phases
+            if p.get('phase') == 'proposed' and p.get('task_title')
+        ), '') or next((
+            str(p.get('task_title')).strip() for p in phases
+            if p.get('task_title') and str(p.get('task_title')).strip()
+        ), '')
 
         # Outcome derivation from phases
         outcome_kind = 'in_progress'
@@ -5718,7 +5767,7 @@ def build_cycle_feed(
                 for lesson_id in context:
                     if not lesson_id:
                         continue
-                    lid = str(lesson_id).split(":", 1)[-1]
+                    lid = _normalize_lesson_ref(lesson_id)
                     if rendered_lesson_ids is None or lid in rendered_lesson_ids:
                         entity_links.append(f'<a class="lesson-link" href="lessons.html#q-{esc(lid)}">{esc(str(lesson_id))}</a>')
                     else:
@@ -5727,22 +5776,33 @@ def build_cycle_feed(
                         # shown and marked unavailable rather than dropped.
                         entity_links.append(f'<span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">{esc(str(lesson_id))} (unavailable)</span>')
 
-        # Check demand and cycle_files for files_changed
+        # Check demand, cycle_files and ledger phases for files_changed
         all_files: list[str] = []
+        has_observed_files = False
         if cid in demand_by_cycle:
             fc = demand_by_cycle[cid].get('files_changed')
             if isinstance(fc, list):
+                has_observed_files = True
                 for f in fc:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         if isinstance(cycle_files, dict):
-            cf = cycle_files.get(cid) or cycle_files.get(cid.replace('cycle-', ''))
+            cf = cycle_files.get(cid) if cid in cycle_files else cycle_files.get(cid.replace('cycle-', ''))
             if isinstance(cf, list):
+                has_observed_files = True
                 for f in cf:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
+                        all_files.append(f_str)
+
+        for p in phases:
+            if isinstance(p, dict) and isinstance(p.get('files_changed'), list):
+                has_observed_files = True
+                for f in p['files_changed']:
+                    f_str = str(f)
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         files_changed = all_files
@@ -5920,6 +5980,16 @@ def build_cycle_feed(
             # its own neutral pill.
             badge_class = 'badge-abandoned'
             outcome_label = f'ABANDONED{(": " + reason) if reason else ""}'
+
+        # No work commit? Use recorded task title; an integrated cycle with
+        # neither should say so explicitly rather than presenting bare success.
+        if not title and proposed_title:
+            title = proposed_title
+        if not title and outcome_kind == 'integrated' and not pushed_late:
+            if has_observed_files and not files_changed:
+                title = 'integrated · no files'
+            elif not has_observed_files:
+                title = 'integrated'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:
