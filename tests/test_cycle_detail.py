@@ -434,3 +434,36 @@ def test_f7_three_history_states_and_incomplete_cases(tmp_path: Path) -> None:
     assert detail3.get("read") == "ok"
     assert detail3.get("capture") == "complete"
     assert detail3.get("reconstruction") == "incomplete"
+
+
+def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path: Path) -> None:
+    """F8: associate records by time window, dedupe cumulative tools, don't invent duration seqs."""
+    from scripts.cycle_detail import build_cycle_index
+
+    bridge = tmp_path / "bridge"
+    bridge.mkdir()
+    (bridge / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "cycle_id": "c-f8", "started_at": "2026-09-25T10:00:00Z", "finished_at": "2026-09-25T10:05:00Z", "classification": "unit_timeout"}) + "\n" +
+        json.dumps({"run_id": "r2", "cycle_id": "c-f8", "started_at": "2026-09-25T10:10:00Z", "finished_at": "2026-09-25T10:15:00Z", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    pdir = tmp_path / "llm_calls" / "prompts"
+    pdir.mkdir(parents=True)
+    def prompt(ts: str, seq: int, tool_result: bool = False) -> dict:
+        msgs = [{"role": "assistant", "tool_calls": [{"id": "tool-1", "function": {"name": "read", "arguments": "{}"}}]}]
+        if tool_result:
+            msgs.append({"role": "tool", "tool_call_id": "tool-1", "content": "done"})
+        return {"cycle_id": "c-f8", "component": "executor", "seq": seq, "ts": ts, "messages": msgs}
+    records = [prompt("2026-09-25T10:01:00Z", 1), prompt("2026-09-25T10:02:00Z", 2, True), prompt("2026-09-25T10:11:00Z", 1)]
+    (pdir / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in records), encoding="utf-8")
+    (tmp_path / "llm_calls" / "2026-09-25.jsonl").write_text(
+        json.dumps({"cycle_id": "c-f8", "component": "executor", "ts": "2026-09-25T10:01:00Z", "duration_ms": 1234}) + "\n",
+        encoding="utf-8",
+    )
+
+    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-f8"]
+    assert [a["model_call_count"] for a in detail["attempts"]] == [2, 1]
+    assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
+    steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
+    assert sum(step.get("kind") == "tool" for step in steps) == 1
+    assert all(step.get("duration") is None for step in steps if step.get("kind") == "model")
