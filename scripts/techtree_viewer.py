@@ -10249,7 +10249,6 @@ def publish_to_pages(
 
     # Branch may not exist yet: bootstrap it from the default branch HEAD.
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
-    initial_base_tree: 'str | None' = None
     if branch_probe.returncode != 0:
         head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
                     '--jq', '.object.sha'])
@@ -10264,16 +10263,22 @@ def publish_to_pages(
             print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
                   file=sys.stderr)
             return 1, {}
-    else:
-        try:
-            import json as _json
-            initial_base_tree = _json.loads(branch_probe.stdout).get('commit', {}).get('commit', {}).get('tree', {}).get('sha')
-        except Exception:
-            initial_base_tree = None
 
     if dry_run:
-        if initial_base_tree:
-            _inspect_and_scan_inherited_tree(initial_base_tree, pages)
+        probe = branch_probe if branch_probe.returncode == 0 else _gh(['api', f'repos/{PUBLISH_REPO}/branches/master'])
+        if probe.returncode != 0:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): cannot read branch for dry-run inspection: {probe.stderr.strip()[:200]}"
+            )
+        try:
+            import json as _json
+            head_data = _json.loads(probe.stdout)
+            probe_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
+            ) from exc
+        _inspect_and_scan_inherited_tree(probe_tree, pages)
         return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
@@ -10318,22 +10323,6 @@ def publish_to_pages(
         print(f'publish: {len(skipped)} page(s) unchanged, nothing to publish')
         return 0, fingerprints
 
-    if initial_base_tree:
-        _inspect_and_scan_inherited_tree(initial_base_tree, pages)
-
-    # 2-4. One tree, one commit, one ref update -- retried as a whole
-    # against a fresh read on a concurrent-write rejection (#270). The
-    # publisher used to read base_tree once, long before this point, then
-    # force-update the ref: a commit landed on gh-pages between that read
-    # and the write took its files out from under it, silently, because the
-    # stale base_tree became this commit's entire tree and the force push
-    # never checked whether the ref had moved. Closing that race means:
-    # base_tree and the commit's parent must come from the SAME read, taken
-    # immediately before building the tree (not cached from earlier), and
-    # the ref update must be non-forcing so a ref that moved after that
-    # read is rejected by GitHub (422, "not a fast forward") instead of
-    # overwritten -- the fix retries the whole read/tree/commit cycle
-    # against the new head rather than forcing the stale one through.
     import json as _json
     max_attempts = 3
     for attempt in range(1, max_attempts + 1):
@@ -10347,12 +10336,12 @@ def publish_to_pages(
             parent_sha = head_data['commit']['sha']
             base_tree = head_data['commit']['commit']['tree']['sha']
         except Exception as exc:
-            print(f'publish: unreadable {PUBLISH_BRANCH} HEAD: {exc}', file=sys.stderr)
-            return 1, {}
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
+            ) from exc
 
-        # ADR-036 rule 3: re-verify target tree if branch tip moved concurrently
-        if attempt > 1 and base_tree != initial_base_tree:
-            _inspect_and_scan_inherited_tree(base_tree, pages)
+        # ADR-036 rule 3: scan base_tree for this attempt unconditionally
+        _inspect_and_scan_inherited_tree(base_tree, pages)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',

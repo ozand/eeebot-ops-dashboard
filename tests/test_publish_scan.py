@@ -340,19 +340,22 @@ def test_adr036_publish_to_pages_bootstrap_scans_master_tree(monkeypatch) -> Non
 
     leaked_blob = base64.b64encode(b'{"reasoning_content": "private text"}').decode("ascii")
     commits_made = []
+    calls_branch = 0
 
     def fake_gh(args, input_text=None):
+        nonlocal calls_branch
         joined = " ".join(args)
         def cp(out, rc=0, err=""):
             return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
         if "branches/gh-pages" in joined:
-            return cp("", rc=1, err="branch not found")
+            calls_branch += 1
+            if calls_branch == 1:
+                return cp("", rc=1, err="branch not found")
+            return cp('{"commit":{"sha":"master-head-sha","commit":{"tree":{"sha":"master-tree"}}}}')
         if "ref/heads/master" in joined:
             return cp("master-head-sha")
         if "refs/heads/gh-pages" in joined and "-X" in args:
             return cp("")
-        if "branches/master" in joined:
-            return cp('{"commit":{"commit":{"tree":{"sha":"master-tree"}}}}')
         if "git/trees/master-tree" in joined:
             return cp(json.dumps({"tree": [{"path": "src/leak.py", "type": "blob", "sha": "leak1"}], "truncated": False}))
         if "blobs/leak1" in joined:
