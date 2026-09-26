@@ -346,11 +346,18 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
 
     index = build_cycle_index(state_root)
     known.update(index.keys())
+    known = {cid for cid in known if _safe_cycle_id(cid)}
 
     return {
         f"cycles/{cid}.html": render_cycle_page(str(cid), index.get(cid))
         for cid in sorted(known)
     }
+
+
+def _safe_cycle_id(cycle_id: str) -> bool:
+    return bool(cycle_id) and cycle_id not in {".", ".."} and not any(
+        char in cycle_id for char in ("/", "\\", "\x00")
+    )
 
 
 def _private_cycle_links(data: dict) -> set[str]:
