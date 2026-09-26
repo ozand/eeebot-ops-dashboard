@@ -39,7 +39,7 @@ def test_redaction_covers_ghu_tokens_in_private_details() -> None:
 
 
 def test_redaction_covers_extended_private_key_blocks() -> None:
-    private_block = "-----BEGIN ENCRYPTED PRIVATE KEY-----\\n" + "SYNTHETIC_PRIVATE_KEY_CANARY\\n" + "-----END ENCRYPTED PRIVATE KEY-----"
+    private_block = "-----BEGIN ENCRYPTED PRIVATE KEY-----\n" + "SYNTHETIC_PRIVATE_KEY_CANARY\n" + "-----END ENCRYPTED PRIVATE KEY-----"
     safe = redact_text(private_block)
     assert "SYNTHETIC_PRIVATE_KEY_CANARY" not in safe
     assert "[redacted: private-key]" in safe
