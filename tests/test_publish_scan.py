@@ -553,7 +553,10 @@ def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: 
 
 def test_adr036_rejects_entities_still_changing_after_round_limit() -> None:
     """ADR-036: If a bounded unescape still changes, do not scan a partially decoded value as clean."""
-    deeply_nested = "&amp;" * 6 + "quot;messages&amp;" + "quot;: []"
+    import html
+    deeply_nested = '"messages": []'
+    for _ in range(6):
+        deeply_nested = html.escape(deeply_nested, quote=True)
     with pytest.raises(ps.PublicationScanError, match="entity.*limit|unescape.*limit|decode.*limit"):
         ps.scan_pages({"index.html": deeply_nested})
 
