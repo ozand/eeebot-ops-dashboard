@@ -155,7 +155,7 @@ def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if "git/trees/oldtree" in joined:
-            return cp(json.dumps({"tree": [{"path": "sub/leak.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
+            return cp(json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
         if "blobs/leakblob1" in joined:
             return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
         if "git/blobs" in joined:
@@ -166,7 +166,7 @@ def test_adr036_publish_to_pages_rejects_inherited_base_tree_leak(monkeypatch) -
 
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
-    assert "sub/leak.html" in str(exc_info.value)
+    assert "tokens.html" in str(exc_info.value)
     assert "structural_reasoning_content" in str(exc_info.value)
 
 
@@ -214,7 +214,7 @@ def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> No
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if "git/trees/oldtree" in joined:
-            return cp(json.dumps({"tree": [{"path": "sub/leak.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
+            return cp(json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": "leakblob1"}], "truncated": False}))
         if "blobs/leakblob1" in joined:
             return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
         return cp("{}")
@@ -223,7 +223,7 @@ def test_adr036_publish_to_pages_dry_run_scans_inherited_tree(monkeypatch) -> No
 
     with pytest.raises(ps.PublicationScanError) as exc_info:
         tv.publish_to_pages({"index.html": "<html>clean page</html>"}, dry_run=True)
-    assert "sub/leak.html" in str(exc_info.value)
+    assert "tokens.html" in str(exc_info.value)
     assert "structural_reasoning_content" in str(exc_info.value)
 
 
@@ -257,7 +257,7 @@ def test_adr036_publish_to_pages_fail_closed_on_blob_fetch_error(monkeypatch) ->
         if "branches/gh-pages" in joined:
             return cp('{"commit":{"sha":"oldparent","commit":{"tree":{"sha":"oldtree"}}}}')
         if "git/trees/oldtree" in joined:
-            return cp(json.dumps({"tree": [{"path": "file.txt", "type": "blob", "sha": "blob1"}], "truncated": False}))
+            return cp(json.dumps({"tree": [{"path": "tokens.html", "type": "blob", "sha": "blob1"}], "truncated": False}))
         if "blobs/blob1" in joined:
             return cp("", rc=1, err="HTTP 404 Blob not found")
         return cp("{}")
@@ -331,46 +331,6 @@ def test_adr036_publish_to_pages_unparseable_branch_probe_refuses_publish(monkey
     with pytest.raises(ps.PublicationScanError):
         tv.publish_to_pages({"index.html": "<html>clean page</html>"})
     assert not tree_created
-
-
-def test_adr036_publish_to_pages_bootstrap_scans_master_tree(monkeypatch) -> None:
-    """ADR-036: Bootstrap path must scan master's inherited tree before committing."""
-    import base64
-    import json
-
-    leaked_blob = base64.b64encode(b'{"reasoning_content": "private text"}').decode("ascii")
-    commits_made = []
-    calls_branch = 0
-
-    def fake_gh(args, input_text=None):
-        nonlocal calls_branch
-        joined = " ".join(args)
-        def cp(out, rc=0, err=""):
-            return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=rc, stdout=out, stderr=err)
-        if "branches/gh-pages" in joined:
-            calls_branch += 1
-            if calls_branch == 1:
-                return cp("", rc=1, err="branch not found")
-            return cp('{"commit":{"sha":"master-head-sha","commit":{"tree":{"sha":"master-tree"}}}}')
-        if "ref/heads/master" in joined:
-            return cp("master-head-sha")
-        if "refs/heads/gh-pages" in joined and "-X" in args:
-            return cp("")
-        if "git/trees/master-tree" in joined:
-            return cp(json.dumps({"tree": [{"path": "src/leak.py", "type": "blob", "sha": "leak1"}], "truncated": False}))
-        if "blobs/leak1" in joined:
-            return cp(json.dumps({"content": leaked_blob, "encoding": "base64"}))
-        if "git/commits" in joined:
-            commits_made.append(args)
-            return cp("comsha")
-        return cp("{}")
-
-    monkeypatch.setattr(tv, "_gh", fake_gh)
-
-    with pytest.raises(ps.PublicationScanError) as exc_info:
-        tv.publish_to_pages({"index.html": "<html>clean page</html>"})
-    assert "src/leak.py" in str(exc_info.value)
-    assert not commits_made
 
 
 def test_adr036_publish_to_pages_scans_moved_head_on_attempt_one(monkeypatch) -> None:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import html as _html
 import re
-from typing import NamedTuple, Pattern
+from typing import Iterable, NamedTuple, Pattern
 
 
 class PublicationScanError(Exception):
@@ -33,6 +33,31 @@ EXCLUDED_NAME_SUBSTRINGS = frozenset({
 EXCLUDED_EXACT_NAMES = frozenset({
     "key", "keys", "pass", "passive", "max_tokens", "token_count",
 })
+
+PUBLIC_PAGE_PATHS = frozenset({
+    "index.html", "lineage.html", "cycles.html", "tokens.html", "lessons.html",
+    "agent.html", "hypotheses.html", "about.html", "techtree.html", "cycle.html",
+    "cycles-archive-index.json", "lineage-cycle-details.json",
+})
+
+_ARCHIVE_JSON_RE = re.compile(r"^cycles-archive-[0-9]+\.json$")
+
+
+def is_allowed_publish_path(path: str) -> bool:
+    """Return True if path is an authorized public artifact name under ADR-036."""
+    return path in PUBLIC_PAGE_PATHS or bool(_ARCHIVE_JSON_RE.match(path))
+
+
+def validate_publish_allowlist(paths: 'Iterable[str]') -> None:
+    """Validate that all paths destined for or inherited by gh-pages are allowed.
+
+    Raises PublicationScanError if any unlisted path is detected.
+    """
+    unlisted = sorted(p for p in paths if not is_allowed_publish_path(p))
+    if unlisted:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unlisted publication path(s) not in allowlist: {', '.join(unlisted)}"
+        )
 
 
 def is_secret_value(value: str) -> bool:
@@ -141,6 +166,7 @@ def scan_pages(pages: dict[str, str]) -> None:
     The exception message specifies filename, pattern name, and match count;
     the secret value itself is NEVER included.
     """
+    validate_publish_allowlist(pages.keys())
     violations: list[str] = []
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):

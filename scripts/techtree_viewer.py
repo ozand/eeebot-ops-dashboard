@@ -10138,9 +10138,9 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
     import base64
     import json as _json
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
 
     if not base_tree:
         raise PublicationScanError(
@@ -10180,6 +10180,11 @@ def _inspect_and_scan_inherited_tree(base_tree: str, uploaded_paths: set[str] | 
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
             sha = item.get('sha')
+            if path:
+                if not is_allowed_publish_path(path):
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
+                    )
             if path and sha and path not in uploaded_paths:
                 b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
                 if b_res.returncode != 0:
