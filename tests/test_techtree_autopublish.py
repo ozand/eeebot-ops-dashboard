@@ -84,6 +84,14 @@ def test_should_not_publish_when_digest_unchanged_and_fresh() -> None:
     assert publish is False
 
 
+def test_should_publish_retries_immediately_if_host_snapshot_failed() -> None:
+    """Codex comment 4109822811: Prior host snapshot failure must retry before staleness floor."""
+    state = {'digest': 'same', 'published_at': 1000.0, 'host_snapshot_failed_since': 1000.0}
+    publish, reason = ap.should_publish('same', state, staleness_floor_seconds=3600, now=1010.0)
+    assert publish is True
+    assert 'host snapshot failed' in reason.lower()
+
+
 def test_staleness_floor_triggers_publish_on_unchanged_digest() -> None:
     state = {'digest': 'same', 'published_at': 1000.0}
     floor = 3600.0
@@ -123,6 +131,22 @@ def test_parse_args_state_dir_defaults_to_first_segment_of_env_var(
 
 
 # --- state file persistence (acceptance tests 4, 5) -------------------------
+
+def test_refusal_save_preserves_host_failure_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "state-root"
+    _write_state_root(root)
+    state_dir = tmp_path / "publisher-state"
+    digest = ap.compute_tree_digest(root)
+    ap.save_publish_state(state_dir, digest, 1000.0, host_snapshot_failed_since=900.0,
+                          last_host_error="synthetic host failure")
+    monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_args: "synthetic unavailable source")
+
+    assert ap.run(ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir)])) == 1
+    loaded = ap.load_publish_state(state_dir)
+    assert loaded["host_snapshot_failed_since"] == 900.0
+    assert loaded["last_host_error"] == "synthetic host failure"
+    assert isinstance(loaded["refusing_since"], (int, float))
+
 
 def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     state_dir = tmp_path / 'techtree-state'
@@ -170,6 +194,7 @@ def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkey
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **_: (0, {}))
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -190,6 +215,7 @@ def test_278_run_persists_page_fingerprints_after_publish(tmp_path: Path, monkey
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     fake_fp = {'index.html': 'fp1', 'cycles.html': 'fp2'}
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kw: (0, fake_fp))
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -214,9 +240,53 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
         return 0, {}
 
     monkeypatch.setattr(ap.tv, 'publish_to_pages', fake_publish)
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
     assert captured['previous_fingerprints'] == {'index.html': 'prev-fp'}
+
+
+def test_scanner_refusal_returns_failure_without_saving_fingerprints_but_keeps_host_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scripts.publish_scan import PublicationScanError
+
+    root = tmp_path / "state"
+    _write_state_root(root)
+    state_dir = tmp_path / "techtree-state"
+    site_root = tmp_path / "site"
+    prior_fingerprints = {"index.html": "prior-fingerprint"}
+    ap.save_publish_state(state_dir, "old-digest", 1000.0, page_fingerprints=prior_fingerprints)
+    monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+
+    def refuse(_pages, **_kwargs):
+        raise PublicationScanError("synthetic scan refusal")
+
+    monkeypatch.setattr(ap.tv, "publish_to_pages", refuse)
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
+
+    assert ap.run(args) == 1
+    assert (site_root / "current" / "index.html").is_file()
+    assert ap.load_publish_state(state_dir)["page_fingerprints"] == prior_fingerprints
+
+
+def test_successful_publish_clears_host_snapshot_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "state"
+    _write_state_root(root)
+    state_dir = tmp_path / "techtree-state"
+    ap.save_publish_state(state_dir, "old", 1000.0, page_fingerprints={"old": "fp"},
+                         host_snapshot_failed_since=900.0, last_host_error="prior")
+    monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+    monkeypatch.setattr(ap.tv, "publish_to_pages", lambda *_args, **_kwargs: (0, {"index.html": "new-fp"}))
+    monkeypatch.setattr(ap.sinks, "publish_ordered", lambda *_args, **kwargs: (0, {"index.html": "new-fp"}))
+
+    assert ap.run(ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(tmp_path / "site")])) == 0
+    saved = ap.load_publish_state(state_dir)
+    assert saved["page_fingerprints"] == {"index.html": "new-fp"}
+    assert saved.get("host_snapshot_failed_since") is None
+    assert saved.get("last_host_error") is None
 
 
 def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -244,6 +314,7 @@ def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch:
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
     args = ap.parse_args([
@@ -387,6 +458,7 @@ def test_missing_tree_source_file_still_publishes(
     state_dir = tmp_path / 'techtree-state'
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     published: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
@@ -508,6 +580,7 @@ def test_refusal_then_recovery_clears_refusing_since(
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
 
@@ -552,6 +625,7 @@ def test_refusal_past_freeze_limit_publishes_fail_soft_page(
     (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nod', encoding='utf-8')  # still torn
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     published: list[str] = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
@@ -713,6 +787,7 @@ def test_run_publishes_on_backward_clock_jump_even_with_unchanged_digest(
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setenv('EEEBOT_SITE_ROOT', str(tmp_path / 'site'))
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])

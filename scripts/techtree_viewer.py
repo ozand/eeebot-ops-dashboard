@@ -4572,11 +4572,19 @@ def build_cycle_details(
         # public records keep their size.
         if insight:
             out['lesson_insight_chars'] = len(str(insight))
+        elif lesson.get('insight_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['insight_chars'])
+        elif lesson.get('result_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['result_chars'])
         # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
+        elif lesson.get('problem_chars') is not None:
+            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
+        elif lesson.get('solution_chars') is not None:
+            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
@@ -4584,10 +4592,11 @@ def build_cycle_details(
         out = record(str(reflection['cycle_id']))
         # ADR-036 rule 3: the reflector's output is model text -- public
         # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': len(str(reflection.get('summary') or ''))}
+        payload: dict[str, Any] = {'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
-            payload[f'{key}_count'] = len(value) if isinstance(value, list) else (1 if value else 0)
+            preserved_count = reflection.get(f'{key}_count')
+            payload[f'{key}_count'] = int(preserved_count) if preserved_count is not None else (len(value) if isinstance(value, list) else (1 if value else 0))
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -4614,8 +4623,9 @@ def build_cycle_details(
             # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'summary_chars': len(str(rec.get('summary_excerpt') or '')),
-            'result_chars': len(str(rec.get('result_excerpt') or '')),
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -6858,9 +6868,8 @@ def _build_proposer_block(
 
 
 def _is_v2_lesson(lesson: dict[str, Any]) -> bool:
-    """Return True when the lesson record has a non-empty 'problem' field,
-    which is the sentinel for the v2 schema (ozand/eeebot#1071)."""
-    return bool(lesson.get('problem'))
+    """Return True when lesson data preserves the v2 schema discriminator."""
+    return bool(lesson.get('problem') or lesson.get('_v2_lesson') or lesson.get('problem_chars') is not None)
 
 
 def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: str | None = None) -> str:
@@ -7113,28 +7122,44 @@ def build_agent_panel(
     context_html = build_two_tier_context_html(agent_context)
     # 1. AGENTS.md
     if agents_md is not None:
-        md_text = agents_md.strip()
-        # ADR-036 rule 3: AGENTS.md is system-prompt text -- LAN only.
-        # Issue #44: capped scroll boxes are scroll-traps; native <details>
-        # keeps the page one scrolling document, closed by default.
+        if isinstance(agents_md, dict) and "lines" in agents_md and "chars" in agents_md:
+            md_lines = agents_md["lines"]
+            md_chars = agents_md["chars"]
+        else:
+            md_text = str(agents_md).strip()
+            md_lines = len(md_text.splitlines())
+            md_chars = len(md_text)
         agents_html = (
             f'<details class="charter-details agents-md-box">'
-            f'<summary>AGENTS.md charter ({len(md_text.splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(md_text):,} chars)</p></div></details>'
+            f'<summary>AGENTS.md charter ({md_lines} lines)</summary>'
+            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({md_chars:,} chars)</p></div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
 
     # 2. Goals charter
-    goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
+    goals_html = '<p class="unavailable-note">goals charter absent</p>'
     if isinstance(goal_text, dict):
-        g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-        # ADR-036 rule 3: the operator's goal text is private -- LAN only.
-        goals_html = (
-            f'<details class="charter-details goal-text-box">'
-            f'<summary>Goals charter ({len(str(g_text).splitlines())} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({len(str(g_text)):,} chars)</p></div></details>'
-        )
+        g_state = goal_text.get("state")
+        if g_state == "absent":
+            goals_html = '<p class="unavailable-note">goals charter absent</p>'
+        elif g_state == "unexpected_shape":
+            goals_html = '<p class="unavailable-note">goals charter unexpected shape</p>'
+        elif g_state == "present" or g_state is None:
+            if "lines" in goal_text and "chars" in goal_text and goal_text["lines"] is not None:
+                g_lines = goal_text["lines"]
+                g_chars = goal_text["chars"]
+            else:
+                g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
+                g_lines = len(str(g_text).splitlines())
+                g_chars = len(str(g_text))
+            goals_html = (
+                f'<details class="charter-details goal-text-box">'
+                f'<summary>Goals charter ({g_lines} lines)</summary>'
+                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
+            )
+        else:
+            goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
 
     # 3. Skills fitness table
     skills_html = '<p class="unavailable-note">skill reads unavailable</p>'
@@ -9468,8 +9493,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_text')
-    agents_md = data.get('agents_md')
+    goal_text = data.get('goal_meta') or data.get('goal_text')
+    agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
@@ -9831,6 +9856,11 @@ def _last_cycles_subset(ledger_tail: list[Any] | None, want: int = 3) -> list[An
     return [r for r in ledger_tail if isinstance(r, dict) and str(r.get('cycle_id') or '') in keep]
 
 
+def render_public_pages(data: dict[str, Any], host: str, generated_at: str | None = None) -> dict[str, str]:
+    """ADR-036 public entry point; caller supplies only public-safe data."""
+    return render_pages(data, host, generated_at)
+
+
 def render_pages(data: dict[str, Any], host: str, generated_at: str | None = None) -> dict[str, str]:
     """Issue #70: render the multi-page site. Returns {filename: html} with
     keys index/lineage/cycles/lessons/agent/hypotheses/techtree .html. All
@@ -9851,8 +9881,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_text')
-    agents_md = data.get('agents_md')
+    goal_text = data.get('goal_meta') or data.get('goal_text')
+    agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
     cycle_details = build_cycle_details(
@@ -10045,6 +10075,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         '--state-root', default=STATE_ROOT,
         help=f'local state root to read when --local is set (default: {STATE_ROOT})',
     )
+    parser.add_argument('--site-root', default='/var/lib/eeebot-site', help='local host snapshot root used with --publish')
     parser.add_argument(
         '--publish', action='store_true',
         help='also publish the page to GitHub Pages (gh-pages branch of '
@@ -10121,34 +10152,15 @@ def _gh(args: list[str], input_text: 'str | None' = None) -> subprocess.Complete
 
 _GENERATED_AT_RE = re.compile(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}')
 _SOURCE_AGE_RE = re.compile(r'\d+(?:\.\d+)?[smhd] old')
+_SNAPSHOT_META_RE = re.compile(r'<meta name="snapshot-version" content="[^"]*">')
+_SNAPSHOT_FOOTER_RE = re.compile(r'<footer class="snapshot-meta">.*?</footer>', re.DOTALL)
 
 
 def _page_fingerprint(html: str) -> str:
-    """#278: sha256 over a page with its two guaranteed-every-run-volatile
-    fields -- the "generated {timestamp} UTC" footer stamp and the
-    "newest source {age} old" freshness string -- replaced by fixed
-    placeholders first.
-
-    Both change on literally every publish regardless of whether any
-    DOMAIN content did (the timestamp is wall-clock at render time; the
-    age is `now - mtime` and only stays constant if measured at the exact
-    same instant twice). Hashing the raw HTML would mean every page always
-    looks "changed" and publish_to_pages's unchanged-file skip could never
-    fire -- which is the exact defect issue #278 measured ("all 8 files
-    touched every run because shared navigation/timestamp metadata
-    invalidates every page").
-
-    Wrong-direction risk: neither pattern can occur elsewhere in rendered
-    content (other timestamps in this codebase are ISO-8601 with a literal
-    `T`/`Z`, never the bare `YYYY-MM-DD HH:MM:SS` form used only by this
-    footer; no other field is formatted as "<number><unit> old"), so this
-    cannot mistake a real content change for volatile noise. If it ever
-    did, the failure mode is bounded, not silent: the staleness floor in
-    techtree_autopublish.py already forces a full republish at least once
-    per its configured window regardless of any digest/fingerprint
-    decision, so a wrongly-skipped page cannot stay stale indefinitely."""
     normalized = _GENERATED_AT_RE.sub('GENERATED_AT', html)
     normalized = _SOURCE_AGE_RE.sub('SOURCE_AGE', normalized)
+    normalized = _SNAPSHOT_META_RE.sub(lambda match: f'SNAPSHOT_VERSION:{match.group(0)}', normalized)
+    normalized = _SNAPSHOT_FOOTER_RE.sub(lambda match: f'SNAPSHOT_FOOTER:{match.group(0)}', normalized)
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
@@ -10416,9 +10428,9 @@ def publish_to_pages(
     actually complete."""
     import base64
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
 
     if isinstance(pages, str):
         pages = {'index.html': pages}
@@ -10427,9 +10439,20 @@ def publish_to_pages(
         return 1, {}
 
     pages = dict(pages)
-    # ADR-036 rule 3: scan new pages unconditionally before blob creation
+    # Match master #326: direct callers receive scanner/allowlist refusals.
     scan_pages(pages)
     previous_fingerprints = previous_fingerprints or {}
+
+    try:
+        try:
+            from two_sinks import validate_publish_allowlist
+        except ImportError:
+            from scripts.two_sinks import validate_publish_allowlist
+        validate_publish_allowlist(pages)
+        scan_pages(pages)
+    except Exception as exc:
+        print(f'publish: validation failed: {exc}', file=sys.stderr)
+        return 1, {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
@@ -10617,7 +10640,25 @@ def main(argv: list[str] | None = None) -> int:
         webbrowser.open((out_path / 'index.html').resolve().as_uri())
 
     if args.publish:
-        rc, _fingerprints = publish_to_pages(pages)
+        try:
+            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs
+        except ImportError:
+            from two_sinks import publish_ordered, render_private_pages, split_render_inputs
+
+        public_data, private_data = split_render_inputs(data)
+        public_pages = render_public_pages(public_data, args.host)
+        private_pages = render_private_pages(private_data, args.host)
+        now_ts = time.time()
+        version = f"{int(now_ts)}-manual"
+        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
+        rc, _ = publish_ordered(
+            Path(args.site_root),
+            public_pages,
+            private_pages,
+            version,
+            publisher=lambda p: publish_to_pages(p),
+            generated_at=stamp,
+        )
         return rc
 
     return 0

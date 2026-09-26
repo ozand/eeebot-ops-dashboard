@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -37,6 +38,7 @@ from typing import Any
 # /opt/eeebot-techtree/).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import techtree_viewer as tv  # noqa: E402
+import two_sinks as sinks  # noqa: E402
 try:
     from scripts.publish_scan import scan_pages
 except ImportError:
@@ -226,11 +228,6 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             data = json.load(fh)
         if isinstance(data, dict) and 'digest' in data and 'published_at' in data:
             data.setdefault('refusing_since', None)
-            # #278: a state file written before per-page fingerprinting
-            # existed simply lacks this key -- treat that the same as "no
-            # page has a known-unchanged fingerprint yet", which is exactly
-            # correct: every page uploads fresh on the first run after this
-            # field is introduced, same as day one.
             data.setdefault('page_fingerprints', {})
             return data
     except Exception:  # noqa: BLE001
@@ -242,6 +239,9 @@ def save_publish_state(
     state_dir: Path, digest: str | None, published_at: float | None,
     refusing_since: float | None = None,
     page_fingerprints: dict[str, str] | None = None,
+    host_snapshot_failed_since: float | None = None,
+    last_host_error: str | None = None,
+    clear_host_failure: bool = False,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -270,6 +270,16 @@ def save_publish_state(
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
         }
+        previous_state = load_publish_state(state_dir)
+        if not clear_host_failure:
+            if host_snapshot_failed_since is None:
+                host_snapshot_failed_since = previous_state.get('host_snapshot_failed_since')
+            if last_host_error is None:
+                last_host_error = previous_state.get('last_host_error')
+        if host_snapshot_failed_since is not None:
+            payload['host_snapshot_failed_since'] = host_snapshot_failed_since
+        if last_host_error is not None:
+            payload['last_host_error'] = last_host_error
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
             fh.flush()
@@ -306,6 +316,8 @@ def should_publish(
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
+    if state.get('host_snapshot_failed_since') is not None:
+        return True, 'prior host snapshot failed; retrying host sink'
     if prev_digest != current_digest:
         return True, 'tree digest changed'
     if not isinstance(prev_published_at, (int, float)):
@@ -372,6 +384,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f'publish even on an unchanged digest once the last publish is older than this many hours (default: {DEFAULT_STALENESS_FLOOR_HOURS})',
     )
     parser.add_argument(
+        '--site-root', default=os.environ.get('EEEBOT_SITE_ROOT', sinks.DEFAULT_SITE_ROOT),
+        help=f'host snapshot directory (default: {sinks.DEFAULT_SITE_ROOT})',
+    )
+    parser.add_argument('--serve', action='store_true', help='serve the current host snapshot')
+    parser.add_argument('--bind-address', default=os.environ.get('EEEBOT_DASHBOARD_BIND_ADDRESS', sinks.DEFAULT_BIND_ADDRESS))
+    parser.add_argument('--bind-port', type=int, default=int(os.environ.get('EEEBOT_DASHBOARD_BIND_PORT', sinks.DEFAULT_BIND_PORT)))
+    parser.add_argument(
         '--host-label', default='eeepc',
         help='host label shown in the rendered page footer (default: eeepc)',
     )
@@ -418,6 +437,7 @@ def run(args: argparse.Namespace) -> int:
 
     instance_repo = args.instance_repo or str(state_root.parent / 'eeebot-self-evolving')
     data = tv.read_local_state(str(state_root), instance_repo=instance_repo)
+    public_data, private_data = sinks.split_render_inputs(data)
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()
@@ -426,7 +446,9 @@ def run(args: argparse.Namespace) -> int:
     source_problem = _unreadable_tree_source(data, state_root)
 
     if args.dry_run:
-        pages = tv.render_pages(data, args.host_label)
+        pages = tv.render_public_pages(public_data, args.host_label)
+        pages = sinks.add_snapshot_version(pages, f"dry-run-{int(now)}")
+        sinks.validate_publish_allowlist(pages)
         scan_pages(pages)
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
@@ -495,6 +517,8 @@ def run(args: argparse.Namespace) -> int:
                     state_dir, state.get('digest'), state.get('published_at'),
                     refusing_since=refusing_since,
                     page_fingerprints=state.get('page_fingerprints'),
+                    host_snapshot_failed_since=state.get('host_snapshot_failed_since'),
+                    last_host_error=state.get('last_host_error'),
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '
@@ -521,40 +545,68 @@ def run(args: argparse.Namespace) -> int:
     # page; no-op bridge cycles therefore avoid six network calls. The same
     # in-memory observation is passed to every rendered page.
     data['ci_freshness'] = tv.read_ci_freshness()
-    pages = tv.render_pages(data, args.host_label)
+    public_data['ci_freshness'] = data['ci_freshness']
+    public_pages = tv.render_public_pages(public_data, args.host_label)
+    private_pages = sinks.render_private_pages(private_data, args.host_label)
+    version = f"{int(now)}-{digest[:12]}"
+    stamp = datetime.fromtimestamp(now, timezone.utc).isoformat()
 
-    if not os.environ.get('GH_TOKEN'):
-        print(
-            'techtree-autopublish: GH_TOKEN is not set -- create '
-            '/etc/eeepc-agent/techtree-publish.env (root-owned, 0600) with a '
-            'GH_TOKEN=<token> line',
-            file=sys.stderr,
+    sink_root = Path(args.site_root)
+
+    def gh_publisher(pages_to_pub):
+        if not os.environ.get('GH_TOKEN'):
+            print(
+                'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
+                file=sys.stderr,
+            )
+            return 1, {}
+        return tv.publish_to_pages(pages_to_pub, previous_fingerprints=state.get('page_fingerprints'))
+
+    try:
+        rc, fingerprints = sinks.publish_ordered(
+            sink_root,
+            public_pages,
+            private_pages,
+            version,
+            publisher=gh_publisher,
+            generated_at=stamp,
         )
+    except sinks.HostSnapshotError as exc:
+        print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
+        gh_rc, gh_fps = exc.publish_result or (1, {})
+        if gh_rc == 0 and gh_fps:
+            failed_since = state.get('host_snapshot_failed_since') or now
+            save_publish_state(
+                state_dir, digest, now,
+                page_fingerprints=gh_fps,
+                host_snapshot_failed_since=failed_since,
+                last_host_error=str(exc),
+            )
+        return 1
+    except Exception as exc:
+        print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         return 1
 
-    # publish_to_pages already returns 1 (rather than raising) on any API
-    # failure and never writes anything on that path -- so a failed publish
-    # here simply skips save_publish_state below and leaves gh-pages as it
-    # was, ready to retry next cycle.
-    #
-    # #278: previous_fingerprints lets publish_to_pages skip re-uploading
-    # any page whose normalized content (timestamp/age stripped) matches
-    # what was published last time -- this is the mechanism that stops
-    # re-uploading all 8 files in full on every run.
-    rc, fingerprints = tv.publish_to_pages(
-        pages, previous_fingerprints=state.get('page_fingerprints'),
-    )
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
-    save_publish_state(state_dir, digest, now, page_fingerprints=fingerprints)
+    save_publish_state(
+        state_dir, digest, now,
+        page_fingerprints=fingerprints,
+        host_snapshot_failed_since=None,
+        last_host_error=None,
+        clear_host_failure=True,
+    )
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.serve:
+        sinks.serve_site(Path(args.site_root), args.bind_address, args.bind_port)
+        return 0
     return run(args)
 
 

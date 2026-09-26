@@ -70,6 +70,13 @@ ProtectSystem=strict
 # StateDirectory= removes the trap at the source instead of papering over it.
 StateDirectory=eeebot-techtree
 StateDirectoryMode=0700
+# ADR-036 D1 host snapshot sink: one StateDirectory declaration as required
+# by systemd. Use ExecStartPre with the '+' prefix so root creates the shared
+# site root before sandboxed publisher startup without changing the private
+# 0700 mode of /var/lib/eeebot-techtree. The DynamicUser server is granted
+# read-only access by its own unit after the orchestrated D4 cutover.
+ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site
+ReadWritePaths=/var/lib/eeebot-site
 
 # Precautionary, not smoke-tested on the host (issue #27 review, blocker
 # B9): eeebot-publish is a system user created with --no-create-home, so
