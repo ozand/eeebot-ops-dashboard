@@ -353,12 +353,15 @@ def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -
         keep_dirs = {destination.resolve()}
         if previous and previous.is_dir():
             keep_dirs.add(previous)
+        cleanup_failures = []
         for old in site_root.iterdir():
             if old.is_dir() and not old.is_symlink() and old.resolve() not in keep_dirs:
                 try:
                     shutil.rmtree(old)
-                except OSError:
-                    pass
+                except Exception as exc:
+                    cleanup_failures.append(f"{old.name}: {exc}")
+        if cleanup_failures:
+            raise HostSnapshotError(f"Snapshot cleanup failed: {'; '.join(cleanup_failures)}")
         return destination
     except BaseException:
         if staging.exists():
@@ -393,7 +396,7 @@ def publish_ordered(
     host_error = None
     try:
         atomic_snapshot_swap(site_root, host_pages, version)
-    except OSError as exc:
+    except Exception as exc:
         host_error = exc
 
     publish_result = publisher(versioned_public)
