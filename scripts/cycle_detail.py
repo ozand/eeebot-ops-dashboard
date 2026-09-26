@@ -59,7 +59,24 @@ def sanitize_tool_arguments(arguments: str) -> str:
         for key, value in parsed.items()
     ):
         return "[env file contents withheld]"
-    return redact_text(json.dumps(parsed, ensure_ascii=False))
+    return json.dumps(_sanitize_nested_value(parsed), ensure_ascii=False)
+
+
+def _sanitize_nested_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        sanitized = {}
+        for key, item in value.items():
+            key_text = str(key)
+            if re.search(r"(?i)(password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)", key_text):
+                sanitized[key] = "[redacted]"
+            else:
+                sanitized[key] = _sanitize_nested_value(item)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitize_nested_value(item) for item in value]
+    if isinstance(value, str):
+        return redact_text(value)
+    return value
 
 
 def sanitize_tool_output(args: str, result: str) -> str:
