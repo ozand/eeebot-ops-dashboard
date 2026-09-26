@@ -23,7 +23,7 @@ SECRET_PATTERNS = (
     (re.compile(r'(?i)("(?:\w*_)?(?:password|token|api_key|secret)"\s*:\s*)"(?:[^"\\]|\\.)*"'), r'\g<1>"[redacted]"'),
     # Specific API key tokens
     (re.compile(r'\bsk-[A-Za-z0-9_-]{8,}\b'), '[redacted: api-key]'),
-    (re.compile(r'(?i)\b(?:ghp_|gho_|ghs_|github_pat_)[A-Za-z0-9_]+'), '[redacted: token]'),
+    (re.compile(r'(?i)\b(?:ghp_|gho_|ghs_|ghu_|github_pat_)[A-Za-z0-9_]+'), '[redacted: token]'),
     (re.compile(r'(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+'), 'Bearer [redacted: bearer]'),
     (re.compile(r'\bAKIA[A-Z0-9]{16}\b'), '[redacted: aws-key]'),
     (re.compile(r'(?i)\bxox[baprs]-[A-Za-z0-9-]+'), '[redacted: slack-token]'),
@@ -204,6 +204,17 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                         s["status"] = "ok"
                         break
     response_tools = prompt.get("tool_calls") or []
+    response_ids = {str(tc.get("id")) for tc in response_tools if isinstance(tc, dict) and tc.get("id")}
+    observed_ids = set(pending_calls)
+    if response_ids:
+        for call_id in response_ids - observed_ids:
+            response = next(tc for tc in response_tools if isinstance(tc, dict) and str(tc.get("id")) == call_id)
+            fn = response.get("function") or response
+            args = fn.get("arguments") or ""
+            steps.append({"kind": "tool", "tool_call_id": call_id,
+                          "name": str(fn.get("name") or "tool"), "arguments": str(args),
+                          "result": "[response tool call not reconciled to request history]",
+                          "source": source, "status": "incomplete", "duration": None, "tokens": None})
     if isinstance(response_tools, str):
         try:
             response_tools = json.loads(response_tools)
@@ -418,7 +429,8 @@ def format_model_step(step: dict[str, Any]) -> str:
 
 def format_tool_step(step: dict[str, Any]) -> str:
     name = display_text(str(step.get("name", "unavailable")))
-    args = display_text(str(step.get("arguments", "unavailable")))
+    raw_args = str(step.get("arguments", "unavailable"))
+    args = "[env file contents withheld]" if is_env_path(raw_args) else display_text(raw_args)
     res_val = step.get("result")
     result = display_text(sanitize_tool_output(args, str(res_val))) if res_val is not None else "unavailable"
     dur_val = step.get("duration")
