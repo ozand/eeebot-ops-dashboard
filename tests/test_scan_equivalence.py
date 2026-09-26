@@ -29,6 +29,16 @@ POSITIVES = [
     ("index.html", '{"token": "session_token_xyz987654"}'),
     ("index.html", "{\n'api_key': 'secret123456'\n}"),
     ("index.html", 'PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\\nMIIEogIBAAKCAQEA0Y\\n-----END RSA PRIVATE KEY-----"'),
+    ("index.html", "Authorization: sk-super_secret_canary_value_9988776655"),
+    ("index.html", "password=abc1234567890; password=another-secret-999"),
+    ("index.html", "basic dXNlcjpwYXNzd29yZDEyMzQ="),
+    ("index.html", "https://u:p@example.test http://u:p@example.test"),
+    ("index.html", '<p title="ghp_abcdefghijklmnop123456" data-other="value"></p>'),
+    ("index.html", "<p>API_KEY=abc<span></span>def12345</p>"),
+    ("index.html", "<p>{'messages': [{'role': 'user'}]}</p>"),
+    ("index.html", "<div>ghp_&lt;span&gt;abcdefghijklmnop123456&lt;/span&gt;</div>"),
+    ("index.html", "<div>{&amp;#34;password&amp;#34;: &amp;#34;secret123456&amp;#34;}</div>"),
+    ("index.html", "'auth_token': 'mysecretvalue'"),
     ("cycles-archive-1.json", '{"excerpt":"{&quot;messages&quot;: []}"}'),
 ]
 
