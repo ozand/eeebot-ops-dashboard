@@ -1366,7 +1366,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">152</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">47.3%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-26 20:52:32 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">24.8%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">24.8%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">19 events · 13 tasks · 5.0%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">83 events · 5 tasks · 21.7%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">8.1% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790446524.964" data-render-age-seconds="29">data: 29s old &middot; generated 18:15 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790446977.653" data-render-age-seconds="27">data: 27s old &middot; generated 18:23 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1409,19 +1409,19 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-09-26 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c2d65709e1f2">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c2d65709e1f2">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <span class="badge badge-integrated">INTEGRATED</span>
+            <strong class="feed-title">diary: record skip for companion test addressing lesson (already done in 89cb1a44)</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c2d65709e1f2)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c2d65709e1f2">details</a>
             
-            
+            <a href="lineage.html#node-5e1abed" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-09-26T17:58:26.787458Z">20:58 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-0307d778e5da</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/companion_test_direct_lookup.md (unavailable)</span></div>
-          
-          <div class="feed-cost">&#9889; 23 calls &middot; 486.3K tok &middot; dur 9m4s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-files">&#128193; diary/2026-09-26.md</div>
+          <div class="feed-cost">&#9889; 30 calls &middot; 650.0K tok &middot; dur 13m41s <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-fallback-f99f207de3c1">
@@ -1529,14 +1529,14 @@
           <div class="feed-cost">&#9889; 2 calls &middot; 32.26K tok &middot; dur 45s</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-ae82a2dcee4e">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-ae82a2dcee4e">
           <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
+            <span class="badge badge-partial">PARTIAL: service_only</span>
             <strong class="feed-title">selfevo: auto-commit residual state — diary/2026-09-26.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ae82a2dcee4e)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ae82a2dcee4e">details</a>
             
-            <a href="lineage.html#node-ce6f561" class="feed-tree-link">tree &#8599;</a>
+            
             <span class="feed-ts" title="2026-09-26T14:18:28.055356Z">17:18 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-3a7c8bc98196</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:lessons/markdown_code_block_validation_protocol.md (unavailable)</span></div>
@@ -2163,7 +2163,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator unknown · generated 2026-09-26 18:15:54 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 20:52:32 MSK</span></footer>
+<footer class="page-footer">generator unknown · generated 2026-09-26 18:23:25 UTC &middot; host eeepc &middot; newest source 27s old &middot; <span class="footer-computed">scorecard computed 2026-09-26 20:52:32 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
