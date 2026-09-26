@@ -216,9 +216,15 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     prompt_paths = [p for date in dates for p in (state_root / "llm_calls" / "prompts" / f"{date}.jsonl", state_root / "llm_calls" / "prompts" / f"{date}.jsonl.gz") if p.is_file()]
     duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
 
-    raw_runs, runs_ok = _read_jsonl(run_paths)
-    raw_prompts, prompts_ok = _read_jsonl(prompt_paths)
-    durations, durations_ok = _read_jsonl(duration_paths)
+    runs_result = _read_jsonl(run_paths)
+    prompts_result = _read_jsonl(prompt_paths)
+    durations_result = _read_jsonl(duration_paths)
+    raw_runs, runs_ok = runs_result
+    raw_prompts, prompts_ok = prompts_result
+    durations, durations_ok = durations_result
+    broken_runs = getattr(runs_result, "broken", False)
+    broken_prompts = getattr(prompts_result, "broken", False)
+    broken_dur = getattr(durations_result, "broken", False)
 
     seen_run_ids = set()
     runs = []
@@ -233,8 +239,11 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     compactions = []
     compactions_ok = True
     c_path = state_root / "compaction" / "journal.jsonl"
+    broken_comp = False
     if c_path.is_file():
-        c_rows, compactions_ok = _read_jsonl([c_path])
+        compaction_result = _read_jsonl([c_path])
+        c_rows, compactions_ok = compaction_result
+        broken_comp = getattr(compaction_result, "broken", False)
         compactions = c_rows
 
     all_reads_ok = runs_ok and prompts_ok and durations_ok and compactions_ok
@@ -258,7 +267,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             reconstruction_state = "unknown"
         elif not c_prompts and c_runs:
             reconstruction_state = "incomplete"
-        elif not all_reads_ok or has_compaction:
+        elif not all_reads_ok:
+            reconstruction_state = "unknown"
+        elif broken_runs or broken_prompts or broken_dur or broken_comp or has_compaction:
             reconstruction_state = "incomplete"
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
