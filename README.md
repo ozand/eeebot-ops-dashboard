@@ -112,13 +112,16 @@ First-time setup:
    ```bash
    sudo useradd -r -s /bin/false -d /var/lib/eeebot-techtree eeebot-publish
    sudo mkdir -p /opt/eeebot-techtree /var/lib/eeebot-techtree
-   sudo chown -R eeebot-publish:eeebot-publish /opt/eeebot-techtree /var/lib/eeebot-techtree
+   sudo chown -R eeebot-publish:eeebot-publish /var/lib/eeebot-techtree
    ```
-2. Install the systemd unit:
+2. Install the systemd unit and bridge trigger:
    ```bash
    sudo cp systemd/eeebot-techtree-publish.service /etc/systemd/system/
+   sudo mkdir -p /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/
+   sudo cp systemd/drop-ins/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/
    sudo systemctl daemon-reload
    ```
+   *(Note: the periodic timer `eeebot-techtree-publish.timer` is provisioned from `ozand/eeebot` at `host/eeepc/systemd/eeebot-techtree-publish.timer`).*
 3. Install the sync script and drop-in (see `deploy/README-sync.md`):
    ```bash
    sudo install -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
