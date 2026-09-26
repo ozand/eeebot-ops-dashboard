@@ -258,6 +258,22 @@ def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path
     assert observed["state_root"] == tmp_path
 
 
+def test_reflection_metrics_are_preserved_in_host_cycle_pages(tmp_path: Path) -> None:
+    from scripts.two_sinks import build_private_cycle_pages, split_render_inputs
+
+    public, private = split_render_inputs({"reflections": [{
+        "cycle_id": "cycle-reflection-host", "summary": "some summary",
+        "findings": [{"kind": "wasted_steps", "detail": "finding"}],
+        "recommendations": [{"kind": "good_practice", "detail": "recommendation"}],
+    }]})
+    pages = build_private_cycle_pages(private, tmp_path)
+    page = pages["cycles/cycle-reflection-host.html"]
+    assert "Summary chars: 12" in page
+    assert "Findings count: 1" in page
+    assert "Recommendations count: 1" in page
+    assert "some summary" not in page
+
+
 def test_manual_cycle_page_links_are_safely_encoded_and_bounded(tmp_path: Path) -> None:
     from scripts.two_sinks import build_private_cycle_pages
 
