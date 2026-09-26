@@ -153,6 +153,17 @@ def test_incomplete_history_is_marked():
     assert "history incomplete" in render_cycle_page("c", {"attempts": [marked]})
 
 
+def test_mismatched_tool_response_id_does_not_complete_pending_call() -> None:
+    from scripts.cycle_detail import extract_tool_steps
+
+    steps = extract_tool_steps({"seq": 1, "messages": [
+        {"role": "assistant", "tool_calls": [{"id": "expected", "function": {"name": "read", "arguments": "{}"}}]},
+        {"role": "tool", "tool_call_id": "different", "content": "response"},
+    ]})
+    assert len(steps) == 1
+    assert steps[0]["status"] == "pending"
+
+
 def test_reconstructed_steps_have_source_and_unknown_duration():
     """ADR-036 §4: reconstructed tool steps extract from prompt messages, carry source, unknown duration and no tokens."""
     from scripts.cycle_detail import extract_tool_steps
