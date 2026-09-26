@@ -1777,7 +1777,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
 
 def _is_non_work_commit_subject(subject: str) -> bool:
     normalized = subject.strip().lower()
-    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state"))
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
 
 
 def _is_non_work_commit_message(message: str) -> bool:
@@ -5759,22 +5759,33 @@ def build_cycle_feed(
                         # shown and marked unavailable rather than dropped.
                         entity_links.append(f'<span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">{esc(str(lesson_id))} (unavailable)</span>')
 
-        # Check demand and cycle_files for files_changed
+        # Check demand, cycle_files and ledger phases for files_changed
         all_files: list[str] = []
+        has_observed_files = False
         if cid in demand_by_cycle:
             fc = demand_by_cycle[cid].get('files_changed')
             if isinstance(fc, list):
+                has_observed_files = True
                 for f in fc:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         if isinstance(cycle_files, dict):
             cf = cycle_files.get(cid) or cycle_files.get(cid.replace('cycle-', ''))
             if isinstance(cf, list):
+                has_observed_files = True
                 for f in cf:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
+                        all_files.append(f_str)
+
+        for p in phases:
+            if isinstance(p, dict) and isinstance(p.get('files_changed'), list):
+                has_observed_files = True
+                for f in p['files_changed']:
+                    f_str = str(f)
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         files_changed = all_files
@@ -5957,8 +5968,11 @@ def build_cycle_feed(
         # neither should say so explicitly rather than presenting bare success.
         if not title and proposed_title:
             title = proposed_title
-        if not title and outcome_kind == 'integrated' and not files_changed:
-            title = 'integrated · no files'
+        if not title and outcome_kind == 'integrated':
+            if has_observed_files and not files_changed:
+                title = 'integrated · no files'
+            elif not has_observed_files:
+                title = 'integrated'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:

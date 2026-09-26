@@ -4593,6 +4593,16 @@ def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_n
     assert 'integrated · no files' not in html
 
 
+def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
+    """When files were never observed, title must be 'integrated', not 'integrated · no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-no-files-field', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">integrated</strong>' in html
+    assert 'integrated · no files' not in html
+
+
 def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
     residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
     checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
