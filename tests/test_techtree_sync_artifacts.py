@@ -651,7 +651,16 @@ def test_sync_script_drift_match_mismatch_and_unknown(tmp_path: Path, sh_availab
     assert (nonroot_mismatch.dest / "SYNC_DRIFT").is_file()
     assert "not root, ownership of SYNC_DRIFT unchanged" in nonroot_mismatch.stderr
 
-    unknown = _run_sync(tmp_path / "unknown", mode="drift-fetch-fail", initial_manifest="scripts/foo.py\n")
+    stale_then_unknown = _run_sync(
+        tmp_path / "stale-then-unknown", mode="ok", initial_manifest="scripts/foo.py\n",
+        extra_env={"FAKE_REPO_SYNC_SCRIPT": _sh_path(repo_script)},
+    )
+    assert stale_then_unknown.returncode == 0, stale_then_unknown.stderr
+    assert (stale_then_unknown.dest / "SYNC_DRIFT").is_file()
+    unknown = _run_sync(
+        stale_then_unknown.dest.parent, mode="drift-fetch-fail",
+        initial_manifest="scripts/foo.py\n",
+    )
     assert unknown.returncode == 0, unknown.stderr
     assert "techtree sync: sync script drift: drift unknown" in unknown.stdout + unknown.stderr
     assert not (unknown.dest / "SYNC_DRIFT").exists()
