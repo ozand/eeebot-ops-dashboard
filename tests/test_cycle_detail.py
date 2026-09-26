@@ -333,3 +333,16 @@ def test_unresolved_pending_tool_call_marks_history_incomplete(tmp_path: Path) -
 
     assert detail["available"] is True
     assert detail["history_complete"] is False
+
+
+def test_tool_result_applies_display_limit_truncation() -> None:
+    """Codex comment 4109820846: Tool results exceeding display limit must be truncated with omitted char count."""
+    long_result = "output line\n" * 500  # ~6000 chars > DEFAULT_DISPLAY_LIMIT 4000
+    step = {
+        "name": "bash",
+        "arguments": "git status",
+        "result": long_result,
+        "source": "reconstructed",
+    }
+    rendered = format_tool_step(step)
+    assert "characters not shown" in rendered
