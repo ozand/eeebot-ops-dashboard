@@ -524,10 +524,17 @@ def render_cycle_page(cycle_id: str, data: dict[str, Any] | None) -> str:
     attempts = data.get("attempts") or []
     sessions = data.get("sessions") or []
     total_calls = data.get("total_model_calls", 0)
+    reflection = data.get("reflection") if isinstance(data.get("reflection"), dict) else None
 
     rows = [f'<main><h1>Cycle {_escape(cycle_id)}</h1>']
     rows.append(f'<div class="cycle-summary"><p>Total model calls: {total_calls}</p>')
     rows.append(f'<p>{"history incomplete" if data.get("history_complete") is not True else "history complete"}</p></div>')
+
+    if reflection:
+        rows.append('<section class="reflection-summary"><h2>Reflector summary</h2>')
+        rows.append(f'<p>Summary chars: {_escape(str(reflection.get("summary_chars", "unknown")))}</p>')
+        rows.append(f'<p>Findings count: {_escape(str(reflection.get("findings_count", "unknown")))}</p>')
+        rows.append(f'<p>Recommendations count: {_escape(str(reflection.get("recommendations_count", "unknown")))}</p></section>')
 
     rows.append('<section class="attempts-section"><h2>Attempts</h2>')
     if not attempts:

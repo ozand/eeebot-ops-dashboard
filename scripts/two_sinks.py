@@ -336,6 +336,9 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
         from scripts.cycle_detail import build_cycle_index, render_cycle_page
 
     known = set(cycle_ids or ())
+    detail_records = private_data.get("cycle_details")
+    if isinstance(detail_records, dict):
+        known.update(map(str, detail_records))
     ledger = private_data.get("ledger_tail") or []
     if isinstance(ledger, list):
         known.update(str(row["cycle_id"]) for row in ledger if isinstance(row, dict) and row.get("cycle_id"))
@@ -344,6 +347,10 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
         known.update(str(row["cycle_id"]) for row in history if isinstance(row, dict) and row.get("cycle_id"))
     if isinstance(private_data.get("cycle_details"), dict):
         known.update(map(str, private_data["cycle_details"]))
+    for key in ("reflections", "lessons"):
+        rows = private_data.get(key)
+        if isinstance(rows, list):
+            known.update(str(row["cycle_id"]) for row in rows if isinstance(row, dict) and row.get("cycle_id"))
     known.update(_private_cycle_links(private_data))
 
     index = build_cycle_index(state_root)
@@ -351,7 +358,9 @@ def build_private_cycle_pages(private_data: dict, state_root: Path, host: str = 
     known = {cid for cid in known if _safe_cycle_id(cid)}
 
     return {
-        f"cycles/{cid}.html": render_cycle_page(str(cid), index.get(cid))
+        f"cycles/{cid}.html": render_cycle_page(
+            str(cid), index.get(cid) or (detail_records or {}).get(cid)
+        )
         for cid in sorted(known)
     }
 

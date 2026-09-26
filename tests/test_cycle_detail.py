@@ -259,6 +259,7 @@ def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path
 
 
 def test_reflection_metrics_are_preserved_in_host_cycle_pages(tmp_path: Path) -> None:
+    from scripts.techtree_viewer import build_cycle_details
     from scripts.two_sinks import build_private_cycle_pages, split_render_inputs
 
     public, private = split_render_inputs({"reflections": [{
@@ -266,6 +267,7 @@ def test_reflection_metrics_are_preserved_in_host_cycle_pages(tmp_path: Path) ->
         "findings": [{"kind": "wasted_steps", "detail": "finding"}],
         "recommendations": [{"kind": "good_practice", "detail": "recommendation"}],
     }]})
+    private["cycle_details"] = build_cycle_details([], None, None, public.get("reflections"))
     pages = build_private_cycle_pages(private, tmp_path)
     page = pages["cycles/cycle-reflection-host.html"]
     assert "Summary chars: 12" in page
