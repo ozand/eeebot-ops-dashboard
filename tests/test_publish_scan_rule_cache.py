@@ -192,7 +192,9 @@ def test_cache_bound_scales_with_rule_count() -> None:
         )
 
     for sha in shas:
-        assert ps.cache_contains_clean(cache, sha, mode="json"), (
+        assert ps.cache_contains_clean(
+            cache, sha, mode="json", extra_version=ps.inherited_blob_decoder_version(),
+        ), (
             "an earlier page's full approval must not be evicted by later pages' "
             "entries once the bound accounts for the per-rule multiplier"
         )
