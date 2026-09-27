@@ -107,6 +107,18 @@ def is_secret_value(value: str) -> bool:
     return True
 
 
+# #355 (F4): the shared scan functions read these imported names by name
+# (``re.split``/``re.IGNORECASE`` in ``is_excluded_key_name``/``scan_text``,
+# ``json.loads``/``json.JSONDecodeError`` in ``scan_text``, ``_html.unescape``
+# in ``_unescape_until_stable``, ``HTMLParser`` as ``_ScanHTMLParser``'s base
+# class) but none of them has source of its own to fingerprint -- they're
+# stdlib. Their behavior is pinned to the interpreter's stdlib version
+# instead, since that's the only thing that can change it without a diff to
+# this file. No ``releaselevel``/``serial``: the host runs one pinned
+# interpreter build, so major.minor.micro is already a stable, sufficient
+# identity here.
+_STDLIB_IMPORT_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
 _RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
 _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
@@ -117,6 +129,7 @@ _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "_SHARED_FINGERPRINT_DEPENDENCIES", "_RULE_DATA_DEPENDENCIES",
     "_shared_fingerprint_dependency_names", "_rule_data_dependency_names",
     "_all_top_level_dependency_objects", "_shared_scan_version", "rule_names",
+    "_STDLIB_IMPORT_VERSION",
 })
 _RULE_DATA_DEPENDENCIES = frozenset({
     "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
@@ -462,21 +475,44 @@ def _canonical_fingerprint_value(value: Any, *, name: str = "dependency") -> str
 
     No repr fallback is permitted: unsupported values make cache identity
     unavailable rather than silently introducing process-specific state.
+
+    #355 (F3): every built-in-type branch below matches on ``type(value) is
+    ...``, never ``isinstance`` -- a subclass (which could override
+    iteration, equality, or hashing) falls through to the ``unsupported``
+    branch instead of being silently treated as its base type.
     """
-    if value is None or isinstance(value, (str, int, bool)):
-        encoded: Any = [type(value).__name__, value]
-    elif isinstance(value, float):
+    value_type = type(value)
+    if value is None:
+        encoded: Any = ["NoneType", None]
+    elif value_type is bool:
+        encoded = ["bool", value]
+    elif value_type is str:
+        encoded = ["str", value]
+    elif value_type is int:
+        encoded = ["int", value]
+    elif value_type is float:
         encoded = ["float", value.hex()]
-    elif isinstance(value, re.Pattern):
+    elif value_type is re.Pattern:
+        if type(value.pattern) is not str or type(value.flags) is not int:
+            # #357 (ChatGPT external review): a str/int subclass here (e.g.
+            # re.compile() fed a str subclass) must not be silently treated
+            # as the exact type it isn't -- no str()/int() coercion either,
+            # since that would hide the very subclass mismatch this exists
+            # to catch.
+            raise FingerprintUnavailableError(
+                f"unsupported scanner fingerprint value for {name}: "
+                f"re.Pattern with non-exact pattern/flags type "
+                f"({type(value.pattern).__name__}/{type(value.flags).__name__})"
+            )
         encoded = ["pattern", value.pattern, value.flags]
-    elif isinstance(value, (list, tuple)):
-        encoded = [type(value).__name__, [
+    elif value_type is list or value_type is tuple:
+        encoded = [value_type.__name__, [
             _canonical_fingerprint_value(item, name=name) for item in value
         ]]
-    elif isinstance(value, (set, frozenset)):
+    elif value_type is set or value_type is frozenset:
         values = [_canonical_fingerprint_value(item, name=name) for item in value]
-        encoded = [type(value).__name__, sorted(values)]
-    elif isinstance(value, dict):
+        encoded = [value_type.__name__, sorted(values)]
+    elif value_type is dict:
         pairs = [
             (_canonical_fingerprint_value(key, name=name), _canonical_fingerprint_value(item, name=name))
             for key, item in value.items()
@@ -529,13 +565,43 @@ def _shared_scan_version() -> str:
     appearing in those functions' own source. Every transitive
     constant/class reachable from the hashed functions must be included
     explicitly, or an edit to one silently leaves stale approvals in
-    place."""
-    parts = []
-    for name, value in sorted(_all_top_level_dependency_objects().items()):
-        parts.append(f"{name}:{_canonical_fingerprint_value(value, name=name)}")
-    parts.append(_canonical_fingerprint_value(_shared_fingerprint_dependency_names()))
-    parts.append(_canonical_fingerprint_value(_rule_data_dependency_names()))
-    return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
+    place.
+
+    #355 (F1/F2): scanner configuration -- every name in
+    ``_SHARED_FINGERPRINT_DEPENDENCIES``/``_RULE_DATA_DEPENDENCIES``, plus
+    ``_ScanHTMLParser``'s keyword defaults and ``RAW_TEXT_TAGS`` -- is
+    defined only by this module's source and never changes in-process.
+    ``inspect.getsource``/``lru_cache`` cannot see a live reassignment
+    (e.g. ``_ScanHTMLParser.RAW_TEXT_TAGS = ...`` after import) or a
+    closure/keyword-default mutation; a test that changes one of these in
+    place must call ``cache_clear()`` on this function afterward, and must
+    not assume that alone makes the new value visible to
+    ``inspect.getsource``-based fingerprinting.
+
+    #355 (F3): the whole build below -- dependency collection,
+    serialization, hashing -- is one failure boundary. Every exception here
+    (an unsupported/mis-shaped dependency, a cyclic container, a string
+    that can't round-trip through UTF-8, an ``inspect.unwrap`` cycle)
+    becomes ``FingerprintUnavailableError``, matching every other failure
+    mode this function already fails safe on -- callers already treat that
+    exception as "no trustworthy version; scan everything, cache nothing."
+    """
+    try:
+        parts = []
+        for name, value in sorted(_all_top_level_dependency_objects().items()):
+            parts.append(f"{name}:{_canonical_fingerprint_value(value, name=name)}")
+        parts.append(_canonical_fingerprint_value(_shared_fingerprint_dependency_names()))
+        parts.append(_canonical_fingerprint_value(_rule_data_dependency_names()))
+        payload = "\x00".join(parts).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:  # F3: any failure here must fail safe, never propagate
+        # #357 (ChatGPT external review): never interpolate the caught
+        # exception into this message -- an exception whose own __str__
+        # raises would then blow up while WE are handling it, leaking past
+        # this fallback instead of becoming a clean FingerprintUnavailableError.
+        raise FingerprintUnavailableError("scanner fingerprint construction failed") from exc
 
 
 def rule_version(rule_name: str, *, extra_version: str = "") -> str:
