@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import subprocess
+import sys
 
 import pytest
 
@@ -59,6 +60,9 @@ def master_scanner(tmp_path_factory: pytest.TempPathFactory):
     spec = importlib.util.spec_from_file_location("publish_scan_master", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    # inspect.getsource() on a class (used by the scanner's version fingerprint
+    # since #343) resolves the module through sys.modules.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
