@@ -103,6 +103,7 @@ def test_publish_duration_warning_on_single_run_over_ten_minutes() -> None:
     warning, updated = ap.record_publish_duration(state, duration_seconds=601, changed=True)
     assert warning == 'publish duration exceeded 10 minutes (601s)'
     assert updated['publish_duration_warning'] == warning
+    assert updated['changed_publish_durations_seconds'] == [601.0]
 
 
 def test_three_changed_slow_runs_warn_and_unchanged_does_not_break_or_advance_streak() -> None:
@@ -115,6 +116,7 @@ def test_three_changed_slow_runs_warn_and_unchanged_does_not_break_or_advance_st
     assert state['changed_publish_durations_seconds'] == [181, 182]
     warning, state = ap.record_publish_duration(state, duration_seconds=183, changed=True)
     assert warning == '3 consecutive changed publishes exceeded 3 minutes'
+    assert state['changed_publish_durations_seconds'] == [181.0, 182.0, 183.0]
 
 
 def test_fast_changed_publish_resets_consecutive_slow_streak() -> None:
@@ -122,6 +124,58 @@ def test_fast_changed_publish_resets_consecutive_slow_streak() -> None:
     warning, state = ap.record_publish_duration(state, duration_seconds=180, changed=True)
     assert warning is None
     assert state['changed_publish_durations_seconds'] == []
+
+
+def test_run_duration_warning_is_written_to_journal_and_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'publisher-state'
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': 'new-fp'}))
+    monkeypatch.setattr(ap.time, 'monotonic', iter([1.0, 602.0]).__next__)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    assert ap.run(args) == 0
+    output = capsys.readouterr()
+    assert 'WARNING: publish duration exceeded 10 minutes' in output.err
+    state = ap.load_publish_state(state_dir)
+    assert state['publish_duration_warning'] == 'publish duration exceeded 10 minutes (601s)'
+    assert len(state['changed_publish_durations_seconds']) == 1
+
+
+def test_run_persists_three_changed_slow_warning_while_unchanged_run_does_not_count(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'publisher-state'
+    ap.save_publish_state(
+        state_dir, digest='stale', published_at=1.0,
+        page_fingerprints={'index.html': 'old-fp'},
+        changed_publish_durations_seconds=[181.0, 182.0],
+    )
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
+    # Current fingerprint equals prior fingerprint: an unchanged success is
+    # excluded from the slow changed-run streak and leaves its two samples.
+    fp = ap.tv._page_fingerprint('same')
+    ap.save_publish_state(
+        state_dir, digest='stale', published_at=1.0,
+        page_fingerprints={'index.html': fp},
+        changed_publish_durations_seconds=[181.0, 182.0],
+    )
+    monkeypatch.setattr(ap.tv, 'render_pages', lambda *_args, **_kwargs: {'index.html': 'same'})
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': fp}))
+    monkeypatch.setattr(ap.time, 'monotonic', iter([1.0, 2.0]).__next__)
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    assert ap.run(args) == 0
+    assert 'WARNING' not in capsys.readouterr().err
+    persisted = ap.load_publish_state(state_dir)
+    assert persisted['changed_publish_durations_seconds'] == [181.0, 182.0]
+    assert persisted['publish_duration_warning'] is None
 
 
 def test_permanent_timeout_dropin_documents_manual_installation_and_verification() -> None:
@@ -163,13 +217,13 @@ def test_save_and_load_publish_state_roundtrip(tmp_path: Path) -> None:
     ap.save_publish_state(state_dir, digest='abc123', published_at=12345.0)
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
+    assert loaded == {'digest': 'abc123', 'published_at': 12345.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
 
 
 def test_load_publish_state_missing_file_reads_as_never_published(tmp_path: Path) -> None:
     state_dir = tmp_path / 'does-not-exist-yet'
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
+    assert loaded == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
 
 
 def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
@@ -185,7 +239,7 @@ def test_interrupted_write_does_not_corrupt_state_file(tmp_path: Path) -> None:
     stray.write_text('{"digest": "half-written', encoding='utf-8')  # deliberately truncated/invalid JSON
 
     loaded = ap.load_publish_state(state_dir)
-    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
+    assert loaded == {'digest': 'good', 'published_at': 500.0, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
 
 
 def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -268,7 +322,7 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     rc = ap.run(args)
 
     assert rc != 0
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
 
 
 def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -307,7 +361,7 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}}
+    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
 
 
 def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:

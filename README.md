@@ -122,7 +122,15 @@ First-time setup:
    sudo systemctl daemon-reload
    ```
    *(Note: the periodic timer `eeebot-techtree-publish.timer` is provisioned from `ozand/eeebot` at `host/eeepc/systemd/eeebot-techtree-publish.timer`).*
-3. Install the sync script and drop-in (see `deploy/README-sync.md`):
+3. Install the permanent publisher timeout drop-in manually. The cold scanner run after a rules/version change took 5:45 on the constrained host, above the unit's 5-minute default; the 15-minute budget prevents systemd from killing a valid publish. This drop-in is intentionally not part of the sync manifest, so verify it after installation:
+   ```bash
+   sudo mkdir -p /etc/systemd/system/eeebot-techtree-publish.service.d/
+   sudo install -o root -g root -m 0644 systemd/drop-ins/eeebot-techtree-publish.service.d/20-timeout.conf /etc/systemd/system/eeebot-techtree-publish.service.d/20-timeout.conf
+   sudo systemctl daemon-reload
+   systemctl show -p TimeoutStartUSec eeebot-techtree-publish.service
+   ```
+   Verify the value is `TimeoutStartUSec=15min` (systemd may render this as microseconds). Also check `systemctl cat eeebot-techtree-publish.service` contains the drop-in. This timeout is permanent; duration warnings are logged and persisted by the autopublisher.
+4. Install the sync script and drop-in (see `deploy/README-sync.md`):
    ```bash
    sudo install -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
    sudo mkdir -p /etc/systemd/system/eeebot-techtree-publish.service.d/

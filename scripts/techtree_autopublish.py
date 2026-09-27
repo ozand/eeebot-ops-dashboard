@@ -75,6 +75,9 @@ LEDGER_DIGEST_PATH = 'ledger/cycles.jsonl'
 LEDGER_DIGEST_TAIL_LINES = 50
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
+PUBLISH_SINGLE_RUN_WARNING_SECONDS = 10 * 60
+PUBLISH_CHANGED_RUN_WARNING_SECONDS = 3 * 60
+PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT = 3
 
 # A floor on the floor (issue #27 review round 4, item A). The torn/
 # unreadable-source guard below (_unreadable_tree_source) is right to
@@ -232,6 +235,8 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             # correct: every page uploads fresh on the first run after this
             # field is introduced, same as day one.
             data.setdefault('page_fingerprints', {})
+            data.setdefault('changed_publish_durations_seconds', [])
+            data.setdefault('publish_duration_warning', None)
             # Cache validation is owned by publish_scan so its schema and key
             # version cannot drift from the scanner's acceptance rules.
             try:
@@ -239,12 +244,22 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             except ImportError:
                 from publish_scan import validate_clean_cache  # type: ignore
             data['clean_scan_cache'] = validate_clean_cache(data.get('clean_scan_cache', {}))
+            durations = data.get('changed_publish_durations_seconds')
+            if not isinstance(durations, list) or any(
+                not isinstance(value, (int, float)) or value < 0 for value in durations
+            ):
+                data['changed_publish_durations_seconds'] = []
+            else:
+                data['changed_publish_durations_seconds'] = durations[-PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:]
+            warning = data.get('publish_duration_warning')
+            data['publish_duration_warning'] = warning if isinstance(warning, str) else None
             return data
     except Exception:  # noqa: BLE001
         pass
     return {
         'digest': None, 'published_at': None, 'refusing_since': None,
         'page_fingerprints': {}, 'clean_scan_cache': {},
+        'changed_publish_durations_seconds': [], 'publish_duration_warning': None,
     }
 
 
@@ -253,6 +268,8 @@ def save_publish_state(
     refusing_since: float | None = None,
     page_fingerprints: dict[str, str] | None = None,
     clean_scan_cache: dict[str, bool] | None = None,
+    changed_publish_durations_seconds: list[float] | None = None,
+    publish_duration_warning: str | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -281,6 +298,8 @@ def save_publish_state(
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
             'clean_scan_cache': clean_scan_cache if isinstance(clean_scan_cache, dict) else {},
+            'changed_publish_durations_seconds': changed_publish_durations_seconds or [],
+            'publish_duration_warning': publish_duration_warning,
         }
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
@@ -295,6 +314,31 @@ def save_publish_state(
             'until this is fixed',
             file=sys.stderr,
         )
+
+
+def record_publish_duration(
+    state: dict[str, Any], *, duration_seconds: float, changed: bool,
+) -> tuple[str | None, dict[str, Any]]:
+    """Record a completed publish and return any one-run/consecutive warning.
+
+    Unchanged runs neither increment nor reset the changed-run streak.
+    """
+    history = state.get('changed_publish_durations_seconds')
+    durations = list(history) if isinstance(history, list) else []
+    warning = None
+    if duration_seconds > PUBLISH_SINGLE_RUN_WARNING_SECONDS:
+        warning = f'publish duration exceeded 10 minutes ({duration_seconds:.0f}s)'
+    if changed:
+        if duration_seconds > PUBLISH_CHANGED_RUN_WARNING_SECONDS:
+            durations = (durations + [float(duration_seconds)])[-PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:]
+        else:
+            durations = []
+        if len(durations) == PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:
+            warning = warning or '3 consecutive changed publishes exceeded 3 minutes'
+    updated = dict(state)
+    updated['changed_publish_durations_seconds'] = durations
+    updated['publish_duration_warning'] = warning
+    return warning, updated
 
 
 def should_publish(
@@ -424,6 +468,7 @@ def _refusal_freeze_status(
 
 
 def run(args: argparse.Namespace) -> int:
+    run_started = time.monotonic()
     state_root = Path(args.state_root)
     state_dir = Path(args.state_dir)
     staleness_floor_seconds = args.staleness_floor_hours * 3600.0
@@ -512,6 +557,8 @@ def run(args: argparse.Namespace) -> int:
                     refusing_since=refusing_since,
                     page_fingerprints=state.get('page_fingerprints'),
                     clean_scan_cache={},
+                    changed_publish_durations_seconds=state.get('changed_publish_durations_seconds'),
+                    publish_duration_warning=state.get('publish_duration_warning'),
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '
@@ -558,19 +605,44 @@ def run(args: argparse.Namespace) -> int:
     # any page whose normalized content (timestamp/age stripped) matches
     # what was published last time -- this is the mechanism that stops
     # re-uploading all 8 files in full on every run.
+    previous_fingerprints = state.get('page_fingerprints', {})
+    changed = any(
+        previous_fingerprints.get(name) != tv._page_fingerprint(content)
+        for name, content in pages.items()
+    )
     rc, fingerprints = tv.publish_to_pages(
         pages,
-        previous_fingerprints=state.get('page_fingerprints'),
+        previous_fingerprints=previous_fingerprints,
         scan_cache=state.get('clean_scan_cache'),
     )
+    publish_duration = max(0.0, time.monotonic() - run_started)
+    duration_warning, duration_state = record_publish_duration(
+        state, duration_seconds=publish_duration, changed=changed,
+    )
+    if duration_warning:
+        print(f'techtree-autopublish: WARNING: {duration_warning}', file=sys.stderr)
+    else:
+        print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
+        # Keep the last-known-good publish identity/fingerprints while still
+        # persisting duration telemetry for this attempted changed run.
+        save_publish_state(
+            state_dir, state.get('digest'), state.get('published_at'),
+            refusing_since=state.get('refusing_since'),
+            page_fingerprints=previous_fingerprints,
+            clean_scan_cache=state.get('clean_scan_cache'),
+            changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+            publish_duration_warning=duration_warning,
+        )
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
     save_publish_state(
         state_dir, digest, now, page_fingerprints=fingerprints,
         clean_scan_cache=state.get('clean_scan_cache'),
+        changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+        publish_duration_warning=duration_warning,
     )
     return 0
 
