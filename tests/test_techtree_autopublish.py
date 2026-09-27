@@ -227,9 +227,7 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
     root = tmp_path / 'state'
     _write_state_root(root)
     state_dir = tmp_path / 'techtree-state'
-    from scripts.publish_scan import clean_cache_key
-
-    cache_key = clean_cache_key('b' * 64, version='a' * 64)
+    cache_key = 'a' * 64 + ':html:' + 'b' * 64
     ap.save_publish_state(
         state_dir, digest='stale-digest-forces-republish', published_at=1.0,
         page_fingerprints={'index.html': 'prev-fp'},
