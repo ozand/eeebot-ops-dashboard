@@ -132,6 +132,14 @@ def _import_bindings_identity() -> str:
     reads by name stayed the same, but what it's actually bound to did
     not. This fingerprints the binding itself, straight from source, not
     just the interpreter behind it.
+
+    Limitation: only *top-level* (module-body) ``Import``/``ImportFrom``
+    are covered -- an import inside a function body is invisible here.
+    The one case of this in the file is ``inherited_blob_decoder_version``,
+    which imports ``techtree_viewer`` inside its own body (so a
+    publish-only checkout without that sibling module still degrades
+    cleanly instead of failing at module load); retargeting that inner
+    import would not change this fingerprint.
     """
     source = inspect.getsource(sys.modules[__name__])
     tree = ast.parse(source)
