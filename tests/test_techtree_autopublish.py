@@ -227,7 +227,9 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
     root = tmp_path / 'state'
     _write_state_root(root)
     state_dir = tmp_path / 'techtree-state'
-    cache_key = 'a' * 64 + ':html:' + 'b' * 40
+    from scripts.publish_scan import clean_cache_key
+
+    cache_key = clean_cache_key('b' * 64)
     ap.save_publish_state(
         state_dir, digest='stale-digest-forces-republish', published_at=1.0,
         page_fingerprints={'index.html': 'prev-fp'},
@@ -240,6 +242,9 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
     def fake_publish(pages, **kw):
         captured['previous_fingerprints'] = kw.get('previous_fingerprints')
         captured['scan_cache'] = kw.get('scan_cache')
+        # Model the cache-aware second publication: unchanged blobs already
+        # approved by the prior run must remain available to the scanner.
+        assert captured['scan_cache'] == {cache_key: True}
         return 0, {}
 
     monkeypatch.setattr(ap.tv, 'publish_to_pages', fake_publish)

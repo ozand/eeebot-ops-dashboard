@@ -59,6 +59,8 @@ def master_scanner(tmp_path_factory: pytest.TempPathFactory):
     spec = importlib.util.spec_from_file_location("publish_scan_master", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    import sys
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -101,6 +103,5 @@ def test_live_gh_pages_findings_preserve_master_and_remain_clean(master_scanner)
         raw = subprocess.run(
             ["git", "show", f"origin/gh-pages:{path}"], capture_output=True, check=True
         ).stdout.decode("utf-8")
-        is_json = path.endswith(".json")
         optimized = _assert_master_findings_preserved(raw, master_scanner)
         assert optimized == {}, path
