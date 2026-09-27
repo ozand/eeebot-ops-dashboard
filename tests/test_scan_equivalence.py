@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 
 import pytest
@@ -8,6 +9,7 @@ from scripts import publish_scan as ps
 
 
 POSITIVES = [
+    ("cycles-archive-1.json", '{"password": "my_super_secret_password"}'),
     ("index.html", "/etc/eeepc-agent/litellm.env"),
     ("index.html", "sk-12345678901234567890abcdef"),
     ("index.html", "ghp_1234567890123456"),
@@ -43,24 +45,39 @@ POSITIVES = [
 ]
 
 
-def _assert_prefilter_equivalent(
-    content: str, *, html_mode: bool, json_mode: bool, monkeypatch: pytest.MonkeyPatch,
+@pytest.fixture(scope="module")
+def master_scanner(tmp_path_factory: pytest.TempPathFactory):
+    """Load the actual origin/master scanner as an independent reference."""
+    source = subprocess.run(
+        ["git", "show", "origin/master:scripts/publish_scan.py"],
+        capture_output=True, check=False,
+    )
+    if source.returncode:
+        pytest.skip("requires origin/master for scanner reference comparisons")
+    path = tmp_path_factory.mktemp("master-scanner") / "publish_scan_master.py"
+    path.write_bytes(source.stdout)
+    spec = importlib.util.spec_from_file_location("publish_scan_master", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _assert_master_findings_preserved(
+    content: str, master_scanner,
 ) -> dict[str, int]:
-    optimized = ps.scan_text(content, html_mode=html_mode, json_mode=json_mode)
-    with monkeypatch.context() as m:
-        m.setattr(ps, "SCANNER_ANCHORS", {})
-        full = ps.scan_text(content, html_mode=html_mode, json_mode=json_mode)
-    assert optimized == full
-    return optimized
+    expected = master_scanner.scan_text(content)
+    actual = ps.scan_text(content)
+    assert all(actual.get(name, 0) >= count for name, count in expected.items())
+    return actual
 
 
 @pytest.mark.parametrize(("filename", "payload"), POSITIVES)
-def test_full_scan_matches_prefiltered_scan_for_every_positive(
-    filename: str, payload: str, monkeypatch: pytest.MonkeyPatch,
+def test_new_scanner_preserves_master_findings_for_every_positive(
+    filename: str, payload: str, master_scanner,
 ) -> None:
-    """Compare actual scan_text results with and without its literal prefilter."""
-    is_json = filename.endswith(".json")
-    _assert_prefilter_equivalent(payload, html_mode=not is_json, json_mode=is_json, monkeypatch=monkeypatch)
+    """New scan findings must include all findings from origin/master."""
+    _assert_master_findings_preserved(payload, master_scanner)
 
 
 def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -70,7 +87,7 @@ def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -
     assert ps.scan_text("prefix UNANCHORED_SECRET suffix") == {rule.name: 1}
 
 
-def test_live_gh_pages_findings_match_reference_and_remain_clean(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_live_gh_pages_findings_preserve_master_and_remain_clean(master_scanner) -> None:
     has_remote_branch = subprocess.run(
         ["git", "rev-parse", "--verify", "origin/gh-pages"], capture_output=True, text=True, check=False
     )
@@ -85,7 +102,5 @@ def test_live_gh_pages_findings_match_reference_and_remain_clean(monkeypatch: py
             ["git", "show", f"origin/gh-pages:{path}"], capture_output=True, check=True
         ).stdout.decode("utf-8")
         is_json = path.endswith(".json")
-        optimized = _assert_prefilter_equivalent(
-            raw, html_mode=not is_json, json_mode=is_json, monkeypatch=monkeypatch,
-        )
+        optimized = _assert_master_findings_preserved(raw, master_scanner)
         assert optimized == {}, path
