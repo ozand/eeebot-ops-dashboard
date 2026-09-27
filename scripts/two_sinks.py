@@ -29,6 +29,10 @@ except ImportError:
     )  # type: ignore
 
 _PUBLIC_REASON_CODE_RE = re.compile(r"^[a-z0-9_:.-]{1,64}$")
+# Explicit ledger decision enums emitted by the runtime's dedup bridge.
+_PUBLIC_LEDGER_DECISIONS = frozenset({
+    "skipped_duplicate", "proceeded", "skipped_recent_failure",
+})
 
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
@@ -121,6 +125,9 @@ def _sanitize_public_value(key: str, value: object) -> object:
             reason = projected.get("reason")
             if isinstance(reason, str) and reason:
                 projected["reason"] = reason if _PUBLIC_REASON_CODE_RE.fullmatch(reason) else f"reason text, {len(reason)} chars (LAN)"
+            if "decision" in projected:
+                decision = projected.get("decision")
+                projected["decision"] = decision if isinstance(decision, str) and decision in _PUBLIC_LEDGER_DECISIONS else "[withheld]"
             rows.append(projected)
         return rows
     if key == "agent_context" and isinstance(value, dict):
