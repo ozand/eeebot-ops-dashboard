@@ -372,8 +372,8 @@ def test_transitive_guard_traverses_attribute_binding_and_constant_chain():
     tree = ast.parse('''
 class Parser:
     pass
-BASE_TAGS: tuple[str, ...] = ("script",)
-TAGS: tuple[str, ...] = BASE_TAGS
+BASE_TAGS: str = "script"
+TAGS: str = BASE_TAGS
 Parser.RAW_TEXT_TAGS = TAGS
 ''')
     transitive = _transitive_scan_dependencies(tree, roots=["Parser.RAW_TEXT_TAGS"])
