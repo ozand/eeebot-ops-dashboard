@@ -1745,6 +1745,26 @@ def test_lineage_leaf_classifies_model_call_incomplete():
     assert tv._leaf_outcome({"status": "model_call_incomplete"}) == "model_call_incomplete"
 
 
+def test_model_call_incomplete_lineage_legend_and_unknown_boundary_are_distinct() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'sha-root',
+         'parent_sha': '', 'ts': '2026-08-15T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-incomplete',
+         'outcome': 'model_call_incomplete', 'ts': '2026-08-16T00:00:00Z'},
+    ]
+    html = tv._build_unified_lineage(
+        rows, {'current_sha': 'missing-current-sha', 'nodes': {}}, None,
+        '2026-08-18T00:00:00Z',
+    )
+    assert html.count('arch-model_call_incomplete lineage-legend-node') == 1
+    assert 'arch-model_call_incomplete lineage-node' in html
+    assert 'arch-unknown lineage-legend-node' in html
+    assert '</svg> unavailable</span>' in html
+    assert 'class="arch-node arch-model_call_incomplete lineage-node"' in html
+    assert 'data-boundary="fallback_current_unavailable"' in html
+    assert '"outcome":"unknown"' in html
+
+
 def test_model_call_incomplete_appears_in_cycle_feed_and_detail_rendering() -> None:
     fixture = _fixture()
     fixture['ledger_tail'] = [
