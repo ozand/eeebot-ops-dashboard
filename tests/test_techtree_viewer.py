@@ -6382,6 +6382,61 @@ def test_311_live_malformed_start_is_newer_than_archived_valid_attempt() -> None
     assert 'KILLED / INCOMPLETE' not in row
 
 
+def test_337_malformed_live_start_does_not_borrow_archive_timestamp(tmp_path: Path) -> None:
+    cid = "cycle-live-malformed-no-followup"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "live"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-20T19:00:00Z", "_ledger_source": "archive:2026-09-20"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-20T19:10:00Z", "_ledger_source": "archive:2026-09-20"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, ledger_history=ledger, history_mode=True, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'FAILED' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_337_archive_malformed_start_does_not_outrank_live_attempt_without_same_source_time() -> None:
+    cid = "cycle-archive-malformed-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-26T19:00:00Z", "_ledger_source": "live"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-26T19:10:00Z", "_ledger_source": "live"},
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "archive:2026-09-20"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-19T19:00:00Z", "_ledger_source": "archive:2026-09-19"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, ledger_history=ledger, history_mode=True, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'FAILED' in row
+    assert 'running' not in row
+
+
+def test_337_malformed_started_uses_live_recency_for_finished_bridge_run() -> None:
+    cid = "cycle-malformed-ended-retry"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "live"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-26T20:00:00Z", "_ledger_source": "live"},
+    ]
+    runs = [{
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-26T19:59:40Z",
+        "finished_at": "2026-09-26T20:01:00Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=runs,
+        now=datetime(2026, 9, 26, 20, 2, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
+
+
 def test_311_missing_latest_start_timestamp_does_not_reuse_older_attempt() -> None:
     cid = "cycle-missing-latest-start"
     ledger = [
