@@ -618,13 +618,21 @@ def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
 
 
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
+    from scripts import techtree_viewer as tv
+
     marker = "PRIVATE_STRATEGIST_REASON_CANARY_771"
     public, _ = split_render_inputs({"strategist_decisions": [{
         "success": False, "reason": f"LLM failed: {marker}",
+        "timestamp": "2026-09-03T12:37:17Z", "inputs_status": {}, "counts": {},
     }]})
     projected = public["strategist_decisions"][0]
+    pages = tv.render_public_pages(public, "eeepc")
+    public_payload = json.dumps(pages)
     assert marker not in json.dumps(public)
     assert projected["reason"] == f"reason text, {len('LLM failed: ' + marker)} chars (LAN)"
+    assert marker not in public_payload
+
+
 def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
     public, _ = split_render_inputs({"lessons": [lesson]})
