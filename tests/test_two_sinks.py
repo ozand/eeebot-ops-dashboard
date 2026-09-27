@@ -607,6 +607,14 @@ def test_split_render_inputs_preserves_bridge_run_telemetry() -> None:
     assert public["bridge_active_run"] == active
 
 
+def test_split_render_inputs_preserves_bridge_run_telemetry() -> None:
+    recent_run = [{"run_id": "run-recent", "cycle_id": "cycle-recent", "classification": "unit_timeout"}]
+    active_run = {"run_id": "run-active", "cycle_id": "cycle-active", "started_at": "2026-09-27T12:00:00Z"}
+    public, _ = split_render_inputs({"bridge_runs": recent_run, "bridge_active_run": active_run})
+    assert public["bridge_runs"] == recent_run
+    assert public["bridge_active_run"] == active_run
+
+
 def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
     public, _ = split_render_inputs({"lessons": [lesson]})
