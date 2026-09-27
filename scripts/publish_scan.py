@@ -6,6 +6,7 @@ Used by publish_to_pages and autopublish dry-run; reused by D2 masking.
 """
 from __future__ import annotations
 
+import ast
 import functools
 import html as _html
 from html.parser import HTMLParser
@@ -119,6 +120,44 @@ def is_secret_value(value: str) -> bool:
 # identity here.
 _STDLIB_IMPORT_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
+
+def _import_bindings_identity() -> str:
+    """Normalized (module target + local alias) text for every top-level
+    ``Import``/``ImportFrom`` in this file, sorted for a stable order.
+
+    #358: ``_STDLIB_IMPORT_VERSION`` only tracks the interpreter, so
+    retargeting an import to a different module while keeping the same
+    local alias (``import foo as re`` instead of ``import re``) left the
+    shared fingerprint unchanged -- the alias a fingerprinted function
+    reads by name stayed the same, but what it's actually bound to did
+    not. This fingerprints the binding itself, straight from source, not
+    just the interpreter behind it.
+
+    Limitation: only *top-level* (module-body) ``Import``/``ImportFrom``
+    are covered -- an import inside a function body is invisible here.
+    The one case of this in the file is ``inherited_blob_decoder_version``,
+    which imports ``techtree_viewer`` inside its own body (so a
+    publish-only checkout without that sibling module still degrades
+    cleanly instead of failing at module load); retargeting that inner
+    import would not change this fingerprint.
+    """
+    source = inspect.getsource(sys.modules[__name__])
+    tree = ast.parse(source)
+    bindings: list[str] = []
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local = alias.asname or alias.name.split(".")[0]
+                bindings.append(f"import {alias.name} as {local}")
+        elif isinstance(node, ast.ImportFrom):
+            level = "." * node.level
+            module = node.module or ""
+            for alias in node.names:
+                local = alias.asname or alias.name
+                bindings.append(f"from {level}{module} import {alias.name} as {local}")
+    return "\n".join(sorted(bindings))
+
+
 _RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
 _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
@@ -129,7 +168,7 @@ _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "_SHARED_FINGERPRINT_DEPENDENCIES", "_RULE_DATA_DEPENDENCIES",
     "_shared_fingerprint_dependency_names", "_rule_data_dependency_names",
     "_all_top_level_dependency_objects", "_shared_scan_version", "rule_names",
-    "_STDLIB_IMPORT_VERSION",
+    "_STDLIB_IMPORT_VERSION", "_IMPORT_BINDINGS_IDENTITY",
 })
 _RULE_DATA_DEPENDENCIES = frozenset({
     "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
@@ -541,6 +580,8 @@ def _all_top_level_dependency_objects() -> dict[str, Any]:
             value = _ScanHTMLParser.RAW_TEXT_TAGS
         elif name == "_shared_scan_version":
             value = inspect.unwrap(globals()[name])
+        elif name == "_IMPORT_BINDINGS_IDENTITY":
+            value = _import_bindings_identity()
         else:
             value = globals()[name]
         objects[name] = value

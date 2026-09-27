@@ -225,14 +225,47 @@ def test_ast_guard_indexes_imported_names_the_scanner_reads():
         "route to _STDLIB_IMPORT_VERSION, since the bare import name itself "
         "is never a fingerprint dependency"
     )
+    assert "_IMPORT_BINDINGS_IDENTITY" in transitive, (
+        "#358: an imported name must also route to _IMPORT_BINDINGS_IDENTITY "
+        "-- the interpreter version alone doesn't change when an import is "
+        "retargeted to a different module under the same alias"
+    )
     shared = ps._shared_fingerprint_dependency_names()
     rule_data = ps._rule_data_dependency_names()
     assert transitive <= shared | rule_data
 
-    # Test: remove the import-backed dependency from the covered set and
-    # the guard fails -- proving it actually watches imported bindings.
+    # Test: remove either import-backed dependency from the covered set
+    # and the guard fails -- proving it actually watches imported bindings.
     with pytest.raises(AssertionError):
         assert transitive <= (shared - {"_STDLIB_IMPORT_VERSION"}) | rule_data
+    with pytest.raises(AssertionError):
+        assert transitive <= (shared - {"_IMPORT_BINDINGS_IDENTITY"}) | rule_data
+
+
+def test_shared_scan_version_changes_when_import_is_retargeted_same_alias(monkeypatch):
+    """#358: retargeting an import's module while keeping the same local
+    alias (``import copyreg as hashlib`` instead of ``import hashlib``)
+    previously left the shared fingerprint unchanged --
+    _STDLIB_IMPORT_VERSION only tracks the interpreter, not which module
+    is actually bound to a name."""
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+
+    real_getsource = ps.inspect.getsource
+    real_source = real_getsource(ps)
+    retargeted_source = real_source.replace("import hashlib\n", "import copyreg as hashlib\n", 1)
+    assert retargeted_source != real_source, "fixture source must actually contain the line being retargeted"
+
+    def fake_getsource(obj, *args, **kwargs):
+        if obj is ps:
+            return retargeted_source
+        return real_getsource(obj, *args, **kwargs)
+
+    monkeypatch.setattr(ps.inspect, "getsource", fake_getsource)
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    ps._shared_scan_version.cache_clear()  # don't leak the fake-getsource-computed value into later tests
+    assert after != before, "retargeting an import under the same alias must change the shared fingerprint"
 
 
 def _transitive_scan_dependencies(
@@ -255,7 +288,11 @@ def _transitive_scan_dependencies(
             # its behavior is pinned to the interpreter's stdlib version
             # instead (see _STDLIB_IMPORT_VERSION), not to the bare import
             # name, which would never appear in a fingerprint dependency set.
+            # #358: that alone doesn't catch a retargeted import keeping the
+            # same alias, so the binding's own normalized text is fingerprinted
+            # too (see _IMPORT_BINDINGS_IDENTITY).
             found.add("_STDLIB_IMPORT_VERSION")
+            found.add("_IMPORT_BINDINGS_IDENTITY")
             continue
         found.add(name)
         node = top_level.get(name) or constants.get(name) or attributes.get(name)
