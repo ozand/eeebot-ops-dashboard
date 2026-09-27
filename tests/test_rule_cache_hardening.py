@@ -572,6 +572,62 @@ def test_fingerprint_boundary_fails_safe_on_wrapped_unwrap_cycle(monkeypatch, ca
     _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
 
 
+def test_fingerprint_boundary_fails_safe_on_sha256_failure(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): hashlib.sha256 sat
+    OUTSIDE the try boundary at 7fb437e2 -- a hashing failure propagated
+    raw instead of becoming FingerprintUnavailableError like every other
+    failure in this same build."""
+    original_sha256 = ps.hashlib.sha256
+    calls = {"n": 0}
+
+    def flaky_sha256(*args, **kwargs):
+        # Fails only for the fingerprint hash itself (the direct probe
+        # call, then scan_pages's own internal re-check) -- real content
+        # hashing (page shas, etc.) inside scan_pages must still work so
+        # the rest of a full uncached scan can actually complete.
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise ValueError("simulated hashing failure")
+        return original_sha256(*args, **kwargs)
+
+    monkeypatch.setattr(ps.hashlib, "sha256", flaky_sha256)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+class _StrFailsError(Exception):
+    def __str__(self) -> str:
+        raise RuntimeError("str() itself fails")
+
+
+def test_fingerprint_boundary_fails_safe_on_exception_with_failing_str(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): at 7fb437e2 the
+    fallback message interpolated the caught exception (f"...{exc}"),
+    which calls its __str__ -- an exception whose __str__ itself raises
+    then blows up while WE are handling it, leaking past the very
+    fallback meant to catch it."""
+    def poisoned():
+        raise _StrFailsError("boom")
+
+    monkeypatch.setattr(ps, "_all_top_level_dependency_objects", poisoned)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_str_subclass_regex_pattern(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): a re.Pattern whose
+    .pattern/.flags are a str/int subclass (not the exact type) must be
+    rejected explicitly -- at 7fb437e2 it passed straight through and was
+    silently accepted."""
+    class _StrSubclass(str):
+        pass
+
+    poison_pattern = re.compile(_StrSubclass("x"))
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": poison_pattern},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
 def test_ast_guard_mutations_detect_annotated_constants_and_attribute_assignments():
     source = '''
 class Parser:

@@ -114,7 +114,9 @@ def is_secret_value(value: str) -> bool:
 # class) but none of them has source of its own to fingerprint -- they're
 # stdlib. Their behavior is pinned to the interpreter's stdlib version
 # instead, since that's the only thing that can change it without a diff to
-# this file.
+# this file. No ``releaselevel``/``serial``: the host runs one pinned
+# interpreter build, so major.minor.micro is already a stable, sufficient
+# identity here.
 _STDLIB_IMPORT_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 _RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
@@ -491,6 +493,17 @@ def _canonical_fingerprint_value(value: Any, *, name: str = "dependency") -> str
     elif value_type is float:
         encoded = ["float", value.hex()]
     elif value_type is re.Pattern:
+        if type(value.pattern) is not str or type(value.flags) is not int:
+            # #357 (ChatGPT external review): a str/int subclass here (e.g.
+            # re.compile() fed a str subclass) must not be silently treated
+            # as the exact type it isn't -- no str()/int() coercion either,
+            # since that would hide the very subclass mismatch this exists
+            # to catch.
+            raise FingerprintUnavailableError(
+                f"unsupported scanner fingerprint value for {name}: "
+                f"re.Pattern with non-exact pattern/flags type "
+                f"({type(value.pattern).__name__}/{type(value.flags).__name__})"
+            )
         encoded = ["pattern", value.pattern, value.flags]
     elif value_type is list or value_type is tuple:
         encoded = [value_type.__name__, [
@@ -580,13 +593,15 @@ def _shared_scan_version() -> str:
         parts.append(_canonical_fingerprint_value(_shared_fingerprint_dependency_names()))
         parts.append(_canonical_fingerprint_value(_rule_data_dependency_names()))
         payload = "\x00".join(parts).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
     except FingerprintUnavailableError:
         raise
     except Exception as exc:  # F3: any failure here must fail safe, never propagate
-        raise FingerprintUnavailableError(
-            f"scanner fingerprint construction failed: {type(exc).__name__}: {exc}"
-        ) from exc
-    return hashlib.sha256(payload).hexdigest()
+        # #357 (ChatGPT external review): never interpolate the caught
+        # exception into this message -- an exception whose own __str__
+        # raises would then blow up while WE are handling it, leaking past
+        # this fallback instead of becoming a clean FingerprintUnavailableError.
+        raise FingerprintUnavailableError("scanner fingerprint construction failed") from exc
 
 
 def rule_version(rule_name: str, *, extra_version: str = "") -> str:
