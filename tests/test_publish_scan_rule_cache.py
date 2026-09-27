@@ -143,6 +143,26 @@ def test_measured_cold_after_single_rule_change_beats_a_full_cold_scan(monkeypat
     )
 
 
+def test_special_rule_version_notices_flags_only_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1, second round): _rule_witness for
+    json_secret_field/env_secret_kv included each regex's pattern text
+    but not its .flags -- a flags-only change (e.g. enabling re.MULTILINE)
+    left the rule's version, and therefore every persisted approval,
+    unchanged even though matching behavior changed."""
+    for rule_name, attr in (
+        ("json_secret_field", "_JSON_SECRET_KEY_RE"),
+        ("json_secret_field", "_JSON_CANDIDATE_RE"),
+        ("env_secret_kv", "_ENV_SECRET_KV_RE"),
+        ("env_secret_kv", "_ENV_KEY_CANDIDATE_RE"),
+    ):
+        before = ps.rule_version(rule_name)
+        original = getattr(ps, attr)
+        monkeypatch.setattr(ps, attr, re.compile(original.pattern, original.flags | re.MULTILINE))
+        after = ps.rule_version(rule_name)
+        assert after != before, f"{rule_name} must notice a flags-only change to {attr}"
+        monkeypatch.setattr(ps, attr, original)
+
+
 def test_shared_version_notices_excluded_name_table_changes(monkeypatch: pytest.MonkeyPatch) -> None:
     """Codex re-check on PR #343 (P1): is_excluded_key_name's own source
     text never changes when EXCLUDED_EXACT_NAMES/_METRIC_NAME_TOKENS/
