@@ -958,6 +958,7 @@ def read_ledger_history():
             _mtimes.append(os.path.getmtime(path))
         except Exception:
             continue
+        source = "live" if _day is None else f"archive:{_day}"
         for line in lines:
             line = line.strip()
             if not line:
@@ -967,7 +968,7 @@ def read_ledger_history():
             except Exception:
                 continue
             if isinstance(obj, dict) and obj.get("phase") in LEDGER_PHASES:
-                matched.append(obj)
+                matched.append({**obj, "_ledger_source": source})
     return matched
 
 def read_bridge_runs():
@@ -2138,6 +2139,7 @@ def read_local_state(
                     continue
             except Exception:  # noqa: BLE001
                 continue
+            source = 'live' if name == 'cycles.jsonl' else f'archive:{day}'
             for line in rows:
                 line = line.strip()
                 if not line:
@@ -2147,7 +2149,7 @@ def read_local_state(
                 except Exception:  # noqa: BLE001
                     continue
                 if isinstance(obj, dict) and obj.get('phase') in LEDGER_PHASES:
-                    matched.append(obj)
+                    matched.append({**obj, '_ledger_source': source})
         return matched
 
     def read_bridge_runs_local() -> list[dict[str, Any]]:
@@ -6036,6 +6038,21 @@ def build_cycle_feed(
                 for p in phases[start_idx + 1:]
                 if isinstance(p, dict) and _parse_iso_ts(str(p.get('ts') or "")) is not None
             ), None)
+            start_source = phases[start_idx].get('_ledger_source')
+            # Never borrow a timestamp across live/archive boundaries: the
+            # live ledger is ordered before archives, not chronologically.
+            if start_source and any(
+                p.get('_ledger_source') != start_source
+                for p in phases[start_idx + 1:]
+                if isinstance(p, dict)
+            ):
+                following_ts = next((
+                    _parse_iso_ts(str(p.get('ts') or ''))
+                    for p in phases[start_idx + 1:]
+                    if isinstance(p, dict)
+                    and p.get('_ledger_source') == start_source
+                    and _parse_iso_ts(str(p.get('ts') or '')) is not None
+                ), None)
             malformed_recency.append((start_idx, following_ts))
         latest_malformed = max(
             malformed_recency,
@@ -6049,7 +6066,13 @@ def build_cycle_feed(
             last_started_idx = latest_malformed[0]
             malformed_ts = latest_malformed[1]
             if malformed_ts is None:
+                start_source = phases[last_started_idx].get('_ledger_source')
                 attempt_phases = phases[last_started_idx:]
+                if start_source:
+                    attempt_phases = [
+                        p for p in attempt_phases
+                        if p.get('_ledger_source') == start_source
+                    ]
             else:
                 # The malformed start has a later event time than the archive
                 # start, so select the latest attempt by that evidence, then
@@ -6192,6 +6215,10 @@ def build_cycle_feed(
             started_ts = ''
             if last_started_idx is not None and phases[last_started_idx].get('ts'):
                 started_ts = str(phases[last_started_idx]['ts'])
+            if _parse_iso_ts(started_ts) is None and latest_malformed is not None:
+                inferred_start = latest_malformed[1]
+                if inferred_start is not None:
+                    started_ts = inferred_start.isoformat()
             max_phase_ts = _max_ts(attempt_phases) or ts_val or started_ts
             is_ended, ended_reason = is_cycle_run_ended(
                 cid, started_ts, max_phase_ts, bridge_runs, ref_now,
