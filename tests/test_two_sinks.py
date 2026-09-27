@@ -421,7 +421,12 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     """ADR-036: Host failure preserves gh-pages fingerprints, records host_snapshot_failed_since (not overwritten), and skips uploads on run 2."""
     import time
     from scripts import techtree_autopublish as ap
+    from scripts.publish_scan import inherited_blob_decoder_version, rule_cache_key, rule_names
 
+    cache_key = rule_cache_key(
+        rule_names()[0], "b" * 64, mode="html",
+        extra_version=inherited_blob_decoder_version(),
+    )
     root = tmp_path / "state"
     state_dir = tmp_path / "state_dir"
     bad_site = tmp_path / "bad_site"
@@ -443,6 +448,9 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
 
     published_batches = []
     def fake_publish(pages, **kw):
+        scan_cache = kw.get("scan_cache")
+        assert isinstance(scan_cache, dict)
+        scan_cache[cache_key] = True
         prev = kw.get("previous_fingerprints") or {}
         changed = {k: v for k, v in pages.items() if prev.get(k) != ap.tv._page_fingerprint(v)}
         published_batches.append(changed)
@@ -463,6 +471,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     assert state1.get("host_snapshot_failed_since") is not None
     assert state1.get("last_host_error") is not None
     assert len(state1.get("page_fingerprints", {})) > 0
+    assert state1["clean_scan_cache"] == {cache_key: True}
     first_failed_since = state1["host_snapshot_failed_since"]
     assert len(published_batches[0]) > 0
 
@@ -471,6 +480,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     assert rc2 == 1
     state2 = ap.load_publish_state(state_dir)
     assert state2.get("host_snapshot_failed_since") == first_failed_since
+    assert state2["clean_scan_cache"] == {cache_key: True}
     assert len(published_batches) == 2
     assert len(published_batches[1]) == 1  # New version metadata requires updating the inherited blob.
 
@@ -620,6 +630,60 @@ def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
     assert marker not in json.dumps(public)
     assert projected["decision"] == f"decision text, {len(marker)} chars (LAN)"
     assert projected["rationale"] == ""
+
+
+def test_public_ledger_decision_allows_codes_only_in_rendered_pages() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_LEDGER_DECISION_CANARY_882"
+    public, _ = split_render_inputs({"ledger_tail": [
+        {"phase": "proposer_reject", "cycle_id": "rejected", "decision": f"model says {marker}"},
+        {"phase": "dedup", "cycle_id": "dedup", "decision": "skipped_duplicate"},
+    ]})
+    pages = tv.render_public_pages(public, "eeepc")
+    rendered = json.dumps(pages)
+    assert marker not in rendered
+    assert "model says" not in rendered
+    assert "[withheld]" in rendered
+    assert "skipped_duplicate" in rendered
+
+
+def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_STRATEGIST_REASON_CANARY_771"
+    public, _ = split_render_inputs({"strategist_decisions": [{
+        "success": False, "reason": f"LLM failed: {marker}",
+        "timestamp": "2026-09-03T12:37:17Z", "inputs_status": {}, "counts": {},
+    }]})
+    projected = public["strategist_decisions"][0]
+    pages = tv.render_public_pages(public, "eeepc")
+    public_payload = json.dumps(pages)
+    assert marker not in json.dumps(public)
+    assert projected["reason"] == f"reason text, {len('LLM failed: ' + marker)} chars (LAN)"
+    assert marker not in public_payload
+
+
+def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_REFUSAL_REASON_CANARY_991"
+    live_row = {
+        "success": False,
+        "reason": f"refused: 2 of 5 inputs empty; {marker}",
+        "timestamp": "2026-09-03T12:37:17Z",
+        "inputs_status": {},
+        "counts": {},
+    }
+    public, _ = split_render_inputs({"strategist_decisions": [live_row]})
+    rendered = tv._build_strategist_run_item(public["strategist_decisions"])
+
+    assert public["strategist_decisions"][0]["refused"] is True
+    assert "refused" in rendered
+    assert "health-alert-text" not in rendered
+    assert marker not in json.dumps(public)
+    assert marker not in rendered
+    assert "2 of 5 inputs empty" not in rendered
 
 
 def test_split_render_inputs_preserves_lesson_body_lengths() -> None:

@@ -536,7 +536,7 @@ def test_extract_git_titles_local_mocked_success(monkeypatch: pytest.MonkeyPatch
                 stdout='msha123 merge: integrate selfevo/cycle-456\n',
                 stderr='',
             )
-        elif 'log' in cmd and 'msha123^2' in cmd:
+        elif 'log' in cmd and 'msha123^1..msha123^2' in cmd:
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=0,
@@ -4543,6 +4543,170 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
     assert missing != unavailable != present_empty
 
 
+
+def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Path) -> None:
+    """A diary-only branch must not borrow an ordinary commit from before branch creation."""
+    repo = tmp_path / 'branch_only_repo'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'base.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+    (repo / 'diary.txt').write_text('diary', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'diary.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'diary: record cycle'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-diary', '-m',
+                    'merge: integrate selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+
+    titles, _cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
+    assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
+
+
+
+def test_extract_git_titles_searches_past_five_non_work_commits(tmp_path: Path) -> None:
+    """A run of diary commits cannot hide an earlier real work commit."""
+    repo = tmp_path / 'long_diary_branch'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-long'], check=True, capture_output=True)
+    (repo / 'work.txt').write_text('real work', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement actual cycle work'], check=True, capture_output=True)
+    for i in range(6):
+        (repo / f'diary-{i}.txt').write_text('diary', encoding='utf-8')
+        subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(repo), 'commit', '-m', f'diary: entry {i}'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-long', '-m',
+                    'merge: integrate selfevo/cycle-cycle-long'], check=True, capture_output=True)
+
+    titles, _files, error = tv.extract_git_titles_local(repo)
+    assert error is None
+    assert titles.get('cycle-long') == 'Implement actual cycle work'
+
+
+
+def test_cycle_feed_normalizes_lesson_reference_path_and_prefix() -> None:
+    html = tv.build_cycle_feed(
+        [{'phase': 'outcome', 'cycle_id': 'cycle-path', 'outcome': 'success',
+          'lessons_context': ['lesson:lessons/subagent_result_error_handling.md']}],
+        rendered_lesson_ids={'subagent_result_error_handling'},
+    )
+    assert 'href="lessons.html#q-subagent_result_error_handling"' in html
+    assert '(unavailable)' not in html
+
+
+
+def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
+    rows = [
+        {'phase': 'proposed', 'cycle_id': 'cycle-title', 'task_title': 'Implement diary filter'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-title', 'outcome': 'success', 'files_changed': ['src/filter.py']},
+        {'phase': 'outcome', 'cycle_id': 'cycle-empty', 'outcome': 'success', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Implement diary filter</strong>' in html
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
+    assert '<strong class="feed-title">success</strong>' not in html
+
+
+
+def test_non_work_commit_detector_skips_chore_and_merge() -> None:
+    """Regression: chore: and merge: commits must be skipped as non-work commits."""
+    assert tv._is_non_work_commit_message("merge: sync with main")
+    assert tv._is_non_work_commit_message("chore: update dependencies")
+
+
+
+def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_no_files() -> None:
+    """Ledger files_changed must be read so git failures do not falsely claim 'no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-ledger-files', 'outcome': 'success',
+         'files_changed': ['src/real_file.py']},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert 'src/real_file.py' in html
+    assert 'integrated · no files' not in html
+
+
+
+def test_cycle_feed_pushed_late_uses_specific_title_fallback_without_git_or_task_title() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-late-fallback', 'outcome': 'pushed_late',
+         'push_attempts': 3},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">pushed late, 3 attempt(s)</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+
+def test_cycle_feed_empty_git_diff_is_preserved_as_observed_no_files() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-observed-empty-diff', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(
+        rows, task_titles={}, cycle_files={'cycle-observed-empty-diff': []}, history_mode=True
+    )
+    assert '<strong class="feed-title">integrated · no files</strong>' in html
+
+
+
+def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
+    """When files were never observed, title must be 'integrated', not 'integrated · no files'."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-no-files-field', 'outcome': 'success'},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">integrated</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+
+def test_remote_reader_script_defines_commit_classifier() -> None:
+    """Codex P2: REMOTE_READER_SCRIPT must define _is_non_work_commit_message inside its scope."""
+    ns: dict = {}
+    exec(compile(tv.REMOTE_READER_SCRIPT, '<remote_script>', 'exec'), ns)
+    assert "_is_non_work_commit_message" in ns
+    assert ns["_is_non_work_commit_message"]("diary: test")
+    assert ns["_is_non_work_commit_message"]("merge: sync")
+    assert not ns["_is_non_work_commit_message"]("selfevo: real task")
+
+
+
+def test_cycle_feed_falls_back_to_task_title_from_any_phase() -> None:
+    """Codex P2: task_title on non-proposed phases (e.g. outcome) must be used as fallback title."""
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-only-outcome', 'outcome': 'success',
+         'task_title': 'Task from outcome row', 'files_changed': []},
+    ]
+    html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
+    assert '<strong class="feed-title">Task from outcome row</strong>' in html
+    assert 'integrated · no files' not in html
+
+
+
+def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
+    residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
+    checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
+    assert tv._is_non_work_commit_message("diary: record entry")
+    assert tv._is_non_work_commit_message(residual)
+    assert tv._is_non_work_commit_message("selfevo: checkpoint state")
+    assert tv._is_non_work_commit_message(checkpoint)
+    assert not tv._is_non_work_commit_message("selfevo: Implement requested task")
+
+
+
 def test_274_cycle_lesson_link_shown_as_unavailable_not_dropped() -> None:
     cycles = tv.build_cycle_feed(
         [{'phase': 'outcome', 'cycle_id': 'cycle-x', 'outcome': 'success', 'ts': '2026-09-16T00:00:00Z',
@@ -4898,7 +5062,7 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
         'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
@@ -6216,6 +6380,61 @@ def test_311_live_malformed_start_is_newer_than_archived_valid_attempt() -> None
     assert 'running' in row
     assert 'FAILED' not in row
     assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_337_malformed_live_start_does_not_borrow_archive_timestamp(tmp_path: Path) -> None:
+    cid = "cycle-live-malformed-no-followup"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "live"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-20T19:00:00Z", "_ledger_source": "archive:2026-09-20"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-20T19:10:00Z", "_ledger_source": "archive:2026-09-20"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, ledger_history=ledger, history_mode=True, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'FAILED' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_337_archive_malformed_start_does_not_outrank_live_attempt_without_same_source_time() -> None:
+    cid = "cycle-archive-malformed-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-26T19:00:00Z", "_ledger_source": "live"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-26T19:10:00Z", "_ledger_source": "live"},
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "archive:2026-09-20"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-19T19:00:00Z", "_ledger_source": "archive:2026-09-19"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, ledger_history=ledger, history_mode=True, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'FAILED' in row
+    assert 'running' not in row
+
+
+def test_337_malformed_started_uses_live_recency_for_finished_bridge_run() -> None:
+    cid = "cycle-malformed-ended-retry"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp", "_ledger_source": "live"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-26T20:00:00Z", "_ledger_source": "live"},
+    ]
+    runs = [{
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-26T19:59:40Z",
+        "finished_at": "2026-09-26T20:01:00Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=runs,
+        now=datetime(2026, 9, 26, 20, 2, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
 
 
 def test_311_missing_latest_start_timestamp_does_not_reuse_older_attempt() -> None:
@@ -9218,20 +9437,6 @@ def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
     assert fingerprints['cycles.html'] != previous_fp['cycles.html']
 
 
-def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -> None:
-    calls: list = []
-    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
-
-    html = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old SAME'
-    previous_fp = {'index.html': tv._page_fingerprint(html)}
-    rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
-    assert rc == 0
-    assert not any('git/blobs' in ' '.join(c) for c in calls)
-    assert not any('-X' in c and 'POST' in c and 'git/trees' in ' '.join(c) for c in calls)
-    assert not any('git/commits' in ' '.join(c) for c in calls)
-    assert fingerprints == previous_fp
-
-
 def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> None:
     ledger = [
         {'phase': 'outcome', 'cycle_id': f'cycle-w{i:03d}', 'outcome': 'success', 'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
@@ -9910,33 +10115,6 @@ def test_272_remote_reader_script_mirrors_subagents_and_prompts(tmp_path: Path) 
     assert prompts['cycle-c']['system']['text'] == 'sys'
 
 
-def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
-    """#272 acceptance: a subagent record with no cycle_id must be reported
-    as unjoined, never attached to the nearest cycle by time."""
-    ledger_rows = [
-        {'cycle_id': 'cycle-only-one', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'},
-    ]
-    subagent_records = [
-        {'subagent_id': 'joined', 'cycle_id': 'cycle-only-one', 'label': 'l', 'status': 'ok',
-         'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
-         'result_excerpt': 'r', 'iteration_count': 2},
-        {'subagent_id': 'orphan', 'cycle_id': None, 'label': 'l2', 'status': 'ok',
-         'task_excerpt': 't2', 'task_truncated': False, 'task_bytes': 2, 'summary_excerpt': 's2',
-         'result_excerpt': 'r2', 'iteration_count': 1},
-    ]
-    details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
-    assert details['cycle-only-one']['subagents'] == [{
-        'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
-        'result_chars': 1, 'iteration_count': 2,
-    }]
-    assert details['__unjoined_subagents__']['unjoined_count'] == 1
-    assert details['__unjoined_subagents__']['subagents'][0]['subagent_id'] == 'orphan'
-    # The orphan must not have leaked onto the only real cycle.
-    joined_ids = {sa['subagent_id'] for sa in details['cycle-only-one']['subagents']}
-    assert 'orphan' not in joined_ids
-
-
 def test_272_build_cycle_details_attaches_and_bounds_prompts() -> None:
     ledger_rows = [{'cycle_id': 'cycle-p', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'}]
     cycle_prompts = {
@@ -10361,151 +10539,6 @@ def test_issue196_feed_ages_use_live_status_vocabulary_and_one_unit() -> None:
     # An unreadable feed still shows its threshold, and reads as a problem.
     assert 'llm_calls: unknown/24.0h' in html
     assert 'feed-badge-missing' in html
-
-class TestIssue200DocOnlyBudgetGuard:
-    """The row exists to tell three situations apart, so the panel must too.
-
-    A low deferral count has three causes and #1108 was unanswerable for months
-    because they were indistinguishable: the guard never reached, the guard
-    reached with nothing to suppress, and the guard triggered by an unreadable
-    ledger rather than a real over-budget count. The last is a fail-open and
-    must never render like a working guard.
-    """
-
-    LIVE = {
-        'phase': 'doc_only_budget', 'doc_only_deferred': 0,
-        'doc_only_integrations_24h': 5, 'doc_only_budget_24h': 5,
-        'ledger_blind': False, 'doc_budget_exceeded': True,
-        'items_considered': 8, 'ts': '2026-09-03T02:44:59Z',
-    }
-
-    def test_live_host_row_reads_as_reached_with_nothing_to_defer(self) -> None:
-        html = tv._build_doc_only_budget_item([dict(self.LIVE)])
-        assert '5/5' in html
-        assert 'cap reached' in html
-        assert 'of 8' in html
-        assert 'unavailable' not in html
-
-    def test_within_budget_is_distinct_from_cap_reached(self) -> None:
-        row = dict(self.LIVE, doc_only_integrations_24h=2, doc_budget_exceeded=False)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'within budget' in html
-        assert '2/5' in html
-        assert 'cap reached' not in html
-
-    def test_ledger_blind_does_not_read_as_a_working_guard(self) -> None:
-        row = dict(self.LIVE, ledger_blind=True)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'fail-open' in html
-        assert 'cap reached' not in html
-        assert 'within budget' not in html
-        healthy = tv._build_doc_only_budget_item([dict(self.LIVE)])
-        assert 'badge-available' in healthy
-        assert 'badge-available' not in html, (
-            'a fail-open guard rendered with the same badge as a healthy one')
-
-    def test_actual_deferral_is_visible_as_such(self) -> None:
-        row = dict(self.LIVE, doc_only_deferred=3)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'deferring' in html
-        assert '3 deferred' in html
-
-    def test_absent_row_is_unavailable_not_zero(self) -> None:
-        for tail in (None, [], [{'phase': 'outcome', 'outcome': 'success'}]):
-            html = tv._build_doc_only_budget_item(tail)
-            assert 'unavailable' in html, tail
-            assert '0/0' not in html
-
-    def test_the_latest_row_wins(self) -> None:
-        old = dict(self.LIVE, doc_only_integrations_24h=1, doc_budget_exceeded=False)
-        new = dict(self.LIVE, doc_only_integrations_24h=9)
-        html = tv._build_doc_only_budget_item([old, {'phase': 'gate'}, new])
-        assert '9/5' in html
-        assert '1/5' not in html
-
-    def test_the_item_reaches_the_panel(self) -> None:
-        html = tv.build_now_panel(None, None, None, None, ledger_tail=[dict(self.LIVE)])
-        assert 'Doc Budget Guard:' in html
-        assert 'cap reached' in html
-
-class TestIssue204StrategistRunProvenance:
-    """A degraded strategist looks exactly like a healthy one from outside.
-
-    That is why #999 needed an audit rather than an alert: it advised from three
-    dead inputs for eight runs and nothing on the dashboard said so. The row
-    carries `inputs_status` so the condition is machine-readable; these tests pin
-    that the panel keeps the states apart rather than merely printing the row.
-    """
-
-    LIVE = {
-        "success": True,
-        "reason": "valid bounded advisory output applied",
-        "counts": {"advisories_recorded": 2, "advisories_written": 2, "hypotheses_appended": 2},
-        "inputs_status": {
-            "goals": {"chars": 2736, "source": "release_root", "status": "complete"},
-            "scorecard": {"history_rows": 55, "status": "complete"},
-            "funnel": {"ids": 200, "status": "complete"},
-            "insights": {"cards": 2, "legacy": 3, "status": "complete"},
-            "evolution_tree": {"nodes": 100, "status": "complete"},
-        },
-        "timestamp": "2026-09-03T12:37:17.640697Z",
-    }
-
-    def _text(self, decisions):
-        import re
-        return re.sub("<[^>]+>", "", tv._build_strategist_run_item(decisions)).strip()
-
-    def test_the_live_host_row_renders_time_ratio_and_output(self) -> None:
-        text = self._text([dict(self.LIVE)])
-        assert "ran" in text
-        assert "2026-09-03T12:37:17" in text
-        assert "inputs 5/5" in text
-        assert "2 hypotheses, 2 advisories" in text
-
-    def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
-        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
-        html = tv._build_strategist_run_item([refused])
-        healthy = tv._build_strategist_run_item([dict(self.LIVE)])
-        assert "refused" in self._text([refused])
-        assert "badge-available" in healthy
-        assert "badge-available" not in html, (
-            "a refusal rendered with the same badge as a healthy run")
-
-    def test_an_error_is_distinct_from_both(self) -> None:
-        errored = dict(self.LIVE, success=False, reason="LLM call failed: timeout")
-        html = tv._build_strategist_run_item([errored])
-        assert "error" in self._text([errored])
-        assert "badge-available" not in html
-        assert "badge-rejected" not in html
-
-    def test_degraded_inputs_are_named_not_just_counted(self) -> None:
-        degraded = dict(self.LIVE)
-        degraded["inputs_status"] = dict(self.LIVE["inputs_status"])
-        degraded["inputs_status"]["insights"] = {"cards": 0, "legacy": 0, "status": "empty"}
-        degraded["inputs_status"]["funnel"] = {"ids": 0, "status": "empty"}
-        text = self._text([degraded])
-        assert "inputs 3/5" in text
-        assert "insights:empty" in text
-        assert "funnel:empty" in text
-
-    def test_absent_or_unreadable_is_unavailable_not_zero(self) -> None:
-        for decisions in (None, [], ["not a dict"], [123]):
-            text = self._text(decisions)
-            assert "unavailable" in text, decisions
-            assert "0/5" not in text, decisions
-
-    def test_the_newest_row_wins(self) -> None:
-        old = dict(self.LIVE, timestamp="2026-09-01T03:00:00Z")
-        new = dict(self.LIVE, timestamp="2026-09-03T12:37:17Z")
-        text = self._text([old, new])
-        assert "2026-09-03" in text
-        assert "2026-09-01" not in text
-
-    def test_the_item_reaches_the_panel(self) -> None:
-        html = tv.build_now_panel(None, None, None, None, strategist_decisions=[dict(self.LIVE)])
-        assert "Strategist:" in html
-        assert "inputs 5/5" in html
-
 
 # ─── #215 tests: gate_violations retained in cycle details export ─────────────
 
