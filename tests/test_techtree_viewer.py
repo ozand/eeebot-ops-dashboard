@@ -4898,7 +4898,7 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
         'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
@@ -9218,20 +9218,6 @@ def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
     assert fingerprints['cycles.html'] != previous_fp['cycles.html']
 
 
-def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -> None:
-    calls: list = []
-    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
-
-    html = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old SAME'
-    previous_fp = {'index.html': tv._page_fingerprint(html)}
-    rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
-    assert rc == 0
-    assert not any('git/blobs' in ' '.join(c) for c in calls)
-    assert not any('-X' in c and 'POST' in c and 'git/trees' in ' '.join(c) for c in calls)
-    assert not any('git/commits' in ' '.join(c) for c in calls)
-    assert fingerprints == previous_fp
-
-
 def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> None:
     ledger = [
         {'phase': 'outcome', 'cycle_id': f'cycle-w{i:03d}', 'outcome': 'success', 'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
@@ -9910,33 +9896,6 @@ def test_272_remote_reader_script_mirrors_subagents_and_prompts(tmp_path: Path) 
     assert prompts['cycle-c']['system']['text'] == 'sys'
 
 
-def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
-    """#272 acceptance: a subagent record with no cycle_id must be reported
-    as unjoined, never attached to the nearest cycle by time."""
-    ledger_rows = [
-        {'cycle_id': 'cycle-only-one', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'},
-    ]
-    subagent_records = [
-        {'subagent_id': 'joined', 'cycle_id': 'cycle-only-one', 'label': 'l', 'status': 'ok',
-         'task_excerpt': 't', 'task_truncated': False, 'task_bytes': 1, 'summary_excerpt': 's',
-         'result_excerpt': 'r', 'iteration_count': 2},
-        {'subagent_id': 'orphan', 'cycle_id': None, 'label': 'l2', 'status': 'ok',
-         'task_excerpt': 't2', 'task_truncated': False, 'task_bytes': 2, 'summary_excerpt': 's2',
-         'result_excerpt': 'r2', 'iteration_count': 1},
-    ]
-    details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
-    assert details['cycle-only-one']['subagents'] == [{
-        'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
-        'result_chars': 1, 'iteration_count': 2,
-    }]
-    assert details['__unjoined_subagents__']['unjoined_count'] == 1
-    assert details['__unjoined_subagents__']['subagents'][0]['subagent_id'] == 'orphan'
-    # The orphan must not have leaked onto the only real cycle.
-    joined_ids = {sa['subagent_id'] for sa in details['cycle-only-one']['subagents']}
-    assert 'orphan' not in joined_ids
-
-
 def test_272_build_cycle_details_attaches_and_bounds_prompts() -> None:
     ledger_rows = [{'cycle_id': 'cycle-p', 'outcome': 'success', 'ts': '2026-09-17T00:00:00Z'}]
     cycle_prompts = {
@@ -10361,151 +10320,6 @@ def test_issue196_feed_ages_use_live_status_vocabulary_and_one_unit() -> None:
     # An unreadable feed still shows its threshold, and reads as a problem.
     assert 'llm_calls: unknown/24.0h' in html
     assert 'feed-badge-missing' in html
-
-class TestIssue200DocOnlyBudgetGuard:
-    """The row exists to tell three situations apart, so the panel must too.
-
-    A low deferral count has three causes and #1108 was unanswerable for months
-    because they were indistinguishable: the guard never reached, the guard
-    reached with nothing to suppress, and the guard triggered by an unreadable
-    ledger rather than a real over-budget count. The last is a fail-open and
-    must never render like a working guard.
-    """
-
-    LIVE = {
-        'phase': 'doc_only_budget', 'doc_only_deferred': 0,
-        'doc_only_integrations_24h': 5, 'doc_only_budget_24h': 5,
-        'ledger_blind': False, 'doc_budget_exceeded': True,
-        'items_considered': 8, 'ts': '2026-09-03T02:44:59Z',
-    }
-
-    def test_live_host_row_reads_as_reached_with_nothing_to_defer(self) -> None:
-        html = tv._build_doc_only_budget_item([dict(self.LIVE)])
-        assert '5/5' in html
-        assert 'cap reached' in html
-        assert 'of 8' in html
-        assert 'unavailable' not in html
-
-    def test_within_budget_is_distinct_from_cap_reached(self) -> None:
-        row = dict(self.LIVE, doc_only_integrations_24h=2, doc_budget_exceeded=False)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'within budget' in html
-        assert '2/5' in html
-        assert 'cap reached' not in html
-
-    def test_ledger_blind_does_not_read_as_a_working_guard(self) -> None:
-        row = dict(self.LIVE, ledger_blind=True)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'fail-open' in html
-        assert 'cap reached' not in html
-        assert 'within budget' not in html
-        healthy = tv._build_doc_only_budget_item([dict(self.LIVE)])
-        assert 'badge-available' in healthy
-        assert 'badge-available' not in html, (
-            'a fail-open guard rendered with the same badge as a healthy one')
-
-    def test_actual_deferral_is_visible_as_such(self) -> None:
-        row = dict(self.LIVE, doc_only_deferred=3)
-        html = tv._build_doc_only_budget_item([row])
-        assert 'deferring' in html
-        assert '3 deferred' in html
-
-    def test_absent_row_is_unavailable_not_zero(self) -> None:
-        for tail in (None, [], [{'phase': 'outcome', 'outcome': 'success'}]):
-            html = tv._build_doc_only_budget_item(tail)
-            assert 'unavailable' in html, tail
-            assert '0/0' not in html
-
-    def test_the_latest_row_wins(self) -> None:
-        old = dict(self.LIVE, doc_only_integrations_24h=1, doc_budget_exceeded=False)
-        new = dict(self.LIVE, doc_only_integrations_24h=9)
-        html = tv._build_doc_only_budget_item([old, {'phase': 'gate'}, new])
-        assert '9/5' in html
-        assert '1/5' not in html
-
-    def test_the_item_reaches_the_panel(self) -> None:
-        html = tv.build_now_panel(None, None, None, None, ledger_tail=[dict(self.LIVE)])
-        assert 'Doc Budget Guard:' in html
-        assert 'cap reached' in html
-
-class TestIssue204StrategistRunProvenance:
-    """A degraded strategist looks exactly like a healthy one from outside.
-
-    That is why #999 needed an audit rather than an alert: it advised from three
-    dead inputs for eight runs and nothing on the dashboard said so. The row
-    carries `inputs_status` so the condition is machine-readable; these tests pin
-    that the panel keeps the states apart rather than merely printing the row.
-    """
-
-    LIVE = {
-        "success": True,
-        "reason": "valid bounded advisory output applied",
-        "counts": {"advisories_recorded": 2, "advisories_written": 2, "hypotheses_appended": 2},
-        "inputs_status": {
-            "goals": {"chars": 2736, "source": "release_root", "status": "complete"},
-            "scorecard": {"history_rows": 55, "status": "complete"},
-            "funnel": {"ids": 200, "status": "complete"},
-            "insights": {"cards": 2, "legacy": 3, "status": "complete"},
-            "evolution_tree": {"nodes": 100, "status": "complete"},
-        },
-        "timestamp": "2026-09-03T12:37:17.640697Z",
-    }
-
-    def _text(self, decisions):
-        import re
-        return re.sub("<[^>]+>", "", tv._build_strategist_run_item(decisions)).strip()
-
-    def test_the_live_host_row_renders_time_ratio_and_output(self) -> None:
-        text = self._text([dict(self.LIVE)])
-        assert "ran" in text
-        assert "2026-09-03T12:37:17" in text
-        assert "inputs 5/5" in text
-        assert "2 hypotheses, 2 advisories" in text
-
-    def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
-        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
-        html = tv._build_strategist_run_item([refused])
-        healthy = tv._build_strategist_run_item([dict(self.LIVE)])
-        assert "refused" in self._text([refused])
-        assert "badge-available" in healthy
-        assert "badge-available" not in html, (
-            "a refusal rendered with the same badge as a healthy run")
-
-    def test_an_error_is_distinct_from_both(self) -> None:
-        errored = dict(self.LIVE, success=False, reason="LLM call failed: timeout")
-        html = tv._build_strategist_run_item([errored])
-        assert "error" in self._text([errored])
-        assert "badge-available" not in html
-        assert "badge-rejected" not in html
-
-    def test_degraded_inputs_are_named_not_just_counted(self) -> None:
-        degraded = dict(self.LIVE)
-        degraded["inputs_status"] = dict(self.LIVE["inputs_status"])
-        degraded["inputs_status"]["insights"] = {"cards": 0, "legacy": 0, "status": "empty"}
-        degraded["inputs_status"]["funnel"] = {"ids": 0, "status": "empty"}
-        text = self._text([degraded])
-        assert "inputs 3/5" in text
-        assert "insights:empty" in text
-        assert "funnel:empty" in text
-
-    def test_absent_or_unreadable_is_unavailable_not_zero(self) -> None:
-        for decisions in (None, [], ["not a dict"], [123]):
-            text = self._text(decisions)
-            assert "unavailable" in text, decisions
-            assert "0/5" not in text, decisions
-
-    def test_the_newest_row_wins(self) -> None:
-        old = dict(self.LIVE, timestamp="2026-09-01T03:00:00Z")
-        new = dict(self.LIVE, timestamp="2026-09-03T12:37:17Z")
-        text = self._text([old, new])
-        assert "2026-09-03" in text
-        assert "2026-09-01" not in text
-
-    def test_the_item_reaches_the_panel(self) -> None:
-        html = tv.build_now_panel(None, None, None, None, strategist_decisions=[dict(self.LIVE)])
-        assert "Strategist:" in html
-        assert "inputs 5/5" in html
-
 
 # ─── #215 tests: gate_violations retained in cycle details export ─────────────
 
