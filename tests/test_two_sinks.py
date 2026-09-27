@@ -600,14 +600,6 @@ def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
 
 
 def test_split_render_inputs_preserves_bridge_run_telemetry() -> None:
-    runs = [{"cycle_id": "cycle-a", "run_id": "run-a", "classification": "unit_timeout"}]
-    active = {"cycle_id": "cycle-b", "run_id": "run-b", "started_at": "2026-09-27T12:00:00Z"}
-    public, _ = split_render_inputs({"bridge_runs": runs, "bridge_active_run": active})
-    assert public["bridge_runs"] == runs
-    assert public["bridge_active_run"] == active
-
-
-def test_split_render_inputs_preserves_bridge_run_telemetry() -> None:
     recent_run = [{"run_id": "run-recent", "cycle_id": "cycle-recent", "classification": "unit_timeout"}]
     active_run = {"run_id": "run-active", "cycle_id": "cycle-active", "started_at": "2026-09-27T12:00:00Z"}
     public, _ = split_render_inputs({"bridge_runs": recent_run, "bridge_active_run": active_run})
