@@ -1607,7 +1607,7 @@ def test_hypotheses_api_exposes_local_vs_live_diagnostics_and_prefers_live_canon
     assert payload['canonical_source'] == 'eeepc'
     assert payload['canonical_path'] == '/var/lib/eeepc-agent/self-evolving-agent/state/hypotheses/backlog.json'
     assert payload['live_path'] == '/var/lib/eeepc-agent/self-evolving-agent/state/hypotheses/backlog.json'
-    assert payload['local_path'].endswith('/workspace/state/hypotheses/backlog.json')
+    assert Path(payload['local_path']).as_posix().endswith('/workspace/state/hypotheses/backlog.json')
     assert payload['local_entry_count'] == 5
     assert payload['live_entry_count'] == 7
     assert payload['entry_count'] == 7

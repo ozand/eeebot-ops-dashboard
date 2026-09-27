@@ -114,7 +114,7 @@ def test_system_api_exposes_bounded_selfevo_current_proof_summary(tmp_path: Path
     assert proof['latest_issue_lifecycle']['pr_number'] == 26
     assert proof['latest_merge']['pr_number'] == 26
     assert proof['remote_freshness']['state'] == 'stale'
-    assert any(path.endswith('workspace/state/self_evolution/current_state.json') for path in proof['evidence_paths'])
+    assert any(Path(path).as_posix().endswith('workspace/state/self_evolution/current_state.json') for path in proof['evidence_paths'])
 
     app = create_app(_cfg(tmp_path, db))
     status, api_body = _call_app(app, '/api/system')

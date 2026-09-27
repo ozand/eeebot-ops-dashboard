@@ -59,7 +59,7 @@ def test_normalize_repo_state_loads_hypothesis_backlog_snapshot(tmp_path: Path):
     result = _normalize_repo_state(repo)
     backlog = result['raw'].get('hypothesis_backlog')
     assert backlog is not None
-    assert backlog['path'].endswith('workspace/state/hypotheses/backlog.json')
+    assert Path(backlog['path']).as_posix().endswith('workspace/state/hypotheses/backlog.json')
     assert backlog['entry_count'] == 1
     assert backlog['selected_hypothesis_id'] == 'hyp-2'
     assert backlog['selected_hypothesis_title'] == 'Ship dashboard visibility'
@@ -557,4 +557,4 @@ def test_collect_once_persists_subagent_telemetry(tmp_path: Path):
     assert detail['goal_id'] == 'goal-2'
     assert detail['cycle_id'] == 'cycle-2'
     assert detail['report_path'] == '/workspace/state/reports/evolution-2.json'
-    assert detail['source_path'].endswith('workspace/state/subagents/sub-2.json')
+    assert Path(detail['source_path']).as_posix().endswith('workspace/state/subagents/sub-2.json')
