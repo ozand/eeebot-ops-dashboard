@@ -1,0 +1,291 @@
+"""#340: page approvals are keyed by page sha256 + the version of EACH
+rule, recording which rules the approval covers. When one rule's version
+changes, only that rule re-scans; every other rule's approval is reused.
+Every rule still scans the whole page (no fragment splitting, no seams).
+"""
+from __future__ import annotations
+
+import re
+import time
+
+import pytest
+
+from scripts import publish_scan as ps
+
+
+def _bump_one_rule_version(monkeypatch: pytest.MonkeyPatch, rule_name: str) -> None:
+    """Change ONE rule's own pattern text without changing what it
+    matches (wraps it in a no-op non-capturing group) -- its version
+    changes; every other rule's does not."""
+    new_patterns = []
+    for rule in ps.STANDALONE_PATTERNS:
+        if rule.name == rule_name:
+            new_patterns.append(
+                ps.SecretPattern(rule.name, re.compile(f"(?:{rule.pattern.pattern})", rule.pattern.flags), rule.description)
+            )
+        else:
+            new_patterns.append(rule)
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", tuple(new_patterns))
+
+
+def test_changing_one_rule_version_rescans_only_that_rule(monkeypatch: pytest.MonkeyPatch) -> None:
+    changed = "openai_secret_key"
+    pages = {
+        "index.html": "ordinary clean page A content, nothing sensitive here at all",
+        "tokens.html": "ordinary clean page B content, also nothing sensitive whatsoever",
+    }
+    cache: dict[str, bool] = {}
+    ps.scan_pages(dict(pages), clean_cache=cache)
+    before = dict(cache)
+    assert before
+    version_before = ps.rule_version(changed)
+
+    # Every rule approved for every page before the version bump.
+    for fname in pages:
+        content_sha = __import__("hashlib").sha256(pages[fname].encode("utf-8")).hexdigest()
+        for name in ps.rule_names():
+            assert cache.get(ps.rule_cache_key(name, content_sha, mode="html", extra_version=ps.inherited_blob_decoder_version())) is True
+
+    _bump_one_rule_version(monkeypatch, changed)
+    version_after = ps.rule_version(changed)
+    assert version_after != version_before, "the bump must actually change the rule's own version"
+
+    calls: list[list[str] | None] = []
+    real_scan_text = ps.scan_text
+
+    def _spy_scan_text(content, **kwargs):
+        calls.append(list(kwargs.get("rules")) if kwargs.get("rules") is not None else None)
+        return real_scan_text(content, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", _spy_scan_text)
+
+    ps.scan_pages(dict(pages), clean_cache=cache)
+
+    # Every scan_text call this run only asked for the ONE changed rule --
+    # not a full re-scan of every rule.
+    assert calls, "scan_text must have been invoked for the stale rule"
+    for requested_rules in calls:
+        assert requested_rules == [changed], requested_rules
+
+    for fname in pages:
+        content_sha = __import__("hashlib").sha256(pages[fname].encode("utf-8")).hexdigest()
+        for name in ps.rule_names():
+            key = ps.rule_cache_key(name, content_sha, mode="html", extra_version=ps.inherited_blob_decoder_version())
+            assert cache.get(key) is True, name
+            if name == changed:
+                assert key not in before, "the changed rule's cache key must be a NEW version"
+            else:
+                assert key in before, f"{name}'s approval must be reused, not a new key"
+
+
+def test_new_rule_added_only_that_rule_scans_existing_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Adding a brand-new rule behaves the same as changing an existing
+    one: only the new rule (never seen before) is stale."""
+    pages = {"index.html": "ordinary clean page content"}
+    cache: dict[str, bool] = {}
+    ps.scan_pages(dict(pages), clean_cache=cache)
+    before = dict(cache)
+
+    new_rule = ps.SecretPattern("rule_cache_test_canary", re.compile(r"RULE_CACHE_TEST_CANARY_NO_MATCH"), "test")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, new_rule))
+
+    calls: list[list[str] | None] = []
+    real_scan_text = ps.scan_text
+
+    def _spy_scan_text(content, **kwargs):
+        calls.append(list(kwargs.get("rules")) if kwargs.get("rules") is not None else None)
+        return real_scan_text(content, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", _spy_scan_text)
+    ps.scan_pages(dict(pages), clean_cache=cache)
+
+    assert calls == [["rule_cache_test_canary"]]
+    for key in before:
+        assert cache.get(key) is True, "every pre-existing rule approval must be untouched"
+
+    # This is the security property, not just a call-count assertion: a new
+    # rule may find a leak on a page approved by every rule in the old set.
+    secret_page = {"index.html": "PUBLIC UNIQUE_NEW_RULE_SECRET_77291"}
+    old_cache: dict[str, bool] = {}
+    ps.scan_pages(secret_page, clean_cache=old_cache)
+    secret_rule = ps.SecretPattern(
+        "new_secret_rule", re.compile(r"UNIQUE_NEW_RULE_SECRET_77291"), "test leak canary",
+    )
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, secret_rule))
+    with pytest.raises(ps.PublicationScanError, match="new_secret_rule"):
+        ps.scan_pages(secret_page, clean_cache=old_cache)
+
+
+def test_measured_cold_after_single_rule_change_beats_a_full_cold_scan(monkeypatch: pytest.MonkeyPatch) -> None:
+    """#340 measurement: shared HTML/JSON extraction still runs on any
+    stale page (there is no fragment cache, no seams), so a single-rule
+    cold pass is NOT as fast as a fully-warm repeat -- but it must still
+    be meaningfully faster than a full cold scan of every rule, proving
+    only the changed rule actually re-ran."""
+    content = (
+        '<!doctype html><html><body>' +
+        ('<p class="status">ordinary dashboard text and counters 123456</p>' * 20000) +
+        '</body></html>'
+    )
+    pages = {"lineage.html": content}
+
+    full_cold_cache: dict[str, bool] = {}
+    start = time.perf_counter()
+    ps.scan_pages(dict(pages), clean_cache=full_cold_cache)
+    full_cold_seconds = time.perf_counter() - start
+
+    warm_cache: dict[str, bool] = dict(full_cold_cache)
+    start = time.perf_counter()
+    ps.scan_pages(dict(pages), clean_cache=warm_cache)
+    warm_seconds = time.perf_counter() - start
+
+    single_rule_cache: dict[str, bool] = dict(full_cold_cache)
+    _bump_one_rule_version(monkeypatch, "openai_secret_key")
+    start = time.perf_counter()
+    ps.scan_pages(dict(pages), clean_cache=single_rule_cache)
+    single_rule_cold_seconds = time.perf_counter() - start
+
+    assert warm_seconds < single_rule_cold_seconds < full_cold_seconds, (
+        f"warm={warm_seconds:.4f}s, single-rule-cold={single_rule_cold_seconds:.4f}s, "
+        f"full-cold={full_cold_seconds:.4f}s -- single-rule must land strictly between"
+    )
+    assert single_rule_cold_seconds < full_cold_seconds * 0.7, (
+        f"single-rule cold ({single_rule_cold_seconds:.4f}s) should be well under "
+        f"full cold ({full_cold_seconds:.4f}s) -- only one of ~{len(ps.rule_names())} rules re-ran"
+    )
+
+
+def test_special_rule_version_notices_flags_only_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1, second round): _rule_witness for
+    json_secret_field/env_secret_kv included each regex's pattern text
+    but not its .flags -- a flags-only change (e.g. enabling re.MULTILINE)
+    left the rule's version, and therefore every persisted approval,
+    unchanged even though matching behavior changed."""
+    for rule_name, attr in (
+        ("json_secret_field", "_JSON_SECRET_KEY_RE"),
+        ("json_secret_field", "_JSON_CANDIDATE_RE"),
+        ("env_secret_kv", "_ENV_SECRET_KV_RE"),
+        ("env_secret_kv", "_ENV_KEY_CANDIDATE_RE"),
+    ):
+        before = ps.rule_version(rule_name)
+        original = getattr(ps, attr)
+        monkeypatch.setattr(ps, attr, re.compile(original.pattern, original.flags | re.MULTILINE))
+        after = ps.rule_version(rule_name)
+        assert after != before, f"{rule_name} must notice a flags-only change to {attr}"
+        monkeypatch.setattr(ps, attr, original)
+
+
+def test_shared_version_notices_excluded_name_table_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1): is_excluded_key_name's own source
+    text never changes when EXCLUDED_EXACT_NAMES/_METRIC_NAME_TOKENS/
+    _METRIC_SUBSTRINGS change -- only the tables it reads by name do. A
+    rule whose approval depends on this heuristic must not stay approved
+    across a change to what counts as excluded."""
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    monkeypatch.setattr(ps, "EXCLUDED_EXACT_NAMES", frozenset(ps.EXCLUDED_EXACT_NAMES | {"totally_new_exempt_word"}))
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    assert after != before
+
+
+def test_shared_version_notices_html_parser_class_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1): _html_scan_variants's own source
+    text never changes when _ScanHTMLParser's extraction logic changes --
+    only the class it instantiates does."""
+    class _TweakedScanHTMLParser(ps._ScanHTMLParser):
+        """A behaviorally different subclass stands in for an edited parser."""
+
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    monkeypatch.setattr(ps, "_ScanHTMLParser", _TweakedScanHTMLParser)
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    assert after != before
+
+
+def test_cache_bound_scales_with_rule_count() -> None:
+    """Codex re-check on PR #343 (P1): a flat 256-entry cache bound only
+    holds ~256/len(rule_names()) fully-approved pages once every rule has
+    its own key -- for 14 rules, ~18 pages, defeating warm-cache reuse for
+    any larger history. The bound must scale with the rule count."""
+    import hashlib
+
+    cache: dict[str, bool] = {}
+    # Enough distinct synthetic pages to exceed the OLD flat 256 bound
+    # once multiplied by the rule count, but reuse allowed filenames by
+    # varying only the inherited blob sha (content identity), matching
+    # how a real archive's many blobs share a small filename set.
+    shas = [hashlib.sha256(f"page-{i}".encode()).hexdigest()[:40] for i in range(30)]
+    for sha in shas:
+        ps.scan_pages(
+            {"cycles-archive-1.json": '{"n": 1}'}, clean_cache=cache,
+            inherited_blob_shas={"cycles-archive-1.json": sha},
+        )
+
+    for sha in shas:
+        assert ps.cache_contains_clean(
+            cache, sha, mode="json", extra_version=ps.inherited_blob_decoder_version(),
+        ), (
+            "an earlier page's full approval must not be evicted by later pages' "
+            "entries once the bound accounts for the per-rule multiplier"
+        )
+
+
+def test_oversized_cache_is_trimmed_not_wholesale_rejected() -> None:
+    """Codex re-check on PR #343 (P2): a cache larger than the live
+    _cache_entry_bound() -- whether from ordinary accumulation or a
+    scanner release that REMOVES a rule (shrinking the bound) -- must be
+    trimmed to size, never rejected outright. Rejecting it forces every
+    page and inherited blob through a cold fetch/scan, exactly the
+    regression this per-rule cache exists to avoid."""
+    version = ps.rule_version("eeepc_agent_path")
+    oversized = {
+        f"eeepc_agent_path:{version}:html:{i:040x}": True
+        for i in range(ps._cache_entry_bound() + 100)
+    }
+    validated = ps.validate_clean_cache(oversized)
+    assert validated, "a cache that is merely large, with every entry valid, must not be wiped to empty"
+    assert all(
+        ps._RULE_CACHE_KEY_RE.fullmatch(key) and value is True
+        for key, value in validated.items()
+    )
+
+
+def test_rule_removal_does_not_wipe_the_other_rules_approvals(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P2): the specific scenario named in the
+    finding -- an OLDER release's cache (built while a rule existed that
+    has since been removed) is oversized relative to TODAY's smaller
+    _cache_entry_bound(). It must be validated and pruned in place, not
+    rejected outright by validate_clean_cache before scan_pages ever gets
+    a chance to prune it correctly -- proven here by scanning a brand
+    new page afterward and confirming its approval survives (the FIFO
+    eviction of much older, pre-existing padding entries is expected and
+    unchanged from before this PR)."""
+    before_names = set(ps.rule_names())
+    extra_rule = ps.SecretPattern(
+        "temp_rule_for_removal_test", re.compile(r"NEVER_MATCHES_ANYTHING_XYZ_CANARY"), "test",
+    )
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, extra_rule))
+    # Simulate an OLD, already-accumulated cache from when 15 rules
+    # existed -- oversized relative to today's (about-to-shrink) bound.
+    version = ps.rule_version("eeepc_agent_path", extra_version=ps.inherited_blob_decoder_version())
+    cache: dict[str, bool] = {
+        f"eeepc_agent_path:{version}:html:{i:040x}": True
+        for i in range(ps._cache_entry_bound())
+    }
+
+    monkeypatch.undo()  # the rule is removed -- back to today's rule set
+    assert set(ps.rule_names()) == before_names
+
+    # This call must not be rejected outright by validate_clean_cache
+    # (it would be, against the OLD live-scaled bound check) and must
+    # successfully record the new page's approval afterward.
+    pages = {"index.html": "ordinary clean page content, nothing sensitive at all here"}
+    ps.scan_pages(dict(pages), clean_cache=cache)
+    content_sha = __import__("hashlib").sha256(pages["index.html"].encode("utf-8")).hexdigest()
+    for name in ps.rule_names():
+        key = ps.rule_cache_key(name, content_sha, mode="html", extra_version=ps.inherited_blob_decoder_version())
+        assert cache.get(key) is True, (
+            f"the newly-scanned page's {name} approval must be recorded, not lost to a wholesale cache reject"
+        )
