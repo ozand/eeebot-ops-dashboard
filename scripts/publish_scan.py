@@ -377,9 +377,15 @@ def _rule_witness(rule_name: str) -> str:
             anchors = SCANNER_ANCHORS.get(rule.name, ())
             return f"{rule.name}:{rule.pattern.pattern}:{rule.pattern.flags}:{anchors}"
     if rule_name == "json_secret_field":
-        return f"json_secret_field:{_JSON_CANDIDATE_RE.pattern}:{_JSON_SECRET_KEY_RE.pattern}"
+        return (
+            f"json_secret_field:{_JSON_CANDIDATE_RE.pattern}:{_JSON_CANDIDATE_RE.flags}:"
+            f"{_JSON_SECRET_KEY_RE.pattern}:{_JSON_SECRET_KEY_RE.flags}"
+        )
     if rule_name == "env_secret_kv":
-        return f"env_secret_kv:{_ENV_KEY_CANDIDATE_RE.pattern}:{_ENV_SECRET_KV_RE.pattern}"
+        return (
+            f"env_secret_kv:{_ENV_KEY_CANDIDATE_RE.pattern}:{_ENV_KEY_CANDIDATE_RE.flags}:"
+            f"{_ENV_SECRET_KV_RE.pattern}:{_ENV_SECRET_KV_RE.flags}"
+        )
     raise ValueError(f"unknown scanner rule: {rule_name}")
 
 
