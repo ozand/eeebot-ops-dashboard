@@ -9,48 +9,38 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.publish_scan import STANDALONE_PATTERNS
+from scripts.publish_scan import scan_text
 
 DEFAULT_DISPLAY_LIMIT = 4000
 
-REDACTION_REPLACEMENTS = {
-    "eeepc_agent_path": "[internal path]",
-    "openai_secret_key": "[redacted: api-key]",
-    "openai_secret_key_short": "[redacted: api-key]",
-    "github_token": "[redacted: token]",
-    "bearer_token": "Bearer [redacted: bearer]",
-    "aws_access_key": "[redacted: aws-key]",
-    "slack_token": "[redacted: slack-token]",
-    "basic_auth": "[redacted: basic-auth]",
-    "url_credentials": "[redacted: url-credentials]",
-    "private_key_header": "[redacted: private-key]",
-    "structural_reasoning_content": "[redacted field]",
-    "structural_messages": "[redacted field]",
-    "structural_prompt": "[redacted field]",
-    "json_secret_field": "[redacted]",
-    "env_secret_kv": "[redacted]",
-}
-
 class SanitizedText(str):
     """Text that has passed the private-detail sanitizer."""
+
+
+WITHHELD_SECRET = SanitizedText("[withheld: secret pattern]")
+WITHHELD_ENV = SanitizedText("[withheld: env file]")
 
 def _escape(value: str) -> str:
     return html.escape(value, quote=True)
 
 
-def _replace_secret_fields(value: str) -> str:
-    value = re.sub(r'(?i)(["\']?[\w-]*(?:password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)[\w-]*["\']?\s*:\s*)(["\'])(.*?)(\2)', lambda match: f"{match.group(1)}{match.group(2)}[redacted]{match.group(2)}", value)
-    value = re.sub(r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*:\s*)([^\s\r\n]+)', lambda match: f"{match.group(1)}[redacted]", value)
-    return re.sub(r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)([^\s\r\n]+)', lambda match: f"{match.group(1)}[redacted]", value)
+def _serialized_block(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+
+def sanitize_block(value: Any, *, env_path: bool = False) -> SanitizedText:
+    serialized = _serialized_block(value)
+    if env_path or is_env_path(serialized):
+        return WITHHELD_ENV
+    if scan_text(serialized):
+        return WITHHELD_SECRET
+    return SanitizedText(serialized)
 
 
 def redact_text(value: str) -> SanitizedText:
-    result = value
-    for rule in STANDALONE_PATTERNS:
-        replacement = REDACTION_REPLACEMENTS.get(rule.name)
-        if replacement:
-            result = rule.pattern.sub(replacement, result)
-    return SanitizedText(_replace_secret_fields(result))
+    return sanitize_block(value)
 
 
 def is_env_path(path_str: str) -> bool:
@@ -61,45 +51,16 @@ def is_env_path(path_str: str) -> bool:
     )
 
 
-def sanitize_tool_arguments(arguments: str) -> SanitizedText:
-    try:
-        parsed = json.loads(arguments)
-    except (json.JSONDecodeError, TypeError):
-        return SanitizedText("[env file contents withheld]" if is_env_path(arguments) else redact_text(arguments))
-    if _contains_env_path(parsed):
-        return SanitizedText("[env file contents withheld]")
-    return SanitizedText(json.dumps(_sanitize_nested_value(parsed), ensure_ascii=False))
+def sanitize_tool_arguments(arguments: Any) -> SanitizedText:
+    return sanitize_block(arguments)
 
 
-def _contains_env_path(value: Any) -> bool:
-    if isinstance(value, dict):
-        return any((str(key).lower() in {"path", "file", "filename"} and isinstance(item, str) and is_env_path(item)) or _contains_env_path(item) for key, item in value.items())
-    if isinstance(value, list):
-        return any(_contains_env_path(item) for item in value)
-    return False
 
 
-def _sanitize_nested_value(value: Any) -> Any:
-    if isinstance(value, dict):
-        sanitized = {}
-        for key, item in value.items():
-            key_text = str(key)
-            if re.search(r"(?i)(password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)", key_text):
-                sanitized[key] = SanitizedText("[redacted]")
-            else:
-                sanitized[key] = _sanitize_nested_value(item)
-        return sanitized
-    if isinstance(value, list):
-        return [item if isinstance(item, SanitizedText) else _sanitize_nested_value(item) for item in value]
-    if isinstance(value, str):
-        return redact_text(value)
-    return value
-
-
-def sanitize_tool_output(args: str, result: str) -> SanitizedText:
-    if is_env_path(args) or is_env_path(result):
-        return SanitizedText("[env file contents withheld]")
-    return redact_text(result)
+def sanitize_tool_output(args: Any, result: Any) -> SanitizedText:
+    if is_env_path(_serialized_block(args)):
+        return WITHHELD_ENV
+    return sanitize_block(result)
 
 
 def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> SanitizedText:
