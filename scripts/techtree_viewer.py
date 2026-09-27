@@ -958,6 +958,7 @@ def read_ledger_history():
             _mtimes.append(os.path.getmtime(path))
         except Exception:
             continue
+        source = "live" if _day is None else f"archive:{_day}"
         for line in lines:
             line = line.strip()
             if not line:
@@ -967,7 +968,7 @@ def read_ledger_history():
             except Exception:
                 continue
             if isinstance(obj, dict) and obj.get("phase") in LEDGER_PHASES:
-                matched.append(obj)
+                matched.append({**obj, "_ledger_source": source})
     return matched
 
 def read_bridge_runs():
@@ -1360,6 +1361,21 @@ def _read_lessons_archive(lessons_dir):
     return sorted(rows_all, key=lambda r: (r.get('date') or '', r.get('id') or ''), reverse=True)
 
 
+def _is_non_work_commit_subject(subject):
+    normalized = subject.strip().lower()
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
+
+
+def _is_non_work_commit_message(message):
+    lines = message.splitlines()
+    trailers = {line.strip().lower() for line in lines[1:]}
+    return (
+        (bool(lines) and _is_non_work_commit_subject(lines[0]))
+        or "selfevo-residual: true" in trailers
+        or "selfevo-checkpoint: true" in trailers
+    )
+
+
 def extract_git_titles(node_shas=None):
     titles = {}
     cycle_files = {}
@@ -1383,7 +1399,7 @@ def extract_git_titles(node_shas=None):
             if len(parts) != 2:
                 continue
             commit_sha, subject = parts
-            if "merge: integrate selfevo/cycle-" in subject:
+            if subject.startswith("merge: integrate selfevo/cycle-"):
                 cycle_part = subject.split("merge: integrate selfevo/", 1)[-1].strip()
                 if cycle_part.startswith("cycle-cycle-"):
                     norm_cycle_id = "cycle-" + cycle_part[len("cycle-cycle-"):]
@@ -1391,18 +1407,16 @@ def extract_git_titles(node_shas=None):
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^2", "-n", "5", "--format=%s"]
+                    cmd_title = ["git", "-C", INSTANCE_REPO, "-c", f"safe.directory={INSTANCE_REPO}", "log", f"{commit_sha}^1..{commit_sha}^2", "--format=%B%x00"]
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
-                        for t_line in res_title.stdout.strip().splitlines():
-                            t_line = t_line.strip()
-                            if not t_line:
+                        for commit_message in res_title.stdout.split("\x00"):
+                            t_line = commit_message.strip()
+                            if not t_line or _is_non_work_commit_message(t_line):
                                 continue
-                            if t_line.startswith("chore:") or t_line.startswith("merge:"):
-                                continue
-                            titles[cycle_part] = t_line
+                            titles[cycle_part] = t_line.splitlines()[0].strip()
                             if norm_cycle_id != cycle_part:
-                                titles[norm_cycle_id] = t_line
+                                titles[norm_cycle_id] = t_line.splitlines()[0].strip()
                             break
                 except Exception:
                     pass
@@ -1832,6 +1846,22 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
     return data
 
 
+def _is_non_work_commit_subject(subject: str) -> bool:
+    normalized = subject.strip().lower()
+    return normalized.startswith(("diary:", "selfevo: checkpoint", "selfevo: auto-commit residual state", "chore:", "merge:"))
+
+
+def _is_non_work_commit_message(message: str) -> bool:
+    lines = message.splitlines()
+    trailers = {line.strip().lower() for line in lines[1:]}
+    return (
+        (bool(lines) and _is_non_work_commit_subject(lines[0]))
+        or "selfevo-residual: true" in trailers
+        or "selfevo-checkpoint: true" in trailers
+    )
+
+
+
 def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None) -> tuple[dict[str, str], dict[str, list[str]], str | None]:
     titles: dict[str, str] = {}
     cycle_files: dict[str, list[str]] = {}
@@ -1855,7 +1885,7 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
             if len(parts) != 2:
                 continue
             commit_sha, subject = parts
-            if 'merge: integrate selfevo/cycle-' in subject:
+            if subject.startswith('merge: integrate selfevo/cycle-'):
                 cycle_part = subject.split('merge: integrate selfevo/', 1)[-1].strip()
                 if cycle_part.startswith('cycle-cycle-'):
                     norm_cycle_id = 'cycle-' + cycle_part[len('cycle-cycle-'):]
@@ -1863,18 +1893,16 @@ def extract_git_titles_local(repo_root: Path, node_shas: list[str] | None = None
                     norm_cycle_id = cycle_part
 
                 try:
-                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^2', '-n', '5', '--format=%s']
+                    cmd_title = ['git', '-C', repo_str, '-c', f'safe.directory={repo_str}', 'log', f'{commit_sha}^1..{commit_sha}^2', '--format=%B%x00']
                     res_title = subprocess.run(cmd_title, capture_output=True, text=True, timeout=5)
                     if res_title.returncode == 0:
-                        for t_line in res_title.stdout.strip().splitlines():
-                            t_line = t_line.strip()
-                            if not t_line:
+                        for commit_message in res_title.stdout.split("\x00"):
+                            t_line = commit_message.strip()
+                            if not t_line or _is_non_work_commit_message(t_line):
                                 continue
-                            if t_line.startswith('chore:') or t_line.startswith('merge:'):
-                                continue
-                            titles[cycle_part] = t_line
+                            titles[cycle_part] = t_line.splitlines()[0].strip()
                             if norm_cycle_id != cycle_part:
-                                titles[norm_cycle_id] = t_line
+                                titles[norm_cycle_id] = t_line.splitlines()[0].strip()
                             break
                 except Exception:
                     pass
@@ -2111,6 +2139,7 @@ def read_local_state(
                     continue
             except Exception:  # noqa: BLE001
                 continue
+            source = 'live' if name == 'cycles.jsonl' else f'archive:{day}'
             for line in rows:
                 line = line.strip()
                 if not line:
@@ -2120,7 +2149,7 @@ def read_local_state(
                 except Exception:  # noqa: BLE001
                     continue
                 if isinstance(obj, dict) and obj.get('phase') in LEDGER_PHASES:
-                    matched.append(obj)
+                    matched.append({**obj, '_ledger_source': source})
         return matched
 
     def read_bridge_runs_local() -> list[dict[str, Any]]:
@@ -5733,6 +5762,21 @@ def build_now_panel(
     '''
 
 
+def _normalize_lesson_ref(value: Any) -> str:
+    """Map ledger lesson references to the ID used by the rendered corpus."""
+    from pathlib import PurePosixPath
+
+    reference = str(value or "").strip().replace("\\", "/")
+    if ":" in reference:
+        reference = reference.rsplit(":", 1)[-1]
+    if reference.startswith("lessons/"):
+        reference = PurePosixPath(reference).name
+        if reference.endswith(".md"):
+            reference = reference[:-3]
+    return reference
+
+
+
 def is_cycle_run_ended(
     cid: str,
     started_ts: str,
@@ -5825,6 +5869,7 @@ def is_cycle_run_ended(
     return False, ""
 
 
+
 def build_cycle_feed(
     ledger_tail: list[dict[str, Any]] | None,
     demand_completed: dict[str, Any] | None = None,
@@ -5901,8 +5946,16 @@ def build_cycle_feed(
     window = cycle_items if history_mode else cycle_items[:50]
     last_day = None
     for cid, phases in window:
-        # Determine task title
+        # Prefer the work commit subject; task_title remains a meaningful
+        # fallback when legacy integrations have no selectable work commit.
         title = titles_map.get(cid) or titles_map.get(cid.replace('cycle-', ''))
+        proposed_title = next((
+            str(p.get('task_title')).strip() for p in phases
+            if p.get('phase') == 'proposed' and p.get('task_title')
+        ), '') or next((
+            str(p.get('task_title')).strip() for p in phases
+            if p.get('task_title') and str(p.get('task_title')).strip()
+        ), '')
 
         # Outcome derivation from phases
         outcome_kind = 'in_progress'
@@ -5923,7 +5976,7 @@ def build_cycle_feed(
                 for lesson_id in context:
                     if not lesson_id:
                         continue
-                    lid = str(lesson_id).split(":", 1)[-1]
+                    lid = _normalize_lesson_ref(lesson_id)
                     if rendered_lesson_ids is None or lid in rendered_lesson_ids:
                         entity_links.append(f'<a class="lesson-link" href="lessons.html#q-{esc(lid)}">{esc(str(lesson_id))}</a>')
                     else:
@@ -5932,22 +5985,33 @@ def build_cycle_feed(
                         # shown and marked unavailable rather than dropped.
                         entity_links.append(f'<span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">{esc(str(lesson_id))} (unavailable)</span>')
 
-        # Check demand and cycle_files for files_changed
+        # Check demand, cycle_files and ledger phases for files_changed
         all_files: list[str] = []
+        has_observed_files = False
         if cid in demand_by_cycle:
             fc = demand_by_cycle[cid].get('files_changed')
             if isinstance(fc, list):
+                has_observed_files = True
                 for f in fc:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         if isinstance(cycle_files, dict):
-            cf = cycle_files.get(cid) or cycle_files.get(cid.replace('cycle-', ''))
+            cf = cycle_files.get(cid) if cid in cycle_files else cycle_files.get(cid.replace('cycle-', ''))
             if isinstance(cf, list):
+                has_observed_files = True
                 for f in cf:
                     f_str = str(f)
-                    if f_str not in all_files:
+                    if f_str and f_str not in all_files:
+                        all_files.append(f_str)
+
+        for p in phases:
+            if isinstance(p, dict) and isinstance(p.get('files_changed'), list):
+                has_observed_files = True
+                for f in p['files_changed']:
+                    f_str = str(f)
+                    if f_str and f_str not in all_files:
                         all_files.append(f_str)
 
         files_changed = all_files
@@ -5974,20 +6038,61 @@ def build_cycle_feed(
                 for p in phases[start_idx + 1:]
                 if isinstance(p, dict) and _parse_iso_ts(str(p.get('ts') or "")) is not None
             ), None)
+            start_source = phases[start_idx].get('_ledger_source')
+            # Never borrow a timestamp across live/archive boundaries: the
+            # live ledger is ordered before archives, not chronologically.
+            if start_source and any(
+                p.get('_ledger_source') != start_source
+                for p in phases[start_idx + 1:]
+                if isinstance(p, dict)
+            ):
+                following_ts = next((
+                    _parse_iso_ts(str(p.get('ts') or ''))
+                    for p in phases[start_idx + 1:]
+                    if isinstance(p, dict)
+                    and p.get('_ledger_source') == start_source
+                    and _parse_iso_ts(str(p.get('ts') or '')) is not None
+                ), None)
             malformed_recency.append((start_idx, following_ts))
         latest_malformed = max(
             malformed_recency,
             key=lambda item: item[1] or datetime.min.replace(tzinfo=timezone.utc),
         ) if malformed_recency else None
-        if latest_malformed is not None and (
-            latest_valid is None
-            or latest_malformed[1] is None
-            or latest_malformed[1] >= latest_valid[1]
-        ):
+        malformed_is_newer = latest_valid is None
+        if latest_malformed is not None and latest_valid is not None:
+            malformed_ts = latest_malformed[1]
+            if malformed_ts is not None:
+                malformed_is_newer = malformed_ts >= latest_valid[1]
+            else:
+                malformed_source = phases[latest_malformed[0]].get('_ledger_source')
+                valid_source = phases[latest_valid[0]].get('_ledger_source')
+                source_order = list(dict.fromkeys(
+                    p.get('_ledger_source') for p in phases
+                    if isinstance(p, dict) and p.get('_ledger_source')
+                ))
+                if malformed_source in source_order and valid_source in source_order:
+                    malformed_is_newer = (
+                        source_order.index(malformed_source) < source_order.index(valid_source)
+                        or (
+                            malformed_source == valid_source
+                            and latest_malformed[0] > latest_valid[0]
+                        )
+                    )
+                else:
+                    # Without source metadata retain the legacy conservative
+                    # behavior: an unparseable later start outranks a valid one.
+                    malformed_is_newer = True
+        if latest_malformed is not None and malformed_is_newer:
             last_started_idx = latest_malformed[0]
             malformed_ts = latest_malformed[1]
             if malformed_ts is None:
+                start_source = phases[last_started_idx].get('_ledger_source')
                 attempt_phases = phases[last_started_idx:]
+                if start_source:
+                    attempt_phases = [
+                        p for p in attempt_phases
+                        if p.get('_ledger_source') == start_source
+                    ]
             else:
                 # The malformed start has a later event time than the archive
                 # start, so select the latest attempt by that evidence, then
@@ -6130,6 +6235,10 @@ def build_cycle_feed(
             started_ts = ''
             if last_started_idx is not None and phases[last_started_idx].get('ts'):
                 started_ts = str(phases[last_started_idx]['ts'])
+            if _parse_iso_ts(started_ts) is None and latest_malformed is not None:
+                inferred_start = latest_malformed[1]
+                if inferred_start is not None:
+                    started_ts = inferred_start.isoformat()
             max_phase_ts = _max_ts(attempt_phases) or ts_val or started_ts
             is_ended, ended_reason = is_cycle_run_ended(
                 cid, started_ts, max_phase_ts, bridge_runs, ref_now,
@@ -6208,6 +6317,16 @@ def build_cycle_feed(
         elif outcome_kind == 'incomplete':
             badge_class = 'badge-failed'
             outcome_label = f'KILLED / INCOMPLETE{(": " + reason) if reason else ""}'
+
+        # No work commit? Use recorded task title; an integrated cycle with
+        # neither should say so explicitly rather than presenting bare success.
+        if not title and proposed_title:
+            title = proposed_title
+        if not title and outcome_kind == 'integrated' and not pushed_late:
+            if has_observed_files and not files_changed:
+                title = 'integrated · no files'
+            elif not has_observed_files:
+                title = 'integrated'
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:

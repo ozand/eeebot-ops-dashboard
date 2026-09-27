@@ -10,6 +10,7 @@ import sys
 import pytest
 
 from scripts import publish_scan as ps
+from scripts import techtree_viewer as tv
 from test_scan_equivalence import POSITIVES
 
 
@@ -61,6 +62,52 @@ def test_shared_fingerprint_getsource_failure_disables_cache_and_logs(monkeypatc
     assert scans == [list(ps.rule_names())], "without a trustworthy fingerprint, run every rule and bypass approvals"
     assert approved == before, "unversioned results must not add or remove cached approvals"
     assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
+
+
+def test_inherited_tree_fingerprint_failure_fetches_and_scans_blob(monkeypatch, capsys):
+    import base64
+    import json
+    content = "ordinary inherited content safe to publish"
+    blob_sha = "a" * 40
+    requests = []
+
+    def fake_gh(args, **kwargs):
+        requests.append(args)
+        if "git/trees/tree-sha?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "encoding": "base64",
+                "content": base64.b64encode(content.encode()).decode(),
+            }), "")
+        raise AssertionError(f"unexpected GitHub request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    ps._shared_scan_version.cache_clear()
+    original = ps.inspect.getsource
+
+    def fail_scan_source(value):
+        if getattr(value, "__name__", None) in {"scan_text", "spy_scan"}:
+            raise OSError("source unavailable")
+        return original(value)
+
+    monkeypatch.setattr(ps.inspect, "getsource", fail_scan_source)
+    ps._shared_scan_version.cache_clear()
+    scans = []
+    real_scan = ps.scan_text
+
+    def spy_scan(text, **kwargs):
+        scans.append(text)
+        return real_scan(text, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan)
+    tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache={})
+
+    assert any(f"git/blobs/{blob_sha}" in request[1] for request in requests)
+    assert scans == [content]
+    assert "fingerprint unavailable" in capsys.readouterr().err.lower()
 
 
 def test_same_name_rule_pattern_flags_and_anchor_changes_invalidate_old_approvals(monkeypatch):

@@ -691,8 +691,12 @@ def cache_contains_clean(
     stale rules against). ``version`` is accepted for backward-compatible
     call signatures but unused -- versioning is per-rule now."""
     del version
-    safe_cache = validate_clean_cache(cache)
-    return all(
-        safe_cache.get(rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)) is True
-        for name in rule_names()
-    )
+    try:
+        safe_cache = validate_clean_cache(cache)
+        return all(
+            safe_cache.get(rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)) is True
+            for name in rule_names()
+        )
+    except FingerprintUnavailableError as exc:
+        print(f"publish-scan: inherited cache fingerprint unavailable ({exc}); treating blob as cache miss", file=sys.stderr)
+        return False
