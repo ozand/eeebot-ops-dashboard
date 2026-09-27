@@ -599,6 +599,16 @@ def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
     assert "CANARY_PUBLIC_CHARTER_OK" in pub_json
 
 
+def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
+    lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
+    public, _ = split_render_inputs({"lessons": [lesson]})
+    projected = public["lessons"][0]
+    assert projected["problem"] == ""
+    assert projected["solution"] == ""
+    assert projected["problem_chars"] == 28
+    assert projected["solution_chars"] == 31
+
+
 def test_f10_current_alias_redirects_and_swap_preserves_old_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """External review F10: /current/... must redirect to /<version>/... to prevent reader snapshot skew."""
     from scripts.two_sinks import SnapshotHTTPRequestHandler
@@ -618,10 +628,15 @@ def test_f10_current_alias_redirects_and_swap_preserves_old_link(tmp_path: Path,
         def end_headers(self):
             pass
 
-    h = MockHandler("/current/data.json")
+    h = MockHandler("/current/cycle.html?id=cycle-123")
     h.do_GET()
     assert h.response_code == 302
-    assert h.headers_sent.get("Location") == "/v1/data.json"
+    assert h.headers_sent.get("Location") == "/v1/cycle.html?id=cycle-123"
+
+
+def test_bind_settings_reject_ipv6_addresses() -> None:
+    with pytest.raises(ValueError, match="IPv4"):
+        parse_bind_settings("::1", 8080)
 
 
 def test_f12_host_catches_any_exception_and_reports_cleanup_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
