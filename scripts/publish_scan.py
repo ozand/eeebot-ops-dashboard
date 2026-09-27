@@ -6,9 +6,11 @@ Used by publish_to_pages and autopublish dry-run; reused by D2 masking.
 """
 from __future__ import annotations
 
+import functools
 import html as _html
 from html.parser import HTMLParser
 import hashlib
+import inspect
 import json
 import re
 from pathlib import Path
@@ -240,8 +242,20 @@ def _json_strings(value: Any) -> Iterable[str]:
             yield from _json_strings(item)
 
 
-def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) -> dict[str, int]:
-    """Scan text and return rule hit counts; parser work is selected by artifact type."""
+def scan_text(
+    content: str, *, html_mode: bool = True, json_mode: bool = False,
+    rules: "Iterable[str] | None" = None,
+) -> dict[str, int]:
+    """Scan text and return rule hit counts; parser work is selected by artifact type.
+
+    ``rules`` (ADR-036/#340 per-rule cache): if given, only these named
+    rules are checked -- the whole page is still parsed/decoded exactly as
+    before ("every rule scans the whole page", no seams), only WHICH rules
+    run against it changes. ``None`` (default) checks every rule, matching
+    every caller that does not care about a partial rule set (equivalence
+    tests, direct callers).
+    """
+    active_rules = set(rules) if rules is not None else None
     findings: dict[str, int] = {}
     source_variants = [content, _unescape_until_stable(content)]
     strings: list[str] = []
@@ -269,6 +283,8 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
 
     lower_cache: dict[str, str] = {}
     for rule in STANDALONE_PATTERNS:
+        if active_rules is not None and rule.name not in active_rules:
+            continue
         anchors = SCANNER_ANCHORS.get(rule.name)
         for variant in variants:
             insensitive = bool(rule.pattern.flags & re.IGNORECASE) or rule.pattern.pattern.startswith("(?i)")
@@ -281,8 +297,10 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
 
     json_count = 0
     env_count = 0
-    for variant in variants:
-        if _JSON_CANDIDATE_RE.search(variant):
+    want_json = active_rules is None or "json_secret_field" in active_rules
+    want_env = active_rules is None or "env_secret_kv" in active_rules
+    for variant in variants if (want_json or want_env) else ():
+        if want_json and _JSON_CANDIDATE_RE.search(variant):
             hits = 0
             for match in _JSON_SECRET_KEY_RE.finditer(variant):
                 key = match.group(1)
@@ -290,7 +308,7 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
                 if not is_excluded_key_name(key) and is_secret_value(value):
                     hits += 1
             json_count = max(json_count, hits)
-        if _ENV_KEY_CANDIDATE_RE.search(variant):
+        if want_env and _ENV_KEY_CANDIDATE_RE.search(variant):
             hits = 0
             for match in _ENV_SECRET_KV_RE.finditer(variant):
                 key = match.group(1)
@@ -317,7 +335,7 @@ def _text_has_rule_anchor(
         return any(anchor.lower() in normalized for anchor in anchors)
     return any(anchor in text for anchor in anchors)
 
-_CACHE_KEY_RE = re.compile(r"^[0-9a-f]{64}:(?:html|json):(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+_RULE_CACHE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*:[0-9a-f]{64}:(?:html|json):(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
 
 def validate_clean_cache(value: Any) -> dict[str, bool]:
@@ -325,11 +343,66 @@ def validate_clean_cache(value: Any) -> dict[str, bool]:
     if not isinstance(value, dict):
         return {}
     if len(value) > 256 or any(
-        not isinstance(key, str) or not _CACHE_KEY_RE.fullmatch(key) or clean is not True
+        not isinstance(key, str) or not _RULE_CACHE_KEY_RE.fullmatch(key) or clean is not True
         for key, clean in value.items()
     ):
         return {}
     return dict(value)
+
+
+def rule_names() -> tuple[str, ...]:
+    """All named scanner rules. A function, not a module constant, so a
+    monkeypatched ``STANDALONE_PATTERNS`` (tests add/replace rules) is
+    reflected without re-importing anything."""
+    return tuple(rule.name for rule in STANDALONE_PATTERNS) + ("json_secret_field", "env_secret_kv")
+
+
+def _rule_witness(rule_name: str) -> str:
+    """This ONE rule's own definition, and nothing else -- changing a
+    different rule's pattern must never change this witness (#340)."""
+    for rule in STANDALONE_PATTERNS:
+        if rule.name == rule_name:
+            anchors = SCANNER_ANCHORS.get(rule.name, ())
+            return f"{rule.name}:{rule.pattern.pattern}:{rule.pattern.flags}:{anchors}"
+    if rule_name == "json_secret_field":
+        return f"json_secret_field:{_JSON_CANDIDATE_RE.pattern}:{_JSON_SECRET_KEY_RE.pattern}"
+    if rule_name == "env_secret_kv":
+        return f"env_secret_kv:{_ENV_KEY_CANDIDATE_RE.pattern}:{_ENV_SECRET_KV_RE.pattern}"
+    raise ValueError(f"unknown scanner rule: {rule_name}")
+
+
+@functools.lru_cache(maxsize=1)
+def _shared_scan_version() -> str:
+    """Fingerprint of the scanning infrastructure every rule depends on --
+    HTML/JSON extraction, unescaping, and the excluded/secret-value
+    heuristics. A change here invalidates EVERY rule's cache at once
+    (correct and safe: none of them can be trusted to still behave the
+    same way); a change to one rule's own pattern only invalidates that
+    rule (see ``_rule_witness``). Cached for the process lifetime -- tests
+    that monkeypatch shared helpers should not expect this to notice."""
+    parts = [
+        inspect.getsource(fn) for fn in (
+            scan_text, _html_scan_variants, _unescape_until_stable,
+            _json_strings, _text_has_rule_anchor, is_excluded_key_name,
+            is_secret_value,
+        )
+    ]
+    return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
+
+
+def rule_version(rule_name: str, *, extra_version: str = "") -> str:
+    """Version of a single named rule: shared scanning infra + this rule's
+    OWN definition + the inherited-blob-decoder version. Two rules share a
+    version only by coincidence; the same rule's version changes only when
+    its own pattern, the shared scanning code, or the decoder changes."""
+    payload = f"{_shared_scan_version()}\x00{_rule_witness(rule_name)}\x00{extra_version}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def rule_cache_key(
+    rule_name: str, content_sha: str, *, mode: str = "html", extra_version: str = "",
+) -> str:
+    return f"{rule_name}:{rule_version(rule_name, extra_version=extra_version)}:{mode}:{content_sha}"
 
 
 def scan_pages(
@@ -344,6 +417,13 @@ def scan_pages(
     or call-text marker is detected in any page or inherited file.
     The exception message specifies filename, pattern name, and match count;
     the secret value itself is NEVER included.
+
+    #340: each page's approval is keyed by content sha + the version of
+    EACH rule, and records which rules it covers. When only one rule's
+    version changes, every page's approval for every OTHER rule is reused
+    as-is -- only the changed rule re-scans (the whole page, same as
+    always; there is no fragment-level splitting here, so there are no
+    seams to miss a canary at).
     """
     validate_publish_allowlist(pages.keys())
     cache = clean_cache if isinstance(clean_cache, dict) else None
@@ -351,9 +431,14 @@ def scan_pages(
         validated = validate_clean_cache(cache)
         cache.clear()
         cache.update(validated)
-    version = scanner_version(extra_version=inherited_blob_decoder_version())
+    extra_version = inherited_blob_decoder_version()
+    names = rule_names()
     violations: list[str] = []
-    clean_keys: list[str] = []
+    # Every fresh (page, rule) approval this run confirms clean -- written
+    # to the cache only once every page has passed, never partially (a
+    # rejected run must not populate the cache at all, same as before).
+    fresh_keys: list[str] = []
+
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
@@ -361,14 +446,25 @@ def scan_pages(
         mode = "json" if is_json else "html"
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
-        cache_key = clean_cache_key(content_sha, version, mode=mode)
-        clean_keys.append(cache_key)
-        if cache is not None and cache.get(cache_key) is True:
-            continue
-        findings = scan_text(content, html_mode=not is_json, json_mode=is_json)
+
+        page_rule_keys = {
+            name: rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)
+            for name in names
+        }
+        if cache is not None:
+            stale_rules = [name for name, key in page_rule_keys.items() if cache.get(key) is not True]
+        else:
+            stale_rules = list(names)
+        if not stale_rules:
+            continue  # every current rule already approved this exact content
+
+        findings = scan_text(content, html_mode=not is_json, json_mode=is_json, rules=stale_rules)
         if findings:
             summary = ", ".join(f"{rule}: {cnt}" for rule, cnt in sorted(findings.items()))
             violations.append(f"{fname}: {summary}")
+            continue
+        if cache is not None:
+            fresh_keys.extend(page_rule_keys[name] for name in stale_rules)
 
     if violations:
         details = "; ".join(violations)
@@ -376,13 +472,21 @@ def scan_pages(
             f"Publication rejected (ADR-036 rule 3): sensitive markers detected in {len(violations)} file(s): {details}"
         )
     if cache is not None:
-        for key in clean_keys:
+        for key in fresh_keys:
             cache[key] = True
-        # The cache is metadata only and bounded across content churn.
-        current_prefix = f"{version}:"
-        current_keys = [key for key in cache if key.startswith(current_prefix)]
+        # Drop any entry whose embedded version no longer matches that
+        # rule's CURRENT version -- garbage-collects approvals a rule
+        # version bump made stale, one rule at a time, never the whole
+        # cache (the point of #340).
+        current_versions = {name: rule_version(name, extra_version=extra_version) for name in names}
+        kept: dict[str, bool] = {}
+        for key, value in cache.items():
+            rule_name, _, rest = key.partition(":")
+            version, _, _ = rest.partition(":")
+            if current_versions.get(rule_name) == version:
+                kept[key] = value
         cache.clear()
-        for key in current_keys[-256:]:
+        for key in list(kept)[-256:]:
             cache[key] = True
 
 
@@ -442,7 +546,15 @@ def cache_contains_clean(
     mode: str = "html",
     extra_version: str = "",
 ) -> bool:
+    """True only if EVERY current rule has an approval for this content sha
+    (#340: a partial, some-rules-stale approval is not enough here -- this
+    check gates skipping a fetch of content the caller has not even
+    downloaded yet, so there is no page text available to re-scan the
+    stale rules against). ``version`` is accepted for backward-compatible
+    call signatures but unused -- versioning is per-rule now."""
+    del version
     safe_cache = validate_clean_cache(cache)
-    return safe_cache.get(
-        clean_cache_key(content_sha, version, mode=mode, extra_version=extra_version)
-    ) is True
+    return all(
+        safe_cache.get(rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)) is True
+        for name in rule_names()
+    )
