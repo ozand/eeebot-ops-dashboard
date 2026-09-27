@@ -8,6 +8,7 @@ from unittest import mock
 import pytest
 
 from scripts import techtree_autopublish as ap
+from scripts.publish_scan import PublicationScanError
 
 
 def _write_state_root(root: Path, **overrides: object) -> None:
@@ -144,6 +145,40 @@ def test_run_duration_warning_is_written_to_journal_and_state(
     state = ap.load_publish_state(state_dir)
     assert state['publish_duration_warning'] == 'publish duration exceeded 10 minutes (601s)'
     assert len(state['changed_publish_durations_seconds']) == 1
+
+
+def test_run_records_duration_when_publication_scan_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    # Codex P2 on #342: a scanner refusal raises PublicationScanError instead
+    # of returning rc=1, so a slow cold scan that ends in a refusal must still
+    # warn and persist its duration, while the refusal itself propagates.
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'publisher-state'
+    ap.save_publish_state(
+        state_dir, digest='stale', published_at=1.0,
+        page_fingerprints={'index.html': 'old-fp'},
+    )
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
+
+    def refuse(pages, **kwargs):
+        raise PublicationScanError('refused: secret-shaped content')
+
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', refuse)
+    monkeypatch.setattr(ap.time, 'monotonic', iter([1.0, 602.0]).__next__)
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    with pytest.raises(PublicationScanError):
+        ap.run(args)
+    assert 'WARNING: publish duration exceeded 10 minutes' in capsys.readouterr().err
+    persisted = ap.load_publish_state(state_dir)
+    assert persisted['publish_duration_warning'] == 'publish duration exceeded 10 minutes (601s)'
+    assert persisted['changed_publish_durations_seconds'] == [601.0]
+    # The last-known-good publish identity is kept.
+    assert persisted['digest'] == 'stale'
+    assert persisted['page_fingerprints'] == {'index.html': 'old-fp'}
 
 
 def test_run_persists_three_changed_slow_warning_while_unchanged_run_does_not_count(

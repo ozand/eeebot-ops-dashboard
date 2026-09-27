@@ -610,21 +610,18 @@ def run(args: argparse.Namespace) -> int:
         previous_fingerprints.get(name) != tv._page_fingerprint(content)
         for name, content in pages.items()
     )
-    rc, fingerprints = tv.publish_to_pages(
-        pages,
-        previous_fingerprints=previous_fingerprints,
-        scan_cache=state.get('clean_scan_cache'),
-    )
-    publish_duration = max(0.0, time.monotonic() - run_started)
-    duration_warning, duration_state = record_publish_duration(
-        state, duration_seconds=publish_duration, changed=changed,
-    )
-    if duration_warning:
-        print(f'techtree-autopublish: WARNING: {duration_warning}', file=sys.stderr)
-    else:
-        print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
-    if rc != 0:
-        print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
+    def record_attempt_duration() -> tuple[str | None, dict[str, Any]]:
+        publish_duration = max(0.0, time.monotonic() - run_started)
+        warning, updated = record_publish_duration(
+            state, duration_seconds=publish_duration, changed=changed,
+        )
+        if warning:
+            print(f'techtree-autopublish: WARNING: {warning}', file=sys.stderr)
+        else:
+            print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
+        return warning, updated
+
+    def save_failed_attempt(warning: str | None, updated: dict[str, Any]) -> None:
         # Keep the last-known-good publish identity/fingerprints while still
         # persisting duration telemetry for this attempted changed run.
         save_publish_state(
@@ -632,9 +629,26 @@ def run(args: argparse.Namespace) -> int:
             refusing_since=state.get('refusing_since'),
             page_fingerprints=previous_fingerprints,
             clean_scan_cache=state.get('clean_scan_cache'),
-            changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
-            publish_duration_warning=duration_warning,
+            changed_publish_durations_seconds=updated['changed_publish_durations_seconds'],
+            publish_duration_warning=warning,
         )
+
+    try:
+        rc, fingerprints = tv.publish_to_pages(
+            pages,
+            previous_fingerprints=previous_fingerprints,
+            scan_cache=state.get('clean_scan_cache'),
+        )
+    except Exception:
+        # A scanner refusal (PublicationScanError) raises instead of returning
+        # rc=1. A slow cold scan that ends in a refusal is exactly the run the
+        # duration warning exists for, so record it before re-raising.
+        save_failed_attempt(*record_attempt_duration())
+        raise
+    duration_warning, duration_state = record_attempt_duration()
+    if rc != 0:
+        print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
+        save_failed_attempt(duration_warning, duration_state)
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
