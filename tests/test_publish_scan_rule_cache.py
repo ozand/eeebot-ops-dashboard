@@ -141,3 +141,58 @@ def test_measured_cold_after_single_rule_change_beats_a_full_cold_scan(monkeypat
         f"single-rule cold ({single_rule_cold_seconds:.4f}s) should be well under "
         f"full cold ({full_cold_seconds:.4f}s) -- only one of ~{len(ps.rule_names())} rules re-ran"
     )
+
+
+def test_shared_version_notices_excluded_name_table_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1): is_excluded_key_name's own source
+    text never changes when EXCLUDED_EXACT_NAMES/_METRIC_NAME_TOKENS/
+    _METRIC_SUBSTRINGS change -- only the tables it reads by name do. A
+    rule whose approval depends on this heuristic must not stay approved
+    across a change to what counts as excluded."""
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    monkeypatch.setattr(ps, "EXCLUDED_EXACT_NAMES", frozenset(ps.EXCLUDED_EXACT_NAMES | {"totally_new_exempt_word"}))
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    assert after != before
+
+
+def test_shared_version_notices_html_parser_class_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P1): _html_scan_variants's own source
+    text never changes when _ScanHTMLParser's extraction logic changes --
+    only the class it instantiates does."""
+    class _TweakedScanHTMLParser(ps._ScanHTMLParser):
+        """A behaviorally different subclass stands in for an edited parser."""
+
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    monkeypatch.setattr(ps, "_ScanHTMLParser", _TweakedScanHTMLParser)
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    assert after != before
+
+
+def test_cache_bound_scales_with_rule_count() -> None:
+    """Codex re-check on PR #343 (P1): a flat 256-entry cache bound only
+    holds ~256/len(rule_names()) fully-approved pages once every rule has
+    its own key -- for 14 rules, ~18 pages, defeating warm-cache reuse for
+    any larger history. The bound must scale with the rule count."""
+    import hashlib
+
+    cache: dict[str, bool] = {}
+    # Enough distinct synthetic pages to exceed the OLD flat 256 bound
+    # once multiplied by the rule count, but reuse allowed filenames by
+    # varying only the inherited blob sha (content identity), matching
+    # how a real archive's many blobs share a small filename set.
+    shas = [hashlib.sha256(f"page-{i}".encode()).hexdigest()[:40] for i in range(30)]
+    for sha in shas:
+        ps.scan_pages(
+            {"cycles-archive-1.json": '{"n": 1}'}, clean_cache=cache,
+            inherited_blob_shas={"cycles-archive-1.json": sha},
+        )
+
+    for sha in shas:
+        assert ps.cache_contains_clean(cache, sha, mode="json"), (
+            "an earlier page's full approval must not be evicted by later pages' "
+            "entries once the bound accounts for the per-rule multiplier"
+        )
