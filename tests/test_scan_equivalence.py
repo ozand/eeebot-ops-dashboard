@@ -62,7 +62,6 @@ def master_scanner(tmp_path_factory: pytest.TempPathFactory):
     module = importlib.util.module_from_spec(spec)
     # inspect.getsource() on a class (used by the scanner's version fingerprint
     # since #343) resolves the module through sys.modules.
-    import sys
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module

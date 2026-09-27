@@ -40,9 +40,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import techtree_viewer as tv  # noqa: E402
 import two_sinks as sinks  # noqa: E402
 try:
-    from scripts.publish_scan import scan_pages
+    from scripts.publish_scan import PublicationScanError, scan_pages
 except ImportError:
-    from publish_scan import scan_pages  # type: ignore  # noqa: E402
+    from publish_scan import PublicationScanError, scan_pages  # type: ignore  # noqa: E402
 
 DEFAULT_STATE_DIR = '/var/lib/eeebot-techtree'
 STATE_FILENAME = 'publish_state.json'
@@ -77,6 +77,9 @@ LEDGER_DIGEST_PATH = 'ledger/cycles.jsonl'
 LEDGER_DIGEST_TAIL_LINES = 50
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
+PUBLISH_SINGLE_RUN_WARNING_SECONDS = 10 * 60
+PUBLISH_CHANGED_RUN_WARNING_SECONDS = 3 * 60
+PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT = 3
 
 # A floor on the floor (issue #27 review round 4, item A). The torn/
 # unreadable-source guard below (_unreadable_tree_source) is right to
@@ -229,6 +232,8 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
         if isinstance(data, dict) and 'digest' in data and 'published_at' in data:
             data.setdefault('refusing_since', None)
             data.setdefault('page_fingerprints', {})
+            data.setdefault('changed_publish_durations_seconds', [])
+            data.setdefault('publish_duration_warning', None)
             # Cache validation is owned by publish_scan so its schema and key
             # version cannot drift from the scanner's acceptance rules.
             try:
@@ -236,12 +241,22 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             except ImportError:
                 from publish_scan import validate_clean_cache  # type: ignore
             data['clean_scan_cache'] = validate_clean_cache(data.get('clean_scan_cache', {}))
+            durations = data.get('changed_publish_durations_seconds')
+            if not isinstance(durations, list) or any(
+                not isinstance(value, (int, float)) or value < 0 for value in durations
+            ):
+                data['changed_publish_durations_seconds'] = []
+            else:
+                data['changed_publish_durations_seconds'] = durations[-PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:]
+            warning = data.get('publish_duration_warning')
+            data['publish_duration_warning'] = warning if isinstance(warning, str) else None
             return data
     except Exception:  # noqa: BLE001
         pass
     return {
         'digest': None, 'published_at': None, 'refusing_since': None,
         'page_fingerprints': {}, 'clean_scan_cache': {},
+        'changed_publish_durations_seconds': [], 'publish_duration_warning': None,
     }
 
 
@@ -253,6 +268,9 @@ def save_publish_state(
     last_host_error: str | None = None,
     clear_host_failure: bool = False,
     clean_scan_cache: dict[str, bool] | None = None,
+    changed_publish_durations_seconds: list[float] | None = None,
+    publish_duration_warning: str | None = None,
+    published: bool = True,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -281,6 +299,8 @@ def save_publish_state(
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
             'clean_scan_cache': clean_scan_cache if isinstance(clean_scan_cache, dict) else {},
+            'changed_publish_durations_seconds': changed_publish_durations_seconds or [],
+            'publish_duration_warning': publish_duration_warning,
         }
         previous_state = load_publish_state(state_dir)
         if not clear_host_failure:
@@ -298,13 +318,45 @@ def save_publish_state(
             os.fsync(fh.fileno())
         os.replace(tmp_path, state_dir / STATE_FILENAME)
     except OSError as exc:
+        # `published=False` is the failed-attempt save (rc!=0 or a raised
+        # scanner refusal): nothing reached gh-pages, so the journal must not
+        # claim a successful publish.
+        outcome = (
+            'the page just published successfully, but every future cycle '
+            'will republish unnecessarily until this is fixed'
+            if published else
+            'this attempt did not publish; its duration telemetry is lost'
+        )
         print(
             f'techtree-autopublish: FAILED to save publish state to {state_dir} '
-            f'({exc.__class__.__name__}: {exc}) -- the page just published '
-            'successfully, but every future cycle will republish unnecessarily '
-            'until this is fixed',
+            f'({exc.__class__.__name__}: {exc}) -- {outcome}',
             file=sys.stderr,
         )
+
+
+def record_publish_duration(
+    state: dict[str, Any], *, duration_seconds: float, changed: bool,
+) -> tuple[str | None, dict[str, Any]]:
+    """Record a completed publish and return any one-run/consecutive warning.
+
+    Unchanged runs neither increment nor reset the changed-run streak.
+    """
+    history = state.get('changed_publish_durations_seconds')
+    durations = list(history) if isinstance(history, list) else []
+    warning = None
+    if duration_seconds > PUBLISH_SINGLE_RUN_WARNING_SECONDS:
+        warning = f'publish duration exceeded 10 minutes ({duration_seconds:.0f}s)'
+    if changed:
+        if duration_seconds > PUBLISH_CHANGED_RUN_WARNING_SECONDS:
+            durations = (durations + [float(duration_seconds)])[-PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:]
+        else:
+            durations = []
+        if len(durations) == PUBLISH_SLOW_CHANGED_RUNS_WARNING_COUNT:
+            warning = warning or '3 consecutive changed publishes exceeded 3 minutes'
+    updated = dict(state)
+    updated['changed_publish_durations_seconds'] = durations
+    updated['publish_duration_warning'] = warning
+    return warning, updated
 
 
 def should_publish(
@@ -443,6 +495,7 @@ def _refusal_freeze_status(
 
 
 def run(args: argparse.Namespace) -> int:
+    run_started = time.monotonic()
     state_root = Path(args.state_root)
     state_dir = Path(args.state_dir)
     staleness_floor_seconds = args.staleness_floor_hours * 3600.0
@@ -536,6 +589,8 @@ def run(args: argparse.Namespace) -> int:
                     host_snapshot_failed_since=state.get('host_snapshot_failed_since'),
                     last_host_error=state.get('last_host_error'),
                     clean_scan_cache={},
+                    changed_publish_durations_seconds=state.get('changed_publish_durations_seconds'),
+                    publish_duration_warning=state.get('publish_duration_warning'),
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '
@@ -569,19 +624,61 @@ def run(args: argparse.Namespace) -> int:
     stamp = datetime.fromtimestamp(now, timezone.utc).isoformat()
 
     sink_root = Path(args.site_root)
+    previous_fingerprints = state.get('page_fingerprints', {})
+    changed = any(
+        previous_fingerprints.get(name) != tv._page_fingerprint(content)
+        for name, content in public_pages.items()
+    )
+    duration_warning: str | None = None
+    duration_state = state
+
+    def record_attempt_duration() -> tuple[str | None, dict[str, Any]]:
+        publish_duration = max(0.0, time.monotonic() - run_started)
+        warning, updated = record_publish_duration(
+            state, duration_seconds=publish_duration, changed=changed,
+        )
+        if warning:
+            print(f'techtree-autopublish: WARNING: {warning}', file=sys.stderr)
+        else:
+            print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
+        return warning, updated
+
+    def save_failed_attempt(warning: str | None, updated: dict[str, Any]) -> None:
+        save_publish_state(
+            state_dir, state.get('digest'), state.get('published_at'),
+            refusing_since=state.get('refusing_since'),
+            page_fingerprints=previous_fingerprints,
+            host_snapshot_failed_since=state.get('host_snapshot_failed_since'),
+            last_host_error=state.get('last_host_error'),
+            clean_scan_cache=state.get('clean_scan_cache'),
+            changed_publish_durations_seconds=updated['changed_publish_durations_seconds'],
+            publish_duration_warning=warning,
+            published=False,
+        )
 
     def gh_publisher(pages_to_pub):
+        nonlocal duration_warning, duration_state
         if not os.environ.get('GH_TOKEN'):
             print(
                 'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
                 file=sys.stderr,
             )
             return 1, {}
-        return tv.publish_to_pages(
-            pages_to_pub,
-            previous_fingerprints=state.get('page_fingerprints'),
-            scan_cache=state.get('clean_scan_cache'),
-        )
+        try:
+            result = tv.publish_to_pages(
+                pages_to_pub,
+                previous_fingerprints=previous_fingerprints,
+                scan_cache=state.get('clean_scan_cache'),
+            )
+        except Exception as exc:
+            duration_warning, duration_state = record_attempt_duration()
+            if isinstance(exc, PublicationScanError):
+                save_failed_attempt(duration_warning, duration_state)
+                raise
+            print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
+            return 1, {}
+        duration_warning, duration_state = record_attempt_duration()
+        return result
 
     try:
         rc, fingerprints = sinks.publish_ordered(
@@ -603,14 +700,22 @@ def run(args: argparse.Namespace) -> int:
                 host_snapshot_failed_since=failed_since,
                 last_host_error=str(exc),
                 clean_scan_cache=state.get('clean_scan_cache'),
+                changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+                publish_duration_warning=duration_warning,
             )
         return 1
     except Exception as exc:
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
+        if isinstance(exc, PublicationScanError):
+            raise
+        if duration_state is state:
+            duration_warning, duration_state = record_attempt_duration()
+        save_failed_attempt(duration_warning, duration_state)
         return 1
 
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
+        save_failed_attempt(duration_warning, duration_state)
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
@@ -621,6 +726,8 @@ def run(args: argparse.Namespace) -> int:
         last_host_error=None,
         clear_host_failure=True,
         clean_scan_cache=state.get('clean_scan_cache'),
+        changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+        publish_duration_warning=duration_warning,
     )
     return 0
 
