@@ -577,7 +577,11 @@ def run(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return 1, {}
-        return tv.publish_to_pages(pages_to_pub, previous_fingerprints=state.get('page_fingerprints'))
+        return tv.publish_to_pages(
+            pages_to_pub,
+            previous_fingerprints=state.get('page_fingerprints'),
+            scan_cache=state.get('clean_scan_cache'),
+        )
 
     try:
         rc, fingerprints = sinks.publish_ordered(
