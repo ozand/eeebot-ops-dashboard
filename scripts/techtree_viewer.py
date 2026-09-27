@@ -20,7 +20,8 @@ rule wins:
 
 1. ``investigate`` -- the proposer reports ``llm_unavailable``.
 2. ``investigate`` -- the newest HEALTH_FAILURE_STREAK_LENGTH (3) consecutive
-   cycle outcomes are all ``failed`` or ``partial``.
+   cycle outcomes are all ``failed``, ``partial`` or ``model_call_incomplete``
+   (an unsuccessful provider call, not a code crash).
 3. ``degraded``    -- the newest source file is older than HEALTH_STALE_SECONDS
    (3600 s): the page itself is stale.
 4. ``degraded``    -- the last integrated cycle is at least
@@ -347,6 +348,8 @@ def health_verdict(
     streak = 0
     for outcome in reversed(recent_outcomes):
         if outcome in {'failed', 'partial', 'model_call_incomplete'}:
+            # An incomplete provider call is not evidence of a code crash, but
+            # it is still an unsuccessful cycle and must not break the streak.
             streak += 1
         else:
             break
@@ -3825,7 +3828,9 @@ def _lane_b_layout(
 # #208 review: _ARCHIVE_RING and _ledger_outcome_kind (#71/#77) served only the
 # deleted archive tree and are gone with it. Leaf outcomes on the day lineage
 # are classified inline in _build_vertical_day_lineage: failed / partial /
-# skipped. There is no `running` there — a cycle that has started and not
+# model_call_incomplete / skipped. The incomplete model-call outcome is an
+# unsuccessful cycle, but unlike a bridge exception it does not prove code crashed.
+# There is no `running` there — a cycle that has started and not
 # finished is not a leaf and does not appear on lineage.html (it does on the
 # cycle feed).
 
@@ -4511,7 +4516,11 @@ def _build_unified_lineage(
             label = {'truncated': 'history truncated', 'current_unavailable': 'current unavailable', 'cycle': 'cycle detected'}.get(node.get('parent_status'), 'recorded parent unavailable')
             parts.append(f'<text class="lineage-hidden-parent" data-parent-status="{esc(node["parent_status"])}" x="{x}" y="{y - (26 if node.get("current") else 14)}" text-anchor="middle">{esc(label)}</text>')
         cid = str(node.get('cycle_id') or node['node_id'])
-        kind = str(node.get('outcome') or 'integrated')
+        raw_kind = str(node.get('outcome') or 'integrated')
+        kind = raw_kind if raw_kind in {
+            'integrated', 'skipped', 'partial', 'failed', 'push_pending',
+            'superseded', 'abandoned', 'model_call_incomplete',
+        } else 'skipped'
         title = str(node.get('title') or cid)
         attrs = [f'class="arch-node arch-{esc(kind)} lineage-node"', f'data-cycle-id="{esc(cid)}"', f'data-node-id="{esc(node["node_id"])}"', f'data-cycle-node-index="{int(node.get("cycle_node_index") or 1)}"', f'data-cycle-node-count="{int(node.get("cycle_node_count") or 1)}"', f'cx="{x}"', f'cy="{y}"', 'r="9"', 'tabindex="0"', 'role="button"', f'aria-label="{esc(title)} — click for details"', f'id="{_safe_node_dom_id(node["node_id"])}"']
         if node.get('boundary'):
@@ -6277,8 +6286,10 @@ def build_cycle_feed(
                 attempts_note = f', {push_attempts} attempt(s)' if push_attempts else ''
                 outcome_label = f'INTEGRATED (late{attempts_note})'
         elif outcome_kind == 'model_call_incomplete':
+            # Provider did not return a usable response: unsuccessful, but not
+            # evidence that bridge code crashed. Keep a distinct safe label.
             badge_class = 'badge-failed'
-            outcome_label = f'MODEL CALL INCOMPLETE{(": " + reason) if reason else ""}'
+            outcome_label = 'MODEL CALL INCOMPLETE'
         elif outcome_kind == 'failed':
             badge_class = 'badge-failed'
             outcome_label = f'FAILED{(": " + reason) if reason else ""}'
@@ -9567,6 +9578,7 @@ CSS = '''
     .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .arch-node.arch-model_call_incomplete { fill: #33263d; stroke: #c792ea; stroke-dasharray: 5 2; }
     .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
     .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
     .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
