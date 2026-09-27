@@ -576,8 +576,7 @@ def format_model_step(step: dict[str, Any]) -> str:
             value = step[label]
             if not isinstance(value, SanitizedText):
                 raise TypeError(f"{label} must be SanitizedText")
-            safe_value = value
-            parts.append(f"<p><b>{label.title()}:</b> {_escape(str(display_text(safe_value)))}</p>")
+            parts.append(f"<p><b>{label.title()}:</b> {_escape(str(display_text(value)))}</p>")
     if step.get("tokens") is not None:
         parts.append(f"<p>Tokens: {step['tokens']}</p>")
     if step.get("duration") is not None:
@@ -590,15 +589,11 @@ def format_tool_step(step: dict[str, Any]) -> str:
     name = display_text(str(step.get("name", "unavailable")))
     raw_args = step.get("arguments", SanitizedText("unavailable"))
     if not isinstance(raw_args, SanitizedText):
-        if "arguments" in step and step.get("kind") == "model":
-            raise TypeError("arguments must be SanitizedText")
-        raw_args = sanitize_tool_arguments(str(raw_args))
-    args = display_text(raw_args)
+        raise TypeError("arguments must be SanitizedText")
+    args = SanitizedText("[env file contents withheld]") if is_env_path(str(raw_args)) else display_text(raw_args)
     res_val = step.get("result")
     if res_val is not None and not isinstance(res_val, SanitizedText):
-        if step.get("kind") == "model":
-            raise TypeError("result must be SanitizedText")
-        res_val = sanitize_tool_output(str(raw_args), str(res_val))
+        raise TypeError("result must be SanitizedText")
     result = display_text(sanitize_tool_output(str(raw_args), str(res_val))) if res_val is not None else SanitizedText("unavailable")
     dur_val = step.get("duration")
     duration = display_text(str(dur_val)) if dur_val is not None else "unknown"

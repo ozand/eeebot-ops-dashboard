@@ -122,7 +122,8 @@ def test_model_assistant_content_is_sanitized_before_message_serialization() -> 
 
 
 def test_tool_arguments_with_env_path_are_withheld() -> None:
-    step = {"name": "read_file", "arguments": json.dumps({"path": "/tmp/.env"}), "result": "not shown"}
+    from scripts.cycle_detail import SanitizedText
+    step = {"name": "read_file", "arguments": SanitizedText(json.dumps({"path": "/tmp/.env"})), "result": SanitizedText("not shown")}
     rendered = format_tool_step(step)
     assert "/tmp/.env" not in rendered
     assert "[env file contents withheld]" in rendered
@@ -137,7 +138,7 @@ def test_env_file_content_in_tool_arguments_is_withheld_everywhere() -> None:
     }}]}]
     cleaned = cd.sanitize_messages(messages)
     assert canary not in json.dumps(cleaned)
-    rendered = cd.format_tool_step({"name": "write_file", "arguments": messages[0]["tool_calls"][0]["function"]["arguments"], "result": "ok"})
+    rendered = cd.format_tool_step({"name": "write_file", "arguments": cd.sanitize_tool_arguments(messages[0]["tool_calls"][0]["function"]["arguments"]), "result": cd.redact_text("ok")})
     assert canary not in rendered
 
 
@@ -165,12 +166,13 @@ def test_env_withholding_does_not_corrupt_structured_non_env_arguments() -> None
 
 def test_tool_step_reading_env_file_withholds_content():
     """ADR-036 Decision 1 (a): reading /etc/eeepc-agent/*.env withholds contents unconditionally."""
+    from scripts.cycle_detail import SanitizedText
     dummy_secret = "CANARY_SECRET_VAL_7711"
     step = {
         "kind": "tool",
         "name": "read_file",
-        "arguments": json.dumps({"path": "/etc/eeepc-agent/test.env"}),
-        "result": f"SECRET_KEY={dummy_secret}\nOTHER=123",
+        "arguments": SanitizedText(json.dumps({"path": "/etc/eeepc-agent/test.env"})),
+        "result": SanitizedText(f"SECRET_KEY={dummy_secret}\nOTHER=123"),
         "status": "ok",
     }
     rendered = format_tool_step(step)
@@ -532,11 +534,12 @@ def test_unresolved_pending_tool_call_marks_history_incomplete(tmp_path: Path) -
 
 def test_tool_result_applies_display_limit_truncation() -> None:
     """Codex comment 4109820846: Tool results exceeding display limit must be truncated with omitted char count."""
+    from scripts.cycle_detail import SanitizedText
     long_result = "output line\n" * 500  # ~6000 chars > DEFAULT_DISPLAY_LIMIT 4000
     step = {
         "name": "bash",
-        "arguments": "git status",
-        "result": long_result,
+        "arguments": SanitizedText("git status"),
+        "result": SanitizedText(long_result),
         "source": "reconstructed",
     }
     rendered = format_tool_step(step)
