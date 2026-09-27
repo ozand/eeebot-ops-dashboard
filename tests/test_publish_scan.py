@@ -178,12 +178,24 @@ def test_scan_large_live_sized_fixture_meets_budget_and_clean_cache_is_fast() ->
     assert warm_seconds < 0.25, f"cached repeat took {warm_seconds:.3f}s"
 
 
-def test_json_scanning_unescapes_values_without_html_parser(monkeypatch: pytest.MonkeyPatch) -> None:
-    """JSON artifacts scan every decoded string but do not instantiate the HTML parser."""
-    monkeypatch.setattr(ps, "_html_scan_variants", lambda _value: (_ for _ in ()).throw(AssertionError("HTML parser called for JSON")))
+def test_json_scanning_unescapes_values_and_parses_embedded_html() -> None:
+    """JSON artifacts inspect decoded strings, including HTML embedded in them."""
     payload = '{"excerpt":"{&quot;messages&quot;: []}"}'
     with pytest.raises(ps.PublicationScanError, match="structural_messages"):
         ps.scan_pages({"cycles-archive-1.json": payload})
+
+
+def test_json_scanning_parses_html_embedded_in_json_string() -> None:
+    """HTML tags inside a JSON string must not conceal a split secret."""
+    payload = '{"excerpt":"ghp_<span>abcdefghijklmnop123456</span>"}'
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"cycles-archive-1.json": payload})
+
+
+def test_json_string_streams_do_not_synthesize_env_secret() -> None:
+    """Independent JSON strings are not concatenated into a synthetic assignment."""
+    payload = '{"left":"AUTH=", "right":"abcdefghijk"}'
+    assert ps.scan_text(payload, json_mode=True, html_mode=False) == {}
 
 
 def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: pytest.MonkeyPatch) -> None:

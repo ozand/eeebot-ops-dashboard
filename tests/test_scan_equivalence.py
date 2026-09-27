@@ -53,8 +53,7 @@ def _reference_findings(content: str, *, html_mode: bool, json_mode: bool) -> di
             pass
         else:
             strings = [ps._unescape_until_stable(v) for v in ps._json_strings(decoded)]
-            if strings:
-                variants.append("\x00".join(strings))
+            variants = [variant for value in strings for variant in (value, *ps._html_scan_variants(value))]
     elif html_mode:
         variants.extend(ps._html_scan_variants(variants[-1]))
     variants = list(dict.fromkeys(variants))
@@ -103,6 +102,11 @@ def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_live_gh_pages_findings_match_reference_and_remain_clean() -> None:
+    has_remote_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "origin/gh-pages"], capture_output=True, text=True, check=False
+    )
+    if has_remote_branch.returncode:
+        pytest.skip("requires fetched origin/gh-pages branch; run git fetch origin gh-pages")
     listing = subprocess.run(
         ["git", "ls-tree", "-r", "origin/gh-pages"], capture_output=True, text=True, check=True
     ).stdout.splitlines()
