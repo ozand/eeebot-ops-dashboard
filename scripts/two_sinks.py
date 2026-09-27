@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import re
+from ipaddress import ip_address
 import shutil
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -51,6 +52,12 @@ DEFAULT_BIND_PORT = 8080
 def parse_bind_settings(address: str = DEFAULT_BIND_ADDRESS, port: int = DEFAULT_BIND_PORT) -> tuple[str, int]:
     if not address or not 1 <= int(port) <= 65535:
         raise ValueError("ADR-036 host bind settings require an address and port 1..65535")
+    try:
+        parsed_address = ip_address(address)
+    except ValueError:
+        parsed_address = None
+    if parsed_address is not None and parsed_address.version == 6:
+        raise ValueError("ADR-036 dashboard bind address must use IPv4")
     return address, int(port)
 
 
@@ -62,7 +69,8 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
         return None
 
     def do_GET(self) -> None:
-        clean_path = self.path.split("?", 1)[0].split("#", 1)[0]
+        clean_path, separator, query = self.path.partition("?")
+        clean_path = clean_path.split("#", 1)[0]
         if clean_path in {"", "/", "/index.html"} or clean_path == "/current" or clean_path.startswith("/current/"):
             current = self.site_root / "current"
             if current.is_symlink():
@@ -79,6 +87,8 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
             else:
                 dest = f"/{target_version}/"
             self.send_response(302)
+            if separator:
+                dest = f"{dest}?{query}"
             self.send_header("Location", dest)
             self.end_headers()
             return
