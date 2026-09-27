@@ -1510,7 +1510,8 @@ def test_public_ledger_reason_is_redacted_before_html_and_json_rendering() -> No
     from scripts.two_sinks import split_render_inputs
     public_data, _ = split_render_inputs(data)
     pages = tv.render_pages(public_data, host="test-host")
-    assert all(marker not in body for body in pages.values())
+    leaked = [name for name, body in pages.items() if marker in body]
+    assert leaked == [], leaked
 
 
 def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
