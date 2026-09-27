@@ -495,57 +495,6 @@ def test_extract_git_titles_local_parsing(tmp_path: Path) -> None:
     assert 'feature_file.txt' in cycle_files.get('cycle-cycle-123', []) or 'feature_file.txt' in cycle_files.get('cycle-123', [])
 
 
-def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Path) -> None:
-    """A diary-only branch must not borrow an ordinary commit from before branch creation."""
-    repo = tmp_path / 'branch_only_repo'
-    repo.mkdir()
-    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
-
-    (repo / 'base.txt').write_text('base', encoding='utf-8')
-    subprocess.run(['git', '-C', str(repo), 'add', 'base.txt'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-diary'], check=True, capture_output=True)
-    (repo / 'diary.txt').write_text('diary', encoding='utf-8')
-    subprocess.run(['git', '-C', str(repo), 'add', 'diary.txt'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'diary: record cycle'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-diary', '-m',
-                    'merge: integrate selfevo/cycle-cycle-diary'], check=True, capture_output=True)
-
-    titles, _cycle_files, err = tv.extract_git_titles_local(repo)
-    assert err is None
-    assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
-
-
-def test_extract_git_titles_searches_past_five_non_work_commits(tmp_path: Path) -> None:
-    """A run of diary commits cannot hide an earlier real work commit."""
-    repo = tmp_path / 'long_diary_branch'
-    repo.mkdir()
-    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
-    (repo / 'base.txt').write_text('base', encoding='utf-8')
-    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-long'], check=True, capture_output=True)
-    (repo / 'work.txt').write_text('real work', encoding='utf-8')
-    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
-    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement actual cycle work'], check=True, capture_output=True)
-    for i in range(6):
-        (repo / f'diary-{i}.txt').write_text('diary', encoding='utf-8')
-        subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
-        subprocess.run(['git', '-C', str(repo), 'commit', '-m', f'diary: entry {i}'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
-    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-long', '-m',
-                    'merge: integrate selfevo/cycle-cycle-long'], check=True, capture_output=True)
-
-    titles, _files, error = tv.extract_git_titles_local(repo)
-    assert error is None
-    assert titles.get('cycle-long') == 'Implement actual cycle work'
-
-
 def test_extract_git_titles_local_non_repo(tmp_path: Path) -> None:
     not_repo = tmp_path / 'not_a_repo'
     not_repo.mkdir()
@@ -1249,10 +1198,8 @@ def test_task3_issue37_hypothesis_evidence_anchors() -> None:
     assert '<a href="#cycle-absent">' not in html_out
 
 
-# ===========================================================================
-# Batch 2 Data UX Tests (Issues #40, #41, #42)
-# ===========================================================================
-
+# ====================================================================# Batch 2 Data UX Tests (Issues #40, #41, #42)
+# ====================================================================
 def test_hypotheses_panel_dedupe_by_title_keeps_newest() -> None:
     data = {
         'entries': {
@@ -2473,10 +2420,8 @@ def test_issue42_evo_fitness_compact() -> None:
     assert 'r:1.23M' in html
 
 
-# =========================================================================
-# Issue 43: Strip horizontal computed timestamp (moved to footer)
-# =========================================================================
-
+# ==================================================================# Issue 43: Strip horizontal computed timestamp (moved to footer)
+# ==================================================================
 def test_issue43_empire_stats_strip_has_no_computed_timestamp() -> None:
     scorecard = {
         'loop': {'integrations': 42},
@@ -2508,10 +2453,8 @@ def test_issue43_render_page_omits_scorecard_computed_when_missing() -> None:
     assert 'scorecard computed' not in html
 
 
-# =========================================================================
-# Issue 44: Research mint column right border + no era-grid-line
-# =========================================================================
-
+# ==================================================================# Issue 44: Research mint column right border + no era-grid-line
+# ==================================================================
 def test_issue44_mint_column_has_right_border_rect() -> None:
     portfolio = {
         'current': 'root',
@@ -2534,10 +2477,8 @@ def test_issue44_canvas_has_no_era_grid_lines() -> None:
     assert 'era-grid-line' not in html
 
 
-# =========================================================================
-# Issue 45: Hypotheses lifecycle collapsible section
-# =========================================================================
-
+# ==================================================================# Issue 45: Hypotheses lifecycle collapsible section
+# ==================================================================
 def test_issue45_answered_hypotheses_in_details_element() -> None:
     hl = {
         'entries': {
@@ -2577,10 +2518,8 @@ def test_issue45_no_answered_hypotheses_no_details() -> None:
     assert 'Active Hypo' in html
 
 
-# =========================================================================
-# Issue 47: Feed integrated cycles have tree links
-# =========================================================================
-
+# ==================================================================# Issue 47: Feed integrated cycles have tree links
+# ==================================================================
 def test_issue47_feed_integrated_cycle_has_tree_link() -> None:
     ledger_tail = [
         {'phase': 'outcome', 'cycle_id': 'cycle-evo1', 'status': 'success'},
@@ -2622,10 +2561,8 @@ def test_issue47_feed_non_integrated_cycle_has_no_tree_link() -> None:
     assert 'feed-tree-link' not in html
 
 
-# =========================================================================
-# Issue 48: Multi-column agent panel with Skills table
-# =========================================================================
-
+# ==================================================================# Issue 48: Multi-column agent panel with Skills table
+# ==================================================================
 def test_issue97_confirmed_usage_and_eval_source() -> None:
     html = tv.build_agent_panel(
         agents_md=None,
@@ -4260,7 +4197,8 @@ def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -
     rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
     assert rc == 0
     assert not any('git/blobs' in ' '.join(c) for c in calls)
-    assert not any('git/trees' in ' '.join(c) for c in calls)
+    assert not any('git/trees' in ' '.join(c) and '-X' in c for c in calls)
+    assert any('git/trees' in ' '.join(c) for c in calls)  # inherited tree is still scanned (ADR-036)
     assert not any('git/commits' in ' '.join(c) for c in calls)
     assert fingerprints == previous_fp
 
@@ -4605,6 +4543,60 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
     assert missing != unavailable != present_empty
 
 
+
+def test_extract_git_titles_local_does_not_walk_before_cycle_branch(tmp_path: Path) -> None:
+    """A diary-only branch must not borrow an ordinary commit from before branch creation."""
+    repo = tmp_path / 'branch_only_repo'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'base.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+    (repo / 'diary.txt').write_text('diary', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', 'diary.txt'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'diary: record cycle'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-diary', '-m',
+                    'merge: integrate selfevo/cycle-cycle-diary'], check=True, capture_output=True)
+
+    titles, _cycle_files, err = tv.extract_git_titles_local(repo)
+    assert err is None
+    assert 'cycle-diary' not in titles and 'cycle-cycle-diary' not in titles
+
+
+
+def test_extract_git_titles_searches_past_five_non_work_commits(tmp_path: Path) -> None:
+    """A run of diary commits cannot hide an earlier real work commit."""
+    repo = tmp_path / 'long_diary_branch'
+    repo.mkdir()
+    subprocess.run(['git', 'init', '-b', 'master', str(repo)], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.name', 'Tester'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'config', 'user.email', 'test@example.com'], check=True)
+    (repo / 'base.txt').write_text('base', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement unrelated base feature'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', '-b', 'selfevo/cycle-cycle-long'], check=True, capture_output=True)
+    (repo / 'work.txt').write_text('real work', encoding='utf-8')
+    subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(repo), 'commit', '-m', 'Implement actual cycle work'], check=True, capture_output=True)
+    for i in range(6):
+        (repo / f'diary-{i}.txt').write_text('diary', encoding='utf-8')
+        subprocess.run(['git', '-C', str(repo), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(repo), 'commit', '-m', f'diary: entry {i}'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'checkout', 'master'], check=True, capture_output=True)
+    subprocess.run(['git', '-C', str(repo), 'merge', '--no-ff', 'selfevo/cycle-cycle-long', '-m',
+                    'merge: integrate selfevo/cycle-cycle-long'], check=True, capture_output=True)
+
+    titles, _files, error = tv.extract_git_titles_local(repo)
+    assert error is None
+    assert titles.get('cycle-long') == 'Implement actual cycle work'
+
+
+
 def test_cycle_feed_normalizes_lesson_reference_path_and_prefix() -> None:
     html = tv.build_cycle_feed(
         [{'phase': 'outcome', 'cycle_id': 'cycle-path', 'outcome': 'success',
@@ -4613,6 +4605,7 @@ def test_cycle_feed_normalizes_lesson_reference_path_and_prefix() -> None:
     )
     assert 'href="lessons.html#q-subagent_result_error_handling"' in html
     assert '(unavailable)' not in html
+
 
 
 def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
@@ -4627,10 +4620,12 @@ def test_cycle_feed_falls_back_to_work_title_or_explicit_no_files() -> None:
     assert '<strong class="feed-title">success</strong>' not in html
 
 
+
 def test_non_work_commit_detector_skips_chore_and_merge() -> None:
     """Regression: chore: and merge: commits must be skipped as non-work commits."""
     assert tv._is_non_work_commit_message("merge: sync with main")
     assert tv._is_non_work_commit_message("chore: update dependencies")
+
 
 
 def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_no_files() -> None:
@@ -4644,6 +4639,7 @@ def test_cycle_feed_reads_files_changed_from_ledger_and_does_not_falsely_claim_n
     assert 'integrated · no files' not in html
 
 
+
 def test_cycle_feed_pushed_late_uses_specific_title_fallback_without_git_or_task_title() -> None:
     rows = [
         {'phase': 'outcome', 'cycle_id': 'cycle-late-fallback', 'outcome': 'pushed_late',
@@ -4652,6 +4648,7 @@ def test_cycle_feed_pushed_late_uses_specific_title_fallback_without_git_or_task
     html = tv.build_cycle_feed(rows, task_titles={}, history_mode=True)
     assert '<strong class="feed-title">pushed late, 3 attempt(s)</strong>' in html
     assert 'integrated · no files' not in html
+
 
 
 def test_cycle_feed_empty_git_diff_is_preserved_as_observed_no_files() -> None:
@@ -4664,6 +4661,7 @@ def test_cycle_feed_empty_git_diff_is_preserved_as_observed_no_files() -> None:
     assert '<strong class="feed-title">integrated · no files</strong>' in html
 
 
+
 def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
     """When files were never observed, title must be 'integrated', not 'integrated · no files'."""
     rows = [
@@ -4674,6 +4672,7 @@ def test_cycle_feed_unobserved_files_renders_integrated_not_no_files() -> None:
     assert 'integrated · no files' not in html
 
 
+
 def test_remote_reader_script_defines_commit_classifier() -> None:
     """Codex P2: REMOTE_READER_SCRIPT must define _is_non_work_commit_message inside its scope."""
     ns: dict = {}
@@ -4682,6 +4681,7 @@ def test_remote_reader_script_defines_commit_classifier() -> None:
     assert ns["_is_non_work_commit_message"]("diary: test")
     assert ns["_is_non_work_commit_message"]("merge: sync")
     assert not ns["_is_non_work_commit_message"]("selfevo: real task")
+
 
 
 def test_cycle_feed_falls_back_to_task_title_from_any_phase() -> None:
@@ -4695,6 +4695,7 @@ def test_cycle_feed_falls_back_to_task_title_from_any_phase() -> None:
     assert 'integrated · no files' not in html
 
 
+
 def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> None:
     residual = "docs: residual" + chr(10) * 2 + "Selfevo-Residual: true"
     checkpoint = "docs: checkpoint" + chr(10) * 2 + "Selfevo-Checkpoint: true"
@@ -4703,6 +4704,7 @@ def test_non_work_commit_detector_handles_trailers_and_keeps_cycle_title() -> No
     assert tv._is_non_work_commit_message("selfevo: checkpoint state")
     assert tv._is_non_work_commit_message(checkpoint)
     assert not tv._is_non_work_commit_message("selfevo: Implement requested task")
+
 
 
 def test_274_cycle_lesson_link_shown_as_unavailable_not_dropped() -> None:
@@ -6212,6 +6214,340 @@ def test_1755_compute_window_pressure_remote_copy_matches_local_module() -> None
     assert remote_result == local_result
 
 
+# ---------------------------------------------------------------------------
+# Issue #311: a cycle run without a terminal row is not running if its
+# bridge unit has already finished (killed/timeout in runs.jsonl or wall-clock
+# ceiling exceeded)
+# ---------------------------------------------------------------------------
+
+
+def test_311_cycle_without_terminal_row_killed_by_runs_jsonl() -> None:
+    """Exact reproduction of cycle-4c03177c1be8 from 2026-09-23:
+    Re-run multiple times ending with outcome: paused-supplier.
+    Last attempt has started at 21:46:07Z, planning_session, system_prompt,
+    and NO terminal row after that.
+    Bridge runs.jsonl records the run finished with unit_timeout / TERM / systemd.
+    Must render as KILLED / INCOMPLETE, never running, never paused-supplier.
+    """
+    cid = "cycle-4c03177c1be8"
+    task_title = "Extend raw-json-final-turn skill with payload validation and fence-stripping formatting rules"
+    ledger = [
+        {"phase": "proposed", "cycle_id": cid, "task_title": task_title, "ts": "2026-09-23T16:59:20Z"},
+        # Run 8 ending in paused-supplier
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-23T21:39:40Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "malformed", "ts": "2026-09-23T21:41:13Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "paused-supplier", "reason": "llm_supplier_paused", "ts": "2026-09-23T21:41:52Z"},
+        # Run 9 (the last run) killed by systemd timeout -- NO outcome row
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-23T21:46:07Z"},
+        {"phase": "diary_open_entry", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-23T21:46:14Z"},
+        {"phase": "dedup", "cycle_id": cid, "decision": "proceeded", "ts": "2026-09-23T21:46:31Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "malformed", "ts": "2026-09-23T21:54:35Z"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-23T21:54:54Z"},
+    ]
+    # Real format from state/bridge/runs-2026-09-23.jsonl.gz on eeepc
+    real_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-2e29943c1c354a50",
+            "started_at": "2026-09-23T21:45:31.075488Z",
+            "finished_at": "2026-09-23T22:40:23.677412Z",
+            "duration_s": 3292.602,
+            "classification": "unit_timeout",
+            "outcome": "interrupted",
+            "exit_status": "TERM",
+            "source": "systemd",
+        }
+    ]
+    ref_now = datetime(2026, 9, 25, 12, 0, 0, tzinfo=timezone.utc)
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        task_titles={cid: task_title},
+        history_mode=True,
+        bridge_runs=real_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'badge-failed' in row
+    assert 'data-outcome="incomplete"' in html_out
+    # Must NOT combine lack of terminal row into 'running'
+    assert 'running' not in row
+    # Must NOT combine previous attempt's outcome into title or badge
+    assert 'paused-supplier' not in row
+    # Title from proposed / task_titles survives
+    assert task_title in row
+
+
+def test_311_post_1908_killed_by_cycle_id_in_runs_jsonl() -> None:
+    """Post-#1908 killed run: runs.jsonl explicitly carries cycle_id."""
+    cid = "cycle-20634d6019f1"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T19:30:00Z"},
+    ]
+    # Real format from state/bridge/runs.jsonl on eeepc from 2026-09-25
+    real_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-bc9bb5aa2dcd4384",
+            "started_at": "2026-09-25T19:26:39.607816Z",
+            "finished_at": "2026-09-25T20:21:33.346570Z",
+            "duration_s": 3293.739,
+            "classification": "unit_timeout",
+            "outcome": "interrupted",
+            "exit_status": "TERM",
+            "source": "systemd",
+            "cycle_id": cid,
+            "request_id": f"llm-proposer-{cid}",
+        }
+    ]
+    ref_now = datetime(2026, 9, 25, 21, 0, 0, tzinfo=timezone.utc)
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        bridge_runs=real_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'badge-failed' in row
+    assert 'running' not in row
+
+
+def test_311_completed_previous_attempt_does_not_kill_active_retry() -> None:
+    """A completed run for the same cycle_id must not end a newer retry."""
+    cid = "cycle-retry-same-id"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+    ]
+    bridge_runs = [{
+        "schema_version": "bridge-run-v1",
+        "phase": "run_end",
+        "run_id": "run-previous",
+        "started_at": "2026-09-25T20:00:00Z",
+        "finished_at": "2026-09-25T20:30:00Z",
+        "classification": "completion",
+        "outcome": "success",
+        "source": "systemd",
+        "cycle_id": cid,
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=bridge_runs,
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_malformed_latest_start_does_not_reuse_older_attempt() -> None:
+    cid = "cycle-malformed-latest-start"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-25T19:10:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T19:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'failed' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_live_malformed_start_is_newer_than_archived_valid_attempt() -> None:
+    """Live rows precede archives, so index order cannot date malformed starts."""
+    cid = "cycle-live-malformed-over-archive"
+    # This is read_ledger_history order: current cycles.jsonl first, then
+    # rotated archive rows. The live retry has no parseable start timestamp;
+    # the older archive still has a valid start and terminal failure.
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "not-a-timestamp"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-26T20:00:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-20T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-20T19:10:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 26, 20, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'FAILED' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_missing_latest_start_timestamp_does_not_reuse_older_attempt() -> None:
+    cid = "cycle-missing-latest-start"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "ts": "2026-09-25T19:10:00Z"},
+        {"phase": "started", "cycle_id": cid},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T19:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'failed' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_finished_run_must_overlap_ledger_attempt_start() -> None:
+    cid = "cycle-quick-retry-same-id"
+    ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]
+    prior_run = {
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-25T19:25:10Z",
+        "finished_at": "2026-09-25T19:26:20Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[prior_run],
+        now=datetime(2026, 9, 25, 19, 27, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_same_attempt_run_start_slightly_before_ledger_start_matches() -> None:
+    cid = "cycle-run-start-boundary"
+    ledger = [{"phase": "started", "cycle_id": cid, "ts": "2026-09-25T19:26:40Z"}]
+    runs = [{
+        "phase": "run_end", "cycle_id": cid,
+        "started_at": "2026-09-25T19:26:10Z",
+        "finished_at": "2026-09-25T19:30:00Z",
+        "classification": "unit_timeout", "exit_status": "TERM",
+    }]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=runs,
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
+
+    too_early = [{**runs[0], "started_at": "2026-09-25T19:23:59Z"}]
+    outside_tolerance = tv.build_cycle_feed(
+        ledger, bridge_runs=too_early,
+        now=datetime(2026, 9, 25, 19, 31, tzinfo=timezone.utc),
+    )
+    early_row = outside_tolerance.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' not in early_row
+    assert 'running' in early_row
+
+
+def test_311_genuinely_running_cycle_still_renders_running() -> None:
+    """A cycle that started 5 minutes ago and has no finished bridge run
+    is genuinely running and must still render with 'running' badge."""
+    cid = "cycle-live-now-1"
+    ref_now = datetime(2026, 9, 25, 22, 0, 0, tzinfo=timezone.utc)
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+    ]
+    bridge_runs = [
+        {
+            "schema_version": "bridge-run-v1",
+            "phase": "run_end",
+            "run_id": "run-old",
+            "started_at": "2026-09-25T20:00:00Z",
+            "finished_at": "2026-09-25T20:30:00Z",
+            "classification": "completion",
+            "outcome": "success",
+            "cycle_id": "cycle-old",
+        }
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger_tail=ledger,
+        bridge_runs=bridge_runs,
+        now=ref_now,
+    )
+    row = html_out.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'badge-available' in row
+    assert 'KILLED' not in row
+    assert 'INCOMPLETE' not in row
+
+
+def test_311_latest_attempt_uses_timestamp_not_ledger_iteration_order() -> None:
+    """Rotated ledger rows may list the older archived start after live rows."""
+    cid = "cycle-rotated-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:55:00Z"},
+        {"phase": "planning_session", "cycle_id": cid, "outcome": "integrated", "ts": "2026-09-25T21:58:00Z"},
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T20:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "failed", "reason": "old-attempt", "ts": "2026-09-25T20:30:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'running' in row
+    assert 'old-attempt' not in row
+    assert 'KILLED / INCOMPLETE' not in row
+
+
+def test_311_attempt_phase_transitions_are_applied_in_timestamp_order() -> None:
+    cid = "cycle-rotated-terminal-order"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:45:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "pushed_late", "ts": "2026-09-25T22:00:00Z"},
+        {"phase": "outcome", "cycle_id": cid, "outcome": "push_pending", "ts": "2026-09-25T21:50:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 1, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'INTEGRATED (late' in row
+    assert 'PUSH PENDING' not in row
+
+
+def test_311_timeout_ceiling_uses_attempt_start_not_latest_phase() -> None:
+    cid = "cycle-stale-with-fresh-phase"
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T20:55:00Z"},
+        {"phase": "system_prompt", "cycle_id": cid, "ts": "2026-09-25T21:59:00Z"},
+    ]
+    html = tv.build_cycle_feed(
+        ledger, bridge_runs=[],
+        now=datetime(2026, 9, 25, 22, 0, tzinfo=timezone.utc),
+    )
+    row = html.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
+
+
+def test_311_wall_clock_timeout_threshold_from_config(monkeypatch) -> None:
+    """Threshold comes from BRIDGE_UNIT_TIMEOUT_SECONDS (configurable),
+    not a hardcoded literal."""
+    cid = "cycle-stale-poweroff"
+    # Started 40 minutes ago
+    ledger = [
+        {"phase": "started", "cycle_id": cid, "ts": "2026-09-25T21:00:00Z"},
+    ]
+    ref_now = datetime(2026, 9, 25, 21, 40, 0, tzinfo=timezone.utc)
+
+    # 1. Under default 55-minute (3300s) timeout: 40 min is not yet timed out
+    html_under = tv.build_cycle_feed(ledger_tail=ledger, bridge_runs=[], now=ref_now)
+    assert 'running' in html_under
+
+    # 2. Configured lower threshold (e.g. 1800s / 30m): 40 min is timed out
+    monkeypatch.setattr(tv, "BRIDGE_UNIT_TIMEOUT_SECONDS", 1800)
+    html_over = tv.build_cycle_feed(ledger_tail=ledger, bridge_runs=[], now=ref_now)
+    row = html_over.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+    assert 'KILLED / INCOMPLETE' in row
+    assert 'running' not in row
 def test_adr036_prompt_text_never_reaches_public_pages(tmp_path: Path) -> None:
     """ADR-036 rule 3: executor prompt text (system and task) is call text.
 

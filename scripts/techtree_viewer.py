@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import os
 import hashlib
 import html
 import json
@@ -115,6 +116,15 @@ CI_TOTAL_BUDGET_SECONDS = 45
 HEALTH_STALE_SECONDS = 3600
 HEALTH_INTEGRATION_RECENCY_SECONDS = 6 * 3600
 HEALTH_FAILURE_STREAK_LENGTH = 3
+
+# Issue #311: wall-clock ceiling for subagent bridge runs (systemd TimeoutStartSec = 55min).
+# When a cycle has no terminal outcome in the ledger, it is treated as killed/incomplete
+# if its bridge run finished (via runs.jsonl), or the time elapsed since its last ledger
+# activity exceeds this ceiling. Configurable via environment variable.
+BRIDGE_UNIT_TIMEOUT_SECONDS = int(os.environ.get('EEEBOT_BRIDGE_TIMEOUT_SECONDS', '3300'))
+# Bridge process setup precedes its first ledger `started` row; allow bounded
+# timestamp skew while rejecting records from earlier same-cycle attempts.
+BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS = 120
 
 
 def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
@@ -960,6 +970,48 @@ def read_ledger_history():
                 matched.append(obj)
     return matched
 
+def read_bridge_runs():
+    """Issue #311: read bridge runs from state/bridge/runs.jsonl and daily
+    runs-YYYY-MM-DD.jsonl.gz archives for detecting killed/timeout runs."""
+    bdir = os.path.join(STATE_ROOT, "bridge")
+    cutoff = time.time() - LEDGER_HISTORY_DAYS * 86400
+    files = []
+    try:
+        for name in os.listdir(bdir):
+            if name == "runs.jsonl":
+                files.append((None, os.path.join(bdir, name)))
+            elif name.startswith("runs-") and name.endswith(".jsonl.gz"):
+                day = name[len("runs-"):-len(".jsonl.gz")]
+                try:
+                    ts = time.mktime(time.strptime(day, "%Y-%m-%d"))
+                except ValueError:
+                    continue
+                if ts >= cutoff:
+                    files.append((day, os.path.join(bdir, name)))
+    except Exception:
+        return []
+    files.sort(key=lambda item: item[0] or "9999", reverse=True)
+    runs = []
+    for _day, path in files:
+        try:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
+                lines = fh.readlines()
+            _mtimes.append(os.path.getmtime(path))
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(obj, dict):
+                runs.append(obj)
+    return runs
+
 
 def read_file_text(relpath):
     path = os.path.join(INSTANCE_REPO, relpath)
@@ -1669,6 +1721,8 @@ result = {
     "ledger_history": read_ledger_history(),
     "bridge_exit_streak": read_json("bridge/exit_streak.json"),
     "bridge_exits": read_jsonl("bridge/exits.jsonl"),
+    "bridge_runs": read_bridge_runs(),
+    "bridge_active_run": read_json("bridge/run.json"),
     "strategist_decisions": read_jsonl("strategist/decisions.jsonl"),
     "demand_futility": read_json("demand/futility.json"),
     "systemd_drift": read_systemd_drift(),
@@ -1731,6 +1785,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'bridge_runs': None,
+        'bridge_active_run': None,
         'strategist_decisions': None,
         'demand_futility': None,
         'systemd_drift': None,
@@ -1971,6 +2027,8 @@ def read_local_state(
         'reflections': [],
         'bridge_exit_streak': None,
         'bridge_exits': None,
+        'bridge_runs': None,
+        'bridge_active_run': None,
         'strategist_decisions': None,
         'demand_futility': None,
         'systemd_drift': {'status': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2091,6 +2149,57 @@ def read_local_state(
                 if isinstance(obj, dict) and obj.get('phase') in LEDGER_PHASES:
                     matched.append(obj)
         return matched
+
+    def read_bridge_runs_local() -> list[dict[str, Any]]:
+        """Issue #311: read bridge runs from state/bridge/runs.jsonl and daily
+        runs-YYYY-MM-DD.jsonl.gz archives for detecting killed/timeout runs."""
+        bridge_dir = root / 'bridge'
+        try:
+            names = sorted(p.name for p in bridge_dir.iterdir())
+        except OSError:
+            return []
+        cutoff = 0.0
+        try:
+            cutoff = time.mktime(time.strptime(
+                (datetime.now(timezone.utc) - timedelta(days=LEDGER_HISTORY_DAYS)).strftime('%Y-%m-%d'),
+                '%Y-%m-%d'))
+        except Exception:
+            cutoff = 0.0
+        runs: list[dict[str, Any]] = []
+        for name in reversed(names):
+            lines: list[str] = []
+            path = bridge_dir / name
+            try:
+                if name == 'runs.jsonl':
+                    with path.open('r', encoding='utf-8', errors='replace') as fh:
+                        lines = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                elif name.startswith('runs-') and name.endswith('.jsonl.gz'):
+                    day = name[len('runs-'):-len('.jsonl.gz')]
+                    try:
+                        file_ts = time.mktime(time.strptime(day, '%Y-%m-%d'))
+                    except Exception:
+                        continue
+                    if file_ts < cutoff:
+                        continue
+                    with gzip.open(path, 'rt', encoding='utf-8', errors='replace') as fh:
+                        lines = fh.readlines()
+                    mtimes.append(path.stat().st_mtime)
+                else:
+                    continue
+            except Exception:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if isinstance(obj, dict):
+                        runs.append(obj)
+                except Exception:
+                    continue
+        return runs
 
     def read_llm_stats_local() -> dict[str, Any]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
@@ -2681,6 +2790,8 @@ def read_local_state(
         'reflections': read_jsonl('reflector/reflections.jsonl'),
         'bridge_exit_streak': read_json('bridge/exit_streak.json'),
         'bridge_exits': read_jsonl('bridge/exits.jsonl'),
+        'bridge_runs': read_bridge_runs_local(),
+        'bridge_active_run': read_json('bridge/run.json'),
         'strategist_decisions': read_jsonl('strategist/decisions.jsonl'),
         'demand_futility': read_json('demand/futility.json'),
         'systemd_drift': read_systemd_drift_local(),
@@ -5663,6 +5774,100 @@ def _normalize_lesson_ref(value: Any) -> str:
     return reference
 
 
+
+def is_cycle_run_ended(
+    cid: str,
+    started_ts: str,
+    max_phase_ts: str,
+    bridge_runs: list[dict[str, Any]] | None,
+    ref_now: datetime,
+    *,
+    bridge_active_run: dict[str, Any] | None = None,
+    timeout_seconds: int = BRIDGE_UNIT_TIMEOUT_SECONDS,
+    explicit_now: bool = False,
+) -> tuple[bool, str]:
+    """Issue #311: a cycle run without a terminal row is not running if its
+    bridge unit has already finished (recorded killed/timeout in runs.jsonl,
+    subsequent run completed, or wall-clock ceiling exceeded)."""
+    s_dt = _parse_iso_ts(started_ts) if started_ts else None
+    if s_dt is not None and s_dt.tzinfo is None:
+        s_dt = s_dt.replace(tzinfo=timezone.utc)
+
+    if bridge_runs:
+        for run in bridge_runs:
+            if not isinstance(run, dict):
+                continue
+            run_cid = str(run.get("cycle_id") or "")
+            cls = str(run.get("classification") or run.get("outcome") or "ended")
+            exit_status = str(run.get("exit_status") or "")
+            is_timeout = (
+                cls in ("unit_timeout", "killed", "loop_breaker_abort")
+                or exit_status in ("TERM", "KILL")
+            )
+
+            r_start = _parse_iso_ts(str(run.get("started_at") or ""))
+            r_end = _parse_iso_ts(str(run.get("finished_at") or ""))
+            if r_start is not None and r_start.tzinfo is None:
+                r_start = r_start.replace(tzinfo=timezone.utc)
+            if r_end is not None and r_end.tzinfo is None:
+                r_end = r_end.replace(tzinfo=timezone.utc)
+
+            # A run belongs to this attempt only if it began at or after the
+            # attempt's started row. This prevents a completed retry with the
+            # same cycle_id from making a newer attempt look ended.
+            matches_cycle = bool(run_cid and (
+                run_cid == cid or run_cid == cid.replace("cycle-", "", 1)
+            ))
+            belongs_to_attempt = bool(
+                r_start and s_dt
+                and r_start >= s_dt - timedelta(seconds=BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS)
+                and (r_end is None or r_end >= s_dt)
+            )
+            if matches_cycle and belongs_to_attempt and (run.get("finished_at") or run.get("phase") == "run_end"):
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
+
+            # Legacy records lacked cycle_id; correlate them by time overlap.
+            if not run_cid and r_start and r_end and s_dt and r_start <= s_dt <= r_end:
+                if is_timeout:
+                    return True, f"unit timeout ({cls})"
+                return True, f"bridge unit ended ({cls})"
+
+            # 3. Subsequent bridge run completed
+            if r_start and s_dt:
+                if r_start.tzinfo is None:
+                    r_start = r_start.replace(tzinfo=timezone.utc)
+                if r_start > s_dt:
+                    if run.get("finished_at") or run.get("phase") == "run_end":
+                        return True, "subsequent bridge run completed"
+
+    if bridge_active_run and isinstance(bridge_active_run, dict):
+        act_cid = str(bridge_active_run.get("cycle_id") or "")
+        if act_cid and act_cid != cid and act_cid != cid.replace("cycle-", "", 1):
+            act_start = _parse_iso_ts(str(bridge_active_run.get("started_at") or ""))
+            if act_start and s_dt:
+                if act_start.tzinfo is None:
+                    act_start = act_start.replace(tzinfo=timezone.utc)
+                if act_start > s_dt:
+                    return True, "subsequent bridge run active"
+
+    # 4. Wall-clock ceiling (systemd TimeoutStartSec) is measured from the
+    # attempt start, not the most recent ledger activity. Later phases do not
+    # extend the systemd unit's deadline.
+    if bridge_runs is not None or explicit_now:
+        act_dt = s_dt
+        if act_dt is not None:
+            if ref_now.tzinfo is None:
+                ref_now = ref_now.replace(tzinfo=timezone.utc)
+            age = (ref_now - act_dt).total_seconds()
+            if age > timeout_seconds:
+                return True, f"wall-clock timeout ({int(age // 60)}m > {timeout_seconds // 60}m ceiling)"
+
+    return False, ""
+
+
+
 def build_cycle_feed(
     ledger_tail: list[dict[str, Any]] | None,
     demand_completed: dict[str, Any] | None = None,
@@ -5675,6 +5880,8 @@ def build_cycle_feed(
     ledger_history: list[Any] | None = None,
     now: datetime | None = None,
     archive_out: list[str] | None = None,
+    bridge_runs: list[dict[str, Any]] | None = None,
+    bridge_active_run: dict[str, Any] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -5807,6 +6014,66 @@ def build_cycle_feed(
 
         files_changed = all_files
 
+        # Issue #311: select the latest attempt chronologically. Ledger readers
+        # may concatenate active and rotated rows in non-chronological order.
+        started_rows = [
+            (i, _parse_iso_ts(str(p.get('ts') or "")))
+            for i, p in enumerate(phases)
+            if isinstance(p, dict) and p.get('phase') == 'started'
+        ]
+        valid_starts = [(i, ts) for i, ts in started_rows if ts is not None]
+        malformed_starts = [i for i, ts in started_rows if ts is None]
+        latest_valid = max(valid_starts, key=lambda item: item[1]) if valid_starts else None
+        # Source order is not recency: read_ledger_history appends live rows
+        # before archives. Estimate each malformed boundary's recency from the
+        # first parseable phase timestamp after it, never from its concatenated
+        # list index. This lets a malformed live start outrank a valid older
+        # archived start while preserving same-source malformed retry behavior.
+        malformed_recency = []
+        for start_idx in malformed_starts:
+            following_ts = next((
+                _parse_iso_ts(str(p.get('ts') or ""))
+                for p in phases[start_idx + 1:]
+                if isinstance(p, dict) and _parse_iso_ts(str(p.get('ts') or "")) is not None
+            ), None)
+            malformed_recency.append((start_idx, following_ts))
+        latest_malformed = max(
+            malformed_recency,
+            key=lambda item: item[1] or datetime.min.replace(tzinfo=timezone.utc),
+        ) if malformed_recency else None
+        if latest_malformed is not None and (
+            latest_valid is None
+            or latest_malformed[1] is None
+            or latest_malformed[1] >= latest_valid[1]
+        ):
+            last_started_idx = latest_malformed[0]
+            malformed_ts = latest_malformed[1]
+            if malformed_ts is None:
+                attempt_phases = phases[last_started_idx:]
+            else:
+                # The malformed start has a later event time than the archive
+                # start, so select the latest attempt by that evidence, then
+                # keep only timestamped phases from that boundary onward.
+                timestamped_attempt_phases = []
+                for p in phases[last_started_idx:]:
+                    phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                    if phase_ts is not None and phase_ts >= malformed_ts:
+                        timestamped_attempt_phases.append((phase_ts, p))
+                attempt_phases = [
+                    p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])
+                ]
+        elif latest_valid is not None:
+            last_started_idx, latest_start = latest_valid
+            timestamped_attempt_phases = []
+            for p in phases:
+                phase_ts = _parse_iso_ts(str(p.get('ts') or ""))
+                if phase_ts is not None and phase_ts >= latest_start:
+                    timestamped_attempt_phases.append((phase_ts, p))
+            attempt_phases = [p for _phase_ts, p in sorted(timestamped_attempt_phases, key=lambda item: item[0])]
+        else:
+            last_started_idx = started_rows[-1][0] if started_rows else None
+            attempt_phases = phases[last_started_idx:] if last_started_idx is not None else phases
+
         # Scan phases for most decisive outcome and reason
         # Precedence: outcome > gate fail > proposer_reject > dedup > idle > started
         gate_fail_reason = ''
@@ -5819,7 +6086,7 @@ def build_cycle_feed(
         push_attempts: str | None = None
         pushed_late = False
 
-        for p in phases:
+        for p in attempt_phases:
             if not ts_val and p.get('ts'):
                 ts_val = str(p.get('ts'))
             phase_name = p.get('phase')
@@ -5911,10 +6178,30 @@ def build_cycle_feed(
                     if p.get('reason'):
                         outcome_reason = str(p.get('reason'))
                         reason = outcome_reason
+                elif st in ('paused-supplier', 'paused_supplier'):
+                    outcome_kind = 'failed'
+                    outcome_reason = str(p.get('reason') or 'paused-supplier')
+                    reason = outcome_reason
                 if p.get('delta') is not None:
                     metric_delta = str(p.get('delta'))
                 elif p.get('metric_delta') is not None:
                     metric_delta = str(p.get('metric_delta'))
+
+        # Issue #311: check if an in-progress cycle run without a terminal row has already ended
+        if outcome_kind == 'in_progress':
+            started_ts = ''
+            if last_started_idx is not None and phases[last_started_idx].get('ts'):
+                started_ts = str(phases[last_started_idx]['ts'])
+            max_phase_ts = _max_ts(attempt_phases) or ts_val or started_ts
+            is_ended, ended_reason = is_cycle_run_ended(
+                cid, started_ts, max_phase_ts, bridge_runs, ref_now,
+                bridge_active_run=bridge_active_run,
+                timeout_seconds=BRIDGE_UNIT_TIMEOUT_SECONDS,
+                explicit_now=(now is not None),
+            )
+            if is_ended:
+                outcome_kind = 'incomplete'
+                reason = ended_reason
 
         # In Lane B, nodes can be referenced by cycle_id or sha
         tree_node_match = tree_by_cycle.get(cid) or tree_by_sha.get(cid)
@@ -5980,6 +6267,9 @@ def build_cycle_feed(
             # its own neutral pill.
             badge_class = 'badge-abandoned'
             outcome_label = f'ABANDONED{(": " + reason) if reason else ""}'
+        elif outcome_kind == 'incomplete':
+            badge_class = 'badge-failed'
+            outcome_label = f'KILLED / INCOMPLETE{(": " + reason) if reason else ""}'
 
         # No work commit? Use recorded task title; an integrated cycle with
         # neither should say so explicitly rather than presenting bare success.
@@ -5993,7 +6283,14 @@ def build_cycle_feed(
 
         # If title is missing from cycle_titles/merge commits, derive human-readable reason
         if not title:
-            if outcome_status:
+            for p in phases:
+                if isinstance(p, dict) and p.get('phase') == 'proposed' and p.get('task_title'):
+                    title = str(p['task_title']).strip()
+                    break
+        if not title:
+            if outcome_kind == 'incomplete':
+                derived_title = f"killed: {reason}" if reason else "killed / incomplete: no terminal row"
+            elif outcome_status:
                 if outcome_reason:
                     derived_title = f"{outcome_status}: {outcome_reason}"
                 elif outcome_status == 'partial':
@@ -6130,7 +6427,7 @@ def build_cycle_feed(
                 # #297: pushed_late folds into 'integrated' above (a delayed
                 # success, not its own bucket) -- no chip for it. superseded
                 # and abandoned are their own neutral outcomes.
-                'superseded', 'abandoned', 'running',
+                'superseded', 'abandoned', 'incomplete', 'running',
             )
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
@@ -8691,6 +8988,7 @@ CSS = '''
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {
       display: flex;
@@ -9316,6 +9614,7 @@ CSS = '''
     .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
     .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
     .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-incomplete { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
@@ -9468,15 +9767,36 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 def _generator_sha() -> str:
     """Return the generator's git short SHA.
 
-    Preference order (issue #101):
-    1. Module-level ``_BAKED_GENERATOR_SHA`` — non-empty when set at deploy
-       time via ``sed -i``, so no git repo is required on the host.
-    2. ``git rev-parse --short HEAD`` — works when running directly from the
+    Preference order:
+    1. File ``GENERATOR_SHA`` written by eeebot-techtree-sync.sh (issue #325).
+    2. Module-level ``_BAKED_GENERATOR_SHA`` — legacy sentinel (issue #101),
+       non-empty when set at deploy time via ``sed -i``.
+    3. ``git rev-parse --short HEAD`` — works when running directly from the
        repo (operator workstation / CI).
-    3. ``'unknown'`` — neither source is available.
+    4. ``'unknown'`` — none available.
     """
+    candidates: list[Path] = []
+    import os
+    env_file = os.environ.get("GENERATOR_SHA_FILE")
+    if env_file:
+        candidates.append(Path(env_file))
+    here = Path(__file__).resolve()
+    candidates.append(here.parent.parent / "GENERATOR_SHA")
+    candidates.append(here.parent / "GENERATOR_SHA")
+    candidates.append(Path("/opt/eeebot-techtree/GENERATOR_SHA"))
+
+    for path in candidates:
+        try:
+            if path.is_file():
+                raw = path.read_text(encoding="utf-8").strip()
+                if re.fullmatch(r"[0-9a-fA-F]{40}", raw):
+                    return raw[:7]
+                continue
+        except Exception:
+            pass
+
     if _BAKED_GENERATOR_SHA:
-        return _BAKED_GENERATOR_SHA
+        return _BAKED_GENERATOR_SHA[:7]
     try:
         repo_dir = Path(__file__).resolve().parent.parent
         result = subprocess.run(
@@ -9486,7 +9806,7 @@ def _generator_sha() -> str:
             timeout=5,
             cwd=str(repo_dir),
         )
-        return result.stdout.strip() if result.returncode == 0 else 'unknown'
+        return result.stdout.strip()[:7] if result.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'
 
@@ -9638,6 +9958,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
         rendered_lesson_ids=rendered_lesson_ids,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
     daily_digest = build_daily_digest(
         ledger_tail=ledger_tail,
@@ -9680,7 +10002,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
-        generator_sha=generator_sha or 'unknown',
+        generator_sha=esc(str(generator_sha or 'unknown')[:7]),
     )
 
 
@@ -9888,6 +10210,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     digest (computed over all sources) still triggers on any input change."""
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    now_dt = _parse_iso_ts(str(generated_at)) or datetime.now(timezone.utc)
 
     portfolio = data.get('portfolio')
     scorecard = data.get('scorecard')
@@ -10004,6 +10327,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
         archive_out=cycles_archive_rows,
+        now=now_dt,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
@@ -10032,7 +10358,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
-                          computed_note, error_note, titles_note, generator_sha or 'unknown')
+                          computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
 
     teaser_html = _index_teasers(data, ledger_tail, evolution_tree, hypotheses)
     teaser_feed = build_cycle_feed(
@@ -10042,6 +10368,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        now=now_dt,
+        bridge_runs=data.get('bridge_runs'),
+        bridge_active_run=data.get('bridge_active_run'),
     )
 
     pages: dict[str, str] = {
@@ -10201,14 +10530,32 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> None:
+# Increment when inherited base64/gzip/UTF-8 decoding semantics change.
+_INHERITED_BLOB_DECODER_VERSION = "1"
+
+
+def _inspect_and_scan_inherited_tree(
+    base_tree: str,
+    uploaded_paths: set[str] | dict[str, str],
+    scan_cache: dict[str, bool] | None = None,
+) -> None:
     """ADR-036 rule 3: verify full target tree recursively (fail-closed)."""
     import base64
     import json as _json
     try:
-        from scripts.publish_scan import scan_pages, PublicationScanError
+        from scripts.publish_scan import (
+            PublicationScanError,
+            cache_contains_clean,
+            is_allowed_publish_path,
+            scan_pages,
+        )
     except ImportError:
-        from publish_scan import scan_pages, PublicationScanError
+        from publish_scan import (
+            PublicationScanError,
+            cache_contains_clean,
+            is_allowed_publish_path,
+            scan_pages,
+        )
 
     if not base_tree:
         raise PublicationScanError(
@@ -10242,13 +10589,32 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
         raise PublicationScanError(
             "Publication rejected (ADR-036 rule 3): target tree object is null or missing"
         )
+    if not isinstance(entries, list):
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): target tree is not a list (invalid schema): {type(entries).__name__}"
+        )
 
     inherited_pages = {}
+    inherited_blob_shas: dict[str, str] = {}
     for item in entries:
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
             sha = item.get('sha')
-            if path and sha and path not in pages:
+            if path:
+                if not is_allowed_publish_path(path):
+                    raise PublicationScanError(
+                        f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
+                    )
+            if path and sha and path not in uploaded_paths:
+                if cache_contains_clean(
+                    scan_cache,
+                    sha,
+                    mode="json" if path.lower().endswith(".json") else "html",
+                    extra_version=_INHERITED_BLOB_DECODER_VERSION,
+                ):
+                    # The blob SHA is content-addressed and cache key includes
+                    # scanner version; avoid fetching it again only after a clean scan.
+                    continue
                 b_res = _gh(['api', f'repos/{PUBLISH_REPO}/git/blobs/{sha}'])
                 if b_res.returncode != 0:
                     raise PublicationScanError(
@@ -10256,25 +10622,186 @@ def _inspect_and_scan_inherited_tree(base_tree: str, pages: dict[str, str]) -> N
                     )
                 try:
                     b_json = _json.loads(b_res.stdout)
+                    if not isinstance(b_json, dict) or "content" not in b_json or b_json["content"] is None:
+                        raise PublicationScanError(
+                            f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
+                        )
                     raw = b_json.get('content', '')
                     enc = b_json.get('encoding', '')
                     if enc == 'base64':
-                        txt = base64.b64decode(raw).decode('utf-8', errors='replace')
+                        raw_bytes = base64.b64decode(raw)
+                        if raw_bytes.startswith(b'\x1f\x8b'):
+                            import zlib
+                            try:
+                                max_decompressed_bytes = 20 * 1024 * 1024
+                                chunks = []
+                                total = 0
+                                remaining = raw_bytes
+                                while remaining:
+                                    decompressor = zlib.decompressobj(wbits=31)
+                                    chunk = decompressor.decompress(
+                                        remaining, max_decompressed_bytes - total + 1
+                                    )
+                                    total += len(chunk)
+                                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(chunk)
+                                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                                    total += len(tail)
+                                    if total > max_decompressed_bytes:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                                        )
+                                    chunks.append(tail)
+                                    # Gzip members concatenate byte-for-byte; do not insert
+                                    # separators that could split a credential across lines.
+                                    if not decompressor.eof:
+                                        raise PublicationScanError(
+                                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                                        )
+                                    remaining = decompressor.unused_data
+                                raw_bytes = b''.join(chunks)
+                            except PublicationScanError:
+                                raise
+                            except Exception as gz_exc:
+                                raise PublicationScanError(
+                                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
+                                ) from gz_exc
+                        try:
+                            txt = raw_bytes.decode('utf-8')
+                        except UnicodeDecodeError as u_exc:
+                            raise PublicationScanError(
+                                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {u_exc}"
+                            ) from u_exc
                     else:
                         txt = raw
                     inherited_pages[path] = txt
+                    inherited_blob_shas[path] = sha
+                except PublicationScanError:
+                    raise
                 except Exception as exc:
                     raise PublicationScanError(
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
-        scan_pages(inherited_pages)
+        scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
+
+
+def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
+    """Return True if GitHub API explicitly confirmed the branch is missing (404 / Not Found)."""
+    msg = f"{res.stderr} {res.stdout}".lower()
+    return "404" in msg or "not found" in msg or "branch not found" in msg
+
+
+def _ensure_pages_enabled() -> bool:
+    """Enable Pages on gh-pages if not already; return False if activation failed."""
+    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
+    if pages_enabled.returncode != 0:
+        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
+                      '--input', '-'],
+                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
+        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
+            print(f'publish: Pages enable failed: {enable.stderr.strip()[:200]}', file=sys.stderr)
+            return False
+    return True
+
+
+def _dry_run_pages(
+    pages: dict[str, str],
+    previous_fingerprints: dict[str, str] | None,
+    scan_cache: dict[str, bool] | None = None,
+) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: inspect dry run without remote mutation."""
+    import json as _json
+    try:
+        from scripts.publish_scan import PublicationScanError
+    except ImportError:
+        from publish_scan import PublicationScanError
+
+    branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+    if branch_probe.returncode != 0:
+        if _is_confirmed_not_found(branch_probe):
+            print(f'publish: [dry-run] {PUBLISH_BRANCH} does not exist yet; target tree is clean')
+            return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): cannot probe {PUBLISH_BRANCH} during dry-run (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}"
+        )
+    try:
+        head_data = _json.loads(branch_probe.stdout)
+        probe_tree = head_data['commit']['commit']['tree']['sha']
+    except Exception as exc:
+        raise PublicationScanError(
+            f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
+        ) from exc
+    prev_fp = previous_fingerprints or {}
+    uploaded = {
+        fname for fname, html in pages.items()
+        if prev_fp.get(fname) != _page_fingerprint(html)
+    }
+    _inspect_and_scan_inherited_tree(probe_tree, uploaded, scan_cache)
+    return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+
+
+def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]:
+    """ADR-036 rule 3: bootstrap gh-pages from clean orphan tree, never master."""
+    import base64
+    import json as _json
+    tree_entries = []
+    fingerprints: dict[str, str] = {}
+    for fname, html in sorted(pages.items()):
+        fingerprints[fname] = _page_fingerprint(html)
+        blob_b64 = base64.b64encode(html.encode('utf-8')).decode('ascii')
+        blob_body = _json.dumps({'content': blob_b64, 'encoding': 'base64'})
+        blob = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/blobs',
+                    '--input', '-', '--jq', '.sha'], input_text=blob_body)
+        if blob.returncode != 0:
+            print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}', file=sys.stderr)
+            return 1, {}
+        tree_entries.append({
+            'path': fname, 'mode': '100644', 'type': 'blob', 'sha': blob.stdout.strip()
+        })
+
+    tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees', '--input', '-'],
+               input_text=_json.dumps({'tree': tree_entries}))
+    if tree.returncode != 0:
+        print(f'publish: initial tree creation failed: {tree.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        tree_sha = _json.loads(tree.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial tree response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits', '--input', '-'],
+                 input_text=_json.dumps({'tree': tree_sha, 'message': 'publish: initial site', 'parents': []}))
+    if commit.returncode != 0:
+        print(f'publish: initial commit failed: {commit.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+    try:
+        commit_sha = _json.loads(commit.stdout)['sha']
+    except Exception as exc:
+        print(f'publish: unparseable initial commit response: {exc}', file=sys.stderr)
+        return 1, {}
+
+    made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
+                '-f', f'ref=refs/heads/{PUBLISH_BRANCH}', '-f', f'sha={commit_sha}'])
+    if made.returncode != 0:
+        print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
+        return 1, {}
+
+    if not _ensure_pages_enabled():
+        return 1, {}
+    print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
+    return 0, fingerprints
 
 
 def publish_to_pages(
     pages: 'dict[str, str] | str',
     *,
     previous_fingerprints: 'dict[str, str] | None' = None,
+    scan_cache: 'dict[str, bool] | None' = None,
     dry_run: bool = False,
 ) -> 'tuple[int, dict[str, str]]':
     """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
@@ -10310,44 +10837,22 @@ def publish_to_pages(
 
     pages = dict(pages)
     # ADR-036 rule 3: scan new pages unconditionally before blob creation
-    scan_pages(pages)
+    scan_pages(pages, clean_cache=scan_cache)
     previous_fingerprints = previous_fingerprints or {}
     # (#208: the former "copy vendor files when a page references assets/vendor/"
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
-    # Branch may not exist yet: bootstrap it from the default branch HEAD.
+    if dry_run:
+        return _dry_run_pages(pages, previous_fingerprints, scan_cache)
+
+    # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
-        head = _gh(['api', f'repos/{PUBLISH_REPO}/git/ref/heads/master',
-                    '--jq', '.object.sha'])
-        if head.returncode != 0:
-            print(f'publish: cannot resolve master HEAD: {head.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-        made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
-                    '-f', f'ref=refs/heads/{PUBLISH_BRANCH}',
-                    '-f', f'sha={head.stdout.strip()}'])
-        if made.returncode != 0:
-            print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}',
-                  file=sys.stderr)
-            return 1, {}
-
-    if dry_run:
-        probe = branch_probe if branch_probe.returncode == 0 else _gh(['api', f'repos/{PUBLISH_REPO}/branches/master'])
-        if probe.returncode != 0:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): cannot read branch for dry-run inspection: {probe.stderr.strip()[:200]}"
-            )
-        try:
-            import json as _json
-            head_data = _json.loads(probe.stdout)
-            probe_tree = head_data['commit']['commit']['tree']['sha']
-        except Exception as exc:
-            raise PublicationScanError(
-                f"Publication rejected (ADR-036 rule 3): unparseable branch HEAD during dry-run: {exc}"
-            ) from exc
-        _inspect_and_scan_inherited_tree(probe_tree, pages)
-        return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
+        if _is_confirmed_not_found(branch_probe):
+            return _bootstrap_clean_branch(pages)
+        print(f'publish: cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}',
+              file=sys.stderr)
+        return 1, {}
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -10382,6 +10887,22 @@ def publish_to_pages(
         tree_entries.append(entry)
 
     if not tree_entries:
+        # ADR-036: Scan base_tree even when 0 pages changed ('nothing to publish')
+        import json as _json
+        head = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
+        if head.returncode != 0:
+            print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
+                  file=sys.stderr)
+            return 1, {}
+        try:
+            head_data = _json.loads(head.stdout)
+            base_tree = head_data['commit']['commit']['tree']['sha']
+        except Exception as exc:
+            raise PublicationScanError(
+                f"Publication rejected (ADR-036 rule 3): unparseable {PUBLISH_BRANCH} HEAD: {exc}"
+            ) from exc
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths=set(), scan_cache=scan_cache)
+
         # #278: every page's normalized content matched last publish's --
         # nothing to commit. should_publish's tree digest gate normally
         # prevents reaching publish_to_pages at all in that case, but a
@@ -10422,7 +10943,8 @@ def publish_to_pages(
             ) from exc
 
         # ADR-036 rule 3: scan base_tree for this attempt unconditionally
-        _inspect_and_scan_inherited_tree(base_tree, pages)
+        uploaded_paths = {entry['path'] for entry in tree_entries}
+        _inspect_and_scan_inherited_tree(base_tree, uploaded_paths, scan_cache)
 
         tree_payload = {'tree': tree_entries, 'base_tree': base_tree}
         tree = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/trees',
@@ -10464,16 +10986,8 @@ def publish_to_pages(
         print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
               f're-reading and retrying', file=sys.stderr)
 
-    # Enable Pages on gh-pages if not already (idempotent; 409 = already on).
-    pages_enabled = _gh(['api', f'repos/{PUBLISH_REPO}/pages'])
-    if pages_enabled.returncode != 0:
-        enable = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/pages',
-                      '--input', '-'],
-                     input_text='{"source":{"branch":"gh-pages","path":"/"}}')
-        if enable.returncode != 0 and '409' not in (enable.stderr or ''):
-            print(f'publish: Pages enable failed (page pushed anyway): '
-                  f'{enable.stderr.strip()[:200]}', file=sys.stderr)
-
+    if not _ensure_pages_enabled():
+        return 1, {}
     print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
           f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
     return 0, fingerprints
