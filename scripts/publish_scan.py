@@ -345,16 +345,38 @@ _RULE_CACHE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*:[0-9a-f]{64}:(?:html|json):(?
 # with the rule count so the intended page-level capacity is preserved.
 _CACHE_PAGE_CAP = 256
 
+# A fixed, generous ceiling for validate_clean_cache's size sanity check --
+# NOT tied to today's live rule count, so a rule REMOVAL (which shrinks
+# _cache_entry_bound()) can never wholesale-reject an otherwise-valid,
+# merely-larger-than-the-new-bound cache. Headroom for far more rules
+# than exist today; scan_pages's own pruning still rightsizes to the
+# live bound afterward.
+_CACHE_VALIDATE_CEILING = _CACHE_PAGE_CAP * 128
+
 
 def _cache_entry_bound() -> int:
     return _CACHE_PAGE_CAP * len(rule_names())
 
 
 def validate_clean_cache(value: Any) -> dict[str, bool]:
-    """Return a safe cache or empty mapping; any malformed entry invalidates all."""
+    """Return a safe cache or empty mapping; any malformed entry invalidates
+    all -- format only. Size is checked against a stable, generous ceiling
+    (``_CACHE_VALIDATE_CEILING``), never the live, rule-count-scaled
+    ``_cache_entry_bound()``.
+
+    Codex re-check on PR #343 (P2): rejecting against the LIVE bound meant
+    a release that removes even one rule shrinks the bound and can
+    wholesale-wipe a cache that was merely a bit larger than the new,
+    smaller bound -- every remaining rule's still-valid approval lost,
+    forcing a full cold scan of every page. ``scan_pages``'s own pruning
+    step (rule-name + version matching, run AFTER this validation)
+    already rightsizes to the live bound and correctly drops entries for
+    a removed rule; this check only needs to catch genuinely malformed or
+    absurdly oversized input, not track the exact current rule count.
+    """
     if not isinstance(value, dict):
         return {}
-    if len(value) > _cache_entry_bound() or any(
+    if len(value) > _CACHE_VALIDATE_CEILING or any(
         not isinstance(key, str) or not _RULE_CACHE_KEY_RE.fullmatch(key) or clean is not True
         for key, clean in value.items()
     ):
