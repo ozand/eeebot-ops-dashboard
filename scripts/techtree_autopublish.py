@@ -270,6 +270,7 @@ def save_publish_state(
     clean_scan_cache: dict[str, bool] | None = None,
     changed_publish_durations_seconds: list[float] | None = None,
     publish_duration_warning: str | None = None,
+    published: bool = True,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -307,11 +308,18 @@ def save_publish_state(
             os.fsync(fh.fileno())
         os.replace(tmp_path, state_dir / STATE_FILENAME)
     except OSError as exc:
+        # `published=False` is the failed-attempt save (rc!=0 or a raised
+        # scanner refusal): nothing reached gh-pages, so the journal must not
+        # claim a successful publish.
+        outcome = (
+            'the page just published successfully, but every future cycle '
+            'will republish unnecessarily until this is fixed'
+            if published else
+            'this attempt did not publish; its duration telemetry is lost'
+        )
         print(
             f'techtree-autopublish: FAILED to save publish state to {state_dir} '
-            f'({exc.__class__.__name__}: {exc}) -- the page just published '
-            'successfully, but every future cycle will republish unnecessarily '
-            'until this is fixed',
+            f'({exc.__class__.__name__}: {exc}) -- {outcome}',
             file=sys.stderr,
         )
 
@@ -631,6 +639,7 @@ def run(args: argparse.Namespace) -> int:
             clean_scan_cache=state.get('clean_scan_cache'),
             changed_publish_durations_seconds=updated['changed_publish_durations_seconds'],
             publish_duration_warning=warning,
+            published=False,
         )
 
     try:

@@ -181,6 +181,35 @@ def test_run_records_duration_when_publication_scan_raises(
     assert persisted['page_fingerprints'] == {'index.html': 'old-fp'}
 
 
+def test_failed_attempt_state_save_error_does_not_claim_publish(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    # Codex P2 on #342 (47e52cdf): a refused publish whose state save fails
+    # must not log "the page just published successfully".
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    state_dir = tmp_path / 'publisher-state'
+    ap.save_publish_state(state_dir, digest='stale', published_at=1.0)
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
+
+    def refuse(pages, **kwargs):
+        raise PublicationScanError('refused: secret-shaped content')
+
+    def unwritable(*_args, **_kwargs):
+        raise PermissionError('read-only state dir')
+
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', refuse)
+    monkeypatch.setattr(ap.os, 'replace', unwritable)
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    with pytest.raises(PublicationScanError):
+        ap.run(args)
+    err = capsys.readouterr().err
+    assert 'FAILED to save publish state' in err
+    assert 'published successfully' not in err
+    assert 'did not publish' in err
+
+
 def test_run_persists_three_changed_slow_warning_while_unchanged_run_does_not_count(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
 ) -> None:
