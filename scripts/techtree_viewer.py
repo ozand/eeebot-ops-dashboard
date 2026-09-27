@@ -6058,11 +6058,31 @@ def build_cycle_feed(
             malformed_recency,
             key=lambda item: item[1] or datetime.min.replace(tzinfo=timezone.utc),
         ) if malformed_recency else None
-        if latest_malformed is not None and (
-            latest_valid is None
-            or latest_malformed[1] is None
-            or latest_malformed[1] >= latest_valid[1]
-        ):
+        malformed_is_newer = latest_valid is None
+        if latest_malformed is not None and latest_valid is not None:
+            malformed_ts = latest_malformed[1]
+            if malformed_ts is not None:
+                malformed_is_newer = malformed_ts >= latest_valid[1]
+            else:
+                malformed_source = phases[latest_malformed[0]].get('_ledger_source')
+                valid_source = phases[latest_valid[0]].get('_ledger_source')
+                source_order = list(dict.fromkeys(
+                    p.get('_ledger_source') for p in phases
+                    if isinstance(p, dict) and p.get('_ledger_source')
+                ))
+                if malformed_source in source_order and valid_source in source_order:
+                    malformed_is_newer = (
+                        source_order.index(malformed_source) < source_order.index(valid_source)
+                        or (
+                            malformed_source == valid_source
+                            and latest_malformed[0] > latest_valid[0]
+                        )
+                    )
+                else:
+                    # Without source metadata retain the legacy conservative
+                    # behavior: an unparseable later start outranks a valid one.
+                    malformed_is_newer = True
+        if latest_malformed is not None and malformed_is_newer:
             last_started_idx = latest_malformed[0]
             malformed_ts = latest_malformed[1]
             if malformed_ts is None:
