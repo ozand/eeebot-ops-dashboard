@@ -292,6 +292,7 @@
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {
       display: flex;
@@ -917,6 +918,7 @@
     .badge-push-pending { background: rgba(224, 166, 76, 0.2); color: #e0a64c; border: 1px solid #e0a64c; }
     .badge-superseded { background: rgba(122, 139, 168, 0.18); color: #7a8ba8; border: 1px solid #7a8ba8; }
     .badge-abandoned { background: rgba(139, 127, 168, 0.18); color: #8b7fa8; border: 1px solid #8b7fa8; }
+    .badge-incomplete { background: rgba(178, 58, 58, 0.2); color: #e06c75; border: 1px solid #b23a3a; }
     .badge-stale { background: rgba(139, 150, 173, 0.15); color: #9db4a6; border: 1px solid #3d6b52; }
     .badge-researching { background: rgba(86, 211, 100, 0.22); color: #56d364; border: 1px solid #56d364; }
     .badge-available { background: rgba(139, 150, 173, 0.18); color: #c6dacc; border: 1px solid #3d6b52; }
@@ -1366,7 +1368,7 @@
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">148</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">39.7%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-09-27 04:42:46 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">24.7%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">24.7%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">18 events · 12 tasks · 4.8%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">4 events · 1 tasks · 1.1%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">79 events · 5 tasks · 20.9%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">8.5% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">1.1M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">4 cycle(s) / 14m</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790474319.169" data-render-age-seconds="146">data: 2m old &middot; generated 02:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790475301.167" data-render-age-seconds="43">data: 42s old &middot; generated 02:15 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1420,10 +1422,10 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 4.2h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 1m/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 5.7h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-22T00:00:10 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
-        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-09-27T02:00:52.029781Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-09-27 04:57:38 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-09-27 04:52:15 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-09-27 04:51:48 MSK</li></ul></div>
+        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-09-27T02:15:30.454447Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-09-27 05:08:24 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-09-27 04:52:15 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-09-27 05:06:15 MSK</li></ul></div>
         <div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">12 defect(s), scanned 2026-09-27 02:00:00 MSK</span><ul class="systemd-drift-findings"><li class="systemd-drift-defect">installed, not in release: <code>eeebot-techtree-publish.service.d/20-timeout.conf</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-agent-workspace-export@.service</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-agent-workspace-export@.timer</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-monitor.service</code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code>eeepc-monitor.timer</code> (owner: unknown)</li><li>installed, not in release: <code>eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf</code> (owner: dashboard)</li><li>installed, not in release: <code>eeepc-self-evolving-subagent-bridge.timer.d/preset.conf</code> (owner: preset)</li><li class="systemd-drift-defect">stray backup file: <code>eeebot-daily-verdict.service.bak-20260924</code></li><li class="systemd-drift-defect">stray backup file: <code>eeebot-techtree-publish.service.10-state-read.conf.bak-20260924T103214Z</code></li><li class="systemd-drift-defect">stray backup file: <code>eeebot-techtree-publish.service.sync.conf.bak-20260924T103214Z</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-agent-health.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-agent.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-self-evolving-subagent-bridge.service.bak-20260817-880</code></li><li class="systemd-drift-defect">stray backup file: <code>eeepc-strong-reflection.service.bak-20260817-880</code></li></ul></div>
         <div class="now-item"><span class="now-label">Local CI:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">pass: 80 passed, 2 warnings in 40.27s</span></div>
-        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 1229 recent calls checked</span></div>
+        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 1239 recent calls checked</span></div>
         <div class="now-item"><span class="now-label">Artifact Graph:</span> <span class="badge badge-available">242 artifacts</span> <span class="badge badge-available">52 ready</span> <span class="badge badge-available">190 leaves</span><div class="now-sub">oldest leaves: <code>scripts/analyze_cycle_duration.py</code>, <code>scripts/analyze_pass_streak.py</code>, <code>scripts/backlog_health.py</code>, <code>scripts/benchmark_api_latency.py</code>, <code>scripts/benchmark_cpu.py</code></div></div>
         
         <details class="failed-exits-details" open>
@@ -1458,16 +1460,16 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
         <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-5d4fbfa72b62">
           <div class="feed-header">
             <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <strong class="feed-title">Extend select_test_runner.py to resolve companion test paths and disallow whole-suite directory runs</strong>
             <span class="feed-cid copyable" translate="no">(cycle-5d4fbfa72b62)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-5d4fbfa72b62">details</a>
             
             
-            <span class="feed-ts" title="2026-09-27T01:48:42.194218Z">04:48 MSK</span>
+            <span class="feed-ts" title="2026-09-27T01:52:04.205964Z">04:52 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-44ac39a76e51</span> &middot; <a class="lesson-link" href="lessons.html#q-LESS-REF-c871bf9abe41-8608">lesson:LESS-REF-c871bf9abe41-8608</a></div>
           
-          <div class="feed-cost">&#9889; 3 calls &middot; 16.11K tok &middot; dur 6m9s</div>
+          <div class="feed-cost">&#9889; 14 calls &middot; 188.0K tok &middot; dur 19m58s</div>
         </li>
         
         <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-c0c97fc0206b">
@@ -1478,7 +1480,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c0c97fc0206b">details</a>
             
             <a href="lineage.html#node-5e46377" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-27T00:46:55.852935Z">03:46 MSK</span>
+            <span class="feed-ts" title="2026-09-27T00:50:25.972764Z">03:50 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-2946e891a38f</span></div>
           <div class="feed-files">&#128193; diary/2026-09-27.md, scripts/insert_diary_entry.py, tests/test_insert_diary_entry.py</div>
@@ -1493,7 +1495,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
             <a class="cycle-detail-link" href="cycle.html?id=cycle-8d87bcc424d1">details</a>
             
             <a href="lineage.html#node-3f55b1b" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-09-26T23:57:46.146185Z">02:57 MSK</span>
+            <span class="feed-ts" title="2026-09-27T00:01:07.607772Z">03:01 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-d928cfc1b7ed</span></div>
           <div class="feed-files">&#128193; diary/2026-09-27.md, scripts/filter_git_paths.py, tests/test_filter_git_paths.py</div>
@@ -1504,7 +1506,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
     </section>
     
 </main>
-<footer class="page-footer">generator aac68fb · generated 2026-09-27 02:01:05 UTC &middot; host eeepc &middot; newest source 2m old &middot; <span class="footer-computed">scorecard computed 2026-09-27 04:42:46 MSK</span></footer>
+<footer class="page-footer">generator 402d509 · generated 2026-09-27 02:15:44 UTC &middot; host eeepc &middot; newest source 42s old &middot; <span class="footer-computed">scorecard computed 2026-09-27 04:42:46 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
