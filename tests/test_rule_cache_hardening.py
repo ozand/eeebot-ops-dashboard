@@ -19,7 +19,71 @@ def test_duplicate_and_reserved_rule_names_fail_closed():
     with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
         ps.validate_rule_names(("json_secret_field", "json_secret_field"))
     with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
+        ps.validate_rule_names(("json_secret_field",))
+    with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
         ps.validate_rule_names(("env_secret_kv",))
+
+
+def test_rule_names_rejects_reserved_name_after_runtime_rule_replacement(monkeypatch):
+    reserved = ps.SecretPattern("json_secret_field", re.compile("NO_MATCH"), "bad")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (reserved,))
+    with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
+        ps.rule_names()
+
+
+def test_shared_fingerprint_getsource_failure_disables_cache_and_logs(monkeypatch, capsys):
+    page = {"index.html": "ordinary content safe to publish"}
+    extra = ps.inherited_blob_decoder_version()
+    approved = {
+        ps.rule_cache_key(name, __import__("hashlib").sha256(page["index.html"].encode()).hexdigest(), mode="html", extra_version=extra): True
+        for name in ps.rule_names()
+    }
+    original = ps.inspect.getsource
+
+    def fail_callable_source(value):
+        if value is ps.scan_text:
+            raise OSError("source unavailable")
+        return original(value)
+
+    monkeypatch.setattr(ps.inspect, "getsource", fail_callable_source)
+    scans = []
+    real_scan = ps.scan_text
+
+    def spy_scan(content, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan(content, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan)
+    before = dict(approved)
+    ps.scan_pages(page, clean_cache=approved)
+    assert scans == [None], "without a trustworthy fingerprint, run all rules and bypass approvals"
+    assert approved == before, "unversioned results must not be read from or written to the cache"
+    assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
+
+
+def test_same_name_rule_pattern_flags_and_anchor_changes_invalidate_old_approvals(monkeypatch):
+    page = {"index.html": "prefix same_rule_secret"}
+    rule = ps.SecretPattern("same_rule_secret", re.compile(r"same_rule_secret"), "canary")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (rule,))
+    monkeypatch.setattr(ps, "SCANNER_ANCHORS", {rule.name: ("absent",)})
+    cache = {}
+    ps.scan_pages(page, clean_cache=cache)  # old definition does not match due to anchor
+
+    # Anchor-only change with same name must make the page stale and refuse.
+    monkeypatch.setattr(ps, "SCANNER_ANCHORS", {rule.name: ("same_rule_secret",)})
+    with pytest.raises(ps.PublicationScanError, match=rule.name):
+        ps.scan_pages(page, clean_cache=cache)
+
+    # Approve the same page with a case-sensitive uppercase pattern, then
+    # change only flags to IGNORECASE under the same rule name.
+    cache.clear()
+    case_sensitive = ps.SecretPattern(rule.name, re.compile(r"SAME_RULE_SECRET"), "canary")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (case_sensitive,))
+    ps.scan_pages(page, clean_cache=cache)
+    changed_flags = ps.SecretPattern(rule.name, re.compile(r"SAME_RULE_SECRET", re.IGNORECASE), "canary")
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (changed_flags,))
+    with pytest.raises(ps.PublicationScanError, match=rule.name):
+        ps.scan_pages(page, clean_cache=cache)
 
 
 def test_transitive_shared_fingerprint_covers_all_rule_dependencies():
