@@ -254,9 +254,9 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
         else:
             parsed_json = True
             strings = [_unescape_until_stable(value) for value in _json_strings(decoded)]
-            # Scan decoded strings independently; joining or scanning the raw
-            # container could synthesize assignments across JSON boundaries.
-            source_variants = list(strings)
+            # Scan decoded strings independently; retain the original source
+            # too so assignment rules can see JSON key/colon/value structure.
+            source_variants.extend(strings)
     elif html_mode:
         source_variants.extend(_html_scan_variants(source_variants[-1]))
     if parsed_json:
