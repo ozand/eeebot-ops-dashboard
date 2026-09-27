@@ -208,10 +208,37 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_SECRET_KEY_RE", "_ENV_SECRET_KV_RE"} <= rule_data
 
 
+def test_ast_guard_indexes_imported_names_the_scanner_reads():
+    """F4 (#355): the shared scan functions read imported names (``re``,
+    ``json``, ``html`` as ``_html``, ``HTMLParser`` as ``_ScanHTMLParser``'s
+    base) that _ast_dependency_bindings previously never indexed as
+    bindings, so the ownership assertion silently ignored them."""
+    source = inspect.getsource(ps)
+    tree = ast.parse(source)
+    _top_level, _constants, _attributes, _collisions, imports = _ast_dependency_bindings(tree)
+    assert {"re", "json", "_html", "HTMLParser"} <= imports.keys()
+
+    transitive = _transitive_scan_dependencies(tree)
+    transitive.discard("SecretPattern")  # NamedTuple type is not scanner rule data.
+    assert "_STDLIB_IMPORT_VERSION" in transitive, (
+        "an imported name reachable from the fingerprinted functions must "
+        "route to _STDLIB_IMPORT_VERSION, since the bare import name itself "
+        "is never a fingerprint dependency"
+    )
+    shared = ps._shared_fingerprint_dependency_names()
+    rule_data = ps._rule_data_dependency_names()
+    assert transitive <= shared | rule_data
+
+    # Test: remove the import-backed dependency from the covered set and
+    # the guard fails -- proving it actually watches imported bindings.
+    with pytest.raises(AssertionError):
+        assert transitive <= (shared - {"_STDLIB_IMPORT_VERSION"}) | rule_data
+
+
 def _transitive_scan_dependencies(
     tree: ast.Module, roots: list[str] | None = None,
 ) -> set[str]:
-    top_level, constants, attributes, _collisions = _ast_dependency_bindings(tree)
+    top_level, constants, attributes, _collisions, imports = _ast_dependency_bindings(tree)
     pending = list(roots) if roots is not None else [
         "scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
         "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value",
@@ -223,6 +250,13 @@ def _transitive_scan_dependencies(
         if name in visited:
             continue
         visited.add(name)
+        if name in imports:
+            # F4 (#355): an imported name has no source of its own here --
+            # its behavior is pinned to the interpreter's stdlib version
+            # instead (see _STDLIB_IMPORT_VERSION), not to the bare import
+            # name, which would never appear in a fingerprint dependency set.
+            found.add("_STDLIB_IMPORT_VERSION")
+            continue
         found.add(name)
         node = top_level.get(name) or constants.get(name) or attributes.get(name)
         if node is None:
@@ -246,6 +280,7 @@ def _transitive_scan_dependencies(
         pending.extend(discovered_constants)
         pending.extend(reads & top_level.keys())
         pending.extend(reads & attributes.keys())
+        pending.extend(reads & imports.keys())
         if name == "_ScanHTMLParser":
             found.add("RAW_TEXT_TAGS")
     return found
@@ -257,8 +292,16 @@ def _ast_dependency_bindings(tree: ast.Module):
     attributes = {}
     class_methods = set()
     module_functions = set()
+    imports: dict[str, str] = {}
     for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports[alias.asname or alias.name.split(".")[0]] = alias.name
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            for alias in node.names:
+                imports[alias.asname or alias.name] = f"{module}.{alias.name}" if module else alias.name
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions[node.name] = node
             module_functions.add(node.name)
         elif isinstance(node, ast.ClassDef):
@@ -279,7 +322,7 @@ def _ast_dependency_bindings(tree: ast.Module):
                     constants[target.id] = node
                 elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
                     attributes[f"{target.value.id}.{target.attr}"] = node
-    return functions, constants, attributes, module_functions & class_methods
+    return functions, constants, attributes, module_functions & class_methods, imports
 
 
 def _mutate_rule_data(name, value):
@@ -432,6 +475,101 @@ def test_shared_fingerprint_dependencies_are_immutable_after_cached_version(monk
                 value.clear()
     assert isinstance(ps._ScanHTMLParser.RAW_TEXT_TAGS, frozenset), "class-level scanner tags must be immutable"
     assert ps._shared_scan_version() == before
+
+
+def test_scan_html_parser_config_matches_source_and_never_changes_in_process():
+    """F1/F2 (#355): inspect.getsource does not see a live __kwdefaults__
+    reassignment or a class attribute reassigned after the class body ran
+    (lru_cache doesn't see it either) -- the publisher never does this (a
+    fresh process per publish, config always from source), but the guard
+    proves both stay equal to what the module's own source text defines."""
+    source = inspect.getsource(ps)
+    tree = ast.parse(source)
+    class_node = next(
+        node for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "_ScanHTMLParser"
+    )
+    init_node = next(
+        node for node in class_node.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "__init__"
+    )
+    kwonly_defaults = {}
+    for arg, default in zip(init_node.args.kwonlyargs, init_node.args.kw_defaults):
+        assert default is not None, f"{arg.arg} must have a literal default to be source-verifiable"
+        kwonly_defaults[arg.arg] = ast.literal_eval(default)
+    assert ps._ScanHTMLParser.__init__.__kwdefaults__ == kwonly_defaults
+
+    raw_tags_assign = next(
+        node for node in class_node.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == "RAW_TEXT_TAGS"
+    )
+    call = raw_tags_assign.value
+    assert isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "frozenset"
+    source_tags = frozenset(ast.literal_eval(call.args[0]))
+    assert ps._ScanHTMLParser.RAW_TEXT_TAGS == source_tags
+
+
+def _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys):
+    """Shared assertions for every F3 (#355) failure-class test: the direct
+    call raises FingerprintUnavailableError (not the raw exception type --
+    on current master, before the fingerprint build was one boundary, it
+    would propagate uncaught here), and scan_pages still completes a full
+    uncached scan instead of aborting publication."""
+    ps._shared_scan_version.cache_clear()
+    with pytest.raises(ps.FingerprintUnavailableError):
+        ps._shared_scan_version()
+    ps._shared_scan_version.cache_clear()
+    page = {"index.html": "ordinary content safe to publish"}
+    ps.scan_pages(page)  # must not raise -- publication does not abort
+    assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
+    ps._shared_scan_version.cache_clear()
+
+
+def test_fingerprint_boundary_fails_safe_on_bytes_regex_pattern(monkeypatch, capsys):
+    """F3 (#355): a bytes-pattern regex among the dependencies raises
+    TypeError from json.dumps (publish_scan.py:497), not
+    FingerprintUnavailableError, before the whole build was one boundary."""
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": re.compile(rb"x")},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_cyclic_container(monkeypatch, capsys):
+    """F3 (#355): a self-referential list/dict among the dependencies
+    raises RecursionError from unbounded recursive serialization."""
+    cyclic: list = []
+    cyclic.append(cyclic)
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": cyclic},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_surrogate_string(monkeypatch, capsys):
+    """F3 (#355): a lone surrogate in a dependency's string raises
+    UnicodeEncodeError at the final ``.encode("utf-8")`` (publish_scan.py
+    near :538), after json.dumps itself accepts it silently."""
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": "\udcff"},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_wrapped_unwrap_cycle(monkeypatch, capsys):
+    """F3 (#355): a __wrapped__ cycle makes inspect.unwrap raise ValueError
+    (publish_scan.py:507, _all_top_level_dependency_objects' own handling
+    of the "_shared_scan_version" name)."""
+    def cyclic_unwrap(*_args, **_kwargs):
+        raise ValueError("wrapper loop when unwrapping simulated cycle")
+
+    monkeypatch.setattr(ps.inspect, "unwrap", cyclic_unwrap)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
 
 
 def test_ast_guard_mutations_detect_annotated_constants_and_attribute_assignments():
