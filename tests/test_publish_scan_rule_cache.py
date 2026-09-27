@@ -218,3 +218,55 @@ def test_cache_bound_scales_with_rule_count() -> None:
             "an earlier page's full approval must not be evicted by later pages' "
             "entries once the bound accounts for the per-rule multiplier"
         )
+
+
+def test_oversized_cache_is_trimmed_not_wholesale_rejected() -> None:
+    """Codex re-check on PR #343 (P2): a cache larger than the live
+    _cache_entry_bound() -- whether from ordinary accumulation or a
+    scanner release that REMOVES a rule (shrinking the bound) -- must be
+    trimmed to size, never rejected outright. Rejecting it forces every
+    page and inherited blob through a cold fetch/scan, exactly the
+    regression this per-rule cache exists to avoid."""
+    version = ps.rule_version("eeepc_agent_path")
+    oversized = {
+        f"eeepc_agent_path:{version}:html:{i:040x}": True
+        for i in range(ps._cache_entry_bound() + 100)
+    }
+    validated = ps.validate_clean_cache(oversized)
+    assert validated, "a cache that is merely large, with every entry valid, must not be wiped to empty"
+    assert all(
+        ps._RULE_CACHE_KEY_RE.fullmatch(key) and value is True
+        for key, value in validated.items()
+    )
+
+
+def test_rule_removal_does_not_wipe_the_other_rules_approvals(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Codex re-check on PR #343 (P2): the specific scenario named in the
+    finding -- a release removes one rule, shrinking _cache_entry_bound()
+    below the persisted cache's size. The remaining rules' approvals for
+    already-scanned pages must survive, not be discarded wholesale."""
+    pages = {"index.html": "ordinary clean page content, nothing sensitive at all here"}
+    cache: dict[str, bool] = {}
+    ps.scan_pages(dict(pages), clean_cache=cache)
+    before_names = set(ps.rule_names())
+
+    extra_rule = ps.SecretPattern(
+        "temp_rule_for_removal_test", re.compile(r"NEVER_MATCHES_ANYTHING_XYZ_CANARY"), "test",
+    )
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, extra_rule))
+    # Pad the cache with enough same-shaped entries that its size sits
+    # between the 15-rule and 14-rule bounds once the extra rule is
+    # removed below, without needing thousands of real scan_pages calls.
+    version = ps.rule_version("eeepc_agent_path")
+    for i in range(ps._cache_entry_bound()):
+        cache[f"eeepc_agent_path:{version}:html:{i:040x}"] = True
+
+    monkeypatch.undo()  # remove the extra rule again -- back to today's rule set
+    assert set(ps.rule_names()) == before_names
+
+    ps.scan_pages(dict(pages), clean_cache=cache)
+    content_sha = __import__("hashlib").sha256(pages["index.html"].encode("utf-8")).hexdigest()
+    for name in ps.rule_names():
+        assert cache.get(ps.rule_cache_key(name, content_sha, mode="html")) is True, (
+            f"{name}'s approval for the already-scanned page must survive a rule removal, not be wiped"
+        )
