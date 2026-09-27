@@ -36,7 +36,7 @@ PUBLIC_DATA_KEYS = frozenset({
     "skill_evals", "ci_freshness", "cycle_titles", "cycle_files", "cycle_titles_error",
     "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
-    "reflections", "bridge_exit_streak", "bridge_exits", "strategist_decisions",
+    "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
     "generator_sha", "_newest_source_age_seconds", "_error",
 })
