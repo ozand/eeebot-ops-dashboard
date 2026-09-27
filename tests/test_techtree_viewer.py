@@ -1514,6 +1514,16 @@ def test_public_ledger_reason_is_redacted_before_html_and_json_rendering() -> No
     assert leaked == [], leaked
 
 
+def test_lessons_panel_renders_saved_problem_and_solution_lengths() -> None:
+    html = tv.build_lessons_panel([{
+        "id": "lesson-sanitized", "date": "2026-09-27", "cycle_id": "cycle-sanitized",
+        "problem": "", "solution": "", "problem_chars": 28, "solution_chars": 31,
+        "_v2_lesson": True, "title": "safe title", "kind": "bug",
+    }])
+    assert "Problem:</span> text on the LAN site only (28 chars)" in html
+    assert "Solution:</span> text on the LAN site only (31 chars)" in html
+
+
 def test_issue172_render_pages_lineage_cycle_details_covers_history() -> None:
     history_row = {
         'phase': 'outcome',
@@ -6173,6 +6183,9 @@ def test_cycle_detail_projection_consumes_all_preserved_text_lengths() -> None:
     assert agents["tier2_skills"][0]["content_chars"] == len("private skill content")
     assert agents["tier2_skills"][0]["desc_chars"] == len("private skill description")
     assert agents["tier2_memory"]["files"][0]["content_chars"] == len("private memory")
+    rendered_context = tv.build_two_tier_context_html(agents)
+    assert "14 chars received by model" in rendered_context
+    assert "12 chars" in rendered_context
 
 
 def test_build_cycle_details_uses_preserved_reflection_projection_metrics() -> None:
