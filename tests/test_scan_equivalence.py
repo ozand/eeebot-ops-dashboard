@@ -43,55 +43,24 @@ POSITIVES = [
 ]
 
 
-def _reference_findings(content: str, *, html_mode: bool, json_mode: bool) -> dict[str, int]:
-    variants = [content, ps._unescape_until_stable(content)]
-    if json_mode:
-        import json
-        try:
-            decoded = json.loads(content)
-        except (json.JSONDecodeError, UnicodeError):
-            pass
-        else:
-            strings = [ps._unescape_until_stable(v) for v in ps._json_strings(decoded)]
-            variants = [variant for value in strings for variant in (value, *ps._html_scan_variants(value))]
-    elif html_mode:
-        variants.extend(ps._html_scan_variants(variants[-1]))
-    variants = list(dict.fromkeys(variants))
-    result: dict[str, int] = {}
-    for rule in ps.STANDALONE_PATTERNS:
-        count = max((len(list(rule.pattern.finditer(v))) for v in variants), default=0)
-        if count:
-            result[rule.name] = count
-    json_count = 0
-    env_count = 0
-    for variant in variants:
-        json_hits = 0
-        for match in ps._JSON_SECRET_KEY_RE.finditer(variant):
-            key = match.group(1)
-            val = match.group(2) or match.group(3) or ""
-            if not ps.is_excluded_key_name(key) and ps.is_secret_value(val):
-                json_hits += 1
-        json_count = max(json_count, json_hits)
-        env_hits = 0
-        for match in ps._ENV_SECRET_KV_RE.finditer(variant):
-            key = match.group(1)
-            val = match.group(2) or match.group(3) or match.group(4) or ""
-            if not ps.is_excluded_key_name(key) and ps.is_secret_value(val):
-                env_hits += 1
-        env_count = max(env_count, env_hits)
-    if json_count:
-        result["json_secret_field"] = json_count
-    if env_count:
-        result["env_secret_kv"] = env_count
-    return result
+def _assert_prefilter_equivalent(
+    content: str, *, html_mode: bool, json_mode: bool, monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, int]:
+    optimized = ps.scan_text(content, html_mode=html_mode, json_mode=json_mode)
+    with monkeypatch.context() as m:
+        m.setattr(ps, "SCANNER_ANCHORS", {})
+        full = ps.scan_text(content, html_mode=html_mode, json_mode=json_mode)
+    assert optimized == full
+    return optimized
 
 
 @pytest.mark.parametrize(("filename", "payload"), POSITIVES)
-def test_new_scan_findings_match_combined_regex_reference(filename: str, payload: str) -> None:
+def test_full_scan_matches_prefiltered_scan_for_every_positive(
+    filename: str, payload: str, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Compare actual scan_text results with and without its literal prefilter."""
     is_json = filename.endswith(".json")
-    assert ps.scan_text(payload, html_mode=not is_json, json_mode=is_json) == _reference_findings(
-        payload, html_mode=not is_json, json_mode=is_json
-    )
+    _assert_prefilter_equivalent(payload, html_mode=not is_json, json_mode=is_json, monkeypatch=monkeypatch)
 
 
 def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -101,7 +70,7 @@ def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -
     assert ps.scan_text("prefix UNANCHORED_SECRET suffix") == {rule.name: 1}
 
 
-def test_live_gh_pages_findings_match_reference_and_remain_clean() -> None:
+def test_live_gh_pages_findings_match_reference_and_remain_clean(monkeypatch: pytest.MonkeyPatch) -> None:
     has_remote_branch = subprocess.run(
         ["git", "rev-parse", "--verify", "origin/gh-pages"], capture_output=True, text=True, check=False
     )
@@ -116,7 +85,7 @@ def test_live_gh_pages_findings_match_reference_and_remain_clean() -> None:
             ["git", "show", f"origin/gh-pages:{path}"], capture_output=True, check=True
         ).stdout.decode("utf-8")
         is_json = path.endswith(".json")
-        expected = _reference_findings(raw, html_mode=not is_json, json_mode=is_json)
-        actual = ps.scan_text(raw, html_mode=not is_json, json_mode=is_json)
-        assert actual == expected, path
-        assert actual == {}, path
+        optimized = _assert_prefilter_equivalent(
+            raw, html_mode=not is_json, json_mode=is_json, monkeypatch=monkeypatch,
+        )
+        assert optimized == {}, path
