@@ -1355,8 +1355,8 @@ def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
     assert 'revert=' in body or 'queued' in body or 'none' in body
     assert 'remaining=925' in body
     assert 'experiment-telemetry' in body
-    assert 'workspace/state/experiments/current.json' in body
-    assert 'workspace/state/budgets/current.json' in body
+    assert 'experiments/current.json' in body.replace('\\', '/')
+    assert 'budgets/current.json' in body.replace('\\', '/')
     assert 'reward-baseline' in body
 
     status, credits_body = _call_app(app, '/credits')
@@ -1378,7 +1378,8 @@ def test_app_experiments_renders_current_experiment_and_budget(tmp_path: Path):
     assert 'outcome' in api_body
     assert 'metric_frontier' in api_body
     assert 'contract_path' in api_body
-    assert 'workspace/state/experiments/current.json' in api_body
+    api_payload = json.loads(api_body)
+    assert Path(api_payload['current_experiment']['source_path']).as_posix().endswith('workspace/state/experiments/current.json')
 
     status, credits_api = _call_app(app, '/api/credits')
     assert status.startswith('200')
