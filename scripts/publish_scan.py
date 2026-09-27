@@ -205,7 +205,7 @@ def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
 
 class _ScanHTMLParser(HTMLParser):
     """Collect text, attributes and raw-text bodies for security scanning."""
-    RAW_TEXT_TAGS = {"script", "style", "textarea", "title"}
+    RAW_TEXT_TAGS = frozenset({"script", "style", "textarea", "title"})
 
     def __init__(self, *, collect_raw_text: bool = True) -> None:
         super().__init__(convert_charrefs=True)
@@ -457,12 +457,54 @@ def _rule_data_dependency_names() -> frozenset[str]:
     return _RULE_DATA_DEPENDENCIES
 
 
+def _canonical_fingerprint_value(value: Any, *, name: str = "dependency") -> str:
+    """Serialize fingerprint inputs recursively and deterministically.
+
+    No repr fallback is permitted: unsupported values make cache identity
+    unavailable rather than silently introducing process-specific state.
+    """
+    if value is None or isinstance(value, (str, int, bool)):
+        encoded: Any = [type(value).__name__, value]
+    elif isinstance(value, float):
+        encoded = ["float", value.hex()]
+    elif isinstance(value, re.Pattern):
+        encoded = ["pattern", value.pattern, value.flags]
+    elif isinstance(value, (list, tuple)):
+        encoded = [type(value).__name__, [
+            _canonical_fingerprint_value(item, name=name) for item in value
+        ]]
+    elif isinstance(value, (set, frozenset)):
+        values = [_canonical_fingerprint_value(item, name=name) for item in value]
+        encoded = [type(value).__name__, sorted(values)]
+    elif isinstance(value, dict):
+        pairs = [
+            (_canonical_fingerprint_value(key, name=name), _canonical_fingerprint_value(item, name=name))
+            for key, item in value.items()
+        ]
+        encoded = ["dict", sorted(pairs)]
+    elif inspect.isfunction(value) or inspect.isclass(value):
+        try:
+            source = inspect.getsource(value)
+        except (OSError, TypeError) as exc:
+            raise FingerprintUnavailableError(
+                f"cannot fingerprint scanner dependency {name}: {type(exc).__name__}"
+            ) from exc
+        encoded = ["source", source]
+    else:
+        raise FingerprintUnavailableError(
+            f"unsupported scanner fingerprint value for {name}: {type(value).__name__}"
+        )
+    return json.dumps(encoded, ensure_ascii=False, separators=(",", ":"))
+
+
 def _all_top_level_dependency_objects() -> dict[str, Any]:
     """Objects/bindings that must stay represented in the shared fingerprint."""
     objects: dict[str, Any] = {}
     for name in sorted(_shared_fingerprint_dependency_names()):
         if name == "RAW_TEXT_TAGS":
             value = _ScanHTMLParser.RAW_TEXT_TAGS
+        elif name == "_shared_scan_version":
+            value = inspect.unwrap(globals()[name])
         else:
             value = globals()[name]
         objects[name] = value
@@ -490,22 +532,9 @@ def _shared_scan_version() -> str:
     place."""
     parts = []
     for name, value in sorted(_all_top_level_dependency_objects().items()):
-        if isinstance(value, (set, frozenset)):
-            rendered = repr(sorted(value))
-        elif isinstance(value, re.Pattern):
-            rendered = f"pattern:{value.pattern!r}:flags:{value.flags}"
-        else:
-            try:
-                rendered = inspect.getsource(value)
-            except (OSError, TypeError) as exc:
-                if inspect.isfunction(value) or inspect.isclass(value):
-                    raise FingerprintUnavailableError(
-                        f"cannot fingerprint scanner dependency {name}: {type(exc).__name__}"
-                    ) from exc
-                rendered = repr(value)
-        parts.append(f"{name}:{rendered}")
-    parts.append(repr(sorted(_shared_fingerprint_dependency_names())))
-    parts.append(repr(sorted(_rule_data_dependency_names())))
+        parts.append(f"{name}:{_canonical_fingerprint_value(value, name=name)}")
+    parts.append(_canonical_fingerprint_value(_shared_fingerprint_dependency_names()))
+    parts.append(_canonical_fingerprint_value(_rule_data_dependency_names()))
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
 
 

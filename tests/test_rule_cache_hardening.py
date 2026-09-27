@@ -201,43 +201,250 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     shared = ps._shared_fingerprint_dependency_names()
     rule_data = ps._rule_data_dependency_names()
     transitive = _transitive_scan_dependencies(tree)
+    transitive.discard("SecretPattern")  # NamedTuple type is not scanner rule data.
     assert transitive <= shared | rule_data
     assert not (shared & rule_data), "each transitive dependency has exactly one fingerprint owner"
     assert "RAW_TEXT_TAGS" in shared
     assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_SECRET_KEY_RE", "_ENV_SECRET_KV_RE"} <= rule_data
 
 
-def _transitive_scan_dependencies(tree: ast.Module) -> set[str]:
-    top_level = {
-        node.name: node for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-    }
-    top_level.update({
-        node.name: node for node in tree.body if isinstance(node, ast.ClassDef)
-        for node in node.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    })
-    constants = {
-        node.targets[0].id: node for node in tree.body
-        if isinstance(node, ast.Assign) and len(node.targets) == 1
-        and isinstance(node.targets[0], ast.Name) and node.targets[0].id.isupper()
-    }
-    pending = ["scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
-               "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value"]
+def _transitive_scan_dependencies(
+    tree: ast.Module, roots: list[str] | None = None,
+) -> set[str]:
+    top_level, constants, attributes, _collisions = _ast_dependency_bindings(tree)
+    pending = list(roots) if roots is not None else [
+        "scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
+        "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value",
+    ]
     found: set[str] = set()
+    visited: set[str] = set()
     while pending:
         name = pending.pop()
-        if name in found:
+        if name in visited:
             continue
+        visited.add(name)
         found.add(name)
-        node = top_level.get(name) or constants.get(name)
+        node = top_level.get(name) or constants.get(name) or attributes.get(name)
         if node is None:
             continue
         reads = {item.id for item in ast.walk(node) if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)}
-        found.update(reads & constants.keys())
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            # A queued binding needs its own RHS dependencies traversed too.
+            value = node.value
+            reads.update(
+                item.id for item in ast.walk(value)
+                if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)
+            )
+        reads.update(
+            f"{item.value.id}.{item.attr}" for item in ast.walk(node)
+            if isinstance(item, ast.Attribute) and isinstance(item.ctx, ast.Load)
+            and isinstance(item.value, ast.Name)
+        )
+        discovered_constants = reads & constants.keys()
+        found.update(discovered_constants)
+        found.update(reads & attributes.keys())
+        pending.extend(discovered_constants)
         pending.extend(reads & top_level.keys())
+        pending.extend(reads & attributes.keys())
         if name == "_ScanHTMLParser":
             found.add("RAW_TEXT_TAGS")
     return found
+
+
+def _ast_dependency_bindings(tree: ast.Module):
+    functions = {}
+    constants = {}
+    attributes = {}
+    class_methods = set()
+    module_functions = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions[node.name] = node
+            module_functions.add(node.name)
+        elif isinstance(node, ast.ClassDef):
+            functions[node.name] = node
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    functions[f"{node.name}.{child.name}"] = child
+                    class_methods.add(child.name)
+                elif isinstance(child, (ast.Assign, ast.AnnAssign)):
+                    targets = child.targets if isinstance(child, ast.Assign) else [child.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name):
+                            constants[f"{node.name}.{target.id}"] = child
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    constants[target.id] = node
+                elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
+                    attributes[f"{target.value.id}.{target.attr}"] = node
+    return functions, constants, attributes, module_functions & class_methods
+
+
+def _mutate_rule_data(name, value):
+    if isinstance(value, tuple) and value and isinstance(value[0], ps.SecretPattern):
+        changed = []
+        for item in value:
+            if isinstance(item, ps.SecretPattern):
+                changed.append(ps.SecretPattern(item.name, re.compile(item.pattern.pattern + "(?:X)", item.pattern.flags), item.description))
+            else:
+                changed.append(item)
+        return tuple(changed)
+    if isinstance(value, dict):
+        result = dict(value)
+        key = next(iter(result))
+        result[key] = tuple(result[key]) + ("mutation-marker",)
+        return result
+    if isinstance(value, re.Pattern):
+        return re.compile(value.pattern + "(?:X)", value.flags)
+    raise AssertionError(f"no mutation strategy for {name}: {type(value).__name__}")
+
+
+def _owned_rules(name):
+    if name == "STANDALONE_PATTERNS":
+        return {pattern.name for pattern in ps.STANDALONE_PATTERNS}
+    if name == "SCANNER_ANCHORS":
+        return {"eeepc_agent_path"}
+    if name in {"_JSON_CANDIDATE_RE", "_JSON_SECRET_KEY_RE"}:
+        return {"json_secret_field"}
+    if name in {"_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE"}:
+        return {"env_secret_kv"}
+    raise AssertionError(f"unknown rule-data dependency: {name}")
+
+
+def _ast_bindings(tree: ast.Module):
+    names = set()
+    module_functions = set()
+    methods = set()
+    attributes = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                module_functions.add(node.name)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+                elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
+                    attributes.add(f"{target.value.id}.{target.attr}")
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    names.add(f"{node.name}.{child.name}")
+                    methods.add(child.name)
+                elif isinstance(child, ast.AnnAssign) and isinstance(child.target, ast.Name):
+                    names.add(f"{node.name}.{child.target.id}")
+    return names | attributes, module_functions & methods
+
+
+def _ast_assigned_attributes(tree: ast.Module) -> set[str]:
+    return {
+        f"{node.value.id}.{node.attr}"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store)
+        and isinstance(node.value, ast.Name)
+    }
+
+
+def test_dependency_ast_guard_covers_annotated_string_attribute_and_name_collisions():
+    source = '''
+class Parser:
+    RAW_TEXT_TAGS: frozenset[str] = frozenset({"script"})
+    def helper(self):
+        return "method"
+def helper():
+    return "module"
+RULE_NAME: str = "rule-data"
+Parser.RAW_TEXT_TAGS = frozenset({"style"})
+'''
+    tree = ast.parse(source)
+    bindings, collisions = _ast_bindings(tree)
+    assert {"RULE_NAME", "Parser.RAW_TEXT_TAGS"} <= bindings
+    assert {"helper", "Parser.helper"} <= bindings
+    assert collisions == {"helper"}
+    assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
+
+
+def test_transitive_guard_traverses_attribute_binding_and_constant_chain():
+    tree = ast.parse('''
+class Parser:
+    pass
+BASE_TAGS: str = "script"
+TAGS: str = BASE_TAGS
+Parser.RAW_TEXT_TAGS = TAGS
+''')
+    transitive = _transitive_scan_dependencies(tree, roots=["Parser.RAW_TEXT_TAGS"])
+    assert {"Parser.RAW_TEXT_TAGS", "TAGS", "BASE_TAGS"} <= transitive
+
+
+def test_canonical_fingerprint_serializer_is_recursive_and_refuses_unsupported_types():
+    canonical = ps._canonical_fingerprint_value
+    assert canonical({"z": {"b", "a"}, "a": (1, True)}) == canonical(
+        {"a": (1, True), "z": {"a", "b"}}
+    )
+    assert canonical(re.compile("token", re.IGNORECASE)) == canonical(
+        re.compile("token", re.IGNORECASE)
+    )
+    with pytest.raises(ps.FingerprintUnavailableError, match="unsupported"):
+        canonical(object())
+
+
+def test_rule_data_dependency_mutation_matrix_changes_only_owned_rule_versions(monkeypatch):
+    dependencies = ps._rule_data_dependency_names()
+    assert dependencies == {
+        "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
+        "_JSON_SECRET_KEY_RE", "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE",
+    }
+    initial_shared = ps._shared_scan_version()
+    baseline = {name: ps.rule_version(name) for name in ps.rule_names()}
+    hit_before = ps._shared_scan_version.cache_info().hits
+    assert ps._shared_scan_version() == initial_shared
+    assert ps._shared_scan_version.cache_info().hits == hit_before + 1
+    for dependency in sorted(dependencies):
+        original = getattr(ps, dependency)
+        replacement = _mutate_rule_data(dependency, original)
+        monkeypatch.setattr(ps, dependency, replacement)
+        ps._shared_scan_version.cache_clear()
+        assert ps._shared_scan_version() == initial_shared, dependency
+        changed = {
+            name for name in ps.rule_names()
+            if ps.rule_version(name) != baseline[name]
+        }
+        expected = _owned_rules(dependency)
+        assert changed == expected, (dependency, changed, expected)
+        monkeypatch.setattr(ps, dependency, original)
+        ps._shared_scan_version.cache_clear()
+        assert {name: ps.rule_version(name) for name in ps.rule_names()} == baseline
+
+
+def test_shared_fingerprint_dependencies_are_immutable_after_cached_version(monkeypatch):
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    for dependency, value in ps._all_top_level_dependency_objects().items():
+        if dependency == "RAW_TEXT_TAGS":
+            continue  # exposed alias for the separately checked class-owned set
+        assert isinstance(value, (str, int, float, bool, type(None), tuple, frozenset, re.Pattern, type)) or inspect.isfunction(value), dependency
+        if isinstance(value, (frozenset, tuple)):
+            with pytest.raises(AttributeError):
+                value.clear()
+    assert isinstance(ps._ScanHTMLParser.RAW_TEXT_TAGS, frozenset), "class-level scanner tags must be immutable"
+    assert ps._shared_scan_version() == before
+
+
+def test_ast_guard_mutations_detect_annotated_constants_and_attribute_assignments():
+    source = '''
+class Parser:
+    RAW_TEXT_TAGS: frozenset[str] = frozenset({"script"})
+RULE_NAME: str = "rule-data"
+Parser.RAW_TEXT_TAGS = frozenset({"style"})
+'''
+    tree = ast.parse(source)
+    bindings, _collisions = _ast_bindings(tree)
+    assert {"RULE_NAME"} <= bindings
+    assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
 
 
 def test_rule_data_change_after_shared_cache_clear_is_per_rule_only(monkeypatch):
