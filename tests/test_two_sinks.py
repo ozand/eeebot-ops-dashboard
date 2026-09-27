@@ -617,6 +617,22 @@ def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
     assert projected["rationale"] == ""
 
 
+def test_public_ledger_decision_allows_codes_only_in_rendered_pages() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_LEDGER_DECISION_CANARY_882"
+    public, _ = split_render_inputs({"ledger_tail": [
+        {"phase": "proposer_reject", "cycle_id": "rejected", "decision": f"model says {marker}"},
+        {"phase": "dedup", "cycle_id": "dedup", "decision": "skipped_duplicate"},
+    ]})
+    pages = tv.render_public_pages(public, "eeepc")
+    rendered = json.dumps(pages)
+    assert marker not in rendered
+    assert "model says" not in rendered
+    assert "[withheld]" in rendered
+    assert "skipped_duplicate" in rendered
+
+
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     from scripts import techtree_viewer as tv
 
