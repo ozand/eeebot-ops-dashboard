@@ -16,6 +16,7 @@ DEFAULT_DISPLAY_LIMIT = 4000
 REDACTION_REPLACEMENTS = {
     "eeepc_agent_path": "[internal path]",
     "openai_secret_key": "[redacted: api-key]",
+    "openai_secret_key_short": "[redacted: api-key]",
     "github_token": "[redacted: token]",
     "bearer_token": "Bearer [redacted: bearer]",
     "aws_access_key": "[redacted: aws-key]",
@@ -28,7 +29,6 @@ REDACTION_REPLACEMENTS = {
     "structural_prompt": "[redacted field]",
     "json_secret_field": "[redacted]",
     "env_secret_kv": "[redacted]",
-    "openai_secret_key_short": "[redacted: api-key]",
 }
 
 class SanitizedText(str):

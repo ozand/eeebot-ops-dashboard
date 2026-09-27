@@ -5,6 +5,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import shutil
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +26,8 @@ except ImportError:
         is_allowed_publish_path,
         scan_pages as _publish_scan_pages,
     )  # type: ignore
+
+_PUBLIC_REASON_CODE_RE = re.compile(r"^[a-z0-9_:.-]{1,64}$")
 
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
@@ -98,16 +101,33 @@ def serve_site(site_root: Path, address: str = DEFAULT_BIND_ADDRESS, port: int =
 
 
 def _sanitize_public_value(key: str, value: object) -> object:
+    if key in {"ledger_tail", "ledger_history"} and isinstance(value, list):
+        rows = []
+        for row in value:
+            if not isinstance(row, dict):
+                rows.append(row)
+                continue
+            projected = dict(row)
+            reason = projected.get("reason")
+            if isinstance(reason, str) and reason:
+                projected["reason"] = reason if _PUBLIC_REASON_CODE_RE.fullmatch(reason) else f"reason text, {len(reason)} chars (LAN)"
+            rows.append(projected)
+        return rows
     if key == "agent_context" and isinstance(value, dict):
         ctx = copy.deepcopy(value)
-        ctx["prompt_text"] = None
-        ctx["task_text"] = None
+        for field in ("prompt_text", "task_text"):
+            if isinstance(ctx.get(field), str):
+                ctx[f"{field}_chars"] = len(ctx[field])
+                ctx[field] = None
         for skill in ctx.get("tier2_skills") or []:
             if isinstance(skill, dict):
-                skill["content"] = ""
-                skill["desc"] = ""
+                for field in ("content", "desc"):
+                    if isinstance(skill.get(field), str):
+                        skill[f"{field}_chars"] = len(skill[field])
+                        skill[field] = ""
         for mem in ctx.get("tier2_memory", {}).get("files") or []:
-            if isinstance(mem, dict):
+            if isinstance(mem, dict) and isinstance(mem.get("content"), str):
+                mem["content_chars"] = len(mem["content"])
                 mem["content"] = ""
         return ctx
     if key == "subagent_records" and isinstance(value, list):
@@ -117,7 +137,8 @@ def _sanitize_public_value(key: str, value: object) -> object:
                 r = dict(rec)
                 for field in ("task", "summary", "result", "task_excerpt", "summary_excerpt", "result_excerpt"):
                     if field in r:
-                        r[f"{field}_chars"] = len(r[field]) if isinstance(r[field], str) else 0
+                        if isinstance(r[field], str):
+                            r[f"{field}_chars"] = len(r[field])
                         r[field] = ""
                 records.append(r)
             else:
@@ -161,8 +182,10 @@ def _sanitize_public_value(key: str, value: object) -> object:
                 r = dict(rec)
                 for field in ("problem", "solution", "insight", "result"):
                     if field in r:
-                        r[f"{field}_chars"] = len(r[field]) if isinstance(r[field], str) else 0
+                        if isinstance(r[field], str):
+                            r[f"{field}_chars"] = len(r[field])
                         r[field] = ""
+                r["_v2_lesson"] = bool(rec.get("problem") or rec.get("problem_chars") is not None)
                 les.append(r)
             else:
                 les.append(rec)

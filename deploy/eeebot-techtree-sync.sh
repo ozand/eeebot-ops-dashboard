@@ -7,6 +7,7 @@ set -eu
 
 DEST=/opt/eeebot-techtree
 RAW_BASE=https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/master
+COMMITS_URL=${SYNC_COMMITS_URL:-https://api.github.com/repos/ozand/eeebot-ops-dashboard/commits/master}
 # Permanent backups kept per installed file. The publish unit fires every few
 # minutes and each run replaced every manifest file, so an unbounded keep-all
 # policy reached 86 files / 11 MB in one directory (issue #155).
@@ -118,6 +119,35 @@ mkdir -p "$DEST" "$TMP_ROOT"
 CURL_OPTS="--connect-timeout 10 --max-time 60 --proto-redir =https"
 MANIFEST="$LOCAL_MANIFEST"
 manifest_source=local
+
+# Fetch master revision before downloading files (#325).
+# Pinning RAW_BASE to this immutable commit guarantees the manifest and all
+# downloaded assets match the recorded GENERATOR_SHA revision.
+REV_TMP="$TMP_ROOT/GENERATOR_SHA"
+if [ -n "${GH_TOKEN:-}" ]; then
+    # Keep the token out of curl argv and logs; pass config only through stdin.
+    # shellcheck disable=SC2086
+    { printf 'header = "Authorization: token %s"\n' "$GH_TOKEN"; \
+      printf '%s\n' 'header = "Accept: application/vnd.github.sha"'; } |
+        curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
+            -K - "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null || true
+else
+    # shellcheck disable=SC2086
+    curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
+        -H "Accept: application/vnd.github.sha" \
+        "$COMMITS_URL" -o "$TMP_ROOT/rev.remote" 2>/dev/null || true
+fi
+if [ -f "$TMP_ROOT/rev.remote" ]; then
+    cand=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["sha"] if isinstance(d,dict) else "")' < "$TMP_ROOT/rev.remote" 2>/dev/null || tr -d '\r\n' < "$TMP_ROOT/rev.remote")
+    if [ "${#cand}" -eq 40 ] && printf '%s' "$cand" | grep -Eq '^[0-9a-fA-F]{40}$'; then
+        printf '%s\n' "$cand" > "$REV_TMP"
+        RAW_BASE="https://raw.githubusercontent.com/ozand/eeebot-ops-dashboard/$cand"
+        echo "techtree sync: pinned download to master revision $cand"
+    else
+        echo "techtree sync: warning: invalid revision response from $COMMITS_URL" >&2
+    fi
+fi
+
 # shellcheck disable=SC2086  # CURL_OPTS is deliberately word-split
 if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 $CURL_OPTS \
     "$RAW_BASE/deploy/sync-manifest.txt" -o "$TMP_ROOT/manifest.remote"; then
@@ -193,6 +223,41 @@ while IFS='|' read -r relative tmp; do
     fi
     installed=$((installed + 1))
 done < "$FILES"
+
+# Atomically install or invalidate GENERATOR_SHA (#325)
+destination="$DEST/GENERATOR_SHA"
+if [ -f "$REV_TMP" ]; then
+    backup=
+    permanent_backup=
+    if [ -e "$destination" ]; then
+        backup="$TMP_ROOT/backup-generator-sha"
+        permanent_backup="$destination.bak.$stamp"
+        cp -p "$destination" "$backup"
+    fi
+    if [ "$(id -u)" -eq 0 ]; then
+        chown root:root "$REV_TMP"
+    else
+        echo "techtree sync: not root, ownership of GENERATOR_SHA unchanged" >&2
+    fi
+    chmod 0644 "$REV_TMP"
+    if ! mv -f "$REV_TMP" "$destination"; then
+        echo "techtree sync: replace failed: GENERATOR_SHA" >&2
+        exit 1
+    fi
+    printf '%s|%s|%s|%s\n' "GENERATOR_SHA" "$destination" "$backup" "$permanent_backup" >> "$MOVED_LIST"
+    if [ -n "$backup" ]; then
+        cp -p "$backup" "$permanent_backup"
+    fi
+elif [ -e "$destination" ]; then
+    # Invalidate stale revision metadata after an unversioned sync
+    backup="$TMP_ROOT/backup-generator-sha"
+    permanent_backup="$destination.bak.$stamp"
+    cp -p "$destination" "$backup"
+    rm -f "$destination"
+    printf '%s|%s|%s|%s\n' "GENERATOR_SHA" "$destination" "$backup" "$permanent_backup" >> "$MOVED_LIST"
+    cp -p "$backup" "$permanent_backup"
+    echo "techtree sync: invalidated stale revision metadata $destination"
+fi
 
 if [ -f "$MOVED_LIST" ]; then
     prune_backups

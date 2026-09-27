@@ -4572,11 +4572,19 @@ def build_cycle_details(
         # public records keep their size.
         if insight:
             out['lesson_insight_chars'] = len(str(insight))
+        elif lesson.get('insight_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['insight_chars'])
+        elif lesson.get('result_chars') is not None:
+            out['lesson_insight_chars'] = int(lesson['result_chars'])
         # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
+        elif lesson.get('problem_chars') is not None:
+            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
+        elif lesson.get('solution_chars') is not None:
+            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
@@ -4620,8 +4628,9 @@ def build_cycle_details(
             # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'summary_chars': len(str(rec.get('summary_excerpt') or '')),
-            'result_chars': len(str(rec.get('result_excerpt') or '')),
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -6864,9 +6873,8 @@ def _build_proposer_block(
 
 
 def _is_v2_lesson(lesson: dict[str, Any]) -> bool:
-    """Return True when the lesson record has a non-empty 'problem' field,
-    which is the sentinel for the v2 schema (ozand/eeebot#1071)."""
-    return bool(lesson.get('problem'))
+    """Return True when lesson data preserves the v2 schema discriminator."""
+    return bool(lesson.get('problem') or lesson.get('_v2_lesson') or lesson.get('problem_chars') is not None)
 
 
 def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: str | None = None) -> str:
@@ -9420,15 +9428,36 @@ document.querySelectorAll('.copyable').forEach(function (el) {{
 def _generator_sha() -> str:
     """Return the generator's git short SHA.
 
-    Preference order (issue #101):
-    1. Module-level ``_BAKED_GENERATOR_SHA`` — non-empty when set at deploy
-       time via ``sed -i``, so no git repo is required on the host.
-    2. ``git rev-parse --short HEAD`` — works when running directly from the
+    Preference order:
+    1. File ``GENERATOR_SHA`` written by eeebot-techtree-sync.sh (issue #325).
+    2. Module-level ``_BAKED_GENERATOR_SHA`` — legacy sentinel (issue #101),
+       non-empty when set at deploy time via ``sed -i``.
+    3. ``git rev-parse --short HEAD`` — works when running directly from the
        repo (operator workstation / CI).
-    3. ``'unknown'`` — neither source is available.
+    4. ``'unknown'`` — none available.
     """
+    candidates: list[Path] = []
+    import os
+    env_file = os.environ.get("GENERATOR_SHA_FILE")
+    if env_file:
+        candidates.append(Path(env_file))
+    here = Path(__file__).resolve()
+    candidates.append(here.parent.parent / "GENERATOR_SHA")
+    candidates.append(here.parent / "GENERATOR_SHA")
+    candidates.append(Path("/opt/eeebot-techtree/GENERATOR_SHA"))
+
+    for path in candidates:
+        try:
+            if path.is_file():
+                raw = path.read_text(encoding="utf-8").strip()
+                if re.fullmatch(r"[0-9a-fA-F]{40}", raw):
+                    return raw[:7]
+                continue
+        except Exception:
+            pass
+
     if _BAKED_GENERATOR_SHA:
-        return _BAKED_GENERATOR_SHA
+        return _BAKED_GENERATOR_SHA[:7]
     try:
         repo_dir = Path(__file__).resolve().parent.parent
         result = subprocess.run(
@@ -9438,7 +9467,7 @@ def _generator_sha() -> str:
             timeout=5,
             cwd=str(repo_dir),
         )
-        return result.stdout.strip() if result.returncode == 0 else 'unknown'
+        return result.stdout.strip()[:7] if result.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'
 
@@ -9632,7 +9661,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         computed_note=computed_note,
         error_note=error_note,
         titles_note=titles_note,
-        generator_sha=generator_sha or 'unknown',
+        generator_sha=esc(str(generator_sha or 'unknown')[:7]),
     )
 
 
@@ -9989,7 +10018,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     def _page(title: str, current: str, page_main: str) -> str:
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
-                          computed_note, error_note, titles_note, generator_sha or 'unknown')
+                          computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
 
     teaser_html = _index_teasers(data, ledger_tail, evolution_tree, hypotheses)
     teaser_feed = build_cycle_feed(

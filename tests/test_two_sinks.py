@@ -137,6 +137,11 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     assert public_reflection["summary_chars"] > 0
     assert public_reflection["transcript_coverage"] == 0.8333
     assert public_reflection["partial_view"] is True
+    preserved_reflection = {**public_reflection, "recommendations_count": 1}
+    cycle_details = tv.build_cycle_details([], None, [], [preserved_reflection])
+    assert cycle_details["c1"]["reflection"]["summary_chars"] == len(markers["reflections"])
+    assert cycle_details["c1"]["reflection"]["findings_count"] == 1
+    assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
 
     pages = tv.render_pages(public_data, "eeepc")
     for fname, content in pages.items():

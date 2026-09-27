@@ -551,6 +551,22 @@ def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: 
         tv.publish_to_pages({"index.html": "<html>clean index</html>"})
 
 
+def test_adr036_rejects_entities_still_changing_after_round_limit() -> None:
+    """ADR-036: If a bounded unescape still changes, do not scan a partially decoded value as clean."""
+    import html
+    deeply_nested = '"messages": []'
+    for _ in range(6):
+        deeply_nested = html.escape(deeply_nested, quote=True)
+    # Verify the test input itself has six real escaping layers and is not merely
+    # a run of adjacent entities that stabilizes early.
+    decoded = deeply_nested
+    for _ in range(5):
+        decoded = html.unescape(decoded)
+    assert html.unescape(decoded) != decoded
+    with pytest.raises(ps.PublicationScanError, match="entity.*limit|unescape.*limit|decode.*limit"):
+        ps.scan_pages({"index.html": deeply_nested})
+
+
 def test_adr036_tag_stripped_secrets_and_markers_trigger_rejection() -> None:
     """ADR-036 rule 3: Secrets and markers split across HTML tags must be detected."""
     split_token = "<code>ghp_<span>abcdefghijklmnop123456</span></code>"
@@ -645,6 +661,49 @@ def test_adr036_single_quoted_keys_and_values_trigger_rejection() -> None:
 
     with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
         ps.scan_pages({"index.html": single_json_3})
+
+
+def test_adr036_encoded_html_markup_is_parsed_before_scanning() -> None:
+    """HTML-escaped tag delimiters must be unescaped before parser tokenization."""
+    encoded_markup = "ghp_&lt;span&gt;abcdefghijklmnop123456&lt;/span&gt;"
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": encoded_markup})
+
+
+def test_adr036_html_parser_detects_tokens_split_through_tags_and_attributes() -> None:
+    """ADR-036: Scanner inspects parsed text and attributes without merging the streams."""
+    split_github_token = '<div>ghp_<span class="red box">abcdefghijklmnop123456</span></div>'
+    split_assignment = '<p>API_KEY=abc<span></span>def12345</p>'
+    token_in_attribute = '<span data-token="ghp_abcdefghijklmnop123456"></span>'
+
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": split_github_token})
+
+    with pytest.raises(ps.PublicationScanError, match="env_secret_kv"):
+        ps.scan_pages({"index.html": split_assignment})
+
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": token_in_attribute})
+
+
+def test_adr036_raw_text_element_markup_is_scanned_as_html_fragment() -> None:
+    """Tag-split credentials in raw-text elements are parsed with text and attributes separate."""
+    for element in ("script", "style", "textarea", "title"):
+        page = f"<{element}>document.body.innerHTML='ghp_<span>abcdefghijklmnop123456</span>'</{element}>"
+        with pytest.raises(ps.PublicationScanError, match="github_token"):
+            ps.scan_pages({"index.html": page})
+
+    attributed_fragment = '<script>document.body.innerHTML=\'ghp_<span class="red box">abcdefghijklmnop123456</span>\'</script>'
+    with pytest.raises(ps.PublicationScanError, match="github_token"):
+        ps.scan_pages({"index.html": attributed_fragment})
+
+
+def test_adr036_single_quoted_structural_markers_trigger_rejection() -> None:
+    """ADR-036: Single-quoted call structures are still call markers and must be rejected."""
+    with pytest.raises(ps.PublicationScanError, match="structural_messages"):
+        ps.scan_pages({"index.html": "{'messages': [{'role': 'user'}]}"})
+    with pytest.raises(ps.PublicationScanError, match="structural_reasoning_content"):
+        ps.scan_pages({"index.html": "{'reasoning_content': 'private'}"})
 
 
 def test_adr036_iterative_html_unescape_double_encoded_entities() -> None:
