@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.publish_scan import scan_text
+from scripts.publish_scan import STANDALONE_PATTERNS, scan_text
 
 DEFAULT_DISPLAY_LIMIT = 4000
 
@@ -19,6 +19,24 @@ class SanitizedText(str):
 
 WITHHELD_SECRET = SanitizedText("[withheld: secret pattern]")
 WITHHELD_ENV = SanitizedText("[withheld: env file]")
+
+REDACTION_REPLACEMENTS = {
+    "eeepc_agent_path": "[internal path]",
+    "openai_secret_key": "[redacted: api-key]",
+    "openai_secret_key_short": "[redacted: api-key]",
+    "github_token": "[redacted: token]",
+    "bearer_token": "Bearer [redacted: bearer]",
+    "aws_access_key": "[redacted: aws-key]",
+    "slack_token": "[redacted: slack-token]",
+    "basic_auth": "[redacted: basic-auth]",
+    "url_credentials": "[redacted: url-credentials]",
+    "private_key_header": "[redacted: private-key]",
+    "structural_reasoning_content": "[redacted field]",
+    "structural_messages": "[redacted field]",
+    "structural_prompt": "[redacted field]",
+    "json_secret_field": "[redacted]",
+    "env_secret_kv": "[redacted]",
+}
 
 def _escape(value: str) -> str:
     return html.escape(value, quote=True)
@@ -39,8 +57,31 @@ def sanitize_block(value: Any, *, env_path: bool = False) -> SanitizedText:
     return SanitizedText(serialized)
 
 
+def _replace_secret_fields(value: str) -> str:
+    value = re.sub(
+        r'(?i)(["\']?[\w-]*(?:password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)[\w-]*["\']?\s*:\s*)(["\'])(.*?)(\2)',
+        lambda match: f"{match.group(1)}{match.group(2)}[redacted]{match.group(2)}",
+        value,
+    )
+    value = re.sub(
+        r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*:\s*)([^\s\r\n]+)',
+        lambda match: f"{match.group(1)}[redacted]",
+        value,
+    )
+    return re.sub(
+        r'(?i)([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*=\s*)([^\s\r\n]+)',
+        lambda match: f"{match.group(1)}[redacted]",
+        value,
+    )
+
+
 def redact_text(value: str) -> SanitizedText:
-    return sanitize_block(value)
+    result = value
+    for rule in STANDALONE_PATTERNS:
+        replacement = REDACTION_REPLACEMENTS.get(rule.name)
+        if replacement:
+            result = rule.pattern.sub(replacement, result)
+    return SanitizedText(_replace_secret_fields(result))
 
 
 def is_env_path(path_str: str) -> bool:
@@ -52,9 +93,40 @@ def is_env_path(path_str: str) -> bool:
 
 
 def sanitize_tool_arguments(arguments: Any) -> SanitizedText:
-    return sanitize_block(arguments)
+    try:
+        parsed = json.loads(arguments) if isinstance(arguments, str) else arguments
+    except (json.JSONDecodeError, TypeError):
+        return WITHHELD_ENV if is_env_path(str(arguments)) else redact_text(str(arguments))
+    if _contains_env_path(parsed):
+        return WITHHELD_ENV
+    return SanitizedText(json.dumps(_sanitize_nested_value(parsed), ensure_ascii=False))
 
 
+def _contains_env_path(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            (str(key).lower() in {"path", "file", "filename"} and isinstance(item, str) and is_env_path(item))
+            or _contains_env_path(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_env_path(item) for item in value)
+    return False
+
+
+def _sanitize_nested_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: SanitizedText("[redacted]")
+            if re.search(r"(?i)(password|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)", str(key))
+            else _sanitize_nested_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_nested_value(item) for item in value]
+    if isinstance(value, str):
+        return redact_text(value)
+    return value
 
 
 def sanitize_tool_output(args: Any, result: Any) -> SanitizedText:

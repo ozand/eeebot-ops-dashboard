@@ -143,7 +143,7 @@ STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
     SecretPattern("slack_token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b"), "Slack API token"),
     SecretPattern("basic_auth", re.compile(r"(?i)\bAuthorization\s*:\s*Basic\s+[A-Za-z0-9+/=]{10,}\b|\bBasic\s+[A-Za-z0-9+/=]{16,}\b"), "Basic Auth header"),
     SecretPattern("url_credentials", re.compile(r"https?://[^:\s/\"']+:[^@\s/\"']+@[^/\s\"']+"), "URL containing embedded credentials"),
-    SecretPattern("private_key_header", re.compile(r"-----BEGIN (?:[A-Z0-9_-]+ )*PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9_-]+ )*PRIVATE KEY-----"), "private key block"),
+    SecretPattern("private_key_header", re.compile(r"-----BEGIN (?:[A-Z0-9_-]+ )*PRIVATE KEY-----"), "private key block"),
     SecretPattern("structural_reasoning_content", re.compile(r"['\"]reasoning_content['\"]"), "call marker reasoning_content"),
     SecretPattern("structural_messages", re.compile(r"['\"]messages['\"]\s*:"), "call marker messages"),
     SecretPattern("structural_prompt", re.compile(r"['\"]prompt['\"]\s*:\s*\{"), "call marker prompt object"),
@@ -167,6 +167,7 @@ validate_rule_names(rule.name for rule in STANDALONE_PATTERNS)
 SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
     "eeepc_agent_path": ("/etc/eeepc-agent",),
     "openai_secret_key": ("sk-",),
+    "openai_secret_key_short": ("sk-",),
     "github_token": ("ghp_", "gho_", "ghs_", "ghu_", "github_pat_"),
     "bearer_token": ("bearer",),
     "aws_access_key": ("AKIA",),
