@@ -98,6 +98,40 @@ def test_should_publish_when_never_published_before() -> None:
     assert publish is True
 
 
+def test_publish_duration_warning_on_single_run_over_ten_minutes() -> None:
+    state = {'changed_publish_durations_seconds': []}
+    warning, updated = ap.record_publish_duration(state, duration_seconds=601, changed=True)
+    assert warning == 'publish duration exceeded 10 minutes (601s)'
+    assert updated['publish_duration_warning'] == warning
+
+
+def test_three_changed_slow_runs_warn_and_unchanged_does_not_break_or_advance_streak() -> None:
+    state = {'changed_publish_durations_seconds': []}
+    for seconds in (181, 182):
+        warning, state = ap.record_publish_duration(state, duration_seconds=seconds, changed=True)
+        assert warning is None
+    warning, state = ap.record_publish_duration(state, duration_seconds=0.1, changed=False)
+    assert warning is None
+    assert state['changed_publish_durations_seconds'] == [181, 182]
+    warning, state = ap.record_publish_duration(state, duration_seconds=183, changed=True)
+    assert warning == '3 consecutive changed publishes exceeded 3 minutes'
+
+
+def test_fast_changed_publish_resets_consecutive_slow_streak() -> None:
+    state = {'changed_publish_durations_seconds': [181, 182]}
+    warning, state = ap.record_publish_duration(state, duration_seconds=180, changed=True)
+    assert warning is None
+    assert state['changed_publish_durations_seconds'] == []
+
+
+def test_permanent_timeout_dropin_documents_manual_installation_and_verification() -> None:
+    timeout = Path(__file__).parents[1] / 'systemd/drop-ins/eeebot-techtree-publish.service.d/20-timeout.conf'
+    assert 'permanent' in timeout.read_text(encoding='utf-8').lower()
+    readme = (Path(__file__).parents[1] / 'README.md').read_text(encoding='utf-8')
+    assert '20-timeout.conf' in readme
+    assert 'TimeoutStartUSec' in readme
+
+
 # --- item I (issue #27 review round 4): $STATE_DIRECTORY may become -------
 # --- colon-separated if a second directory name is ever added -------------
 
