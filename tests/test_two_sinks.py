@@ -149,12 +149,120 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
             assert m not in content, f"Marker {k} ({m}) found in rendered public page {fname}"
 
 
+def test_m1_reason_allowlist_rejects_lowercase_freeform_canaries() -> None:
+    for canary in ("privatecanary", "accessdenied", "password:hunter2", "x:y"):
+        public, private = split_render_inputs({
+            "ledger_tail": [{"phase": "outcome", "reason": canary}],
+            "strategist_decisions": [{"reason": canary, "decision": canary}],
+        })
+        encoded = json.dumps(public)
+        assert canary not in encoded
+        assert private["withheld_reason_counts"]
+        assert "withheld_reason_counts" not in encoded
+
+
 def test_no_private_file_of_any_kind_is_published(tmp_path: Path):
     """ADR-036 §3: allowlist is extension-independent."""
     from scripts.publish_scan import PublicationScanError
     for name in ("calls.json", "dump.gz", "index.idx", "unexpected.bin"):
         with pytest.raises(PublicationScanError, match="unlisted"):
             validate_publish_allowlist({name: "payload"})
+
+
+def test_m5_built_tree_scan_preserves_relative_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.two_sinks as sinks
+    captured = {}
+    monkeypatch.setattr(sinks, "_publish_scan_pages", lambda pages: captured.update(pages))
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "index.html").write_text("root", encoding="utf-8")
+    (tmp_path / "nested" / "index.html").write_text("nested", encoding="utf-8")
+    sinks.scan_built_tree(tmp_path)
+    assert captured == {"index.html": "root", "nested/index.html": "nested"}
+
+
+def test_m7_snapshot_names_reject_header_injection_and_traversal(tmp_path: Path) -> None:
+    from scripts.two_sinks import add_snapshot_version
+    for version in ("v1\\r\\nInjected: yes", "x" * 65, "../outside"):
+        with pytest.raises(ValueError):
+            add_snapshot_version(PUBLIC, version)
+    for name in ("../escape.html", "/absolute.html", "nested/../../escape.html"):
+        with pytest.raises(ValueError):
+            add_snapshot_version({name: "bad"}, "v1")
+
+
+def test_m2_derived_view_reason_and_priority_are_typed_and_evidence_is_removed() -> None:
+    marker = "PRIVATE_CANARY_DERIVED"
+    public, _ = split_render_inputs({"derived_view": {
+        "status": "present", "reason": marker,
+        "charter": {"source": "goal_text_json", "text": marker},
+        "priority_items": [{"number": "3", "evidence": marker, "label": "safe"}],
+    }})
+    encoded = json.dumps(public)
+    assert marker not in encoded and "evidence" not in encoded
+    assert public["derived_view"]["reason"] == "derived view present"
+    assert "text" not in public["derived_view"]["charter"]
+    assert "number" not in public["derived_view"]["priority_items"][0]
+
+
+def test_m3_counters_are_recomputed_and_renderer_rejects_string_counts() -> None:
+    from scripts import techtree_viewer as tv
+    public, _ = split_render_inputs({"agent_context": {"prompt_text": "PRIVATE", "prompt_text_chars": "wrong"}})
+    assert public["agent_context"]["prompt_text_chars"] == len("PRIVATE")
+    rendered = tv.build_agent_panel({"lines": "PRIVATE_CANARY", "chars": "PRIVATE_CANARY"}, None, None)
+    assert "PRIVATE_CANARY" not in rendered
+
+
+def test_m6_snapshot_server_blocks_encoded_alias_escape_and_head_routes(tmp_path: Path) -> None:
+    import threading
+    from http.server import ThreadingHTTPServer
+    from urllib.request import Request, urlopen
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "root"}, "v1")
+    class Handler(SnapshotHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(root), **kwargs)
+    Handler.site_root = root.resolve()
+    class Server(ThreadingHTTPServer):
+        daemon_threads = True
+    server = Server(("127.0.0.1", 0), Handler)
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        base = f"http://127.0.0.1:{server.server_port}"
+        for route in ("/%63urrent/", "/./current/"):
+            with urlopen(Request(base + route, method="HEAD")) as response:
+                assert response.status == 200
+                assert response.geturl().endswith("/v1/index.html")
+                assert response.read() == b""
+        for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
+            with pytest.raises(Exception):
+                urlopen(base + route)
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
+def test_m8_host_failure_state_is_recorded_when_github_publish_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import techtree_autopublish as ap
+    HostSnapshotError = ap.sinks.HostSnapshotError
+    root, state_dir, site = tmp_path / "input", tmp_path / "publisher", tmp_path / "site"
+    ap.save_publish_state(state_dir, "old", 1.0)
+    monkeypatch.setattr(ap, "compute_tree_digest", lambda *_: "new")
+    monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_: None)
+    monkeypatch.setattr(ap.tv, "read_local_state", lambda *_a, **_kw: {"_error": None})
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+    monkeypatch.setattr(ap.tv, "render_public_pages", lambda *_a, **_kw: {"index.html": "safe"})
+    monkeypatch.setattr(ap.sinks, "render_private_pages", lambda *_a, **_kw: {})
+    monkeypatch.setattr(ap.sinks, "publish_ordered", lambda *_a, **_kw: (_ for _ in ()).throw(
+        HostSnapshotError("host failed", publish_result=(1, {}))))
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site)])
+    assert ap.run(args) == 1
+    saved = ap.load_publish_state(state_dir)
+    assert saved["host_snapshot_failed_since"] is not None
+    assert saved["last_host_error"] == "host failed"
 
 
 def test_built_tree_scan_refuses_private_markers(tmp_path: Path):
@@ -267,7 +375,7 @@ def test_server_root_redirects_to_version_snapshot(tmp_path: Path):
     h = MockHandler("/")
     h.do_GET()
     assert h.response_code == 302
-    assert h.headers_sent.get("Location") == "/v1/"
+    assert h.headers_sent.get("Location") == "/v1/index.html"
 
 
 def test_snapshot_swap_is_atomic_for_readers(tmp_path: Path, monkeypatch):
@@ -512,15 +620,15 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert "0 chars" not in panel_shape
     assert "unexpected shape" in panel_shape
 
-    pub_pres, _ = split_render_inputs({"goal_text": {"charter": "c1\nc2", "priorities": ["p1", "p2"]}})
+    pub_pres, _ = split_render_inputs({"goal_text": {"text": "private canon", "priorities": ["p1", "p2"]}})
     meta_pres = pub_pres["goal_meta"]
     assert meta_pres["state"] == "present"
     assert meta_pres["priority_count"] == 2
-    assert meta_pres["lines"] == 2
-    assert meta_pres["chars"] == 5
+    assert meta_pres["lines"] is None
+    assert meta_pres["chars"] is None
     panel_pres = tv.build_agent_panel(None, meta_pres, None)
-    assert "Goals charter (2 lines)" in panel_pres
-    assert "5 chars" in panel_pres
+    assert "Goals charter (" in panel_pres
+    assert "private canon" not in panel_pres
 
     pub_no_prio, _ = split_render_inputs({"goal_text": {"charter": "line1"}})
     meta_no_prio = pub_no_prio["goal_meta"]
@@ -623,7 +731,7 @@ def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
     public, _ = split_render_inputs({"strategist_decisions": [{"decision": marker, "rationale": "private"}]})
     projected = public["strategist_decisions"][0]
     assert marker not in json.dumps(public)
-    assert projected["decision"] == f"decision text, {len(marker)} chars (LAN)"
+    assert projected["decision"].startswith("withheld (")
     assert projected["rationale"] == ""
 
 
@@ -643,6 +751,29 @@ def test_public_ledger_decision_allows_codes_only_in_rendered_pages() -> None:
     assert "skipped_duplicate" in rendered
 
 
+def test_m2_ci_freshness_added_after_split_is_projected() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+    public, _ = split_render_inputs({})
+    data = {"repo": {"state": "PRIVATE_CANARY_CI", "reason": "PRIVATE_CANARY_DETAIL"}}
+    public["ci_freshness"] = _sanitize_public_value("ci_freshness", data)
+    assert "PRIVATE_CANARY" not in json.dumps(public)
+
+
+def test_m2_release_goals_charter_source_is_pinned() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+    marker = "PRIVATE_CANARY_CHARTER_SOURCE"
+    for source in ("goal_text_json", "legacy_goals_md", "unknown", None):
+        projected = _sanitize_public_value("derived_view", {
+            "status": "present", "charter": {"source": source, "text": marker},
+        })
+        assert "text" not in projected["charter"]
+        assert marker not in json.dumps(projected)
+    allowed = _sanitize_public_value("derived_view", {
+        "status": "present", "charter": {"source": "release_goals_md", "text": "public goals"},
+    })
+    assert allowed["charter"]["text"] == "public goals"
+
+
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     from scripts import techtree_viewer as tv
 
@@ -655,7 +786,7 @@ def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     pages = tv.render_public_pages(public, "eeepc")
     public_payload = json.dumps(pages)
     assert marker not in json.dumps(public)
-    assert projected["reason"] == f"reason text, {len('LLM failed: ' + marker)} chars (LAN)"
+    assert projected["reason"].startswith("withheld (")
     assert marker not in public_payload
 
 
@@ -665,7 +796,8 @@ def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None
     marker = "PRIVATE_REFUSAL_REASON_CANARY_991"
     live_row = {
         "success": False,
-        "reason": f"refused: 2 of 5 inputs empty; {marker}",
+        "reason": "refused",
+        "details": f"2 of 5 inputs empty; {marker}",
         "timestamp": "2026-09-03T12:37:17Z",
         "inputs_status": {},
         "counts": {},
@@ -776,6 +908,7 @@ def test_b1_viewer_main_publish_routes_through_split_and_publish_ordered(tmp_pat
     monkeypatch.setattr(tv, "fetch_remote_state", lambda *a, **kw: {"_error": None})
     monkeypatch.setattr(tv, "publish_to_pages", lambda *a, **kw: pytest.fail("publish_to_pages called directly!"))
 
+    monkeypatch.setattr("scripts.two_sinks._sanitize_public_value", lambda *_a, **_kw: {})
     out_dir = tmp_path / "out"
     rc = tv.main(["--local", "--state-root", str(tmp_path), "--out", str(out_dir), "--publish"])
     assert rc == 0

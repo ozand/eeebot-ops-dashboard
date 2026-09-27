@@ -234,6 +234,10 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             data.setdefault('page_fingerprints', {})
             data.setdefault('changed_publish_durations_seconds', [])
             data.setdefault('publish_duration_warning', None)
+            if not isinstance(data.get('host_snapshot_failed_since'), (int, float)) or isinstance(data.get('host_snapshot_failed_since'), bool):
+                data.pop('host_snapshot_failed_since', None)
+            if not isinstance(data.get('last_host_error'), str):
+                data.pop('last_host_error', None)
             # Cache validation is owned by publish_scan so its schema and key
             # version cannot drift from the scanner's acceptance rules.
             try:
@@ -617,7 +621,7 @@ def run(args: argparse.Namespace) -> int:
     # page; no-op bridge cycles therefore avoid six network calls. The same
     # in-memory observation is passed to every rendered page.
     data['ci_freshness'] = tv.read_ci_freshness()
-    public_data['ci_freshness'] = data['ci_freshness']
+    public_data['ci_freshness'] = sinks._sanitize_public_value('ci_freshness', data['ci_freshness'])
     public_pages = tv.render_public_pages(public_data, args.host_label)
     private_pages = sinks.render_private_pages(private_data, args.host_label)
     version = f"{int(now)}-{digest[:12]}"
@@ -692,17 +696,18 @@ def run(args: argparse.Namespace) -> int:
     except sinks.HostSnapshotError as exc:
         print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
         gh_rc, gh_fps = exc.publish_result or (1, {})
-        if gh_rc == 0 and gh_fps:
-            failed_since = state.get('host_snapshot_failed_since') or now
-            save_publish_state(
-                state_dir, digest, now,
-                page_fingerprints=gh_fps,
-                host_snapshot_failed_since=failed_since,
-                last_host_error=str(exc),
-                clean_scan_cache=state.get('clean_scan_cache'),
-                changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
-                publish_duration_warning=duration_warning,
-            )
+        failed_since = state.get('host_snapshot_failed_since') or now
+        save_publish_state(
+            state_dir, digest if gh_rc == 0 else state.get('digest'), now if gh_rc == 0 else state.get('published_at'),
+            page_fingerprints=gh_fps if gh_rc == 0 and gh_fps else state.get('page_fingerprints'),
+            host_snapshot_failed_since=failed_since,
+            last_host_error=str(exc),
+            refusing_since=state.get('refusing_since'),
+            clean_scan_cache=state.get('clean_scan_cache'),
+            changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+            publish_duration_warning=duration_warning,
+            published=gh_rc == 0,
+        )
         return 1
     except Exception as exc:
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)

@@ -7539,8 +7539,8 @@ def build_agent_panel(
     # 1. AGENTS.md
     if agents_md is not None:
         if isinstance(agents_md, dict) and "lines" in agents_md and "chars" in agents_md:
-            md_lines = agents_md["lines"]
-            md_chars = agents_md["chars"]
+            md_lines = agents_md["lines"] if isinstance(agents_md["lines"], int) and not isinstance(agents_md["lines"], bool) and agents_md["lines"] >= 0 else 0
+            md_chars = agents_md["chars"] if isinstance(agents_md["chars"], int) and not isinstance(agents_md["chars"], bool) and agents_md["chars"] >= 0 else 0
         else:
             md_text = str(agents_md).strip()
             md_lines = len(md_text.splitlines())
@@ -7562,9 +7562,9 @@ def build_agent_panel(
         elif g_state == "unexpected_shape":
             goals_html = '<p class="unavailable-note">goals charter unexpected shape</p>'
         elif g_state == "present" or g_state is None:
-            if "lines" in goal_text and "chars" in goal_text and goal_text["lines"] is not None:
+            if "lines" in goal_text and "chars" in goal_text and isinstance(goal_text["lines"], int) and not isinstance(goal_text["lines"], bool) and goal_text["lines"] >= 0:
                 g_lines = goal_text["lines"]
-                g_chars = goal_text["chars"]
+                g_chars = goal_text["chars"] if isinstance(goal_text["chars"], int) and not isinstance(goal_text["chars"], bool) and goal_text["chars"] >= 0 else 0
             else:
                 g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
                 g_lines = len(str(g_text).splitlines())
@@ -7823,10 +7823,10 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     produced = (f"{int(counts.get('hypotheses_appended') or 0)} hypotheses, "
                 f"{int(counts.get('advisories_written') or 0)} advisories")
 
-    reason = str(row.get('reason') or '')
     if row.get('success') is True:
         badge, label = 'badge badge-available', 'ran'
-    elif row.get('refused') is True or 'refus' in reason.lower():
+    elif (row.get('refused') is True or row.get('decision') in {'refused', 'declined'}
+          or (isinstance(row.get('reason'), str) and row['reason'] in {'refused', 'declined'})):
         badge, label = 'badge badge-rejected', 'refused'
     else:
         badge, label = 'health-alert-text', 'error'
@@ -7835,8 +7835,6 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     detail = f'{label} {when} — {ratio}, {produced}'
     if degraded:
         detail += ' — degraded: ' + ', '.join(degraded[:3])
-    if label != 'ran' and reason and not reason.startswith('reason text, '):
-        detail += f' — {reason[:80]}'
     return (f'<div class="now-item"><span class="now-label">Strategist:</span> '
             f'<span class="{badge}">{esc(detail)}</span></div>')
 
@@ -11072,11 +11070,37 @@ def main(argv: list[str] | None = None) -> int:
         data = read_local_state(args.state_root, include_ci_freshness=True)
     else:
         data = fetch_remote_state(args.host)
-    pages = render_pages(data, args.host)
-
     out_path = Path(args.out)
+    if data.get('_error'):
+        print(f'note: {data["_error"]}', file=sys.stderr)
+
+    if args.publish:
+        try:
+            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+        except ImportError:
+            from two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+
+        public_data, private_data = split_render_inputs(data)
+        public_data["ci_freshness"] = _sanitize_public_value("ci_freshness", data.get("ci_freshness"))
+        public_pages = render_public_pages(public_data, args.host)
+        private_pages = render_private_pages(private_data, args.host)
+        now_ts = time.time()
+        version = f"{int(now_ts)}-manual"
+        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
+        rc, _ = publish_ordered(
+            Path(args.site_root),
+            public_pages,
+            private_pages,
+            version,
+            publisher=lambda p: publish_to_pages(p),
+            generated_at=stamp,
+        )
+        return rc
+
+    if isinstance(data.get("ci_freshness"), dict):
+        data["ci_freshness"] = _sanitize_public_value("ci_freshness", data["ci_freshness"])
+    pages = render_pages(data, args.host)
     if out_path.suffix == '.html':
-        # legacy single-file invocation: write the landing page there
         out_path.write_text(pages['index.html'], encoding='utf-8')
         print(f'wrote {out_path.resolve()}')
     else:
@@ -11092,33 +11116,8 @@ def main(argv: list[str] | None = None) -> int:
                 destination.write_bytes(source.read_bytes())
         print(f'wrote {len(pages)} pages to {out_path.resolve()}')
 
-    if data.get('_error'):
-        print(f'note: {data["_error"]}', file=sys.stderr)
-
     if args.open:
         webbrowser.open((out_path / 'index.html').resolve().as_uri())
-
-    if args.publish:
-        try:
-            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs
-        except ImportError:
-            from two_sinks import publish_ordered, render_private_pages, split_render_inputs
-
-        public_data, private_data = split_render_inputs(data)
-        public_pages = render_public_pages(public_data, args.host)
-        private_pages = render_private_pages(private_data, args.host)
-        now_ts = time.time()
-        version = f"{int(now_ts)}-manual"
-        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
-        rc, _ = publish_ordered(
-            Path(args.site_root),
-            public_pages,
-            private_pages,
-            version,
-            publisher=lambda p: publish_to_pages(p),
-            generated_at=stamp,
-        )
-        return rc
 
     return 0
 

@@ -5597,7 +5597,7 @@ class TestIssue204StrategistRunProvenance:
         assert "2 hypotheses, 2 advisories" in text
 
     def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
-        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
+        refused = dict(self.LIVE, success=False, refused=True, decision="refused", reason="withheld (<=64)")
         html = tv._build_strategist_run_item([refused])
         healthy = tv._build_strategist_run_item([dict(self.LIVE)])
         assert "refused" in self._text([refused])
