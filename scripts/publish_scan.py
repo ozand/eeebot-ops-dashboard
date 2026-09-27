@@ -337,12 +337,24 @@ def _text_has_rule_anchor(
 
 _RULE_CACHE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*:[0-9a-f]{64}:(?:html|json):(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
+# Target number of distinct fully-approved content identities (pages or
+# inherited blobs) to retain. Codex re-check on PR #343 (P1): a flat
+# 256-entry bound left over from the single-key-per-page era only holds
+# ~256/len(rule_names()) fully-approved pages once every rule has its own
+# key -- 18 pages for today's 14 rules. The actual entry bound scales
+# with the rule count so the intended page-level capacity is preserved.
+_CACHE_PAGE_CAP = 256
+
+
+def _cache_entry_bound() -> int:
+    return _CACHE_PAGE_CAP * len(rule_names())
+
 
 def validate_clean_cache(value: Any) -> dict[str, bool]:
     """Return a safe cache or empty mapping; any malformed entry invalidates all."""
     if not isinstance(value, dict):
         return {}
-    if len(value) > 256 or any(
+    if len(value) > _cache_entry_bound() or any(
         not isinstance(key, str) or not _RULE_CACHE_KEY_RE.fullmatch(key) or clean is not True
         for key, clean in value.items()
     ):
@@ -379,14 +391,27 @@ def _shared_scan_version() -> str:
     (correct and safe: none of them can be trusted to still behave the
     same way); a change to one rule's own pattern only invalidates that
     rule (see ``_rule_witness``). Cached for the process lifetime -- tests
-    that monkeypatch shared helpers should not expect this to notice."""
+    that monkeypatch shared helpers should not expect this to notice.
+
+    Codex re-check on PR #343 (P1): the functions' own source text does
+    NOT change when a table or class they read BY NAME changes --
+    ``is_excluded_key_name`` references ``EXCLUDED_EXACT_NAMES``/
+    ``_METRIC_NAME_TOKENS``/``_METRIC_SUBSTRINGS`` and
+    ``_html_scan_variants`` references ``_ScanHTMLParser`` without either
+    appearing in those functions' own source. Every transitive
+    constant/class reachable from the hashed functions must be included
+    explicitly, or an edit to one silently leaves stale approvals in
+    place."""
     parts = [
         inspect.getsource(fn) for fn in (
             scan_text, _html_scan_variants, _unescape_until_stable,
             _json_strings, _text_has_rule_anchor, is_excluded_key_name,
-            is_secret_value,
+            is_secret_value, _ScanHTMLParser,
         )
     ]
+    parts.append(repr(sorted(EXCLUDED_EXACT_NAMES)))
+    parts.append(repr(sorted(_METRIC_NAME_TOKENS)))
+    parts.append(repr(_METRIC_SUBSTRINGS))
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
 
 
@@ -486,7 +511,7 @@ def scan_pages(
             if current_versions.get(rule_name) == version:
                 kept[key] = value
         cache.clear()
-        for key in list(kept)[-256:]:
+        for key in list(kept)[-_cache_entry_bound():]:
             cache[key] = True
 
 
