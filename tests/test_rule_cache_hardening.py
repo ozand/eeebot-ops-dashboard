@@ -26,6 +26,7 @@ def test_transitive_shared_fingerprint_covers_all_rule_dependencies():
     source = inspect.getsource(ps)
     tree = ast.parse(source)
     covered = ps._shared_fingerprint_dependency_names()
+    rule_data = ps._rule_data_dependency_names()
     top_level = {
         node.name: node for node in tree.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
@@ -64,7 +65,9 @@ def test_transitive_shared_fingerprint_covers_all_rule_dependencies():
             assert raw_tags is not None
             transitive.add("RAW_TEXT_TAGS")
     assert "RAW_TEXT_TAGS" in covered
-    assert transitive <= covered
+    assert transitive <= covered | rule_data
+    assert not (covered & rule_data), "shared infrastructure and per-rule data must stay separate"
+    assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE", "_JSON_SECRET_KEY_RE", "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE"} <= rule_data
 
 
 def test_shared_scan_version_is_stable_across_python_hash_seeds():

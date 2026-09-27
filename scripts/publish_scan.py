@@ -103,6 +103,20 @@ def is_secret_value(value: str) -> bool:
 
 
 _RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
+_SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
+    "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
+    "_METRIC_SUBSTRINGS", "is_secret_value", "_unescape_until_stable",
+    "_json_strings", "_ScanHTMLParser", "RAW_TEXT_TAGS",
+    "_html_scan_variants", "scan_text", "_text_has_rule_anchor",
+    "PublicationScanError", "validate_rule_names", "_RESERVED_RULE_NAMES",
+    "_SHARED_FINGERPRINT_DEPENDENCIES", "_RULE_DATA_DEPENDENCIES",
+    "_shared_fingerprint_dependency_names", "_rule_data_dependency_names",
+    "_all_top_level_dependency_objects", "_shared_scan_version",
+})
+_RULE_DATA_DEPENDENCIES = frozenset({
+    "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
+    "_JSON_SECRET_KEY_RE", "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE",
+})
 
 
 def validate_rule_names(names: Iterable[str]) -> None:
@@ -429,31 +443,24 @@ def _rule_witness(rule_name: str) -> str:
 
 
 def _shared_fingerprint_dependency_names() -> frozenset[str]:
-    """Source-anchored allowlist of module definitions in shared scan deps.
+    """Module definitions fingerprinted as shared scanner infrastructure."""
+    return _SHARED_FINGERPRINT_DEPENDENCIES
 
-    The AST regression test requires every top-level module definition to be
-    listed, so new constants/helpers cannot silently stay outside the shared
-    fingerprint. Adding a module binding to this set is itself fingerprinted.
-    """
-    return frozenset({
-        "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
-        "_METRIC_SUBSTRINGS", "is_secret_value", "_unescape_until_stable",
-        "_json_strings", "_ScanHTMLParser", "RAW_TEXT_TAGS",
-        "_html_scan_variants", "scan_text", "_text_has_rule_anchor",
-        "SCANNER_ANCHORS", "STANDALONE_PATTERNS", "PublicationScanError",
-        "_JSON_CANDIDATE_RE", "_JSON_SECRET_KEY_RE",
-        "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE", "validate_rule_names",
-        "_RESERVED_RULE_NAMES",
-    })
+
+def _rule_data_dependency_names() -> frozenset[str]:
+    """Rule definitions fingerprinted only by their per-rule witnesses."""
+    return _RULE_DATA_DEPENDENCIES
 
 
 def _all_top_level_dependency_objects() -> dict[str, Any]:
     """Objects/bindings that must stay represented in the shared fingerprint."""
     objects: dict[str, Any] = {}
-    for name, value in globals().copy().items():
-        if name in _shared_fingerprint_dependency_names():
-            objects[name] = value
-    objects["RAW_TEXT_TAGS"] = _ScanHTMLParser.RAW_TEXT_TAGS
+    for name in sorted(_shared_fingerprint_dependency_names()):
+        if name == "RAW_TEXT_TAGS":
+            value = _ScanHTMLParser.RAW_TEXT_TAGS
+        else:
+            value = globals()[name]
+        objects[name] = value
     return objects
 
 
@@ -478,10 +485,15 @@ def _shared_scan_version() -> str:
     place."""
     parts = []
     for name, value in sorted(_all_top_level_dependency_objects().items()):
-        try:
-            rendered = inspect.getsource(value)
-        except (OSError, TypeError):
-            rendered = repr(value)
+        if isinstance(value, (set, frozenset)):
+            rendered = repr(sorted(value))
+        elif isinstance(value, re.Pattern):
+            rendered = f"pattern:{value.pattern!r}:flags:{value.flags}"
+        else:
+            try:
+                rendered = inspect.getsource(value)
+            except (OSError, TypeError):
+                rendered = repr(value)
         parts.append(f"{name}:{rendered}")
     parts.append(repr(sorted(_shared_fingerprint_dependency_names())))
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
