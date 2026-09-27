@@ -232,16 +232,27 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
             # correct: every page uploads fresh on the first run after this
             # field is introduced, same as day one.
             data.setdefault('page_fingerprints', {})
+            # Cache validation is owned by publish_scan so its schema and key
+            # version cannot drift from the scanner's acceptance rules.
+            try:
+                from scripts.publish_scan import validate_clean_cache
+            except ImportError:
+                from publish_scan import validate_clean_cache  # type: ignore
+            data['clean_scan_cache'] = validate_clean_cache(data.get('clean_scan_cache', {}))
             return data
     except Exception:  # noqa: BLE001
         pass
-    return {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}}
+    return {
+        'digest': None, 'published_at': None, 'refusing_since': None,
+        'page_fingerprints': {}, 'clean_scan_cache': {},
+    }
 
 
 def save_publish_state(
     state_dir: Path, digest: str | None, published_at: float | None,
     refusing_since: float | None = None,
     page_fingerprints: dict[str, str] | None = None,
+    clean_scan_cache: dict[str, bool] | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -269,6 +280,7 @@ def save_publish_state(
             'digest': digest, 'published_at': published_at,
             'refusing_since': refusing_since,
             'page_fingerprints': page_fingerprints or {},
+            'clean_scan_cache': clean_scan_cache if isinstance(clean_scan_cache, dict) else {},
         }
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
@@ -427,7 +439,7 @@ def run(args: argparse.Namespace) -> int:
 
     if args.dry_run:
         pages = tv.render_pages(data, args.host_label)
-        scan_pages(pages)
+        scan_pages(pages, clean_cache=state.get('clean_scan_cache'))
         if publish and source_problem:
             _, refusal_age, freeze_limit, past_limit = _refusal_freeze_status(
                 state, staleness_floor_seconds, now,
@@ -465,6 +477,10 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     if source_problem:
+        # Never carry clean-scan approvals across a source-integrity refusal.
+        # The current snapshot is untrusted; if the bounded refusal later
+        # publishes a fail-soft page, each exact page/blob still gets scanned.
+        state['clean_scan_cache'] = {}
         # Blocker B1: a torn/unreadable tree source must never publish a
         # blank page over the good one, and must never have its bad digest
         # recorded -- next cycle re-reads the same (still torn, or by then
@@ -495,6 +511,7 @@ def run(args: argparse.Namespace) -> int:
                     state_dir, state.get('digest'), state.get('published_at'),
                     refusing_since=refusing_since,
                     page_fingerprints=state.get('page_fingerprints'),
+                    clean_scan_cache={},
                 )
             print(
                 f'techtree-autopublish: refusing to publish -- {source_problem}; '
@@ -542,14 +559,19 @@ def run(args: argparse.Namespace) -> int:
     # what was published last time -- this is the mechanism that stops
     # re-uploading all 8 files in full on every run.
     rc, fingerprints = tv.publish_to_pages(
-        pages, previous_fingerprints=state.get('page_fingerprints'),
+        pages,
+        previous_fingerprints=state.get('page_fingerprints'),
+        scan_cache=state.get('clean_scan_cache'),
     )
     if rc != 0:
         print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         return 1
 
     print(f'techtree-autopublish: published ({reason})')
-    save_publish_state(state_dir, digest, now, page_fingerprints=fingerprints)
+    save_publish_state(
+        state_dir, digest, now, page_fingerprints=fingerprints,
+        clean_scan_cache=state.get('clean_scan_cache'),
+    )
     return 0
 
 
