@@ -4520,7 +4520,7 @@ def _build_unified_lineage(
         kind = raw_kind if raw_kind in {
             'integrated', 'skipped', 'partial', 'failed', 'push_pending',
             'superseded', 'abandoned', 'model_call_incomplete',
-        } else 'skipped'
+        } else 'unavailable' if raw_kind == 'unknown' else 'skipped'
         title = str(node.get('title') or cid)
         attrs = [f'class="arch-node arch-{esc(kind)} lineage-node"', f'data-cycle-id="{esc(cid)}"', f'data-node-id="{esc(node["node_id"])}"', f'data-cycle-node-index="{int(node.get("cycle_node_index") or 1)}"', f'data-cycle-node-count="{int(node.get("cycle_node_count") or 1)}"', f'cx="{x}"', f'cy="{y}"', 'r="9"', 'tabindex="0"', 'role="button"', f'aria-label="{esc(title)} — click for details"', f'id="{_safe_node_dom_id(node["node_id"])}"']
         if node.get('boundary'):
@@ -9579,6 +9579,7 @@ CSS = '''
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
     .arch-node.arch-model_call_incomplete { fill: #33263d; stroke: #c792ea; stroke-dasharray: 5 2; }
+    .arch-node.arch-unavailable { fill: #242b33; stroke: #8391a1; stroke-dasharray: 1 3; }
     .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
     .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
     .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }

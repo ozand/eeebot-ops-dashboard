@@ -1763,6 +1763,8 @@ def test_model_call_incomplete_lineage_legend_and_unknown_boundary_are_distinct(
     assert 'class="arch-node arch-model_call_incomplete lineage-node"' in html
     assert 'data-boundary="fallback_current_unavailable"' in html
     assert '"outcome":"unknown"' in html
+    assert 'class="arch-node arch-unavailable lineage-node"' in html
+
 
 
 def test_model_call_incomplete_appears_in_cycle_feed_and_detail_rendering() -> None:
