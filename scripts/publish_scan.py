@@ -244,17 +244,27 @@ def scan_text(content: str, *, html_mode: bool = True, json_mode: bool = False) 
     """Scan text and return rule hit counts; parser work is selected by artifact type."""
     findings: dict[str, int] = {}
     source_variants = [content, _unescape_until_stable(content)]
+    strings: list[str] = []
+    parsed_json = False
     if json_mode:
         try:
             decoded = json.loads(content)
         except (json.JSONDecodeError, UnicodeError):
             pass  # malformed JSON: scan raw and decoded source fail-closed
         else:
+            parsed_json = True
             strings = [_unescape_until_stable(value) for value in _json_strings(decoded)]
-            if strings:
-                source_variants.append("\x00".join(strings))
+            # Scan decoded strings independently; joining or scanning the raw
+            # container could synthesize assignments across JSON boundaries.
+            source_variants = list(strings)
     elif html_mode:
         source_variants.extend(_html_scan_variants(source_variants[-1]))
+    if parsed_json:
+        # A decoded JSON value may itself embed HTML markup. Parse strings as
+        # independent fragments; never parse the JSON container or join values.
+        for value in strings:
+            if "<" in value:
+                source_variants.extend(_html_scan_variants(value))
     variants = list(dict.fromkeys(source_variants))
 
     lower_cache: dict[str, str] = {}
