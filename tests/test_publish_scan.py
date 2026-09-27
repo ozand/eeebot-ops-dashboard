@@ -192,6 +192,13 @@ def test_json_scanning_parses_html_embedded_in_json_string() -> None:
         ps.scan_pages({"cycles-archive-1.json": payload})
 
 
+def test_valid_json_password_field_is_rejected() -> None:
+    """Keep key/colon/value structure visible to the JSON secret detector."""
+    payload = '{"password": "my_super_secret_password"}'
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"cycles-archive-1.json": payload})
+
+
 def test_json_string_streams_do_not_synthesize_env_secret() -> None:
     """Independent JSON strings are not concatenated into a synthetic assignment."""
     payload = '{"left":"AUTH=", "right":"abcdefghijk"}'
