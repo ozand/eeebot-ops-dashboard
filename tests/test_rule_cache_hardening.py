@@ -201,6 +201,7 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     shared = ps._shared_fingerprint_dependency_names()
     rule_data = ps._rule_data_dependency_names()
     transitive = _transitive_scan_dependencies(tree)
+    transitive.discard("SecretPattern")  # NamedTuple type is not scanner rule data.
     assert transitive <= shared | rule_data
     assert not (shared & rule_data), "each transitive dependency has exactly one fingerprint owner"
     assert "RAW_TEXT_TAGS" in shared
@@ -216,22 +217,33 @@ def _transitive_scan_dependencies(
         "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value",
     ]
     found: set[str] = set()
+    visited: set[str] = set()
     while pending:
         name = pending.pop()
-        if name in found:
+        if name in visited:
             continue
+        visited.add(name)
         found.add(name)
         node = top_level.get(name) or constants.get(name) or attributes.get(name)
         if node is None:
             continue
         reads = {item.id for item in ast.walk(node) if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)}
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            # A queued binding needs its own RHS dependencies traversed too.
+            value = node.value
+            reads.update(
+                item.id for item in ast.walk(value)
+                if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)
+            )
         reads.update(
             f"{item.value.id}.{item.attr}" for item in ast.walk(node)
             if isinstance(item, ast.Attribute) and isinstance(item.ctx, ast.Load)
             and isinstance(item.value, ast.Name)
         )
-        found.update(reads & constants.keys())
+        discovered_constants = reads & constants.keys()
+        found.update(discovered_constants)
         found.update(reads & attributes.keys())
+        pending.extend(discovered_constants)
         pending.extend(reads & top_level.keys())
         pending.extend(reads & attributes.keys())
         if name == "_ScanHTMLParser":
@@ -356,15 +368,16 @@ Parser.RAW_TEXT_TAGS = frozenset({"style"})
     assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
 
 
-def test_transitive_guard_traverses_attribute_binding_rhs():
+def test_transitive_guard_traverses_attribute_binding_and_constant_chain():
     tree = ast.parse('''
 class Parser:
     pass
-TAGS: str = "script"
+BASE_TAGS: tuple[str, ...] = ("script",)
+TAGS: tuple[str, ...] = BASE_TAGS
 Parser.RAW_TEXT_TAGS = TAGS
 ''')
     transitive = _transitive_scan_dependencies(tree, roots=["Parser.RAW_TEXT_TAGS"])
-    assert {"Parser.RAW_TEXT_TAGS", "TAGS"} <= transitive
+    assert {"Parser.RAW_TEXT_TAGS", "TAGS", "BASE_TAGS"} <= transitive
 
 
 def test_canonical_fingerprint_serializer_is_recursive_and_refuses_unsupported_types():
