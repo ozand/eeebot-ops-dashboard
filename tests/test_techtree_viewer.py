@@ -6483,6 +6483,18 @@ def test_public_ledger_reason_is_redacted_before_html_and_json_rendering() -> No
     assert leaked == [], leaked
 
 
+def test_render_two_tier_context_uses_saved_private_text_sizes() -> None:
+    context = {
+        "prompt_text": None, "prompt_text_chars": 14,
+        "task_text": None, "task_text_chars": 12,
+        "system_prompt": {"chars": 14, "cap": 100, "sections": {}},
+    }
+    html = tv.build_two_tier_context_html(context)
+    assert "14 chars received by model" in html
+    assert "runtime_context + task" in html and "12c" in html
+    assert "task text withheld for privacy; captured size: 12 chars" in html
+
+
 def test_lessons_panel_renders_saved_problem_and_solution_lengths() -> None:
     html = tv.build_lessons_panel([{
         "id": "lesson-sanitized", "date": "2026-09-27", "cycle_id": "cycle-sanitized",
