@@ -659,6 +659,28 @@ def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     assert marker not in public_payload
 
 
+def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_REFUSAL_REASON_CANARY_991"
+    live_row = {
+        "success": False,
+        "reason": f"refused: 2 of 5 inputs empty; {marker}",
+        "timestamp": "2026-09-03T12:37:17Z",
+        "inputs_status": {},
+        "counts": {},
+    }
+    public, _ = split_render_inputs({"strategist_decisions": [live_row]})
+    rendered = tv._build_strategist_run_item(public["strategist_decisions"])
+
+    assert public["strategist_decisions"][0]["refused"] is True
+    assert "refused" in rendered
+    assert "health-alert-text" not in rendered
+    assert marker not in json.dumps(public)
+    assert marker not in rendered
+    assert "2 of 5 inputs empty" not in rendered
+
+
 def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
     public, _ = split_render_inputs({"lessons": [lesson]})

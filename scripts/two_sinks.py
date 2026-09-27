@@ -190,6 +190,8 @@ def _sanitize_public_value(key: str, value: object) -> object:
                 r["rationale"] = ""
                 reason = r.get("reason")
                 if isinstance(reason, str) and reason and not _PUBLIC_REASON_CODE_RE.fullmatch(reason):
+                    # Preserve a categorical signal without exposing refusal prose.
+                    r["refused"] = "refus" in reason.lower()
                     r["reason"] = f"reason text, {len(reason)} chars (LAN)"
                 decs.append(r)
             else:

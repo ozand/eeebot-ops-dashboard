@@ -7826,7 +7826,7 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     reason = str(row.get('reason') or '')
     if row.get('success') is True:
         badge, label = 'badge badge-available', 'ran'
-    elif 'refus' in reason.lower():
+    elif row.get('refused') is True or 'refus' in reason.lower():
         badge, label = 'badge badge-rejected', 'refused'
     else:
         badge, label = 'health-alert-text', 'error'
@@ -7835,7 +7835,7 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     detail = f'{label} {when} — {ratio}, {produced}'
     if degraded:
         detail += ' — degraded: ' + ', '.join(degraded[:3])
-    if label != 'ran' and reason:
+    if label != 'ran' and reason and not reason.startswith('reason text, '):
         detail += f' — {reason[:80]}'
     return (f'<div class="now-item"><span class="now-label">Strategist:</span> '
             f'<span class="{badge}">{esc(detail)}</span></div>')
