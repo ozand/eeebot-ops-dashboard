@@ -5404,7 +5404,6 @@ def test_issue196_health_verdict_requires_scorecard_evidence() -> None:
     assert reason == 'scorecard data unavailable'
 
 
-import scripts.techtree_viewer as tv
 
 
 def test_issue196_monitored_feed_ages_three_state() -> None:

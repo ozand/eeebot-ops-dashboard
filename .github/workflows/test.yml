@@ -31,6 +31,15 @@ jobs:
           pip install pytest jinja2
           pip install git+https://github.com/ozand/eeebot.git
           pip install -e .
+          pip install "ruff==0.16.7"
+
+      # #315-follow-up: a merge glued two copies of tests/test_techtree_viewer.py
+      # together and Python silently kept the second definition of 253 test_
+      # functions, so master's own tests stopped running while CI stayed green.
+      # This guard fails the build on any redefined name before that can
+      # happen again, silently, a second time.
+      - name: Check for redefined names (F811)
+        run: ruff check --select F811 tests/ scripts/
 
       - name: Run pytest
         run: |
