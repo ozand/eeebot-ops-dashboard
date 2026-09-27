@@ -421,7 +421,12 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     """ADR-036: Host failure preserves gh-pages fingerprints, records host_snapshot_failed_since (not overwritten), and skips uploads on run 2."""
     import time
     from scripts import techtree_autopublish as ap
+    from scripts.publish_scan import inherited_blob_decoder_version, rule_cache_key, rule_names
 
+    cache_key = rule_cache_key(
+        rule_names()[0], "b" * 64, mode="html",
+        extra_version=inherited_blob_decoder_version(),
+    )
     root = tmp_path / "state"
     state_dir = tmp_path / "state_dir"
     bad_site = tmp_path / "bad_site"
@@ -443,6 +448,9 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
 
     published_batches = []
     def fake_publish(pages, **kw):
+        scan_cache = kw.get("scan_cache")
+        assert isinstance(scan_cache, dict)
+        scan_cache[cache_key] = True
         prev = kw.get("previous_fingerprints") or {}
         changed = {k: v for k, v in pages.items() if prev.get(k) != ap.tv._page_fingerprint(v)}
         published_batches.append(changed)
@@ -463,6 +471,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     assert state1.get("host_snapshot_failed_since") is not None
     assert state1.get("last_host_error") is not None
     assert len(state1.get("page_fingerprints", {})) > 0
+    assert state1["clean_scan_cache"] == {cache_key: True}
     first_failed_since = state1["host_snapshot_failed_since"]
     assert len(published_batches[0]) > 0
 
@@ -471,6 +480,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
     assert rc2 == 1
     state2 = ap.load_publish_state(state_dir)
     assert state2.get("host_snapshot_failed_since") == first_failed_since
+    assert state2["clean_scan_cache"] == {cache_key: True}
     assert len(published_batches) == 2
     assert len(published_batches[1]) == 1  # New version metadata requires updating the inherited blob.
 

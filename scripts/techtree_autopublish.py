@@ -602,6 +602,7 @@ def run(args: argparse.Namespace) -> int:
                 page_fingerprints=gh_fps,
                 host_snapshot_failed_since=failed_since,
                 last_host_error=str(exc),
+                clean_scan_cache=state.get('clean_scan_cache'),
             )
         return 1
     except Exception as exc:
