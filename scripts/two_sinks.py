@@ -179,7 +179,9 @@ def _sanitize_public_value(key: str, value: object) -> object:
         for rec in value:
             if isinstance(rec, dict):
                 r = dict(rec)
-                r["decision"] = ""
+                decision = r.get("decision")
+                if isinstance(decision, str) and decision and not _PUBLIC_REASON_CODE_RE.fullmatch(decision):
+                    r["decision"] = f"decision text, {len(decision)} chars (LAN)"
                 r["rationale"] = ""
                 decs.append(r)
             else:

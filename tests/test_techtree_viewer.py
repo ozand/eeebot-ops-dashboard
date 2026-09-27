@@ -6495,6 +6495,19 @@ def test_render_two_tier_context_uses_saved_private_text_sizes() -> None:
     assert "task text withheld for privacy; captured size: 12 chars" in html
 
 
+def test_full_render_uses_saved_lesson_body_lengths_after_public_projection() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "lessons": [{
+        "id": "lesson-full-render", "date": "2026-09-27", "cycle_id": "cycle-full-render",
+        "problem": "p" * 28, "solution": "s" * 31, "title": "safe title", "kind": "bug",
+    }]}
+    public, _ = split_render_inputs(source)
+    pages = tv.render_pages(public, host="eeepc")
+    assert "Problem:</span> text on the LAN site only (28 chars)" in pages["lessons.html"]
+    assert "Solution:</span> text on the LAN site only (31 chars)" in pages["lessons.html"]
+
+
 def test_lessons_panel_renders_saved_problem_and_solution_lengths() -> None:
     html = tv.build_lessons_panel([{
         "id": "lesson-sanitized", "date": "2026-09-27", "cycle_id": "cycle-sanitized",

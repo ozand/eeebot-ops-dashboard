@@ -604,12 +604,22 @@ def test_f1_operator_priority_and_local_ci_output_projected_safely() -> None:
     assert "CANARY_PUBLIC_CHARTER_OK" in pub_json
 
 
+
 def test_split_render_inputs_preserves_bridge_run_telemetry() -> None:
     recent_run = [{"run_id": "run-recent", "cycle_id": "cycle-recent", "classification": "unit_timeout"}]
     active_run = {"run_id": "run-active", "cycle_id": "cycle-active", "started_at": "2026-09-27T12:00:00Z"}
     public, _ = split_render_inputs({"bridge_runs": recent_run, "bridge_active_run": active_run})
     assert public["bridge_runs"] == recent_run
     assert public["bridge_active_run"] == active_run
+
+
+def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
+    marker = "PRIVATE_STRATEGIST_DECISION_CANARY_62"
+    public, _ = split_render_inputs({"strategist_decisions": [{"decision": marker, "rationale": "private"}]})
+    projected = public["strategist_decisions"][0]
+    assert marker not in json.dumps(public)
+    assert projected["decision"] == f"decision text, {len(marker)} chars (LAN)"
+    assert projected["rationale"] == ""
 
 
 def test_split_render_inputs_preserves_lesson_body_lengths() -> None:

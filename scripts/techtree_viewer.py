@@ -7273,8 +7273,8 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
         # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
-        problem_chars = int(l.get('problem_chars') or len(problem))
-        solution_chars = int(l.get('solution_chars') or len(solution))
+        problem_chars = int(l.get('problem_chars') if l.get('problem_chars') is not None else len(problem))
+        solution_chars = int(l.get('solution_chars') if l.get('solution_chars') is not None else len(solution))
         problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else ''
         solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else ''
 
