@@ -13,12 +13,17 @@ import hashlib
 import inspect
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any, Iterable, NamedTuple, Pattern
 
 
 class PublicationScanError(Exception):
     """Raised when publication is rejected due to leaked secrets or call text."""
+
+
+class FingerprintUnavailableError(RuntimeError):
+    """Shared scanner infrastructure could not be fingerprinted safely."""
 
 
 PublishScanError = PublicationScanError
@@ -108,10 +113,10 @@ _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "_METRIC_SUBSTRINGS", "is_secret_value", "_unescape_until_stable",
     "_json_strings", "_ScanHTMLParser", "RAW_TEXT_TAGS",
     "_html_scan_variants", "scan_text", "_text_has_rule_anchor",
-    "PublicationScanError", "validate_rule_names", "_RESERVED_RULE_NAMES",
+    "PublicationScanError", "FingerprintUnavailableError", "validate_rule_names", "_RESERVED_RULE_NAMES",
     "_SHARED_FINGERPRINT_DEPENDENCIES", "_RULE_DATA_DEPENDENCIES",
     "_shared_fingerprint_dependency_names", "_rule_data_dependency_names",
-    "_all_top_level_dependency_objects", "_shared_scan_version",
+    "_all_top_level_dependency_objects", "_shared_scan_version", "rule_names",
 })
 _RULE_DATA_DEPENDENCIES = frozenset({
     "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
@@ -492,10 +497,15 @@ def _shared_scan_version() -> str:
         else:
             try:
                 rendered = inspect.getsource(value)
-            except (OSError, TypeError):
+            except (OSError, TypeError) as exc:
+                if inspect.isfunction(value) or inspect.isclass(value):
+                    raise FingerprintUnavailableError(
+                        f"cannot fingerprint scanner dependency {name}: {type(exc).__name__}"
+                    ) from exc
                 rendered = repr(value)
         parts.append(f"{name}:{rendered}")
     parts.append(repr(sorted(_shared_fingerprint_dependency_names())))
+    parts.append(repr(sorted(_rule_data_dependency_names())))
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
 
 
@@ -535,13 +545,26 @@ def scan_pages(
     seams to miss a canary at).
     """
     validate_publish_allowlist(pages.keys())
-    cache = clean_cache if isinstance(clean_cache, dict) else None
-    if cache is not None:
-        validated = validate_clean_cache(cache)
-        cache.clear()
-        cache.update(validated)
+    original_cache = clean_cache if isinstance(clean_cache, dict) else None
+    # Validate into a private working copy. If scanner versioning fails, caller
+    # cache bytes/entries remain untouched and are not used during this scan.
+    cache = validate_clean_cache(original_cache) if original_cache is not None else None
+    if original_cache is not None and cache != original_cache:
+        original_cache.clear()
+        original_cache.update(cache)
     extra_version = inherited_blob_decoder_version()
     names = rule_names()
+    try:
+        _shared_scan_version()
+        # Force every per-rule witness inside the fail-closed boundary; a
+        # source-less rule definition must not bypass approval invalidation.
+        for _name in names:
+            _rule_witness(_name)
+        fingerprint_available = True
+    except FingerprintUnavailableError as exc:
+        fingerprint_available = False
+        cache = None  # never trust/read/write approvals without a stable version
+        print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []
     # Every fresh (page, rule) approval this run confirms clean -- written
     # to the cache only once every page has passed, never partially (a
@@ -556,10 +579,13 @@ def scan_pages(
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-        page_rule_keys = {
-            name: rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)
-            for name in names
-        }
+        page_rule_keys = (
+            {
+                name: rule_cache_key(name, content_sha, mode=mode, extra_version=extra_version)
+                for name in names
+            }
+            if fingerprint_available and cache is not None else {}
+        )
         if cache is not None:
             stale_rules = [name for name, key in page_rule_keys.items() if cache.get(key) is not True]
         else:
@@ -597,6 +623,9 @@ def scan_pages(
         cache.clear()
         for key in list(kept)[-_cache_entry_bound():]:
             cache[key] = True
+        if original_cache is not None:
+            original_cache.clear()
+            original_cache.update(cache)
 
 
 def inherited_blob_decoder_version() -> str:

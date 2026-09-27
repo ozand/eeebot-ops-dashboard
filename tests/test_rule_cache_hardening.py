@@ -38,10 +38,11 @@ def test_shared_fingerprint_getsource_failure_disables_cache_and_logs(monkeypatc
         ps.rule_cache_key(name, __import__("hashlib").sha256(page["index.html"].encode()).hexdigest(), mode="html", extra_version=extra): True
         for name in ps.rule_names()
     }
+    ps._shared_scan_version.cache_clear()
     original = ps.inspect.getsource
 
     def fail_callable_source(value):
-        if value is ps.scan_text:
+        if getattr(value, "__name__", None) == "spy_scan":
             raise OSError("source unavailable")
         return original(value)
 
@@ -54,10 +55,11 @@ def test_shared_fingerprint_getsource_failure_disables_cache_and_logs(monkeypatc
         return real_scan(content, **kwargs)
 
     monkeypatch.setattr(ps, "scan_text", spy_scan)
+    ps._shared_scan_version.cache_clear()
     before = dict(approved)
     ps.scan_pages(page, clean_cache=approved)
-    assert scans == [None], "without a trustworthy fingerprint, run all rules and bypass approvals"
-    assert approved == before, "unversioned results must not be read from or written to the cache"
+    assert scans == [list(ps.rule_names())], "without a trustworthy fingerprint, run every rule and bypass approvals"
+    assert approved == before, "unversioned results must not add or remove cached approvals"
     assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
 
 
