@@ -207,17 +207,21 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_SECRET_KEY_RE", "_ENV_SECRET_KV_RE"} <= rule_data
 
 
-def _transitive_scan_dependencies(tree: ast.Module) -> set[str]:
+def _transitive_scan_dependencies(
+    tree: ast.Module, roots: list[str] | None = None,
+) -> set[str]:
     top_level, constants, attributes, _collisions = _ast_dependency_bindings(tree)
-    pending = ["scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
-               "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value"]
+    pending = list(roots) if roots is not None else [
+        "scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
+        "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value",
+    ]
     found: set[str] = set()
     while pending:
         name = pending.pop()
         if name in found:
             continue
         found.add(name)
-        node = top_level.get(name) or constants.get(name)
+        node = top_level.get(name) or constants.get(name) or attributes.get(name)
         if node is None:
             continue
         reads = {item.id for item in ast.walk(node) if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)}
@@ -350,6 +354,17 @@ Parser.RAW_TEXT_TAGS = frozenset({"style"})
     assert {"helper", "Parser.helper"} <= bindings
     assert collisions == {"helper"}
     assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
+
+
+def test_transitive_guard_traverses_attribute_binding_rhs():
+    tree = ast.parse('''
+class Parser:
+    pass
+TAGS: str = "script"
+Parser.RAW_TEXT_TAGS = TAGS
+''')
+    transitive = _transitive_scan_dependencies(tree, roots=["Parser.RAW_TEXT_TAGS"])
+    assert {"Parser.RAW_TEXT_TAGS", "TAGS"} <= transitive
 
 
 def test_canonical_fingerprint_serializer_is_recursive_and_refuses_unsupported_types():
