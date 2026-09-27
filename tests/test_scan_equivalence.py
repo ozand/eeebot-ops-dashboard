@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import subprocess
+import sys
 
 import pytest
 
@@ -59,6 +60,9 @@ def master_scanner(tmp_path_factory: pytest.TempPathFactory):
     spec = importlib.util.spec_from_file_location("publish_scan_master", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    # inspect.getsource() on a class (used by the scanner's version fingerprint
+    # since #343) resolves the module through sys.modules.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -78,6 +82,51 @@ def test_new_scanner_preserves_master_findings_for_every_positive(
 ) -> None:
     """New scan findings must include all findings from origin/master."""
     _assert_master_findings_preserved(payload, master_scanner)
+
+
+@pytest.mark.parametrize(("filename", "payload"), POSITIVES)
+def test_scan_pages_preserves_master_findings_for_every_positive(
+    filename: str, payload: str, master_scanner,
+) -> None:
+    """#340: the full scan_pages path (page approval cache included) must
+    still reject everything origin/master's scanner would have caught --
+    equivalence through the whole path, not just scan_text directly."""
+    try:
+        master_scanner.scan_pages({filename: payload})
+        master_rejects = False
+    except master_scanner.PublicationScanError:
+        master_rejects = True
+    if not master_rejects:
+        pytest.skip("origin/master does not reject this fixture; nothing to preserve")
+    with pytest.raises(ps.PublicationScanError):
+        ps.scan_pages({filename: payload})
+
+
+def test_scan_pages_live_gh_pages_findings_preserve_master_and_remain_clean(master_scanner) -> None:
+    """#340: same as test_live_gh_pages_findings_preserve_master_and_remain_clean
+    but through scan_pages (with a fresh cache each call), proving the
+    per-rule cache never masks a finding origin/master's scanner would
+    also report."""
+    has_remote_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "origin/gh-pages"], capture_output=True, text=True, check=False
+    )
+    if has_remote_branch.returncode:
+        pytest.skip("requires fetched origin/gh-pages branch; run git fetch origin gh-pages")
+    listing = subprocess.run(
+        ["git", "ls-tree", "-r", "origin/gh-pages"], capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    for line in listing:
+        _meta, path = line.split("\t", 1)
+        raw = subprocess.run(
+            ["git", "show", f"origin/gh-pages:{path}"], capture_output=True, check=True
+        ).stdout.decode("utf-8")
+        try:
+            master_scanner.scan_pages({path: raw})
+        except master_scanner.PublicationScanError as exc:
+            with pytest.raises(ps.PublicationScanError):
+                ps.scan_pages({path: raw})
+            continue
+        ps.scan_pages({path: raw})  # must not raise
 
 
 def test_unanchored_rule_runs_full_regex_scan(monkeypatch: pytest.MonkeyPatch) -> None:

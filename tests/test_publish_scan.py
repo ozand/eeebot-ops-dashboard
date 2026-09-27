@@ -132,7 +132,7 @@ def test_scan_invalid_cache_is_treated_as_empty_cache() -> None:
 
 def test_publish_state_roundtrip_preserves_clean_scan_hash_cache(tmp_path: Path) -> None:
     from scripts.techtree_autopublish import load_publish_state, save_publish_state
-    cache = {"a" * 64 + ":html:" + "b" * 64: True}
+    cache = {ps.rule_cache_key("eeepc_agent_path", "b" * 64, mode="html"): True}
     save_publish_state(tmp_path, "digest", 1.0, clean_scan_cache=cache)
     state = load_publish_state(tmp_path)
     assert state["clean_scan_cache"] == cache
@@ -658,10 +658,10 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
 
 def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pytest.MonkeyPatch) -> None:
     import json
+    sha = "a" * 40
     cache = {
-        ps.clean_cache_key(
-            "a" * 40, extra_version=tv._INHERITED_BLOB_DECODER_VERSION, mode="html"
-        ): True
+        ps.rule_cache_key(name, sha, mode="html", extra_version=tv._INHERITED_BLOB_DECODER_VERSION): True
+        for name in ps.rule_names()
     }
     calls = []
 
@@ -702,10 +702,9 @@ def test_inherited_blob_approval_written_and_read_with_decoder_version(monkeypat
     tv._inspect_and_scan_inherited_tree("tree-sha", set(), scan_cache=cache)
 
     assert len(blob_fetches) == 1, "second pass must use the exact versioned approval written by the first"
-    expected = ps.clean_cache_key(
-        sha, extra_version=tv._INHERITED_BLOB_DECODER_VERSION, mode="html"
-    )
-    assert cache.get(expected) is True
+    for name in ps.rule_names():
+        expected = ps.rule_cache_key(name, sha, mode="html", extra_version=tv._INHERITED_BLOB_DECODER_VERSION)
+        assert cache.get(expected) is True, name
 
 
 def test_adr036_inherited_tree_unlisted_path_rejected_by_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
