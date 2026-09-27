@@ -103,6 +103,18 @@ def test_new_rule_added_only_that_rule_scans_existing_pages(monkeypatch: pytest.
     for key in before:
         assert cache.get(key) is True, "every pre-existing rule approval must be untouched"
 
+    # This is the security property, not just a call-count assertion: a new
+    # rule may find a leak on a page approved by every rule in the old set.
+    secret_page = {"index.html": "PUBLIC UNIQUE_NEW_RULE_SECRET_77291"}
+    old_cache: dict[str, bool] = {}
+    ps.scan_pages(secret_page, clean_cache=old_cache)
+    secret_rule = ps.SecretPattern(
+        "new_secret_rule", re.compile(r"UNIQUE_NEW_RULE_SECRET_77291"), "test leak canary",
+    )
+    monkeypatch.setattr(ps, "STANDALONE_PATTERNS", (*ps.STANDALONE_PATTERNS, secret_rule))
+    with pytest.raises(ps.PublicationScanError, match="new_secret_rule"):
+        ps.scan_pages(secret_page, clean_cache=old_cache)
+
 
 def test_measured_cold_after_single_rule_change_beats_a_full_cold_scan(monkeypatch: pytest.MonkeyPatch) -> None:
     """#340 measurement: shared HTML/JSON extraction still runs on any

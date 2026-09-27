@@ -102,6 +102,18 @@ def is_secret_value(value: str) -> bool:
     return True
 
 
+_RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
+
+
+def validate_rule_names(names: Iterable[str]) -> None:
+    """Fail closed when scanner rule names are duplicate or reserved."""
+    seen: set[str] = set()
+    for name in names:
+        if name in seen or name in _RESERVED_RULE_NAMES:
+            raise RuntimeError(f"duplicate or reserved scanner rule name: {name}")
+        seen.add(name)
+
+
 STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
     SecretPattern("eeepc_agent_path", re.compile(r"/etc/eeepc-agent"), "internal /etc/eeepc-agent path"),
     SecretPattern("openai_secret_key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"), "OpenAI secret key format"),
@@ -128,6 +140,7 @@ _ENV_KEY_CANDIDATE_RE = re.compile(
     r'(?i)\b[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS|AUTH)[A-Za-z0-9_]*\s*[:=]'
 )
 
+validate_rule_names(rule.name for rule in STANDALONE_PATTERNS)
 
 # Required literal anchors per scanner rule. A rule may have multiple
 # alternatives; every successful alternative must contain at least one anchor.
@@ -387,8 +400,12 @@ def validate_clean_cache(value: Any) -> dict[str, bool]:
 def rule_names() -> tuple[str, ...]:
     """All named scanner rules. A function, not a module constant, so a
     monkeypatched ``STANDALONE_PATTERNS`` (tests add/replace rules) is
-    reflected without re-importing anything."""
-    return tuple(rule.name for rule in STANDALONE_PATTERNS) + ("json_secret_field", "env_secret_kv")
+    reflected without re-importing anything. Validate dynamically too, so a
+    runtime/test replacement cannot collide with reserved special rules.
+    """
+    names = tuple(rule.name for rule in STANDALONE_PATTERNS)
+    validate_rule_names(names)
+    return names + tuple(sorted(_RESERVED_RULE_NAMES))
 
 
 def _rule_witness(rule_name: str) -> str:
@@ -411,6 +428,35 @@ def _rule_witness(rule_name: str) -> str:
     raise ValueError(f"unknown scanner rule: {rule_name}")
 
 
+def _shared_fingerprint_dependency_names() -> frozenset[str]:
+    """Source-anchored allowlist of module definitions in shared scan deps.
+
+    The AST regression test requires every top-level module definition to be
+    listed, so new constants/helpers cannot silently stay outside the shared
+    fingerprint. Adding a module binding to this set is itself fingerprinted.
+    """
+    return frozenset({
+        "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
+        "_METRIC_SUBSTRINGS", "is_secret_value", "_unescape_until_stable",
+        "_json_strings", "_ScanHTMLParser", "RAW_TEXT_TAGS",
+        "_html_scan_variants", "scan_text", "_text_has_rule_anchor",
+        "SCANNER_ANCHORS", "STANDALONE_PATTERNS", "PublicationScanError",
+        "_JSON_CANDIDATE_RE", "_JSON_SECRET_KEY_RE",
+        "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE", "validate_rule_names",
+        "_RESERVED_RULE_NAMES",
+    })
+
+
+def _all_top_level_dependency_objects() -> dict[str, Any]:
+    """Objects/bindings that must stay represented in the shared fingerprint."""
+    objects: dict[str, Any] = {}
+    for name, value in globals().copy().items():
+        if name in _shared_fingerprint_dependency_names():
+            objects[name] = value
+    objects["RAW_TEXT_TAGS"] = _ScanHTMLParser.RAW_TEXT_TAGS
+    return objects
+
+
 @functools.lru_cache(maxsize=1)
 def _shared_scan_version() -> str:
     """Fingerprint of the scanning infrastructure every rule depends on --
@@ -430,16 +476,14 @@ def _shared_scan_version() -> str:
     constant/class reachable from the hashed functions must be included
     explicitly, or an edit to one silently leaves stale approvals in
     place."""
-    parts = [
-        inspect.getsource(fn) for fn in (
-            scan_text, _html_scan_variants, _unescape_until_stable,
-            _json_strings, _text_has_rule_anchor, is_excluded_key_name,
-            is_secret_value, _ScanHTMLParser,
-        )
-    ]
-    parts.append(repr(sorted(EXCLUDED_EXACT_NAMES)))
-    parts.append(repr(sorted(_METRIC_NAME_TOKENS)))
-    parts.append(repr(_METRIC_SUBSTRINGS))
+    parts = []
+    for name, value in sorted(_all_top_level_dependency_objects().items()):
+        try:
+            rendered = inspect.getsource(value)
+        except (OSError, TypeError):
+            rendered = repr(value)
+        parts.append(f"{name}:{rendered}")
+    parts.append(repr(sorted(_shared_fingerprint_dependency_names())))
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
 
 
