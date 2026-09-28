@@ -6,6 +6,7 @@ Used by publish_to_pages and autopublish dry-run; reused by D2 masking.
 """
 from __future__ import annotations
 
+import ast
 import functools
 import html as _html
 from html.parser import HTMLParser
@@ -107,6 +108,56 @@ def is_secret_value(value: str) -> bool:
     return True
 
 
+# #355 (F4): the shared scan functions read these imported names by name
+# (``re.split``/``re.IGNORECASE`` in ``is_excluded_key_name``/``scan_text``,
+# ``json.loads``/``json.JSONDecodeError`` in ``scan_text``, ``_html.unescape``
+# in ``_unescape_until_stable``, ``HTMLParser`` as ``_ScanHTMLParser``'s base
+# class) but none of them has source of its own to fingerprint -- they're
+# stdlib. Their behavior is pinned to the interpreter's stdlib version
+# instead, since that's the only thing that can change it without a diff to
+# this file. No ``releaselevel``/``serial``: the host runs one pinned
+# interpreter build, so major.minor.micro is already a stable, sufficient
+# identity here.
+_STDLIB_IMPORT_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+
+def _import_bindings_identity() -> str:
+    """Normalized (module target + local alias) text for every top-level
+    ``Import``/``ImportFrom`` in this file, sorted for a stable order.
+
+    #358: ``_STDLIB_IMPORT_VERSION`` only tracks the interpreter, so
+    retargeting an import to a different module while keeping the same
+    local alias (``import foo as re`` instead of ``import re``) left the
+    shared fingerprint unchanged -- the alias a fingerprinted function
+    reads by name stayed the same, but what it's actually bound to did
+    not. This fingerprints the binding itself, straight from source, not
+    just the interpreter behind it.
+
+    Limitation: only *top-level* (module-body) ``Import``/``ImportFrom``
+    are covered -- an import inside a function body is invisible here.
+    ``inherited_blob_decoder_version`` imports ``techtree_viewer`` inside
+    its own body so a publish-only checkout without that sibling module
+    still degrades cleanly instead of failing at module load. The decoder
+    itself now has a separate source fingerprint; the reader's fallback
+    import target does not change that decoder-source fingerprint.
+    """
+    source = inspect.getsource(sys.modules[__name__])
+    tree = ast.parse(source)
+    bindings: list[str] = []
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local = alias.asname or alias.name.split(".")[0]
+                bindings.append(f"import {alias.name} as {local}")
+        elif isinstance(node, ast.ImportFrom):
+            level = "." * node.level
+            module = node.module or ""
+            for alias in node.names:
+                local = alias.asname or alias.name
+                bindings.append(f"from {level}{module} import {alias.name} as {local}")
+    return "\n".join(sorted(bindings))
+
+
 _RESERVED_RULE_NAMES = frozenset({"json_secret_field", "env_secret_kv"})
 _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "is_excluded_key_name", "EXCLUDED_EXACT_NAMES", "_METRIC_NAME_TOKENS",
@@ -117,6 +168,7 @@ _SHARED_FINGERPRINT_DEPENDENCIES = frozenset({
     "_SHARED_FINGERPRINT_DEPENDENCIES", "_RULE_DATA_DEPENDENCIES",
     "_shared_fingerprint_dependency_names", "_rule_data_dependency_names",
     "_all_top_level_dependency_objects", "_shared_scan_version", "rule_names",
+    "_STDLIB_IMPORT_VERSION", "_IMPORT_BINDINGS_IDENTITY",
 })
 _RULE_DATA_DEPENDENCIES = frozenset({
     "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
@@ -205,7 +257,7 @@ def _unescape_until_stable(text: str, max_rounds: int = 5) -> str:
 
 class _ScanHTMLParser(HTMLParser):
     """Collect text, attributes and raw-text bodies for security scanning."""
-    RAW_TEXT_TAGS = {"script", "style", "textarea", "title"}
+    RAW_TEXT_TAGS = frozenset({"script", "style", "textarea", "title"})
 
     def __init__(self, *, collect_raw_text: bool = True) -> None:
         super().__init__(convert_charrefs=True)
@@ -457,12 +509,79 @@ def _rule_data_dependency_names() -> frozenset[str]:
     return _RULE_DATA_DEPENDENCIES
 
 
+def _canonical_fingerprint_value(value: Any, *, name: str = "dependency") -> str:
+    """Serialize fingerprint inputs recursively and deterministically.
+
+    No repr fallback is permitted: unsupported values make cache identity
+    unavailable rather than silently introducing process-specific state.
+
+    #355 (F3): every built-in-type branch below matches on ``type(value) is
+    ...``, never ``isinstance`` -- a subclass (which could override
+    iteration, equality, or hashing) falls through to the ``unsupported``
+    branch instead of being silently treated as its base type.
+    """
+    value_type = type(value)
+    if value is None:
+        encoded: Any = ["NoneType", None]
+    elif value_type is bool:
+        encoded = ["bool", value]
+    elif value_type is str:
+        encoded = ["str", value]
+    elif value_type is int:
+        encoded = ["int", value]
+    elif value_type is float:
+        encoded = ["float", value.hex()]
+    elif value_type is re.Pattern:
+        if type(value.pattern) is not str or type(value.flags) is not int:
+            # #357 (ChatGPT external review): a str/int subclass here (e.g.
+            # re.compile() fed a str subclass) must not be silently treated
+            # as the exact type it isn't -- no str()/int() coercion either,
+            # since that would hide the very subclass mismatch this exists
+            # to catch.
+            raise FingerprintUnavailableError(
+                f"unsupported scanner fingerprint value for {name}: "
+                f"re.Pattern with non-exact pattern/flags type "
+                f"({type(value.pattern).__name__}/{type(value.flags).__name__})"
+            )
+        encoded = ["pattern", value.pattern, value.flags]
+    elif value_type is list or value_type is tuple:
+        encoded = [value_type.__name__, [
+            _canonical_fingerprint_value(item, name=name) for item in value
+        ]]
+    elif value_type is set or value_type is frozenset:
+        values = [_canonical_fingerprint_value(item, name=name) for item in value]
+        encoded = [value_type.__name__, sorted(values)]
+    elif value_type is dict:
+        pairs = [
+            (_canonical_fingerprint_value(key, name=name), _canonical_fingerprint_value(item, name=name))
+            for key, item in value.items()
+        ]
+        encoded = ["dict", sorted(pairs)]
+    elif inspect.isfunction(value) or inspect.isclass(value):
+        try:
+            source = inspect.getsource(value)
+        except (OSError, TypeError) as exc:
+            raise FingerprintUnavailableError(
+                f"cannot fingerprint scanner dependency {name}: {type(exc).__name__}"
+            ) from exc
+        encoded = ["source", source]
+    else:
+        raise FingerprintUnavailableError(
+            f"unsupported scanner fingerprint value for {name}: {type(value).__name__}"
+        )
+    return json.dumps(encoded, ensure_ascii=False, separators=(",", ":"))
+
+
 def _all_top_level_dependency_objects() -> dict[str, Any]:
     """Objects/bindings that must stay represented in the shared fingerprint."""
     objects: dict[str, Any] = {}
     for name in sorted(_shared_fingerprint_dependency_names()):
         if name == "RAW_TEXT_TAGS":
             value = _ScanHTMLParser.RAW_TEXT_TAGS
+        elif name == "_shared_scan_version":
+            value = inspect.unwrap(globals()[name])
+        elif name == "_IMPORT_BINDINGS_IDENTITY":
+            value = _import_bindings_identity()
         else:
             value = globals()[name]
         objects[name] = value
@@ -487,26 +606,43 @@ def _shared_scan_version() -> str:
     appearing in those functions' own source. Every transitive
     constant/class reachable from the hashed functions must be included
     explicitly, or an edit to one silently leaves stale approvals in
-    place."""
-    parts = []
-    for name, value in sorted(_all_top_level_dependency_objects().items()):
-        if isinstance(value, (set, frozenset)):
-            rendered = repr(sorted(value))
-        elif isinstance(value, re.Pattern):
-            rendered = f"pattern:{value.pattern!r}:flags:{value.flags}"
-        else:
-            try:
-                rendered = inspect.getsource(value)
-            except (OSError, TypeError) as exc:
-                if inspect.isfunction(value) or inspect.isclass(value):
-                    raise FingerprintUnavailableError(
-                        f"cannot fingerprint scanner dependency {name}: {type(exc).__name__}"
-                    ) from exc
-                rendered = repr(value)
-        parts.append(f"{name}:{rendered}")
-    parts.append(repr(sorted(_shared_fingerprint_dependency_names())))
-    parts.append(repr(sorted(_rule_data_dependency_names())))
-    return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
+    place.
+
+    #355 (F1/F2): scanner configuration -- every name in
+    ``_SHARED_FINGERPRINT_DEPENDENCIES``/``_RULE_DATA_DEPENDENCIES``, plus
+    ``_ScanHTMLParser``'s keyword defaults and ``RAW_TEXT_TAGS`` -- is
+    defined only by this module's source and never changes in-process.
+    ``inspect.getsource``/``lru_cache`` cannot see a live reassignment
+    (e.g. ``_ScanHTMLParser.RAW_TEXT_TAGS = ...`` after import) or a
+    closure/keyword-default mutation; a test that changes one of these in
+    place must call ``cache_clear()`` on this function afterward, and must
+    not assume that alone makes the new value visible to
+    ``inspect.getsource``-based fingerprinting.
+
+    #355 (F3): the whole build below -- dependency collection,
+    serialization, hashing -- is one failure boundary. Every exception here
+    (an unsupported/mis-shaped dependency, a cyclic container, a string
+    that can't round-trip through UTF-8, an ``inspect.unwrap`` cycle)
+    becomes ``FingerprintUnavailableError``, matching every other failure
+    mode this function already fails safe on -- callers already treat that
+    exception as "no trustworthy version; scan everything, cache nothing."
+    """
+    try:
+        parts = []
+        for name, value in sorted(_all_top_level_dependency_objects().items()):
+            parts.append(f"{name}:{_canonical_fingerprint_value(value, name=name)}")
+        parts.append(_canonical_fingerprint_value(_shared_fingerprint_dependency_names()))
+        parts.append(_canonical_fingerprint_value(_rule_data_dependency_names()))
+        payload = "\x00".join(parts).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:  # F3: any failure here must fail safe, never propagate
+        # #357 (ChatGPT external review): never interpolate the caught
+        # exception into this message -- an exception whose own __str__
+        # raises would then blow up while WE are handling it, leaking past
+        # this fallback instead of becoming a clean FingerprintUnavailableError.
+        raise FingerprintUnavailableError("scanner fingerprint construction failed") from exc
 
 
 def rule_version(rule_name: str, *, extra_version: str = "") -> str:
@@ -529,6 +665,7 @@ def scan_pages(
     *,
     clean_cache: dict[str, bool] | None = None,
     inherited_blob_shas: dict[str, str] | None = None,
+    inherited_decoder_version: str | None = None,
 ) -> None:
     """Scan all output pages destined for public pages before upload.
 
@@ -545,6 +682,8 @@ def scan_pages(
     seams to miss a canary at).
     """
     validate_publish_allowlist(pages.keys())
+    if inherited_blob_shas is not None and inherited_decoder_version is None:
+        clean_cache = None
     original_cache = clean_cache if isinstance(clean_cache, dict) else None
     # Validate into a private working copy. If scanner versioning fails, caller
     # cache bytes/entries remain untouched and are not used during this scan.
@@ -552,9 +691,16 @@ def scan_pages(
     if original_cache is not None and cache != original_cache:
         original_cache.clear()
         original_cache.update(cache)
-    extra_version = inherited_blob_decoder_version()
     names = rule_names()
     try:
+        if inherited_blob_shas is not None:
+            if inherited_decoder_version is None:
+                raise FingerprintUnavailableError("inherited decoder fingerprint unavailable")
+            extra_version = inherited_decoder_version
+        else:
+            extra_version = inherited_blob_decoder_version()
+        artifact_mode = inherited_blob_artifact_mode
+        page_modes = {fname: artifact_mode(fname) for fname in pages}
         _shared_scan_version()
         # Force every per-rule witness inside the fail-closed boundary; a
         # source-less rule definition must not bypass approval invalidation.
@@ -563,8 +709,22 @@ def scan_pages(
         fingerprint_available = True
     except FingerprintUnavailableError as exc:
         fingerprint_available = False
+        extra_version = ""
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
         cache = None  # never trust/read/write approvals without a stable version
         print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
+    except Exception as exc:
+        fingerprint_available = False
+        extra_version = ""
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
+        cache = None
+        print(f"publish-scan: shared scanner fingerprint unavailable ({type(exc).__name__}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []
     # Every fresh (page, rule) approval this run confirms clean -- written
     # to the cache only once every page has passed, never partially (a
@@ -574,8 +734,11 @@ def scan_pages(
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
-        is_json = fname.lower().endswith(".json")
-        mode = "json" if is_json else "html"
+        # If the viewer helper is absent in a publish-only checkout, its
+        # canonical artifact selector is unavailable too. Use the equivalent
+        # filename rule only for this uncached full scan; never reuse approvals.
+        mode = page_modes[fname]
+        is_json = mode == "json"
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -628,27 +791,49 @@ def scan_pages(
             original_cache.update(cache)
 
 
-def inherited_blob_decoder_version() -> str:
-    """Version of the external inherited-blob decode/interpretation pipeline.
-
-    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
-    artifact-mode handling before inherited content reaches scan_pages.
-    """
+def _inherited_blob_decoder_module():
     try:
         from scripts import techtree_viewer
     except ImportError:
         try:
             import techtree_viewer
         except ImportError as exc:
-            raise PublicationScanError(
-                "Publication rejected (ADR-036 rule 3): inherited blob decoder version unavailable"
+            raise FingerprintUnavailableError(
+                "inherited blob decoder implementation unavailable"
             ) from exc
-    version = getattr(techtree_viewer, "_INHERITED_BLOB_DECODER_VERSION", None)
-    if not isinstance(version, str) or not version:
-        raise PublicationScanError(
-            "Publication rejected (ADR-036 rule 3): inherited blob decoder version is missing"
-        )
-    return version
+    return techtree_viewer
+
+
+def inherited_blob_artifact_mode(path: str) -> str:
+    """Select the artifact scan mode through the decoder's canonical helper."""
+    try:
+        selector = getattr(_inherited_blob_decoder_module(), "_inherited_blob_artifact_mode", None)
+        if not callable(selector):
+            raise FingerprintUnavailableError("inherited blob artifact-mode selector unavailable")
+        return selector(path)
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob artifact-mode selection failed") from exc
+
+
+def inherited_blob_decoder_version() -> str:
+    """Version of inherited-blob decoding/mode behavior from decoder sources.
+
+    The viewer implementation must remain source-available and immutable
+    during a publish process; failure to resolve or fingerprint it disables
+    approvals for that scan rather than blocking publication or trusting cache.
+    """
+    try:
+        decoder_module = _inherited_blob_decoder_module()
+        decoder_version = getattr(decoder_module, "_inherited_blob_decoder_version", None)
+        if not callable(decoder_version):
+            raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
+        return decoder_version()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob decoder fingerprint unavailable") from exc
 
 
 def scanner_version(*, extra_version: str = "") -> str:

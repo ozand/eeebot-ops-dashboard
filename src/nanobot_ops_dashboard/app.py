@@ -2743,7 +2743,10 @@ def _discover_experiment_visibility(cfg: DashboardConfig, plan_latest: dict | No
         budget_history = [snapshot for snapshot in eeepc_experiment_history if snapshot.get('budget')] + budget_history
 
     current_experiment = experiment_history[0] if experiment_history else None
-    current_budget = next((snapshot for snapshot in budget_history if '/budgets/' in (snapshot.get('source_path') or '')), None) or (budget_history[0] if budget_history else None)
+    current_budget = next((
+        snapshot for snapshot in budget_history
+        if '/budgets/' in Path(snapshot.get('source_path') or '').as_posix()
+    ), None) or (budget_history[0] if budget_history else None)
     reward_source = 'experiment telemetry' if current_experiment and current_experiment.get('reward_signal') is not None else 'task plan snapshot' if plan_latest and plan_latest.get('reward_signal') is not None else 'unavailable'
     reward_signal = current_experiment.get('reward_signal') if current_experiment and current_experiment.get('reward_signal') is not None else (plan_latest.get('reward_signal') if isinstance(plan_latest, dict) else None)
     reward_text = _reward_signal_text(reward_signal)
