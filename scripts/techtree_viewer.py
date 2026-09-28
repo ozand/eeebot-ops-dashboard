@@ -10679,13 +10679,21 @@ def _inherited_blob_decoder_version() -> str:
         from publish_scan import FingerprintUnavailableError, _canonical_fingerprint_value
     try:
         try:
-            from scripts.publish_scan import inherited_blob_artifact_mode
+            from scripts.publish_scan import (
+                _inherited_blob_decoder_module,
+                inherited_blob_artifact_mode,
+            )
         except ImportError:
-            from publish_scan import inherited_blob_artifact_mode
+            from publish_scan import (
+                _inherited_blob_decoder_module,
+                inherited_blob_artifact_mode,
+            )
         sources = (
             inspect.getsource(_decode_inherited_blob),
             inspect.getsource(_inherited_blob_artifact_mode),
+            inspect.getsource(_inherited_blob_decoder_module),
             inspect.getsource(inherited_blob_artifact_mode),
+            inspect.getsource(_canonical_fingerprint_value),
             inspect.getsource(_inherited_blob_decoder_version),
         )
         payload = _canonical_fingerprint_value(sources, name="inherited_blob_decoder_source")

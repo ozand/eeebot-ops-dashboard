@@ -24,6 +24,7 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
     decoder_sources = (
         tv._decode_inherited_blob,
         tv._inherited_blob_artifact_mode,
+        ps._inherited_blob_decoder_module,
         ps.inherited_blob_artifact_mode,
         tv._inherited_blob_decoder_version,
     )
@@ -525,6 +526,52 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     assert not (shared & rule_data), "each transitive dependency has exactly one fingerprint owner"
     assert "RAW_TEXT_TAGS" in shared
     assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_SECRET_KEY_RE", "_ENV_SECRET_KV_RE"} <= rule_data
+
+
+def test_inherited_decoder_fingerprint_ast_covers_called_module_functions():
+    viewer_tree = ast.parse(inspect.getsource(tv))
+    scanner_tree = ast.parse(inspect.getsource(ps))
+    viewer_functions = {
+        node.name: node for node in viewer_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    scanner_functions = {
+        node.name: node for node in scanner_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    fingerprinted = {
+        "_decode_inherited_blob": (viewer_functions, {
+            "base64.b64decode": "stdlib base64 decoder; runtime version is the contract",
+            "json.loads": "stdlib JSON parser",
+            "zlib.decompressobj": "stdlib gzip decompressor",
+        }),
+        "_inherited_blob_artifact_mode": (viewer_functions, {}),
+        "_inherited_blob_decoder_module": (scanner_functions, {}),
+        "inherited_blob_artifact_mode": (scanner_functions, {}),
+        "_canonical_fingerprint_value": (scanner_functions, {
+            "json.dumps": "stdlib deterministic serialization",
+            "inspect.getsource": "stdlib source introspection",
+        }),
+        "_inherited_blob_decoder_version": (viewer_functions, {
+            "hashlib.sha256": "stdlib cryptographic digest",
+            "inspect.getsource": "stdlib source introspection",
+            "_canonical_fingerprint_value": "implementation is itself fingerprinted",
+        }),
+    }
+    covered = set(fingerprinted)
+    modules = viewer_functions.keys() | scanner_functions.keys()
+    for name, (functions, exclusions) in fingerprinted.items():
+        node = functions[name]
+        module_node_names = modules
+        if name == "_inherited_blob_decoder_version":
+            module_node_names = modules | {"_inherited_blob_decoder_version"}
+        calls = {
+            ast.unparse(child.func) for child in ast.walk(node)
+            if isinstance(child, ast.Call)
+        }
+        module_calls = calls & module_node_names
+        missing = module_calls - covered - exclusions.keys()
+        assert not missing, f"{name} calls un-fingerprinted module functions: {sorted(missing)}"
 
 
 def test_ast_guard_indexes_imported_names_the_scanner_reads():
