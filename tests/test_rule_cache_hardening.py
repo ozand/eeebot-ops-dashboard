@@ -44,6 +44,8 @@ def test_fingerprint_failure_preserves_canonical_mode_and_json_scan(monkeypatch,
     pages = {
         "x.txt": r'{"payload":"\u007b\u0022password\u0022\u003a\u0022sk-\u0073upersecretcanaryvalue123456\u0022\u007d"}'
     }
+    assert ps.scan_text(pages["x.txt"], json_mode=True, html_mode=False)
+    assert not ps.scan_text(pages["x.txt"], json_mode=False, html_mode=True)
     cache = {}
     modes = []
     monkeypatch.setattr(ps, "validate_publish_allowlist", lambda _paths: None)
