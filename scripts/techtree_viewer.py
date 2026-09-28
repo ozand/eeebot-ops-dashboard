@@ -10971,9 +10971,9 @@ def publish_to_pages(
     independently of later Pages-enable status.
     fingerprints is the fresh {filename: fingerprint} map for every page
     passed in (whether uploaded or skipped this run) for the caller to
-    persist for next time. On any failure path, fingerprints is {} -- the
-    caller must not persist a fingerprint for a publish that didn't
-    actually complete."""
+    persist for next time. On a post-ref-update Pages-enable failure,
+    fingerprints is returned with ``ref_updated=True`` so state-save failure
+    telemetry can report that the remote ref already changed."""
     import base64
     try:
         from scripts.publish_scan import scan_pages, PublicationScanError
