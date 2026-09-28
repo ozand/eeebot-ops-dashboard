@@ -2281,7 +2281,9 @@ def read_local_state(
                         prompt_tokens = row.get('prompt_tokens')
                         if isinstance(prompt_tokens, int) and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0:
                             if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
-                                latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': prompt_tokens, 'ts': row.get('ts')}
+                                # #368: the same row's resolved window (eeebot#1755),
+                                # carried as-is -- null stays null, rendered "unknown".
+                                latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': prompt_tokens, 'ts': row.get('ts'), 'context_window': row.get('context_window')}
             except OSError:
                 continue
         return latest
