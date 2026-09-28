@@ -22,6 +22,32 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def test_bridge_diagnostics_are_private_only_after_real_projection_and_render(tmp_path: Path):
+    from scripts import techtree_viewer as tv
+
+    error_marker = "PRIVATE_BRIDGE_ERROR_CANARY_412584"
+    where_marker = "PRIVATE_BRIDGE_WHERE_CANARY_412584"
+    data = {"bridge_exit_streak": {
+        "consecutive_failures": 5,
+        "last_error": error_marker,
+        "last_where": where_marker,
+    }}
+    public_data, private_data = split_render_inputs(data)
+    private_data["scorecard"] = {"reader_status": {"feeds": {"usage": {"status": "fresh"}}}}
+    private_data["_newest_source_age_seconds"] = 120
+    private_data["health_recent_outcomes"] = ["integrated"]
+    private_data["health_last_integrated_ts"] = "2026-09-01T01:50:00Z"
+    private_pages = tv.render_pages(private_data, "eeepc", generated_at="2026-09-01 02:00:00")
+    public_pages = tv.render_public_pages(public_data, "eeepc")
+    public_json = json.dumps(public_data)
+
+    assert any(error_marker in page and where_marker in page for page in private_pages.values())
+    assert "error" == public_data["bridge_exit_streak"]["last_error"]
+    for marker in (error_marker, where_marker):
+        assert marker not in public_json
+        assert all(marker not in page for page in public_pages.values())
+
+
 def test_cycle_title_exception_canary_is_removed_by_real_publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Cycle title probe exceptions are public codes only, including the built snapshot."""
     from scripts import techtree_viewer as tv
