@@ -10670,32 +10670,32 @@ def _inherited_blob_artifact_mode(path: str) -> str:
     return "json" if path.lower().endswith(".json") else "html"
 
 
+_VIEWER_DECODER_FINGERPRINT = (
+    "_decode_inherited_blob",
+    "_inherited_blob_artifact_mode",
+    "_inherited_blob_decoder_version",
+)
+_SCANNER_DECODER_FINGERPRINT = (
+    "_inherited_blob_decoder_module",
+    "inherited_blob_artifact_mode",
+    "_canonical_fingerprint_value",
+)
+
+
 @functools.lru_cache(maxsize=1)
 def _inherited_blob_decoder_version() -> str:
     """Fingerprint decoder and artifact-mode behavior so approvals cannot go stale."""
     try:
-        from scripts.publish_scan import FingerprintUnavailableError, _canonical_fingerprint_value
+        from scripts import publish_scan as _ps
     except ImportError:
-        from publish_scan import FingerprintUnavailableError, _canonical_fingerprint_value
+        import publish_scan as _ps
+    FingerprintUnavailableError = _ps.FingerprintUnavailableError
+    _canonical_fingerprint_value = _ps._canonical_fingerprint_value
     try:
-        try:
-            from scripts.publish_scan import (
-                _inherited_blob_decoder_module,
-                inherited_blob_artifact_mode,
-            )
-        except ImportError:
-            from publish_scan import (
-                _inherited_blob_decoder_module,
-                inherited_blob_artifact_mode,
-            )
-        sources = (
-            inspect.getsource(_decode_inherited_blob),
-            inspect.getsource(_inherited_blob_artifact_mode),
-            inspect.getsource(_inherited_blob_decoder_module),
-            inspect.getsource(inherited_blob_artifact_mode),
-            inspect.getsource(_canonical_fingerprint_value),
-            inspect.getsource(_inherited_blob_decoder_version),
-        )
+        viewer_mod = sys.modules[__name__]
+        functions = [getattr(viewer_mod, name) for name in _VIEWER_DECODER_FINGERPRINT]
+        functions.extend(getattr(_ps, name) for name in _SCANNER_DECODER_FINGERPRINT)
+        sources = tuple(inspect.getsource(function) for function in functions)
         payload = _canonical_fingerprint_value(sources, name="inherited_blob_decoder_source")
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
     except FingerprintUnavailableError:

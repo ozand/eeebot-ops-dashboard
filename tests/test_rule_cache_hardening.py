@@ -21,13 +21,9 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
     tv._inherited_blob_decoder_version.cache_clear()
     baseline = ps.inherited_blob_decoder_version()
 
-    decoder_sources = (
-        tv._decode_inherited_blob,
-        tv._inherited_blob_artifact_mode,
-        ps._inherited_blob_decoder_module,
-        ps.inherited_blob_artifact_mode,
-        tv._inherited_blob_decoder_version,
-    )
+    decoder_sources = tuple(
+        getattr(tv, name) for name in tv._VIEWER_DECODER_FINGERPRINT
+    ) + tuple(getattr(ps, name) for name in tv._SCANNER_DECODER_FINGERPRINT)
     for changed in decoder_sources:
         def changed_decoder_source(value, *, changed=changed):
             source = original(value)
@@ -37,7 +33,7 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
 
         monkeypatch.setattr(_inspect, "getsource", changed_decoder_source)
         tv._inherited_blob_decoder_version.cache_clear()
-        assert ps.inherited_blob_decoder_version() != baseline, changed.__name__
+        assert ps.inherited_blob_decoder_version() != baseline, getattr(changed, "__name__", changed[1])
         monkeypatch.setattr(_inspect, "getsource", original)
         tv._inherited_blob_decoder_version.cache_clear()
 
@@ -145,6 +141,23 @@ def test_inherited_scan_does_not_retry_content_rejection(monkeypatch, capsys):
     assert "fingerprint unavailable" not in capsys.readouterr().err.lower()
     monkeypatch.setattr(ps, "scan_pages", real_scan_pages)
 
+
+
+def test_inherited_decoder_fingerprint_works_with_flat_host_modules():
+    import subprocess
+    from pathlib import Path
+
+    scripts_dir = str(Path(ps.__file__).resolve().parent)
+    code = (
+        "import sys; sys.path.insert(0, " + repr(scripts_dir) + "); "
+        "import publish_scan, techtree_viewer; "
+        "techtree_viewer._inherited_blob_decoder_version.cache_clear(); "
+        "print(techtree_viewer._inherited_blob_decoder_version())"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True,
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}\s*", result.stdout)
 
 def test_inherited_blob_decoder_resolver_error_scans_uncached(monkeypatch, capsys):
     import base64
@@ -529,49 +542,57 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
 
 
 def test_inherited_decoder_fingerprint_ast_covers_called_module_functions():
-    viewer_tree = ast.parse(inspect.getsource(tv))
-    scanner_tree = ast.parse(inspect.getsource(ps))
-    viewer_functions = {
-        node.name: node for node in viewer_tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    }
-    scanner_functions = {
-        node.name: node for node in scanner_tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    }
-    fingerprinted = {
-        "_decode_inherited_blob": (viewer_functions, {
-            "base64.b64decode": "stdlib base64 decoder; runtime version is the contract",
-            "json.loads": "stdlib JSON parser",
-            "zlib.decompressobj": "stdlib gzip decompressor",
-        }),
-        "_inherited_blob_artifact_mode": (viewer_functions, {}),
-        "_inherited_blob_decoder_module": (scanner_functions, {}),
-        "inherited_blob_artifact_mode": (scanner_functions, {}),
-        "_canonical_fingerprint_value": (scanner_functions, {
-            "json.dumps": "stdlib deterministic serialization",
-            "inspect.getsource": "stdlib source introspection",
-        }),
-        "_inherited_blob_decoder_version": (viewer_functions, {
-            "hashlib.sha256": "stdlib cryptographic digest",
-            "inspect.getsource": "stdlib source introspection",
-            "_canonical_fingerprint_value": "implementation is itself fingerprinted",
-        }),
-    }
-    covered = set(fingerprinted)
-    modules = viewer_functions.keys() | scanner_functions.keys()
-    for name, (functions, exclusions) in fingerprinted.items():
-        node = functions[name]
-        module_node_names = modules
-        if name == "_inherited_blob_decoder_version":
-            module_node_names = modules | {"_inherited_blob_decoder_version"}
-        calls = {
-            ast.unparse(child.func) for child in ast.walk(node)
-            if isinstance(child, ast.Call)
+    module_trees = {}
+    module_functions = {}
+    for module in (tv, ps):
+        tree = ast.parse(inspect.getsource(module))
+        module_trees[module.__name__] = tree
+        module_functions[module.__name__] = {
+            node.name for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         }
-        module_calls = calls & module_node_names
-        missing = module_calls - covered - exclusions.keys()
-        assert not missing, f"{name} calls un-fingerprinted module functions: {sorted(missing)}"
+
+    fingerprinted_names = {
+        (tv.__name__, name) for name in tv._VIEWER_DECODER_FINGERPRINT
+    } | {
+        (ps.__name__, name) for name in tv._SCANNER_DECODER_FINGERPRINT
+    } | {(tv.__name__, "_inherited_blob_decoder_version")}
+    exclusions = {
+        (tv.__name__, "_decode_inherited_blob"): {
+            "loads": "json.loads is stdlib parsing; Python runtime version is the contract",
+            "b64decode": "base64.b64decode is stdlib; Python runtime version is the contract",
+            "decompressobj": "zlib.decompressobj is stdlib; Python runtime version is the contract",
+        },
+        (ps.__name__, "_canonical_fingerprint_value"): {
+            "dumps": "json.dumps is stdlib deterministic serialization",
+            "getsource": "inspect.getsource is stdlib source introspection",
+        },
+        (tv.__name__, "_inherited_blob_decoder_version"): {
+            "getsource": "inspect.getsource is stdlib source introspection",
+            "sha256": "hashlib.sha256 is stdlib cryptographic digest",
+        },
+    }
+    for module_name, function_name in fingerprinted_names:
+        node = next(
+            node for node in module_trees[module_name].body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == function_name
+        )
+        calls = set()
+        for child in ast.walk(node):
+            if not isinstance(child, ast.Call):
+                continue
+            if isinstance(child.func, ast.Name):
+                calls.add(child.func.id)
+            elif isinstance(child.func, ast.Attribute):
+                calls.add(child.func.attr)
+        all_module_functions = set().union(*module_functions.values())
+        covered = {name for _, name in fingerprinted_names}
+        documented_exclusions = set(exclusions.get((module_name, function_name), {}))
+        missing = (calls & all_module_functions) - covered - documented_exclusions
+        assert not missing, (
+            f"{function_name} calls un-fingerprinted module functions: {sorted(missing)}"
+        )
 
 
 def test_ast_guard_indexes_imported_names_the_scanner_reads():
