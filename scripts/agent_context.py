@@ -78,25 +78,63 @@ def section_owner_meta(name: str) -> dict[str, Any]:
     return SECTION_OWNER_MAP.get(name, UNMAPPED_SECTION_META)
 
 
+#: #368: appended to every number the page shows from the static map above
+#: instead of from the ledger row, so a documented value is never read as
+#: runtime state.
+STATIC_VALUE_LABEL = "(static, runtime not reporting)"
+
+
+def _is_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def recorded_release_pool(row: dict[str, Any] | None) -> dict[str, Any] | None:
-    """The runtime's own ``release_pool`` record from a ledger row, when the
-    row carries a well-formed one (``cap``/``used`` ints) -- else ``None``."""
-    pool = row.get("release_pool") if isinstance(row, dict) else None
-    if not isinstance(pool, dict):
+    """The release pool as the runtime recorded it on a ledger row --
+    ``{"cap", "used"}`` -- or ``None`` when the row carries none.
+
+    Reads ``release_pool_chars`` (``{"limit", "used"}``, the
+    ``phase: system_prompt`` telemetry for this issue) and, failing that,
+    the builder's own ``release_pool`` record (``{"cap", "used"}``)."""
+    if not isinstance(row, dict):
         return None
-    cap, used = pool.get("cap"), pool.get("used")
-    if not all(isinstance(v, int) and not isinstance(v, bool) for v in (cap, used)):
-        return None
-    return pool
+    pool = row.get("release_pool_chars")
+    if isinstance(pool, dict) and _is_int(pool.get("limit")) and _is_int(pool.get("used")):
+        return {"cap": pool["limit"], "used": pool["used"]}
+    pool = row.get("release_pool")
+    if isinstance(pool, dict) and _is_int(pool.get("cap")) and _is_int(pool.get("used")):
+        return {"cap": pool["cap"], "used": pool["used"]}
+    return None
 
 
-def section_budget_text(name: str, meta: dict[str, Any], pool_cap: int = RELEASE_POOL_CHARS) -> str:
+def release_floors(row: dict[str, Any] | None) -> dict[str, tuple[int, bool]]:
+    """``{section: (floor_chars, is_static)}``. OPERATING.md's floor comes
+    from the row's ``operating_reserve_chars`` when recorded."""
+    floors = {name: (floor, True) for name, floor in RELEASE_POOL_FLOORS.items()}
+    recorded = row.get("operating_reserve_chars") if isinstance(row, dict) else None
+    if isinstance(recorded, int) and not isinstance(recorded, bool):
+        floors["operating"] = (recorded, False)
+    return floors
+
+
+def _static_suffix(is_static: bool) -> str:
+    return f" {STATIC_VALUE_LABEL}" if is_static else ""
+
+
+def section_budget_text(
+    name: str,
+    meta: dict[str, Any],
+    pool_cap: int = RELEASE_POOL_CHARS,
+    *,
+    pool_static: bool = True,
+    floors: dict[str, tuple[int, bool]] | None = None,
+) -> str:
     """#368: a release block's budget is the shared pool (plus its floor, if
-    it has one), never a per-block cap it could appear to overrun."""
+    it has one), never a per-block cap it could appear to overrun. A number
+    taken from the static map says so."""
     if meta.get("pool"):
-        text = f"shared pool {pool_cap:,}c"
-        floor = RELEASE_POOL_FLOORS.get(name)
-        return f"{text} · floor {floor:,}c" if floor else text
+        text = f"shared pool {pool_cap:,}c{_static_suffix(pool_static)}"
+        floor = (floors if floors is not None else release_floors(None)).get(name)
+        return f"{text} · floor {floor[0]:,}c{_static_suffix(floor[1])}" if floor else text
     cap = meta.get("cap")
     return f"{cap:,}c" if isinstance(cap, int) else "dynamic"
 
@@ -1100,6 +1138,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     total_sections_chars = 0
     recorded_pool = recorded_release_pool(sys_prompt)
     pool_cap = recorded_pool["cap"] if recorded_pool else RELEASE_POOL_CHARS
+    pool_floors = release_floors(sys_prompt)
     pool_used_from_sections = 0
 
     if sections:
@@ -1108,7 +1147,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             meta = section_owner_meta(sec_name)
             owner = meta["owner"]
             file_name = meta["file"]
-            cap_text = section_budget_text(sec_name, meta, pool_cap)
+            cap_text = section_budget_text(
+                sec_name, meta, pool_cap, pool_static=recorded_pool is None, floors=pool_floors,
+            )
             if meta.get("pool"):
                 pool_used_from_sections += sec_sz
             is_missing = file_name in missing_files
@@ -1181,11 +1222,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if recorded_pool:
             pool_used, pool_source = recorded_pool["used"], "recorded by runtime"
         else:
-            pool_used, pool_source = pool_used_from_sections, "&sum; recorded release sections; pool size static (eeebot#1802)"
+            pool_used, pool_source = pool_used_from_sections, "used = &sum; recorded release sections"
         floors = " · ".join(
-            f"{esc(SECTION_OWNER_MAP[name]['file'])} floor {floor:,}c" for name, floor in RELEASE_POOL_FLOORS.items()
+            f"{esc(SECTION_OWNER_MAP[name]['file'])} floor {floor:,}c{_static_suffix(is_static)}"
+            for name, (floor, is_static) in pool_floors.items()
         )
-        out.append(f'      <p class="rec-note release-pool-note"><strong>Release pool (shared by release files):</strong> {pool_used:,} / {pool_cap:,}c used ({pool_source}) · {floors} (a minimum, not a ceiling)</p>')
+        out.append(f'      <p class="rec-note release-pool-note"><strong>Release pool (shared by release files):</strong> {pool_used:,} / {pool_cap:,}c{_static_suffix(recorded_pool is None)} used ({pool_source}) · {floors} (a minimum, not a ceiling)</p>')
         if outside_cap:
             tail_total = sum(item["actual_chars"] for item in outside_cap)
             out.append(f'      <p class="rec-note"><strong>Legacy tail beyond recorded sections:</strong> {tail_total:,}c across {len(outside_cap)} block(s) -- see below. Not part of the ledger `sections` map.</p>')

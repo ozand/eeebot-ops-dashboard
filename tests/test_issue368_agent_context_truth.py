@@ -102,13 +102,43 @@ def test_item1_release_blocks_show_shared_pool_not_stale_per_block_caps(tmp_path
     # caps they appear to overrun.
     assert "3,200c" not in html
     assert '<td class="num">5,000c</td>' not in html
-    assert "shared pool 15,500c · floor 5,000c" in html  # OPERATING.md floor
     # release pool occupancy: 1,000 + 1,200 + 3,849 + 500 + 6,103
-    assert "12,652 / 15,500c used" in html
+    assert "12,652 / 15,500c" in html
     # sections the builder defines are mapped, never "unmapped"
     assert 'class="t1-owner t1-owner-unmapped"' not in html
     for cap in ("3,000c", "600c", "1,200c"):  # priorities / scorecard / position
         assert f'<td class="num">{cap}</td>' in html
+
+
+STATIC = "(static, runtime not reporting)"
+
+
+def test_item1_static_pool_numbers_say_they_are_static(tmp_path):
+    """No pool telemetry on the row: 15,500 and 5,000 come from the
+    dashboard's documented map and the page must say so, every time."""
+    state = _state(tmp_path, prompts={f"{CYCLE_A}.system.txt": _prompt_text(SECTIONS)})
+    html = _render(tmp_path, state)["agent.html"]
+
+    assert f"shared pool 15,500c {STATIC} · floor 5,000c {STATIC}" in html  # operating row
+    assert f"12,652 / 15,500c {STATIC} used" in html
+    assert f"OPERATING.md floor 5,000c {STATIC}" in html
+    assert "shared pool 15,500c ·" not in html  # never unlabelled
+    assert "shared pool 15,500c</td>" not in html
+
+
+def test_item1_recorded_pool_is_shown_without_static_label(tmp_path):
+    state = _state(
+        tmp_path,
+        rows=[_row(release_pool_chars={"limit": 16000, "used": 12345}, operating_reserve_chars=5500)],
+        prompts={f"{CYCLE_A}.system.txt": _prompt_text(SECTIONS)},
+    )
+    html = _render(tmp_path, state)["agent.html"]
+
+    assert "shared pool 16,000c · floor 5,500c" in html
+    assert "12,345 / 16,000c used (recorded by runtime)" in html
+    assert "OPERATING.md floor 5,500c (a minimum" in html
+    assert STATIC not in html
+    assert "15,500" not in html
 
 
 # --- item 2: window from runtime telemetry, or unknown -----------------------
@@ -197,26 +227,44 @@ def test_item5_stage_states_are_separate_when_block_load_truncates(tmp_path):
 
 # --- public-output canary ------------------------------------------------------
 
-def test_snapshot_text_canary_never_reaches_any_public_page(tmp_path):
+def test_snapshot_text_canary_never_reaches_any_public_file(tmp_path, monkeypatch):
     """ADR-036 rule 3: snapshot text is LAN-only. #368 changes which text is
-    READ, never what is PUBLISHED -- a canary in the selected cycle's own
-    .system.txt/.task.txt, and in another cycle's, reaches no public page."""
+    READ, never what is PUBLISHED. A canary in the selected cycle's own
+    .system.txt/.task.txt, and in another cycle's, goes through the real
+    generator -- the publisher's own ``main --local`` entry point, which
+    reads the state dir via ``read_agent_context_dict`` and writes the site
+    to disk -- and no written file contains it."""
+    from scripts.agent_context import read_agent_context_dict
+
     canary_a = "CANARY-368-a7f3c1e9-SELECTED"
     canary_b = "CANARY-368-5d20b4aa-OTHER"
     text_a = _prompt_text(SECTIONS)
     text_a = canary_a + text_a[len(canary_a):]
+    task_a = f"## Identity\n{canary_a}\n"
     state = _state(
         tmp_path,
         rows=[_row(cycle_id=CYCLE_B, ts="2026-09-27T19:00:00Z"), _row()],
         prompts={
             f"{CYCLE_A}.system.txt": text_a,
-            f"{CYCLE_A}.task.txt": f"## Identity\n{canary_a}\n",
+            f"{CYCLE_A}.task.txt": task_a,
             f"{CYCLE_B}.system.txt": f"{canary_b}\n",
             f"{CYCLE_B}.task.txt": f"## Identity\n{canary_b}\n",
         },
     )
-    pages = _render(tmp_path, state)
-    assert f"{len(text_a):,} chars received by model" in pages["agent.html"]  # the text WAS read
-    for name, html in pages.items():
-        assert canary_a not in html, name
-        assert canary_b not in html, name
+    # the reader really does carry the canary text into the render input
+    context = read_agent_context_dict(state)
+    assert canary_a in context["prompt_text"] and canary_a in context["task_text"]
+
+    # only the network probe is stubbed; reading and rendering are real
+    monkeypatch.setattr(tv, "read_ci_freshness", lambda *a, **k: None)
+    out = tmp_path / "site"
+    assert tv.main(["--local", "--state-root", str(state), "--out", str(out)]) == 0
+
+    written = [p for p in out.rglob("*") if p.is_file()]
+    assert (out / "agent.html") in written
+    agent_html = (out / "agent.html").read_text(encoding="utf-8")
+    assert f"{len(text_a):,} chars received by model" in agent_html  # sizes published
+    for path in written:
+        data = path.read_bytes()
+        assert canary_a.encode() not in data, path
+        assert canary_b.encode() not in data, path
