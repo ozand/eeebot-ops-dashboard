@@ -710,8 +710,8 @@ def scan_pages(
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
-        is_json = fname.lower().endswith(".json")
-        mode = "json" if is_json else "html"
+        mode = inherited_blob_artifact_mode(fname)
+        is_json = mode == "json"
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -764,12 +764,7 @@ def scan_pages(
             original_cache.update(cache)
 
 
-def inherited_blob_decoder_version() -> str:
-    """Version of the external inherited-blob decode/interpretation pipeline.
-
-    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
-    artifact-mode handling before inherited content reaches scan_pages.
-    """
+def _inherited_blob_decoder_module():
     try:
         from scripts import techtree_viewer
     except ImportError:
@@ -779,7 +774,30 @@ def inherited_blob_decoder_version() -> str:
             raise FingerprintUnavailableError(
                 "inherited blob decoder implementation unavailable"
             ) from exc
-    decoder_version = getattr(techtree_viewer, "_inherited_blob_decoder_version", None)
+    return techtree_viewer
+
+
+def inherited_blob_artifact_mode(path: str) -> str:
+    """Select the artifact scan mode through the decoder's canonical helper."""
+    try:
+        selector = getattr(_inherited_blob_decoder_module(), "_inherited_blob_artifact_mode", None)
+        if not callable(selector):
+            raise FingerprintUnavailableError("inherited blob artifact-mode selector unavailable")
+        return selector(path)
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob artifact-mode selection failed") from exc
+
+
+def inherited_blob_decoder_version() -> str:
+    """Version of the external inherited-blob decode/interpretation pipeline.
+
+    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
+    artifact-mode handling before inherited content reaches scan_pages.
+    """
+    decoder_module = _inherited_blob_decoder_module()
+    decoder_version = getattr(decoder_module, "_inherited_blob_decoder_version", None)
     if not callable(decoder_version):
         raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
     return decoder_version()

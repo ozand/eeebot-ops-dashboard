@@ -205,6 +205,63 @@ def test_json_string_streams_do_not_synthesize_env_secret() -> None:
     assert ps.scan_text(payload, json_mode=True, html_mode=False) == {}
 
 
+def test_inherited_artifact_mode_is_shared_before_and_after_blob_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
+    import base64
+    import json
+    import subprocess
+
+    sha = "c" * 40
+    response = {"content": base64.b64encode(b'{"password": "safe"}').decode(), "encoding": "base64"}
+    calls = []
+
+    def fake_gh(args, **kwargs):
+        calls.append(args)
+        if "git/trees/tree-mode?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "cycles-archive-1.json", "sha": sha}],
+            }), "")
+        if f"git/blobs/{sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps(response), "")
+        raise AssertionError(f"unexpected request {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    original_mode = tv._inherited_blob_artifact_mode
+    modes_seen = []
+
+    def record_mode(path):
+        mode = original_mode(path)
+        modes_seen.append((path, mode))
+        return mode
+
+    monkeypatch.setattr(tv, "_inherited_blob_artifact_mode", record_mode)
+    cache = {}
+    tv._inherited_blob_decoder_version.cache_clear()
+    tv._inspect_and_scan_inherited_tree("tree-mode", set(), scan_cache=cache)
+    assert modes_seen == [("cycles-archive-1.json", "json"), ("cycles-archive-1.json", "json")]
+    assert ps.inherited_blob_artifact_mode("cycles-archive-1.json") == "json"
+    for name in ps.rule_names():
+        assert cache.get(ps.rule_cache_key(name, sha, mode="json", extra_version=ps.inherited_blob_decoder_version())) is True
+
+
+def test_inherited_blob_artifact_mode_change_invalidates_decoder_fingerprint(monkeypatch):
+    import inspect
+
+    tv._inherited_blob_decoder_version.cache_clear()
+    before = ps.inherited_blob_decoder_version()
+    original = inspect.getsource
+
+    def changed_source(value):
+        source = original(value)
+        if value is ps.inherited_blob_artifact_mode:
+            return source + "\\n# simulated mode selector change\\n"
+        return source
+
+    monkeypatch.setattr(inspect, "getsource", changed_source)
+    tv._inherited_blob_decoder_version.cache_clear()
+    assert ps.inherited_blob_decoder_version() != before
+    tv._inherited_blob_decoder_version.cache_clear()
+
+
 def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: pytest.MonkeyPatch) -> None:
     import inspect
     import scripts.techtree_viewer as viewer
