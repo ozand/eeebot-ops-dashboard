@@ -341,12 +341,7 @@ def health_verdict(
     if isinstance(bridge_exit_streak, dict):
         consecutive_failures = bridge_exit_streak.get('consecutive_failures')
         if isinstance(consecutive_failures, int) and consecutive_failures >= HEALTH_FAILURE_STREAK_LENGTH:
-            err = bridge_exit_streak.get('last_error') or ''
-            where = bridge_exit_streak.get('last_where') or ''
-            detail = f': {err}' if err else ''
-            if where:
-                detail += f' at {where}'
-            return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
+            return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures'
     streak = 0
     for outcome in reversed(recent_outcomes):
         if outcome in {'failed', 'partial', 'model_call_incomplete'}:
@@ -5708,18 +5703,10 @@ def build_now_panel(
                 'signal kills of the bridge unit">does not see SIGTERM kills (eeebot#1683)</span></div>'
             )
         else:
-            err = bridge_exit_streak.get('last_error') or ''
-            where = bridge_exit_streak.get('last_where') or ''
-            detail_parts = []
-            if err:
-                detail_parts.append(f'<code>{esc(err)}</code>')
-            if where:
-                detail_parts.append(f'<span class="now-sub">at {esc(where)}</span>')
-            detail_str = f' &mdash; {" ".join(detail_parts)}' if detail_parts else ''
             streak_html = (
                 '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
                 f'<strong class="health-alert-text">{consec} consecutive failure{"s" if consec != 1 else ""}</strong>'
-                f'{detail_str}</div>'
+                '<span class="now-sub">bridge error details withheld</span></div>'
             )
 
     # 5. Monitored feed ages

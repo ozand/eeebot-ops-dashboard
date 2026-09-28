@@ -22,6 +22,89 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def test_cycle_title_exception_canary_is_removed_by_real_publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Cycle title probe exceptions are public codes only, including the built snapshot."""
+    from scripts import techtree_viewer as tv
+
+    canary = "PRIVATE_CYCLE_TITLE_EXCEPTION_CANARY"
+    state = tmp_path / "state"
+    repo = tmp_path / "repo"
+    state.mkdir()
+    repo.mkdir()
+    monkeypatch.setattr(tv, "extract_git_titles_local", lambda *_a, **_kw: ({}, {}, canary))
+    data = tv.read_local_state(str(state), str(repo))
+    assert data["cycle_titles_error"] == canary
+    raw, private = split_render_inputs(data)
+    assert canary in json.dumps(private)
+    assert canary not in json.dumps(raw)
+    assert "cycle_titles_error" not in raw
+    pages = tv.render_public_pages(raw, "eeepc")
+    published = []
+    publish_ordered(tmp_path / "site", pages, {}, "v1", lambda public: published.append(public) or (0, {}))
+    assert canary not in json.dumps(published)
+    for path in (tmp_path / "site/v1").rglob("*"):
+        if path.is_file():
+            assert canary not in path.read_text(encoding="utf-8", errors="replace")
+
+
+def test_snapshot_staging_is_outside_site_root_and_not_http_served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import http.client
+    import threading
+    from http.server import ThreadingHTTPServer
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+
+    root = tmp_path / "site"
+    observed = []
+    original_mkdtemp = __import__("tempfile").mkdtemp
+
+    def record_mkdtemp(*args, **kwargs):
+        path = original_mkdtemp(*args, **kwargs)
+        observed.append(Path(path).resolve())
+        return path
+
+    monkeypatch.setattr("scripts.two_sinks.tempfile.mkdtemp", record_mkdtemp)
+    atomic_snapshot_swap(root, {"index.html": "public"}, "v1")
+    staging = observed[0]
+    assert staging.parent == root.parent.resolve()
+    assert staging != root and not staging.is_relative_to(root.resolve())
+
+    Handler = type("Handler", (SnapshotHTTPRequestHandler,), {"site_root": root.resolve()})
+    server = ThreadingHTTPServer(("127.0.0.1", 0), lambda *a, **kw: Handler(*a, directory=str(root), **kw))
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+        conn.request("GET", "/" + staging.name + "/index.html")
+        response = conn.getresponse()
+        assert response.status == 404
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
+def test_bridge_error_canary_is_redacted_from_public_projection():
+    canary = "PRIVATE_BRIDGE_ERROR_CANARY"
+    public, private = split_render_inputs({
+        "bridge_exit_streak": {"consecutive_failures": 2, "last_error": canary},
+        "bridge_exits": [{"outcome": "failure", "error": canary}],
+    })
+    assert canary in json.dumps(private)
+    assert canary not in json.dumps(public)
+    assert public["bridge_exit_streak"]["last_error"] == "bridge error withheld"
+    assert public["bridge_exits"][0]["error"] == "bridge error withheld"
+
+
+def test_publisher_unit_installation_and_post_install_checks_are_documented() -> None:
+    readme = Path(__file__).resolve().parent.parent / "deploy" / "README-sync.md"
+    text = readme.read_text(encoding="utf-8")
+    assert "sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service" in text
+    assert "sudo systemctl cat eeebot-techtree-publish.service" in text
+    assert "sudo systemctl show eeebot-techtree-publish.service" in text
+    assert "owner: ozand" in text
+
+
 def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     """ADR-036 §1: host precedes gh-pages and both use one version."""
     order = []
@@ -188,6 +271,25 @@ def test_m7_snapshot_names_reject_header_injection_and_traversal(tmp_path: Path)
     for name in ("../escape.html", "/absolute.html", "nested/../../escape.html"):
         with pytest.raises(ValueError):
             add_snapshot_version({name: "bad"}, "v1")
+
+
+def test_m1_bridge_failure_canary_is_not_rendered_in_public_health_or_feed() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_BRIDGE_EXCEPTION_CANARY_991"
+    public, _ = split_render_inputs({
+        "bridge_exit_streak": {"consecutive_failures": 5, "last_error": marker, "last_where": marker},
+        "bridge_exits": [{"outcome": "failure", "error": marker, "where": marker}],
+    })
+    assert marker not in json.dumps(public)
+    verdict = tv.health_verdict(
+        1, "2026-09-01T00:00:00Z", [], False, "2026-09-01T01:00:00Z",
+        public["bridge_exit_streak"], {},
+    )
+    assert marker not in json.dumps(verdict)
+    page = tv.render_public_pages(public, "eeepc")["index.html"]
+    assert marker not in page
+    assert "bridge error withheld" in page
 
 
 def test_m2_derived_view_reason_and_priority_are_typed_and_evidence_is_removed() -> None:

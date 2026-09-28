@@ -72,7 +72,17 @@ sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
 ```
 
-Then install the publisher sync drop-in from a checkout containing the merged repository artifacts:
+Install the publisher unit itself as a class-3 host step (owner: ozand), from a checkout containing the merged repository artifacts. Then verify the effective unit and sandbox before installing its repository-sync drop-in:
+
+```bash
+sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service
+sudo systemctl daemon-reload
+sudo systemctl cat eeebot-techtree-publish.service
+sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p StateDirectory -p StateDirectoryMode -p ReadWritePaths
+sudo systemctl show eeebot-techtree-publish.service -p LoadState -p ActiveState -p FragmentPath
+```
+
+Confirm the unit has `User=eeebot-publish`, `ProtectSystem=strict`, `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700`, and `ReadWritePaths=/var/lib/eeebot-site`; do not print credential contents. Only after those checks, install the publisher sync drop-in:
 
 ```bash
 scp deploy/eeebot-techtree-sync.sh ozand@eeepc-lan:/tmp/eeebot-techtree-sync.sh

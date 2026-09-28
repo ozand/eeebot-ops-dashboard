@@ -57,7 +57,7 @@ _VERSION_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
     "ledger_tail", "ledger_history", "demand_rotation", "demand_completed", "skill_reads",
-    "skill_evals", "ci_freshness", "cycle_titles", "cycle_files", "cycle_titles_error",
+    "skill_evals", "ci_freshness", "cycle_titles", "cycle_files",
     "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
     "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
@@ -267,6 +267,12 @@ def _drop_invalid_counters(value: object) -> object:
 
 
 def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | None = None) -> object:
+    if key in {"cycle_titles_error", "probe_error"}:
+        if value:
+            if withheld is not None:
+                withheld["probe_error"] = withheld.get("probe_error", 0) + 1
+            return _reason_bucket(str(value))
+        return ""
     if key == "derived_view" and isinstance(value, dict):
         return _drop_invalid_counters(_sanitize_derived_view(value, withheld))
     if isinstance(value, (dict, list)):
@@ -319,8 +325,11 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
                 mem["content"] = ""
         return _drop_invalid_counters(ctx)
     if key == "bridge_exit_streak" and isinstance(value, dict):
-        return {k: value[k] for k in ("consecutive_failures", "last_ts", "count")
-                if k in value and isinstance(value[k], int) and not isinstance(value[k], bool) and value[k] >= 0}
+        result = {k: value[k] for k in ("consecutive_failures", "last_ts", "count")
+                  if k in value and isinstance(value[k], int) and not isinstance(value[k], bool) and value[k] >= 0}
+        if value.get("last_error"):
+            result["last_error"] = "bridge error withheld"
+        return result
     if key == "bridge_exits" and isinstance(value, list):
         projected = []
         for row in value:
@@ -608,7 +617,10 @@ def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -
     previous = current_link.resolve() if current_link.is_symlink() else None
     if destination.exists():
         raise FileExistsError(destination)
-    staging = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=site_root.parent))
+    staging = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=site_root.parent)).resolve()
+    if staging.parent != site_root.parent.resolve():
+        shutil.rmtree(staging, ignore_errors=True)
+        raise OSError("snapshot staging must be a sibling of site_root for atomic rename")
     try:
         try:
             os.chmod(staging, 0o755)
