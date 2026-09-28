@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import inspect
 import os
 import hashlib
 import html
@@ -10577,8 +10578,102 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-# Increment when inherited base64/gzip/UTF-8 decoding semantics change.
-_INHERITED_BLOB_DECODER_VERSION = "1"
+def _decode_inherited_blob(
+    response_text: str,
+    path: str,
+    *,
+    publication_scan_error: type[Exception],
+) -> str:
+    """Decode one GitHub blob response into text for inherited-page scanning."""
+    import base64
+    import json
+
+    try:
+        blob = json.loads(response_text)
+        if not isinstance(blob, dict) or "content" not in blob or blob["content"] is None:
+            raise publication_scan_error(
+                f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
+            )
+        raw = blob.get("content", "")
+        encoding = blob.get("encoding", "")
+        if encoding != "base64":
+            return raw
+        raw_bytes = base64.b64decode(raw)
+        if raw_bytes.startswith(b"\x1f\x8b"):
+            import zlib
+
+            try:
+                max_decompressed_bytes = 20 * 1024 * 1024
+                chunks = []
+                total = 0
+                remaining = raw_bytes
+                while remaining:
+                    decompressor = zlib.decompressobj(wbits=31)
+                    chunk = decompressor.decompress(
+                        remaining, max_decompressed_bytes - total + 1
+                    )
+                    total += len(chunk)
+                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                        )
+                    chunks.append(chunk)
+                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                    total += len(tail)
+                    if total > max_decompressed_bytes:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                        )
+                    chunks.append(tail)
+                    if not decompressor.eof:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                        )
+                    remaining = decompressor.unused_data
+                raw_bytes = b"".join(chunks)
+            except publication_scan_error:
+                raise
+            except Exception as gzip_error:
+                raise publication_scan_error(
+                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gzip_error}"
+                ) from gzip_error
+        try:
+            return raw_bytes.decode("utf-8")
+        except UnicodeDecodeError as utf8_error:
+            raise publication_scan_error(
+                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {utf8_error}"
+            ) from utf8_error
+    except publication_scan_error:
+        raise
+    except Exception as decode_error:
+        raise publication_scan_error(
+            f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {decode_error}"
+        ) from decode_error
+
+
+def _inherited_blob_artifact_mode(path: str) -> str:
+    """Return the scanner mode selected for an inherited public artifact."""
+    return "json" if path.lower().endswith(".json") else "html"
+
+
+def _inherited_blob_decoder_version() -> str:
+    """Fingerprint decoder and artifact-mode behavior so approvals cannot go stale."""
+    try:
+        from scripts.publish_scan import FingerprintUnavailableError, _canonical_fingerprint_value
+    except ImportError:
+        from publish_scan import FingerprintUnavailableError, _canonical_fingerprint_value
+    try:
+        sources = (
+            inspect.getsource(_decode_inherited_blob),
+            inspect.getsource(_inherited_blob_artifact_mode),
+            inspect.getsource(_inherited_blob_decoder_version),
+        )
+        payload = _canonical_fingerprint_value(sources, name="inherited_blob_decoder_source")
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as fingerprint_error:
+        raise FingerprintUnavailableError("inherited blob decoder fingerprint unavailable") from fingerprint_error
 
 
 def _inspect_and_scan_inherited_tree(
@@ -10591,6 +10686,7 @@ def _inspect_and_scan_inherited_tree(
     import json as _json
     try:
         from scripts.publish_scan import (
+            FingerprintUnavailableError,
             PublicationScanError,
             cache_contains_clean,
             is_allowed_publish_path,
@@ -10598,6 +10694,7 @@ def _inspect_and_scan_inherited_tree(
         )
     except ImportError:
         from publish_scan import (
+            FingerprintUnavailableError,
             PublicationScanError,
             cache_contains_clean,
             is_allowed_publish_path,
@@ -10653,11 +10750,19 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
                     )
             if path and sha and path not in uploaded_paths:
-                if cache_contains_clean(
+                try:
+                    decoder_version = _inherited_blob_decoder_version()
+                except FingerprintUnavailableError as exc:
+                    print(
+                        f"publish-scan: inherited decoder fingerprint unavailable ({exc}); treating blob as cache miss",
+                        file=sys.stderr,
+                    )
+                    decoder_version = None
+                if decoder_version is not None and cache_contains_clean(
                     scan_cache,
                     sha,
-                    mode="json" if path.lower().endswith(".json") else "html",
-                    extra_version=_INHERITED_BLOB_DECODER_VERSION,
+                    mode=_inherited_blob_artifact_mode(path),
+                    extra_version=decoder_version,
                 ):
                     # The blob SHA is content-addressed and cache key includes
                     # scanner version; avoid fetching it again only after a clean scan.
@@ -10668,62 +10773,11 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): cannot fetch inherited blob {path} (exit {b_res.returncode})"
                     )
                 try:
-                    b_json = _json.loads(b_res.stdout)
-                    if not isinstance(b_json, dict) or "content" not in b_json or b_json["content"] is None:
-                        raise PublicationScanError(
-                            f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
-                        )
-                    raw = b_json.get('content', '')
-                    enc = b_json.get('encoding', '')
-                    if enc == 'base64':
-                        raw_bytes = base64.b64decode(raw)
-                        if raw_bytes.startswith(b'\x1f\x8b'):
-                            import zlib
-                            try:
-                                max_decompressed_bytes = 20 * 1024 * 1024
-                                chunks = []
-                                total = 0
-                                remaining = raw_bytes
-                                while remaining:
-                                    decompressor = zlib.decompressobj(wbits=31)
-                                    chunk = decompressor.decompress(
-                                        remaining, max_decompressed_bytes - total + 1
-                                    )
-                                    total += len(chunk)
-                                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                        )
-                                    chunks.append(chunk)
-                                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
-                                    total += len(tail)
-                                    if total > max_decompressed_bytes:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                        )
-                                    chunks.append(tail)
-                                    # Gzip members concatenate byte-for-byte; do not insert
-                                    # separators that could split a credential across lines.
-                                    if not decompressor.eof:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
-                                        )
-                                    remaining = decompressor.unused_data
-                                raw_bytes = b''.join(chunks)
-                            except PublicationScanError:
-                                raise
-                            except Exception as gz_exc:
-                                raise PublicationScanError(
-                                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
-                                ) from gz_exc
-                        try:
-                            txt = raw_bytes.decode('utf-8')
-                        except UnicodeDecodeError as u_exc:
-                            raise PublicationScanError(
-                                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {u_exc}"
-                            ) from u_exc
-                    else:
-                        txt = raw
+                    txt = _decode_inherited_blob(
+                        b_res.stdout,
+                        path,
+                        publication_scan_error=PublicationScanError,
+                    )
                     inherited_pages[path] = txt
                     inherited_blob_shas[path] = sha
                 except PublicationScanError:
@@ -10733,7 +10787,16 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
-        scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
+        try:
+            scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
+        except FingerprintUnavailableError as exc:
+            # The scanner could not establish safe cache identity. Drop
+            # approvals for this run and scan every inherited page uncached.
+            print(
+                f"publish-scan: inherited decoder fingerprint unavailable ({exc}); performing uncached full scan",
+                file=sys.stderr,
+            )
+            scan_pages(inherited_pages, clean_cache=None, inherited_blob_shas=inherited_blob_shas)
 
 
 def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:

@@ -14,6 +14,76 @@ from scripts import techtree_viewer as tv
 from test_scan_equivalence import POSITIVES
 
 
+def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch):
+    import inspect as _inspect
+
+    original = _inspect.getsource
+    baseline = ps.inherited_blob_decoder_version()
+
+    def changed_decoder_source(value):
+        source = original(value)
+        if value is tv._decode_inherited_blob:
+            return source + "\\n# simulated decoder behavior change\\n"
+        return source
+
+    monkeypatch.setattr(_inspect, "getsource", changed_decoder_source)
+    assert ps.inherited_blob_decoder_version() != baseline
+
+
+def test_inherited_blob_decoder_fingerprint_failure_fetches_and_scans_uncached(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    content = "safe inherited page content"
+    blob_sha = "f" * 40
+    remote_requests = []
+
+    def fake_gh(args, **kwargs):
+        remote_requests.append(args)
+        if f"git/trees/tree-fingerprint?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(content.encode()).decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected GitHub request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    cache = {
+        ps.rule_cache_key(name, blob_sha, mode="html", extra_version="old-decoder"): True
+        for name in ps.rule_names()
+    }
+    original_getsource = inspect.getsource
+
+    def fail_decoder_source(value):
+        if value is tv._decode_inherited_blob:
+            raise OSError("decoder source unavailable")
+        return original_getsource(value)
+
+    monkeypatch.setattr(inspect, "getsource", fail_decoder_source)
+    scans = []
+    original_scan_pages = ps.scan_pages
+    real_scan_text = ps.scan_text
+
+    def spy_scan_text(text, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan_text(text, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan_text)
+    tv._inspect_and_scan_inherited_tree("tree-fingerprint", set(), scan_cache=cache)
+
+    assert len(remote_requests) == 2, "fingerprint failure must miss cache and fetch inherited blob"
+    assert scans == [list(ps.rule_names())], "all rules must scan without a trustworthy decoder fingerprint"
+    assert cache == {
+        ps.rule_cache_key(name, blob_sha, mode="html", extra_version="old-decoder"): True
+        for name in ps.rule_names()
+    }, "uncached full scan must not rewrite approvals"
+    assert "inherited decoder fingerprint unavailable" in capsys.readouterr().err.lower()
+
+
 def test_duplicate_and_reserved_rule_names_fail_closed():
     with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
         ps.validate_rule_names(("dup", "dup"))

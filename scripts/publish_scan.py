@@ -135,11 +135,11 @@ def _import_bindings_identity() -> str:
 
     Limitation: only *top-level* (module-body) ``Import``/``ImportFrom``
     are covered -- an import inside a function body is invisible here.
-    The one case of this in the file is ``inherited_blob_decoder_version``,
-    which imports ``techtree_viewer`` inside its own body (so a
-    publish-only checkout without that sibling module still degrades
-    cleanly instead of failing at module load); retargeting that inner
-    import would not change this fingerprint.
+    ``inherited_blob_decoder_version`` imports ``techtree_viewer`` inside
+    its own body so a publish-only checkout without that sibling module
+    still degrades cleanly instead of failing at module load. The decoder
+    itself now has a separate source fingerprint; the reader's fallback
+    import target does not change that decoder-source fingerprint.
     """
     source = inspect.getsource(sys.modules[__name__])
     tree = ast.parse(source)
@@ -688,9 +688,9 @@ def scan_pages(
     if original_cache is not None and cache != original_cache:
         original_cache.clear()
         original_cache.update(cache)
-    extra_version = inherited_blob_decoder_version()
     names = rule_names()
     try:
+        extra_version = inherited_blob_decoder_version()
         _shared_scan_version()
         # Force every per-rule witness inside the fail-closed boundary; a
         # source-less rule definition must not bypass approval invalidation.
@@ -776,15 +776,13 @@ def inherited_blob_decoder_version() -> str:
         try:
             import techtree_viewer
         except ImportError as exc:
-            raise PublicationScanError(
-                "Publication rejected (ADR-036 rule 3): inherited blob decoder version unavailable"
+            raise FingerprintUnavailableError(
+                "inherited blob decoder implementation unavailable"
             ) from exc
-    version = getattr(techtree_viewer, "_INHERITED_BLOB_DECODER_VERSION", None)
-    if not isinstance(version, str) or not version:
-        raise PublicationScanError(
-            "Publication rejected (ADR-036 rule 3): inherited blob decoder version is missing"
-        )
-    return version
+    decoder_version = getattr(techtree_viewer, "_inherited_blob_decoder_version", None)
+    if not callable(decoder_version):
+        raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
+    return decoder_version()
 
 
 def scanner_version(*, extra_version: str = "") -> str:

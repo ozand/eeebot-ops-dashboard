@@ -206,11 +206,20 @@ def test_json_string_streams_do_not_synthesize_env_secret() -> None:
 
 
 def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: pytest.MonkeyPatch) -> None:
+    import inspect
     import scripts.techtree_viewer as viewer
-    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v2", raising=False)
-    before = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
-    monkeypatch.setattr(viewer, "_INHERITED_BLOB_DECODER_VERSION", "test-decoder-v3", raising=False)
-    after = ps.scanner_version(extra_version=viewer._INHERITED_BLOB_DECODER_VERSION)
+
+    original = inspect.getsource
+    before = ps.inherited_blob_decoder_version()
+
+    def changed_decoder_source(value):
+        source = original(value)
+        if value is viewer._decode_inherited_blob:
+            return source + "\\n# simulated gzip decoding change\\n"
+        return source
+
+    monkeypatch.setattr(inspect, "getsource", changed_decoder_source)
+    after = ps.inherited_blob_decoder_version()
     assert after != before
 
 
@@ -659,8 +668,9 @@ def test_adr036_remote_blob_scanned_when_local_page_is_fingerprint_skipped(monke
 def test_inherited_clean_blob_cache_skips_remote_blob_download(monkeypatch: pytest.MonkeyPatch) -> None:
     import json
     sha = "a" * 40
+    decoder_version = ps.inherited_blob_decoder_version()
     cache = {
-        ps.rule_cache_key(name, sha, mode="html", extra_version=tv._INHERITED_BLOB_DECODER_VERSION): True
+        ps.rule_cache_key(name, sha, mode="html", extra_version=decoder_version): True
         for name in ps.rule_names()
     }
     calls = []
@@ -703,7 +713,7 @@ def test_inherited_blob_approval_written_and_read_with_decoder_version(monkeypat
 
     assert len(blob_fetches) == 1, "second pass must use the exact versioned approval written by the first"
     for name in ps.rule_names():
-        expected = ps.rule_cache_key(name, sha, mode="html", extra_version=tv._INHERITED_BLOB_DECODER_VERSION)
+        expected = ps.rule_cache_key(name, sha, mode="html", extra_version=ps.inherited_blob_decoder_version())
         assert cache.get(expected) is True, name
 
 
