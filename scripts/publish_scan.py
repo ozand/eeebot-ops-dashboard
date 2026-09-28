@@ -692,6 +692,8 @@ def scan_pages(
         original_cache.clear()
         original_cache.update(cache)
     names = rule_names()
+    page_modes: dict[str, str] = {}
+    page_mode_selector_succeeded = False
     try:
         if inherited_blob_shas is not None:
             if inherited_decoder_version is None:
@@ -701,6 +703,7 @@ def scan_pages(
             extra_version = inherited_blob_decoder_version()
         artifact_mode = inherited_blob_artifact_mode
         page_modes = {fname: artifact_mode(fname) for fname in pages}
+        page_mode_selector_succeeded = True
         _shared_scan_version()
         # Force every per-rule witness inside the fail-closed boundary; a
         # source-less rule definition must not bypass approval invalidation.
@@ -710,19 +713,21 @@ def scan_pages(
     except FingerprintUnavailableError as exc:
         fingerprint_available = False
         extra_version = ""
-        page_modes = {
-            fname: ("json" if fname.lower().endswith(".json") else "html")
-            for fname in pages
-        }
+        if not page_mode_selector_succeeded:
+            page_modes = {
+                fname: ("json" if fname.lower().endswith(".json") else "html")
+                for fname in pages
+            }
         cache = None  # never trust/read/write approvals without a stable version
         print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
     except Exception as exc:
         fingerprint_available = False
         extra_version = ""
-        page_modes = {
-            fname: ("json" if fname.lower().endswith(".json") else "html")
-            for fname in pages
-        }
+        if not page_mode_selector_succeeded:
+            page_modes = {
+                fname: ("json" if fname.lower().endswith(".json") else "html")
+                for fname in pages
+            }
         cache = None
         print(f"publish-scan: shared scanner fingerprint unavailable ({type(exc).__name__}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []

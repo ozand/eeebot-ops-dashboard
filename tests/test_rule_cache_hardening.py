@@ -38,6 +38,29 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
         tv._inherited_blob_decoder_version.cache_clear()
 
 
+def test_fingerprint_failure_preserves_canonical_mode_and_json_scan(monkeypatch, capsys):
+    pages = {"x.txt": r'{"password": "sk-super\u005fsecretcanaryvalue123456"}'}
+    cache = {}
+    modes = []
+    monkeypatch.setattr(ps, "validate_publish_allowlist", lambda _paths: None)
+    def canonical_mode(path):
+        modes.append(path)
+        return "json"
+
+    monkeypatch.setattr(ps, "inherited_blob_artifact_mode", canonical_mode)
+
+    def unavailable_version():
+        raise ps.FingerprintUnavailableError("shared scanner fingerprint unavailable")
+
+    monkeypatch.setattr(ps, "_shared_scan_version", unavailable_version)
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages(pages, clean_cache=cache)
+    err = capsys.readouterr().err.lower()
+    assert "performing uncached full scan" in err
+    assert modes == ["x.txt"]
+    assert cache == {}
+
+
 def test_scan_pages_scans_fully_without_viewer_decoder(monkeypatch, capsys):
     import base64
     import json
