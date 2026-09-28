@@ -271,8 +271,8 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
         if value:
             if withheld is not None:
                 withheld["probe_error"] = withheld.get("probe_error", 0) + 1
-            return _reason_bucket(str(value))
-        return ""
+            return "probe_unavailable"
+        return "absent"
     if key == "derived_view" and isinstance(value, dict):
         return _drop_invalid_counters(_sanitize_derived_view(value, withheld))
     if isinstance(value, (dict, list)):
@@ -328,7 +328,7 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
         result = {k: value[k] for k in ("consecutive_failures", "last_ts", "count")
                   if k in value and isinstance(value[k], int) and not isinstance(value[k], bool) and value[k] >= 0}
         if value.get("last_error"):
-            result["last_error"] = "bridge error withheld"
+            result["last_error"] = "error"
         return result
     if key == "bridge_exits" and isinstance(value, list):
         projected = []
@@ -339,7 +339,7 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
             if "exit_code" in item and (isinstance(item["exit_code"], bool) or not isinstance(item["exit_code"], int)):
                 item.pop("exit_code")
             if row.get("error"):
-                item["error"] = "bridge error withheld"
+                item["error"] = "error"
             projected.append(item)
         return projected
     if key == "bridge_active_run" and isinstance(value, dict):

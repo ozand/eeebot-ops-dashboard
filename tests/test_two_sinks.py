@@ -37,6 +37,8 @@ def test_cycle_title_exception_canary_is_removed_by_real_publication(tmp_path: P
     raw, private = split_render_inputs(data)
     assert canary in json.dumps(private)
     assert canary not in json.dumps(raw)
+    from scripts.two_sinks import _sanitize_public_value
+    assert _sanitize_public_value("cycle_titles_error", canary) == "probe_unavailable"
     assert "cycle_titles_error" not in raw
     pages = tv.render_public_pages(raw, "eeepc")
     published = []
@@ -92,8 +94,8 @@ def test_bridge_error_canary_is_redacted_from_public_projection():
     })
     assert canary in json.dumps(private)
     assert canary not in json.dumps(public)
-    assert public["bridge_exit_streak"]["last_error"] == "bridge error withheld"
-    assert public["bridge_exits"][0]["error"] == "bridge error withheld"
+    assert public["bridge_exit_streak"]["last_error"] == "error"
+    assert public["bridge_exits"][0]["error"] == "error"
 
 
 def test_publisher_unit_installation_and_post_install_checks_are_documented() -> None:
@@ -289,7 +291,8 @@ def test_m1_bridge_failure_canary_is_not_rendered_in_public_health_or_feed() -> 
     assert marker not in json.dumps(verdict)
     page = tv.render_public_pages(public, "eeepc")["index.html"]
     assert marker not in page
-    assert "bridge error withheld" in page
+    assert "bridge error withheld" not in page
+    assert "error" in page
 
 
 def test_m2_derived_view_reason_and_priority_are_typed_and_evidence_is_removed() -> None:
