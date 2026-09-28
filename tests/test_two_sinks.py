@@ -213,9 +213,10 @@ def test_m3_counters_are_recomputed_and_renderer_rejects_string_counts() -> None
 
 
 def test_m6_snapshot_server_blocks_encoded_alias_escape_and_head_routes(tmp_path: Path) -> None:
+    import http.client
     import threading
     from http.server import ThreadingHTTPServer
-    from urllib.request import Request, urlopen
+    from urllib.request import urlopen
     from scripts.two_sinks import SnapshotHTTPRequestHandler
 
     root = tmp_path / "site"
@@ -232,10 +233,16 @@ def test_m6_snapshot_server_blocks_encoded_alias_escape_and_head_routes(tmp_path
     try:
         base = f"http://127.0.0.1:{server.server_port}"
         for route in ("/%63urrent/", "/./current/"):
-            with urlopen(Request(base + route, method="HEAD")) as response:
-                assert response.status == 200
-                assert response.geturl().endswith("/v1/index.html")
-                assert response.read() == b""
+            conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+            conn.request("HEAD", route)
+            first = conn.getresponse()
+            assert first.status == 302
+            assert first.getheader("Location") == "/v1/index.html"
+            conn.request("HEAD", first.getheader("Location"))
+            second = conn.getresponse()
+            assert second.status == 200
+            assert second.read() == b""
+            conn.close()
         for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
             with pytest.raises(Exception):
                 urlopen(base + route)
