@@ -288,7 +288,8 @@ def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: 
     cache: dict[str, bool] = {}
     sha = "a" * 40
     ps.scan_pages({"index.html": "safe inherited content"}, clean_cache=cache,
-                  inherited_blob_shas={"index.html": sha})
+                  inherited_blob_shas={"index.html": sha},
+                  inherited_decoder_version=ps.inherited_blob_decoder_version())
     first_keys = set(cache)
     assert first_keys
 
@@ -296,7 +297,8 @@ def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: 
         raise AssertionError("clean blob cache should skip repeated byte scan")
     monkeypatch.setattr(ps, "scan_text", fail_scan)
     ps.scan_pages({"index.html": "same blob bytes"}, clean_cache=cache,
-                  inherited_blob_shas={"index.html": sha})
+                  inherited_blob_shas={"index.html": sha},
+                  inherited_decoder_version=ps.inherited_blob_decoder_version())
 
 
 def test_adr036_structural_call_markers_trigger_rejection() -> None:

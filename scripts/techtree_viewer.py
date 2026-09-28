@@ -10762,9 +10762,9 @@ def _inspect_and_scan_inherited_tree(
     inherited_blob_shas: dict[str, str] = {}
     try:
         decoder_version = _inherited_blob_decoder_version()
-    except FingerprintUnavailableError as exc:
+    except Exception as exc:
         print(
-            f"publish-scan: inherited decoder fingerprint unavailable ({exc}); treating blobs as cache misses",
+            f"publish-scan: inherited decoder fingerprint unavailable ({type(exc).__name__}); treating blobs as cache misses",
             file=sys.stderr,
         )
         decoder_version = None
@@ -10808,12 +10808,24 @@ def _inspect_and_scan_inherited_tree(
                     ) from exc
     if inherited_pages:
         try:
-            scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
-        except FingerprintUnavailableError as exc:
+            if decoder_version is None:
+                scan_pages(
+                    inherited_pages,
+                    clean_cache=None,
+                    inherited_blob_shas=inherited_blob_shas,
+                )
+            else:
+                scan_pages(
+                    inherited_pages,
+                    clean_cache=scan_cache,
+                    inherited_blob_shas=inherited_blob_shas,
+                    inherited_decoder_version=decoder_version,
+                )
+        except Exception as exc:
             # The scanner could not establish safe cache identity. Drop
             # approvals for this run and scan every inherited page uncached.
             print(
-                f"publish-scan: inherited decoder fingerprint unavailable ({exc}); performing uncached full scan",
+                f"publish-scan: inherited decoder fingerprint unavailable ({type(exc).__name__}); performing uncached full scan",
                 file=sys.stderr,
             )
             scan_pages(inherited_pages, clean_cache=None, inherited_blob_shas=inherited_blob_shas)

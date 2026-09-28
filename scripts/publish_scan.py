@@ -665,6 +665,7 @@ def scan_pages(
     *,
     clean_cache: dict[str, bool] | None = None,
     inherited_blob_shas: dict[str, str] | None = None,
+    inherited_decoder_version: str | None = None,
 ) -> None:
     """Scan all output pages destined for public pages before upload.
 
@@ -681,6 +682,8 @@ def scan_pages(
     seams to miss a canary at).
     """
     validate_publish_allowlist(pages.keys())
+    if inherited_blob_shas is not None and inherited_decoder_version is None:
+        clean_cache = None
     original_cache = clean_cache if isinstance(clean_cache, dict) else None
     # Validate into a private working copy. If scanner versioning fails, caller
     # cache bytes/entries remain untouched and are not used during this scan.
@@ -690,7 +693,12 @@ def scan_pages(
         original_cache.update(cache)
     names = rule_names()
     try:
-        extra_version = inherited_blob_decoder_version()
+        if inherited_blob_shas is not None:
+            if inherited_decoder_version is None:
+                raise FingerprintUnavailableError("inherited decoder fingerprint unavailable")
+            extra_version = inherited_decoder_version
+        else:
+            extra_version = inherited_blob_decoder_version()
         artifact_mode = inherited_blob_artifact_mode
         page_modes = {fname: artifact_mode(fname) for fname in pages}
         _shared_scan_version()
@@ -701,12 +709,22 @@ def scan_pages(
         fingerprint_available = True
     except FingerprintUnavailableError as exc:
         fingerprint_available = False
+        extra_version = ""
         page_modes = {
             fname: ("json" if fname.lower().endswith(".json") else "html")
             for fname in pages
         }
         cache = None  # never trust/read/write approvals without a stable version
         print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
+    except Exception as exc:
+        fingerprint_available = False
+        extra_version = ""
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
+        cache = None
+        print(f"publish-scan: shared scanner fingerprint unavailable ({type(exc).__name__}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []
     # Every fresh (page, rule) approval this run confirms clean -- written
     # to the cache only once every page has passed, never partially (a
@@ -800,16 +818,22 @@ def inherited_blob_artifact_mode(path: str) -> str:
 
 
 def inherited_blob_decoder_version() -> str:
-    """Version of the external inherited-blob decode/interpretation pipeline.
+    """Version of inherited-blob decoding/mode behavior from decoder sources.
 
-    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
-    artifact-mode handling before inherited content reaches scan_pages.
+    The viewer implementation must remain source-available and immutable
+    during a publish process; failure to resolve or fingerprint it disables
+    approvals for that scan rather than blocking publication or trusting cache.
     """
-    decoder_module = _inherited_blob_decoder_module()
-    decoder_version = getattr(decoder_module, "_inherited_blob_decoder_version", None)
-    if not callable(decoder_version):
-        raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
-    return decoder_version()
+    try:
+        decoder_module = _inherited_blob_decoder_module()
+        decoder_version = getattr(decoder_module, "_inherited_blob_decoder_version", None)
+        if not callable(decoder_version):
+            raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
+        return decoder_version()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob decoder fingerprint unavailable") from exc
 
 
 def scanner_version(*, extra_version: str = "") -> str:
