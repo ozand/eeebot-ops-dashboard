@@ -6205,16 +6205,16 @@ def build_cycle_feed(
                     outcome_kind = 'push_pending'
                     if p.get('push_attempts') is not None:
                         push_attempts = str(p.get('push_attempts'))
-                elif st == 'pushed_late':
-                    # #297: eeebot#1709 increment 2 -- the next cycle-start
-                    # finished a push_pending cycle's push: a genuine
-                    # success, just delayed one cycle. Same bucket as any
-                    # other success -- no new filter chip -- the badge/title
-                    # note the delay and attempt count.
+                elif st == 'pushed_late' and (p.get('delivered') is not False and p.get('delivery_state') != 'unknown'):
+                    # A late push is integrated only when delivery is known.
                     outcome_kind = 'integrated'
                     pushed_late = True
                     if p.get('push_attempts') is not None:
                         push_attempts = str(p.get('push_attempts'))
+                elif st == 'pushed_late':
+                    outcome_kind = 'partial'
+                    outcome_reason = 'delivery_unknown'
+                    reason = outcome_reason
                 elif st == 'superseded':
                     # #297: origin/main moved past the pending push's
                     # recorded base -- never merged/rebased automatically.
