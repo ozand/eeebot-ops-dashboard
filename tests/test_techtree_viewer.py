@@ -3123,6 +3123,19 @@ def test_297_pushed_late_renders_as_integrated_with_late_note() -> None:
     assert 'data-outcome="integrated"' in history_html
 
 
+def test_297_unknown_delivery_late_push_is_not_integrated() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-unknown-late', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-unknown-late', 'outcome': 'pushed_late',
+         'delivered': False, 'delivery_state': 'unknown', 'reason': 'delivery_unknown',
+         'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-unknown-late"')[1].split('</li>')[0]
+    assert 'INTEGRATED' not in row
+    assert 'delivery_unknown' in row
+    assert 'data-outcome="integrated"' not in row
+
+
 def test_297_superseded_renders_own_neutral_pill() -> None:
     html_out = _issue59_page([
         {'phase': 'started', 'cycle_id': 'cycle-superseded-1', 'ts': '2026-08-18T03:00:00Z'},
