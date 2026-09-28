@@ -204,6 +204,10 @@ def test_ref_updated_pages_enable_failure_and_unwritable_state_journal_published
     err = capsys.readouterr().err
     assert 'FAILED to save publish state' in err
     assert 'did not publish' not in err
+    assert 'published successfully' not in err
+    assert 'ref moved' in err
+    assert 'activation failed' in err
+    assert 'previous page left untouched' not in err
 
 
 def test_failed_attempt_state_save_error_does_not_claim_publish(
