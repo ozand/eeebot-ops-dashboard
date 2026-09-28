@@ -123,6 +123,13 @@ def test_scan_pages_live_gh_pages_findings_preserve_master_and_remain_clean(mast
         try:
             master_scanner.scan_pages({path: raw})
         except master_scanner.PublicationScanError as exc:
+            if "inherited blob decoder version unavailable" in str(exc) or "inherited blob decoder version is missing" in str(exc):
+                # Older master scanners cannot load the sibling viewer helper
+                # from this isolated module checkout. That is unavailable
+                # fingerprint state, not evidence of a content finding; the
+                # live fixture is independently required to remain clean.
+                ps.scan_pages({path: raw})
+                continue
             with pytest.raises(ps.PublicationScanError):
                 ps.scan_pages({path: raw})
             continue

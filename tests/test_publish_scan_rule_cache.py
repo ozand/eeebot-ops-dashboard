@@ -221,6 +221,7 @@ def test_cache_bound_scales_with_rule_count() -> None:
         ps.scan_pages(
             {"cycles-archive-1.json": '{"n": 1}'}, clean_cache=cache,
             inherited_blob_shas={"cycles-archive-1.json": sha},
+            inherited_decoder_version=ps.inherited_blob_decoder_version(),
         )
 
     for sha in shas:

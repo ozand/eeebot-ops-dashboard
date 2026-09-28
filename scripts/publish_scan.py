@@ -135,11 +135,11 @@ def _import_bindings_identity() -> str:
 
     Limitation: only *top-level* (module-body) ``Import``/``ImportFrom``
     are covered -- an import inside a function body is invisible here.
-    The one case of this in the file is ``inherited_blob_decoder_version``,
-    which imports ``techtree_viewer`` inside its own body (so a
-    publish-only checkout without that sibling module still degrades
-    cleanly instead of failing at module load); retargeting that inner
-    import would not change this fingerprint.
+    ``inherited_blob_decoder_version`` imports ``techtree_viewer`` inside
+    its own body so a publish-only checkout without that sibling module
+    still degrades cleanly instead of failing at module load. The decoder
+    itself now has a separate source fingerprint; the reader's fallback
+    import target does not change that decoder-source fingerprint.
     """
     source = inspect.getsource(sys.modules[__name__])
     tree = ast.parse(source)
@@ -665,6 +665,7 @@ def scan_pages(
     *,
     clean_cache: dict[str, bool] | None = None,
     inherited_blob_shas: dict[str, str] | None = None,
+    inherited_decoder_version: str | None = None,
 ) -> None:
     """Scan all output pages destined for public pages before upload.
 
@@ -681,6 +682,8 @@ def scan_pages(
     seams to miss a canary at).
     """
     validate_publish_allowlist(pages.keys())
+    if inherited_blob_shas is not None and inherited_decoder_version is None:
+        clean_cache = None
     original_cache = clean_cache if isinstance(clean_cache, dict) else None
     # Validate into a private working copy. If scanner versioning fails, caller
     # cache bytes/entries remain untouched and are not used during this scan.
@@ -688,9 +691,16 @@ def scan_pages(
     if original_cache is not None and cache != original_cache:
         original_cache.clear()
         original_cache.update(cache)
-    extra_version = inherited_blob_decoder_version()
     names = rule_names()
     try:
+        if inherited_blob_shas is not None:
+            if inherited_decoder_version is None:
+                raise FingerprintUnavailableError("inherited decoder fingerprint unavailable")
+            extra_version = inherited_decoder_version
+        else:
+            extra_version = inherited_blob_decoder_version()
+        artifact_mode = inherited_blob_artifact_mode
+        page_modes = {fname: artifact_mode(fname) for fname in pages}
         _shared_scan_version()
         # Force every per-rule witness inside the fail-closed boundary; a
         # source-less rule definition must not bypass approval invalidation.
@@ -699,8 +709,22 @@ def scan_pages(
         fingerprint_available = True
     except FingerprintUnavailableError as exc:
         fingerprint_available = False
+        extra_version = ""
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
         cache = None  # never trust/read/write approvals without a stable version
         print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
+    except Exception as exc:
+        fingerprint_available = False
+        extra_version = ""
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
+        cache = None
+        print(f"publish-scan: shared scanner fingerprint unavailable ({type(exc).__name__}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []
     # Every fresh (page, rule) approval this run confirms clean -- written
     # to the cache only once every page has passed, never partially (a
@@ -710,8 +734,11 @@ def scan_pages(
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
-        is_json = fname.lower().endswith(".json")
-        mode = "json" if is_json else "html"
+        # If the viewer helper is absent in a publish-only checkout, its
+        # canonical artifact selector is unavailable too. Use the equivalent
+        # filename rule only for this uncached full scan; never reuse approvals.
+        mode = page_modes[fname]
+        is_json = mode == "json"
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -764,27 +791,49 @@ def scan_pages(
             original_cache.update(cache)
 
 
-def inherited_blob_decoder_version() -> str:
-    """Version of the external inherited-blob decode/interpretation pipeline.
-
-    Bump when techtree_viewer changes base64, concatenated-gzip, UTF-8, or
-    artifact-mode handling before inherited content reaches scan_pages.
-    """
+def _inherited_blob_decoder_module():
     try:
         from scripts import techtree_viewer
     except ImportError:
         try:
             import techtree_viewer
         except ImportError as exc:
-            raise PublicationScanError(
-                "Publication rejected (ADR-036 rule 3): inherited blob decoder version unavailable"
+            raise FingerprintUnavailableError(
+                "inherited blob decoder implementation unavailable"
             ) from exc
-    version = getattr(techtree_viewer, "_INHERITED_BLOB_DECODER_VERSION", None)
-    if not isinstance(version, str) or not version:
-        raise PublicationScanError(
-            "Publication rejected (ADR-036 rule 3): inherited blob decoder version is missing"
-        )
-    return version
+    return techtree_viewer
+
+
+def inherited_blob_artifact_mode(path: str) -> str:
+    """Select the artifact scan mode through the decoder's canonical helper."""
+    try:
+        selector = getattr(_inherited_blob_decoder_module(), "_inherited_blob_artifact_mode", None)
+        if not callable(selector):
+            raise FingerprintUnavailableError("inherited blob artifact-mode selector unavailable")
+        return selector(path)
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob artifact-mode selection failed") from exc
+
+
+def inherited_blob_decoder_version() -> str:
+    """Version of inherited-blob decoding/mode behavior from decoder sources.
+
+    The viewer implementation must remain source-available and immutable
+    during a publish process; failure to resolve or fingerprint it disables
+    approvals for that scan rather than blocking publication or trusting cache.
+    """
+    try:
+        decoder_module = _inherited_blob_decoder_module()
+        decoder_version = getattr(decoder_module, "_inherited_blob_decoder_version", None)
+        if not callable(decoder_version):
+            raise FingerprintUnavailableError("inherited blob decoder source fingerprint unavailable")
+        return decoder_version()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as exc:
+        raise FingerprintUnavailableError("inherited blob decoder fingerprint unavailable") from exc
 
 
 def scanner_version(*, extra_version: str = "") -> str:
