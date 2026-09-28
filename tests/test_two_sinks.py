@@ -739,8 +739,9 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert meta_pres["lines"] is None
     assert meta_pres["chars"] is None
     panel_pres = tv.build_agent_panel(None, meta_pres, None)
-    assert "Goals charter (" in panel_pres
+    assert "Goals charter (size unavailable)" in panel_pres
     assert "private canon" not in panel_pres
+    assert "<built-in method" not in panel_pres
 
     pub_no_prio, _ = split_render_inputs({"goal_text": {"charter": "line1"}})
     meta_no_prio = pub_no_prio["goal_meta"]
@@ -908,7 +909,7 @@ def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None
     marker = "PRIVATE_REFUSAL_REASON_CANARY_991"
     live_row = {
         "success": False,
-        "reason": "refused",
+        "reason": "refused: private context details " + marker,
         "details": f"2 of 5 inputs empty; {marker}",
         "timestamp": "2026-09-03T12:37:17Z",
         "inputs_status": {},
@@ -922,6 +923,7 @@ def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None
     assert "health-alert-text" not in rendered
     assert marker not in json.dumps(public)
     assert marker not in rendered
+    assert "private context details" not in rendered
     assert "2 of 5 inputs empty" not in rendered
 
 

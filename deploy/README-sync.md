@@ -56,33 +56,40 @@ failed download or compile.
 ## Host steps (D4, orchestrator)
 
 D1 only provides the server unit file; it does not install or enable it. The
-orchestrator performs the host cutover after D3 gate #1978: stop the legacy
-`eeebot-dashboard.service` first, then install and enable
-`eeebot-dashboard-server.service`. Never run both servers simultaneously;
-they bind the same `:8080` port. The publisher unit's root `ExecStartPre`
-creates `/var/lib/eeebot-site` as `eeebot-publish:0755`, preserving the
-publisher's private `StateDirectory=eeebot-techtree` mode `0700`. The host
-unit explicitly grants `ReadWritePaths=/var/lib/eeebot-site` to the publisher.
+orchestrator performs the host cutover after D3 gate #1978. The first cutover
+must seed and verify a complete host snapshot before stopping the working
+legacy service: the replacement refuses to start unless `current` points to a
+complete snapshot. Install/configure the publisher, trigger one publish, then
+verify `current/index.html` exists and is readable by the server identity.
+Only then stop legacy and start the replacement. Never run both servers
+simultaneously; they bind the same `:8080` port. The publisher unit's root
+`ExecStartPre` creates `/var/lib/eeebot-site` as `eeebot-publish:0755`,
+preserving the publisher's private `StateDirectory=eeebot-techtree` mode
+`0700`. The host unit explicitly grants `ReadWritePaths=/var/lib/eeebot-site`
+to the publisher.
 
-```bash
-sudo systemctl stop eeebot-dashboard.service
-sudo install -o root -g root -m 0644 deploy/eeebot-dashboard-server.service /etc/systemd/system/eeebot-dashboard-server.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now eeebot-dashboard-server.service
-sudo systemctl status eeebot-dashboard-server.service
-```
-
-Install the publisher unit itself as a class-3 host step (owner: ozand), from a checkout containing the merged repository artifacts. Then verify the effective unit and sandbox before installing its repository-sync drop-in:
+Install the publisher unit itself as a class-3 host step (owner: ozand), from a checkout containing the merged repository artifacts. The publisher credential file must already be provisioned through the approved host process. Install and verify the unit, then trigger the initial snapshot before cutover:
 
 ```bash
 sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service
 sudo systemctl daemon-reload
 sudo systemctl cat eeebot-techtree-publish.service
-sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p StateDirectory -p StateDirectoryMode -p ReadWritePaths
-sudo systemctl show eeebot-techtree-publish.service -p LoadState -p ActiveState -p FragmentPath
+sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p StateDirectory -p StateDirectoryMode -p ReadWritePaths -p LoadState -p ActiveState -p FragmentPath
+sudo systemctl start eeebot-techtree-publish.service
+sudo test -s /var/lib/eeebot-site/current/index.html
 ```
 
-Confirm the unit has `User=eeebot-publish`, `ProtectSystem=strict`, `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700`, and `ReadWritePaths=/var/lib/eeebot-site`; do not print credential contents. Only after those checks, install the publisher sync drop-in:
+Confirm the effective unit has `User=eeebot-publish`, `ProtectSystem=strict`, `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700`, and `ReadWritePaths=/var/lib/eeebot-site`. Do not print credential contents. Only after `test -s` succeeds, continue with server cutover:
+
+```bash
+sudo install -o root -g root -m 0644 deploy/eeebot-dashboard-server.service /etc/systemd/system/eeebot-dashboard-server.service
+sudo systemctl daemon-reload
+sudo systemctl stop eeebot-dashboard.service
+sudo systemctl enable --now eeebot-dashboard-server.service
+sudo systemctl status eeebot-dashboard-server.service
+```
+
+Never run both servers simultaneously; they bind the same port. After the initial snapshot and server cutover, install the publisher sync drop-in:
 
 ```bash
 scp deploy/eeebot-techtree-sync.sh ozand@eeepc-lan:/tmp/eeebot-techtree-sync.sh

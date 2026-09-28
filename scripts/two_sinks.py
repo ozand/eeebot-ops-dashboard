@@ -392,8 +392,11 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
                 r.pop("details", None)
                 reason = r.get("reason")
                 if reason is not None:
-                    r["refused"] = (reason in {"refused", "declined"} if isinstance(reason, str)
-                                     else False)
+                    r["refused"] = (
+                        isinstance(reason, str)
+                        and (reason in {"refused", "declined"}
+                             or reason.startswith(("refused:", "declined:")))
+                    )
                     r["reason"] = "refused" if r["refused"] else _project_reason(
                         reason, withheld, "strategist_reason")
                 decs.append(r)

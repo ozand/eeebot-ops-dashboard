@@ -2740,7 +2740,7 @@ def test_batch3_issue44_charter_boxes_are_details_with_line_counts() -> None:
     assert '<details class="charter-details agents-md-box">' in html_out
     assert '<details class="charter-details goal-text-box">' in html_out
     assert 'AGENTS.md charter (3 lines)' in html_out
-    assert 'Goals charter (1 lines)' in html_out
+    assert 'Goals charter (size unavailable)' in html_out
 
 
 def test_batch3_issue45_many_files_expandable_few_files_plain() -> None:

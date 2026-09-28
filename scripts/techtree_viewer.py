@@ -7562,17 +7562,18 @@ def build_agent_panel(
         elif g_state == "unexpected_shape":
             goals_html = '<p class="unavailable-note">goals charter unexpected shape</p>'
         elif g_state == "present" or g_state is None:
-            if "lines" in goal_text and "chars" in goal_text and isinstance(goal_text["lines"], int) and not isinstance(goal_text["lines"], bool) and goal_text["lines"] >= 0:
-                g_lines = goal_text["lines"]
-                g_chars = goal_text["chars"] if isinstance(goal_text["chars"], int) and not isinstance(goal_text["chars"], bool) and goal_text["chars"] >= 0 else 0
+            g_lines = goal_text.get("lines")
+            g_chars = goal_text.get("chars")
+            valid_lines = isinstance(g_lines, int) and not isinstance(g_lines, bool) and g_lines >= 0
+            valid_chars = isinstance(g_chars, int) and not isinstance(g_chars, bool) and g_chars >= 0
+            if valid_lines and valid_chars:
+                size_note = f"{g_lines} lines; {g_chars:,} chars"
             else:
-                g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-                g_lines = len(str(g_text).splitlines())
-                g_chars = len(str(g_text))
+                size_note = "size unavailable"
             goals_html = (
                 f'<details class="charter-details goal-text-box">'
-                f'<summary>Goals charter ({g_lines} lines)</summary>'
-                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
+                f'<summary>Goals charter ({size_note})</summary>'
+                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only</p></div></details>'
             )
         else:
             goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
