@@ -37,6 +37,7 @@ old and pins the verdict to ``degraded`` forever.
 from __future__ import annotations
 
 import argparse
+import functools
 import gzip
 import inspect
 import os
@@ -10669,6 +10670,7 @@ def _inherited_blob_artifact_mode(path: str) -> str:
     return "json" if path.lower().endswith(".json") else "html"
 
 
+@functools.lru_cache(maxsize=1)
 def _inherited_blob_decoder_version() -> str:
     """Fingerprint decoder and artifact-mode behavior so approvals cannot go stale."""
     try:
@@ -10753,6 +10755,14 @@ def _inspect_and_scan_inherited_tree(
 
     inherited_pages = {}
     inherited_blob_shas: dict[str, str] = {}
+    try:
+        decoder_version = _inherited_blob_decoder_version()
+    except FingerprintUnavailableError as exc:
+        print(
+            f"publish-scan: inherited decoder fingerprint unavailable ({exc}); treating blobs as cache misses",
+            file=sys.stderr,
+        )
+        decoder_version = None
     for item in entries:
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
@@ -10763,14 +10773,6 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
                     )
             if path and sha and path not in uploaded_paths:
-                try:
-                    decoder_version = _inherited_blob_decoder_version()
-                except FingerprintUnavailableError as exc:
-                    print(
-                        f"publish-scan: inherited decoder fingerprint unavailable ({exc}); treating blob as cache miss",
-                        file=sys.stderr,
-                    )
-                    decoder_version = None
                 if decoder_version is not None and cache_contains_clean(
                     scan_cache,
                     sha,

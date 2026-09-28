@@ -210,6 +210,7 @@ def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: p
     import scripts.techtree_viewer as viewer
 
     original = inspect.getsource
+    viewer._inherited_blob_decoder_version.cache_clear()
     before = ps.inherited_blob_decoder_version()
 
     def changed_decoder_source(value):
@@ -219,8 +220,10 @@ def test_scan_version_changes_when_inherited_blob_decoder_changes(monkeypatch: p
         return source
 
     monkeypatch.setattr(inspect, "getsource", changed_decoder_source)
+    viewer._inherited_blob_decoder_version.cache_clear()
     after = ps.inherited_blob_decoder_version()
     assert after != before
+    viewer._inherited_blob_decoder_version.cache_clear()
 
 
 def test_inherited_blob_cache_keys_by_blob_sha_and_scanner_version(monkeypatch: pytest.MonkeyPatch) -> None:

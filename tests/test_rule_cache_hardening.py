@@ -18,6 +18,7 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
     import inspect as _inspect
 
     original = _inspect.getsource
+    tv._inherited_blob_decoder_version.cache_clear()
     baseline = ps.inherited_blob_decoder_version()
 
     def changed_decoder_source(value):
@@ -27,7 +28,53 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
         return source
 
     monkeypatch.setattr(_inspect, "getsource", changed_decoder_source)
+    tv._inherited_blob_decoder_version.cache_clear()
     assert ps.inherited_blob_decoder_version() != baseline
+    tv._inherited_blob_decoder_version.cache_clear()
+
+
+def test_inherited_blob_decoder_version_is_computed_once_for_multiple_blobs(monkeypatch):
+    import base64
+    import json
+    import subprocess
+
+    shas = ("a" * 40, "b" * 40)
+    remote_requests = []
+
+    def fake_gh(args, **kwargs):
+        remote_requests.append(args)
+        if "git/trees/tree-multi?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [
+                    {"type": "blob", "path": "index.html", "sha": shas[0]},
+                    {"type": "blob", "path": "cycles-archive-1.json", "sha": shas[1]},
+                ],
+            }), "")
+        if any(f"git/blobs/{sha}" in args[1] for sha in shas):
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(b"safe content").decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected GitHub request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inherited_blob_decoder_version.cache_clear()
+    original = inspect.getsource
+    calls = []
+
+    def counted_getsource(value):
+        if value in {tv._decode_inherited_blob, tv._inherited_blob_artifact_mode,
+                     tv._inherited_blob_decoder_version}:
+            calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(inspect, "getsource", counted_getsource)
+    cache = {}
+    tv._inspect_and_scan_inherited_tree("tree-multi", set(), scan_cache=cache)
+    assert len(remote_requests) == 3, "tree plus both blobs should be fetched"
+    assert calls == [tv._decode_inherited_blob, tv._inherited_blob_artifact_mode,
+                     tv._inherited_blob_decoder_version], "compute decoder fingerprint once, outside per-blob work"
+    assert len(cache) == len(ps.rule_names()) * 2
+    tv._inherited_blob_decoder_version.cache_clear()
 
 
 def test_inherited_blob_decoder_fingerprint_failure_fetches_and_scans_uncached(monkeypatch, capsys):
