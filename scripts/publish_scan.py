@@ -691,6 +691,8 @@ def scan_pages(
     names = rule_names()
     try:
         extra_version = inherited_blob_decoder_version()
+        artifact_mode = inherited_blob_artifact_mode
+        page_modes = {fname: artifact_mode(fname) for fname in pages}
         _shared_scan_version()
         # Force every per-rule witness inside the fail-closed boundary; a
         # source-less rule definition must not bypass approval invalidation.
@@ -699,6 +701,10 @@ def scan_pages(
         fingerprint_available = True
     except FingerprintUnavailableError as exc:
         fingerprint_available = False
+        page_modes = {
+            fname: ("json" if fname.lower().endswith(".json") else "html")
+            for fname in pages
+        }
         cache = None  # never trust/read/write approvals without a stable version
         print(f"publish-scan: shared scanner fingerprint unavailable ({exc}); performing uncached full scan", file=sys.stderr)
     violations: list[str] = []
@@ -710,7 +716,10 @@ def scan_pages(
     for fname, content in sorted(pages.items()):
         if not isinstance(content, str):
             continue
-        mode = inherited_blob_artifact_mode(fname)
+        # If the viewer helper is absent in a publish-only checkout, its
+        # canonical artifact selector is unavailable too. Use the equivalent
+        # filename rule only for this uncached full scan; never reuse approvals.
+        mode = page_modes[fname]
         is_json = mode == "json"
         blob_sha = (inherited_blob_shas or {}).get(fname)
         content_sha = blob_sha or hashlib.sha256(content.encode("utf-8")).hexdigest()

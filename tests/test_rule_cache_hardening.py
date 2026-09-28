@@ -33,6 +33,32 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
     tv._inherited_blob_decoder_version.cache_clear()
 
 
+def test_scan_pages_scans_fully_without_viewer_decoder(monkeypatch, capsys):
+    import base64
+    import json
+
+    def unavailable_mode(_path):
+        raise ps.FingerprintUnavailableError("viewer unavailable")
+
+    monkeypatch.setattr(ps, "inherited_blob_artifact_mode", unavailable_mode)
+    scans = []
+    real_scan_text = ps.scan_text
+
+    def spy_scan_text(content, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan_text(content, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan_text)
+    cache = {}
+    original_cache = dict(cache)
+    canary = base64.b64encode(b'{"password":"supersecretvalue123"}').decode("ascii")
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"cycles-archive-1.json": json.dumps({"password": "supersecretvalue123", "encoded_probe": canary})}, clean_cache=cache)
+    assert scans == [list(ps.rule_names())]
+    assert cache == original_cache
+    assert "performing uncached full scan" in capsys.readouterr().err
+
+
 def test_inherited_blob_decoder_version_is_computed_once_for_multiple_blobs(monkeypatch):
     import base64
     import json
