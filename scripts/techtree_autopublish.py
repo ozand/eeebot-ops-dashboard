@@ -629,6 +629,8 @@ def run(args: argparse.Namespace) -> int:
             print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
         return warning, updated
 
+    ref_updated = False
+
     def save_failed_attempt(warning: str | None, updated: dict[str, Any]) -> None:
         # Keep the last-known-good publish identity/fingerprints while still
         # persisting duration telemetry for this attempted changed run.
@@ -639,11 +641,11 @@ def run(args: argparse.Namespace) -> int:
             clean_scan_cache=state.get('clean_scan_cache'),
             changed_publish_durations_seconds=updated['changed_publish_durations_seconds'],
             publish_duration_warning=warning,
-            published=False,
+            published=ref_updated,
         )
 
     try:
-        rc, fingerprints = tv.publish_to_pages(
+        rc, fingerprints, ref_updated = tv.publish_to_pages(
             pages,
             previous_fingerprints=previous_fingerprints,
             scan_cache=state.get('clean_scan_cache'),

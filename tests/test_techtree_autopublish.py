@@ -135,7 +135,7 @@ def test_run_duration_warning_is_written_to_journal_and_state(
     state_dir = tmp_path / 'publisher-state'
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': 'new-fp'}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': 'new-fp'}, False))
     monkeypatch.setattr(ap.time, 'monotonic', iter([1.0, 602.0]).__next__)
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
@@ -179,6 +179,31 @@ def test_run_records_duration_when_publication_scan_raises(
     # The last-known-good publish identity is kept.
     assert persisted['digest'] == 'stale'
     assert persisted['page_fingerprints'] == {'index.html': 'old-fp'}
+
+
+def test_ref_updated_pages_enable_failure_and_unwritable_state_journal_published(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    blocked = tmp_path / 'not-a-directory'
+    blocked.write_text('file blocks state dir', encoding='utf-8')
+    state_dir = blocked / 'publisher-state'
+    monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap.tv, 'read_ci_freshness', dict)
+
+    def publish_ref_updated_then_pages_enable_fails(*_args, **_kwargs):
+        # Emulates a successful remote ref update followed by failed Pages enable.
+        return 1, {}, True
+
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', publish_ref_updated_then_pages_enable_fails)
+    monkeypatch.setattr(ap.os, 'replace', lambda *_a, **_kw: (_ for _ in ()).throw(PermissionError('blocked')))
+
+    args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
+    assert ap.run(args) == 1
+    err = capsys.readouterr().err
+    assert 'FAILED to save publish state' in err
+    assert 'did not publish' not in err
 
 
 def test_failed_attempt_state_save_error_does_not_claim_publish(
@@ -232,7 +257,7 @@ def test_run_persists_three_changed_slow_warning_while_unchanged_run_does_not_co
         changed_publish_durations_seconds=[181.0, 182.0],
     )
     monkeypatch.setattr(ap.tv, 'render_pages', lambda *_args, **_kwargs: {'index.html': 'same'})
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': fp}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kwargs: (0, {'index.html': fp}, False))
     monkeypatch.setattr(ap.time, 'monotonic', iter([1.0, 2.0]).__next__)
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -319,7 +344,7 @@ def test_run_passes_default_instance_repo_to_local_reader(tmp_path: Path, monkey
 
     monkeypatch.setattr(ap.tv, 'read_local_state', fake_read)
     monkeypatch.setattr(ap, '_unreadable_tree_source', lambda data, state_root: None)
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **_: (0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **_: (0, {}, False))
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
 
@@ -341,7 +366,7 @@ def test_278_run_persists_page_fingerprints_after_publish(tmp_path: Path, monkey
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: {})
     fake_fp = {'index.html': 'fp1', 'cycles.html': 'fp2'}
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kw: (0, fake_fp))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda pages, **kw: (0, fake_fp, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     assert ap.run(args) == 0
@@ -363,7 +388,7 @@ def test_278_run_passes_previous_fingerprints_to_publish_to_pages(tmp_path: Path
 
     def fake_publish(pages, **kw):
         captured['previous_fingerprints'] = kw.get('previous_fingerprints')
-        return 0, {}
+        return 0, {}, False
 
     monkeypatch.setattr(ap.tv, 'publish_to_pages', fake_publish)
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
@@ -377,7 +402,7 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     state_dir = tmp_path / 'techtree-state'
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (1, {}))  # simulate API failure
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (1, {}, False))  # simulate API failure
 
     args = ap.parse_args([
         '--state-root', str(root),
@@ -396,7 +421,7 @@ def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch:
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}, False))
 
     args = ap.parse_args([
         '--state-root', str(root),
@@ -418,7 +443,7 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
 
     monkeypatch.delenv('GH_TOKEN', raising=False)
     called = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -439,7 +464,7 @@ def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monke
     called = []
     ci_calls = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
     monkeypatch.setattr(ap.tv, 'read_ci_freshness', lambda: ci_calls.append(True) or {})
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir), '--staleness-floor-hours', '6'])
@@ -460,7 +485,7 @@ def test_dry_run_makes_no_publish_call_even_without_credential(tmp_path: Path, m
 
     monkeypatch.delenv('GH_TOKEN', raising=False)
     called = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir), '--dry-run'])
     rc = ap.run(args)
@@ -509,7 +534,7 @@ def test_torn_evolution_tree_refuses_to_publish_and_does_not_save_state(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -546,7 +571,7 @@ def test_missing_tree_source_file_still_publishes(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     published: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -592,7 +617,7 @@ def test_present_but_truncated_hypotheses_file_still_refuses_to_publish(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -629,7 +654,7 @@ def test_present_source_parsing_to_non_dict_refuses_to_publish(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -665,7 +690,7 @@ def test_refusal_then_recovery_clears_refusing_since(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
 
@@ -711,7 +736,7 @@ def test_refusal_past_freeze_limit_publishes_fail_soft_page(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     published: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}, False))
 
     args = ap.parse_args([
         '--state-root', str(root), '--state-dir', str(state_dir),
@@ -750,7 +775,7 @@ def test_refusal_within_freeze_limit_still_refuses(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args([
         '--state-root', str(root), '--state-dir', str(state_dir),
@@ -788,7 +813,7 @@ def test_zero_staleness_floor_does_not_defeat_the_torn_source_guard(
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args([
         '--state-root', str(root), '--state-dir', str(state_dir),
@@ -871,7 +896,7 @@ def test_run_publishes_on_backward_clock_jump_even_with_unchanged_digest(
 
     published: list[str] = []
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (published.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
@@ -934,7 +959,7 @@ def test_permission_denied_tree_source_refuses_to_publish_and_does_not_crash(
     monkeypatch.setattr(Path, 'exists', _mock_exists)
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
     called: list[str] = []
-    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
+    monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}, False))
 
     args = ap.parse_args(['--state-root', str(root), '--state-dir', str(state_dir)])
     rc = ap.run(args)
