@@ -48,7 +48,7 @@ _PUBLIC_REASON_CODES = frozenset({
     "executor_llm_error", "refused", "malformed", "push_failed", "commit_failed", "spawn_failed",
     "timed_out", "proceeded", "skipped_duplicate", "skipped_recent_failure", "clean",
     "cannot_ask", "unanswerable", "absent", "present", "probe_unavailable", "targets_missing",
-    "integrated", "blocked",
+    "integrated", "blocked", "model_call_incomplete",
 })
 _PUBLIC_LEDGER_DECISIONS = frozenset({"skipped_duplicate", "proceeded", "skipped_recent_failure"})
 _COUNTER_SUFFIXES = ("_chars", "_lines", "_count")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import http.client
 import json
 from pathlib import Path
 import threading
@@ -22,6 +23,37 @@ def test_m1_unknown_reason_codes_are_withheld(canary: str) -> None:
     assert "withheld" in encoded
     assert private["withheld_reason_counts"]
     assert "withheld_reason_counts" not in encoded
+
+
+def test_m1_model_call_incomplete_is_an_allowlisted_outcome() -> None:
+    public, private = split_render_inputs({
+        "ledger_tail": [{"phase": "outcome", "outcome": "model_call_incomplete",
+                         "reason": "model_call_incomplete"}],
+        "strategist_decisions": [{"decision": "model_call_incomplete"}],
+    })
+    assert public["ledger_tail"][0]["outcome"] == "model_call_incomplete"
+    assert public["ledger_tail"][0]["reason"] == "model_call_incomplete"
+    assert public["strategist_decisions"][0]["decision"] == "model_call_incomplete"
+    assert "withheld_reason_counts" not in private
+
+
+def test_m1_model_call_incomplete_remains_a_distinct_health_outcome() -> None:
+    verdict, reason = tv.health_verdict(
+        120, "2026-09-01T01:50:00Z", ["model_call_incomplete"] * 3, False,
+        "2026-09-01T02:00:00Z",
+        scorecard={"reader_status": {"feeds": {"usage": {"status": "fresh"}}}},
+    )
+    assert verdict == "investigate"
+    assert "incomplete-model-call" in reason
+
+
+def test_m1_model_call_incomplete_remains_distinct_in_cycle_feed() -> None:
+    html = tv.build_cycle_feed([{
+        "phase": "outcome", "cycle_id": "cycle-incomplete", "outcome": "model_call_incomplete",
+        "ts": "2026-09-01T01:00:00Z",
+    }], history_mode=True)
+    assert "MODEL CALL INCOMPLETE" in html
+    assert "cycle-incomplete" in html
 
 
 def test_m2_public_projection_uses_enums_and_validated_scalars() -> None:
@@ -95,18 +127,25 @@ def test_m6_server_canonicalizes_paths_and_head_redirects(tmp_path: Path) -> Non
     try:
         base = f"http://127.0.0.1:{server.server_port}"
         for route in ("/%63urrent/", "/./current/"):
-            request = urllib.request.Request(base + route, method="HEAD")
-            with urllib.request.urlopen(request) as response:
-                assert response.status == 200
-                assert response.geturl().endswith("/v1/index.html")
-                assert response.read() == b""
+            conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+            conn.request("HEAD", route)
+            first = conn.getresponse()
+            assert first.status == 302
+            assert first.getheader("Location") == "/v1/index.html"
+            conn.request("HEAD", first.getheader("Location"))
+            second = conn.getresponse()
+            assert second.status == 200
+            assert second.read() == b""
+            conn.close()
         for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
             with pytest.raises(Exception):
                 urllib.request.urlopen(base + route)
-        request = urllib.request.Request(base + "/v1/index.html", method="HEAD")
-        with urllib.request.urlopen(request) as response:
-            assert response.status == 200
-            assert response.read() == b""
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        conn.request("HEAD", "/v1/index.html")
+        response = conn.getresponse()
+        assert response.status == 200
+        assert response.read() == b""
+        conn.close()
     finally:
         server.shutdown()
         server.server_close()

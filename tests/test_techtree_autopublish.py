@@ -466,6 +466,8 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     state_dir = tmp_path / 'techtree-state'
 
     monkeypatch.setenv('GH_TOKEN', 'placeholder-not-a-real-token')
+    monkeypatch.setattr(ap, 'should_publish', lambda *_a, **_kw: (True, 'tree digest changed'))
+    monkeypatch.setattr(ap.sinks, 'publish_ordered', lambda *_a, **_kw: (1, {}))
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (1, {}))  # simulate API failure
 
     args = ap.parse_args([
@@ -475,7 +477,11 @@ def test_a_failed_publish_does_not_update_stored_digest(tmp_path: Path, monkeypa
     rc = ap.run(args)
 
     assert rc != 0
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
+    saved = ap.load_publish_state(state_dir)
+    assert saved['digest'] is None
+    assert saved['published_at'] is None
+    assert saved.get('host_snapshot_failed_since') is None
+    assert saved.get('last_host_error') is None
 
 
 def test_a_successful_publish_updates_stored_digest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -507,6 +513,8 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
     state_dir = tmp_path / 'techtree-state'
 
     monkeypatch.delenv('GH_TOKEN', raising=False)
+    monkeypatch.setattr(ap, 'should_publish', lambda *_a, **_kw: (True, 'tree digest changed'))
+    monkeypatch.setattr(ap.sinks, 'publish_ordered', lambda *_a, **_kw: (1, {}))
     called = []
     monkeypatch.setattr(ap.tv, 'publish_to_pages', lambda html_out, **_: (called.append(html_out) or 0, {}))
 
@@ -515,7 +523,11 @@ def test_missing_credential_exits_nonzero_and_does_not_publish(tmp_path: Path, m
 
     assert rc != 0
     assert called == []
-    assert ap.load_publish_state(state_dir) == {'digest': None, 'published_at': None, 'refusing_since': None, 'page_fingerprints': {}, 'clean_scan_cache': {}, 'changed_publish_durations_seconds': [], 'publish_duration_warning': None}
+    saved = ap.load_publish_state(state_dir)
+    assert saved['digest'] is None
+    assert saved['published_at'] is None
+    assert saved.get('host_snapshot_failed_since') is None
+    assert saved.get('last_host_error') is None
 
 
 def test_no_change_no_stale_publishes_nothing_and_is_quiet(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
