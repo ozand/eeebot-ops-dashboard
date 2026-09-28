@@ -111,6 +111,40 @@ def test_inherited_blob_decoder_version_is_computed_once_for_multiple_blobs(monk
     tv._inherited_blob_decoder_version.cache_clear()
 
 
+def test_inherited_scan_does_not_retry_content_rejection(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    blob_sha = "c" * 40
+
+    def fake_gh(args, **kwargs):
+        if "git/trees/tree-reject?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(b"safe content").decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    calls = []
+    real_scan_pages = ps.scan_pages
+
+    def reject_once(*args, **kwargs):
+        calls.append(kwargs)
+        raise ps.PublicationScanError("content rejected")
+
+    monkeypatch.setattr(ps, "scan_pages", reject_once)
+    with pytest.raises(ps.PublicationScanError, match="content rejected"):
+        tv._inspect_and_scan_inherited_tree("tree-reject", set())
+    assert len(calls) == 1
+    assert "fingerprint unavailable" not in capsys.readouterr().err.lower()
+    monkeypatch.setattr(ps, "scan_pages", real_scan_pages)
+
+
 def test_inherited_blob_decoder_resolver_error_scans_uncached(monkeypatch, capsys):
     import base64
     import json

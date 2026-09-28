@@ -10821,7 +10821,7 @@ def _inspect_and_scan_inherited_tree(
                     inherited_blob_shas=inherited_blob_shas,
                     inherited_decoder_version=decoder_version,
                 )
-        except Exception as exc:
+        except FingerprintUnavailableError as exc:
             # The scanner could not establish safe cache identity. Drop
             # approvals for this run and scan every inherited page uncached.
             print(
