@@ -38,6 +38,55 @@ def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch)
         tv._inherited_blob_decoder_version.cache_clear()
 
 
+def test_fingerprint_failure_preserves_canonical_mode_and_json_scan(monkeypatch, capsys):
+    # The outer JSON decodes an embedded JSON object and an escaped token
+    # character. HTML fallback sees neither a JSON secret field nor the token.
+    pages = {
+        "x.txt": r'{"payload":"\u007b\u0022password\u0022\u003a\u0022sk-\u0073upersecretcanaryvalue123456\u0022\u007d"}'
+    }
+    assert ps.scan_text(pages["x.txt"], json_mode=True, html_mode=False)
+    assert not ps.scan_text(pages["x.txt"], json_mode=False, html_mode=True)
+    cache = {}
+    modes = []
+    monkeypatch.setattr(ps, "validate_publish_allowlist", lambda _paths: None)
+    original_pages = ps.scan_pages
+
+    def spy_scan_pages(*args, **kwargs):
+        original_scan_text = ps.scan_text
+        def track_mode(content, **scan_kwargs):
+            observed_modes.append((scan_kwargs.get("json_mode"), scan_kwargs.get("html_mode")))
+            return original_scan_text(content, **scan_kwargs)
+        observed_modes = []
+        monkeypatch.setattr(ps, "scan_text", track_mode)
+        try:
+            return original_pages(*args, **kwargs)
+        finally:
+            monkeypatch.setattr(ps, "scan_text", original_scan_text)
+            scan_modes.extend(observed_modes)
+
+    scan_modes = []
+    monkeypatch.setattr(ps, "scan_pages", spy_scan_pages)
+
+    def canonical_mode(path):
+        modes.append(path)
+        return "json"
+
+    monkeypatch.setattr(ps, "inherited_blob_artifact_mode", canonical_mode)
+
+    def unavailable_version():
+        raise ps.FingerprintUnavailableError("shared scanner fingerprint unavailable")
+
+    monkeypatch.setattr(ps, "_shared_scan_version", unavailable_version)
+    with pytest.raises(ps.PublicationScanError, match="openai_secret_key"):
+        ps.scan_pages(pages, clean_cache=cache)
+    assert cache == {}
+    err = capsys.readouterr().err.lower()
+    assert "performing uncached full scan" in err
+    assert modes == ["x.txt"]
+    assert scan_modes == [(True, False)]
+    assert cache == {}
+
+
 def test_scan_pages_scans_fully_without_viewer_decoder(monkeypatch, capsys):
     import base64
     import json
