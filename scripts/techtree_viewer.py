@@ -20,7 +20,8 @@ rule wins:
 
 1. ``investigate`` -- the proposer reports ``llm_unavailable``.
 2. ``investigate`` -- the newest HEALTH_FAILURE_STREAK_LENGTH (3) consecutive
-   cycle outcomes are all ``failed`` or ``partial``.
+   cycle outcomes are all ``failed``, ``partial`` or ``model_call_incomplete``
+   (an unsuccessful provider call, not a code crash).
 3. ``degraded``    -- the newest source file is older than HEALTH_STALE_SECONDS
    (3600 s): the page itself is stale.
 4. ``degraded``    -- the last integrated cycle is at least
@@ -36,7 +37,9 @@ old and pins the verdict to ``degraded`` forever.
 from __future__ import annotations
 
 import argparse
+import functools
 import gzip
+import inspect
 import os
 import hashlib
 import html
@@ -340,13 +343,15 @@ def health_verdict(
         if isinstance(consecutive_failures, int) and consecutive_failures >= HEALTH_FAILURE_STREAK_LENGTH:
             err = bridge_exit_streak.get('last_error') or ''
             where = bridge_exit_streak.get('last_where') or ''
-            detail = f': {err}' if err else ''
+            detail = f': {esc(str(err))}' if err else ''
             if where:
-                detail += f' at {where}'
+                detail += f' at {esc(str(where))}'
             return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
     streak = 0
     for outcome in reversed(recent_outcomes):
         if outcome in {'failed', 'partial', 'model_call_incomplete'}:
+            # An incomplete provider call is not evidence of a code crash, but
+            # it is still an unsuccessful cycle and must not break the streak.
             streak += 1
         else:
             break
@@ -3825,7 +3830,9 @@ def _lane_b_layout(
 # #208 review: _ARCHIVE_RING and _ledger_outcome_kind (#71/#77) served only the
 # deleted archive tree and are gone with it. Leaf outcomes on the day lineage
 # are classified inline in _build_vertical_day_lineage: failed / partial /
-# skipped. There is no `running` there — a cycle that has started and not
+# model_call_incomplete / skipped. The incomplete model-call outcome is an
+# unsuccessful cycle, but unlike a bridge exception it does not prove code crashed.
+# There is no `running` there — a cycle that has started and not
 # finished is not a leaf and does not appear on lineage.html (it does on the
 # cycle feed).
 
@@ -4492,7 +4499,7 @@ def _build_unified_lineage(
     height = max(84, max((y for _, y in positions.values()), default=42) + 36)
     data_json = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
 
-    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
+    parts = ['<div class="lineage-day-filter lineage-unified-graph" data-default-filter="today" data-lineage-default-mode="today" data-lineage-now="' + esc(now or '') + '"><div class="lineage-day-controls">', '<button type="button" data-lineage-filter="all">All</button>', '<button type="button" data-lineage-filter="today" class="active">Today</button>', '<button type="button" data-lineage-filter="24h">24h</button>', '<button type="button" data-lineage-filter="yesterday-today">Yesterday+Today (UTC calendar)</button>', '<label>from <input type="date" data-lineage-from></label><label>to <input type="date" data-lineage-to></label>', '<button type="button" data-lineage-filter="range">Apply</button>', '<span class="lineage-filter-note" hidden></span></div>', '<div class="lineage-coverage-note" role="status" aria-live="polite" data-default-text="' + esc(_lineage_coverage_text(payload['coverage'])) + '">' + esc(_lineage_coverage_text(payload['coverage'])) + '</div>', '<div class="lineage-legend" aria-label="Lineage Legend">', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Edges:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-recorded"/></svg> recorded</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" class="lineage-legend-edge lineage-legend-edge-inferred"/></svg> inferred</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Nodes:</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-integrated lineage-legend-node"/></svg> integrated</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-skipped lineage-legend-node"/></svg> skipped</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-partial lineage-legend-node"/></svg> partial</span>', '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-failed lineage-legend-node"/></svg> failed</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-push_pending lineage-legend-node"/></svg> push pending</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-superseded lineage-legend-node"/></svg> superseded</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-abandoned lineage-legend-node"/></svg> abandoned</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-model_call_incomplete lineage-legend-node"/></svg> model call incomplete</span>' '    <span class="lineage-legend-item"><svg class="lineage-legend-swatch" width="14" height="14"><circle cx="7" cy="7" r="5" class="arch-node arch-unknown lineage-legend-node"/></svg> unavailable</span></div>', '  <div class="lineage-legend-group"><span class="lineage-legend-title">Current:</span>', '    <span class="lineage-legend-item"><span class="arch-star" style="font-size:14px;line-height:1;">&#9733;</span> current sha</span></div>', '</div>', f'<script type="application/json" id="lineage-data" hidden aria-hidden="true">{data_json}</script>', '<div class="lineage-zoom-controls" role="group" aria-label="Graph zoom"><span class="lineage-zoom-label">Zoom</span><button type="button" data-lineage-zoom="out" aria-label="Zoom out" title="Zoom out">&minus;</button><output class="lineage-zoom-level" data-lineage-zoom-level aria-live="off">100%</output><button type="button" data-lineage-zoom="in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" data-lineage-zoom="fit" title="Scale the whole graph into the visible area">Fit to window</button><button type="button" data-lineage-zoom="reset" title="Back to 100%">1:1</button><button type="button" data-lineage-pan-toggle aria-pressed="false" title="Hand tool: drag anywhere to move the graph. Hold Space for the same thing without leaving select mode, or drag with the middle button. Shortcut: H">Hand</button><span class="lineage-zoom-label">wheel zooms &middot; drag pans &middot; shift+wheel scrolls</span></div>', f'<div class="lineage-graph-scroll" data-lineage-graph-scroll tabindex="0" role="region" aria-label="Lineage graph"><svg id="lineage-svg" class="lineage-day-svg lineage-unified-dag arch-tree" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-lineage-renderer="unified-dag" data-lineage-rendered="server">']
     for edge in payload_edges:
         if not (edge.get('source_available') and edge['source'] in positions and edge['target'] in positions):
             continue
@@ -4511,7 +4518,11 @@ def _build_unified_lineage(
             label = {'truncated': 'history truncated', 'current_unavailable': 'current unavailable', 'cycle': 'cycle detected'}.get(node.get('parent_status'), 'recorded parent unavailable')
             parts.append(f'<text class="lineage-hidden-parent" data-parent-status="{esc(node["parent_status"])}" x="{x}" y="{y - (26 if node.get("current") else 14)}" text-anchor="middle">{esc(label)}</text>')
         cid = str(node.get('cycle_id') or node['node_id'])
-        kind = str(node.get('outcome') or 'integrated')
+        raw_kind = str(node.get('outcome') or 'integrated')
+        kind = raw_kind if raw_kind in {
+            'integrated', 'skipped', 'partial', 'failed', 'push_pending',
+            'superseded', 'abandoned', 'model_call_incomplete',
+        } else 'unavailable' if raw_kind == 'unknown' else 'skipped'
         title = str(node.get('title') or cid)
         attrs = [f'class="arch-node arch-{esc(kind)} lineage-node"', f'data-cycle-id="{esc(cid)}"', f'data-node-id="{esc(node["node_id"])}"', f'data-cycle-node-index="{int(node.get("cycle_node_index") or 1)}"', f'data-cycle-node-count="{int(node.get("cycle_node_count") or 1)}"', f'cx="{x}"', f'cy="{y}"', 'r="9"', 'tabindex="0"', 'role="button"', f'aria-label="{esc(title)} — click for details"', f'id="{_safe_node_dom_id(node["node_id"])}"']
         if node.get('boundary'):
@@ -5702,18 +5713,11 @@ def build_now_panel(
                 'signal kills of the bridge unit">does not see SIGTERM kills (eeebot#1683)</span></div>'
             )
         else:
-            err = bridge_exit_streak.get('last_error') or ''
-            where = bridge_exit_streak.get('last_where') or ''
-            detail_parts = []
-            if err:
-                detail_parts.append(f'<code>{esc(err)}</code>')
-            if where:
-                detail_parts.append(f'<span class="now-sub">at {esc(where)}</span>')
-            detail_str = f' &mdash; {" ".join(detail_parts)}' if detail_parts else ''
             streak_html = (
                 '<div class="now-item"><span class="now-label">Bridge Exit Streak:</span> '
                 f'<strong class="health-alert-text">{consec} consecutive failure{"s" if consec != 1 else ""}</strong>'
-                f'{detail_str}</div>'
+                f'<span class="now-sub">{esc(str(bridge_exit_streak.get("last_error") or "bridge error unavailable"))}'
+                f'{" at " + esc(str(bridge_exit_streak.get("last_where"))) if bridge_exit_streak.get("last_where") else ""}</span></div>'
             )
 
     # 5. Monitored feed ages
@@ -6211,16 +6215,16 @@ def build_cycle_feed(
                     outcome_kind = 'push_pending'
                     if p.get('push_attempts') is not None:
                         push_attempts = str(p.get('push_attempts'))
-                elif st == 'pushed_late':
-                    # #297: eeebot#1709 increment 2 -- the next cycle-start
-                    # finished a push_pending cycle's push: a genuine
-                    # success, just delayed one cycle. Same bucket as any
-                    # other success -- no new filter chip -- the badge/title
-                    # note the delay and attempt count.
+                elif st == 'pushed_late' and (p.get('delivered') is not False and p.get('delivery_state') != 'unknown'):
+                    # A late push is integrated only when delivery is known.
                     outcome_kind = 'integrated'
                     pushed_late = True
                     if p.get('push_attempts') is not None:
                         push_attempts = str(p.get('push_attempts'))
+                elif st == 'pushed_late':
+                    outcome_kind = 'partial'
+                    outcome_reason = 'delivery_unknown'
+                    reason = outcome_reason
                 elif st == 'superseded':
                     # #297: origin/main moved past the pending push's
                     # recorded base -- never merged/rebased automatically.
@@ -6292,8 +6296,10 @@ def build_cycle_feed(
                 attempts_note = f', {push_attempts} attempt(s)' if push_attempts else ''
                 outcome_label = f'INTEGRATED (late{attempts_note})'
         elif outcome_kind == 'model_call_incomplete':
+            # Provider did not return a usable response: unsuccessful, but not
+            # evidence that bridge code crashed. Keep a distinct safe label.
             badge_class = 'badge-failed'
-            outcome_label = f'MODEL CALL INCOMPLETE{(": " + reason) if reason else ""}'
+            outcome_label = 'MODEL CALL INCOMPLETE'
         elif outcome_kind == 'failed':
             badge_class = 'badge-failed'
             outcome_label = f'FAILED{(": " + reason) if reason else ""}'
@@ -7544,8 +7550,8 @@ def build_agent_panel(
     # 1. AGENTS.md
     if agents_md is not None:
         if isinstance(agents_md, dict) and "lines" in agents_md and "chars" in agents_md:
-            md_lines = agents_md["lines"]
-            md_chars = agents_md["chars"]
+            md_lines = agents_md["lines"] if isinstance(agents_md["lines"], int) and not isinstance(agents_md["lines"], bool) and agents_md["lines"] >= 0 else 0
+            md_chars = agents_md["chars"] if isinstance(agents_md["chars"], int) and not isinstance(agents_md["chars"], bool) and agents_md["chars"] >= 0 else 0
         else:
             md_text = str(agents_md).strip()
             md_lines = len(md_text.splitlines())
@@ -7567,17 +7573,18 @@ def build_agent_panel(
         elif g_state == "unexpected_shape":
             goals_html = '<p class="unavailable-note">goals charter unexpected shape</p>'
         elif g_state == "present" or g_state is None:
-            if "lines" in goal_text and "chars" in goal_text and goal_text["lines"] is not None:
-                g_lines = goal_text["lines"]
-                g_chars = goal_text["chars"]
+            g_lines = goal_text.get("lines")
+            g_chars = goal_text.get("chars")
+            valid_lines = isinstance(g_lines, int) and not isinstance(g_lines, bool) and g_lines >= 0
+            valid_chars = isinstance(g_chars, int) and not isinstance(g_chars, bool) and g_chars >= 0
+            if valid_lines and valid_chars:
+                size_note = f"{g_lines} lines; {g_chars:,} chars"
             else:
-                g_text = goal_text.get('charter') or goal_text.get('goal_text') or goal_text.get('text') or str(goal_text)
-                g_lines = len(str(g_text).splitlines())
-                g_chars = len(str(g_text))
+                size_note = "size unavailable"
             goals_html = (
                 f'<details class="charter-details goal-text-box">'
-                f'<summary>Goals charter ({g_lines} lines)</summary>'
-                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({g_chars:,} chars)</p></div></details>'
+                f'<summary>Goals charter ({size_note})</summary>'
+                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only</p></div></details>'
             )
         else:
             goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
@@ -7828,10 +7835,10 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     produced = (f"{int(counts.get('hypotheses_appended') or 0)} hypotheses, "
                 f"{int(counts.get('advisories_written') or 0)} advisories")
 
-    reason = str(row.get('reason') or '')
     if row.get('success') is True:
         badge, label = 'badge badge-available', 'ran'
-    elif row.get('refused') is True or 'refus' in reason.lower():
+    elif (row.get('refused') is True or row.get('decision') in {'refused', 'declined'}
+          or (isinstance(row.get('reason'), str) and row['reason'] in {'refused', 'declined'})):
         badge, label = 'badge badge-rejected', 'refused'
     else:
         badge, label = 'health-alert-text', 'error'
@@ -7840,8 +7847,6 @@ def _build_strategist_run_item(decisions: list[dict[str, Any]] | None) -> str:
     detail = f'{label} {when} — {ratio}, {produced}'
     if degraded:
         detail += ' — degraded: ' + ', '.join(degraded[:3])
-    if label != 'ran' and reason and not reason.startswith('reason text, '):
-        detail += f' — {reason[:80]}'
     return (f'<div class="now-item"><span class="now-label">Strategist:</span> '
             f'<span class="{badge}">{esc(detail)}</span></div>')
 
@@ -9599,6 +9604,8 @@ CSS = '''
     .arch-node.arch-skipped { fill: #1a3328; stroke: #5a7a68; stroke-dasharray: 3 2; }
     .arch-node.arch-partial { fill: #46381e; stroke: #d19a66; stroke-dasharray: 4 2; }
     .arch-node.arch-failed { fill: #4a1d24; stroke: #e06c75; stroke-dasharray: 2 2; }
+    .arch-node.arch-model_call_incomplete { fill: #33263d; stroke: #c792ea; stroke-dasharray: 5 2; }
+    .arch-node.arch-unavailable { fill: #242b33; stroke: #8391a1; stroke-dasharray: 1 3; }
     .arch-node.arch-push_pending { fill: #4a3a16; stroke: #e0a64c; stroke-dasharray: 5 3; }
     .arch-node.arch-superseded { fill: #2a2f3a; stroke: #7a8ba8; stroke-dasharray: 1 3; }
     .arch-node.arch-abandoned { fill: #33303a; stroke: #8b7fa8; stroke-dasharray: 1 1; }
@@ -10596,8 +10603,116 @@ def _page_fingerprint(html: str) -> str:
     return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
-# Increment when inherited base64/gzip/UTF-8 decoding semantics change.
-_INHERITED_BLOB_DECODER_VERSION = "1"
+def _decode_inherited_blob(
+    response_text: str,
+    path: str,
+    *,
+    publication_scan_error: type[Exception],
+) -> str:
+    """Decode one GitHub blob response into text for inherited-page scanning."""
+    import base64
+    import json
+
+    try:
+        blob = json.loads(response_text)
+        if not isinstance(blob, dict) or "content" not in blob or blob["content"] is None:
+            raise publication_scan_error(
+                f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
+            )
+        raw = blob.get("content", "")
+        encoding = blob.get("encoding", "")
+        if encoding != "base64":
+            return raw
+        raw_bytes = base64.b64decode(raw)
+        if raw_bytes.startswith(b"\x1f\x8b"):
+            import zlib
+
+            try:
+                max_decompressed_bytes = 20 * 1024 * 1024
+                chunks = []
+                total = 0
+                remaining = raw_bytes
+                while remaining:
+                    decompressor = zlib.decompressobj(wbits=31)
+                    chunk = decompressor.decompress(
+                        remaining, max_decompressed_bytes - total + 1
+                    )
+                    total += len(chunk)
+                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                        )
+                    chunks.append(chunk)
+                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
+                    total += len(tail)
+                    if total > max_decompressed_bytes:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
+                        )
+                    chunks.append(tail)
+                    if not decompressor.eof:
+                        raise publication_scan_error(
+                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
+                        )
+                    remaining = decompressor.unused_data
+                raw_bytes = b"".join(chunks)
+            except publication_scan_error:
+                raise
+            except Exception as gzip_error:
+                raise publication_scan_error(
+                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gzip_error}"
+                ) from gzip_error
+        try:
+            return raw_bytes.decode("utf-8")
+        except UnicodeDecodeError as utf8_error:
+            raise publication_scan_error(
+                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {utf8_error}"
+            ) from utf8_error
+    except publication_scan_error:
+        raise
+    except Exception as decode_error:
+        raise publication_scan_error(
+            f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {decode_error}"
+        ) from decode_error
+
+
+def _inherited_blob_artifact_mode(path: str) -> str:
+    """Return the scanner mode selected for an inherited public artifact."""
+    return "json" if path.lower().endswith(".json") else "html"
+
+
+_VIEWER_DECODER_FINGERPRINT = (
+    "_decode_inherited_blob",
+    "_inherited_blob_artifact_mode",
+    "_inherited_blob_decoder_version",
+)
+_SCANNER_DECODER_FINGERPRINT = (
+    "_inherited_blob_decoder_module",
+    "inherited_blob_artifact_mode",
+    "_canonical_fingerprint_value",
+)
+
+
+@functools.lru_cache(maxsize=1)
+def _inherited_blob_decoder_version() -> str:
+    """Fingerprint decoder and artifact-mode behavior so approvals cannot go stale."""
+    try:
+        from scripts import publish_scan as _ps
+    except ImportError:
+        import publish_scan as _ps
+    FingerprintUnavailableError = _ps.FingerprintUnavailableError
+    _canonical_fingerprint_value = _ps._canonical_fingerprint_value
+    try:
+        viewer_mod = sys.modules[__name__]
+        functions = [getattr(viewer_mod, name) for name in _VIEWER_DECODER_FINGERPRINT]
+        functions.extend(getattr(_ps, name) for name in _SCANNER_DECODER_FINGERPRINT)
+        sources = tuple(inspect.getsource(function) for function in functions)
+        payload = _canonical_fingerprint_value(sources, name="inherited_blob_decoder_source")
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    except FingerprintUnavailableError:
+        raise
+    except Exception as fingerprint_error:
+        raise FingerprintUnavailableError("inherited blob decoder fingerprint unavailable") from fingerprint_error
 
 
 def _inspect_and_scan_inherited_tree(
@@ -10610,6 +10725,7 @@ def _inspect_and_scan_inherited_tree(
     import json as _json
     try:
         from scripts.publish_scan import (
+            FingerprintUnavailableError,
             PublicationScanError,
             cache_contains_clean,
             is_allowed_publish_path,
@@ -10617,6 +10733,7 @@ def _inspect_and_scan_inherited_tree(
         )
     except ImportError:
         from publish_scan import (
+            FingerprintUnavailableError,
             PublicationScanError,
             cache_contains_clean,
             is_allowed_publish_path,
@@ -10662,6 +10779,14 @@ def _inspect_and_scan_inherited_tree(
 
     inherited_pages = {}
     inherited_blob_shas: dict[str, str] = {}
+    try:
+        decoder_version = _inherited_blob_decoder_version()
+    except Exception as exc:
+        print(
+            f"publish-scan: inherited decoder fingerprint unavailable ({type(exc).__name__}); treating blobs as cache misses",
+            file=sys.stderr,
+        )
+        decoder_version = None
     for item in entries:
         if isinstance(item, dict) and item.get('type') == 'blob':
             path = item.get('path')
@@ -10672,11 +10797,11 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): unlisted inherited path not in allowlist: {path}"
                     )
             if path and sha and path not in uploaded_paths:
-                if cache_contains_clean(
+                if decoder_version is not None and cache_contains_clean(
                     scan_cache,
                     sha,
-                    mode="json" if path.lower().endswith(".json") else "html",
-                    extra_version=_INHERITED_BLOB_DECODER_VERSION,
+                    mode=_inherited_blob_artifact_mode(path),
+                    extra_version=decoder_version,
                 ):
                     # The blob SHA is content-addressed and cache key includes
                     # scanner version; avoid fetching it again only after a clean scan.
@@ -10687,62 +10812,11 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): cannot fetch inherited blob {path} (exit {b_res.returncode})"
                     )
                 try:
-                    b_json = _json.loads(b_res.stdout)
-                    if not isinstance(b_json, dict) or "content" not in b_json or b_json["content"] is None:
-                        raise PublicationScanError(
-                            f"Publication rejected (ADR-036 rule 3): blob response for {path} is missing content"
-                        )
-                    raw = b_json.get('content', '')
-                    enc = b_json.get('encoding', '')
-                    if enc == 'base64':
-                        raw_bytes = base64.b64decode(raw)
-                        if raw_bytes.startswith(b'\x1f\x8b'):
-                            import zlib
-                            try:
-                                max_decompressed_bytes = 20 * 1024 * 1024
-                                chunks = []
-                                total = 0
-                                remaining = raw_bytes
-                                while remaining:
-                                    decompressor = zlib.decompressobj(wbits=31)
-                                    chunk = decompressor.decompress(
-                                        remaining, max_decompressed_bytes - total + 1
-                                    )
-                                    total += len(chunk)
-                                    if total > max_decompressed_bytes or decompressor.unconsumed_tail:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                        )
-                                    chunks.append(chunk)
-                                    tail = decompressor.flush(max_decompressed_bytes - total + 1)
-                                    total += len(tail)
-                                    if total > max_decompressed_bytes:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): decompressed blob {path} exceeds {max_decompressed_bytes} byte limit"
-                                        )
-                                    chunks.append(tail)
-                                    # Gzip members concatenate byte-for-byte; do not insert
-                                    # separators that could split a credential across lines.
-                                    if not decompressor.eof:
-                                        raise PublicationScanError(
-                                            f"Publication rejected (ADR-036 rule 3): incomplete gzip blob {path}"
-                                        )
-                                    remaining = decompressor.unused_data
-                                raw_bytes = b''.join(chunks)
-                            except PublicationScanError:
-                                raise
-                            except Exception as gz_exc:
-                                raise PublicationScanError(
-                                    f"Publication rejected (ADR-036 rule 3): cannot decompress gzip blob {path}: {gz_exc}"
-                                ) from gz_exc
-                        try:
-                            txt = raw_bytes.decode('utf-8')
-                        except UnicodeDecodeError as u_exc:
-                            raise PublicationScanError(
-                                f"Publication rejected (ADR-036 rule 3): binary/non-UTF-8 blob {path}: {u_exc}"
-                            ) from u_exc
-                    else:
-                        txt = raw
+                    txt = _decode_inherited_blob(
+                        b_res.stdout,
+                        path,
+                        publication_scan_error=PublicationScanError,
+                    )
                     inherited_pages[path] = txt
                     inherited_blob_shas[path] = sha
                 except PublicationScanError:
@@ -10752,7 +10826,28 @@ def _inspect_and_scan_inherited_tree(
                         f"Publication rejected (ADR-036 rule 3): cannot decode inherited blob {path}: {exc}"
                     ) from exc
     if inherited_pages:
-        scan_pages(inherited_pages, clean_cache=scan_cache, inherited_blob_shas=inherited_blob_shas)
+        try:
+            if decoder_version is None:
+                scan_pages(
+                    inherited_pages,
+                    clean_cache=None,
+                    inherited_blob_shas=inherited_blob_shas,
+                )
+            else:
+                scan_pages(
+                    inherited_pages,
+                    clean_cache=scan_cache,
+                    inherited_blob_shas=inherited_blob_shas,
+                    inherited_decoder_version=decoder_version,
+                )
+        except FingerprintUnavailableError as exc:
+            # The scanner could not establish safe cache identity. Drop
+            # approvals for this run and scan every inherited page uncached.
+            print(
+                f"publish-scan: inherited decoder fingerprint unavailable ({type(exc).__name__}); performing uncached full scan",
+                file=sys.stderr,
+            )
+            scan_pages(inherited_pages, clean_cache=None, inherited_blob_shas=inherited_blob_shas)
 
 
 def _is_confirmed_not_found(res: subprocess.CompletedProcess[str]) -> bool:
@@ -11077,11 +11172,37 @@ def main(argv: list[str] | None = None) -> int:
         data = read_local_state(args.state_root, include_ci_freshness=True)
     else:
         data = fetch_remote_state(args.host)
-    pages = render_pages(data, args.host)
-
     out_path = Path(args.out)
+    if data.get('_error'):
+        print(f'note: {data["_error"]}', file=sys.stderr)
+
+    if args.publish:
+        try:
+            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+        except ImportError:
+            from two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+
+        public_data, private_data = split_render_inputs(data)
+        public_data["ci_freshness"] = _sanitize_public_value("ci_freshness", data.get("ci_freshness"))
+        public_pages = render_public_pages(public_data, args.host)
+        private_pages = render_private_pages(private_data, args.host, state_root=Path(args.state_root))
+        now_ts = time.time()
+        version = f"{int(now_ts)}-manual"
+        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
+        rc, _ = publish_ordered(
+            Path(args.site_root),
+            public_pages,
+            private_pages,
+            version,
+            publisher=lambda p: publish_to_pages(p),
+            generated_at=stamp,
+        )
+        return rc
+
+    if isinstance(data.get("ci_freshness"), dict):
+        data["ci_freshness"] = _sanitize_public_value("ci_freshness", data["ci_freshness"])
+    pages = render_pages(data, args.host)
     if out_path.suffix == '.html':
-        # legacy single-file invocation: write the landing page there
         out_path.write_text(pages['index.html'], encoding='utf-8')
         print(f'wrote {out_path.resolve()}')
     else:
@@ -11097,33 +11218,8 @@ def main(argv: list[str] | None = None) -> int:
                 destination.write_bytes(source.read_bytes())
         print(f'wrote {len(pages)} pages to {out_path.resolve()}')
 
-    if data.get('_error'):
-        print(f'note: {data["_error"]}', file=sys.stderr)
-
     if args.open:
         webbrowser.open((out_path / 'index.html').resolve().as_uri())
-
-    if args.publish:
-        try:
-            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs
-        except ImportError:
-            from two_sinks import publish_ordered, render_private_pages, split_render_inputs
-
-        public_data, private_data = split_render_inputs(data)
-        public_pages = render_public_pages(public_data, args.host)
-        private_pages = render_private_pages(private_data, args.host, state_root=Path(args.state_root))
-        now_ts = time.time()
-        version = f"{int(now_ts)}-manual"
-        stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()
-        rc, _ = publish_ordered(
-            Path(args.site_root),
-            public_pages,
-            private_pages,
-            version,
-            publisher=lambda p: publish_to_pages(p),
-            generated_at=stamp,
-        )
-        return rc
 
     return 0
 

@@ -1742,6 +1742,68 @@ def test_health_verdict_investigate_by_failure_streak() -> None:
 
 def test_lineage_leaf_classifies_model_call_incomplete():
     assert tv._leaf_outcome({"outcome": "model_call_incomplete"}) == "model_call_incomplete"
+    assert tv._leaf_outcome({"status": "model_call_incomplete"}) == "model_call_incomplete"
+
+
+def test_model_call_incomplete_lineage_legend_and_unknown_boundary_are_distinct() -> None:
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-root', 'sha': 'sha-root',
+         'parent_sha': '', 'ts': '2026-08-15T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-incomplete',
+         'outcome': 'model_call_incomplete', 'ts': '2026-08-16T00:00:00Z'},
+    ]
+    html = tv._build_unified_lineage(
+        rows, {'current_sha': 'missing-current-sha', 'nodes': {}}, None,
+        '2026-08-18T00:00:00Z',
+    )
+    assert html.count('arch-model_call_incomplete lineage-legend-node') == 1
+    assert 'arch-model_call_incomplete lineage-node' in html
+    assert 'arch-unknown lineage-legend-node' in html
+    assert '</svg> unavailable</span>' in html
+    assert 'class="arch-node arch-model_call_incomplete lineage-node"' in html
+    assert 'data-boundary="fallback_current_unavailable"' in html
+    assert '"outcome":"unknown"' in html
+    assert 'class="arch-node arch-unavailable lineage-node"' in html
+
+
+
+def test_model_call_incomplete_appears_in_cycle_feed_and_detail_rendering() -> None:
+    fixture = _fixture()
+    fixture['ledger_tail'] = [
+        {'phase': 'started', 'cycle_id': 'cycle-incomplete', 'ts': '2026-08-16T00:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-incomplete', 'outcome': 'model_call_incomplete',
+         'reason': 'request_payload_rejected: private details must not leak',
+         'ts': '2026-08-16T00:02:00Z'},
+    ]
+    fixture['cycle_details'] = {
+        'cycle-incomplete': {'cycle_id': 'cycle-incomplete', 'outcome': 'model_call_incomplete',
+                             'reason': 'request_payload_rejected: private details must not leak'},
+    }
+    fixture['ledger_history'] = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-incomplete', 'outcome': 'model_call_incomplete',
+         'reason': 'request_payload_rejected: private details must not leak',
+         'ts': '2026-08-16T00:02:00Z'},
+    ]
+    fixture['evolution_tree'] = {'nodes': {
+        'sha-root': {'cycle_id': 'cycle-root', 'parent_sha': '', 'ts': '2026-08-15T00:00:00Z'},
+    }}
+    detail_records = tv.build_cycle_details(
+        fixture['ledger_tail'], None, None, None,
+    )
+    assert detail_records['cycle-incomplete']['outcome'] == 'model_call_incomplete'
+    assert detail_records['cycle-incomplete']['reason'] == 'reason text, 55 chars (LAN)'
+    fixture['cycle_details'] = detail_records
+    pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
+    cycle_html = pages['cycles.html']
+    lineage_html = pages['lineage.html']
+    assert 'data-outcome="model_call_incomplete"' in cycle_html
+    assert 'MODEL CALL INCOMPLETE' in cycle_html
+    assert 'private details must not leak' not in cycle_html
+    assert 'class="arch-node arch-model_call_incomplete lineage-node"' in pages['lineage.html']
+    assert '.arch-node.arch-model_call_incomplete' in pages['lineage.html']
+    assert 'private details must not leak' not in pages['lineage-cycle-details.json']
+    assert 'model_call_incomplete' in pages['lineage-cycle-details.json']
+    assert "line('Outcome', item.outcome || 'unknown')" in lineage_html
 
 
 def test_health_verdict_counts_model_call_incomplete_in_failure_streak() -> None:
@@ -1752,6 +1814,26 @@ def test_health_verdict_counts_model_call_incomplete_in_failure_streak() -> None
     )
     assert verdict == 'investigate'
     assert 'incomplete-model-call' in reason
+
+
+def test_model_call_incomplete_preserves_failure_streak_but_is_not_a_bridge_crash() -> None:
+    recent = ['failed', 'model_call_incomplete', 'partial']
+    verdict, reason = tv.health_verdict(
+        120, '2026-09-01T01:50:00Z', recent, False, '2026-09-01T02:00:00Z',
+    )
+    assert verdict == 'investigate'
+    assert '3 consecutive' in reason
+    assert 'incomplete-model-call' in reason
+
+
+def test_model_call_incomplete_is_not_itself_a_code_crash_streak() -> None:
+    verdict, _ = tv.health_verdict(
+        120, '2026-09-01T01:50:00Z',
+        ['integrated', 'model_call_incomplete', 'model_call_incomplete'],
+        False, '2026-09-01T02:00:00Z',
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
+    )
+    assert verdict == 'healthy'
 
 
 def test_health_verdict_investigate_by_proposer_unavailable() -> None:
@@ -1785,8 +1867,10 @@ def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 2. streak = 0 -> healthy
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
-    # 3. streak >= 1 -> investigate alarm with error details
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}) == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+    # 3. streak >= 1 -> investigate alarm; private exception details are withheld.
+    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'})
+    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures')
+    assert 'NameError' not in str(verdict) and 'bridge.py' not in str(verdict)
 
 
 def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
@@ -1803,15 +1887,17 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '0 failures (crash_record)' in p_zero
     assert 'eeebot#1683' in p_zero
 
-    # 3. streak > 0 -> alarm with details
+    # 3. streak > 0 -> alarm while keeping raw exception/location details private.
     p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
         'consecutive_failures': 140,
         'last_error': "NameError: name '_parse_explore_mode' is not defined",
         'last_where': 'bridge.py:1874',
     })
     assert '140 consecutive failures' in p_alarm
-    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_alarm or "NameError: name '_parse_explore_mode' is not defined" in p_alarm
-    assert 'bridge.py:1874' in p_alarm
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" not in p_alarm
+    assert "NameError: name '_parse_explore_mode' is not defined" not in p_alarm
+    assert 'bridge.py:1874' not in p_alarm
+    assert 'bridge error details withheld' in p_alarm
 
 
 def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_budget_cap() -> None:
@@ -2654,7 +2740,7 @@ def test_batch3_issue44_charter_boxes_are_details_with_line_counts() -> None:
     assert '<details class="charter-details agents-md-box">' in html_out
     assert '<details class="charter-details goal-text-box">' in html_out
     assert 'AGENTS.md charter (3 lines)' in html_out
-    assert 'Goals charter (1 lines)' in html_out
+    assert 'Goals charter (size unavailable)' in html_out
 
 
 def test_batch3_issue45_many_files_expandable_few_files_plain() -> None:
@@ -3039,6 +3125,19 @@ def test_297_pushed_late_renders_as_integrated_with_late_note() -> None:
     # No dedicated filter chip -- pushed_late folds into 'integrated'.
     assert 'data-filter="pushed_late"' not in history_html
     assert 'data-outcome="integrated"' in history_html
+
+
+def test_297_unknown_delivery_late_push_is_not_integrated() -> None:
+    html_out = _issue59_page([
+        {'phase': 'started', 'cycle_id': 'cycle-unknown-late', 'ts': '2026-08-18T03:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-unknown-late', 'outcome': 'pushed_late',
+         'delivered': False, 'delivery_state': 'unknown', 'reason': 'delivery_unknown',
+         'ts': '2026-08-18T03:05:00Z'},
+    ])
+    row = html_out.split('id="cycle-cycle-unknown-late"')[1].split('</li>')[0]
+    assert 'INTEGRATED' not in row
+    assert 'delivery_unknown' in row
+    assert 'data-outcome="integrated"' not in row
 
 
 def test_297_superseded_renders_own_neutral_pill() -> None:
@@ -5597,7 +5696,7 @@ class TestIssue204StrategistRunProvenance:
         assert "2 hypotheses, 2 advisories" in text
 
     def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
-        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
+        refused = dict(self.LIVE, success=False, refused=True, decision="refused", reason="withheld (<=64)")
         html = tv._build_strategist_run_item([refused])
         healthy = tv._build_strategist_run_item([dict(self.LIVE)])
         assert "refused" in self._text([refused])

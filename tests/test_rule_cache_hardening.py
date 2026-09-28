@@ -14,6 +14,339 @@ from scripts import techtree_viewer as tv
 from test_scan_equivalence import POSITIVES
 
 
+def test_inherited_blob_decoder_function_source_changes_fingerprint(monkeypatch):
+    import inspect as _inspect
+
+    original = _inspect.getsource
+    tv._inherited_blob_decoder_version.cache_clear()
+    baseline = ps.inherited_blob_decoder_version()
+
+    decoder_sources = tuple(
+        getattr(tv, name) for name in tv._VIEWER_DECODER_FINGERPRINT
+    ) + tuple(getattr(ps, name) for name in tv._SCANNER_DECODER_FINGERPRINT)
+    for changed in decoder_sources:
+        def changed_decoder_source(value, *, changed=changed):
+            source = original(value)
+            if value is changed:
+                return source + "\\n# simulated decoder dependency change\\n"
+            return source
+
+        monkeypatch.setattr(_inspect, "getsource", changed_decoder_source)
+        tv._inherited_blob_decoder_version.cache_clear()
+        assert ps.inherited_blob_decoder_version() != baseline, getattr(changed, "__name__", changed[1])
+        monkeypatch.setattr(_inspect, "getsource", original)
+        tv._inherited_blob_decoder_version.cache_clear()
+
+
+def test_scan_pages_scans_fully_without_viewer_decoder(monkeypatch, capsys):
+    import base64
+    import json
+
+    def unavailable_mode(_path):
+        raise ps.FingerprintUnavailableError("viewer unavailable")
+
+    monkeypatch.setattr(ps, "inherited_blob_artifact_mode", unavailable_mode)
+    scans = []
+    real_scan_text = ps.scan_text
+
+    def spy_scan_text(content, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan_text(content, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan_text)
+    cache = {}
+    original_cache = dict(cache)
+    canary = base64.b64encode(b'{"password":"supersecretvalue123"}').decode("ascii")
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        ps.scan_pages({"cycles-archive-1.json": json.dumps({"password": "supersecretvalue123", "encoded_probe": canary})}, clean_cache=cache)
+    assert scans == [list(ps.rule_names())]
+    assert cache == original_cache
+    assert "performing uncached full scan" in capsys.readouterr().err
+
+
+def test_inherited_blob_decoder_version_is_computed_once_for_multiple_blobs(monkeypatch):
+    import base64
+    import json
+    import subprocess
+
+    shas = ("a" * 40, "b" * 40)
+    remote_requests = []
+
+    def fake_gh(args, **kwargs):
+        remote_requests.append(args)
+        if "git/trees/tree-multi?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [
+                    {"type": "blob", "path": "index.html", "sha": shas[0]},
+                    {"type": "blob", "path": "cycles-archive-1.json", "sha": shas[1]},
+                ],
+            }), "")
+        if any(f"git/blobs/{sha}" in args[1] for sha in shas):
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(b"safe content").decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected GitHub request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inherited_blob_decoder_version.cache_clear()
+    original = inspect.getsource
+    calls = []
+
+    def counted_getsource(value):
+        if value in {tv._decode_inherited_blob, tv._inherited_blob_artifact_mode,
+                     tv._inherited_blob_decoder_version}:
+            calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(inspect, "getsource", counted_getsource)
+    cache = {}
+    tv._inspect_and_scan_inherited_tree("tree-multi", set(), scan_cache=cache)
+    assert len(remote_requests) == 3, "tree plus both blobs should be fetched"
+    assert calls == [tv._decode_inherited_blob, tv._inherited_blob_artifact_mode,
+                     tv._inherited_blob_decoder_version], "compute decoder fingerprint once, outside per-blob work"
+    assert len(cache) == len(ps.rule_names()) * 2
+    tv._inherited_blob_decoder_version.cache_clear()
+
+
+def test_inherited_scan_does_not_retry_content_rejection(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    blob_sha = "c" * 40
+
+    def fake_gh(args, **kwargs):
+        if "git/trees/tree-reject?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(b"safe content").decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    calls = []
+    real_scan_pages = ps.scan_pages
+
+    def reject_once(*args, **kwargs):
+        calls.append(kwargs)
+        raise ps.PublicationScanError("content rejected")
+
+    monkeypatch.setattr(ps, "scan_pages", reject_once)
+    with pytest.raises(ps.PublicationScanError, match="content rejected"):
+        tv._inspect_and_scan_inherited_tree("tree-reject", set())
+    assert len(calls) == 1
+    assert "fingerprint unavailable" not in capsys.readouterr().err.lower()
+    monkeypatch.setattr(ps, "scan_pages", real_scan_pages)
+
+
+
+def test_inherited_decoder_fingerprint_works_with_flat_host_modules():
+    import subprocess
+    from pathlib import Path
+
+    scripts_dir = str(Path(ps.__file__).resolve().parent)
+    code = (
+        "import sys; sys.path.insert(0, " + repr(scripts_dir) + "); "
+        "import publish_scan, techtree_viewer; "
+        "techtree_viewer._inherited_blob_decoder_version.cache_clear(); "
+        "print(techtree_viewer._inherited_blob_decoder_version())"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True,
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}\s*", result.stdout)
+
+def test_inherited_blob_decoder_resolver_error_scans_uncached(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    blob_sha = "e" * 40
+    content = '{"password":"canarysecretvalue123"}'
+    calls = []
+
+    def fake_gh(args, **kwargs):
+        calls.append(args)
+        if "git/trees/tree-resolver?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "cycles-archive-1.json", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(content.encode()).decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    original_version = ps.inherited_blob_decoder_version()
+    cache = {
+        ps.rule_cache_key(name, blob_sha, mode="json", extra_version=original_version): True
+        for name in ps.rule_names()
+    }
+    before = dict(cache)
+
+    def fail_resolver():
+        raise RuntimeError("decoder helper unavailable")
+
+    monkeypatch.setattr(tv, "_inherited_blob_decoder_version", fail_resolver)
+    monkeypatch.setattr(ps, "inherited_blob_decoder_version", fail_resolver)
+    scanned_rules = []
+    real_scan = ps.scan_text
+
+    def spy_scan(text, **kwargs):
+        scanned_rules.extend(kwargs.get("rules") or [])
+        return real_scan(text, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan)
+    with pytest.raises(ps.PublicationScanError, match="json_secret_field"):
+        tv._inspect_and_scan_inherited_tree("tree-resolver", set(), scan_cache=cache)
+    assert len(calls) == 2, "resolver failure must fetch the inherited blob instead of trusting the approval"
+    assert set(scanned_rules) == set(ps.rule_names())
+    assert cache == before
+    assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
+
+
+def test_inherited_first_fingerprint_failure_cannot_reuse_preseeded_blob_approval(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    blob_sha = "d" * 40
+    content = "safe inherited content"
+    requests = []
+
+    def fake_gh(args, **kwargs):
+        requests.append(args)
+        if "git/trees/tree-retry?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(content.encode()).decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    version = ps.inherited_blob_decoder_version()
+    cache = {
+        ps.rule_cache_key(name, blob_sha, mode="html", extra_version=version): True
+        for name in ps.rule_names()
+    }
+    before = dict(cache)
+    real_version = tv._inherited_blob_decoder_version
+    attempts = {"count": 0}
+
+    def fail_once():
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise ps.FingerprintUnavailableError("transient source lookup failure")
+        return real_version()
+
+    monkeypatch.setattr(tv, "_inherited_blob_decoder_version", fail_once)
+    scans = []
+    real_scan = ps.scan_text
+
+    def spy_scan(text, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan(text, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan)
+    tv._inspect_and_scan_inherited_tree("tree-retry", set(), scan_cache=cache)
+    assert attempts["count"] == 1, "final scan must use the captured version, never resolve a second identity"
+    assert len(requests) == 2, "a pre-seeded approval must not skip fetch after first fingerprint failure"
+    assert scans == [list(ps.rule_names())]
+    assert cache == before, "the successful retry fingerprint must not re-enable this scan's pre-existing approvals"
+    assert "performing uncached full scan" in capsys.readouterr().err
+
+
+def test_inherited_blob_fingerprint_is_used_for_final_scan_cache_key(monkeypatch):
+    import base64
+    import json
+    import subprocess
+
+    blob_sha = "b" * 40
+    cache = {}
+
+    def fake_gh(args, **kwargs):
+        if "git/trees/tree-explicit?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(b"safe content").decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    explicit_version = "decoder-version-captured-before-fetch"
+    original_version = tv._inherited_blob_decoder_version
+    monkeypatch.setattr(tv, "_inherited_blob_decoder_version", lambda: explicit_version)
+    tv._inspect_and_scan_inherited_tree("tree-explicit", set(), scan_cache=cache)
+    assert len(cache) == len(ps.rule_names())
+    assert all(
+        ps.rule_cache_key(name, blob_sha, mode="html", extra_version=explicit_version) in cache
+        for name in ps.rule_names()
+    )
+    monkeypatch.setattr(tv, "_inherited_blob_decoder_version", original_version)
+
+
+def test_inherited_blob_decoder_fingerprint_failure_fetches_and_scans_uncached(monkeypatch, capsys):
+    import base64
+    import json
+    import subprocess
+
+    content = "safe inherited page content"
+    blob_sha = "f" * 40
+    remote_requests = []
+
+    def fake_gh(args, **kwargs):
+        remote_requests.append(args)
+        if f"git/trees/tree-fingerprint?recursive=1" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "tree": [{"type": "blob", "path": "index.html", "sha": blob_sha}],
+            }), "")
+        if f"git/blobs/{blob_sha}" in args[1]:
+            return subprocess.CompletedProcess(args, 0, json.dumps({
+                "content": base64.b64encode(content.encode()).decode(), "encoding": "base64",
+            }), "")
+        raise AssertionError(f"unexpected GitHub request: {args}")
+
+    monkeypatch.setattr(tv, "_gh", fake_gh)
+    tv._inherited_blob_decoder_version.cache_clear()
+    cache = {
+        ps.rule_cache_key(name, blob_sha, mode="html", extra_version="old-decoder"): True
+        for name in ps.rule_names()
+    }
+    before = dict(cache)
+    original_getsource = inspect.getsource
+
+    def fail_decoder_source(value):
+        if value is tv._decode_inherited_blob:
+            raise OSError("decoder source unavailable")
+        return original_getsource(value)
+
+    monkeypatch.setattr(inspect, "getsource", fail_decoder_source)
+    scans = []
+    real_scan_text = ps.scan_text
+
+    def spy_scan_text(text, **kwargs):
+        scans.append(kwargs.get("rules"))
+        return real_scan_text(text, **kwargs)
+
+    monkeypatch.setattr(ps, "scan_text", spy_scan_text)
+    tv._inspect_and_scan_inherited_tree("tree-fingerprint", set(), scan_cache=cache)
+
+    assert len(remote_requests) == 2, "fingerprint failure must miss cache and fetch inherited blob"
+    assert scans == [list(ps.rule_names())], "all rules must scan without a trustworthy decoder fingerprint"
+    assert cache == before, "uncached full scan must not rewrite approvals"
+    assert "inherited decoder fingerprint unavailable" in capsys.readouterr().err.lower()
+
+
 def test_duplicate_and_reserved_rule_names_fail_closed():
     with pytest.raises(RuntimeError, match="duplicate or reserved scanner rule name"):
         ps.validate_rule_names(("dup", "dup"))
@@ -201,43 +534,535 @@ def test_shared_fingerprint_ast_separates_infrastructure_from_rule_data():
     shared = ps._shared_fingerprint_dependency_names()
     rule_data = ps._rule_data_dependency_names()
     transitive = _transitive_scan_dependencies(tree)
+    transitive.discard("SecretPattern")  # NamedTuple type is not scanner rule data.
     assert transitive <= shared | rule_data
     assert not (shared & rule_data), "each transitive dependency has exactly one fingerprint owner"
     assert "RAW_TEXT_TAGS" in shared
     assert {"STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_SECRET_KEY_RE", "_ENV_SECRET_KV_RE"} <= rule_data
 
 
-def _transitive_scan_dependencies(tree: ast.Module) -> set[str]:
-    top_level = {
-        node.name: node for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+def test_inherited_decoder_fingerprint_ast_covers_called_module_functions():
+    module_trees = {}
+    module_functions = {}
+    for module in (tv, ps):
+        tree = ast.parse(inspect.getsource(module))
+        module_trees[module.__name__] = tree
+        module_functions[module.__name__] = {
+            node.name for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+
+    fingerprinted_names = {
+        (tv.__name__, name) for name in tv._VIEWER_DECODER_FINGERPRINT
+    } | {
+        (ps.__name__, name) for name in tv._SCANNER_DECODER_FINGERPRINT
+    } | {(tv.__name__, "_inherited_blob_decoder_version")}
+    exclusions = {
+        (tv.__name__, "_decode_inherited_blob"): {
+            "loads": "json.loads is stdlib parsing; Python runtime version is the contract",
+            "b64decode": "base64.b64decode is stdlib; Python runtime version is the contract",
+            "decompressobj": "zlib.decompressobj is stdlib; Python runtime version is the contract",
+        },
+        (ps.__name__, "_canonical_fingerprint_value"): {
+            "dumps": "json.dumps is stdlib deterministic serialization",
+            "getsource": "inspect.getsource is stdlib source introspection",
+        },
+        (tv.__name__, "_inherited_blob_decoder_version"): {
+            "getsource": "inspect.getsource is stdlib source introspection",
+            "sha256": "hashlib.sha256 is stdlib cryptographic digest",
+        },
     }
-    top_level.update({
-        node.name: node for node in tree.body if isinstance(node, ast.ClassDef)
-        for node in node.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    })
-    constants = {
-        node.targets[0].id: node for node in tree.body
-        if isinstance(node, ast.Assign) and len(node.targets) == 1
-        and isinstance(node.targets[0], ast.Name) and node.targets[0].id.isupper()
-    }
-    pending = ["scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
-               "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value"]
+    for module_name, function_name in fingerprinted_names:
+        node = next(
+            node for node in module_trees[module_name].body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == function_name
+        )
+        calls = set()
+        for child in ast.walk(node):
+            if not isinstance(child, ast.Call):
+                continue
+            if isinstance(child.func, ast.Name):
+                calls.add(child.func.id)
+            elif isinstance(child.func, ast.Attribute):
+                calls.add(child.func.attr)
+        all_module_functions = set().union(*module_functions.values())
+        covered = {name for _, name in fingerprinted_names}
+        documented_exclusions = set(exclusions.get((module_name, function_name), {}))
+        missing = (calls & all_module_functions) - covered - documented_exclusions
+        assert not missing, (
+            f"{function_name} calls un-fingerprinted module functions: {sorted(missing)}"
+        )
+
+
+def test_ast_guard_indexes_imported_names_the_scanner_reads():
+    """F4 (#355): the shared scan functions read imported names (``re``,
+    ``json``, ``html`` as ``_html``, ``HTMLParser`` as ``_ScanHTMLParser``'s
+    base) that _ast_dependency_bindings previously never indexed as
+    bindings, so the ownership assertion silently ignored them."""
+    source = inspect.getsource(ps)
+    tree = ast.parse(source)
+    _top_level, _constants, _attributes, _collisions, imports = _ast_dependency_bindings(tree)
+    assert {"re", "json", "_html", "HTMLParser"} <= imports.keys()
+
+    transitive = _transitive_scan_dependencies(tree)
+    transitive.discard("SecretPattern")  # NamedTuple type is not scanner rule data.
+    assert "_STDLIB_IMPORT_VERSION" in transitive, (
+        "an imported name reachable from the fingerprinted functions must "
+        "route to _STDLIB_IMPORT_VERSION, since the bare import name itself "
+        "is never a fingerprint dependency"
+    )
+    assert "_IMPORT_BINDINGS_IDENTITY" in transitive, (
+        "#358: an imported name must also route to _IMPORT_BINDINGS_IDENTITY "
+        "-- the interpreter version alone doesn't change when an import is "
+        "retargeted to a different module under the same alias"
+    )
+    shared = ps._shared_fingerprint_dependency_names()
+    rule_data = ps._rule_data_dependency_names()
+    assert transitive <= shared | rule_data
+
+    # Test: remove either import-backed dependency from the covered set
+    # and the guard fails -- proving it actually watches imported bindings.
+    with pytest.raises(AssertionError):
+        assert transitive <= (shared - {"_STDLIB_IMPORT_VERSION"}) | rule_data
+    with pytest.raises(AssertionError):
+        assert transitive <= (shared - {"_IMPORT_BINDINGS_IDENTITY"}) | rule_data
+
+
+def test_shared_scan_version_changes_when_import_is_retargeted_same_alias(monkeypatch):
+    """#358: retargeting an import's module while keeping the same local
+    alias (``import copyreg as hashlib`` instead of ``import hashlib``)
+    previously left the shared fingerprint unchanged --
+    _STDLIB_IMPORT_VERSION only tracks the interpreter, not which module
+    is actually bound to a name."""
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+
+    real_getsource = ps.inspect.getsource
+    real_source = real_getsource(ps)
+    retargeted_source = real_source.replace("import hashlib\n", "import copyreg as hashlib\n", 1)
+    assert retargeted_source != real_source, "fixture source must actually contain the line being retargeted"
+
+    def fake_getsource(obj, *args, **kwargs):
+        if obj is ps:
+            return retargeted_source
+        return real_getsource(obj, *args, **kwargs)
+
+    monkeypatch.setattr(ps.inspect, "getsource", fake_getsource)
+    ps._shared_scan_version.cache_clear()
+    after = ps._shared_scan_version()
+    ps._shared_scan_version.cache_clear()  # don't leak the fake-getsource-computed value into later tests
+    assert after != before, "retargeting an import under the same alias must change the shared fingerprint"
+
+
+def _transitive_scan_dependencies(
+    tree: ast.Module, roots: list[str] | None = None,
+) -> set[str]:
+    top_level, constants, attributes, _collisions, imports = _ast_dependency_bindings(tree)
+    pending = list(roots) if roots is not None else [
+        "scan_text", "_html_scan_variants", "_unescape_until_stable", "_json_strings",
+        "_text_has_rule_anchor", "is_excluded_key_name", "is_secret_value",
+    ]
     found: set[str] = set()
+    visited: set[str] = set()
     while pending:
         name = pending.pop()
-        if name in found:
+        if name in visited:
+            continue
+        visited.add(name)
+        if name in imports:
+            # F4 (#355): an imported name has no source of its own here --
+            # its behavior is pinned to the interpreter's stdlib version
+            # instead (see _STDLIB_IMPORT_VERSION), not to the bare import
+            # name, which would never appear in a fingerprint dependency set.
+            # #358: that alone doesn't catch a retargeted import keeping the
+            # same alias, so the binding's own normalized text is fingerprinted
+            # too (see _IMPORT_BINDINGS_IDENTITY).
+            found.add("_STDLIB_IMPORT_VERSION")
+            found.add("_IMPORT_BINDINGS_IDENTITY")
             continue
         found.add(name)
-        node = top_level.get(name) or constants.get(name)
+        node = top_level.get(name) or constants.get(name) or attributes.get(name)
         if node is None:
             continue
         reads = {item.id for item in ast.walk(node) if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)}
-        found.update(reads & constants.keys())
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            # A queued binding needs its own RHS dependencies traversed too.
+            value = node.value
+            reads.update(
+                item.id for item in ast.walk(value)
+                if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)
+            )
+        reads.update(
+            f"{item.value.id}.{item.attr}" for item in ast.walk(node)
+            if isinstance(item, ast.Attribute) and isinstance(item.ctx, ast.Load)
+            and isinstance(item.value, ast.Name)
+        )
+        discovered_constants = reads & constants.keys()
+        found.update(discovered_constants)
+        found.update(reads & attributes.keys())
+        pending.extend(discovered_constants)
         pending.extend(reads & top_level.keys())
+        pending.extend(reads & attributes.keys())
+        pending.extend(reads & imports.keys())
         if name == "_ScanHTMLParser":
             found.add("RAW_TEXT_TAGS")
     return found
+
+
+def _ast_dependency_bindings(tree: ast.Module):
+    functions = {}
+    constants = {}
+    attributes = {}
+    class_methods = set()
+    module_functions = set()
+    imports: dict[str, str] = {}
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports[alias.asname or alias.name.split(".")[0]] = alias.name
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            for alias in node.names:
+                imports[alias.asname or alias.name] = f"{module}.{alias.name}" if module else alias.name
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions[node.name] = node
+            module_functions.add(node.name)
+        elif isinstance(node, ast.ClassDef):
+            functions[node.name] = node
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    functions[f"{node.name}.{child.name}"] = child
+                    class_methods.add(child.name)
+                elif isinstance(child, (ast.Assign, ast.AnnAssign)):
+                    targets = child.targets if isinstance(child, ast.Assign) else [child.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name):
+                            constants[f"{node.name}.{target.id}"] = child
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    constants[target.id] = node
+                elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
+                    attributes[f"{target.value.id}.{target.attr}"] = node
+    return functions, constants, attributes, module_functions & class_methods, imports
+
+
+def _mutate_rule_data(name, value):
+    if isinstance(value, tuple) and value and isinstance(value[0], ps.SecretPattern):
+        changed = []
+        for item in value:
+            if isinstance(item, ps.SecretPattern):
+                changed.append(ps.SecretPattern(item.name, re.compile(item.pattern.pattern + "(?:X)", item.pattern.flags), item.description))
+            else:
+                changed.append(item)
+        return tuple(changed)
+    if isinstance(value, dict):
+        result = dict(value)
+        key = next(iter(result))
+        result[key] = tuple(result[key]) + ("mutation-marker",)
+        return result
+    if isinstance(value, re.Pattern):
+        return re.compile(value.pattern + "(?:X)", value.flags)
+    raise AssertionError(f"no mutation strategy for {name}: {type(value).__name__}")
+
+
+def _owned_rules(name):
+    if name == "STANDALONE_PATTERNS":
+        return {pattern.name for pattern in ps.STANDALONE_PATTERNS}
+    if name == "SCANNER_ANCHORS":
+        return {"eeepc_agent_path"}
+    if name in {"_JSON_CANDIDATE_RE", "_JSON_SECRET_KEY_RE"}:
+        return {"json_secret_field"}
+    if name in {"_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE"}:
+        return {"env_secret_kv"}
+    raise AssertionError(f"unknown rule-data dependency: {name}")
+
+
+def _ast_bindings(tree: ast.Module):
+    names = set()
+    module_functions = set()
+    methods = set()
+    attributes = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                module_functions.add(node.name)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+                elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
+                    attributes.add(f"{target.value.id}.{target.attr}")
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    names.add(f"{node.name}.{child.name}")
+                    methods.add(child.name)
+                elif isinstance(child, ast.AnnAssign) and isinstance(child.target, ast.Name):
+                    names.add(f"{node.name}.{child.target.id}")
+    return names | attributes, module_functions & methods
+
+
+def _ast_assigned_attributes(tree: ast.Module) -> set[str]:
+    return {
+        f"{node.value.id}.{node.attr}"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store)
+        and isinstance(node.value, ast.Name)
+    }
+
+
+def test_dependency_ast_guard_covers_annotated_string_attribute_and_name_collisions():
+    source = '''
+class Parser:
+    RAW_TEXT_TAGS: frozenset[str] = frozenset({"script"})
+    def helper(self):
+        return "method"
+def helper():
+    return "module"
+RULE_NAME: str = "rule-data"
+Parser.RAW_TEXT_TAGS = frozenset({"style"})
+'''
+    tree = ast.parse(source)
+    bindings, collisions = _ast_bindings(tree)
+    assert {"RULE_NAME", "Parser.RAW_TEXT_TAGS"} <= bindings
+    assert {"helper", "Parser.helper"} <= bindings
+    assert collisions == {"helper"}
+    assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
+
+
+def test_transitive_guard_traverses_attribute_binding_and_constant_chain():
+    tree = ast.parse('''
+class Parser:
+    pass
+BASE_TAGS: str = "script"
+TAGS: str = BASE_TAGS
+Parser.RAW_TEXT_TAGS = TAGS
+''')
+    transitive = _transitive_scan_dependencies(tree, roots=["Parser.RAW_TEXT_TAGS"])
+    assert {"Parser.RAW_TEXT_TAGS", "TAGS", "BASE_TAGS"} <= transitive
+
+
+def test_canonical_fingerprint_serializer_is_recursive_and_refuses_unsupported_types():
+    canonical = ps._canonical_fingerprint_value
+    assert canonical({"z": {"b", "a"}, "a": (1, True)}) == canonical(
+        {"a": (1, True), "z": {"a", "b"}}
+    )
+    assert canonical(re.compile("token", re.IGNORECASE)) == canonical(
+        re.compile("token", re.IGNORECASE)
+    )
+    with pytest.raises(ps.FingerprintUnavailableError, match="unsupported"):
+        canonical(object())
+
+
+def test_rule_data_dependency_mutation_matrix_changes_only_owned_rule_versions(monkeypatch):
+    dependencies = ps._rule_data_dependency_names()
+    assert dependencies == {
+        "STANDALONE_PATTERNS", "SCANNER_ANCHORS", "_JSON_CANDIDATE_RE",
+        "_JSON_SECRET_KEY_RE", "_ENV_KEY_CANDIDATE_RE", "_ENV_SECRET_KV_RE",
+    }
+    initial_shared = ps._shared_scan_version()
+    baseline = {name: ps.rule_version(name) for name in ps.rule_names()}
+    hit_before = ps._shared_scan_version.cache_info().hits
+    assert ps._shared_scan_version() == initial_shared
+    assert ps._shared_scan_version.cache_info().hits == hit_before + 1
+    for dependency in sorted(dependencies):
+        original = getattr(ps, dependency)
+        replacement = _mutate_rule_data(dependency, original)
+        monkeypatch.setattr(ps, dependency, replacement)
+        ps._shared_scan_version.cache_clear()
+        assert ps._shared_scan_version() == initial_shared, dependency
+        changed = {
+            name for name in ps.rule_names()
+            if ps.rule_version(name) != baseline[name]
+        }
+        expected = _owned_rules(dependency)
+        assert changed == expected, (dependency, changed, expected)
+        monkeypatch.setattr(ps, dependency, original)
+        ps._shared_scan_version.cache_clear()
+        assert {name: ps.rule_version(name) for name in ps.rule_names()} == baseline
+
+
+def test_shared_fingerprint_dependencies_are_immutable_after_cached_version(monkeypatch):
+    ps._shared_scan_version.cache_clear()
+    before = ps._shared_scan_version()
+    for dependency, value in ps._all_top_level_dependency_objects().items():
+        if dependency == "RAW_TEXT_TAGS":
+            continue  # exposed alias for the separately checked class-owned set
+        assert isinstance(value, (str, int, float, bool, type(None), tuple, frozenset, re.Pattern, type)) or inspect.isfunction(value), dependency
+        if isinstance(value, (frozenset, tuple)):
+            with pytest.raises(AttributeError):
+                value.clear()
+    assert isinstance(ps._ScanHTMLParser.RAW_TEXT_TAGS, frozenset), "class-level scanner tags must be immutable"
+    assert ps._shared_scan_version() == before
+
+
+def test_scan_html_parser_config_matches_source_and_never_changes_in_process():
+    """F1/F2 (#355): inspect.getsource does not see a live __kwdefaults__
+    reassignment or a class attribute reassigned after the class body ran
+    (lru_cache doesn't see it either) -- the publisher never does this (a
+    fresh process per publish, config always from source), but the guard
+    proves both stay equal to what the module's own source text defines."""
+    source = inspect.getsource(ps)
+    tree = ast.parse(source)
+    class_node = next(
+        node for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "_ScanHTMLParser"
+    )
+    init_node = next(
+        node for node in class_node.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "__init__"
+    )
+    kwonly_defaults = {}
+    for arg, default in zip(init_node.args.kwonlyargs, init_node.args.kw_defaults):
+        assert default is not None, f"{arg.arg} must have a literal default to be source-verifiable"
+        kwonly_defaults[arg.arg] = ast.literal_eval(default)
+    assert ps._ScanHTMLParser.__init__.__kwdefaults__ == kwonly_defaults
+
+    raw_tags_assign = next(
+        node for node in class_node.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == "RAW_TEXT_TAGS"
+    )
+    call = raw_tags_assign.value
+    assert isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "frozenset"
+    source_tags = frozenset(ast.literal_eval(call.args[0]))
+    assert ps._ScanHTMLParser.RAW_TEXT_TAGS == source_tags
+
+
+def _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys):
+    """Shared assertions for every F3 (#355) failure-class test: the direct
+    call raises FingerprintUnavailableError (not the raw exception type --
+    on current master, before the fingerprint build was one boundary, it
+    would propagate uncaught here), and scan_pages still completes a full
+    uncached scan instead of aborting publication."""
+    ps._shared_scan_version.cache_clear()
+    with pytest.raises(ps.FingerprintUnavailableError):
+        ps._shared_scan_version()
+    ps._shared_scan_version.cache_clear()
+    page = {"index.html": "ordinary content safe to publish"}
+    ps.scan_pages(page)  # must not raise -- publication does not abort
+    assert "shared scanner fingerprint unavailable" in capsys.readouterr().err.lower()
+    ps._shared_scan_version.cache_clear()
+
+
+def test_fingerprint_boundary_fails_safe_on_bytes_regex_pattern(monkeypatch, capsys):
+    """F3 (#355): a bytes-pattern regex among the dependencies raises
+    TypeError from json.dumps (publish_scan.py:497), not
+    FingerprintUnavailableError, before the whole build was one boundary."""
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": re.compile(rb"x")},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_cyclic_container(monkeypatch, capsys):
+    """F3 (#355): a self-referential list/dict among the dependencies
+    raises RecursionError from unbounded recursive serialization."""
+    cyclic: list = []
+    cyclic.append(cyclic)
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": cyclic},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_surrogate_string(monkeypatch, capsys):
+    """F3 (#355): a lone surrogate in a dependency's string raises
+    UnicodeEncodeError at the final ``.encode("utf-8")`` (publish_scan.py
+    near :538), after json.dumps itself accepts it silently."""
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": "\udcff"},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_wrapped_unwrap_cycle(monkeypatch, capsys):
+    """F3 (#355): a __wrapped__ cycle makes inspect.unwrap raise ValueError
+    (publish_scan.py:507, _all_top_level_dependency_objects' own handling
+    of the "_shared_scan_version" name)."""
+    def cyclic_unwrap(*_args, **_kwargs):
+        raise ValueError("wrapper loop when unwrapping simulated cycle")
+
+    monkeypatch.setattr(ps.inspect, "unwrap", cyclic_unwrap)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_sha256_failure(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): hashlib.sha256 sat
+    OUTSIDE the try boundary at 7fb437e2 -- a hashing failure propagated
+    raw instead of becoming FingerprintUnavailableError like every other
+    failure in this same build."""
+    original_sha256 = ps.hashlib.sha256
+    calls = {"n": 0}
+
+    def flaky_sha256(*args, **kwargs):
+        # Fails only for the fingerprint hash itself (the direct probe
+        # call, then scan_pages's own internal re-check) -- real content
+        # hashing (page shas, etc.) inside scan_pages must still work so
+        # the rest of a full uncached scan can actually complete.
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise ValueError("simulated hashing failure")
+        return original_sha256(*args, **kwargs)
+
+    monkeypatch.setattr(ps.hashlib, "sha256", flaky_sha256)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+class _StrFailsError(Exception):
+    def __str__(self) -> str:
+        raise RuntimeError("str() itself fails")
+
+
+def test_fingerprint_boundary_fails_safe_on_exception_with_failing_str(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): at 7fb437e2 the
+    fallback message interpolated the caught exception (f"...{exc}"),
+    which calls its __str__ -- an exception whose __str__ itself raises
+    then blows up while WE are handling it, leaking past the very
+    fallback meant to catch it."""
+    def poisoned():
+        raise _StrFailsError("boom")
+
+    monkeypatch.setattr(ps, "_all_top_level_dependency_objects", poisoned)
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_fingerprint_boundary_fails_safe_on_str_subclass_regex_pattern(monkeypatch, capsys):
+    """F3 follow-up (#357, ChatGPT external review): a re.Pattern whose
+    .pattern/.flags are a str/int subclass (not the exact type) must be
+    rejected explicitly -- at 7fb437e2 it passed straight through and was
+    silently accepted."""
+    class _StrSubclass(str):
+        pass
+
+    poison_pattern = re.compile(_StrSubclass("x"))
+    monkeypatch.setattr(
+        ps, "_all_top_level_dependency_objects",
+        lambda: {"poison": poison_pattern},
+    )
+    _assert_fingerprint_boundary_fails_safe(monkeypatch, capsys)
+
+
+def test_ast_guard_mutations_detect_annotated_constants_and_attribute_assignments():
+    source = '''
+class Parser:
+    RAW_TEXT_TAGS: frozenset[str] = frozenset({"script"})
+RULE_NAME: str = "rule-data"
+Parser.RAW_TEXT_TAGS = frozenset({"style"})
+'''
+    tree = ast.parse(source)
+    bindings, _collisions = _ast_bindings(tree)
+    assert {"RULE_NAME"} <= bindings
+    assert "Parser.RAW_TEXT_TAGS" in _ast_assigned_attributes(tree)
 
 
 def test_rule_data_change_after_shared_cache_clear_is_per_rule_only(monkeypatch):

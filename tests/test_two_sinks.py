@@ -22,6 +22,117 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def test_bridge_diagnostics_are_private_only_after_real_projection_and_render(tmp_path: Path):
+    from scripts import techtree_viewer as tv
+
+    error_marker = "PRIVATE_BRIDGE_ERROR_CANARY_412584"
+    where_marker = "PRIVATE_BRIDGE_WHERE_CANARY_412584"
+    data = {"bridge_exit_streak": {
+        "consecutive_failures": 5,
+        "last_error": error_marker,
+        "last_where": where_marker,
+    }}
+    public_data, private_data = split_render_inputs(data)
+    private_data["scorecard"] = {"reader_status": {"feeds": {"usage": {"status": "fresh"}}}}
+    private_data["_newest_source_age_seconds"] = 120
+    private_data["health_recent_outcomes"] = ["integrated"]
+    private_data["health_last_integrated_ts"] = "2026-09-01T01:50:00Z"
+    private_pages = tv.render_pages(private_data, "eeepc", generated_at="2026-09-01 02:00:00")
+    public_pages = tv.render_public_pages(public_data, "eeepc")
+    public_json = json.dumps(public_data)
+
+    assert any(error_marker in page and where_marker in page for page in private_pages.values())
+    assert "error" == public_data["bridge_exit_streak"]["last_error"]
+    for marker in (error_marker, where_marker):
+        assert marker not in public_json
+        assert all(marker not in page for page in public_pages.values())
+
+
+def test_cycle_title_exception_canary_is_removed_by_real_publication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Cycle title probe exceptions are public codes only, including the built snapshot."""
+    from scripts import techtree_viewer as tv
+
+    canary = "PRIVATE_CYCLE_TITLE_EXCEPTION_CANARY"
+    state = tmp_path / "state"
+    repo = tmp_path / "repo"
+    state.mkdir()
+    repo.mkdir()
+    monkeypatch.setattr(tv, "extract_git_titles_local", lambda *_a, **_kw: ({}, {}, canary))
+    data = tv.read_local_state(str(state), str(repo))
+    assert data["cycle_titles_error"] == canary
+    raw, private = split_render_inputs(data)
+    assert canary in json.dumps(private)
+    assert canary not in json.dumps(raw)
+    from scripts.two_sinks import _sanitize_public_value
+    assert _sanitize_public_value("cycle_titles_error", canary) == "probe_unavailable"
+    assert "cycle_titles_error" not in raw
+    pages = tv.render_public_pages(raw, "eeepc")
+    published = []
+    publish_ordered(tmp_path / "site", pages, {}, "v1", lambda public: published.append(public) or (0, {}))
+    assert canary not in json.dumps(published)
+    for path in (tmp_path / "site/v1").rglob("*"):
+        if path.is_file():
+            assert canary not in path.read_text(encoding="utf-8", errors="replace")
+
+
+def test_snapshot_staging_is_outside_site_root_and_not_http_served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import http.client
+    import threading
+    from http.server import ThreadingHTTPServer
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+
+    root = tmp_path / "site"
+    observed = []
+    original_mkdtemp = __import__("tempfile").mkdtemp
+
+    def record_mkdtemp(*args, **kwargs):
+        path = original_mkdtemp(*args, **kwargs)
+        observed.append(Path(path).resolve())
+        return path
+
+    monkeypatch.setattr("scripts.two_sinks.tempfile.mkdtemp", record_mkdtemp)
+    atomic_snapshot_swap(root, {"index.html": "public"}, "v1")
+    staging = observed[0]
+    assert staging.parent == root.parent.resolve()
+    assert staging != root and not staging.is_relative_to(root.resolve())
+
+    Handler = type("Handler", (SnapshotHTTPRequestHandler,), {"site_root": root.resolve()})
+    server = ThreadingHTTPServer(("127.0.0.1", 0), lambda *a, **kw: Handler(*a, directory=str(root), **kw))
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+        conn.request("GET", "/" + staging.name + "/index.html")
+        response = conn.getresponse()
+        assert response.status == 404
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
+def test_bridge_error_canary_is_redacted_from_public_projection():
+    canary = "PRIVATE_BRIDGE_ERROR_CANARY"
+    public, private = split_render_inputs({
+        "bridge_exit_streak": {"consecutive_failures": 2, "last_error": canary},
+        "bridge_exits": [{"outcome": "failure", "error": canary}],
+    })
+    assert canary in json.dumps(private)
+    assert canary not in json.dumps(public)
+    assert public["bridge_exit_streak"]["last_error"] == "error"
+    assert public["bridge_exits"][0]["error"] == "error"
+
+
+def test_publisher_unit_installation_and_post_install_checks_are_documented() -> None:
+    readme = Path(__file__).resolve().parent.parent / "deploy" / "README-sync.md"
+    text = readme.read_text(encoding="utf-8")
+    assert "sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service" in text
+    assert "sudo systemctl cat eeebot-techtree-publish.service" in text
+    assert "sudo systemctl show eeebot-techtree-publish.service" in text
+    assert "owner: ozand" in text
+
+
 def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     """ADR-036 §1: host precedes gh-pages and both use one version."""
     order = []
@@ -149,12 +260,147 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
             assert m not in content, f"Marker {k} ({m}) found in rendered public page {fname}"
 
 
+def test_m1_reason_allowlist_rejects_lowercase_freeform_canaries() -> None:
+    for canary in ("privatecanary", "accessdenied", "password:hunter2", "x:y"):
+        public, private = split_render_inputs({
+            "ledger_tail": [{"phase": "outcome", "reason": canary}],
+            "strategist_decisions": [{"reason": canary, "decision": canary}],
+        })
+        encoded = json.dumps(public)
+        assert canary not in encoded
+        assert private["withheld_reason_counts"]
+        assert "withheld_reason_counts" not in encoded
+
+
 def test_no_private_file_of_any_kind_is_published(tmp_path: Path):
     """ADR-036 §3: allowlist is extension-independent."""
     from scripts.publish_scan import PublicationScanError
     for name in ("calls.json", "dump.gz", "index.idx", "unexpected.bin"):
         with pytest.raises(PublicationScanError, match="unlisted"):
             validate_publish_allowlist({name: "payload"})
+
+
+def test_m5_built_tree_scan_preserves_relative_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.two_sinks as sinks
+    captured = {}
+    monkeypatch.setattr(sinks, "_publish_scan_pages", lambda pages: captured.update(pages))
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "index.html").write_text("root", encoding="utf-8")
+    (tmp_path / "nested" / "index.html").write_text("nested", encoding="utf-8")
+    sinks.scan_built_tree(tmp_path)
+    assert captured == {"index.html": "root", "nested/index.html": "nested"}
+
+
+def test_m7_snapshot_names_reject_header_injection_and_traversal(tmp_path: Path) -> None:
+    from scripts.two_sinks import add_snapshot_version
+    for version in ("v1\\r\\nInjected: yes", "x" * 65, "../outside"):
+        with pytest.raises(ValueError):
+            add_snapshot_version(PUBLIC, version)
+    for name in ("../escape.html", "/absolute.html", "nested/../../escape.html"):
+        with pytest.raises(ValueError):
+            add_snapshot_version({name: "bad"}, "v1")
+
+
+def test_m1_bridge_failure_canary_is_not_rendered_in_public_health_or_feed() -> None:
+    from scripts import techtree_viewer as tv
+
+    marker = "PRIVATE_BRIDGE_EXCEPTION_CANARY_991"
+    public, _ = split_render_inputs({
+        "bridge_exit_streak": {"consecutive_failures": 5, "last_error": marker, "last_where": marker},
+        "bridge_exits": [{"outcome": "failure", "error": marker, "where": marker}],
+    })
+    assert marker not in json.dumps(public)
+    verdict = tv.health_verdict(
+        1, "2026-09-01T00:00:00Z", [], False, "2026-09-01T01:00:00Z",
+        public["bridge_exit_streak"], {},
+    )
+    assert marker not in json.dumps(verdict)
+    page = tv.render_public_pages(public, "eeepc")["index.html"]
+    assert marker not in page
+    assert "bridge error withheld" not in page
+    assert "error" in page
+
+
+def test_m2_derived_view_reason_and_priority_are_typed_and_evidence_is_removed() -> None:
+    marker = "PRIVATE_CANARY_DERIVED"
+    public, _ = split_render_inputs({"derived_view": {
+        "status": "present", "reason": marker,
+        "charter": {"source": "goal_text_json", "text": marker},
+        "priority_items": [{"number": "3", "evidence": marker, "label": "safe"}],
+    }})
+    encoded = json.dumps(public)
+    assert marker not in encoded and "evidence" not in encoded
+    assert public["derived_view"]["reason"] == "derived view present"
+    assert "text" not in public["derived_view"]["charter"]
+    assert "number" not in public["derived_view"]["priority_items"][0]
+
+
+def test_m3_counters_are_recomputed_and_renderer_rejects_string_counts() -> None:
+    from scripts import techtree_viewer as tv
+    public, _ = split_render_inputs({"agent_context": {"prompt_text": "PRIVATE", "prompt_text_chars": "wrong"}})
+    assert public["agent_context"]["prompt_text_chars"] == len("PRIVATE")
+    rendered = tv.build_agent_panel({"lines": "PRIVATE_CANARY", "chars": "PRIVATE_CANARY"}, None, None)
+    assert "PRIVATE_CANARY" not in rendered
+
+
+def test_m6_snapshot_server_blocks_encoded_alias_escape_and_head_routes(tmp_path: Path) -> None:
+    import http.client
+    import threading
+    from http.server import ThreadingHTTPServer
+    from urllib.request import urlopen
+    from scripts.two_sinks import SnapshotHTTPRequestHandler
+
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "root"}, "v1")
+    class Handler(SnapshotHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(root), **kwargs)
+    Handler.site_root = root.resolve()
+    class Server(ThreadingHTTPServer):
+        daemon_threads = True
+    server = Server(("127.0.0.1", 0), Handler)
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        base = f"http://127.0.0.1:{server.server_port}"
+        for route in ("/%63urrent/", "/./current/"):
+            conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+            conn.request("HEAD", route)
+            first = conn.getresponse()
+            assert first.status == 302
+            assert first.getheader("Location") == "/v1/index.html"
+            conn.request("HEAD", first.getheader("Location"))
+            second = conn.getresponse()
+            assert second.status == 200
+            assert second.read() == b""
+            conn.close()
+        for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
+            with pytest.raises(Exception):
+                urlopen(base + route)
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)
+
+
+def test_m8_host_failure_state_is_recorded_when_github_publish_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import techtree_autopublish as ap
+    HostSnapshotError = ap.sinks.HostSnapshotError
+    root, state_dir, site = tmp_path / "input", tmp_path / "publisher", tmp_path / "site"
+    ap.save_publish_state(state_dir, "old", 1.0)
+    monkeypatch.setattr(ap, "compute_tree_digest", lambda *_: "new")
+    monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_: None)
+    monkeypatch.setattr(ap.tv, "read_local_state", lambda *_a, **_kw: {"_error": None})
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+    monkeypatch.setattr(ap.tv, "render_public_pages", lambda *_a, **_kw: {"index.html": "safe"})
+    monkeypatch.setattr(ap.sinks, "render_private_pages", lambda *_a, **_kw: {})
+    monkeypatch.setattr(ap.sinks, "publish_ordered", lambda *_a, **_kw: (_ for _ in ()).throw(
+        HostSnapshotError("host failed", publish_result=(1, {}))))
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site)])
+    assert ap.run(args) == 1
+    saved = ap.load_publish_state(state_dir)
+    assert saved["host_snapshot_failed_since"] is not None
+    assert saved["last_host_error"] == "host failed"
 
 
 def test_built_tree_scan_refuses_private_markers(tmp_path: Path):
@@ -267,7 +513,7 @@ def test_server_root_redirects_to_version_snapshot(tmp_path: Path):
     h = MockHandler("/")
     h.do_GET()
     assert h.response_code == 302
-    assert h.headers_sent.get("Location") == "/v1/"
+    assert h.headers_sent.get("Location") == "/v1/index.html"
 
 
 def test_snapshot_swap_is_atomic_for_readers(tmp_path: Path, monkeypatch):
@@ -512,15 +758,16 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     assert "0 chars" not in panel_shape
     assert "unexpected shape" in panel_shape
 
-    pub_pres, _ = split_render_inputs({"goal_text": {"charter": "c1\nc2", "priorities": ["p1", "p2"]}})
+    pub_pres, _ = split_render_inputs({"goal_text": {"text": "private canon", "priorities": ["p1", "p2"]}})
     meta_pres = pub_pres["goal_meta"]
     assert meta_pres["state"] == "present"
     assert meta_pres["priority_count"] == 2
-    assert meta_pres["lines"] == 2
-    assert meta_pres["chars"] == 5
+    assert meta_pres["lines"] is None
+    assert meta_pres["chars"] is None
     panel_pres = tv.build_agent_panel(None, meta_pres, None)
-    assert "Goals charter (2 lines)" in panel_pres
-    assert "5 chars" in panel_pres
+    assert "Goals charter (size unavailable)" in panel_pres
+    assert "private canon" not in panel_pres
+    assert "<built-in method" not in panel_pres
 
     pub_no_prio, _ = split_render_inputs({"goal_text": {"charter": "line1"}})
     meta_no_prio = pub_no_prio["goal_meta"]
@@ -628,7 +875,7 @@ def test_split_render_inputs_withholds_freeform_strategist_decision() -> None:
     public, _ = split_render_inputs({"strategist_decisions": [{"decision": marker, "rationale": "private"}]})
     projected = public["strategist_decisions"][0]
     assert marker not in json.dumps(public)
-    assert projected["decision"] == f"decision text, {len(marker)} chars (LAN)"
+    assert projected["decision"].startswith("withheld (")
     assert projected["rationale"] == ""
 
 
@@ -648,6 +895,29 @@ def test_public_ledger_decision_allows_codes_only_in_rendered_pages() -> None:
     assert "skipped_duplicate" in rendered
 
 
+def test_m2_ci_freshness_added_after_split_is_projected() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+    public, _ = split_render_inputs({})
+    data = {"repo": {"state": "PRIVATE_CANARY_CI", "reason": "PRIVATE_CANARY_DETAIL"}}
+    public["ci_freshness"] = _sanitize_public_value("ci_freshness", data)
+    assert "PRIVATE_CANARY" not in json.dumps(public)
+
+
+def test_m2_release_goals_charter_source_is_pinned() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+    marker = "PRIVATE_CANARY_CHARTER_SOURCE"
+    for source in ("goal_text_json", "legacy_goals_md", "unknown", None):
+        projected = _sanitize_public_value("derived_view", {
+            "status": "present", "charter": {"source": source, "text": marker},
+        })
+        assert "text" not in projected["charter"]
+        assert marker not in json.dumps(projected)
+    allowed = _sanitize_public_value("derived_view", {
+        "status": "present", "charter": {"source": "release_goals_md", "text": "public goals"},
+    })
+    assert allowed["charter"]["text"] == "public goals"
+
+
 def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     from scripts import techtree_viewer as tv
 
@@ -660,7 +930,7 @@ def test_split_render_inputs_withholds_freeform_strategist_reason() -> None:
     pages = tv.render_public_pages(public, "eeepc")
     public_payload = json.dumps(pages)
     assert marker not in json.dumps(public)
-    assert projected["reason"] == f"reason text, {len('LLM failed: ' + marker)} chars (LAN)"
+    assert projected["reason"].startswith("withheld (")
     assert marker not in public_payload
 
 
@@ -670,7 +940,8 @@ def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None
     marker = "PRIVATE_REFUSAL_REASON_CANARY_991"
     live_row = {
         "success": False,
-        "reason": f"refused: 2 of 5 inputs empty; {marker}",
+        "reason": "refused: private context details " + marker,
+        "details": f"2 of 5 inputs empty; {marker}",
         "timestamp": "2026-09-03T12:37:17Z",
         "inputs_status": {},
         "counts": {},
@@ -683,6 +954,7 @@ def test_public_strategist_refusal_keeps_category_without_reason_prose() -> None
     assert "health-alert-text" not in rendered
     assert marker not in json.dumps(public)
     assert marker not in rendered
+    assert "private context details" not in rendered
     assert "2 of 5 inputs empty" not in rendered
 
 
@@ -781,6 +1053,7 @@ def test_b1_viewer_main_publish_routes_through_split_and_publish_ordered(tmp_pat
     monkeypatch.setattr(tv, "fetch_remote_state", lambda *a, **kw: {"_error": None})
     monkeypatch.setattr(tv, "publish_to_pages", lambda *a, **kw: pytest.fail("publish_to_pages called directly!"))
 
+    monkeypatch.setattr("scripts.two_sinks._sanitize_public_value", lambda *_a, **_kw: {})
     out_dir = tmp_path / "out"
     rc = tv.main(["--local", "--state-root", str(tmp_path), "--out", str(out_dir), "--publish"])
     assert rc == 0
