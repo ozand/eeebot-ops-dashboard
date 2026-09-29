@@ -62,20 +62,37 @@ containing the merged repository artifacts. The publisher credential file
 must already be provisioned through the approved host process; never print
 its contents.
 
+**No trigger is paused.** The publisher has two independent triggers: its
+timer, and the bridge unit's `OnSuccess=eeebot-techtree-publish.service`
+(drop-in `eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf`),
+which fires after every bridge run. Neither is touched. Instead, the
+installation is made safe for ANY trigger at ANY moment:
+- Until the single `daemon-reload` at the end of step 3, systemd keeps the
+  previously LOADED publisher configuration. A trigger in that interval runs
+  the legacy configuration exactly as it does today, even though the files on
+  disk have already changed.
+- After that reload, any trigger (the manual start in step 5, the timer, or
+  the bridge's OnSuccess) runs the new configuration: sync, then the new
+  generator. That first run IS the seed.
+- A trigger that arrives while `daemon-reload` itself is running is queued
+  by systemd until the reload completes, so the reload is atomic with respect
+  to triggers.
+
 The order matters:
-- The sync drop-in (its `ExecStartPre` sync of `scripts/two_sinks.py` and the
-  new generator, and its `ExecStart` override to `scripts/`) is installed
-  BEFORE the seed. Otherwise the seed runs the legacy generator, which never
-  creates `current/index.html`.
-- The site root exists BEFORE the first publisher start. `/var/lib/eeebot-site`
+- The site root exists BEFORE the reload (step 1). `/var/lib/eeebot-site`
   is created by systemd-tmpfiles (`deploy/eeebot-site.tmpfiles.conf`, `0755
-  eeebot-publish`), not by the unit: the unit's `ReadWritePaths=` is set up
+  eeebot-publish`), not by the unit. The unit's `ReadWritePaths=` is set up
   with its namespace, before any `ExecStartPre`, and is deliberately not
   optional (`-`), so a missing site root fails the unit loudly. The site root
   is not a `StateDirectory=`: `StateDirectoryMode=` is one mode for all of a
   unit's state directories, and `/var/lib/eeebot-techtree` must stay `0700`.
   sync-manifest does not deliver the tmpfiles file (it installs generators
-  only), so step 3 installs it explicitly.
+  only), so step 1 installs it explicitly. The directory is harmless to the
+  legacy configuration, which never reads it.
+- The unit, the sync drop-in and the sync script are all on disk BEFORE the
+  one `daemon-reload` (step 3). Otherwise the first post-reload run could
+  start without the sync and run the legacy generator, which never creates
+  `current/index.html`.
 
 Everything the publisher writes lives inside `/var/lib/eeebot-site`: snapshot
 staging (`.staging/<version>`, renamed into place on the same filesystem) and
@@ -86,17 +103,53 @@ bind the same `:8080` port. The replacement server refuses to start unless
 `current` points to a complete snapshot, so the seed must succeed before the
 legacy server stops.
 
-1. Install the publisher unit, the sync script and the sync drop-in:
+**Public effect of the cutover.** The seed (the first run after the step-3
+reload) runs the NEW generator, and it publishes to gh-pages through the D1
+public projection at the same time. This changes what is publicly visible.
+Step 5 checks the served public page.
+
+1. Create the site root with systemd-tmpfiles:
+
+```bash
+sudo install -o root -g root -m 0644 deploy/eeebot-site.tmpfiles.conf /etc/tmpfiles.d/eeebot-site.conf
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/eeebot-site.conf
+sudo stat -c "%a %U" /var/lib/eeebot-site
+```
+
+`stat` must print exactly `755 eeebot-publish`. On a first cutover the site
+root must also be EMPTY (`sudo ls -A /var/lib/eeebot-site` prints nothing). A
+root retained from an earlier attempt could let step 5 inspect a stale
+snapshot. If it is not empty, stop and ask the architect before going on.
+
+2. Take a dated backup of everything step 3 overwrites. On 2026-09-29 the host
+   had `/opt/eeebot-techtree/eeebot-techtree-sync.sh` from #325 (sha256 prefix
+   `afea3265`), and the drop-in directory already contained `20-timeout.conf`:
+
+```bash
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS
+sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS
+sudo cp -a /etc/systemd/system/eeebot-dashboard.service /etc/systemd/system/eeebot-dashboard.service.bak-$TS
+ls -la /etc/systemd/system/*.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /opt/eeebot-techtree/*.bak-$TS
+echo "$TS"   # keep: the rollback below uses it
+```
+
+systemd ignores `*.bak-$TS` files and the `*.service.d.bak-$TS` directory:
+neither name matches `<unit>` or `<unit>.d`.
+
+3. Install the publisher unit, the sync drop-in and the sync script (last), and
+   only THEN reload, exactly once:
 
 ```bash
 sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service
-sudo install -o root -g root -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo install -d -o root -g root -m 0755 /etc/systemd/system/eeebot-techtree-publish.service.d
 sudo install -o root -g root -m 0644 deploy/eeebot-techtree-publish.service.d-sync.conf /etc/systemd/system/eeebot-techtree-publish.service.d/20-repo-sync.conf
+sudo install -o root -g root -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo systemctl daemon-reload
 ```
 
-2. Verify the effective unit:
+4. Verify the effective unit:
 
 ```bash
 sudo systemctl cat eeebot-techtree-publish.service
@@ -110,38 +163,67 @@ sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p 
 `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700` and
 `ReadWritePaths=/var/lib/eeebot-site`.
 
-3. Create the site root with systemd-tmpfiles:
+5. Seed the host snapshot. A pre-reload (legacy) invocation may still be
+   running, and systemd merges a new start request into an in-flight start
+   job, so a `start` issued now could return after only the legacy generator
+   ran. First wait until nothing is active. Then force a DISTINCT post-reload
+   invocation and prove it by its `InvocationID`:
 
 ```bash
-sudo install -o root -g root -m 0644 deploy/eeebot-site.tmpfiles.conf /etc/tmpfiles.d/eeebot-site.conf
-sudo systemd-tmpfiles --create /etc/tmpfiles.d/eeebot-site.conf
-sudo stat -c "%a %U" /var/lib/eeebot-site
-```
-
-`stat` must print exactly `755 eeebot-publish`.
-
-4. Seed the host snapshot. This first start runs the sync, then the new
-   generator:
-
-```bash
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+I0=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
 sudo systemctl start eeebot-techtree-publish.service
-sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+I1=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
+[ -n "$I1" ] && [ "$I1" != "$I0" ] && echo "post-reload invocation $I1" || echo "STOP: no distinct post-reload invocation"
+sudo journalctl _SYSTEMD_INVOCATION_ID="$I1" --no-pager | tail -50
 sudo test -s /var/lib/eeebot-site/current/index.html
 ```
 
-5. Verify that the NEW generator produced the snapshot. `add_snapshot_version`
-   (`scripts/two_sinks.py`) writes exactly one
-   `<meta name="snapshot-version" content="<version>">` into every public
-   HTML page, and `<version>` is the directory `current` points at:
+That invocation's journal must show the sync (`eeebot-techtree-sync.sh`)
+followed by the publish. If it prints `STOP`, do not go on.
+
+Verify that the NEW generator produced the snapshot. `add_snapshot_version`
+(`scripts/two_sinks.py`) writes exactly one
+`<meta name="snapshot-version" content="<version>">` into every public HTML
+page, and `<version>` is the directory `current` points at:
 
 ```bash
 sudo grep -o '<meta name="snapshot-version" content="[^"]*">' /var/lib/eeebot-site/current/index.html
-sudo basename "$(sudo readlink /var/lib/eeebot-site/current)"
+V=$(sudo basename "$(sudo readlink /var/lib/eeebot-site/current)"); echo "$V"
 ```
 
-The `grep` must print exactly one line, and its `content` must equal the
-`basename` output. No line or a different value means the snapshot is not from
-the new generator: stop here and do not cut over.
+The `grep` must print exactly one line, and its `content` must equal `$V`. No
+line or a different value means the snapshot is not from the new generator:
+stop here and do not cut over.
+
+The seed also published gh-pages through the D1 projection. `publish_to_pages`
+updates the `gh-pages` ref and returns without waiting for the Pages
+deployment, and `publish_ordered` hands the publisher the versioned public
+pages, so the served page carries the same meta. Wait until the served page
+reports one of the new generator's snapshots (at most 10 minutes).
+
+Match by IDENTITY, never by wall-clock order. The version is
+`<epoch>-<digest12>` from `time.time()`, and the host clock can move
+backwards (`should_publish()` handles NTP/manual corrections), so a larger
+epoch does not mean a newer snapshot. A later trigger may legitimately
+publish a newer snapshot meanwhile, which then becomes `current`. Accept
+only the seed version `$V`, or the version `current` points at when the page
+is polled:
+
+```bash
+for i in $(seq 1 40); do
+  S=$(curl -fsS "https://ozand.github.io/eeebot-ops-dashboard/?v=$(date +%s)" | grep -o '<meta name="snapshot-version" content="[^"]*">' | sed -E 's/.*content="([^"]*)".*/\1/')
+  CUR=$(sudo basename "$(sudo readlink /var/lib/eeebot-site/current)")
+  if [ -n "$S" ] && { [ "$S" = "$V" ] || [ "$S" = "$CUR" ]; }; then echo "served: $S (seed $V, current $CUR)"; break; fi
+  sleep 15
+done
+```
+
+If it never prints `served: ...`, stop: the new projection is not yet what the
+public sees. Once it does, open the public GitHub Pages site and check that it
+renders and shows no private detail (no bridge error text, no file paths, no
+prompt text) before going on.
 
 6. Only now, cut the server over:
 
@@ -151,6 +233,36 @@ sudo systemctl daemon-reload
 sudo systemctl stop eeebot-dashboard.service
 sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
+```
+
+### Rollback
+
+Use the `$TS` printed in step 2.
+
+- **Steps 1-5** (the publisher side): put the backups back and reload. The
+  site root `/var/lib/eeebot-site` and the tmpfiles entry can stay; the legacy
+  configuration never reads them, and nothing serves them until step 6.
+
+```bash
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done   # never swap files under a running publisher
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service
+sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
+sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo systemctl daemon-reload
+sudo systemctl cat eeebot-techtree-publish.service   # must match the pre-cutover unit
+```
+
+  This rollback does not undo the gh-pages publication of the seed. The next
+  run of the legacy generator republishes the old view, as expected.
+
+- **Step 6** (the server side): stop the new server and start the legacy one
+  again.
+
+```bash
+sudo systemctl disable --now eeebot-dashboard-server.service
+sudo systemctl start eeebot-dashboard.service
+sudo systemctl status eeebot-dashboard.service
 ```
 
 ## End-to-end verification
