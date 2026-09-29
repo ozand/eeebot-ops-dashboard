@@ -385,6 +385,7 @@ def should_publish(
     state: dict[str, Any],
     staleness_floor_seconds: float,
     now: float,
+    site_root: Path | None = None,
 ) -> tuple[bool, str]:
     """The publish gate (issue #27): publish if EITHER the tree digest
     changed, OR the last successful publish is older than the staleness
@@ -397,12 +398,21 @@ def should_publish(
     never depends on any clock). A backward clock jump (NTP correction,
     manual reset) would otherwise make `age` negative and permanently
     smaller than the floor, disabling the floor forever (issue #27 review,
-    blocker B7) -- so a negative age is treated the same as "stale"."""
+    blocker B7) -- so a negative age is treated the same as "stale".
+
+    `site_root` (ADR-036 host sink): when the site root EXISTS but serves no
+    valid current snapshot (the first run after D4 creates an empty root, or
+    a lost/incomplete `current`), publish regardless of the digest so the
+    host snapshot is seeded. Decided by the host's state, never by what an
+    earlier run recorded; an absent root (sink not configured) changes
+    nothing here."""
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
     if state.get('host_snapshot_failed_since') is not None:
         return True, 'prior host snapshot failed; retrying host sink'
+    if site_root is not None and os.path.isdir(site_root) and sinks.current_snapshot_target(site_root) is None:
+        return True, 'host site root has no valid current snapshot; seeding host sink'
     if prev_digest != current_digest:
         return True, 'tree digest changed'
     if not isinstance(prev_published_at, (int, float)):
@@ -544,7 +554,7 @@ def run(args: argparse.Namespace) -> int:
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()
-    publish, reason = should_publish(digest, state, staleness_floor_seconds, now)
+    publish, reason = should_publish(digest, state, staleness_floor_seconds, now, site_root=Path(args.site_root))
 
     source_problem = _unreadable_tree_source(data, state_root)
 
