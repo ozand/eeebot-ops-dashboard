@@ -602,7 +602,7 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
         changed = {k: v for k, v in pages.items() if prev.get(k) != ap.tv._page_fingerprint(v)}
         published_batches.append(changed)
         fp = {k: ap.tv._page_fingerprint(v) for k, v in pages.items()}
-        return 0, fp
+        return 0, fp, False  # #372: (rc, fingerprints, ref_updated)
 
     monkeypatch.setattr(ap.tv, "render_public_pages", lambda *a, **kw: {"index.html": "<html>fixed content</html>"})
     monkeypatch.setattr(ap.tv, "publish_to_pages", fake_publish)

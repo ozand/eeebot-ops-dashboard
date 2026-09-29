@@ -11207,7 +11207,7 @@ def main(argv: list[str] | None = None) -> int:
             public_pages,
             private_pages,
             version,
-            publisher=lambda p: publish_to_pages(p),
+            publisher=lambda p: publish_to_pages(p)[:2],  # #372: (rc, fingerprints, ref_updated)
             generated_at=stamp,
         )
         return rc

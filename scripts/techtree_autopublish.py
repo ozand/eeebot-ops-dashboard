@@ -671,7 +671,7 @@ def run(args: argparse.Namespace) -> int:
         )
 
     def gh_publisher(pages_to_pub):
-        nonlocal duration_warning, duration_state
+        nonlocal duration_warning, duration_state, ref_updated
         if not os.environ.get('GH_TOKEN'):
             print(
                 'techtree-autopublish: GH_TOKEN is not set -- skipping gh-pages publication (host snapshot was written)',
@@ -679,7 +679,10 @@ def run(args: argparse.Namespace) -> int:
             )
             return 1, {}
         try:
-            result = tv.publish_to_pages(
+            # #372: publish_to_pages also reports whether the gh-pages ref
+            # moved; kept for save_failed_attempt / the rc != 0 message, while
+            # publish_ordered keeps its (rc, fingerprints) contract.
+            rc, fps, ref_updated = tv.publish_to_pages(
                 pages_to_pub,
                 previous_fingerprints=previous_fingerprints,
                 scan_cache=state.get('clean_scan_cache'),
@@ -692,7 +695,7 @@ def run(args: argparse.Namespace) -> int:
             print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
             return 1, {}
         duration_warning, duration_state = record_attempt_duration()
-        return result
+        return rc, fps
 
     try:
         rc, fingerprints = sinks.publish_ordered(
@@ -717,6 +720,7 @@ def run(args: argparse.Namespace) -> int:
             changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
             publish_duration_warning=duration_warning,
             published=gh_rc == 0,
+            ref_updated=ref_updated,
         )
         return 1
     except Exception as exc:
@@ -738,6 +742,7 @@ def run(args: argparse.Namespace) -> int:
                 changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
                 publish_duration_warning=duration_warning,
                 published=False,
+                ref_updated=ref_updated,
             )
             if isinstance(exc, PublicationScanError):
                 raise
