@@ -13,7 +13,7 @@ import stat
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 from urllib.parse import unquote, urlsplit
 
 try:
@@ -482,12 +482,29 @@ def _flag(label: str) -> _Node:
     return node
 
 
+def _describe(node: _Node, keys: "Iterable[str]" = (), children: "Iterable[_Node]" = ()) -> _Node:
+    """#378 (structural test): record the FIELD NAMES a node can publish and
+    its child nodes, so tests can compare the renderer's reads with the
+    schema (public_schema_fields). No effect on projection."""
+    node.public_keys = frozenset(keys)  # type: ignore[attr-defined]
+    node.children = tuple(children)  # type: ignore[attr-defined]
+    return node
+
+
+def _produces(*keys: str) -> Callable[[Callable], Callable]:
+    """Declare the fields a ``post`` hook adds to its record."""
+    def mark(post: Callable) -> Callable:
+        post.public_keys = frozenset(keys)  # type: ignore[attr-defined]
+        return post
+    return mark
+
+
 def _nullable(inner: _Node) -> _Node:
     """#378 review P2: null is published ONLY where a field is declared
     nullable (the producer writes None there); every other node drops it."""
     def node(value: object, withheld: dict[str, int] | None) -> object:
         return None if value is None else inner(value, withheld)
-    return node
+    return _describe(node, children=(inner,))
 
 
 def _violation_code(value: object, _w: dict[str, int] | None) -> object:
@@ -511,7 +528,7 @@ def _one_of(*nodes: _Node) -> _Node:
             if projected is not _DROP:
                 return projected
         return _DROP
-    return node
+    return _describe(node, children=nodes)
 
 
 def _list(item: _Node, max_items: int | None = None) -> _Node:
@@ -524,7 +541,7 @@ def _list(item: _Node, max_items: int | None = None) -> _Node:
             if projected is not _DROP:
                 rows.append(projected)
         return rows
-    return node
+    return _describe(node, children=(item,))
 
 
 def _map(key: _Node, item: _Node) -> _Node:
@@ -544,7 +561,7 @@ def _map(key: _Node, item: _Node) -> _Node:
             if projected is not _DROP:
                 result[name] = projected
         return result
-    return node
+    return _describe(node, children=(item,))  # map keys are data, not field names
 
 
 def _obj(
@@ -581,7 +598,9 @@ def _obj(
         if post is not None:
             post(value, out, withheld)
         return out
-    return node
+    keys = {*fields, *(sized_text or {}), *(f"{name}_chars" for name in (sized_text or {})),
+            *sized_list, *(f"{name}_count" for name in sized_list), *getattr(post, "public_keys", ())}
+    return _describe(node, keys, fields.values())
 
 
 # -- enums (#356 R3) -------------------------------------------------------------
@@ -639,6 +658,7 @@ _LEDGER_ROW = _obj({
 })
 
 
+@_produces("_v2_lesson")
 def _lesson_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
     out["_v2_lesson"] = bool(source.get("problem"))
 
@@ -667,6 +687,7 @@ _REFLECTION_ROW = _obj({"cycle_id": _ident, "ts": _ts, "summary_chars": _count,
                        sized_text={"summary": ""}, sized_list=("findings", "recommendations"))
 
 
+@_produces("decision", "refused", "reason", "rationale")
 def _strategist_post(source: dict, out: dict, withheld: dict[str, int] | None) -> None:
     if source.get("decision") is not None:
         out["decision"] = _project_reason(source["decision"], withheld, "strategist_decision")
@@ -691,7 +712,7 @@ def _diagnostic_flags(**labels: str) -> Callable[[dict, dict, "dict[str, int] | 
         for field, label in labels.items():
             if source.get(field):
                 out[field] = label
-    return post
+    return _produces(*labels)(post)
 
 
 _BRIDGE_EXIT_ROW = _obj({
@@ -762,6 +783,9 @@ def _project_ci_freshness(value: object, withheld: dict[str, int] | None) -> obj
     return with_state(repos(value, withheld))
 
 
+_describe(_project_ci_freshness, ("repositories", "schema_version", "observed_at_utc", "state"), (_CI_REPO_ROW,))
+
+
 def _priority_label(row: dict, provenance: object, raw_label: object) -> str | None:
     """#356 R5: ONE provenance policy for derived_priorities and
     priority_items. An operator priority is published as its number only
@@ -804,7 +828,7 @@ def _priority_row(fields: Mapping[str, _Node]) -> _Node:
         if isinstance(value.get("evidence"), str) and value["evidence"]:
             _count_withheld(withheld, "priority_evidence")
         return row
-    return node
+    return _describe(node, {*base.public_keys, "label", *_SELF_DERIVED_ONLY}, (base, *_SELF_DERIVED_ONLY.values()))
 
 
 _DERIVED_PRIORITY = _priority_row({
@@ -818,6 +842,7 @@ _PRIORITY_ITEM = _priority_row({
 })
 
 
+@_produces("reason", "charter", "source", "merged", "text")
 def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None) -> None:
     status = out.get("status")
     if status in _VIEW_STATES:
@@ -850,6 +875,7 @@ _DERIVED_VIEW = _obj({
 }, post=_derived_view_post)
 
 
+@_produces("summary")
 def _local_ci_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
     state, probe = out.get("state"), out.get("probe")
     if state == "targets_missing":
@@ -913,6 +939,7 @@ _SYSTEM_PROMPT = _obj({
 _TIER2_FILE = _obj({"name": _ident, "size_bytes": _count, "content_chars": _count}, sized_text={"content": ""})
 
 
+@_produces("prompt_text", "task_text", "prompt_text_chars", "task_text_chars")
 def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
     # #356 R4: the prompt and task are private whatever their type; only a
     # string's size is published.
@@ -1038,6 +1065,8 @@ def _project_demand_futility(value: object, withheld: dict[str, int] | None) -> 
     return _map(_ident, _FUTILITY_GAP)(value, withheld)
 
 
+_describe(_project_demand_futility, ("gaps",), (_FUTILITY_GAP,))
+
 _SYSTEMD_DRIFT = _obj({
     "status": _enum(*_VIEW_STATES), "reason": _code("systemd_drift_reason"), "details": _code("systemd_drift_details"),
     "state": _token, "defect_count": _count, "scanned_at": _ts,
@@ -1121,6 +1150,27 @@ _PUBLIC_EMPTY: dict[str, object] = {
     **{key: {} for key in ("llm_stats", "cycle_files", "derived_view")},
     "generator_sha": "",
 }
+
+
+#: fields of the two metadata sections split_render_inputs builds itself
+_META_FIELDS = frozenset({"present", "lines", "chars", "count", "priority_count", "state"})
+
+
+def public_schema_fields() -> frozenset[str]:
+    """#378: every FIELD NAME the public projection can publish, at any
+    depth (map keys are data and are not included). Used by the structural
+    renderer-reads test (tests/test_d11_renderer_reads.py)."""
+    names: set[str] = set(PUBLIC_DATA_KEYS) | _META_FIELDS
+    seen: set[int] = set()
+    stack: list[object] = list(_PUBLIC_SCHEMA.values())
+    while stack:
+        node = stack.pop()
+        if id(node) in seen:
+            continue
+        seen.add(id(node))
+        names |= getattr(node, "public_keys", frozenset())
+        stack.extend(getattr(node, "children", ()))
+    return frozenset(names)
 
 
 def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | None = None) -> object:
