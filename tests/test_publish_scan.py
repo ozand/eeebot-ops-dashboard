@@ -640,7 +640,7 @@ def test_adr036_dry_run_never_creates_gh_pages_branch(monkeypatch: pytest.Monkey
 
     monkeypatch.setattr(tv, "_gh", fake_gh)
 
-    rc, fp = tv.publish_to_pages({"index.html": "<html>clean content</html>"}, dry_run=True)
+    rc, fp, _ref_updated = tv.publish_to_pages({"index.html": "<html>clean content</html>"}, dry_run=True)
     assert rc == 0
     assert not post_calls, f"dry_run must not make POST calls, but made: {post_calls}"
 
@@ -674,7 +674,7 @@ def test_adr036_bootstrap_gh_pages_from_clean_tree_never_inherits_master(monkeyp
 
     monkeypatch.setattr(tv, "_gh", fake_gh)
 
-    rc, fp = tv.publish_to_pages({"index.html": "<html>clean content</html>"})
+    rc, fp, _ref_updated = tv.publish_to_pages({"index.html": "<html>clean content</html>"})
     assert rc == 0
     assert not any("heads/master" in c or "branches/master" in c for c in calls)
     assert tree_payloads
@@ -992,7 +992,7 @@ def test_adr036_branch_probe_transient_error_refuses_fail_closed(monkeypatch: py
     with pytest.raises(ps.PublicationScanError, match="500|cannot probe|probe error|failed"):
         tv.publish_to_pages({"index.html": "<html>clean</html>"}, dry_run=True)
 
-    rc, fp = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    rc, fp, _ref_updated = tv.publish_to_pages({"index.html": "<html>clean</html>"})
     assert rc == 1
     assert fp == {}
 
@@ -1050,7 +1050,7 @@ def test_adr036_bootstrap_clean_branch_enables_pages(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(tv, "_gh", fake_gh)
 
-    rc, fp = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    rc, fp, _ref_updated = tv.publish_to_pages({"index.html": "<html>clean</html>"})
     assert rc == 0
     assert any("-X" in call and "POST" in call for call in pages_calls)
 
@@ -1079,9 +1079,10 @@ def test_adr036_regular_publish_pages_enable_failure_returns_failure(monkeypatch
         return cp("{}")
 
     monkeypatch.setattr(tv, "_gh", fake_gh)
-    rc, fingerprints = tv.publish_to_pages({"index.html": "<html>updated</html>"})
+    rc, fingerprints, ref_updated = tv.publish_to_pages({"index.html": "<html>updated</html>"})
     assert rc != 0
-    assert fingerprints == {}
+    assert fingerprints
+    assert ref_updated is True
 
 
 def test_adr036_bootstrap_pages_enable_failure_returns_failure(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1105,9 +1106,10 @@ def test_adr036_bootstrap_pages_enable_failure_returns_failure(monkeypatch: pyte
         return subprocess.CompletedProcess(args=["gh"] + list(args), returncode=0, stdout="{}", stderr="")
 
     monkeypatch.setattr(tv, "_gh", fake_gh)
-    rc, fingerprints = tv.publish_to_pages({"index.html": "<html>clean</html>"})
+    rc, fingerprints, ref_updated = tv.publish_to_pages({"index.html": "<html>clean</html>"})
     assert rc != 0
-    assert fingerprints == {}
+    assert fingerprints
+    assert ref_updated is True
 
 
 def test_adr036_gzip_bomb_exceeds_inherited_blob_limit(monkeypatch: pytest.MonkeyPatch) -> None:
