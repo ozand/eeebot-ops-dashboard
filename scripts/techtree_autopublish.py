@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import os
+import stat
 import sys
 import time
 from pathlib import Path
@@ -380,6 +381,22 @@ def record_publish_duration(
     return warning, updated
 
 
+def _host_snapshot_needs_seed(site_root: Path) -> bool:
+    """True when the site root EXISTS (anything but ENOENT) yet serves no
+    valid current snapshot: not a directory, uninspectable, or no complete
+    `current` target."""
+    try:
+        mode = os.lstat(site_root).st_mode
+    except FileNotFoundError:
+        return False  # host sink not configured (D4 has not created it)
+    except OSError:
+        return True
+    try:
+        return not stat.S_ISDIR(mode) or sinks.current_snapshot_target(site_root) is None
+    except OSError:
+        return True
+
+
 def should_publish(
     current_digest: str,
     state: dict[str, Any],
@@ -404,14 +421,16 @@ def should_publish(
     valid current snapshot (the first run after D4 creates an empty root, or
     a lost/incomplete `current`), publish regardless of the digest so the
     host snapshot is seeded. Decided by the host's state, never by what an
-    earlier run recorded; an absent root (sink not configured) changes
-    nothing here."""
+    earlier run recorded; an absent root (ENOENT: sink not configured)
+    changes nothing here. A path that exists but is not a usable root (a
+    file, or one that cannot be inspected) also publishes, so
+    publish_ordered reports host_snapshot_failed instead of a silent skip."""
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
     if state.get('host_snapshot_failed_since') is not None:
         return True, 'prior host snapshot failed; retrying host sink'
-    if site_root is not None and os.path.isdir(site_root) and sinks.current_snapshot_target(site_root) is None:
+    if site_root is not None and _host_snapshot_needs_seed(site_root):
         return True, 'host site root has no valid current snapshot; seeding host sink'
     if prev_digest != current_digest:
         return True, 'tree digest changed'

@@ -167,3 +167,53 @@ def test_2_root_with_complete_current_and_same_digest_skips_as_before(
 
     assert rc == 0 and uploads == []
     assert (site_root / "current").resolve().name == "v0"
+
+
+
+# --- Codex 4136782725: an existing but unusable root is a host FAILURE ----------
+
+def _refuse_site_lock(monkeypatch: pytest.MonkeyPatch, site_root: Path) -> None:
+    real_enter = ap.sinks._SiteLock.__enter__
+
+    def refuse(self):
+        if Path(self.path).parent == site_root:
+            raise PermissionError(13, "Permission denied", str(self.path))
+        return real_enter(self)
+
+    monkeypatch.setattr(ap.sinks._SiteLock, "__enter__", refuse)
+
+
+def test_4_root_that_is_a_file_with_same_digest_publishes_and_fails_the_host(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    site_root = tmp_path / "site"
+    site_root.write_text("not a directory", encoding="utf-8")
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc != 0, "an existing, unusable root is a host failure, never a silent skip"
+    assert uploads, "the run was not stopped at the no-publish gate"
+    assert state["host_snapshot_failed_since"] is not None
+    assert state.get("host_sink") != "host_sink_unconfigured"
+
+
+def test_5_root_that_cannot_be_stat_ed_publishes_and_fails_the_host(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    site_root = tmp_path / "site"
+    site_root.mkdir()
+    real_lstat = os.lstat
+
+    def lstat(path, *args, **kwargs):
+        if Path(path) == site_root:
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_lstat(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "lstat", lstat)
+    monkeypatch.setattr(ap.sinks, "current_snapshot_target",
+                        lambda root: (_ for _ in ()).throw(PermissionError(13, "Permission denied", str(root))))
+    _refuse_site_lock(monkeypatch, site_root)
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc != 0
+    assert uploads, "the run was not stopped at the no-publish gate"
+    assert state["host_snapshot_failed_since"] is not None
