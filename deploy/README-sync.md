@@ -226,6 +226,7 @@ Use the `$TS` printed in step 2.
   configuration never reads them, and nothing serves them until step 6.
 
 ```bash
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done   # never swap files under a running publisher
 sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service
 sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
