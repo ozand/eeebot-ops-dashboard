@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import math
 import os
 import re
 import shutil
@@ -296,30 +297,6 @@ def _is_count(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
-def _drop_source_counters(value: object, generated: set[str] | None = None) -> object:
-    if isinstance(value, dict):
-        return {
-            key: _drop_source_counters(item, generated)
-            for key, item in value.items()
-            if not (_is_counter_field(key) and (generated is None or key not in generated))
-        }
-    if isinstance(value, list):
-        return [_drop_source_counters(item, generated) for item in value]
-    return value
-
-
-def _drop_invalid_counters(value: object) -> object:
-    if isinstance(value, dict):
-        return {
-            key: _drop_invalid_counters(item)
-            for key, item in value.items()
-            if not (_is_counter_field(key) and not _is_count(item))
-        }
-    if isinstance(value, list):
-        return [_drop_invalid_counters(item) for item in value]
-    return value
-
-
 _GOAL_META_STATES = frozenset({"absent", "unexpected_shape", "present"})
 
 
@@ -342,276 +319,721 @@ def _project_meta(key: str, value: object) -> dict[str, Any]:
     return result
 
 
-def _project_bridge_runs(value: object, withheld: dict[str, int] | None) -> list[dict[str, Any]]:
-    """#315 R1 (partial, D1 scope): the free-text fields of a bridge run --
-    ``error``, ``reason``, ``last_where`` -- become codes, as in the
-    bridge_exit_streak dict branch. (Full row allowlisting is D1.1 #356.)"""
-    if not isinstance(value, list):
-        return []
-    runs = []
-    for row in value:
-        if not isinstance(row, dict):
-            continue
-        run = dict(row)
-        if "error" in run:
-            run["error"] = "error" if run["error"] else ""
-        if "last_where" in run:
-            run["last_where"] = "withheld" if run["last_where"] else ""
-        if "reason" in run:
-            run["reason"] = _project_reason(run["reason"], withheld, "bridge_run_reason")
-        runs.append(run)
-    return runs
+# --- #356 D1.1: the typed public projection ------------------------------------
+#
+# Every public value is CONSTRUCTED here from named fields; nothing is copied
+# from a source record. A node is ``(value, withheld) -> projected | _DROP``:
+# a wrong type, a value outside the field's domain, an unknown key and a
+# non-dict row all yield _DROP, and the field (or row) is left out. Nothing
+# returned shares a mutable object with the input (every dict and list is
+# built fresh; scalars are immutable).
+
+_DROP = object()
+_Node = Callable[[object, "dict[str, int] | None"], object]
+
+#: ISO-8601 date or date-time (the loop's writers use ...Z and +00:00).
+_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?)?(?:Z|[+-]\d{2}:?\d{2})?$")
+#: identifiers: cycle ids, shas, repositories, branches, relative paths.
+_IDENT_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._:/@+-]{0,199}$")
+#: single-word codes and names (no "/", no whitespace).
+_TOKEN_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._:+-]{0,63}$")
+#: a file path (relative or absolute) without whitespace.
+_PATH_RE = re.compile(r"^[A-Za-z0-9._/@+-]{1,300}$")
+
+#: Bumped whenever the projection's output domain changes; part of the
+#: publish digest (techtree_autopublish.compute_tree_digest), so a deployed
+#: projection change republishes even when the source tree is quiet.
+PROJECTION_VERSION = "d1.1-typed-1"
+
+
+def _count_withheld(withheld: dict[str, int] | None, category: str) -> None:
+    if withheld is not None:
+        withheld[category] = withheld.get(category, 0) + 1
+
+
+def _text(max_len: int = 1000) -> _Node:
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        return value if isinstance(value, str) and len(value) <= max_len else _DROP
+    return node
+
+
+def _pattern(regex: re.Pattern[str]) -> _Node:
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        return value if isinstance(value, str) and regex.fullmatch(value) else _DROP
+    return node
+
+
+_ident = _pattern(_IDENT_RE)
+_token = _pattern(_TOKEN_RE)
+_path = _pattern(_PATH_RE)
+
+
+def _ts(value: object, _w: dict[str, int] | None) -> object:
+    """A validated timestamp: an ISO-8601 string or a non-negative epoch."""
+    if isinstance(value, str):
+        return value if _TS_RE.fullmatch(value) else _DROP
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0:
+        return value
+    return _DROP
+
+
+def _bool(value: object, _w: dict[str, int] | None) -> object:
+    return value if value is True or value is False else _DROP
+
+
+def _int(minimum: int | None = 0) -> _Node:
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        if isinstance(value, int) and not isinstance(value, bool) and (minimum is None or value >= minimum):
+            return value
+        return _DROP
+    return node
+
+
+def _num(minimum: float | None = None) -> _Node:
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        if (isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+                and (minimum is None or value >= minimum)):
+            return value
+        return _DROP
+    return node
+
+
+_count = _int(0)
+_number = _num()
+
+
+def _enum(*values: str, fallback: str | None = None) -> _Node:
+    allowed = frozenset(values)
+
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        if isinstance(value, str) and value in allowed:
+            return value
+        return fallback if fallback is not None else _DROP
+    return node
+
+
+def _code(category: str) -> _Node:
+    """A reason code from _PUBLIC_REASON_CODES, else its size bucket."""
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        return _project_reason(value, withheld, category)
+    return node
+
+
+def _flag(label: str) -> _Node:
+    """Only the PRESENCE of a private diagnostic is public."""
+    def node(value: object, _w: dict[str, int] | None) -> object:
+        return label if value else ""
+    return node
+
+
+def _one_of(*nodes: _Node) -> _Node:
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        for candidate in nodes:
+            projected = candidate(value, withheld)
+            if projected is not _DROP:
+                return projected
+        return _DROP
+    return node
+
+
+def _list(item: _Node, max_items: int | None = None) -> _Node:
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        if not isinstance(value, list):
+            return _DROP
+        rows = []
+        for entry in value if max_items is None else value[:max_items]:
+            projected = item(entry, withheld)
+            if projected is not _DROP:
+                rows.append(projected)
+        return rows
+    return node
+
+
+def _map(key: _Node, item: _Node) -> _Node:
+    """A dict keyed by DATA (cycle ids, repositories, dates): every key is
+    validated as a value, and None values are kept as None."""
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        if not isinstance(value, dict):
+            return _DROP
+        result = {}
+        for name, entry in value.items():
+            if key(name, withheld) is _DROP:
+                continue
+            projected = None if entry is None else item(entry, withheld)
+            if projected is not _DROP:
+                result[name] = projected
+        return result
+    return node
+
+
+def _obj(
+    fields: Mapping[str, _Node],
+    *,
+    sized_text: Mapping[str, object] | None = None,
+    sized_list: tuple[str, ...] = (),
+    post: Callable[[dict, dict, "dict[str, int] | None"], None] | None = None,
+) -> _Node:
+    """A record with NAMED fields only. ``sized_text`` fields are private
+    text: published as ``<field>_chars`` (only when the source is a string)
+    plus the given blank value. ``sized_list`` fields become
+    ``<field>_count`` and ``[]``. A declared field set to None stays None."""
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        if not isinstance(value, dict):
+            return _DROP
+        out: dict[str, Any] = {}
+        for name, field in fields.items():
+            if name not in value:
+                continue
+            if value[name] is None:
+                out[name] = None
+                continue
+            projected = field(value[name], withheld)
+            if projected is not _DROP:
+                out[name] = projected
+        for name, blank in (sized_text or {}).items():
+            if name in value:
+                if isinstance(value[name], str):
+                    out[f"{name}_chars"] = len(value[name])
+                out[name] = blank
+        for name in sized_list:
+            if name in value:
+                out[f"{name}_count"] = len(value[name]) if isinstance(value[name], list) else 0
+                out[name] = []
+        if post is not None:
+            post(value, out, withheld)
+        return out
+    return node
+
+
+def _metric_value(depth: int) -> _Node:
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        if value is None or value is True or value is False:
+            return value
+        scalar = _number(value, withheld)
+        if scalar is not _DROP:
+            return scalar
+        if isinstance(value, str):
+            return _token(value, withheld)
+        if isinstance(value, list):
+            return _list(_number, 64)(value, withheld)
+        if isinstance(value, dict) and depth > 0:
+            return _metrics(depth - 1)(value, withheld)
+        return _DROP
+    return node
+
+
+def _metrics(depth: int = 2) -> _Node:
+    """A bag of the loop's own numeric metrics (scorecard sections, token
+    summaries): snake_case keys, values a number, a bool, None, a one-word
+    code, a list of numbers, or a nested bag. Prose cannot appear -- a string with a space or
+    "/" is dropped -- and a counter-suffixed key must be a count (#315 R6)."""
+    value_node = _metric_value(depth)
+
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        if not isinstance(value, dict):
+            return _DROP
+        result = {}
+        for name, entry in value.items():
+            if not isinstance(name, str) or not _COUNTER_FIELD_RE.fullmatch(name):
+                continue
+            if _is_counter_field(name) and not _is_count(entry):
+                continue
+            projected = value_node(entry, withheld)
+            if projected is not _DROP:
+                result[name] = projected
+        return result
+    return node
+
+
+# -- enums (#356 R3) -------------------------------------------------------------
+
+_CI_CONCLUSIONS = (
+    "success", "failure", "cancelled", "skipped", "neutral", "timed_out", "action_required",
+    "stale", "startup_failure", "in_progress", "queued", "cannot_ask", "unanswerable", "absent", "unknown",
+)
+_CI_STATES = (
+    "success", "failure", "cancelled", "skipped", "in_progress", "queued", "cannot_ask",
+    "unanswerable", "absent", "unknown", "fresh", "stale", "pending", "no_runs", "disabled",
+)
+_PROBE_STATES = ("absent", "probe_unavailable", "present", "present_uninitialized")
+_VIEW_STATES = ("absent", "probe_unavailable", "present")
+_LOCAL_CI_STATES = ("ran", "targets_missing", "not_run", "running", "skipped", "error", "absent", "unknown")
+_BRIDGE_CLASSIFICATIONS = (
+    "unit_timeout", "killed", "loop_breaker_abort", "wall_clock_abort", "progress_watchdog_abort",
+    "success", "failure", "failed", "error", "crash", "clean", "completed", "timeout", "timed_out",
+    "signal", "paused-supplier", "paused_supplier", "supplier_failure", "unknown", "other",
+)
+_BRIDGE_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | {
+    "success", "failure", "failed", "error", "crash", "completed", "timeout", "killed", "unknown", "other",
+    "unit_timeout", "loop_breaker_abort", "wall_clock_abort", "progress_watchdog_abort",
+}))
+_EXIT_SIGNALS = ("TERM", "KILL", "INT", "HUP", "ABRT", "SEGV", "PIPE", "QUIT")
+_LEDGER_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | {
+    "integrated", "success", "succeeded", "ok", "pass", "passed", "fail", "failed", "partial",
+    "skipped", "push_pending", "pushed_late", "superseded", "abandoned", "paused-supplier",
+    "paused_supplier", "model_call_incomplete", "duplicate", "rejected", "idle", "created",
+    "already_recorded", "not_created", "write_failed", "unknown",
+}))
+_PROVENANCE_OPERATOR = "operator"
+_PROVENANCE_SELF_DERIVED = "self-derived"
+_DERIVED_VIEW_SORT = "provenance(operator<self-derived), then vector(V1<V2), as demand._priority_items"
+
+_exit_status = _one_of(_int(None), _enum(*_EXIT_SIGNALS))
+
+
+# -- records ---------------------------------------------------------------------
+
+_LEDGER_ROW = _obj({
+    "cycle_id": _ident, "phase": _token, "ts": _ts, "outcome": _enum(*_LEDGER_OUTCOMES, fallback="unknown"),
+    "status": _enum(*_LEDGER_OUTCOMES, fallback="unknown"), "sha": _ident, "parent_sha": _ident,
+    "task_title": _text(300), "target_path": _path, "serves": _ident, "demand_id": _ident, "branch": _ident,
+    "reason": _code("ledger_reason"), "decision": _enum(*_PUBLIC_LEDGER_DECISIONS, fallback="[withheld]"),
+    "passed": _bool, "smoke_passed": _bool, "duplicate": _bool, "push_attempts": _count,
+    "delivered": _bool, "delivery_state": _token, "delta": _number, "metric_delta": _number,
+    "files_changed": _list(_path, 50), "lessons_context": _list(_ident, 50),
+    "violations": _list(_text(500), 50), "card_commit": _ident, "card_id": _ident,
+    "skip_reason": _enum(*_PUBLIC_REASON_CODES, "write_failed", fallback="[withheld]"),
+    "error": _code("ledger_error"), "attempt": _pattern(re.compile(r"^\d{1,3}(?:/\d{1,3})?$")),
+    "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
+    "ledger_blind": _bool, "doc_budget_exceeded": _bool, "doc_only_deferred": _count,
+    "doc_only_integrations_24h": _count, "doc_only_budget_24h": _count, "items_considered": _count,
+})
+
+
+def _lesson_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
+    out["_v2_lesson"] = bool(source.get("problem"))
+
+
+_LESSON_ROW = _obj({
+    "id": _ident, "title": _text(300), "date": _ts, "cycle_id": _ident, "task_id": _ident,
+    "hypothesis": _text(500), "source": _enum("live", "archive"), "severity": _token, "kind": _token,
+    "tags": _one_of(_list(_token, 20), _token), "seen_count": _count,
+    "problem_chars": _count, "solution_chars": _count, "insight_chars": _count, "result_chars": _count,
+}, sized_text={"problem": "", "solution": "", "insight": "", "result": ""}, post=_lesson_post)
+
+_SUBAGENT_ROW = _obj({
+    "subagent_id": _ident, "cycle_id": _ident, "goal_id": _ident, "label": _text(200), "status": _token,
+    "started_at": _ts, "finished_at": _ts, "task_truncated": _bool, "summary_truncated": _bool,
+    "result_truncated": _bool, "task_bytes": _count, "iteration_count": _count,
+}, sized_text={name: "" for name in (
+    "task", "summary", "result", "task_excerpt", "summary_excerpt", "result_excerpt")})
+
+_REFLECTION_ROW = _obj({"cycle_id": _ident, "ts": _ts, "summary_chars": _count,
+                        "findings_count": _count, "recommendations_count": _count,
+                        "transcript_coverage": _num(0), "partial_view": _bool,
+                        "input_fit": _obj({"status": _token, "transcript": _obj({
+                            "chars": _count, "recorder_truncated_chars": _count, "dropped_chars": _count})})},
+                       sized_text={"summary": ""}, sized_list=("findings", "recommendations"))
+
+
+def _strategist_post(source: dict, out: dict, withheld: dict[str, int] | None) -> None:
+    if source.get("decision") is not None:
+        out["decision"] = _project_reason(source["decision"], withheld, "strategist_decision")
+    reason = source.get("reason")
+    if reason is not None:
+        out["refused"] = (isinstance(reason, str)
+                          and (reason in {"refused", "declined"} or reason.startswith(("refused:", "declined:"))))
+        out["reason"] = "refused" if out["refused"] else _project_reason(reason, withheld, "strategist_reason")
+    out["rationale"] = ""
+
+
+_STRATEGIST_ROW = _obj({
+    "inputs_status": _map(_token, _obj({"status": _token})),
+    "counts": _obj({"hypotheses_appended": _count, "advisories_written": _count}),
+    "success": _bool, "timestamp": _ts, "ts": _ts, "cycle_id": _ident,
+}, post=_strategist_post)
+
+def _diagnostic_flags(**labels: str) -> Callable[[dict, dict, "dict[str, int] | None"], None]:
+    """Only the PRESENCE of a private diagnostic field is published, as a
+    fixed label, and only when it is set."""
+    def post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
+        for field, label in labels.items():
+            if source.get(field):
+                out[field] = label
+    return post
+
+
+_BRIDGE_EXIT_ROW = _obj({
+    "ts": _ts, "cycle_id": _ident, "exit_code": _int(None), "exit_status": _exit_status,
+    "classification": _enum(*_BRIDGE_CLASSIFICATIONS, fallback="other"),
+    "outcome": _enum(*_BRIDGE_OUTCOMES, fallback="other"),
+}, post=_diagnostic_flags(error="error", where="withheld"))
+
+_BRIDGE_RUN_ROW = _obj({
+    "run_id": _ident, "cycle_id": _ident, "phase": _token, "started_at": _ts, "finished_at": _ts,
+    "classification": _enum(*_BRIDGE_CLASSIFICATIONS, fallback="other"),
+    "outcome": _enum(*_BRIDGE_OUTCOMES, fallback="other"), "exit_status": _exit_status,
+    "error": _flag("error"), "last_where": _flag("withheld"), "reason": _code("bridge_run_reason"),
+})
+
+_BRIDGE_ACTIVE_RUN = _obj({
+    "run_id": _ident, "cycle_id": _ident, "started_at": _ts, "finished_at": _ts,
+    "classification": _enum(*_BRIDGE_CLASSIFICATIONS, fallback="other"),
+    "outcome": _enum(*_BRIDGE_OUTCOMES, fallback="other"), "exit_status": _exit_status,
+}, post=_diagnostic_flags(error="bridge error withheld"))
+
+_BRIDGE_EXIT_STREAK = _obj({"consecutive_failures": _count, "last_ts": _ts, "count": _count},
+                           post=_diagnostic_flags(last_error="error"))
+
+_CI_REPO_ROW = _obj({
+    "state": _enum(*_CI_STATES, fallback="unknown"),
+    "freshness_state": _enum(*_CI_STATES, fallback="unknown"),
+    "latest_conclusion": _enum(*_CI_CONCLUSIONS, fallback="unknown"),
+    "observed_at_utc": _ts,
+    "actions_enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
+    "actions": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
+                     "enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
+                     "observed_at_utc": _ts}),
+    "freshness": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
+                       "latest_conclusion": _enum(*_CI_CONCLUSIONS, fallback="unknown"),
+                       "observed_at_utc": _ts, "latest_completed_at_utc": _ts,
+                       "latest_run_id": _count, "latest_run_number": _count, "age_seconds": _num(0),
+                       "pending_count": _count, "run_count_returned": _count}),
+})
+
+
+def _project_ci_freshness(value: object, withheld: dict[str, int] | None) -> object:
+    """``read_ci_freshness`` shape ``{schema_version, observed_at_utc,
+    repositories: {repo: row}}``; a bare ``{repo: row}`` map (the D1 shape)
+    is projected as the repository map itself. Every row has a ``state``."""
+    if not isinstance(value, dict):
+        return _DROP
+    repos = _map(_ident, _CI_REPO_ROW)
+
+    def with_state(rows: object) -> object:
+        if rows is _DROP:
+            return rows
+        for row in rows.values():
+            row.setdefault("state", "unknown")
+        return rows
+
+    if isinstance(value.get("repositories"), dict):
+        result = {"repositories": with_state(repos(value["repositories"], withheld))}
+        for name, node in (("schema_version", _count), ("observed_at_utc", _ts)):
+            projected = node(value[name], withheld) if name in value else _DROP
+            if projected is not _DROP:
+                result[name] = projected
+        return result
+    return with_state(repos(value, withheld))
+
+
+def _priority_label(item: dict, provenance: object) -> str | None:
+    """#356 R5: ONE provenance policy for derived_priorities and
+    priority_items. An operator priority is published as its number only
+    (its wording is private goal_text); a self-derived label is public; any
+    other or unknown provenance withholds the label."""
+    number = item.get("number")
+    if provenance == _PROVENANCE_OPERATOR:
+        return f"Priority #{number}" if _is_count(number) else "Operator priority"
+    if provenance == _PROVENANCE_SELF_DERIVED:
+        label = _text(300)(item.get("label"), None)
+        return None if label is _DROP else label
+    return None
+
+
+def _priority_row(fields: Mapping[str, _Node], default_provenance: str | None) -> _Node:
+    base = _obj(fields)
+
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        row = base(value, withheld)
+        if row is _DROP:
+            return row
+        provenance = value.get("provenance", default_provenance)
+        label = _priority_label(value, provenance)
+        if label is not None:
+            row["label"] = label
+        if provenance != _PROVENANCE_SELF_DERIVED:
+            row.pop("id", None)  # an operator id is a hash of the private title
+            if value.get("label"):
+                _count_withheld(withheld, "priority_label")
+        if isinstance(value.get("evidence"), str) and value["evidence"]:
+            _count_withheld(withheld, "priority_evidence")
+        return row
+    return node
+
+
+_DERIVED_PRIORITY = _priority_row({
+    "number": _int(None), "vector": _token, "direction": _text(120), "added_utc": _ts,
+    "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED),
+}, default_provenance=_PROVENANCE_SELF_DERIVED)  # the list IS derived_priorities.json
+
+_PRIORITY_ITEM = _priority_row({
+    "rank": _count, "id": _ident, "kind": _token, "vector": _token, "number": _int(None),
+    "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED), "direction": _text(120),
+    "state": _token,
+}, default_provenance=None)  # no provenance recorded: unknown
+
+
+def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None) -> None:
+    status = out.get("status")
+    if status in _VIEW_STATES:
+        out["reason"] = {"absent": "derived view absent", "probe_unavailable": "derived view unavailable",
+                         "present": "derived view present"}[status]
+    charter = source.get("charter")
+    if isinstance(charter, dict):
+        projected = {}
+        if charter.get("source") is not None and _token(charter["source"], None) is not _DROP:
+            projected["source"] = charter["source"]
+        if _bool(charter.get("merged"), None) is not _DROP:
+            projected["merged"] = charter["merged"]
+        text = charter.get("text")
+        if charter.get("source") == "release_goals_md" and isinstance(text, str) and len(text) <= 50000:
+            projected["text"] = text  # the repository goals.md charter is public
+        elif isinstance(text, str) and text:
+            _count_withheld(withheld, "derived_charter_text")
+        out["charter"] = projected
+
+
+_DERIVED_VIEW = _obj({
+    "status": _enum(*_VIEW_STATES), "derived_status": _enum(*_VIEW_STATES),
+    "schema_version": _one_of(_count, _token), "generated_at_utc": _ts, "sort": _enum(_DERIVED_VIEW_SORT),
+    "derived_priorities": _list(_DERIVED_PRIORITY), "priority_items": _list(_PRIORITY_ITEM),
+}, post=_derived_view_post)
+
+
+def _local_ci_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
+    state, probe = out.get("state"), out.get("probe")
+    if state == "targets_missing":
+        out["summary"] = "targets missing"
+    elif state == "ran":
+        # #315 R2: only the VALIDATED exit code (an int, never a bool --
+        # False == 0 would read "passed") may name the result.
+        code = out.get("exit_code")
+        out["summary"] = "result unavailable" if code is None else "passed" if code == 0 else f"failed (exit {code})"
+    elif probe == "absent":
+        out["summary"] = "local CI status absent"
+    elif probe == "probe_unavailable":
+        out["summary"] = "local CI status unavailable"
+
+
+_LOCAL_CI = _obj({
+    "probe": _enum(*_PROBE_STATES), "state": _enum(*_LOCAL_CI_STATES), "ts_utc": _ts, "created_at_utc": _ts,
+    "exit_code": _int(None), "targets_checked": _count, "ok": _bool,
+}, post=_local_ci_post)
+
+_EXECUTOR_MODEL_STATUS = _obj({
+    "probe": _enum(*_PROBE_STATES), "reason": _code("executor_model_reason"), "latest_model": _ident,
+    "latest_class": _enum("self_hosted", "vendor", "other"), "fallback_seen_recent": _bool,
+    "checked_calls": _count,
+})
+
+_EXECUTOR_LLM_STATS = _obj({"cycle_id": _ident, "prompt_tokens": _count, "ts": _ts, "context_window": _count})
+
+_COMPACTION = _obj({
+    "status": _enum("missing", "unavailable", "empty", "present"),
+    "rows": _list(_obj({"cycle_id": _ident, "reason": _token, "ts": _ts})),
+})
+
+_SKILL_READS = _obj({"reads": _list(_obj({"skill": _ident, "confirmed": _bool, "cycle_id": _ident, "ts": _ts}))})
+_SKILL_EVALS = _list(_obj({"skill": _ident, "delta": _number, "cycle_id": _ident, "ts": _ts}))
+
+_NAMED_ENTRY = _one_of(_token, _obj({"name": _ident, "file": _ident, "chars": _count}))
+_DROP_SUMMARY = _obj({"status": _token, "count": _count, "chars": _count, "sections": _list(_token)})
+
+_PROMPT_FIT = _obj({
+    "source_status": _token, "reader_status": _token, "window_kind": _token, "window_days": _num(0),
+    "window_rows": _count, "rows_considered": _count, "rows_with_drops": _count, "rows_with_trims": _count,
+    "prompt_covered_from": _ts, "prompt_covered_to": _ts,
+    "latest": _obj({"ts": _ts, "rung": _token, "dropped": _DROP_SUMMARY, "trimmed": _DROP_SUMMARY}),
+})
+
+_SYSTEM_PROMPT = _obj({
+    "cycle_id": _ident, "ts": _ts, "phase": _token, "chars": _count, "cap": _count, "over_by": _number,
+    "overflow": _bool, "rung": _token, "sections": _map(_token, _count),
+    "missing": _list(_NAMED_ENTRY), "truncated": _list(_NAMED_ENTRY), "dropped": _list(_NAMED_ENTRY),
+    "release_pool_chars": _obj({"limit": _count, "used": _count}),
+    "release_pool": _obj({"cap": _count, "used": _count}), "operating_reserve_chars": _count,
+    "rule_owners": _map(_ident, _token),
+    "skills_catalogue": _obj({"omitted_names": _list(_ident), "truncated": _bool, "budget": _count,
+                              "retained_count": _count, "total_count": _count}),
+    "memory_index": _obj({"resident_missing": _list(_ident), "status": _token,
+                          "resident_matched": _one_of(_count, _list(_ident))}),
+})
+
+_TIER2_FILE = _obj({"name": _ident, "size_bytes": _count, "content_chars": _count}, sized_text={"content": ""})
+
+
+def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
+    # #356 R4: the prompt and task are private whatever their type; only a
+    # string's size is published.
+    for field in ("prompt_text", "task_text"):
+        if field in source:
+            if isinstance(source[field], str):
+                out[f"{field}_chars"] = len(source[field])
+            out[field] = None
+
+
+_AGENT_CONTEXT = _obj({
+    "prompt_text_chars": _count, "task_text_chars": _count,
+    "system_prompt": _SYSTEM_PROMPT,
+    "truncation_streak": _obj({"status": _token, "total_rows": _count, "entries": _list(_obj({
+        "kind": _enum("truncated", "dropped"), "name": _ident, "streak": _count}))}),
+    "tier2_skills": _list(_obj({"name": _ident, "size_bytes": _count, "content_chars": _count, "desc_chars": _count},
+                               sized_text={"content": "", "desc": ""})),
+    "tier2_skills_status": _token,
+    "tier2_lessons": _obj({"index_status": _token, "corpus_status": _token, "corpus_count": _count,
+                           "total_size_bytes": _count, "files": _list(_TIER2_FILE)}),
+    "tier2_memory": _obj({"index_status": _token, "corpus_status": _token, "total_files": _count,
+                          "total_size_bytes": _count, "files": _list(_TIER2_FILE)}),
+    "skill_reads": _SKILL_READS, "skill_evals": _SKILL_EVALS, "executor_llm_stats": _EXECUTOR_LLM_STATS,
+    "compaction": _COMPACTION,
+    "window_pressure": _obj({"status": _token, "rows_in_window": _count, "known_rows": _count,
+                             "unknown_rows": _count, "p99_pct": _num(0), "threshold_pct": _num(0)}),
+    "prompt_fit": _PROMPT_FIT,
+}, post=_agent_context_post)
+
+_DAY_KEY = _pattern(re.compile(r"^\d{4}-\d{2}-\d{2}$"))
+_CALL_STATS = _obj({"calls": _count, "total_tokens": _num(0), "duration_ms": _num(0)})
+_HEATMAP_CELL = _list(_one_of(_number, _token), 8)
+
+_TOKEN_HEATMAP = _obj({
+    "dates": _list(_DAY_KEY),
+    "hourly": _map(_DAY_KEY, _list(_HEATMAP_CELL, 24)),
+    "five_min": _map(_DAY_KEY, _map(_pattern(re.compile(r"^\d{1,3}$")), _HEATMAP_CELL)),
+    "summary": _obj({
+        **{name: _num(0) for name in (
+            "total_tokens", "total_calls", "self_hosted_tokens", "vendor_tokens", "other_tokens",
+            "local_tokens", "gateway_tokens", "days_span", "days_present", "days_missing")},
+        "timezone": _ident, "source_timezone": _ident, "timezone_offset_hours": _number,
+        "quantiles_hourly": _metrics(1), "quantiles_5min": _metrics(1),
+    }),
+})
+
+_FEED_ROW = _obj({"status": _token, "age_seconds": _num(0), "max_age_seconds": _num(0)})
+
+_SCORECARD = _obj({
+    "computed_at_utc": _ts, "window_days": _num(0), "gaps_status": _token,
+    "loop": _metrics(), "cost": _metrics(), "targets": _metrics(), "heldout": _metrics(),
+    "reader_status": _obj({
+        **{reader: _obj({"status": _token}) for reader in ("ledger", "completed", "heldout", "history")},
+        "feeds": _map(_ident, _FEED_ROW)}),
+    "feeds": _obj({"feeds": _map(_ident, _FEED_ROW)}),
+    "quality": _obj({"artifact_graph": _obj({
+        "status": _token, "counts": _metrics(0), "unit_scan_status": _token,
+        "oldest_leaves": _list(_obj({"path": _path}), 20)})}),
+    "control_plane": _obj({"hypothesis_loop": _metrics()}),
+    "gaps": _list(_obj({"metric": _ident})),
+    "prompt_fit": _PROMPT_FIT,
+})
+
+_HYPOTHESIS_ENTRY = _obj({
+    "status": _token, "verdict": _one_of(_bool, _token), "answered_at": _ts, "first_seen": _ts,
+    "last_touched": _ts, "title": _text(300), "answered_evidence": _text(500),
+})
+
+_DURABLE_ENTRY = _obj({
+    "hypothesis_id": _ident, "id": _ident, "title": _text(300), "selection_status": _token,
+    "wsjf": _one_of(_number, _obj({"score": _number})),
+    "hadi": _obj({"hypothesis": _text(1000), "action": _text(1000)}),
+    "hypothesis": _text(1000), "action": _text(1000), "insight_criterion": _text(1000),
+    "success_criterion": _text(1000), "created_at": _ts, "created_ts": _ts,
+})
+
+_FUTILITY_GAP = _obj({"attempt_count": _count, "threshold": _num(0), "attempt_unit": _token,
+                      "surface": _list(_path), "metric": _ident})
+
+
+def _project_demand_futility(value: object, withheld: dict[str, int] | None) -> object:
+    if not isinstance(value, dict):
+        return _DROP
+    if isinstance(value.get("gaps"), dict):
+        return {"gaps": _map(_ident, _FUTILITY_GAP)(value["gaps"], withheld)}
+    return _map(_ident, _FUTILITY_GAP)(value, withheld)
+
+
+_SYSTEMD_DRIFT = _obj({
+    "status": _enum(*_VIEW_STATES), "reason": _code("systemd_drift_reason"), "details": _code("systemd_drift_details"),
+    "state": _token, "defect_count": _count, "scanned_at": _ts,
+    "findings": _obj({
+        "installed_not_in_release": _list(_obj({"owner": _token, "path": _path})),
+        "release_not_installed": _list(_path),
+        "content_differs": _list(_obj({"path": _path, "detail": _code("systemd_drift_detail")})),
+        "stray": _list(_path),
+    }),
+})
+
+#: #356: the typed projection of every public key. A key's node returns the
+#: fresh public value, or _DROP when the whole section has the wrong shape
+#: (the section then gets _PUBLIC_EMPTY's value).
+_PUBLIC_SCHEMA: dict[str, _Node] = {
+    "portfolio": _obj({"current": _ident, "nodes": _map(_ident, _obj({
+        "status": _token, "lever_metric": _ident, "direction": _token, "last_lever_value": _number}))}),
+    "scorecard": _SCORECARD,
+    "evolution_tree": _obj({"current_sha": _ident, "nodes": _map(_ident, _obj({
+        "ts": _ts, "cycle_id": _ident, "parent_sha": _ident, "branch": _ident,
+        "fitness": _obj({"reward": _number}), "outcome": _enum(*_LEDGER_OUTCOMES, fallback="unknown")}))}),
+    "hypotheses": _obj({"entries": _map(_ident, _HYPOTHESIS_ENTRY)}),
+    "hypotheses_durable": _obj({
+        "entries": _one_of(_list(_DURABLE_ENTRY), _map(_ident, _DURABLE_ENTRY)),
+        "model": _ident, "schema": _one_of(_count, _ident), "selected_hypothesis_id": _ident}),
+    "ledger_tail": _list(_LEDGER_ROW),
+    "ledger_history": _list(_LEDGER_ROW),
+    "demand_rotation": _obj({"served": _map(_ident, _ts)}),
+    "demand_completed": _obj({"entries": _map(_ident, _obj({
+        "cycle_id": _ident, "files_changed": _list(_path, 50), "confirmed": _bool}))}),
+    "skill_reads": _SKILL_READS,
+    "skill_evals": _SKILL_EVALS,
+    "ci_freshness": _project_ci_freshness,
+    "cycle_titles": _map(_ident, _text(300)),
+    "cycle_files": _map(_ident, _list(_path, 50)),
+    "llm_stats": _map(_ident, _obj({
+        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _token,
+        "any_length": _bool, "last_ts": _ts})),
+    "proposer_stats": _obj({
+        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
+        "llm_unavailable": _bool, "days": _map(_DAY_KEY, _CALL_STATS)}),
+    "local_ci": _LOCAL_CI,
+    "executor_model_status": _EXECUTOR_MODEL_STATUS,
+    "executor_llm_stats": _EXECUTOR_LLM_STATS,
+    "compaction": _COMPACTION,
+    "token_heatmap": _TOKEN_HEATMAP,
+    "lessons": _list(_LESSON_ROW),
+    "subagent_records": _list(_SUBAGENT_ROW),
+    "derived_view": _DERIVED_VIEW,
+    "reflections": _list(_REFLECTION_ROW),
+    "bridge_exit_streak": _BRIDGE_EXIT_STREAK,
+    "bridge_exits": _list(_BRIDGE_EXIT_ROW),
+    "bridge_runs": _list(_BRIDGE_RUN_ROW),
+    "bridge_active_run": _BRIDGE_ACTIVE_RUN,
+    "strategist_decisions": _list(_STRATEGIST_ROW),
+    "demand_futility": _project_demand_futility,
+    "systemd_drift": _SYSTEMD_DRIFT,
+    "agent_context": _AGENT_CONTEXT,
+    "generator_sha": _one_of(_ident, _enum("")),
+    "_newest_source_age_seconds": _num(0),
+}
+
+#: the value a section gets when its source has the wrong shape. A list
+#: section reads as empty; a dict section as "no data" ({} or None, as the
+#: renderer's own absent state expects).
+_PUBLIC_EMPTY: dict[str, object] = {
+    **{key: [] for key in ("ledger_tail", "ledger_history", "skill_evals", "lessons", "subagent_records",
+                           "reflections", "bridge_exits", "bridge_runs", "strategist_decisions")},
+    "bridge_exit_streak": {},
+}
 
 
 def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | None = None) -> object:
+    """#356: the typed projection of ONE public key (fresh objects only)."""
     if key in {"agents_meta", "goal_meta"}:
         return _project_meta(key, value)
     if key == "_error":
         # #315 R1: the transport/state-read error text can embed host paths
         # or stderr; only its presence is public.
         return "state_read_failed" if value else None
-    if key == "bridge_runs":
-        return _drop_invalid_counters(_project_bridge_runs(_drop_source_counters(value), withheld))
-    if key == "bridge_exit_streak" and not isinstance(value, dict):
-        # #315 R1: a non-dict streak is never passed through raw.
-        return {}
     if key in {"cycle_titles_error", "probe_error"}:
         if value:
-            if withheld is not None:
-                withheld["probe_error"] = withheld.get("probe_error", 0) + 1
+            _count_withheld(withheld, "probe_error")
             return "probe_unavailable"
         return "absent"
-    if key == "derived_view" and isinstance(value, dict):
-        return _drop_invalid_counters(_sanitize_derived_view(value, withheld))
-    if isinstance(value, (dict, list)):
-        value = _drop_source_counters(value)
-    if key == "ci_freshness" and isinstance(value, dict):
-        allowed = {"success", "failure", "cancelled", "skipped", "in_progress", "queued", "cannot_ask", "unanswerable", "absent", "unknown"}
-        result = {}
-        for repo, row in value.items():
-            if not isinstance(row, dict):
-                continue
-            state = row.get("state")
-            result[str(repo)] = {
-                "state": state if isinstance(state, str) and state in allowed else "unknown",
-                **({k: row[k] for k in ("latest_conclusion", "observed_at_utc", "actions_enabled") if k in row and isinstance(row[k], (str, int, bool))}),
-            }
-        return result
-    if key in {"ledger_tail", "ledger_history"} and isinstance(value, list):
-        rows = []
-        for row in value:
-            if not isinstance(row, dict):
-                rows.append(row)
-                continue
-            projected = dict(row)
-            if "reason" in projected:
-                projected["reason"] = _project_reason(projected["reason"], withheld, "ledger_reason")
-            if "decision" in projected:
-                decision = projected.get("decision")
-                projected["decision"] = decision if isinstance(decision, str) and decision in _PUBLIC_LEDGER_DECISIONS else "[withheld]"
-            rows.append(projected)
-        return _drop_invalid_counters(rows)
-    if key == "agent_context" and isinstance(value, dict):
-        ctx = copy.deepcopy(value)
-        for field in ("prompt_text", "task_text"):
-            if isinstance(ctx.get(field), str):
-                ctx[f"{field}_chars"] = len(ctx[field])
-                ctx[field] = None
-        # #315 R8: shapes the projection and the renderer iterate are
-        # normalized first -- a broken one becomes empty, never passes through.
-        if "tier2_skills" in ctx and not isinstance(ctx["tier2_skills"], list):
-            ctx["tier2_skills"] = []
-        if "tier2_memory" in ctx:
-            if not isinstance(ctx["tier2_memory"], dict):
-                ctx["tier2_memory"] = {}
-            elif "files" in ctx["tier2_memory"] and not isinstance(ctx["tier2_memory"]["files"], list):
-                ctx["tier2_memory"]["files"] = []
-        skills = ctx.get("tier2_skills")
-        for skill in skills if isinstance(skills, list) else []:
-            if isinstance(skill, dict):
-                for field in ("content", "desc"):
-                    if isinstance(skill.get(field), str):
-                        skill[f"{field}_chars"] = len(skill[field])
-                        skill[field] = ""
-        fit = ctx.get("prompt_fit")
-        if isinstance(fit, dict):
-            fit.pop("reason", None)
-            fit.pop("summary", None)
-        memory = ctx.get("tier2_memory")
-        mem_files = memory.get("files") if isinstance(memory, dict) else None
-        for mem in mem_files if isinstance(mem_files, list) else []:
-            if isinstance(mem, dict) and isinstance(mem.get("content"), str):
-                mem["content_chars"] = len(mem["content"])
-                mem["content"] = ""
-        return _drop_invalid_counters(ctx)
-    if key == "bridge_exit_streak" and isinstance(value, dict):
-        result = {k: value[k] for k in ("consecutive_failures", "last_ts", "count")
-                  if k in value and isinstance(value[k], int) and not isinstance(value[k], bool) and value[k] >= 0}
-        if value.get("last_error"):
-            result["last_error"] = "error"
-        return result
-    if key == "bridge_exits" and isinstance(value, list):
-        projected = []
-        for row in value:
-            if not isinstance(row, dict):
-                continue
-            item = {k: row[k] for k in ("ts", "cycle_id", "exit_code", "classification") if k in row}
-            if "exit_code" in item and (isinstance(item["exit_code"], bool) or not isinstance(item["exit_code"], int)):
-                item.pop("exit_code")
-            if row.get("error"):
-                item["error"] = "error"
-            projected.append(item)
-        return projected
-    if key == "bridge_active_run" and isinstance(value, dict):
-        allowed = {"run_id", "cycle_id", "started_at", "finished_at", "classification", "exit_status", "outcome"}
-        result = {k: value[k] for k in allowed if k in value and isinstance(value[k], (str, int, bool))}
-        if value.get("error"):
-            result["error"] = "bridge error withheld"
-        return result
-    if key == "subagent_records" and isinstance(value, list):
-        records = []
-        for rec in value:
-            if isinstance(rec, dict):
-                r = dict(rec)
-                for field in ("task", "summary", "result", "task_excerpt", "summary_excerpt", "result_excerpt"):
-                    if field in r:
-                        if isinstance(r[field], str):
-                            r[f"{field}_chars"] = len(r[field])
-                        r[field] = ""
-                records.append(r)
-            else:
-                records.append(rec)
-        return _drop_invalid_counters(records)
-    if key == "reflections" and isinstance(value, list):
-        refs = []
-        for rec in value:
-            if isinstance(rec, dict):
-                r = dict(rec)
-                if "summary" in r:
-                    r["summary_chars"] = len(r["summary"]) if isinstance(r["summary"], str) else 0
-                    r["summary"] = ""
-                if "findings" in r:
-                    r["findings_count"] = len(r["findings"]) if isinstance(r["findings"], list) else 0
-                    r["findings"] = []
-                if "recommendations" in r:
-                    r["recommendations_count"] = len(r["recommendations"]) if isinstance(r["recommendations"], list) else 0
-                    r["recommendations"] = []
-                refs.append(r)
-            else:
-                refs.append(rec)
-        return _drop_invalid_counters(refs)
-    if key == "strategist_decisions" and isinstance(value, list):
-        decs = []
-        for rec in value:
-            if isinstance(rec, dict):
-                r = dict(rec)
-                decision = r.get("decision")
-                if decision is not None:
-                    r["decision"] = _project_reason(decision, withheld, "strategist_decision")
-                r["rationale"] = ""
-                r.pop("details", None)
-                reason = r.get("reason")
-                if reason is not None:
-                    r["refused"] = (
-                        isinstance(reason, str)
-                        and (reason in {"refused", "declined"}
-                             or reason.startswith(("refused:", "declined:")))
-                    )
-                    r["reason"] = "refused" if r["refused"] else _project_reason(
-                        reason, withheld, "strategist_reason")
-                decs.append(r)
-            else:
-                decs.append(rec)
-        return _drop_invalid_counters(decs)
-    if key == "lessons" and isinstance(value, list):
-        les = []
-        for rec in value:
-            if isinstance(rec, dict):
-                r = dict(rec)
-                for field in ("problem", "solution", "insight", "result"):
-                    if field in r:
-                        if isinstance(r[field], str):
-                            r[f"{field}_chars"] = len(r[field])
-                        r[field] = ""
-                r["_v2_lesson"] = bool(rec.get("problem"))
-                les.append(r)
-            else:
-                les.append(rec)
-        return _drop_invalid_counters(les)
-    if key == "local_ci" and isinstance(value, dict):
-        l_proj: dict[str, Any] = {k: value[k] for k in ("probe", "state", "ts_utc") if k in value}
-        exit_code = value.get("exit_code")
-        if isinstance(exit_code, int) and not isinstance(exit_code, bool):
-            l_proj["exit_code"] = exit_code
-        targets_checked = value.get("targets_checked")
-        if isinstance(targets_checked, int) and not isinstance(targets_checked, bool) and targets_checked >= 0:
-            l_proj["targets_checked"] = targets_checked
-        state = value.get("state")
-        if state == "targets_missing":
-            l_proj["summary"] = "targets missing"
-        elif state == "ran":
-            # #315 R2: only the VALIDATED exit code (an int, never a bool --
-            # False == 0 would read "passed") may name the result.
-            code = l_proj.get("exit_code")
-            if code is None:
-                l_proj["summary"] = "result unavailable"
-            else:
-                l_proj["summary"] = "passed" if code == 0 else f"failed (exit {code})"
-        elif value.get("probe") == "absent":
-            l_proj["summary"] = "local CI status absent"
-        elif value.get("probe") == "probe_unavailable":
-            l_proj["summary"] = "local CI status unavailable"
-        return _drop_invalid_counters(l_proj)
-    return _drop_invalid_counters(value)
-def _sanitize_derived_view(value: dict[str, Any], withheld: dict[str, int] | None) -> dict[str, Any]:
-    proj: dict[str, Any] = {}
-    for field in ("status", "schema_version", "generated_at_utc", "sort", "derived_status"):
-        if field in value:
-            proj[field] = value[field]
-    status = value.get("status")
-    if isinstance(status, str) and status in {"absent", "probe_unavailable", "present"}:
-        proj["reason"] = {"absent": "derived view absent", "probe_unavailable": "derived view unavailable", "present": "derived view present"}[status]
-    charter = value.get("charter")
-    if isinstance(charter, dict):
-        source = charter.get("source")
-        proj["charter"] = {k: charter[k] for k in ("source", "merged") if k in charter}
-        if source == "release_goals_md" and isinstance(charter.get("text"), str):
-            proj["charter"]["text"] = charter["text"]
-        elif isinstance(charter.get("text"), str) and charter["text"]:
-            if withheld is not None:
-                withheld["derived_charter_text"] = withheld.get("derived_charter_text", 0) + 1
-    priorities = value.get("derived_priorities")
-    if isinstance(priorities, list):
-        result = []
-        for item in priorities:
-            if not isinstance(item, dict):
-                continue
-            row = {k: item[k] for k in ("label", "vector", "direction", "added_utc") if k in item}
-            number = item.get("number")
-            if isinstance(number, int) and not isinstance(number, bool):
-                row["number"] = number
-            result.append(row)
-        proj["derived_priorities"] = result
-    items = value.get("priority_items")
-    if isinstance(items, list):
-        result = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            row = {k: item[k] for k in ("rank", "id", "kind", "vector", "provenance", "direction") if k in item}
-            number = item.get("number")
-            if isinstance(number, int) and not isinstance(number, bool):
-                row["number"] = number
-            if item.get("provenance") == "operator":
-                row["label"] = f"Priority #{number}" if isinstance(number, int) and not isinstance(number, bool) else "Operator priority"
-            elif isinstance(item.get("label"), str):
-                row["label"] = item["label"]
-            evidence = item.get("evidence")
-            if isinstance(evidence, str) and evidence and withheld is not None:
-                withheld["priority_evidence"] = withheld.get("priority_evidence", 0) + 1
-            result.append(row)
-        proj["priority_items"] = result
-    return proj
+    node = _PUBLIC_SCHEMA.get(key)
+    if node is None or value is None:
+        return None
+    projected = node(value, withheld)
+    if projected is _DROP:
+        _count_withheld(withheld, "projection_shape")
+        return copy.deepcopy(_PUBLIC_EMPTY.get(key))
+    return projected
 
 
 def split_render_inputs(data: dict) -> tuple[dict, dict]:
@@ -953,7 +1375,12 @@ def publish_ordered(
     version: str,
     publisher: Callable[[dict[str, str]], tuple[int, dict[str, str]]],
     generated_at: str | None = None,
+    host_warnings: list[str] | None = None,
 ) -> tuple[int, dict[str, str]]:
+    """#356: a host error whose ``activated`` is true (SnapshotCleanupError:
+    ``current`` already serves the new snapshot, only pruning older ones
+    failed) is NOT a host failure. It is appended to ``host_warnings`` (when
+    given) and the call returns the publisher's result as on success."""
     versioned_public = add_snapshot_version(public_pages, version, generated_at=generated_at)
     versioned_private = add_snapshot_version(private_pages, version, generated_at=generated_at)
 
@@ -969,6 +1396,10 @@ def publish_ordered(
         atomic_snapshot_swap(site_root, host_pages, version)
     except Exception as exc:
         host_error = exc
+    if host_error is not None and getattr(host_error, "activated", False) is True:
+        if host_warnings is not None:
+            host_warnings.append(f"ADR-036 host snapshot cleanup warning: {host_error}")
+        host_error = None
 
     try:
         publish_result = publisher(versioned_public)
