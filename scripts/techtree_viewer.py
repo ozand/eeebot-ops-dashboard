@@ -1664,9 +1664,16 @@ def read_executor_stats():
                 for line in fh:
                     try: row = json.loads(line)
                     except Exception: continue
-                    if row.get('component') == 'executor' and isinstance(row.get('prompt_tokens'), int):
+                    if row.get('component') == 'executor':
                         if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
-                            latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': row.get('prompt_tokens'), 'ts': row.get('ts')}
+                            prompt_tokens = row.get('prompt_tokens')
+                            context_window = row.get('context_window')
+                            latest = {
+                                'cycle_id': row.get('cycle_id'),
+                                'prompt_tokens': prompt_tokens if isinstance(prompt_tokens, int) and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0 else None,
+                                'context_window': context_window if isinstance(context_window, int) and not isinstance(context_window, bool) and context_window > 0 else None,
+                                'ts': row.get('ts'),
+                            }
         except Exception:
             continue
     return latest
