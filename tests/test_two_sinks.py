@@ -343,45 +343,6 @@ def test_m3_counters_are_recomputed_and_renderer_rejects_string_counts() -> None
     assert "PRIVATE_CANARY" not in rendered
 
 
-def test_m6_snapshot_server_blocks_encoded_alias_escape_and_head_routes(tmp_path: Path) -> None:
-    import http.client
-    import threading
-    from http.server import ThreadingHTTPServer
-    from urllib.request import urlopen
-    from scripts.two_sinks import SnapshotHTTPRequestHandler
-
-    root = tmp_path / "site"
-    atomic_snapshot_swap(root, {"index.html": "root"}, "v1")
-    class Handler(SnapshotHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=str(root), **kwargs)
-    Handler.site_root = root.resolve()
-    class Server(ThreadingHTTPServer):
-        daemon_threads = True
-    server = Server(("127.0.0.1", 0), Handler)
-    worker = threading.Thread(target=server.serve_forever, daemon=True)
-    worker.start()
-    try:
-        base = f"http://127.0.0.1:{server.server_port}"
-        for route in ("/%63urrent/", "/./current/"):
-            conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
-            conn.request("HEAD", route)
-            first = conn.getresponse()
-            assert first.status == 302
-            assert first.getheader("Location") == "/v1/index.html"
-            conn.request("HEAD", first.getheader("Location"))
-            second = conn.getresponse()
-            assert second.status == 200
-            assert second.read() == b""
-            conn.close()
-        for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
-            with pytest.raises(Exception):
-                urlopen(base + route)
-    finally:
-        server.shutdown()
-        server.server_close()
-        worker.join(timeout=2)
-
 
 def test_m8_host_failure_state_is_recorded_when_github_publish_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from scripts import techtree_autopublish as ap
@@ -490,30 +451,6 @@ def test_snapshot_swap_replaces_existing_symlink_atomically(tmp_path: Path):
     atomic_snapshot_swap(root, {"index.html": "v2"}, "v2")
     assert (root / "current").resolve().name == "v2"
 
-
-def test_server_root_redirects_to_version_snapshot(tmp_path: Path):
-    """ADR-036 Decision 2: root :8080 redirects to /<version>/ so reader stays in one snapshot."""
-    from scripts.two_sinks import SnapshotHTTPRequestHandler
-    root = tmp_path / "site"
-    atomic_snapshot_swap(root, {"index.html": "hello"}, "v1")
-
-    class MockHandler(SnapshotHTTPRequestHandler):
-        def __init__(self, path):
-            self.path = path
-            self.site_root = root
-            self.response_code = None
-            self.headers_sent = {}
-        def send_response(self, code):
-            self.response_code = code
-        def send_header(self, k, v):
-            self.headers_sent[k] = v
-        def end_headers(self):
-            pass
-
-    h = MockHandler("/")
-    h.do_GET()
-    assert h.response_code == 302
-    assert h.headers_sent.get("Location") == "/v1/index.html"
 
 
 def test_snapshot_swap_is_atomic_for_readers(tmp_path: Path, monkeypatch):
@@ -962,30 +899,6 @@ def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     assert projected["problem_chars"] == 28
     assert projected["solution_chars"] == 31
 
-
-def test_f10_current_alias_redirects_and_swap_preserves_old_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """External review F10: /current/... must redirect to /<version>/... to prevent reader snapshot skew."""
-    from scripts.two_sinks import SnapshotHTTPRequestHandler
-    root = tmp_path / "site"
-    atomic_snapshot_swap(root, {"index.html": "v1", "data.json": "{}"}, "v1")
-
-    class MockHandler(SnapshotHTTPRequestHandler):
-        def __init__(self, path):
-            self.path = path
-            self.site_root = root
-            self.response_code = None
-            self.headers_sent = {}
-        def send_response(self, code):
-            self.response_code = code
-        def send_header(self, k, v):
-            self.headers_sent[k] = v
-        def end_headers(self):
-            pass
-
-    h = MockHandler("/current/cycle.html?id=cycle-123")
-    h.do_GET()
-    assert h.response_code == 302
-    assert h.headers_sent.get("Location") == "/v1/cycle.html?id=cycle-123"
 
 
 def test_bind_settings_reject_ipv6_addresses() -> None:

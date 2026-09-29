@@ -106,6 +106,9 @@ def test_m5_built_tree_scan_uses_relative_paths(tmp_path: Path, monkeypatch: pyt
 
 
 def test_m6_server_canonicalizes_paths_and_head_redirects(tmp_path: Path) -> None:
+    """#315 part A (architect decision) supersedes the redirect contract:
+    versions are not addressable, nothing redirects, aliases of current
+    are 404, and HEAD / is served from the current target."""
     from http.server import ThreadingHTTPServer
     from scripts.two_sinks import SnapshotHTTPRequestHandler
     root = tmp_path / "site"
@@ -126,24 +129,21 @@ def test_m6_server_canonicalizes_paths_and_head_redirects(tmp_path: Path) -> Non
     thread.start()
     try:
         base = f"http://127.0.0.1:{server.server_port}"
-        for route in ("/%63urrent/", "/./current/"):
+        for route in ("/%63urrent/", "/./current/", "/v1/index.html"):
             conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
             conn.request("HEAD", route)
-            first = conn.getresponse()
-            assert first.status == 302
-            assert first.getheader("Location") == "/v1/index.html"
-            conn.request("HEAD", first.getheader("Location"))
-            second = conn.getresponse()
-            assert second.status == 200
-            assert second.read() == b""
+            response = conn.getresponse()
+            assert response.status == 404
+            assert response.getheader("Location") is None
             conn.close()
         for route in ("/.v1.tmp/index.html", "/%2e%2e/README.md", "http://elsewhere/"):
             with pytest.raises(Exception):
                 urllib.request.urlopen(base + route)
         conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
-        conn.request("HEAD", "/v1/index.html")
+        conn.request("HEAD", "/")
         response = conn.getresponse()
         assert response.status == 200
+        assert response.getheader("Content-Length") == "2"
         assert response.read() == b""
         conn.close()
     finally:

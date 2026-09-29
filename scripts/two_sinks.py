@@ -5,9 +5,9 @@ import argparse
 import copy
 import json
 import os
-import posixpath
 import re
 import shutil
+import stat
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
@@ -85,78 +85,151 @@ def parse_bind_settings(address: str = DEFAULT_BIND_ADDRESS, port: int = DEFAULT
     return address, int(port)
 
 
+#: #315 F4: names a snapshot version may never take -- the activation link
+#: itself. Names starting with "." are reserved for staging/link temporaries.
+_RESERVED_VERSION_NAMES = frozenset({"current"})
+
+
+def validate_version_name(version: object) -> str:
+    """#315 F4: the ONE version-name validator shared by the writer
+    (atomic_snapshot_swap/add_snapshot_version) and the server."""
+    if (not isinstance(version, str) or not _VERSION_RE.fullmatch(version)
+            or version.startswith(".") or version in _RESERVED_VERSION_NAMES):
+        raise ValueError(f"invalid snapshot version: {version!r}")
+    return version
+
+
+def _is_valid_version_name(version: object) -> bool:
+    try:
+        validate_version_name(version)
+    except ValueError:
+        return False
+    return True
+
+
+def current_snapshot_target(site_root: Path) -> Path | None:
+    """The resolved directory ``site_root/current`` points at, or None when
+    it is not a symlink to a complete, validly named sibling version."""
+    root = Path(os.path.realpath(site_root))
+    current = root / "current"
+    try:
+        if not current.is_symlink():
+            return None
+        target = Path(os.path.realpath(current))
+    except OSError:
+        return None
+    if target.parent != root or not _is_valid_version_name(target.name) or not _complete_snapshot(target):
+        return None
+    return target
+
+
+def _has_control_character(text: str) -> bool:
+    return any(ord(char) < 0x20 or ord(char) == 0x7F for char in text)
+
+
+class _RequestRejected(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
 class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
+    """#315 part A: serves ONLY the snapshot ``current`` points at.
+
+    Versions are not addressable in the URL and nothing redirects. Each
+    request reads ``current`` once and resolves its path inside that one
+    target; a path segment naming ``current`` or any entry of the site root
+    (a version directory, staging, the lock) is 404. The file is opened
+    before any header is sent (os.open + fstat; the last component must not
+    be a symlink; the opened file's realpath must lie inside the target and
+    be the same inode), so Content-Length is the size of the bytes actually
+    sent and a symlink swapped in between check and open is refused.
+    """
+
     site_root: Path
 
     def list_directory(self, path: str | os.PathLike) -> Any:
         self.send_error(404, "Directory listing disabled")
         return None
 
-    def _canonical_target(self) -> tuple[str, str] | None:
+    def _request_segments(self) -> tuple[list[str], bool]:
+        """(path segments, trailing slash) of the decoded request path."""
         raw = self.path
-        parts = urlsplit(raw)
-        if parts.scheme or parts.netloc or raw.startswith("//"):
-            return None
+        try:
+            parts = urlsplit(raw)  # F10: a malformed URI is a 400, not a crash
+        except ValueError as exc:
+            raise _RequestRejected(400, "Invalid request target") from exc
+        if parts.scheme or parts.netloc or raw.startswith("//") or not parts.path.startswith("/"):
+            raise _RequestRejected(400, "Invalid request target")
         try:
             decoded = unquote(parts.path, errors="strict")
-        except (UnicodeDecodeError, ValueError):
-            return None
-        if "\x00" in decoded or "\\" in decoded or "#" in raw:
-            return None
-        if not parts.path.startswith("/"):
-            return None
-        return posixpath.normpath("/" + decoded.lstrip("/")), ("?" + parts.query if parts.query else "")
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise _RequestRejected(400, "Invalid request target") from exc
+        if _has_control_character(decoded) or "\\" in decoded:
+            raise _RequestRejected(400, "Invalid request target")
+        segments = [segment for segment in decoded.split("/") if segment]
+        if any(segment in {".", ".."} for segment in segments):
+            raise _RequestRejected(404, "Not found")
+        return segments, decoded.endswith("/")
 
-    def _redirect(self, path: str, query: str, method: str = "GET") -> bool:
-        if path not in {"/", "/index.html", "/current"} and not path.startswith("/current/"):
-            return False
-        current = self.site_root / "current"
-        try:
-            target = current.resolve(strict=True)
-        except OSError:
-            self.send_error(503, "Current snapshot unavailable")
-            return True
-        if (not current.is_symlink() or target.parent != self.site_root.resolve()
-                or not _VERSION_RE.fullmatch(target.name) or target.name.startswith(".")
-                or not _complete_snapshot(target)):
-            self.send_error(503, "Current snapshot unavailable")
-            return True
-        version = target.name
-        if not _VERSION_RE.fullmatch(version):
-            self.send_error(503, "Current snapshot unavailable")
-            return True
-        rest = path[len("/current/"):] if path.startswith("/current/") else ""
-        location = f"/{version}/{rest}" if rest else f"/{version}/index.html"
-        self.send_response(302)
-        self.send_header("Location", location + query)
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-        return True
+    def _open_inside(self, target: Path, segments: list[str]) -> tuple[int, os.stat_result, str]:
+        """Open ``segments`` inside ``target`` before any header is sent."""
+        candidate = os.path.join(str(target), *segments) if segments else str(target)
+        for _attempt in range(2):
+            try:
+                link_stat = os.lstat(candidate)
+            except OSError as exc:
+                raise _RequestRejected(404, "Not found") from exc
+            if stat.S_ISLNK(link_stat.st_mode):
+                raise _RequestRejected(404, "Not found")
+            if stat.S_ISDIR(link_stat.st_mode):
+                candidate = os.path.join(candidate, "index.html")  # F9: explicit index
+                continue
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+            try:
+                fd = os.open(candidate, flags)
+            except OSError as exc:
+                raise _RequestRejected(404, "Not found") from exc
+            try:
+                opened = os.fstat(fd)
+                real = os.path.realpath(candidate)
+                real_stat = os.stat(real)
+                if (not stat.S_ISREG(opened.st_mode)
+                        or not Path(real).is_relative_to(target)
+                        or (opened.st_dev, opened.st_ino) != (real_stat.st_dev, real_stat.st_ino)):
+                    raise _RequestRejected(404, "Not found")
+            except BaseException:
+                os.close(fd)
+                raise
+            return fd, opened, real
+        raise _RequestRejected(404, "Not found")
 
     def _serve_snapshot(self, method: str) -> None:
-        request = self._canonical_target()
-        if request is None:
-            self.send_error(400, "Invalid request target")
+        try:
+            segments, trailing_slash = self._request_segments()
+            site_root = Path(os.path.realpath(self.site_root))
+            target = current_snapshot_target(site_root)  # read ONCE per request
+            if target is None:
+                raise _RequestRejected(503, "Current snapshot unavailable")
+            try:
+                site_entries = set(os.listdir(site_root))
+            except OSError as exc:
+                raise _RequestRejected(503, "Current snapshot unavailable") from exc
+            if any(segment == "current" or segment in site_entries for segment in segments):
+                raise _RequestRejected(404, "Not found")
+            if trailing_slash or not segments:
+                segments = [*segments, "index.html"]
+            fd, opened, real = self._open_inside(target, segments)
+        except _RequestRejected as rejected:
+            self.send_error(rejected.code, rejected.message)
             return
-        path, query = request
-        if path != "/" and path.endswith("/"):
-            path = path.rstrip("/") + "/index.html"
-        if path in {"/", "/index.html", "/current"} or path.startswith("/current/"):
-            self._redirect(path, query, method)
-            return
-        target = self._validate_existing_snapshot(path)
-        if target is None:
-            return
-        if method == "HEAD":
+        with os.fdopen(fd, "rb") as stream:
             self.send_response(200)
-            self.send_header("Content-Length", str(target.stat().st_size))
+            self.send_header("Content-Type", self.guess_type(real))  # F11: same headers for HEAD
+            self.send_header("Content-Length", str(opened.st_size))
             self.end_headers()
-        else:
-            self.send_response(200)
-            self.send_header("Content-Length", str(target.stat().st_size))
-            self.send_header("Content-Type", self.guess_type(str(target)))
-            self.end_headers()
-            with target.open("rb") as stream:
+            if method != "HEAD":
                 shutil.copyfileobj(stream, self.wfile)
 
     def do_GET(self) -> None:
@@ -168,29 +241,6 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
     def send_response(self, code: int, message: str | None = None) -> None:
         super().send_response(code, message)
         self._last_response_code = code
-
-    def _validate_existing_snapshot(self, path: str) -> Path | None:
-        relative = Path(path.lstrip("/"))
-        if (not relative.parts or not _VERSION_RE.fullmatch(relative.parts[0])
-                or relative.parts[0].startswith(".")):
-            self.send_error(404)
-            return None
-        if path.endswith("/"):
-            relative = Path(relative.parts[0], *relative.parts[1:], "index.html")
-        root = self.site_root.resolve()
-        version_root = root / relative.parts[0]
-        parts = relative.parts[1:]
-        target = version_root.joinpath(*parts)
-        if (not _complete_snapshot(version_root)
-                or any((root / Path(*relative.parts[:index])).is_symlink()
-                       for index in range(1, len(relative.parts) + 1))
-                or not target.resolve().is_relative_to(version_root.resolve())):
-            self.send_error(404)
-            return None
-        if not target.resolve().is_relative_to(version_root.resolve()) or not target.is_file():
-            self.send_error(404)
-            return None
-        return target
 
 
 def _complete_snapshot(path: Path) -> bool:
@@ -209,15 +259,8 @@ def _validate_page_name(name: str) -> None:
 def serve_site(site_root: Path, address: str = DEFAULT_BIND_ADDRESS, port: int = DEFAULT_BIND_PORT) -> None:
     address, port = parse_bind_settings(address, port)
     site_root = site_root.resolve()
-    current = site_root / "current"
-    try:
-        target = current.resolve(strict=True)
-    except OSError as exc:
-        raise FileNotFoundError(f"ADR-036 current snapshot unavailable: {current}") from exc
-    if (not current.is_symlink() or target.parent != site_root
-            or not _VERSION_RE.fullmatch(target.name) or target.name.startswith(".")
-            or not _complete_snapshot(target)):
-        raise FileNotFoundError(f"ADR-036 current snapshot unavailable: {current}")
+    if current_snapshot_target(site_root) is None:
+        raise FileNotFoundError(f"ADR-036 current snapshot unavailable: {site_root / 'current'}")
 
     class Handler(SnapshotHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
@@ -556,13 +599,21 @@ def scan_pages(pages: Mapping[str, str]) -> None:
 
 
 def scan_built_tree(root: Path) -> None:
-    """Scan all files on disk under root using scripts/publish_scan.py."""
+    """Scan all files on disk under root using scripts/publish_scan.py.
+
+    #315 C2: fail closed on anything but directories and regular files. A
+    symlink is committed by git as its TARGET PATH, which the content scan
+    never sees (it would read the file the link points at); a FIFO/device
+    is not page content at all."""
     root = root.resolve()
-    pages = {
-        path.relative_to(root).as_posix(): path.read_text(encoding="utf-8", errors="replace")
-        for path in root.rglob("*")
-        if path.is_file()
-    }
+    pages = {}
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        mode = os.lstat(path).st_mode
+        if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)):
+            raise PublicationScanError(f"ADR-036 built tree contains a non-regular entry: {relative}")
+        if stat.S_ISREG(mode):
+            pages[relative] = path.read_text(encoding="utf-8", errors="replace")
     _publish_scan_pages(pages)
 
 
@@ -574,8 +625,7 @@ def validate_publish_allowlist(pages: Mapping[str, str]) -> None:
 
 
 def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str | None = None) -> dict[str, str]:
-    if not _VERSION_RE.fullmatch(version):
-        raise ValueError(f"invalid snapshot version: {version!r}")
+    validate_version_name(version)
     for name in pages:
         _validate_page_name(name)
     stamp = generated_at or __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
@@ -604,79 +654,203 @@ def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
     return {}
 
 
+class SnapshotActivationError(RuntimeError):
+    """#315 F6: ``current`` was NOT switched; the candidate was removed
+    (``cleanup_error`` says if that removal itself failed)."""
+
+    activated = False
+
+    def __init__(self, message: str, cleanup_error: BaseException | None = None):
+        super().__init__(message)
+        self.cleanup_error = cleanup_error
+
+
+class SnapshotCleanupError(RuntimeError):
+    """#315 F6: ``current`` WAS switched to ``destination``; only pruning
+    older snapshots afterwards failed."""
+
+    activated = True
+
+    def __init__(self, message: str, destination: Path):
+        super().__init__(message)
+        self.destination = destination
+
+
+class _SiteLock:
+    """#315 F7: one publisher at a time for the whole capture, install,
+    activate and cleanup cycle -- an exclusive lock on ``.publish.lock`` in
+    the site root (the one directory the publisher unit may write; the
+    server serves only inside the current target, never a site-root entry,
+    and the dotted name is never a version, so it is never pruned)."""
+
+    def __init__(self, site_root: Path):
+        self.path = site_root / ".publish.lock"
+        self._stream = None
+
+    def __enter__(self) -> "_SiteLock":
+        self._stream = open(self.path, "a+b")
+        try:
+            import fcntl
+        except ImportError:  # Windows
+            import msvcrt
+            import time as _time
+            self._stream.seek(0)
+            while True:
+                try:
+                    msvcrt.locking(self._stream.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    _time.sleep(0.05)
+        else:
+            fcntl.flock(self._stream.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *_exc) -> None:
+        try:
+            try:
+                import fcntl
+            except ImportError:
+                import msvcrt
+                self._stream.seek(0)
+                msvcrt.locking(self._stream.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(self._stream.fileno(), fcntl.LOCK_UN)
+        finally:
+            self._stream.close()
+
+
+def _chmod_strict(path: Path, mode: int) -> None:
+    """#315 F5: a permission the DynamicUser server needs is never skipped
+    silently -- a chmod failure fails the swap."""
+    os.chmod(path, mode)
+
+
 def atomic_snapshot_swap(site_root: Path, pages: dict[str, str], version: str) -> Path:
-    """Build immutable version dir, then atomically replace current symlink."""
-    if not _VERSION_RE.fullmatch(version):
-        raise ValueError(f"invalid snapshot version: {version!r}")
+    """Build an immutable version dir, then atomically replace the current symlink.
+
+    #315: the version name goes through the shared validator (F4); the
+    candidate must be complete before activation -- non-empty pages with an
+    index.html (F4); every directory created is chmod-ed and a chmod error
+    fails the swap (F5); a failed activation removes the non-activated
+    candidate and raises SnapshotActivationError, while a failure pruning
+    older snapshots after activation raises SnapshotCleanupError (F6); the
+    whole cycle runs under an exclusive publisher lock (F7).
+    """
+    validate_version_name(version)
+    if not pages or "index.html" not in pages:
+        raise ValueError("ADR-036 snapshot candidate is incomplete: pages must be non-empty and include index.html")
     for name in pages:
         _validate_page_name(name)
+    created_root = not site_root.exists()
     site_root.mkdir(parents=True, exist_ok=True)
-    try:
-        os.chmod(site_root, 0o755)
-    except OSError:
-        pass
+    if created_root:
+        _chmod_strict(site_root, 0o755)
+    with _SiteLock(site_root):
+        return _swap_locked(site_root, pages, version)
+
+
+def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
     destination = site_root / version
     current_link = site_root / "current"
-    previous = current_link.resolve() if current_link.is_symlink() else None
-    if destination.exists():
+    previous = current_snapshot_target(site_root)
+    if destination.exists() or destination.is_symlink():
         raise FileExistsError(destination)
     staging = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=site_root.parent)).resolve()
     if staging.parent != site_root.parent.resolve():
         shutil.rmtree(staging, ignore_errors=True)
         raise OSError("snapshot staging must be a sibling of site_root for atomic rename")
     try:
-        try:
-            os.chmod(staging, 0o755)
-        except OSError:
-            pass
+        _chmod_strict(staging, 0o755)
         for name, contents in pages.items():
             _validate_page_name(name)
             target = staging / name
+            missing = []
+            parent = target.parent
+            while parent != staging and not parent.exists():
+                missing.append(parent)
+                parent = parent.parent
             target.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                os.chmod(target.parent, 0o755)
-            except OSError:
-                pass
+            for created in reversed(missing):  # F5: EVERY created directory
+                _chmod_strict(created, 0o755)
             target.write_text(contents, encoding="utf-8")
-            try:
-                os.chmod(target, 0o644)
-            except OSError:
-                pass
+            _chmod_strict(target, 0o644)
+        if not _complete_snapshot(staging):
+            raise ValueError("ADR-036 snapshot candidate is incomplete: index.html missing after install")
         os.replace(staging, destination)
-        link_tmp = site_root / f".current-{version}"
+    except BaseException:
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+    link_tmp = site_root / f".current-{version}"
+    try:
+        if link_tmp.is_symlink() or link_tmp.exists():
+            link_tmp.unlink()
         link_tmp.symlink_to(version, target_is_directory=True)
         try:
             os.replace(link_tmp, current_link)
         except OSError:
-            if os.name == "nt":
-                if current_link.is_symlink():
-                    current_link.unlink()
-                os.replace(link_tmp, current_link)
-            else:
+            if os.name != "nt":
                 raise
-        keep_dirs = {destination.resolve()}
-        if previous and previous.is_dir():
-            keep_dirs.add(previous)
-        cleanup_failures = []
-        for old in site_root.iterdir():
-            if old.is_dir() and not old.is_symlink() and old.resolve() not in keep_dirs and _VERSION_RE.fullmatch(old.name):
-                try:
-                    shutil.rmtree(old)
-                except Exception as exc:
-                    cleanup_failures.append(f"{old.name}: {exc}")
-        if cleanup_failures:
-            raise HostSnapshotError(f"Snapshot cleanup failed: {'; '.join(cleanup_failures)}")
-        return destination
-    except BaseException:
-        if staging.exists():
-            shutil.rmtree(staging)
-        raise
+            # Windows cannot replace an existing directory symlink in one
+            # rename: unlink, then rename -- and put the previous link back
+            # if the rename still fails, so a failed activation never leaves
+            # the site without `current`.
+            if current_link.is_symlink():
+                current_link.unlink()
+            try:
+                os.replace(link_tmp, current_link)
+            except OSError:
+                if previous is not None and not current_link.is_symlink():
+                    current_link.symlink_to(previous.name, target_is_directory=True)
+                raise
+    except BaseException as exc:
+        cleanup_error = None
+        for leftover in (link_tmp,):
+            try:
+                if leftover.is_symlink() or leftover.exists():
+                    leftover.unlink()
+            except OSError as leftover_exc:
+                cleanup_error = leftover_exc
+        try:
+            shutil.rmtree(destination)
+        except OSError as rm_exc:
+            cleanup_error = cleanup_error or rm_exc
+        raise SnapshotActivationError(
+            f"ADR-036 snapshot activation failed ({type(exc).__name__}); candidate {version} removed"
+            + (f"; candidate cleanup failed: {type(cleanup_error).__name__}" if cleanup_error else ""),
+            cleanup_error=cleanup_error,
+        ) from exc
+
+    keep_dirs = {destination.resolve()}
+    if previous is not None:
+        keep_dirs.add(previous)
+    cleanup_failures = []
+    for old in site_root.iterdir():
+        if (old.is_dir() and not old.is_symlink() and old.resolve() not in keep_dirs
+                and _is_valid_version_name(old.name)):
+            try:
+                shutil.rmtree(old)
+            except Exception as exc:
+                cleanup_failures.append(f"{old.name}: {type(exc).__name__}")
+    if cleanup_failures:
+        raise SnapshotCleanupError(
+            f"Snapshot activated as {version}; pruning older snapshots failed: {'; '.join(cleanup_failures)}",
+            destination,
+        )
+    return destination
 
 
 class HostSnapshotError(RuntimeError):
-    def __init__(self, message: str, publish_result: tuple[int, dict[str, str]] | None = None):
+    def __init__(
+        self,
+        message: str,
+        publish_result: tuple[int, dict[str, str]] | None = None,
+        host_error: BaseException | None = None,
+    ):
         super().__init__(message)
         self.publish_result = publish_result
+        self.host_error = host_error
 
 
 def publish_ordered(
@@ -703,7 +877,16 @@ def publish_ordered(
     except Exception as exc:
         host_error = exc
 
-    publish_result = publisher(versioned_public)
+    try:
+        publish_result = publisher(versioned_public)
+    except BaseException as exc:
+        # #315 F3: the publisher's failure must not erase the host outcome.
+        # The exception carries it: host_error is the host sink's exception
+        # (None when the host snapshot was installed and activated).
+        exc.host_error = host_error
+        raise
     if host_error is not None:
-        raise HostSnapshotError(f"ADR-036 host snapshot failed: {type(host_error).__name__}", publish_result)
+        raise HostSnapshotError(
+            f"ADR-036 host snapshot failed: {type(host_error).__name__}", publish_result, host_error=host_error,
+        )
     return publish_result
