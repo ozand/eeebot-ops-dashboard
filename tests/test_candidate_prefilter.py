@@ -22,8 +22,8 @@ def test_all_secret_key_shapes_are_candidates_before_full_scan():
         ("DB_PASS=abcdefghijk", ps._ENV_SECRET_KV_RE),
         ("AUTH=abcdefghijk", ps._ENV_SECRET_KV_RE),
         ('{"my_token_value":"abcdefghijk"}', ps._JSON_SECRET_KEY_RE),
-        ("Basic " + "A" * 16, ps.STANDALONE_PATTERNS[6].pattern),
-        ("Authorization : Basic " + "A" * 16, ps.STANDALONE_PATTERNS[6].pattern),
+        ("Basic " + "A" * 16, next(rule.pattern for rule in ps.STANDALONE_PATTERNS if rule.name == "basic_auth")),
+        ("Authorization : Basic " + "A" * 16, next(rule.pattern for rule in ps.STANDALONE_PATTERNS if rule.name == "basic_auth")),
         ("ACCOUNT_KEY=abcdefghijk", ps._ENV_SECRET_KV_RE),
         ("GH_TOKEN=abcdefghijk", ps._ENV_SECRET_KV_RE),
     ]
@@ -61,6 +61,7 @@ def _positive_samples(name):
     return {
         "eeepc_agent_path": ["/etc/eeepc-agent"],
         "openai_secret_key": ["sk-" + "A" * 24],
+        "openai_secret_key_short": ["sk-" + "A" * 12],
         "github_token": ["ghp_" + "A" * 20, "github_pat_" + "A" * 20],
         "bearer_token": ["Bearer " + "A" * 20],
         "aws_access_key": ["AKIA" + "A" * 16],

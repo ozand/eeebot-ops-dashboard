@@ -1867,10 +1867,17 @@ def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 2. streak = 0 -> healthy
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
-    # 3. streak >= 1 -> investigate alarm; private exception details are withheld.
-    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'})
-    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures')
-    assert 'NameError' not in str(verdict) and 'bridge.py' not in str(verdict)
+    # 3. The local/private renderer retains diagnostics; the public projection
+    # is responsible for reducing/removing them before published rendering.
+    private_streak = {'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}
+    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=private_streak)
+    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+    from scripts.two_sinks import split_render_inputs
+    public_data, _ = split_render_inputs({'bridge_exit_streak': private_streak})
+    assert public_data['bridge_exit_streak']['last_error'] == 'error'
+    assert 'last_where' not in public_data['bridge_exit_streak']
+    public_verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=public_data['bridge_exit_streak'])
+    assert 'NameError' not in str(public_verdict) and 'bridge.py' not in str(public_verdict)
 
 
 def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
@@ -1887,17 +1894,17 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '0 failures (crash_record)' in p_zero
     assert 'eeebot#1683' in p_zero
 
-    # 3. streak > 0 -> alarm while keeping raw exception/location details private.
+    # 3. Private/local panel displays escaped diagnostics. The shared D1
+    # projection contract test verifies these values are absent from public HTML.
     p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
         'consecutive_failures': 140,
         'last_error': "NameError: name '_parse_explore_mode' is not defined",
         'last_where': 'bridge.py:1874',
     })
     assert '140 consecutive failures' in p_alarm
-    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" not in p_alarm
-    assert "NameError: name '_parse_explore_mode' is not defined" not in p_alarm
-    assert 'bridge.py:1874' not in p_alarm
-    assert 'bridge error details withheld' in p_alarm
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_alarm
+    assert 'bridge.py:1874' in p_alarm
+    assert 'bridge error details withheld' not in p_alarm
 
 
 def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_budget_cap() -> None:
