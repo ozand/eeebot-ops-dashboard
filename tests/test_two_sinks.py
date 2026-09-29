@@ -75,42 +75,6 @@ def test_cycle_title_exception_canary_is_removed_by_real_publication(tmp_path: P
             assert canary not in path.read_text(encoding="utf-8", errors="replace")
 
 
-def test_snapshot_staging_is_outside_site_root_and_not_http_served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    import http.client
-    import threading
-    from http.server import ThreadingHTTPServer
-    from scripts.two_sinks import SnapshotHTTPRequestHandler
-
-    root = tmp_path / "site"
-    observed = []
-    original_mkdtemp = __import__("tempfile").mkdtemp
-
-    def record_mkdtemp(*args, **kwargs):
-        path = original_mkdtemp(*args, **kwargs)
-        observed.append(Path(path).resolve())
-        return path
-
-    monkeypatch.setattr("scripts.two_sinks.tempfile.mkdtemp", record_mkdtemp)
-    atomic_snapshot_swap(root, {"index.html": "public"}, "v1")
-    staging = observed[0]
-    assert staging.parent == root.parent.resolve()
-    assert staging != root and not staging.is_relative_to(root.resolve())
-
-    Handler = type("Handler", (SnapshotHTTPRequestHandler,), {"site_root": root.resolve()})
-    server = ThreadingHTTPServer(("127.0.0.1", 0), lambda *a, **kw: Handler(*a, directory=str(root), **kw))
-    worker = threading.Thread(target=server.serve_forever, daemon=True)
-    worker.start()
-    try:
-        conn = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
-        conn.request("GET", "/" + staging.name + "/index.html")
-        response = conn.getresponse()
-        assert response.status == 404
-        conn.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-        worker.join(timeout=2)
-
 
 def test_bridge_error_canary_is_redacted_from_public_projection():
     canary = "PRIVATE_BRIDGE_ERROR_CANARY"

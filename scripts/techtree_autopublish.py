@@ -711,6 +711,27 @@ def run(args: argparse.Namespace) -> int:
         return 1
     except Exception as exc:
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
+        host_error = getattr(exc, 'host_error', None)
+        if host_error is not None:
+            # #315 F3: the publisher's exception carries the host sink's
+            # outcome (sinks.publish_ordered) -- record the host failure too,
+            # instead of losing it behind the publisher's error.
+            if duration_state is state:
+                duration_warning, duration_state = record_attempt_duration()
+            save_publish_state(
+                state_dir, state.get('digest'), state.get('published_at'),
+                page_fingerprints=state.get('page_fingerprints'),
+                host_snapshot_failed_since=state.get('host_snapshot_failed_since') or now,
+                last_host_error=f'ADR-036 host snapshot failed: {type(host_error).__name__}',
+                refusing_since=state.get('refusing_since'),
+                clean_scan_cache=state.get('clean_scan_cache'),
+                changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
+                publish_duration_warning=duration_warning,
+                published=False,
+            )
+            if isinstance(exc, PublicationScanError):
+                raise
+            return 1
         if isinstance(exc, PublicationScanError):
             raise
         if duration_state is state:

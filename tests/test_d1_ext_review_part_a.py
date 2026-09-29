@@ -340,3 +340,93 @@ def test_c2_symlink_in_built_tree_is_refused(tmp_path: Path) -> None:
     (tree / "link.html").symlink_to(tmp_path / "elsewhere.txt")
     with pytest.raises(PublicationScanError, match="non-regular"):
         sinks.scan_built_tree(tree)
+
+
+# --- staging inside the site root (architect decision); dot paths are 404 --------
+
+def test_staging_is_inside_site_root_dot_named_and_renamed_within_one_fs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "ROOT"}, "v1")
+    renames = []
+    real_replace = os.replace
+
+    def record(source, destination):
+        # measured at rename time: the empty .staging is removed afterwards
+        devices = (os.stat(Path(source).parent).st_dev, os.stat(Path(destination).parent).st_dev)
+        renames.append((Path(source).resolve(), Path(destination), devices))
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(os, "replace", record)
+    atomic_snapshot_swap(root, {"index.html": "TWO"}, "v2")
+    monkeypatch.setattr(os, "replace", real_replace)
+    source, _destination, (source_dev, destination_dev) = next(r for r in renames if r[1].name == "v2")
+    assert source.parent == (root / ".staging").resolve()
+    assert source.parent.name.startswith(".")
+    assert source_dev == destination_dev  # one filesystem: the rename is atomic
+
+
+@pytest.mark.parametrize("target", ["/.staging/", "/.staging/v9/index.html", "/.publish.lock", "/.hidden.html"])
+def test_dot_paths_are_never_served(tmp_path: Path, target: str) -> None:
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "ROOT"}, "v1")
+    leftover = root / ".staging" / "v9"
+    leftover.mkdir(parents=True)
+    (leftover / "index.html").write_text("STAGED-SECRET", encoding="utf-8")
+    (root / "v1" / ".hidden.html").write_text("HIDDEN-SECRET", encoding="utf-8")
+    with served(root) as port:
+        status, _headers, body = fetch(port, target)
+    assert status == 404 and b"SECRET" not in body
+
+
+# --- (4) the POSIX activation path is one atomic os.replace, never the fallback ---
+
+def test_posix_activation_never_takes_the_unlink_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "site"
+    atomic_snapshot_swap(root, {"index.html": "ROOT"}, "v1")
+    monkeypatch.setattr(sinks, "_WINDOWS_ACTIVATION_FALLBACK", False)  # the Linux path
+    replace_calls = []
+    real_replace = os.replace
+
+    def refuse_activation(source, destination):
+        if Path(destination).name == "current":
+            replace_calls.append(destination)
+            raise OSError("activation refused")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(os, "replace", refuse_activation)
+    with pytest.raises(sinks.SnapshotActivationError):
+        atomic_snapshot_swap(root, {"index.html": "NEW"}, "v2")
+    monkeypatch.setattr(os, "replace", real_replace)
+    assert len(replace_calls) == 1  # no second, non-atomic attempt
+    assert (root / "current").is_symlink() and (root / "current").resolve().name == "v1"
+    with served(root) as port:
+        assert fetch(port, "/")[:3:2] == (200, b"ROOT")
+
+
+# --- (5) the publisher entry point records host_error on a publisher exception ---
+
+def test_autopublish_records_host_failure_when_the_publisher_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import techtree_autopublish as ap
+
+    root, state_dir = tmp_path / "input", tmp_path / "publisher"
+    bad_site = tmp_path / "bad_site"
+    bad_site.write_text("not a directory", encoding="utf-8")  # the host sink fails
+    ap.save_publish_state(state_dir, "old", 1.0)
+    monkeypatch.setenv("GH_TOKEN", "mock-token")
+    monkeypatch.setattr(ap, "compute_tree_digest", lambda *_: "new")
+    monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_: None)
+    monkeypatch.setattr(ap.tv, "read_local_state", lambda *_a, **_kw: {"_error": None})
+    monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
+    monkeypatch.setattr(ap.tv, "render_public_pages", lambda *_a, **_kw: {"index.html": "safe"})
+    monkeypatch.setattr(ap.sinks, "render_private_pages", lambda *_a, **_kw: {})
+
+    def scanner_refuses(*_a, **_kw):
+        raise PublicationScanError("refused by scanner")
+
+    monkeypatch.setattr(ap.tv, "publish_to_pages", scanner_refuses)
+    args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(bad_site)])
+    with pytest.raises(PublicationScanError):
+        ap.run(args)
+    saved = ap.load_publish_state(state_dir)
+    assert saved["host_snapshot_failed_since"] is not None
+    assert saved["last_host_error"]

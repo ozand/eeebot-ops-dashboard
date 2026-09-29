@@ -8,7 +8,6 @@ import os
 import re
 import shutil
 import stat
-import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
 from pathlib import Path
@@ -216,7 +215,8 @@ class SnapshotHTTPRequestHandler(SimpleHTTPRequestHandler):
                 site_entries = set(os.listdir(site_root))
             except OSError as exc:
                 raise _RequestRejected(503, "Current snapshot unavailable") from exc
-            if any(segment == "current" or segment in site_entries for segment in segments):
+            if any(segment == "current" or segment.startswith(".") or segment in site_entries
+                   for segment in segments):
                 raise _RequestRejected(404, "Not found")
             if trailing_slash or not segments:
                 segments = [*segments, "index.html"]
@@ -719,6 +719,12 @@ class _SiteLock:
             self._stream.close()
 
 
+#: Development-only (Windows cannot rename over an existing directory
+#: symlink): unlink-then-rename. On POSIX activation is ONE os.replace, and a
+#: failure there is a failed activation -- never retried non-atomically.
+_WINDOWS_ACTIVATION_FALLBACK = os.name == "nt"
+
+
 def _chmod_strict(path: Path, mode: int) -> None:
     """#315 F5: a permission the DynamicUser server needs is never skipped
     silently -- a chmod failure fails the swap."""
@@ -755,10 +761,18 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
     previous = current_snapshot_target(site_root)
     if destination.exists() or destination.is_symlink():
         raise FileExistsError(destination)
-    staging = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=site_root.parent)).resolve()
-    if staging.parent != site_root.parent.resolve():
-        shutil.rmtree(staging, ignore_errors=True)
-        raise OSError("snapshot staging must be a sibling of site_root for atomic rename")
+    # #315 (architect decision): staging lives INSIDE the site root, the one
+    # directory the publisher unit may write (ReadWritePaths), under a
+    # dot-named directory the server never serves; the final rename is
+    # therefore within one filesystem.
+    staging_root = site_root / ".staging"
+    if not staging_root.exists():
+        staging_root.mkdir()
+        _chmod_strict(staging_root, 0o755)
+    staging = staging_root / version
+    if staging.exists() or staging.is_symlink():
+        shutil.rmtree(staging)  # left behind by an interrupted run (we hold the lock)
+    staging.mkdir()
     try:
         _chmod_strict(staging, 0o755)
         for name, contents in pages.items():
@@ -777,6 +791,10 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
         if not _complete_snapshot(staging):
             raise ValueError("ADR-036 snapshot candidate is incomplete: index.html missing after install")
         os.replace(staging, destination)
+        try:
+            staging_root.rmdir()  # leave no empty .staging behind; kept if an old leftover remains
+        except OSError:
+            pass
     except BaseException:
         if staging.exists():
             shutil.rmtree(staging, ignore_errors=True)
@@ -790,7 +808,7 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
         try:
             os.replace(link_tmp, current_link)
         except OSError:
-            if os.name != "nt":
+            if not _WINDOWS_ACTIVATION_FALLBACK:
                 raise
             # Windows cannot replace an existing directory symlink in one
             # rename: unlink, then rename -- and put the previous link back

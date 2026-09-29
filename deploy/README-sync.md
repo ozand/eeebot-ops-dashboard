@@ -66,7 +66,12 @@ simultaneously; they bind the same `:8080` port. The publisher unit's root
 `ExecStartPre` creates `/var/lib/eeebot-site` as `eeebot-publish:0755`,
 preserving the publisher's private `StateDirectory=eeebot-techtree` mode
 `0700`. The host unit explicitly grants `ReadWritePaths=/var/lib/eeebot-site`
-to the publisher.
+to the publisher, and that one path is all it writes: snapshot staging
+(`/var/lib/eeebot-site/.staging/<version>`, renamed into place on the same
+filesystem) and the publisher lock (`/var/lib/eeebot-site/.publish.lock`)
+live inside it. No second writable directory is needed. The server never
+serves a dot-named path, a version directory, or `current` itself, only
+files inside the snapshot `current` points at.
 
 Install the publisher unit itself as a class-3 host step (owner: ozand), from a checkout containing the merged repository artifacts. The publisher credential file must already be provisioned through the approved host process. Install and verify the unit, then trigger the initial snapshot before cutover:
 
