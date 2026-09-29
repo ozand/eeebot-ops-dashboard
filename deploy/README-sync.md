@@ -55,36 +55,95 @@ failed download or compile.
 
 ## Host steps (D4, orchestrator)
 
-D1 only provides the server unit file; it does not install or enable it. The
-orchestrator performs the host cutover after D3 gate #1978. The first cutover
-must seed and verify a complete host snapshot before stopping the working
-legacy service: the replacement refuses to start unless `current` points to a
-complete snapshot. Install/configure the publisher, trigger one publish, then
-verify `current/index.html` exists and is readable by the server identity.
-Only then stop legacy and start the replacement. Never run both servers
-simultaneously; they bind the same `:8080` port. The publisher unit's root
-`ExecStartPre` creates `/var/lib/eeebot-site` as `eeebot-publish:0755`,
-preserving the publisher's private `StateDirectory=eeebot-techtree` mode
-`0700`. The host unit explicitly grants `ReadWritePaths=/var/lib/eeebot-site`
-to the publisher, and that one path is all it writes: snapshot staging
-(`/var/lib/eeebot-site/.staging/<version>`, renamed into place on the same
-filesystem) and the publisher lock (`/var/lib/eeebot-site/.publish.lock`)
-live inside it. No second writable directory is needed. The server never
-serves a dot-named path, a version directory, or `current` itself, only
-files inside the snapshot `current` points at.
+D1 only provides the unit files, the sync drop-in and the tmpfiles entry; it
+does not install anything. The orchestrator performs the host cutover after
+D3 gate #1978. Every step below is class 3 (owner: ozand), run from a checkout
+containing the merged repository artifacts. The publisher credential file
+must already be provisioned through the approved host process; never print
+its contents.
 
-Install the publisher unit itself as a class-3 host step (owner: ozand), from a checkout containing the merged repository artifacts. The publisher credential file must already be provisioned through the approved host process. Install and verify the unit, then trigger the initial snapshot before cutover:
+The order matters:
+- The sync drop-in (its `ExecStartPre` sync of `scripts/two_sinks.py` and the
+  new generator, and its `ExecStart` override to `scripts/`) is installed
+  BEFORE the seed. Otherwise the seed runs the legacy generator, which never
+  creates `current/index.html`.
+- The site root exists BEFORE the first publisher start. `/var/lib/eeebot-site`
+  is created by systemd-tmpfiles (`deploy/eeebot-site.tmpfiles.conf`, `0755
+  eeebot-publish`), not by the unit: the unit's `ReadWritePaths=` is set up
+  with its namespace, before any `ExecStartPre`, and is deliberately not
+  optional (`-`), so a missing site root fails the unit loudly. The site root
+  is not a `StateDirectory=`: `StateDirectoryMode=` is one mode for all of a
+  unit's state directories, and `/var/lib/eeebot-techtree` must stay `0700`.
+  sync-manifest does not deliver the tmpfiles file (it installs generators
+  only), so step 3 installs it explicitly.
+
+Everything the publisher writes lives inside `/var/lib/eeebot-site`: snapshot
+staging (`.staging/<version>`, renamed into place on the same filesystem) and
+the publisher lock (`.publish.lock`). The server never serves a dot-named
+path, a version directory, or `current` itself; it serves only files inside
+the snapshot `current` points at. Never run both servers simultaneously; they
+bind the same `:8080` port. The replacement server refuses to start unless
+`current` points to a complete snapshot, so the seed must succeed before the
+legacy server stops.
+
+1. Install the publisher unit, the sync script and the sync drop-in:
 
 ```bash
 sudo install -o root -g root -m 0644 systemd/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service
+sudo install -o root -g root -m 0755 deploy/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh
+sudo install -d -o root -g root -m 0755 /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo install -o root -g root -m 0644 deploy/eeebot-techtree-publish.service.d-sync.conf /etc/systemd/system/eeebot-techtree-publish.service.d/20-repo-sync.conf
 sudo systemctl daemon-reload
+```
+
+2. Verify the effective unit:
+
+```bash
 sudo systemctl cat eeebot-techtree-publish.service
-sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p StateDirectory -p StateDirectoryMode -p ReadWritePaths -p LoadState -p ActiveState -p FragmentPath
+sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p StateDirectory -p StateDirectoryMode -p ReadWritePaths -p ExecStart -p LoadState -p FragmentPath -p DropInPaths
+```
+
+`systemctl cat` must contain the drop-in lines
+`ExecStartPre=-+/opt/eeebot-techtree/eeebot-techtree-sync.sh` and
+`ExecStart=/usr/bin/python3 /opt/eeebot-techtree/scripts/techtree_autopublish.py`.
+`systemctl show` must report `User=eeebot-publish`, `ProtectSystem=strict`,
+`StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700` and
+`ReadWritePaths=/var/lib/eeebot-site`.
+
+3. Create the site root with systemd-tmpfiles:
+
+```bash
+sudo install -o root -g root -m 0644 deploy/eeebot-site.tmpfiles.conf /etc/tmpfiles.d/eeebot-site.conf
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/eeebot-site.conf
+sudo stat -c "%a %U" /var/lib/eeebot-site
+```
+
+`stat` must print exactly `755 eeebot-publish`.
+
+4. Seed the host snapshot. This first start runs the sync, then the new
+   generator:
+
+```bash
 sudo systemctl start eeebot-techtree-publish.service
+sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
 sudo test -s /var/lib/eeebot-site/current/index.html
 ```
 
-Confirm the effective unit has `User=eeebot-publish`, `ProtectSystem=strict`, `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700`, and `ReadWritePaths=/var/lib/eeebot-site`. Do not print credential contents. Only after `test -s` succeeds, continue with server cutover:
+5. Verify that the NEW generator produced the snapshot. `add_snapshot_version`
+   (`scripts/two_sinks.py`) writes exactly one
+   `<meta name="snapshot-version" content="<version>">` into every public
+   HTML page, and `<version>` is the directory `current` points at:
+
+```bash
+sudo grep -o '<meta name="snapshot-version" content="[^"]*">' /var/lib/eeebot-site/current/index.html
+sudo basename "$(sudo readlink /var/lib/eeebot-site/current)"
+```
+
+The `grep` must print exactly one line, and its `content` must equal the
+`basename` output. No line or a different value means the snapshot is not from
+the new generator: stop here and do not cut over.
+
+6. Only now, cut the server over:
 
 ```bash
 sudo install -o root -g root -m 0644 deploy/eeebot-dashboard-server.service /etc/systemd/system/eeebot-dashboard-server.service
@@ -93,24 +152,6 @@ sudo systemctl stop eeebot-dashboard.service
 sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
 ```
-
-Never run both servers simultaneously; they bind the same port. After the initial snapshot and server cutover, install the publisher sync drop-in:
-
-```bash
-scp deploy/eeebot-techtree-sync.sh ozand@eeepc-lan:/tmp/eeebot-techtree-sync.sh
-scp deploy/eeebot-techtree-publish.service.d-sync.conf ozand@eeepc-lan:/tmp/eeebot-techtree-publish.service.d-sync.conf
-ssh ozand@eeepc-lan 'sudo install -o root -g root -m 0755 /tmp/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh && sudo install -o root -g root -m 0644 /tmp/eeebot-techtree-publish.service.d-sync.conf /etc/systemd/system/eeebot-techtree-publish.service.d/20-repo-sync.conf && sudo systemctl daemon-reload && sudo systemctl cat eeebot-techtree-publish.service'
-```
-
-Verify `systemctl cat` contains the drop-in line:
-
-```ini
-ExecStartPre=-+/opt/eeebot-techtree/eeebot-techtree-sync.sh
-```
-
-Also verify that the base unit remains unchanged for `User=eeebot-publish`,
-`ProtectSystem=strict`, credential mounts, and all other sandbox directives.
-Do not print credential contents.
 
 ## End-to-end verification
 

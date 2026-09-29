@@ -678,20 +678,40 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
 
 
 def test_publisher_service_creates_shared_site_root_without_relaxing_private_state() -> None:
+    """#315 (Codex P1, architect variant B): the site root is created by
+    systemd-tmpfiles, not by the unit -- the private StateDirectory stays 0700."""
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
     text = unit_path.read_text(encoding="utf-8")
     assert "StateDirectory=eeebot-techtree" in text
     assert "StateDirectoryMode=0700" in text
-    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
-    assert "ReadWritePaths=/var/lib/eeebot-site" in text
+    assert "install -d" not in text  # ran too late: after namespace setup
+    assert "StateDirectory=eeebot-site" not in text and "eeebot-techtree eeebot-site" not in text
 
 
 def test_publisher_service_unit_declares_site_root_writable() -> None:
-    """Codex comment 4109822802: Publisher service unit must grant write access to site root."""
+    """Codex comment 4109822802: Publisher service unit must grant write access to site root.
+    #315: never with the "-" optional prefix -- a missing site root must fail loudly."""
     unit_path = Path(__file__).resolve().parent.parent / "systemd" / "eeebot-techtree-publish.service"
-    text = unit_path.read_text(encoding="utf-8")
-    assert "ExecStartPre=+install -d -m 0755 -o eeebot-publish /var/lib/eeebot-site" in text
-    assert "ReadWritePaths=/var/lib/eeebot-site" in text
+    lines = [line.strip() for line in unit_path.read_text(encoding="utf-8").splitlines()]
+    assert "ReadWritePaths=/var/lib/eeebot-site" in lines
+    assert "ReadWritePaths=-/var/lib/eeebot-site" not in lines
+
+
+def test_site_root_tmpfiles_entry_matches_the_unit() -> None:
+    """#315 (architect variant B): deploy/eeebot-site.tmpfiles.conf creates the
+    site root 0755 eeebot-publish, the same path the unit's ReadWritePaths names."""
+    root = Path(__file__).resolve().parent.parent
+    entries = [
+        line.split() for line in (root / "deploy" / "eeebot-site.tmpfiles.conf").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    assert len(entries) == 1, entries
+    kind, path, mode, user, group, age = entries[0]
+    assert (kind, mode, user, group, age) == ("d", "0755", "eeebot-publish", "eeebot-publish", "-")
+    unit = (root / "systemd" / "eeebot-techtree-publish.service").read_text(encoding="utf-8")
+    assert f"ReadWritePaths={path}" in [line.strip() for line in unit.splitlines()]
+    server = (root / "deploy" / "eeebot-dashboard-server.service").read_text(encoding="utf-8")
+    assert f"ReadOnlyPaths={path}" in [line.strip() for line in server.splitlines()]
 
 
 def test_atomic_snapshot_swap_sets_traversable_permissions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

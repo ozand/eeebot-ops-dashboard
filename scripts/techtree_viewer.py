@@ -343,9 +343,11 @@ def health_verdict(
         if isinstance(consecutive_failures, int) and consecutive_failures >= HEALTH_FAILURE_STREAK_LENGTH:
             err = bridge_exit_streak.get('last_error') or ''
             where = bridge_exit_streak.get('last_where') or ''
-            detail = f': {esc(str(err))}' if err else ''
+            # #315 (Codex P2): raw text here -- escaped exactly once, at the
+            # HTML boundary (build_now_panel's esc(verdict_reason)).
+            detail = f': {err}' if err else ''
             if where:
-                detail += f' at {esc(str(where))}'
+                detail += f' at {where}'
             return 'investigate', f'bridge crash loop: {consecutive_failures} consecutive invocation failures{detail}'
     streak = 0
     for outcome in reversed(recent_outcomes):
@@ -11189,12 +11191,14 @@ def main(argv: list[str] | None = None) -> int:
     if data.get('_error'):
         print(f'note: {data["_error"]}', file=sys.stderr)
 
-    if args.publish:
-        try:
-            from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
-        except ImportError:
-            from two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+    # #315 (Codex P1): imported for BOTH paths -- the plain --local render
+    # below sanitizes ci_freshness too, and the --publish branch returns early.
+    try:
+        from scripts.two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
+    except ImportError:
+        from two_sinks import publish_ordered, render_private_pages, split_render_inputs, _sanitize_public_value
 
+    if args.publish:
         public_data, private_data = split_render_inputs(data)
         public_data["ci_freshness"] = _sanitize_public_value("ci_freshness", data.get("ci_freshness"))
         public_pages = render_public_pages(public_data, args.host)
