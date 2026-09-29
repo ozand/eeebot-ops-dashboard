@@ -1867,10 +1867,18 @@ def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 2. streak = 0 -> healthy
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
-    # 3. streak >= 1 -> investigate alarm; private exception details are withheld.
-    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'})
-    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures')
-    assert 'NameError' not in str(verdict) and 'bridge.py' not in str(verdict)
+    # 3. streak >= 1 -> investigate alarm. ADR-036 D1 (77062603, "retain
+    # private bridge diagnostics"): the renderer shows the diagnostics it is
+    # given (the private/LAN pages get the raw streak); the PUBLIC pages get
+    # them only after split_render_inputs, which reduces them to codes.
+    raw = {'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}
+    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=raw)
+    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+    from scripts.two_sinks import split_render_inputs
+    public, _ = split_render_inputs({'bridge_exit_streak': raw})
+    public_verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=public['bridge_exit_streak'])
+    assert public_verdict[0] == 'investigate'
+    assert 'NameError' not in str(public_verdict) and 'bridge.py' not in str(public_verdict)
 
 
 def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
@@ -1887,17 +1895,23 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '0 failures (crash_record)' in p_zero
     assert 'eeebot#1683' in p_zero
 
-    # 3. streak > 0 -> alarm while keeping raw exception/location details private.
-    p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
+    # 3. streak > 0 -> alarm. ADR-036 D1 (77062603): the raw streak (private
+    # pages) shows the diagnostics, HTML-escaped; the public pages get the
+    # streak only after split_render_inputs, which reduces them to codes.
+    raw = {
         'consecutive_failures': 140,
         'last_error': "NameError: name '_parse_explore_mode' is not defined",
         'last_where': 'bridge.py:1874',
-    })
+    }
+    p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak=raw)
     assert '140 consecutive failures' in p_alarm
-    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" not in p_alarm
-    assert "NameError: name '_parse_explore_mode' is not defined" not in p_alarm
-    assert 'bridge.py:1874' not in p_alarm
-    assert 'bridge error details withheld' in p_alarm
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined at bridge.py:1874" in p_alarm
+    assert "NameError: name '_parse_explore_mode' is not defined" not in p_alarm  # escaped, never raw
+    from scripts.two_sinks import split_render_inputs
+    public, _ = split_render_inputs({'bridge_exit_streak': raw})
+    p_public = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak=public['bridge_exit_streak'])
+    assert '140 consecutive failures' in p_public
+    assert '_parse_explore_mode' not in p_public and 'bridge.py:1874' not in p_public
 
 
 def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_budget_cap() -> None:
