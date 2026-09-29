@@ -133,12 +133,15 @@ def sanitize_tool_output(args: Any, result: Any) -> SanitizedText:
 
 
 def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> SanitizedText:
-    """Project raw content to bounded size/digest metadata; never render source text."""
+    """Preserve an existing typed projection; otherwise withhold raw content."""
     del limit
+    if isinstance(value, SanitizedText) and (str(value).startswith("[withheld:") or str(value).startswith('{"keys"')):
+        return value
     return _project_value(value)
 
 
 def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
+    """Project message records to safe metadata; never copy source payload text."""
     if isinstance(raw_messages, str):
         try:
             raw_messages = json.loads(raw_messages)
@@ -147,75 +150,43 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_messages, list):
         return []
     cleaned: list[dict[str, Any]] = []
-    pending_tool_args: dict[str, str] = {}
-    for msg in raw_messages:
-        if not isinstance(msg, dict):
+    for message in raw_messages:
+        if not isinstance(message, dict):
             continue
-        m = dict(msg)
-        role = m.get("role")
+        role = str(message.get("role") or "unknown")
+        row: dict[str, Any] = {"role": role}
+        if "content" in message:
+            row["content"] = _project_value(message["content"])
         if role == "assistant":
-            calls = []
-            for tc in m.get("tool_calls") or []:
-                if not isinstance(tc, dict):
-                    calls.append(tc)
-                    continue
-                call = dict(tc)
-                fn = dict(tc.get("function") or tc)
-                raw_args = fn.get("arguments") or ""
-                safe_args = sanitize_tool_arguments(raw_args)
-                fn["arguments"] = safe_args
-                if "function" in tc:
-                    call["function"] = fn
-                else:
-                    call.update(fn)
-                calls.append(call)
-                cid = tc.get("id")
-                if cid:
-                    pending_tool_args[str(cid)] = "typed projection"
-            if "tool_calls" in m:
-                m["tool_calls"] = calls
+            calls = message.get("tool_calls") or []
+            if isinstance(calls, list) and calls:
+                row["tool_calls"] = [
+                    {
+                        "name": str((call.get("function") or call).get("name") or "tool")
+                        if isinstance(call, dict) and isinstance(call.get("function") or call, dict) else "tool",
+                        "arguments": sanitize_tool_arguments(
+                            (call.get("function") or call).get("arguments")
+                            if isinstance(call, dict) and isinstance(call.get("function") or call, dict) else None
+                        ),
+                        "status": "observed",
+                    }
+                    for call in calls
+                ]
+            elif isinstance(message.get("function_call"), dict):
+                call = message["function_call"]
+                row["tool_calls"] = [{
+                    "name": str(call.get("name") or "tool"),
+                    "arguments": sanitize_tool_arguments(call.get("arguments")),
+                    "status": "observed",
+                }]
         elif role == "tool":
-            cid = m.get("tool_call_id")
-            raw_content = m.get("content")
-            content = raw_content if isinstance(raw_content, str) else json.dumps(raw_content, ensure_ascii=False)
-            args = pending_tool_args.pop(str(cid), "") if cid else pending_tool_args.pop("__latest_idless_env_call__", "")
-            m["content"] = _project_value(raw_content)
-        elif "content" in m:
-            m["content"] = _project_value(m["content"])
-        if role == "assistant" and isinstance(m.get("content"), str):
-            m["content"] = _project_value(m["content"])
-        if "content" in m and not isinstance(m["content"], str):
-            m["content"] = _sanitize_nested_value(m["content"])
-        if isinstance(m.get("content"), list):
-            m["content"] = _sanitize_nested_value(m["content"])
-        if isinstance(m.get("function_call"), dict):
-            fn_call = dict(m["function_call"])
-            args = fn_call.get("arguments")
-            fn_call["arguments"] = sanitize_tool_arguments(args)
-            m["function_call"] = fn_call
-        if isinstance(m.get("tool_calls"), list):
-            safe_calls = []
-            for item in m["tool_calls"]:
-                if not isinstance(item, dict):
-                    safe_calls.append(item)
-                    continue
-                call = dict(item)
-                fn = dict(item.get("function") or item)
-                args = fn.get("arguments")
-                if isinstance(args, (dict, list)):
-                    args = json.dumps(args, ensure_ascii=False)
-                if isinstance(args, str):
-                    fn["arguments"] = sanitize_tool_arguments(args)
-                if "function" in item:
-                    call["function"] = fn
-                else:
-                    call.update(fn)
-                safe_calls.append(call)
-            m["tool_calls"] = safe_calls
-        for key, item in list(m.items()):
-            if key != "content" and isinstance(item, (dict, list)):
-                m[key] = _sanitize_nested_value(item)
-        cleaned.append(m)
+            row["name"] = str(message.get("name") or "tool")
+            row["status"] = "result recorded"
+            row["result"] = _project_value(message.get("content"))
+        for field in ("error", "metadata", "reasoning_content"):
+            if field in message:
+                row[field] = _project_value(message[field])
+        cleaned.append(row)
     return cleaned
 
 class ReadResult(tuple):
@@ -246,7 +217,9 @@ def _read_jsonl(paths: list[Path]) -> ReadResult:
                         continue
                     if isinstance(row, dict):
                         rows.append(row)
-        except (OSError, EOFError):
+                    else:
+                        broken.add("*")
+        except (OSError, EOFError, gzip.BadGzipFile):
             broken.add("*")
             return ReadResult(rows, False, broken=broken)
     return ReadResult(rows, True, broken=broken)
@@ -374,7 +347,12 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         ),)
         if plain.is_file() or compressed.is_file()
     ]
-    duration_paths = [p for date in dates for p in (state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz") if p.is_file()]
+    duration_paths = [
+        plain if plain.is_file() else compressed
+        for date in dates
+        for plain, compressed in ((state_root / "llm_calls" / f"{date}.jsonl", state_root / "llm_calls" / f"{date}.jsonl.gz"),)
+        if plain.is_file() or compressed.is_file()
+    ]
 
     runs_result = _read_jsonl(run_paths)
     prompts_result = _read_jsonl(prompt_paths)
@@ -420,7 +398,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     index: dict[str, dict[str, Any]] = {}
     for cid in all_cycle_ids:
         c_runs = [r for r in runs if str(r.get("cycle_id")) == cid]
-        c_prompts = [p for p in raw_prompts if str(p.get("cycle_id")) == cid]
+        c_prompts = sorted(
+            (p for p in raw_prompts if str(p.get("cycle_id")) == cid),
+            key=lambda p: (_parse_timestamp(p.get("ts") or p.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc), str(p.get("seq") or "")),
+        )
         cycle_broken = any(cid in errors for errors in (broken_runs, broken_prompts, broken_dur, broken_comp))
         c_compactions = [c for c in compactions if str(c.get("cycle_id")) == cid]
         has_compaction = any(c.get("reason") == "compacted" or "compact" in str(c.get("reason", "")) for c in c_compactions)
@@ -430,13 +411,17 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         reconstruction_state = "complete"
         cycle_reconstruction_incomplete = False
         if read_state != "ok":
-            reconstruction_state = "unknown"
+            reconstruction_state = "incomplete"
+            cycle_reconstruction_incomplete = True
         elif not c_prompts and c_runs:
             reconstruction_state = "incomplete"
-        elif not all_reads_ok:
-            reconstruction_state = "unknown"
+            cycle_reconstruction_incomplete = True
         elif cycle_broken or has_compaction:
             reconstruction_state = "incomplete"
+            cycle_reconstruction_incomplete = True
+        elif not all_reads_ok:
+            reconstruction_state = "incomplete"
+            cycle_reconstruction_incomplete = True
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
         steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
@@ -459,10 +444,13 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             sanitized_prompt = dict(p)
             sanitized_prompt["messages"] = sanitize_messages(p.get("messages"))
             tools = extract_tool_steps(sanitized_prompt)
-            if any(t.get("status") in {"incomplete", "pending"} for t in tools):
+            if any(t.get("status") in {"incomplete", "pending"} for t in tools) or any(
+                isinstance(message, dict) and message.get("_pending_tool_calls")
+                for message in sanitized_prompt.get("messages", [])
+            ):
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
-            if (p.get("finish_reason") == "tool_calls" and p is c_prompts[-1]) or p.get("tool_calls"):
+            if p.get("finish_reason") == "tool_calls" and p is c_prompts[-1]:
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
             sanitized_msgs = sanitize_messages(p.get("messages"))
@@ -471,6 +459,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 "messages": _project_value(sanitized_msgs) if sanitized_msgs else None,
                 "answer": _project_value(p.get("content")) if p.get("content") is not None else None,
                 "tools": _project_value(p.get("tool_calls")) if p.get("tool_calls") else None,
+                "tool_status": "incomplete" if p.get("finish_reason") == "tool_calls" and p is c_prompts[-1] else "observed",
                 "function_call": _project_value(p.get("function_call")) if p.get("function_call") else None,
                 "reasoning": _project_value(p.get("reasoning_content")) if p.get("reasoning_content") is not None else None,
                 "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
@@ -484,78 +473,115 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             run.get("classification") in {"unit_timeout", "killed"} for run in c_runs
         )
         attempts = []
-        assigned_prompts: set[int] = set()
-        seen_tool_ids_cycle: set[str] = set()
-        for r in c_runs:
-            rid = str(r.get("run_id") or "unavailable")
-            killed = r.get("classification") in {"unit_timeout", "killed"}
-            started = _parse_timestamp(r.get("started_at") or r.get("start_time"))
-            finished = _parse_timestamp(r.get("finished_at") or r.get("end_time"))
-            attributed = [p for p in c_prompts if started is not None and finished is not None
-                          and (stamp := _parse_timestamp(p.get("ts") or p.get("timestamp"))) is not None
-                          and started <= stamp <= finished]
-            assigned_prompts.update(id(p) for p in attributed)
-            role_steps: dict[str, list[dict[str, Any]]] = {}
-            for p in attributed:
-                role = str(p.get("component") or "unassigned")
-                role_steps.setdefault(role, []).extend(steps_by_prompt.get(id(p), [])[:1])
-                for tool in steps_by_prompt.get(id(p), [])[1:]:
-                    tool_id = str(tool.get("tool_call_id") or "")
-                    if not tool_id or tool_id not in seen_tool_ids_cycle:
-                        role_steps[role].append(tool)
-                        if tool_id:
-                            seen_tool_ids_cycle.add(tool_id)
-            attempt_prompts = [prompt for prompt in c_prompts if started is not None and finished is not None
-                               and (stamp := _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))) is not None
-                               and started <= stamp <= finished]
-            if len(c_runs) == 1 and not attempt_prompts:
-                attempt_prompts = list(c_prompts)
-            attempt_complete = (
-                not killed
-                and read_state == "ok"
-                and not cycle_broken
-                and not any(compaction.get("reason") == "compacted" or "compact" in str(compaction.get("reason", "")) for compaction in c_compactions)
-                and bool(attempt_prompts)
-                and all(
-                    not prompt.get("truncated")
-                    and not (prompt.get("finish_reason") == "tool_calls" and prompt is c_prompts[-1])
-                    and not any(step.get("status") in {"incomplete", "pending"} for step in extract_tool_steps(prompt))
-                    for prompt in attempt_prompts
-                )
-            )
-            att_sessions = [{"role": role, "history_complete": attempt_complete,
-                             "model_calls": sum(step.get("kind") == "model" for step in steps), "steps": steps}
-                            for role, steps in sorted(role_steps.items())]
-            if killed:
-                reconstruction_state = "incomplete"
-            attempts.append({"run_id": rid, "classification": r.get("classification") or "unknown",
-                             "model_call_count": len(attributed), "sessions": att_sessions,
-                             "history_complete": attempt_complete})
-        unassigned = [p for p in c_prompts if id(p) not in assigned_prompts]
+        used_duration_ids: set[int] = set()
+        for run in c_runs:
+            run_id = str(run.get("run_id") or "unavailable")
+            started = _parse_timestamp(run.get("started_at") or run.get("start_time"))
+            finished = _parse_timestamp(run.get("finished_at") or run.get("end_time"))
+            owned = [
+                prompt for prompt in c_prompts
+                if (stamp := _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))) is not None
+                and (started is None or finished is None or started <= stamp <= finished)
+            ]
+            role_rows: dict[str, list[dict[str, Any]]] = {}
+            for prompt in owned:
+                role = str(prompt.get("component") or "unknown")
+                role_rows.setdefault(role, []).append(prompt)
+            sessions = []
+            call_count = 0
+            for role, prompts_for_role in sorted(role_rows.items()):
+                model_steps = []
+                tool_names = []
+                for prompt in prompts_for_role:
+                    call_count += 1
+                    key = (cid, role, str(prompt.get("seq")))
+                    candidates = duration_rows.get(key, [])
+                    prompt_time = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
+                    duration = None
+                    for candidate in candidates:
+                        if id(candidate) in used_duration_ids:
+                            continue
+                        candidate_time = _parse_timestamp(candidate.get("ts") or candidate.get("timestamp"))
+                        if prompt_time is None or candidate_time is None or prompt_time == candidate_time:
+                            duration = candidate.get("duration_ms")
+                            used_duration_ids.add(id(candidate))
+                            break
+                    names = []
+                    messages = prompt.get("messages") or []
+                    if isinstance(messages, str):
+                        try:
+                            messages = json.loads(messages)
+                        except (json.JSONDecodeError, TypeError):
+                            messages = []
+                    if isinstance(messages, list):
+                        for message in messages:
+                            if not isinstance(message, dict) or message.get("role") != "assistant":
+                                continue
+                            for call in message.get("tool_calls") or []:
+                                if isinstance(call, dict):
+                                    function = call.get("function") or call
+                                    if isinstance(function, dict) and function.get("name"):
+                                        names.append(str(function["name"]))
+                    for call in prompt.get("tool_calls") or []:
+                        if isinstance(call, dict):
+                            function = call.get("function") or call
+                            if isinstance(function, dict) and function.get("name"):
+                                names.append(str(function["name"]))
+                    tool_names.extend(names)
+                    model_steps.append({
+                        "kind": "model",
+                        "tokens": (prompt.get("prompt_tokens") or 0) + (prompt.get("completion_tokens") or 0),
+                        "duration": duration if duration is not None else "unknown",
+                    })
+                sessions.append({"role": role, "history_complete": not cycle_broken and read_state == "ok",
+                                 "model_calls": len(prompts_for_role), "steps": model_steps,
+                                 "tool_names": tool_names,
+                                 "tokens": sum(step["tokens"] for step in model_steps),
+                                 "duration_ms": sum(step["duration"] for step in model_steps if isinstance(step["duration"], (int, float)))})
+            killed = run.get("classification") in {"unit_timeout", "killed"}
+            run_state = not killed
+            complete = read_state == "ok" and not cycle_broken and not has_compaction and bool(owned) and run_state
+            attempts.append({"run_id": run_id, "classification": run.get("classification") or "unknown",
+                             "model_call_count": call_count, "sessions": sessions,
+                             "history_complete": complete, "outcome": run.get("outcome") or run.get("classification") or "unknown"})
+        owned_prompts = set()
+        for run in c_runs:
+            started = _parse_timestamp(run.get("started_at") or run.get("start_time"))
+            finished = _parse_timestamp(run.get("finished_at") or run.get("end_time"))
+            for prompt in c_prompts:
+                stamp = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
+                if stamp is not None and (started is None or finished is None or started <= stamp <= finished):
+                    owned_prompts.add(id(prompt))
+        unassigned = [prompt for prompt in c_prompts if id(prompt) not in owned_prompts]
         if unassigned:
-            unassigned_steps = []
-            for p in unassigned:
-                unassigned_steps.extend(steps_by_prompt.get(id(p), []))
-            attempts.append({"run_id": "unassigned", "classification": "unknown", "model_call_count": len(unassigned),
-                             "sessions": [{"role": "unassigned", "history_complete": False,
-                                          "model_calls": sum(step.get("kind") == "model" for step in unassigned_steps),
-                                          "steps": unassigned_steps}],
-                             "history_complete": False})
+            tool_names = []
+            for prompt in unassigned:
+                messages = prompt.get("messages") or []
+                if isinstance(messages, list):
+                    for message in messages:
+                        if isinstance(message, dict) and message.get("role") == "assistant":
+                            for call in message.get("tool_calls") or []:
+                                fn = call.get("function") or call if isinstance(call, dict) else {}
+                                if isinstance(fn, dict) and fn.get("name"):
+                                    tool_names.append(str(fn["name"]))
+            attempts.append({"run_id": "unassigned", "classification": "unknown",
+                             "model_call_count": len(unassigned), "history_complete": False,
+                             "outcome": "unknown", "sessions": [{"role": "unassigned",
+                             "history_complete": False, "model_calls": len(unassigned),
+                             "steps": [{"kind": "model", "tokens": 0, "duration": "unknown"} for _ in unassigned],
+                             "tool_names": tool_names}]})
 
         history_complete = (
             read_state == "ok"
             and capture_state == "complete"
             and reconstruction_state == "complete"
+            and not cycle_reconstruction_incomplete
             and not any(a["classification"] in {"unit_timeout", "killed"} for a in attempts)
             and bool(attempts)
             and bool(c_prompts)
         )
 
-        sessions = [
-            {"role": role, "history_complete": history_complete,
-             "model_calls": sum(step.get("kind") == "model" for step in steps), "steps": steps}
-            for role, steps in sorted(sessions_by_role.items())
-        ]
+        sessions = [session for attempt in attempts for session in attempt.get("sessions", [])]
         index[cid] = {
             "cycle_id": cid,
             "available": True,
@@ -597,7 +623,7 @@ def format_model_step(step: dict[str, Any]) -> str:
     if step.get("tokens") is not None:
         parts.append(f"<p>Tokens: {step['tokens']}</p>")
     if step.get("duration") is not None:
-        parts.append(f"<p>Duration: {_escape(display_text(str(step['duration'])))}</p>")
+        parts.append(f"<p>Duration: {_escape(str(step['duration']))}</p>")
     parts.append("</div>")
     return "".join(parts)
 
@@ -646,7 +672,7 @@ def render_cycle_page(cycle_id: str, data: dict[str, Any] | None) -> str:
         calls_text = f"<p>Model calls: {att['model_call_count']}</p>" if att.get("model_call_count") is not None else ""
         rows.append(f'<article class="attempt-row"><h3>Attempt {_escape(str(att.get("run_id", "unavailable")))}</h3>{calls_text}<p>Classification: {_escape(str(att.get("classification", "unknown")))}</p><p>{att_marked["history_state"]}</p>')
         for sess in att.get("sessions") or []:
-            rows.append(f'<section class="attempt-session"><h4>Session {_escape(str(sess.get("role", "unassigned")))}</h4><p>Model calls: {sess.get("model_calls", 0)}</p>')
+            rows.append(f'<section class="attempt-session"><h4>Session {_escape(str(sess.get("role", "unassigned")))}</h4><p>Model calls: {sess.get("model_calls", 0)}</p><p>Tokens: {sess.get("tokens", 0)}</p><p>Duration: {sess.get("duration_ms", "unknown")}</p><p>Tool sequence: {_escape(", ".join(sess.get("tool_names", [])))}</p>')
             for step in sess.get("steps") or []:
                 rows.append(format_tool_step(step) if step.get("kind") == "tool" else format_model_step(step))
             rows.append('</section>')
