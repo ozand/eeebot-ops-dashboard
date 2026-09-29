@@ -6223,6 +6223,20 @@ def test_1755_local_mirror_truncation_streak_no_data_when_ledger_missing(tmp_pat
     assert result['agent_context']['truncation_streak'] == {'status': 'no_data', 'total_rows': 0, 'entries': []}
 
 
+def test_368_agent_page_uses_window_from_latest_executor_row_even_without_tokens(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    _write_jsonl(state / 'llm_calls' / '2026-09-27.jsonl', [
+        {'ts': '2026-09-27T10:00:00Z', 'component': 'executor', 'prompt_tokens': 123, 'context_window': 65536},
+        {'ts': '2026-09-28T10:00:00Z', 'component': 'executor', 'context_window': 131072},
+    ])
+    data = _fixture()
+    local = tv.read_local_state(str(state))
+    data['agent_context'] = local['agent_context']
+    page = tv.render_pages(data, host='eeepc', generated_at='2026-09-28 13:00:00')['agent.html']
+    assert '131,072 tokens (executor llm_calls.context_window)' in page
+    assert '65,536 tokens (executor llm_calls.context_window)' not in page
+
+
 def test_1755_local_mirror_window_pressure_excludes_null_context_window(tmp_path: Path) -> None:
     # Uses real "now" (rather than a pinned clock) so the rows always fall
     # inside the last-24h window `read_local_state` computes internally --

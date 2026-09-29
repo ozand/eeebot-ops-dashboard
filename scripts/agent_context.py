@@ -33,16 +33,34 @@ SEPARATOR_LEN = len(SEPARATOR)  # 7 characters
 # here as aliases so old rows render with real owner/cap info too. Any
 # section name absent from this map falls through to "unmapped" — never
 # dropped.
+#
+# #368 (ozand/eeebot#1802): the five release files no longer have per-block
+# caps. They draw, in assembly order, from ONE shared pool
+# (`ContextBuilder._RELEASE_POOL_CHARS`), and OPERATING.md keeps a floor
+# (`_RELEASE_BLOCK_FLOORS`) -- a minimum, never a ceiling. A release block
+# therefore carries `pool: True` and no `cap`; rendering its old per-block
+# number would show goals 3,849 > "3,200" as an overrun that is not one.
+# The runtime computes the pool's occupancy (`last_fit["release_pool"]`);
+# a ledger row that carries it is preferred over these static numbers.
+RELEASE_POOL_CHARS = 15_500
+RELEASE_POOL_FLOORS: dict[str, int] = {"operating": 5_000}
+
 SECTION_OWNER_MAP: dict[str, dict[str, Any]] = {
-    "identity": {"file": "IDENTITY.md", "owner": "release", "cap": 1500, "label": "Identity & Role"},
-    "soul": {"file": "SOUL.md", "owner": "release", "cap": 1800, "label": "Soul"},
-    "goals": {"file": "goals.md", "owner": "release", "cap": 3200, "label": "Operator Charter / Goals"},
-    "user": {"file": "USER.md", "owner": "release", "cap": 4000, "label": "User"},
-    "operating": {"file": "OPERATING.md", "owner": "release", "cap": 5000, "label": "Operating"},
+    "identity": {"file": "IDENTITY.md", "owner": "release", "cap": None, "pool": True, "label": "Identity & Role"},
+    "soul": {"file": "SOUL.md", "owner": "release", "cap": None, "pool": True, "label": "Soul"},
+    "goals": {"file": "goals.md", "owner": "release", "cap": None, "pool": True, "label": "Operator Charter / Goals"},
+    "user": {"file": "USER.md", "owner": "release", "cap": None, "pool": True, "label": "User"},
+    "operating": {"file": "OPERATING.md", "owner": "release", "cap": None, "pool": True, "label": "Operating"},
     "agents": {"file": "AGENTS.md", "owner": "instance", "cap": 4000, "label": "Bootstrap (AGENTS.md)"},
+    # ADR-034 rule 5: outside the release pool, own shared cap
+    # (`operator_documents.PRIORITIES_BLOCK_CAP`).
+    "priorities": {"file": "operator + derived priorities", "owner": "generated", "cap": 3000, "label": "Priorities"},
     "skills_catalogue": {"file": "skills index", "owner": "generated", "cap": None, "label": "Skills Catalogue (Index)"},
-    "memory": {"file": "memory index", "owner": "generated", "cap": None, "label": "Working Memory"},
-    "runtime": {"file": "runtime facts", "owner": "generated", "cap": None, "label": "Runtime"},
+    "memory": {"file": "memory index", "owner": "generated", "cap": 1000, "label": "Working Memory"},
+    "runtime": {"file": "runtime facts", "owner": "generated", "cap": 400, "label": "Runtime"},
+    # #1766 / #1793: harness-owned fact blocks, last in assembly order.
+    "scorecard": {"file": "scorecard/latest.json", "owner": "generated", "cap": 600, "label": "Scorecard"},
+    "position": {"file": "step/cycle/day position", "owner": "generated", "cap": 1200, "label": "Position"},
     # Pre-migration aliases (old ledger rows, before ADR-022):
     "bootstrap": {"file": "AGENTS.md", "owner": "instance", "cap": 4000, "label": "Bootstrap (AGENTS.md)"},
     "active_skills": {"file": "active skills (loop-owned)", "owner": "generated", "cap": None, "label": "Active Skills (Always Loaded)"},
@@ -58,6 +76,67 @@ def section_owner_meta(name: str) -> dict[str, Any]:
     through to "unmapped" with their chars still rendered — never dropped.
     """
     return SECTION_OWNER_MAP.get(name, UNMAPPED_SECTION_META)
+
+
+#: #368: appended to every number the page shows from the static map above
+#: instead of from the ledger row, so a documented value is never read as
+#: runtime state.
+STATIC_VALUE_LABEL = "(static, runtime not reporting)"
+
+
+def _is_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def recorded_release_pool(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The release pool as the runtime recorded it on a ledger row --
+    ``{"cap", "used"}`` -- or ``None`` when the row carries none.
+
+    Reads ``release_pool_chars`` (``{"limit", "used"}``, the
+    ``phase: system_prompt`` telemetry for this issue) and, failing that,
+    the builder's own ``release_pool`` record (``{"cap", "used"}``)."""
+    if not isinstance(row, dict):
+        return None
+    pool = row.get("release_pool_chars")
+    if isinstance(pool, dict) and _is_int(pool.get("limit")) and _is_int(pool.get("used")):
+        return {"cap": pool["limit"], "used": pool["used"]}
+    pool = row.get("release_pool")
+    if isinstance(pool, dict) and _is_int(pool.get("cap")) and _is_int(pool.get("used")):
+        return {"cap": pool["cap"], "used": pool["used"]}
+    return None
+
+
+def release_floors(row: dict[str, Any] | None) -> dict[str, tuple[int, bool]]:
+    """``{section: (floor_chars, is_static)}``. OPERATING.md's floor comes
+    from the row's ``operating_reserve_chars`` when recorded."""
+    floors = {name: (floor, True) for name, floor in RELEASE_POOL_FLOORS.items()}
+    recorded = row.get("operating_reserve_chars") if isinstance(row, dict) else None
+    if isinstance(recorded, int) and not isinstance(recorded, bool):
+        floors["operating"] = (recorded, False)
+    return floors
+
+
+def _static_suffix(is_static: bool) -> str:
+    return f" {STATIC_VALUE_LABEL}" if is_static else ""
+
+
+def section_budget_text(
+    name: str,
+    meta: dict[str, Any],
+    pool_cap: int = RELEASE_POOL_CHARS,
+    *,
+    pool_static: bool = True,
+    floors: dict[str, tuple[int, bool]] | None = None,
+) -> str:
+    """#368: a release block's budget is the shared pool (plus its floor, if
+    it has one), never a per-block cap it could appear to overrun. A number
+    taken from the static map says so."""
+    if meta.get("pool"):
+        text = f"shared pool {pool_cap:,}c{_static_suffix(pool_static)}"
+        floor = (floors if floors is not None else release_floors(None)).get(name)
+        return f"{text} · floor {floor[0]:,}c{_static_suffix(floor[1])}" if floor else text
+    cap = meta.get("cap")
+    return f"{cap:,}c{_static_suffix(True)}" if isinstance(cap, int) else "dynamic"
 
 
 # #301: rule fingerprints the harness test tracks (see the issue's code map)
@@ -78,6 +157,21 @@ RULE_OWNERS_STATIC: dict[str, str] = {
 
 def esc(s: Any) -> str:
     return html.escape(str(s or ""), quote=True)
+
+
+def utc_to_msk_display(ts: Any) -> str | None:
+    """#368: a recorded UTC ISO8601 timestamp shown in MSK (UTC+3), or
+    ``None`` when it does not parse. A naive timestamp is taken as UTC,
+    which is what every runtime writer records."""
+    if not ts:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(ts).strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(MSK_TZ).strftime("%Y-%m-%d %H:%M:%S MSK")
 
 
 def estimate_tokens(chars: int) -> int:
@@ -477,32 +571,22 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     task_text: str | None = None
     cid = sys_prompt_row.get("cycle_id") if sys_prompt_row else None
 
+    # #368: text comes ONLY from the selected row's own cycle. There is no
+    # fallback to another cycle's newest file: that paired cycle A's sizes
+    # with cycle B's text. A missing file stays missing and renders as
+    # "text for this snapshot unavailable".
     prompts_dir = state_root / "prompts"
-    if prompts_dir.is_dir():
-        if cid:
-            p_file = prompts_dir / f"{cid}.system.txt"
-            t_file = prompts_dir / f"{cid}.task.txt"
-            if p_file.is_file():
-                try:
-                    prompt_text = p_file.read_text(encoding="utf-8", errors="replace")[:150000]
-                except Exception:
-                    pass
-            if t_file.is_file():
-                try:
-                    task_text = t_file.read_text(encoding="utf-8", errors="replace")[:50000]
-                except Exception:
-                    pass
-
-        if prompt_text is None:
+    if cid and prompts_dir.is_dir():
+        p_file = prompts_dir / f"{cid}.system.txt"
+        t_file = prompts_dir / f"{cid}.task.txt"
+        if p_file.is_file():
             try:
-                p_files = [f for f in prompts_dir.iterdir() if f.name.endswith(".system.txt")]
-                if p_files:
-                    p_files.sort(key=lambda f: f.stat().st_mtime)
-                    latest_p = p_files[-1]
-                    prompt_text = latest_p.read_text(encoding="utf-8", errors="replace")[:150000]
-                    t_cand = prompts_dir / f"{latest_p.name[:-11]}.task.txt"
-                    if t_cand.is_file():
-                        task_text = t_cand.read_text(encoding="utf-8", errors="replace")[:50000]
+                prompt_text = p_file.read_text(encoding="utf-8", errors="replace")[:150000]
+            except Exception:
+                pass
+        if t_file.is_file():
+            try:
+                task_text = t_file.read_text(encoding="utf-8", errors="replace")[:50000]
             except Exception:
                 pass
 
@@ -648,6 +732,74 @@ def _render_window_pressure_html(pressure: dict[str, Any]) -> str:
     )
 
 
+def prompt_stage_badges(row: dict[str, Any], compaction: Any) -> list[tuple[str, str]]:
+    """#368: (badge class, text) for the three prompt stages, each read from
+    its own evidence:
+
+    - assembly fit: the rung ladder's final result (``rung``);
+    - source instructions: block-load ``truncated``/``missing`` file lists;
+    - history: this cycle's compaction journal rows (``reason: compacted``).
+    """
+    rung = row.get("rung")
+    if not rung:
+        assembly = ("badge-secondary", "Assembly fit: unavailable")
+    elif rung == "full":
+        assembly = ("badge-success", "Assembly fit: full")
+    else:
+        assembly = ("badge-danger", f"Assembly fit: {rung}")
+
+    truncated = sorted(_flagged_names(row, "truncated"))
+    missing = sorted(_flagged_names(row, "missing"))
+    if truncated or missing:
+        parts = []
+        if truncated:
+            parts.append(f"{len(truncated)} truncated ({', '.join(truncated)})")
+        if missing:
+            parts.append(f"{len(missing)} missing ({', '.join(missing)})")
+        source = ("badge-danger", "Source instructions: " + "; ".join(parts))
+    elif "truncated" in row or "missing" in row:
+        source = ("badge-success", "Source instructions: intact")
+    else:
+        source = ("badge-secondary", "Source instructions: unavailable")
+
+    cid = row.get("cycle_id")
+    status = compaction.get("status") if isinstance(compaction, dict) else None
+    if status == "missing":
+        history = ("badge-secondary", "History: unavailable (journal missing)")
+    elif status == "empty":
+        history = ("badge-secondary", "History: not compacted (journal empty)")
+    elif status == "present" and cid:
+        cycle_rows = [r for r in compaction.get("rows") or [] if isinstance(r, dict) and r.get("cycle_id") == cid]
+        compacted = sum(1 for r in cycle_rows if r.get("reason") == "compacted")
+        if compacted:
+            history = ("badge-secondary", f"History: compacted ({compacted}×)")
+        elif cycle_rows:
+            history = ("badge-success", "History: not compacted")
+        else:
+            history = ("badge-secondary", "History: no journal rows for this cycle")
+    else:
+        history = ("badge-secondary", "History: unavailable")
+    return [assembly, source, history]
+
+
+def dialogue_window_summary(executor_llm_stats: Any) -> str:
+    """#368: the dialogue window as the runtime recorded it, or "unknown".
+
+    The model window is the latest executor ``llm_calls`` row's
+    ``context_window`` (eeebot#1755, resolved per route by the runtime).
+    The compaction reserve is not published by the runtime at all
+    (``context_compaction.RESERVE_TOKENS`` is env-overridable and never
+    journalled), so it and the usable budget stay "unknown" -- never a
+    number kept here that the runtime may no longer use.
+    """
+    window = executor_llm_stats.get("context_window") if isinstance(executor_llm_stats, dict) else None
+    if isinstance(window, int) and not isinstance(window, bool) and window > 0:
+        window_part = f"model window {window:,} tokens (executor llm_calls.context_window)"
+    else:
+        window_part = "model window unknown (latest executor llm_calls row has no context_window)"
+    return f"{window_part} · compaction reserve unknown (not published by runtime) · usable budget unknown"
+
+
 def _lan_only(text: Any) -> str:
     """ADR-036 rule 3: the text of a call (prompt sections, task text,
     SKILL.md bodies) belongs to the private LAN set only. Public pages show
@@ -753,7 +905,14 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             return "published"
         return f"{prompt_fit_status} (reader: {prompt_fit_reader_status})"
 
-    ts_display = ts_str.replace("T", " ").replace("Z", " MSK") if ts_str else "active cycle"
+    # #368: convert, never relabel -- the recorded ts is UTC.
+    ts_msk = utc_to_msk_display(ts_str)
+    ts_display = ts_msk or (f"{ts_str} (unparsed)" if ts_str else "active cycle")
+    # #368: the reader never substitutes another cycle's text, so a missing
+    # file for THIS row's cycle is named as such, not as a generic gap.
+    snapshot_text_unavailable = (
+        f"text for this snapshot unavailable ({esc(cid)})" if cid else "unavailable"
+    )
 
     parsed_prompt = parse_prompt_sections(prompt_text, sections)
     raw_sections_text = {
@@ -842,9 +1001,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('    <div class="context-header-badges">')
     out.append(f'      {headroom_badge}')
-    if rung:
-        rung_badge_class = "badge-success" if rung == "full" else "badge-danger"
-        out.append(f'      <span class="context-badge {rung_badge_class}">Prompt fit: {esc(rung)}</span>')
+    # #368: "Prompt fit: full" next to "AGENTS.md TRUNCATED" claimed more
+    # than the data shows -- block load can truncate while final assembly
+    # still fits. Three stages, three separate states.
+    for badge_class, badge_text in prompt_stage_badges(sys_prompt, compaction):
+        out.append(f'      <span class="context-badge {badge_class} prompt-stage-badge">{esc(badge_text)}</span>')
     out.append(f'      <span class="cycle-pill">{esc(cid or "latest")}</span>')
     out.append('    </div>')
     out.append('  </div>')
@@ -854,7 +1015,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('      <span class="kpi-label">Capped Prompt Load</span>')
     out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
     out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
-    actual_system_display = f'<strong>Actual System Message:</strong> {actual_system_chars:,} chars received by model' if actual_system_chars is not None else '<strong>Actual System Message:</strong> unavailable'
+    actual_system_display = f'<strong>Actual System Message:</strong> {actual_system_chars:,} chars received by model' if actual_system_chars is not None else f'<strong>Actual System Message:</strong> {snapshot_text_unavailable}'
     out.append(f'      <span class="kpi-sub">{actual_system_display}</span>')
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
@@ -911,11 +1072,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     history_prompt_tokens = executor_llm_stats.get("prompt_tokens") if isinstance(executor_llm_stats, dict) else None
     history_text = f"{history_prompt_tokens:,} prompt tokens (executor)" if isinstance(history_prompt_tokens, int) else "unavailable"
     out.append('    </div>')
-    window_tokens = 98000
-    reserve_tokens = 8000
-    window_budget = window_tokens - reserve_tokens
+    window_summary = dialogue_window_summary(executor_llm_stats)
     compaction_status = "compaction did not fire" if isinstance(compaction, dict) and compaction.get("status") in {"missing", "empty"} else esc(compaction.get("status", "unavailable") if isinstance(compaction, dict) else "unavailable")
-    out.append(f'<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> {window_budget:,} tokens ({window_tokens:,} − {reserve_tokens:,}) · occupancy: {history_text} · {compaction_status}</div>')
+    out.append(f'<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> {window_summary} · occupancy: {history_text} · {compaction_status}</div>')
     out.append('  </div>')
 
     out.append('  <div class="context-subject-group context-assembly-group">')
@@ -942,8 +1101,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         else:
             out.append(f'        <div class="t1-block-item {empty_class}"><span class="t1-seq">{t1_seq}</span><span class="t1-name">{esc(sec_name)}</span>{owner_tag}<span class="t1-sz">{sz_text}</span></div>')
     out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
-    window_budget = 98000 - 8000
-    window_text = f"{window_budget:,} tokens available (98,000 − 8,000) · occupancy {history_text}"
+    window_text = f"{window_summary} · occupancy {history_text}"
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">{window_text}</span></div>')
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">{len(task_text) if task_text else 0:,}c</span></div>')
     out.append('      </div>')
@@ -980,6 +1138,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     block_seq = 1
     reconciliation_rows = []
     total_sections_chars = 0
+    recorded_pool = recorded_release_pool(sys_prompt)
+    pool_cap = recorded_pool["cap"] if recorded_pool else RELEASE_POOL_CHARS
+    pool_floors = release_floors(sys_prompt)
+    pool_used_from_sections = 0
 
     if sections:
         for sec_name in sections:
@@ -987,8 +1149,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             meta = section_owner_meta(sec_name)
             owner = meta["owner"]
             file_name = meta["file"]
-            sec_cap = meta.get("cap")
-            cap_text = f"{sec_cap:,}c" if isinstance(sec_cap, int) else "dynamic"
+            cap_text = section_budget_text(
+                sec_name, meta, pool_cap, pool_static=recorded_pool is None, floors=pool_floors,
+            )
+            if meta.get("pool"):
+                pool_used_from_sections += sec_sz
             is_missing = file_name in missing_files
             is_truncated = file_name in truncated_files
             flags = []
@@ -1054,6 +1219,17 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'        <tbody>{"".join(reconciliation_rows)}<tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>{reconciled_total:,}</strong></td><td colspan="2"></td><td><strong>Recorded chars: {message_length:,}</strong> ({esc(message_length_label)})</td></tr></tbody>')
         out.append('      </table>')
         out.append(f'      <p class="rec-note">Formula: &sum;(recorded sections: {total_sections_chars:,}c) + {sep_count} separators &times; {SEPARATOR_LEN}c ({sep_total_chars:,}c) = {reconciled_total:,} chars, compared against {esc(message_length_label)} ({message_length:,}c).</p>')
+        # #368: the release files share one pool; show its occupancy, not
+        # five per-block numbers they could appear to overrun.
+        if recorded_pool:
+            pool_used, pool_source = recorded_pool["used"], "recorded by runtime"
+        else:
+            pool_used, pool_source = pool_used_from_sections, "used = &sum; recorded release sections"
+        floors = " · ".join(
+            f"{esc(SECTION_OWNER_MAP[name]['file'])} floor {floor:,}c{_static_suffix(is_static)}"
+            for name, (floor, is_static) in pool_floors.items()
+        )
+        out.append(f'      <p class="rec-note release-pool-note"><strong>Release pool (shared by release files):</strong> {pool_used:,} / {pool_cap:,}c{_static_suffix(recorded_pool is None)} used ({pool_source}) · {floors} (a minimum, not a ceiling)</p>')
         if outside_cap:
             tail_total = sum(item["actual_chars"] for item in outside_cap)
             out.append(f'      <p class="rec-note"><strong>Legacy tail beyond recorded sections:</strong> {tail_total:,}c across {len(outside_cap)} block(s) -- see below. Not part of the ledger `sections` map.</p>')
@@ -1102,7 +1278,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="user-message-sections">')
     out.append('      <h4>User Message Sections (latest recorded task text)</h4>')
     if not task_text:
-        out.append('      <p class="unavailable-note">task text unavailable for this cycle.</p>')
+        out.append(f'      <p class="unavailable-note">task {snapshot_text_unavailable}.</p>')
     elif not task_sections:
         out.append('      <p class="unavailable-note">no `## ` headings found in the recorded task text.</p>')
     else:
