@@ -163,6 +163,11 @@ sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p 
 `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700` and
 `ReadWritePaths=/var/lib/eeebot-site`.
 
+The publisher is `Type=oneshot` without `RemainAfterExit`, so while it runs its
+ActiveState is `activating` (never `active`), and `systemctl is-active` returns
+non-zero for that. Every wait below therefore loops until the ActiveState is
+`inactive` or `failed`, not on `is-active`.
+
 5. Seed the host snapshot. A pre-reload (legacy) invocation may still be
    running, and systemd merges a new start request into an in-flight start
    job, so a `start` issued now could return after only the legacy generator
@@ -170,10 +175,10 @@ sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p 
    invocation and prove it by its `InvocationID`:
 
 ```bash
-while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+until case "$(systemctl show eeebot-techtree-publish.service -p ActiveState --value)" in inactive|failed) true;; *) false;; esac; do sleep 10; done
 I0=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
 sudo systemctl start eeebot-techtree-publish.service
-while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+until case "$(systemctl show eeebot-techtree-publish.service -p ActiveState --value)" in inactive|failed) true;; *) false;; esac; do sleep 10; done
 I1=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
 [ -n "$I1" ] && [ "$I1" != "$I0" ] && echo "post-reload invocation $I1" || echo "STOP: no distinct post-reload invocation"
 sudo journalctl _SYSTEMD_INVOCATION_ID="$I1" --no-pager | tail -50
@@ -213,7 +218,7 @@ is polled:
 
 ```bash
 for i in $(seq 1 40); do
-  S=$(curl -fsS "https://ozand.github.io/eeebot-ops-dashboard/?v=$(date +%s)" | grep -o '<meta name="snapshot-version" content="[^"]*">' | sed -E 's/.*content="([^"]*)".*/\1/')
+  S=$(curl -fsS --connect-timeout 10 --max-time 30 "https://ozand.github.io/eeebot-ops-dashboard/?v=$(date +%s)" | grep -o '<meta name="snapshot-version" content="[^"]*">' | sed -E 's/.*content="([^"]*)".*/\1/')
   CUR=$(sudo basename "$(sudo readlink /var/lib/eeebot-site/current)")
   if [ -n "$S" ] && { [ "$S" = "$V" ] || [ "$S" = "$CUR" ]; }; then echo "served: $S (seed $V, current $CUR)"; break; fi
   sleep 15
@@ -244,7 +249,7 @@ Use the `$TS` printed in step 2.
   configuration never reads them, and nothing serves them until step 6.
 
 ```bash
-while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done   # never swap files under a running publisher
+until case "$(systemctl show eeebot-techtree-publish.service -p ActiveState --value)" in inactive|failed) true;; *) false;; esac; do sleep 10; done   # never swap files under a running publisher
 sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service
 sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
