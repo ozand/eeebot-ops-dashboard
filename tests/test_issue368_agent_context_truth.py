@@ -107,10 +107,18 @@ def test_item1_release_blocks_show_shared_pool_not_stale_per_block_caps(tmp_path
     # sections the builder defines are mapped, never "unmapped"
     assert 'class="t1-owner t1-owner-unmapped"' not in html
     for cap in ("3,000c", "600c", "1,200c"):  # priorities / scorecard / position
-        assert f'<td class="num">{cap}</td>' in html
+        assert f'<td class="num">{cap} {STATIC}</td>' in html
 
 
 STATIC = "(static, runtime not reporting)"
+
+
+def test_item1_non_pool_caps_are_labelled_static_too(tmp_path):
+    state = _state(tmp_path, prompts={f"{CYCLE_A}.system.txt": _prompt_text(SECTIONS)})
+    html = _render(tmp_path, state)["agent.html"]
+
+    for value in ("3,000c", "1,000c", "400c", "600c", "1,200c"):
+        assert f"{value} {STATIC}" in html
 
 
 def test_item1_static_pool_numbers_say_they_are_static(tmp_path):
@@ -137,7 +145,7 @@ def test_item1_recorded_pool_is_shown_without_static_label(tmp_path):
     assert "shared pool 16,000c · floor 5,500c" in html
     assert "12,345 / 16,000c used (recorded by runtime)" in html
     assert "OPERATING.md floor 5,500c (a minimum" in html
-    assert STATIC not in html
+    assert "shared pool 16,000c (static, runtime not reporting)" not in html
     assert "15,500" not in html
 
 
@@ -205,6 +213,28 @@ def test_item4_missing_snapshot_text_is_not_substituted_from_another_cycle(tmp_p
 
 
 # --- item 5: separate stage states, no overclaiming "Prompt fit: full" --------
+
+def test_item5_missing_compaction_journal_is_unavailable_not_not_compacted(tmp_path):
+    state = _state(
+        tmp_path,
+        prompts={f"{CYCLE_A}.system.txt": _prompt_text(SECTIONS)},
+    )
+    html = _render(tmp_path, state)["agent.html"]
+
+    assert "History: unavailable (journal missing)" in html
+    assert "History: not compacted (journal empty)" not in html
+
+
+def test_item5_empty_compaction_journal_is_not_compacted(tmp_path):
+    state = _state(
+        tmp_path,
+        prompts={f"{CYCLE_A}.system.txt": _prompt_text(SECTIONS)},
+        compaction=[],
+    )
+    html = _render(tmp_path, state)["agent.html"]
+
+    assert "History: not compacted (journal empty)" in html
+
 
 def test_item5_stage_states_are_separate_when_block_load_truncates(tmp_path):
     state = _state(

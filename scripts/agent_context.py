@@ -136,7 +136,7 @@ def section_budget_text(
         floor = (floors if floors is not None else release_floors(None)).get(name)
         return f"{text} · floor {floor[0]:,}c{_static_suffix(floor[1])}" if floor else text
     cap = meta.get("cap")
-    return f"{cap:,}c" if isinstance(cap, int) else "dynamic"
+    return f"{cap:,}c{_static_suffix(True)}" if isinstance(cap, int) else "dynamic"
 
 
 # #301: rule fingerprints the harness test tracks (see the issue's code map)
@@ -764,7 +764,9 @@ def prompt_stage_badges(row: dict[str, Any], compaction: Any) -> list[tuple[str,
 
     cid = row.get("cycle_id")
     status = compaction.get("status") if isinstance(compaction, dict) else None
-    if status in {"missing", "empty"}:
+    if status == "missing":
+        history = ("badge-secondary", "History: unavailable (journal missing)")
+    elif status == "empty":
         history = ("badge-secondary", "History: not compacted (journal empty)")
     elif status == "present" and cid:
         cycle_rows = [r for r in compaction.get("rows") or [] if isinstance(r, dict) and r.get("cycle_id") == cid]
