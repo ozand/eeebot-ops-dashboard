@@ -205,6 +205,10 @@ def compute_tree_digest(state_root: Path) -> str:
     except OSError:
         hasher.update(b'<lessons-missing>')
     hasher.update(b'\x00')
+    # #356: the public projection's version -- a deployed projection change
+    # (e.g. a field it now withholds) republishes even on a quiet tree.
+    hasher.update(f'projection:{sinks.PROJECTION_VERSION}'.encode('utf-8'))
+    hasher.update(b'\x00')
     return hasher.hexdigest()
 
 
@@ -505,6 +509,13 @@ def _refusal_freeze_status(
     return refusing_since, refusal_age, freeze_limit, past_limit
 
 
+def _print_host_warnings(warnings: list[str]) -> None:
+    """#356: an activated host snapshot whose old-version pruning failed is
+    a WARNING in the journal, never a host failure in the publish state."""
+    for warning in warnings:
+        print(f'techtree-autopublish: WARNING: {warning}', file=sys.stderr)
+
+
 def run(args: argparse.Namespace) -> int:
     run_started = time.monotonic()
     state_root = Path(args.state_root)
@@ -697,6 +708,7 @@ def run(args: argparse.Namespace) -> int:
         duration_warning, duration_state = record_attempt_duration()
         return rc, fps
 
+    host_warnings: list[str] = []
     try:
         rc, fingerprints = sinks.publish_ordered(
             sink_root,
@@ -705,6 +717,7 @@ def run(args: argparse.Namespace) -> int:
             version,
             publisher=gh_publisher,
             generated_at=stamp,
+            host_warnings=host_warnings,
         )
     except sinks.HostSnapshotError as exc:
         print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
@@ -724,6 +737,7 @@ def run(args: argparse.Namespace) -> int:
         )
         return 1
     except Exception as exc:
+        _print_host_warnings(host_warnings)
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         host_error = getattr(exc, 'host_error', None)
         if host_error is not None:
@@ -754,6 +768,7 @@ def run(args: argparse.Namespace) -> int:
         save_failed_attempt(duration_warning, duration_state)
         return 1
 
+    _print_host_warnings(host_warnings)
     if rc != 0:
         if ref_updated:
             print(

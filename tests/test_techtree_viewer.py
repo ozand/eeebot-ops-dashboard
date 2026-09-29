@@ -131,7 +131,10 @@ def _fixture() -> dict[str, object]:
             {'phase': 'outcome', 'cycle_id': 'cycle-a', 'status': 'success', 'ts': '2026-08-16T00:02:00Z'},
             {'phase': 'started', 'cycle_id': 'cycle-failed-1', 'ts': '2026-08-16T01:00:00Z'},
             {'phase': 'gate', 'cycle_id': 'cycle-failed-1', 'gate': 'smoke_test', 'status': 'fail', 'reason': 'syntax error in tests', 'ts': '2026-08-16T01:01:00Z'},
-            {'phase': 'outcome', 'cycle_id': 'cycle-failed-1', 'status': 'fail', 'reason': 'smoke_failed', 'ts': '2026-08-16T01:02:00Z'},
+            # gate_failed: the rollback reason eeebot's bridge actually writes
+            # for a gate refusal (bridge.py _rollback_reason); nothing writes
+            # "smoke_failed" (#378).
+            {'phase': 'outcome', 'cycle_id': 'cycle-failed-1', 'status': 'fail', 'reason': 'gate_failed', 'ts': '2026-08-16T01:02:00Z'},
         ],
         'demand_rotation': {
             'served': {'gap-1': '2026-08-16T00:00:00Z', 'gap-2': '2026-08-16T01:00:00Z'},
@@ -397,7 +400,7 @@ def test_cycle_feed_renders_outcomes_files_and_failed_cycles() -> None:
     # Failed cycle (with gate block reason) must be visible
     assert 'Add speculative syntax checking' in html_out
     assert 'cycle-failed-1' in html_out
-    assert 'syntax error in tests' in html_out or 'smoke_failed' in html_out
+    assert 'syntax error in tests' in html_out or 'gate_failed' in html_out
     assert 'feed-outcome-failed' in html_out or 'feed-outcome-gate_blocked' in html_out
 
 
