@@ -116,7 +116,10 @@ sudo systemd-tmpfiles --create /etc/tmpfiles.d/eeebot-site.conf
 sudo stat -c "%a %U" /var/lib/eeebot-site
 ```
 
-`stat` must print exactly `755 eeebot-publish`.
+`stat` must print exactly `755 eeebot-publish`. On a first cutover the site
+root must also be EMPTY (`sudo ls -A /var/lib/eeebot-site` prints nothing). A
+root retained from an earlier attempt could let step 5 inspect a stale
+snapshot. If it is not empty, stop and ask the architect before going on.
 
 2. Take a dated backup of everything step 3 overwrites. On 2026-09-29 the host
    had `/opt/eeebot-techtree/eeebot-techtree-sync.sh` from #325 (sha256 prefix
@@ -160,16 +163,25 @@ sudo systemctl show eeebot-techtree-publish.service -p User -p ProtectSystem -p 
 `StateDirectory=eeebot-techtree`, `StateDirectoryMode=0700` and
 `ReadWritePaths=/var/lib/eeebot-site`.
 
-5. Seed the host snapshot. A timer or bridge trigger may already have run the
-   seed since step 3; the manual start below is then just one more run. Start
-   it, wait until no run is active, and check the result:
+5. Seed the host snapshot. A pre-reload (legacy) invocation may still be
+   running, and systemd merges a new start request into an in-flight start
+   job, so a `start` issued now could return after only the legacy generator
+   ran. First wait until nothing is active. Then force a DISTINCT post-reload
+   invocation and prove it by its `InvocationID`:
 
 ```bash
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+I0=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
 sudo systemctl start eeebot-techtree-publish.service
 while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
-sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
+I1=$(systemctl show eeebot-techtree-publish.service -p InvocationID --value)
+[ -n "$I1" ] && [ "$I1" != "$I0" ] && echo "post-reload invocation $I1" || echo "STOP: no distinct post-reload invocation"
+sudo journalctl _SYSTEMD_INVOCATION_ID="$I1" --no-pager | tail -50
 sudo test -s /var/lib/eeebot-site/current/index.html
 ```
+
+That invocation's journal must show the sync (`eeebot-techtree-sync.sh`)
+followed by the publish. If it prints `STOP`, do not go on.
 
 Verify that the NEW generator produced the snapshot. `add_snapshot_version`
 (`scripts/two_sinks.py`) writes exactly one
@@ -189,15 +201,21 @@ The seed also published gh-pages through the D1 projection. `publish_to_pages`
 updates the `gh-pages` ref and returns without waiting for the Pages
 deployment, and `publish_ordered` hands the publisher the versioned public
 pages, so the served page carries the same meta. Wait until the served page
-reports a snapshot version at least as new as the seed (at most 10 minutes).
-A later trigger may legitimately publish a newer snapshot meanwhile, so accept
-the seed's version or any NEWER one. A version is `<epoch>-<digest12>`
-(`techtree_autopublish.py`), so compare the epoch parts numerically:
+reports one of the new generator's snapshots (at most 10 minutes).
+
+Match by IDENTITY, never by wall-clock order. The version is
+`<epoch>-<digest12>` from `time.time()`, and the host clock can move
+backwards (`should_publish()` handles NTP/manual corrections), so a larger
+epoch does not mean a newer snapshot. A later trigger may legitimately
+publish a newer snapshot meanwhile, which then becomes `current`. Accept
+only the seed version `$V`, or the version `current` points at when the page
+is polled:
 
 ```bash
 for i in $(seq 1 40); do
   S=$(curl -fsS "https://ozand.github.io/eeebot-ops-dashboard/?v=$(date +%s)" | grep -o '<meta name="snapshot-version" content="[^"]*">' | sed -E 's/.*content="([^"]*)".*/\1/')
-  if echo "$S" | grep -qE '^[0-9]+-[0-9a-f]{12}$' && [ "${S%%-*}" -ge "${V%%-*}" ]; then echo "served: $S (seed $V)"; break; fi
+  CUR=$(sudo basename "$(sudo readlink /var/lib/eeebot-site/current)")
+  if [ -n "$S" ] && { [ "$S" = "$V" ] || [ "$S" = "$CUR" ]; }; then echo "served: $S (seed $V, current $CUR)"; break; fi
   sleep 15
 done
 ```
