@@ -210,6 +210,9 @@ sudo systemctl start eeebot-techtree-publish.timer
 sudo systemctl cat eeebot-techtree-publish.service   # must match the pre-cutover unit
 ```
 
+  This rollback does not undo the gh-pages publication from step 4. The next
+  run of the legacy generator republishes the old view, as expected.
+
 - **Step 6** (the server side): stop the new server and start the legacy one
   again.
 
