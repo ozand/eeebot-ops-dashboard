@@ -123,6 +123,11 @@ systemctl is-active eeebot-techtree-publish.timer     # must print: inactive
 systemctl is-enabled eeebot-techtree-publish.service  # must print: masked-runtime
 ```
 
+During steps 1-4, bridge journal errors about starting the OnSuccess job
+`eeebot-techtree-publish.service` (unit masked) are expected. The OnSuccess
+job is a separate job; its failure does not change the bridge unit's
+`Result=success`, and the bridge keeps running its cycles normally.
+
 1. Install the publisher unit, the sync script and the sync drop-in:
 
 ```bash
