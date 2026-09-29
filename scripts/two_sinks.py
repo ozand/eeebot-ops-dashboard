@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import datetime
 import json
 import math
 import os
@@ -331,14 +332,23 @@ def _project_meta(key: str, value: object) -> dict[str, Any]:
 _DROP = object()
 _Node = Callable[[object, "dict[str, int] | None"], object]
 
-#: ISO-8601 date or date-time (the loop's writers use ...Z and +00:00).
-_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?)?(?:Z|[+-]\d{2}:?\d{2})?$")
+#: ISO-8601 date or date-time (the loop's writers use ...Z and +00:00);
+#: the components are range-checked by _ts (#378 review P2).
+_TS_RE = re.compile(
+    r"^(\d{4})-(\d{2})-(\d{2})"
+    r"(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(?:Z|[+-](\d{2}):?(\d{2}))?)?$")
+#: the largest epoch a timestamp may carry (9999-12-31T23:59:59Z).
+_MAX_EPOCH = 253402300799
 #: identifiers: cycle ids, shas, repositories, branches, relative paths.
 _IDENT_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._:/@+-]{0,199}$")
 #: single-word codes and names (no "/", no whitespace).
 _TOKEN_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._:+-]{0,63}$")
-#: a file path (relative or absolute) without whitespace.
+#: a file path without whitespace; _relpath narrows it to repo-relative.
 _PATH_RE = re.compile(r"^[A-Za-z0-9._/@+-]{1,300}$")
+#: #378 review P1-2: the only absolute paths the page shows are systemd
+#: unit files (systemd_drift findings) -- a fixed, non-private domain.
+_UNIT_PATH_RE = re.compile(
+    r"^/(?:etc|lib|usr/lib|run)/systemd/(?:system|user)/[A-Za-z0-9@._:-]{1,128}(?:\.d/[A-Za-z0-9@._:-]{1,128})?$")
 
 #: Bumped whenever the projection's output domain changes; part of the
 #: publish digest (techtree_autopublish.compute_tree_digest), so a deployed
@@ -363,16 +373,49 @@ def _pattern(regex: re.Pattern[str]) -> _Node:
     return node
 
 
-_ident = _pattern(_IDENT_RE)
+def _no_traversal(value: str) -> bool:
+    return "//" not in value and ".." not in value.split("/")
+
+
+def _ident(value: object, _w: dict[str, int] | None) -> object:
+    return value if isinstance(value, str) and _IDENT_RE.fullmatch(value) and _no_traversal(value) else _DROP
+
+
 _token = _pattern(_TOKEN_RE)
-_path = _pattern(_PATH_RE)
+
+
+def _relpath(value: object, _w: dict[str, int] | None) -> object:
+    """#378 review P1-2: a REPO-RELATIVE path only -- no leading "/", no
+    "..", no "//" (a drive letter or backslash never matches _PATH_RE);
+    anything else is omitted."""
+    if isinstance(value, str) and _PATH_RE.fullmatch(value) and not value.startswith("/") and _no_traversal(value):
+        return value
+    return _DROP
+
+
+def _unit_path(value: object, _w: dict[str, int] | None) -> object:
+    return value if isinstance(value, str) and _UNIT_PATH_RE.fullmatch(value) and _no_traversal(value) else _DROP
 
 
 def _ts(value: object, _w: dict[str, int] | None) -> object:
-    """A validated timestamp: an ISO-8601 string or a non-negative epoch."""
+    """A validated timestamp: an ISO-8601 string whose date, time and
+    offset are real (#378 review P2: 2026-02-30 and +25:00 are not), or a
+    non-negative epoch no later than year 9999. An int is never converted
+    to float (10**400 would raise OverflowError)."""
     if isinstance(value, str):
-        return value if _TS_RE.fullmatch(value) else _DROP
-    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0:
+        match = _TS_RE.fullmatch(value)
+        if match is None:
+            return _DROP
+        year, month, day, hour, minute, second, off_h, off_m = (
+            int(part) if part is not None else 0 for part in match.groups())
+        try:
+            datetime.datetime(year, month, day, hour, minute, second)
+        except ValueError:
+            return _DROP
+        return value if off_h <= 23 and off_m <= 59 else _DROP
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value if 0 <= value <= _MAX_EPOCH else _DROP
+    if isinstance(value, float) and math.isfinite(value) and 0 <= value <= _MAX_EPOCH:
         return value
     return _DROP
 
@@ -391,10 +434,13 @@ def _int(minimum: int | None = 0) -> _Node:
 
 def _num(minimum: float | None = None) -> _Node:
     def node(value: object, _w: dict[str, int] | None) -> object:
-        if (isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
-                and (minimum is None or value >= minimum)):
-            return value
-        return _DROP
+        # #378 review P2: an int is checked as an int -- math.isfinite(10**400)
+        # raises OverflowError, which would wipe the whole section.
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return _DROP
+        if isinstance(value, float) and not math.isfinite(value):
+            return _DROP
+        return value if minimum is None or value >= minimum else _DROP
     return node
 
 
@@ -408,14 +454,15 @@ def _enum(*values: str, fallback: str | None = None) -> _Node:
     def node(value: object, _w: dict[str, int] | None) -> object:
         if isinstance(value, str) and value in allowed:
             return value
-        return fallback if fallback is not None else _DROP
+        # a present, invalid value reads as the fallback; null is not a value
+        return fallback if fallback is not None and value is not None else _DROP
     return node
 
 
 def _code(category: str) -> _Node:
     """A reason code from _PUBLIC_REASON_CODES, else its size bucket."""
     def node(value: object, withheld: dict[str, int] | None) -> object:
-        return _project_reason(value, withheld, category)
+        return _DROP if value is None else _project_reason(value, withheld, category)
     return node
 
 
@@ -424,6 +471,28 @@ def _flag(label: str) -> _Node:
     def node(value: object, _w: dict[str, int] | None) -> object:
         return label if value else ""
     return node
+
+
+def _nullable(inner: _Node) -> _Node:
+    """#378 review P2: null is published ONLY where a field is declared
+    nullable (the producer writes None there); every other node drops it."""
+    def node(value: object, withheld: dict[str, int] | None) -> object:
+        return None if value is None else inner(value, withheld)
+    return node
+
+
+def _violation_code(value: object, _w: dict[str, int] | None) -> object:
+    """#378 review P1-1: a gate violation is published as its rule code
+    from the finite reason allowlist (a bare code, or the ``code:`` prefix
+    of the text), else the fixed "violation". The text stays private."""
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped in _PUBLIC_REASON_CODES:
+            return stripped
+        prefix = re.match(r"^([a-z0-9_.-]{1,64})\s*:", stripped)
+        if prefix and prefix.group(1) in _PUBLIC_REASON_CODES:
+            return prefix.group(1)
+    return "violation"
 
 
 def _one_of(*nodes: _Node) -> _Node:
@@ -450,16 +519,19 @@ def _list(item: _Node, max_items: int | None = None) -> _Node:
 
 
 def _map(key: _Node, item: _Node) -> _Node:
-    """A dict keyed by DATA (cycle ids, repositories, dates): every key is
-    validated as a value, and None values are kept as None."""
+    """A dict keyed by DATA (cycle ids, repositories, dates). #378 review
+    P1-3: a key is published only when its validator returns it UNCHANGED
+    -- a validator that maps a key (an enum fallback, a code bucket) drops
+    it instead, so the output key is always the validated source key and
+    two source keys can never collide. A null value needs a nullable item."""
     def node(value: object, withheld: dict[str, int] | None) -> object:
         if not isinstance(value, dict):
             return _DROP
         result = {}
         for name, entry in value.items():
-            if key(name, withheld) is _DROP:
+            if not isinstance(name, str) or key(name, withheld) != name:
                 continue
-            projected = None if entry is None else item(entry, withheld)
+            projected = item(entry, withheld)
             if projected is not _DROP:
                 result[name] = projected
         return result
@@ -475,17 +547,15 @@ def _obj(
 ) -> _Node:
     """A record with NAMED fields only. ``sized_text`` fields are private
     text: published as ``<field>_chars`` (only when the source is a string)
-    plus the given blank value. ``sized_list`` fields become
-    ``<field>_count`` and ``[]``. A declared field set to None stays None."""
+    plus a fresh copy of the given blank value. ``sized_list`` fields, when
+    the source is a list, become ``<field>_count`` and ``[]``; anything
+    else is dropped. A null value needs a nullable field (#378 review P2)."""
     def node(value: object, withheld: dict[str, int] | None) -> object:
         if not isinstance(value, dict):
             return _DROP
         out: dict[str, Any] = {}
         for name, field in fields.items():
             if name not in value:
-                continue
-            if value[name] is None:
-                out[name] = None
                 continue
             projected = field(value[name], withheld)
             if projected is not _DROP:
@@ -494,54 +564,14 @@ def _obj(
             if name in value:
                 if isinstance(value[name], str):
                     out[f"{name}_chars"] = len(value[name])
-                out[name] = blank
+                out[name] = copy.deepcopy(blank)  # never shared between records
         for name in sized_list:
-            if name in value:
-                out[f"{name}_count"] = len(value[name]) if isinstance(value[name], list) else 0
+            if isinstance(value.get(name), list):
+                out[f"{name}_count"] = len(value[name])
                 out[name] = []
         if post is not None:
             post(value, out, withheld)
         return out
-    return node
-
-
-def _metric_value(depth: int) -> _Node:
-    def node(value: object, withheld: dict[str, int] | None) -> object:
-        if value is None or value is True or value is False:
-            return value
-        scalar = _number(value, withheld)
-        if scalar is not _DROP:
-            return scalar
-        if isinstance(value, str):
-            return _token(value, withheld)
-        if isinstance(value, list):
-            return _list(_number, 64)(value, withheld)
-        if isinstance(value, dict) and depth > 0:
-            return _metrics(depth - 1)(value, withheld)
-        return _DROP
-    return node
-
-
-def _metrics(depth: int = 2) -> _Node:
-    """A bag of the loop's own numeric metrics (scorecard sections, token
-    summaries): snake_case keys, values a number, a bool, None, a one-word
-    code, a list of numbers, or a nested bag. Prose cannot appear -- a string with a space or
-    "/" is dropped -- and a counter-suffixed key must be a count (#315 R6)."""
-    value_node = _metric_value(depth)
-
-    def node(value: object, withheld: dict[str, int] | None) -> object:
-        if not isinstance(value, dict):
-            return _DROP
-        result = {}
-        for name, entry in value.items():
-            if not isinstance(name, str) or not _COUNTER_FIELD_RE.fullmatch(name):
-                continue
-            if _is_counter_field(name) and not _is_count(entry):
-                continue
-            projected = value_node(entry, withheld)
-            if projected is not _DROP:
-                result[name] = projected
-        return result
     return node
 
 
@@ -586,12 +616,12 @@ _exit_status = _one_of(_int(None), _enum(*_EXIT_SIGNALS))
 _LEDGER_ROW = _obj({
     "cycle_id": _ident, "phase": _token, "ts": _ts, "outcome": _enum(*_LEDGER_OUTCOMES, fallback="unknown"),
     "status": _enum(*_LEDGER_OUTCOMES, fallback="unknown"), "sha": _ident, "parent_sha": _ident,
-    "task_title": _text(300), "target_path": _path, "serves": _ident, "demand_id": _ident, "branch": _ident,
+    "task_title": _text(300), "target_path": _relpath, "serves": _ident, "demand_id": _ident, "branch": _ident,
     "reason": _code("ledger_reason"), "decision": _enum(*_PUBLIC_LEDGER_DECISIONS, fallback="[withheld]"),
     "passed": _bool, "smoke_passed": _bool, "duplicate": _bool, "push_attempts": _count,
     "delivered": _bool, "delivery_state": _token, "delta": _number, "metric_delta": _number,
-    "files_changed": _list(_path, 50), "lessons_context": _list(_ident, 50),
-    "violations": _list(_text(500), 50), "card_commit": _ident, "card_id": _ident,
+    "files_changed": _list(_relpath, 50), "lessons_context": _list(_ident, 50),
+    "violations": _list(_violation_code, 50), "card_commit": _ident, "card_id": _ident,
     "skip_reason": _enum(*_PUBLIC_REASON_CODES, "write_failed", fallback="[withheld]"),
     "error": _code("ledger_error"), "attempt": _pattern(re.compile(r"^\d{1,3}(?:/\d{1,3})?$")),
     "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
@@ -613,7 +643,7 @@ _LESSON_ROW = _obj({
 
 _SUBAGENT_ROW = _obj({
     "subagent_id": _ident, "cycle_id": _ident, "goal_id": _ident, "label": _text(200), "status": _token,
-    "started_at": _ts, "finished_at": _ts, "task_truncated": _bool, "summary_truncated": _bool,
+    "started_at": _ts, "finished_at": _nullable(_ts), "task_truncated": _bool, "summary_truncated": _bool,
     "result_truncated": _bool, "task_bytes": _count, "iteration_count": _count,
 }, sized_text={name: "" for name in (
     "task", "summary", "result", "task_excerpt", "summary_excerpt", "result_excerpt")})
@@ -660,14 +690,14 @@ _BRIDGE_EXIT_ROW = _obj({
 }, post=_diagnostic_flags(error="error", where="withheld"))
 
 _BRIDGE_RUN_ROW = _obj({
-    "run_id": _ident, "cycle_id": _ident, "phase": _token, "started_at": _ts, "finished_at": _ts,
+    "run_id": _ident, "cycle_id": _ident, "phase": _token, "started_at": _ts, "finished_at": _nullable(_ts),
     "classification": _enum(*_BRIDGE_CLASSIFICATIONS, fallback="other"),
     "outcome": _enum(*_BRIDGE_OUTCOMES, fallback="other"), "exit_status": _exit_status,
     "error": _flag("error"), "last_where": _flag("withheld"), "reason": _code("bridge_run_reason"),
 })
 
 _BRIDGE_ACTIVE_RUN = _obj({
-    "run_id": _ident, "cycle_id": _ident, "started_at": _ts, "finished_at": _ts,
+    "run_id": _ident, "cycle_id": _ident, "started_at": _ts, "finished_at": _nullable(_ts),
     "classification": _enum(*_BRIDGE_CLASSIFICATIONS, fallback="other"),
     "outcome": _enum(*_BRIDGE_OUTCOMES, fallback="other"), "exit_status": _exit_status,
 }, post=_diagnostic_flags(error="bridge error withheld"))
@@ -678,16 +708,17 @@ _BRIDGE_EXIT_STREAK = _obj({"consecutive_failures": _count, "last_ts": _ts, "cou
 _CI_REPO_ROW = _obj({
     "state": _enum(*_CI_STATES, fallback="unknown"),
     "freshness_state": _enum(*_CI_STATES, fallback="unknown"),
-    "latest_conclusion": _enum(*_CI_CONCLUSIONS, fallback="unknown"),
+    "latest_conclusion": _nullable(_enum(*_CI_CONCLUSIONS, fallback="unknown")),
     "observed_at_utc": _ts,
     "actions_enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
     "actions": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
                      "enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
                      "observed_at_utc": _ts}),
     "freshness": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
-                       "latest_conclusion": _enum(*_CI_CONCLUSIONS, fallback="unknown"),
-                       "observed_at_utc": _ts, "latest_completed_at_utc": _ts,
-                       "latest_run_id": _count, "latest_run_number": _count, "age_seconds": _num(0),
+                       "latest_conclusion": _nullable(_enum(*_CI_CONCLUSIONS, fallback="unknown")),
+                       "observed_at_utc": _ts, "latest_completed_at_utc": _nullable(_ts),
+                       "latest_run_id": _nullable(_count), "latest_run_number": _nullable(_count),
+                       "age_seconds": _nullable(_num(0)),
                        "pending_count": _count, "run_count_returned": _count}),
 })
 
@@ -753,12 +784,12 @@ def _priority_row(fields: Mapping[str, _Node], default_provenance: str | None) -
 
 
 _DERIVED_PRIORITY = _priority_row({
-    "number": _int(None), "vector": _token, "direction": _text(120), "added_utc": _ts,
+    "number": _nullable(_int(None)), "vector": _token, "direction": _text(120), "added_utc": _ts,
     "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED),
 }, default_provenance=_PROVENANCE_SELF_DERIVED)  # the list IS derived_priorities.json
 
 _PRIORITY_ITEM = _priority_row({
-    "rank": _count, "id": _ident, "kind": _token, "vector": _token, "number": _int(None),
+    "rank": _count, "id": _ident, "kind": _token, "vector": _token, "number": _nullable(_int(None)),
     "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED), "direction": _text(120),
     "state": _token,
 }, default_provenance=None)  # no provenance recorded: unknown
@@ -817,7 +848,8 @@ _EXECUTOR_MODEL_STATUS = _obj({
     "checked_calls": _count,
 })
 
-_EXECUTOR_LLM_STATS = _obj({"cycle_id": _ident, "prompt_tokens": _count, "ts": _ts, "context_window": _count})
+_EXECUTOR_LLM_STATS = _obj({"cycle_id": _ident, "prompt_tokens": _nullable(_count), "ts": _ts,
+                            "context_window": _nullable(_count)})
 
 _COMPACTION = _obj({
     "status": _enum("missing", "unavailable", "empty", "present"),
@@ -878,9 +910,39 @@ _AGENT_CONTEXT = _obj({
     "skill_reads": _SKILL_READS, "skill_evals": _SKILL_EVALS, "executor_llm_stats": _EXECUTOR_LLM_STATS,
     "compaction": _COMPACTION,
     "window_pressure": _obj({"status": _token, "rows_in_window": _count, "known_rows": _count,
-                             "unknown_rows": _count, "p99_pct": _num(0), "threshold_pct": _num(0)}),
+                             "unknown_rows": _count, "p99_pct": _nullable(_num(0)),
+                             "threshold_pct": _nullable(_num(0))}),
     "prompt_fit": _PROMPT_FIT,
 }, post=_agent_context_post)
+
+#: #378 review P1-4: every scorecard metric is a NAMED field with its type
+#: (the fields the public renderer reads); a ratio is null when its
+#: denominator is zero.
+_RATIO = _nullable(_number)
+_FAILURE_CAUSES = ("execution_failure", "model_unavailable", "model_call_incomplete",
+                   "unknown_failure_cause", "self_dedup")
+_LOOP_METRICS = _obj({
+    "integrations": _count, "confirmed_integration_ratio": _RATIO, "repeat_failure_rate": _RATIO,
+    "repeat_failure_rate_new": _RATIO, "hypothesis_selection_rate": _RATIO, "hypothesis_served_cycles": _count,
+    "paused_supplier_outcomes": _one_of(_count, _enum("unavailable")),
+    "paused_supplier_seconds": _one_of(_num(0), _enum("unavailable")),
+    **{f"{cause}_{kind}": _count for cause in _FAILURE_CAUSES for kind in ("events", "tasks")},
+    **{f"{cause}_share": _RATIO for cause in _FAILURE_CAUSES},
+})
+_COST_METRICS = _obj({"tokens_per_integration": _nullable(_num(0))})
+_HELDOUT_METRICS = _obj({"passed": _count, "checked": _count})
+_TARGET_METRICS = _obj({name: _number for name in (
+    "integrations", "confirmed_integration_ratio", "repeat_failure_rate", "repeat_failure_rate_new",
+    "tokens_per_integration", "heldout")})
+_HYPOTHESIS_LOOP_METRICS = _obj({
+    **{name: _count for name in (
+        "total", "active", "answered", "supported", "refuted", "inconclusive", "inconclusive_within_window",
+        "inconclusive_aged", "inconclusive_undatable", "inconclusive_undatable_no_qualifying_artifact",
+        "inconclusive_undatable_no_completion", "inconclusive_undatable_invalid_timestamp")},
+    "inconclusive_split_status": _token,
+})
+_ARTIFACT_COUNTS = _obj({"artifacts": _count, "components": _count, "leaves": _count})
+_QUANTILES = _obj({name: _one_of(_number, _list(_number, 64)) for name in ("gateway", "local", "total")})
 
 _DAY_KEY = _pattern(re.compile(r"^\d{4}-\d{2}-\d{2}$"))
 _CALL_STATS = _obj({"calls": _count, "total_tokens": _num(0), "duration_ms": _num(0)})
@@ -888,14 +950,14 @@ _HEATMAP_CELL = _list(_one_of(_number, _token), 8)
 
 _TOKEN_HEATMAP = _obj({
     "dates": _list(_DAY_KEY),
-    "hourly": _map(_DAY_KEY, _list(_HEATMAP_CELL, 24)),
-    "five_min": _map(_DAY_KEY, _map(_pattern(re.compile(r"^\d{1,3}$")), _HEATMAP_CELL)),
+    "hourly": _map(_DAY_KEY, _nullable(_list(_HEATMAP_CELL, 24))),  # null: no data that day
+    "five_min": _map(_DAY_KEY, _nullable(_map(_pattern(re.compile(r"^\d{1,3}$")), _HEATMAP_CELL))),
     "summary": _obj({
         **{name: _num(0) for name in (
             "total_tokens", "total_calls", "self_hosted_tokens", "vendor_tokens", "other_tokens",
             "local_tokens", "gateway_tokens", "days_span", "days_present", "days_missing")},
         "timezone": _ident, "source_timezone": _ident, "timezone_offset_hours": _number,
-        "quantiles_hourly": _metrics(1), "quantiles_5min": _metrics(1),
+        "quantiles_hourly": _QUANTILES, "quantiles_5min": _QUANTILES,
     }),
 })
 
@@ -903,21 +965,21 @@ _FEED_ROW = _obj({"status": _token, "age_seconds": _num(0), "max_age_seconds": _
 
 _SCORECARD = _obj({
     "computed_at_utc": _ts, "window_days": _num(0), "gaps_status": _token,
-    "loop": _metrics(), "cost": _metrics(), "targets": _metrics(), "heldout": _metrics(),
+    "loop": _LOOP_METRICS, "cost": _COST_METRICS, "targets": _TARGET_METRICS, "heldout": _HELDOUT_METRICS,
     "reader_status": _obj({
         **{reader: _obj({"status": _token}) for reader in ("ledger", "completed", "heldout", "history")},
         "feeds": _map(_ident, _FEED_ROW)}),
     "feeds": _obj({"feeds": _map(_ident, _FEED_ROW)}),
     "quality": _obj({"artifact_graph": _obj({
-        "status": _token, "counts": _metrics(0), "unit_scan_status": _token,
-        "oldest_leaves": _list(_obj({"path": _path}), 20)})}),
-    "control_plane": _obj({"hypothesis_loop": _metrics()}),
+        "status": _token, "counts": _ARTIFACT_COUNTS, "unit_scan_status": _token,
+        "oldest_leaves": _list(_obj({"path": _relpath}), 20)})}),
+    "control_plane": _obj({"hypothesis_loop": _HYPOTHESIS_LOOP_METRICS}),
     "gaps": _list(_obj({"metric": _ident})),
     "prompt_fit": _PROMPT_FIT,
 })
 
 _HYPOTHESIS_ENTRY = _obj({
-    "status": _token, "verdict": _one_of(_bool, _token), "answered_at": _ts, "first_seen": _ts,
+    "status": _token, "verdict": _nullable(_one_of(_bool, _token)), "answered_at": _nullable(_ts), "first_seen": _ts,
     "last_touched": _ts, "title": _text(300), "answered_evidence": _text(500),
 })
 
@@ -930,7 +992,7 @@ _DURABLE_ENTRY = _obj({
 })
 
 _FUTILITY_GAP = _obj({"attempt_count": _count, "threshold": _num(0), "attempt_unit": _token,
-                      "surface": _list(_path), "metric": _ident})
+                      "surface": _list(_relpath), "metric": _ident})
 
 
 def _project_demand_futility(value: object, withheld: dict[str, int] | None) -> object:
@@ -945,10 +1007,10 @@ _SYSTEMD_DRIFT = _obj({
     "status": _enum(*_VIEW_STATES), "reason": _code("systemd_drift_reason"), "details": _code("systemd_drift_details"),
     "state": _token, "defect_count": _count, "scanned_at": _ts,
     "findings": _obj({
-        "installed_not_in_release": _list(_obj({"owner": _token, "path": _path})),
-        "release_not_installed": _list(_path),
-        "content_differs": _list(_obj({"path": _path, "detail": _code("systemd_drift_detail")})),
-        "stray": _list(_path),
+        "installed_not_in_release": _list(_obj({"owner": _token, "path": _unit_path})),
+        "release_not_installed": _list(_unit_path),
+        "content_differs": _list(_obj({"path": _unit_path, "detail": _code("systemd_drift_detail")})),
+        "stray": _list(_unit_path),
     }),
 })
 
@@ -956,11 +1018,11 @@ _SYSTEMD_DRIFT = _obj({
 #: fresh public value, or _DROP when the whole section has the wrong shape
 #: (the section then gets _PUBLIC_EMPTY's value).
 _PUBLIC_SCHEMA: dict[str, _Node] = {
-    "portfolio": _obj({"current": _ident, "nodes": _map(_ident, _obj({
+    "portfolio": _obj({"current": _nullable(_ident), "nodes": _map(_ident, _obj({
         "status": _token, "lever_metric": _ident, "direction": _token, "last_lever_value": _number}))}),
     "scorecard": _SCORECARD,
     "evolution_tree": _obj({"current_sha": _ident, "nodes": _map(_ident, _obj({
-        "ts": _ts, "cycle_id": _ident, "parent_sha": _ident, "branch": _ident,
+        "ts": _ts, "cycle_id": _ident, "parent_sha": _nullable(_ident), "branch": _ident,
         "fitness": _obj({"reward": _number}), "outcome": _enum(*_LEDGER_OUTCOMES, fallback="unknown")}))}),
     "hypotheses": _obj({"entries": _map(_ident, _HYPOTHESIS_ENTRY)}),
     "hypotheses_durable": _obj({
@@ -970,14 +1032,14 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "ledger_history": _list(_LEDGER_ROW),
     "demand_rotation": _obj({"served": _map(_ident, _ts)}),
     "demand_completed": _obj({"entries": _map(_ident, _obj({
-        "cycle_id": _ident, "files_changed": _list(_path, 50), "confirmed": _bool}))}),
+        "cycle_id": _ident, "files_changed": _list(_relpath, 50), "confirmed": _bool}))}),
     "skill_reads": _SKILL_READS,
     "skill_evals": _SKILL_EVALS,
     "ci_freshness": _project_ci_freshness,
     "cycle_titles": _map(_ident, _text(300)),
-    "cycle_files": _map(_ident, _list(_path, 50)),
+    "cycle_files": _map(_ident, _list(_relpath, 50)),
     "llm_stats": _map(_ident, _obj({
-        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _token,
+        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
@@ -1003,6 +1065,17 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "_newest_source_age_seconds": _num(0),
 }
 
+#: #378 review P2: the sections a producer may leave None (the empty-state
+#: defaults of techtree_viewer.fetch_remote_state / read_json of a missing
+#: file). Any other section given None gets its _PUBLIC_EMPTY value.
+_NULLABLE_SECTIONS = frozenset({
+    "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable", "ledger_tail",
+    "demand_rotation", "demand_completed", "skill_reads", "proposer_stats", "executor_llm_stats", "compaction",
+    "local_ci", "executor_model_status", "token_heatmap", "bridge_exit_streak", "bridge_exits", "bridge_runs",
+    "bridge_active_run", "strategist_decisions", "demand_futility", "systemd_drift", "ci_freshness",
+    "cycle_titles", "agent_context", "_newest_source_age_seconds",
+})
+
 #: the value a section gets when its source has the wrong shape. A list
 #: section reads as empty; a dict section as "no data" ({} or None, as the
 #: renderer's own absent state expects).
@@ -1010,6 +1083,8 @@ _PUBLIC_EMPTY: dict[str, object] = {
     **{key: [] for key in ("ledger_tail", "ledger_history", "skill_evals", "lessons", "subagent_records",
                            "reflections", "bridge_exits", "bridge_runs", "strategist_decisions")},
     "bridge_exit_streak": {},
+    **{key: {} for key in ("llm_stats", "cycle_files", "derived_view")},
+    "generator_sha": "",
 }
 
 
@@ -1027,9 +1102,11 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
             return "probe_unavailable"
         return "absent"
     node = _PUBLIC_SCHEMA.get(key)
-    if node is None or value is None:
+    if node is None:
         return None
-    projected = node(value, withheld)
+    if value is None and key in _NULLABLE_SECTIONS:
+        return None
+    projected = _DROP if value is None else node(value, withheld)
     if projected is _DROP:
         _count_withheld(withheld, "projection_shape")
         return copy.deepcopy(_PUBLIC_EMPTY.get(key))
@@ -1039,6 +1116,10 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
 def split_render_inputs(data: dict) -> tuple[dict, dict]:
     """Allowlist public fields and replace private text with derived metadata."""
     withheld: dict[str, int] = {}
+    if not isinstance(data, dict):
+        # #378 review P2: a non-dict input is "no data", never a crash.
+        withheld["input_shape"] = 1
+        data = {}
     public = {}
     for key, value in data.items():
         if key not in PUBLIC_DATA_KEYS or key in PRIVATE_DATA_KEYS:
