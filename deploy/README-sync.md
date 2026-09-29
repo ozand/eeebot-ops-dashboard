@@ -106,27 +106,36 @@ ls -la /etc/systemd/system/*.bak-$TS /etc/systemd/system/eeebot-techtree-publish
 echo "$TS"   # keep: the rollback below uses it
 ```
 
-0b. Quiesce EVERY trigger of the publisher for steps 1-3, so nothing starts it
-    halfway through the installation. There are two independent triggers:
-    the timer, and the bridge unit's `OnSuccess=eeebot-techtree-publish.service`
-    (drop-in `eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf`),
-    which fires whenever a bridge run completes. Stopping the timer does not
-    stop the second one. A runtime mask blocks both until it is removed in
-    step 4, and does not survive a reboot. Wait for any publisher run that is
-    already active to finish first:
+0b. Quiesce EVERY unsolicited trigger of the publisher from here until the
+    served-version check in step 4 has passed. There are two independent
+    triggers:
+    - the timer;
+    - the bridge unit's `OnSuccess=eeebot-techtree-publish.service`, which
+      fires every time a bridge run completes (drop-in
+      `/etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf`;
+      its only directive is that `OnSuccess=` line).
+
+    Stopping the timer does not stop the second trigger. A runtime mask does
+    not work here: `mask --runtime` writes to `/run/systemd/system`, and the
+    publisher unit lives in `/etc/systemd/system`, which `systemd-analyze
+    unit-paths` ranks higher, so the unit stays startable.
+
+    Instead, move the bridge drop-in aside under the step-0 `$TS` name.
+    systemd reads only `*.conf` in a drop-in directory, so `*.conf.bak-$TS`
+    is ignored. Wait for any publisher run already active to finish first:
 
 ```bash
 sudo systemctl stop eeebot-techtree-publish.timer
 while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
-sudo systemctl mask --runtime eeebot-techtree-publish.service
-systemctl is-active eeebot-techtree-publish.timer     # must print: inactive
-systemctl is-enabled eeebot-techtree-publish.service  # must print: masked-runtime
+sudo mv /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf \
+        /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf.bak-$TS
+sudo systemctl daemon-reload
+systemctl is-active eeebot-techtree-publish.timer                                # must print: inactive
+systemctl show eeepc-self-evolving-subagent-bridge.service -p OnSuccess --value  # must print an empty line
 ```
 
-During steps 1-4, bridge journal errors about starting the OnSuccess job
-`eeebot-techtree-publish.service` (unit masked) are expected. The OnSuccess
-job is a separate job; its failure does not change the bridge unit's
-`Result=success`, and the bridge keeps running its cycles normally.
+The bridge keeps running its cycles normally meanwhile; only the publish
+after each bridge run is paused.
 
 1. Install the publisher unit, the sync script and the sync drop-in:
 
@@ -166,7 +175,6 @@ sudo stat -c "%a %U" /var/lib/eeebot-site
    generator:
 
 ```bash
-sudo systemctl unmask --runtime eeebot-techtree-publish.service
 sudo systemctl start eeebot-techtree-publish.service
 sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
 sudo test -s /var/lib/eeebot-site/current/index.html
@@ -205,9 +213,14 @@ The `grep` must print exactly one line, and its `content` must equal the
 `basename` output. No line or a different value means the snapshot is not from
 the new generator: stop here and do not cut over.
 
-After step 5 passes, turn the publish timer back on:
+After step 5 passes (and the served-version check of step 4 has passed), re-enable
+both triggers: restore the bridge drop-in and turn the timer back on:
 
 ```bash
+sudo mv /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf.bak-$TS \
+        /etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf
+sudo systemctl daemon-reload
+systemctl show eeepc-self-evolving-subagent-bridge.service -p OnSuccess --value  # must print: eeebot-techtree-publish.service
 sudo systemctl start eeebot-techtree-publish.timer
 systemctl is-active eeebot-techtree-publish.timer   # must print: active
 ```
@@ -235,8 +248,10 @@ sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/syst
 sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
 sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d
-sudo systemctl unmask --runtime eeebot-techtree-publish.service   # harmless if already unmasked
+B=/etc/systemd/system/eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf
+[ -f "$B.bak-$TS" ] && sudo mv "$B.bak-$TS" "$B"   # restore the bridge OnSuccess trigger if step 0b moved it
 sudo systemctl daemon-reload
+systemctl show eeepc-self-evolving-subagent-bridge.service -p OnSuccess --value  # must print: eeebot-techtree-publish.service
 sudo systemctl start eeebot-techtree-publish.timer
 sudo systemctl cat eeebot-techtree-publish.service   # must match the pre-cutover unit
 ```
