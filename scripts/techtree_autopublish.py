@@ -242,6 +242,8 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
                 data.pop('host_snapshot_failed_since', None)
             if not isinstance(data.get('last_host_error'), str):
                 data.pop('last_host_error', None)
+            if not isinstance(data.get('host_sink'), str):
+                data.pop('host_sink', None)
             # Cache validation is owned by publish_scan so its schema and key
             # version cannot drift from the scanner's acceptance rules.
             try:
@@ -280,6 +282,7 @@ def save_publish_state(
     publish_duration_warning: str | None = None,
     published: bool = True,
     ref_updated: bool = False,
+    host_sink: str | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -321,6 +324,9 @@ def save_publish_state(
             payload['host_snapshot_failed_since'] = host_snapshot_failed_since
         if last_host_error is not None:
             payload['last_host_error'] = last_host_error
+        if host_sink is not None:
+            # host_sink_unconfigured: the site root does not exist yet (D4).
+            payload['host_sink'] = host_sink
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
             fh.flush()
@@ -507,6 +513,16 @@ def _refusal_freeze_status(
     # A non-positive limit means "no escape", which is the safe reading.
     past_limit = freeze_limit > 0 and refusal_age >= freeze_limit
     return refusing_since, refusal_age, freeze_limit, past_limit
+
+
+def _print_host_sink_unconfigured(host_outcome: dict[str, str], site_root: Path) -> None:
+    """The host sink is not configured until D4 creates the site root: ONE
+    journal line per run, and the run is not a host failure."""
+    if host_outcome.get('status') == 'host_sink_unconfigured':
+        print(
+            f'techtree-autopublish: host sink not configured (site root {site_root} absent); public publish only',
+            file=sys.stderr,
+        )
 
 
 def _print_host_warnings(warnings: list[str]) -> None:
@@ -709,6 +725,7 @@ def run(args: argparse.Namespace) -> int:
         return rc, fps
 
     host_warnings: list[str] = []
+    host_outcome: dict[str, str] = {}
     try:
         rc, fingerprints = sinks.publish_ordered(
             sink_root,
@@ -718,6 +735,7 @@ def run(args: argparse.Namespace) -> int:
             publisher=gh_publisher,
             generated_at=stamp,
             host_warnings=host_warnings,
+            host_outcome=host_outcome,
         )
     except sinks.HostSnapshotError as exc:
         print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
@@ -738,6 +756,7 @@ def run(args: argparse.Namespace) -> int:
         return 1
     except Exception as exc:
         _print_host_warnings(host_warnings)
+        _print_host_sink_unconfigured(host_outcome, sink_root)
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         host_error = getattr(exc, 'host_error', None)
         if host_error is not None:
@@ -769,6 +788,7 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     _print_host_warnings(host_warnings)
+    _print_host_sink_unconfigured(host_outcome, sink_root)
     if rc != 0:
         if ref_updated:
             print(
@@ -788,6 +808,7 @@ def run(args: argparse.Namespace) -> int:
         host_snapshot_failed_since=None,
         last_host_error=None,
         clear_host_failure=True,
+        host_sink=host_outcome.get('status') if host_outcome.get('status') == 'host_sink_unconfigured' else None,
         clean_scan_cache=state.get('clean_scan_cache'),
         changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
         publish_duration_warning=duration_warning,
