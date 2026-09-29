@@ -1869,7 +1869,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         agent_context.update({
             'skill_reads': data.get('skill_reads'),
             'skill_evals': data.get('skill_evals'),
-            'executor_llm_stats': _executor_stats_from_llm_stats(data.get('llm_stats')),
+            'executor_llm_stats': data.get('executor_llm_stats'),
             'compaction': _compaction_status_from_remote(data.get('compaction')),
             'window_pressure': data.get('window_pressure'),
         })
