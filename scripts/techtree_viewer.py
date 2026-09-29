@@ -141,6 +141,17 @@ CI_RUN_CONCLUSIONS = (
     'action_required', 'startup_failure', 'stale',
 )
 CI_LATEST_CONCLUSIONS = (*CI_RUN_CONCLUSIONS, 'none', 'cannot_ask')
+CI_ACTIONS_ENABLED_UNKNOWN = ('cannot_ask', 'unanswerable')  # `enabled` when not a bool
+
+#: #378: the vocabularies of this module's state readers (the local
+#: read_*_local functions AND their REMOTE_READER_SCRIPT twins). two_sinks
+#: imports them; tests/test_d11_enum_writers.py checks every literal the
+#: readers return is listed here.
+PROBE_STATES = ('absent', 'probe_unavailable', 'present', 'present_uninitialized')  # local_ci, executor_model_status
+VIEW_STATES = ('absent', 'probe_unavailable', 'present')  # derived_view, systemd_drift
+COMPACTION_STATES = ('missing', 'unavailable', 'empty', 'present')
+MODEL_CLASSES = ('self_hosted', 'vendor', 'other')  # classify_model
+LESSON_SOURCES = ('live',)  # read_lessons_local tags live rows; archive rows carry no source
 
 
 def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:

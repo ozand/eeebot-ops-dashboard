@@ -35,11 +35,13 @@ except ImportError:
 # public enum cannot drift from what the reader emits.
 try:
     from scripts.techtree_viewer import (
-        CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+        CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+        COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,
     )
 except ImportError:
     from techtree_viewer import (  # type: ignore
-        CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+        CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+        COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,
     )
 
 # Reason enums emitted by the ledger/proposer/strategist writers. Keep these
@@ -631,20 +633,46 @@ _CI_STATES = tuple(dict.fromkeys((
 #: 7302 diff_touched_more_than_errors_yaml, 7312 exception:<class name>).
 _ERROR_CARD_SKIP_REASONS = ("worktree_add_failed", "write_failed", "push_rejected",
                             "diff_touched_more_than_errors_yaml")
-_PROBE_STATES = ("absent", "probe_unavailable", "present", "present_uninitialized")
-_VIEW_STATES = ("absent", "probe_unavailable", "present")
-_LOCAL_CI_STATES = ("ran", "targets_missing", "not_run", "running", "skipped", "error", "absent", "unknown")
+_PROBE_STATES = PROBE_STATES
+_VIEW_STATES = VIEW_STATES
+#: #378: SNAPSHOTS of eeebot writers (another repo, cannot be imported) at
+#: eeebot 6d476b71; tests/test_d11_enum_writers.py pins each one with its
+#: file:line, so dropping a writer value from the projection turns it red.
+#: eeebot nanobot/runtime/local_ci.py:41 (default "ran"), :109 "targets_missing"
+_LOCAL_CI_STATES = ("ran", "targets_missing")
+#: eeebot nanobot/crash_record.py:262-263 (unit_timeout; completion|failed
+#: by outcome), nanobot/runtime/bridge.py:5306-5310 (loop_breaker_abort,
+#: wall_clock_abort, progress_watchdog_abort), :7012-7014 (completion|failed).
+_RUN_END_CLASSIFICATIONS = ("completion", "failed", "unit_timeout", "loop_breaker_abort", "wall_clock_abort",
+                            "progress_watchdog_abort")
+#: eeebot nanobot/crash_record.py:323 / :443-445 (record_exit and run_end rows).
+_RUN_OUTCOMES = ("success", "failure", "interrupted")
 _BRIDGE_CLASSIFICATIONS = (
+    *_RUN_END_CLASSIFICATIONS,
     "unit_timeout", "killed", "loop_breaker_abort", "wall_clock_abort", "progress_watchdog_abort",
     "success", "failure", "failed", "error", "crash", "clean", "completed", "timeout", "timed_out",
     "signal", "paused-supplier", "paused_supplier", "supplier_failure", "unknown", "other",
 )
-_BRIDGE_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | {
+_BRIDGE_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | set(_RUN_OUTCOMES) | {
     "success", "failure", "failed", "error", "crash", "completed", "timeout", "killed", "unknown", "other",
     "unit_timeout", "loop_breaker_abort", "wall_clock_abort", "progress_watchdog_abort",
 }))
-_EXIT_SIGNALS = ("TERM", "KILL", "INT", "HUP", "ABRT", "SEGV", "PIPE", "QUIT")
-_LEDGER_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | {
+#: systemd $EXIT_STATUS signal names, as eeebot nanobot/crash_record.py:434-445
+#: records them (INTERRUPTED_EXIT_STATUSES :73-80 also lists SIG-prefixed forms).
+_EXIT_SIGNALS = ("TERM", "KILL", "INT", "HUP", "ABRT", "SEGV", "PIPE", "QUIT", "BUS", "FPE", "ILL",
+                 "ALRM", "USR1", "USR2", "XCPU", "XFSZ", "SIGTERM", "SIGINT", "SIGKILL")
+#: eeebot nanobot/runtime/cycle_ledger.py:90-93 VALID_OUTCOMES, :355-357
+#: VALID_DIARY_OPEN_OUTCOMES, :404-407 VALID_PLANNING_OUTCOMES, plus the
+#: literal outcomes other ledger writers record (rg "outcome=" at 6d476b71).
+_EEEBOT_LEDGER_OUTCOMES = (
+    "success", "partial", "failed", "skipped-duplicate", "promotion_candidate", "push_pending", "pushed_late",
+    "superseded", "abandoned", "paused-supplier",
+    "integrated", "refused", "malformed", "push_failed", "commit_failed",
+    "no_plan", "spawn_failed", "timed_out", "rest", "rest_unchanged", "rejected_duplicate",
+    "write_failed", "unchanged", "skipped_supplier_paused", "pass", "miss", "hit", "failure", "completed",
+    "blocked", "inconclusive",
+)
+_LEDGER_OUTCOMES = tuple(sorted(_PUBLIC_REASON_CODES | set(_EEEBOT_LEDGER_OUTCOMES) | {
     "integrated", "success", "succeeded", "ok", "pass", "passed", "fail", "failed", "partial",
     "skipped", "push_pending", "pushed_late", "superseded", "abandoned", "paused-supplier",
     "paused_supplier", "model_call_incomplete", "duplicate", "rejected", "idle", "created",
@@ -684,7 +712,7 @@ def _lesson_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
 
 _LESSON_ROW = _obj({
     "id": _ident, "title": _text(300), "date": _ts, "cycle_id": _ident, "task_id": _ident,
-    "source": _enum("live", "archive"), "severity": _token, "kind": _token,
+    "source": _enum(*LESSON_SOURCES), "severity": _token, "kind": _token,
     "tags": _one_of(_list(_token, 20), _token), "seen_count": _count,
     "problem_chars": _count, "solution_chars": _count, "insight_chars": _count, "result_chars": _count,
     "hypothesis_chars": _count,
@@ -761,9 +789,9 @@ _CI_REPO_ROW = _obj({
     "freshness_state": _enum(*_CI_STATES, fallback="unknown"),
     "latest_conclusion": _nullable(_enum(*_CI_CONCLUSIONS, fallback="unknown")),
     "observed_at_utc": _ts,
-    "actions_enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
+    "actions_enabled": _one_of(_bool, _enum(*CI_ACTIONS_ENABLED_UNKNOWN)),
     "actions": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
-                     "enabled": _one_of(_bool, _enum("unanswerable", "cannot_ask")),
+                     "enabled": _one_of(_bool, _enum(*CI_ACTIONS_ENABLED_UNKNOWN)),
                      "observed_at_utc": _ts}),
     "freshness": _obj({"state": _enum(*_CI_STATES, fallback="unknown"),
                        "latest_conclusion": _nullable(_enum(*_CI_CONCLUSIONS, fallback="unknown")),
@@ -917,7 +945,7 @@ _LOCAL_CI = _obj({
 
 _EXECUTOR_MODEL_STATUS = _obj({
     "probe": _enum(*_PROBE_STATES), "reason": _code("executor_model_reason"), "latest_model": _ident,
-    "latest_class": _enum("self_hosted", "vendor", "other"), "fallback_seen_recent": _bool,
+    "latest_class": _enum(*MODEL_CLASSES), "fallback_seen_recent": _bool,
     "checked_calls": _count,
 })
 
@@ -925,7 +953,7 @@ _EXECUTOR_LLM_STATS = _obj({"cycle_id": _ident, "prompt_tokens": _nullable(_coun
                             "context_window": _nullable(_count)})
 
 _COMPACTION = _obj({
-    "status": _enum("missing", "unavailable", "empty", "present"),
+    "status": _enum(*COMPACTION_STATES),
     "rows": _list(_obj({"cycle_id": _ident, "reason": _token, "ts": _ts})),
 })
 
@@ -993,15 +1021,19 @@ _AGENT_CONTEXT = _obj({
 #: (the fields the public renderer reads); a ratio is null when its
 #: denominator is zero.
 _RATIO = _nullable(_number)
+_SCORECARD_UNAVAILABLE = "unavailable"
 _FAILURE_CAUSES = ("execution_failure", "model_unavailable", "model_call_incomplete",
                    "unknown_failure_cause", "self_dedup")
 _LOOP_METRICS = _obj({
     "integrations": _count, "confirmed_integration_ratio": _RATIO, "repeat_failure_rate": _RATIO,
     "repeat_failure_rate_new": _RATIO, "hypothesis_selection_rate": _RATIO, "hypothesis_served_cycles": _count,
-    "paused_supplier_outcomes": _one_of(_count, _enum("unavailable")),
-    "paused_supplier_seconds": _one_of(_num(0), _enum("unavailable")),
-    **{f"{cause}_{kind}": _count for cause in _FAILURE_CAUSES for kind in ("events", "tasks")},
-    **{f"{cause}_share": _RATIO for cause in _FAILURE_CAUSES},
+    "paused_supplier_outcomes": _one_of(_count, _enum(_SCORECARD_UNAVAILABLE)),  # scorecard.py:890
+    "paused_supplier_seconds": _one_of(_num(0), _enum(_SCORECARD_UNAVAILABLE)),  # scorecard.py:891
+    # eeebot nanobot/runtime/scorecard.py:852-867: "unavailable" when the
+    # ledger is (or, for model_call_incomplete/unknown_failure_cause, always)
+    **{f"{cause}_{kind}": _one_of(_count, _enum(_SCORECARD_UNAVAILABLE))
+       for cause in _FAILURE_CAUSES for kind in ("events", "tasks")},
+    **{f"{cause}_share": _one_of(_RATIO, _enum(_SCORECARD_UNAVAILABLE)) for cause in _FAILURE_CAUSES},
 })
 _COST_METRICS = _obj({"tokens_per_integration": _nullable(_num(0))})
 _HELDOUT_METRICS = _obj({"passed": _count, "checked": _count})
