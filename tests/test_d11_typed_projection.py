@@ -351,6 +351,7 @@ def test_real_render_and_publish_every_public_file(tmp_path: Path) -> None:
     assert S in json.dumps(private, default=str), "the private side keeps the source"
     uploaded: list[dict[str, str]] = []
     site = tmp_path / "site"
+    site.mkdir()  # the D4 host step creates the site root
     publish_ordered(site, _render(public), {}, "v356", lambda pages: uploaded.append(pages) or (0, {}))
 
     files = [path for path in (site / "v356").rglob("*") if path.is_file()]
