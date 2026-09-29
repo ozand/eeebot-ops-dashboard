@@ -16,6 +16,7 @@ stubbed.
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -24,12 +25,19 @@ import scripts.two_sinks as sinks
 from scripts import techtree_autopublish as ap
 
 
-def _run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site_root: Path) -> tuple[int, dict, list]:
+def _run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site_root: Path,
+         *, recent_unconfigured_publish: bool = False) -> tuple[int, dict, list]:
+    """``recent_unconfigured_publish``: the previous run (pre-D4) published
+    this SAME digest a minute ago with the host sink unconfigured."""
     state_dir = tmp_path / "publisher"
-    ap.save_publish_state(state_dir, "old", 1.0)
+    digest = "same" if recent_unconfigured_publish else "new"
+    if recent_unconfigured_publish:
+        ap.save_publish_state(state_dir, "same", time.time() - 60, host_sink="host_sink_unconfigured")
+    else:
+        ap.save_publish_state(state_dir, "old", 1.0)
     uploads: list = []
     monkeypatch.setenv("GH_TOKEN", "mock-token")
-    monkeypatch.setattr(ap, "compute_tree_digest", lambda *_: "new")
+    monkeypatch.setattr(ap, "compute_tree_digest", lambda *_: digest)
     monkeypatch.setattr(ap, "_unreadable_tree_source", lambda *_: None)
     monkeypatch.setattr(ap.tv, "read_local_state", lambda *_a, **_kw: {"_error": None})
     monkeypatch.setattr(ap.tv, "read_ci_freshness", lambda: {})
@@ -113,3 +121,49 @@ def test_c_existing_writable_site_root_swaps_normally(tmp_path: Path, monkeypatc
     assert rc == 0 and uploads
     assert (site_root / "current" / "index.html").is_file()
     assert "host_snapshot_failed_since" not in state
+
+
+# --- Codex 4136424439: the D4 seed after a pre-D4 (unconfigured) publish ---------
+# Architect: the trigger is HOST STATE -- the site root exists AND serves no
+# valid current snapshot -- never the previous run's host_sink flag.
+
+def test_1_root_appears_without_current_same_digest_publishes_a_seed(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pre-D4 run published digest "same" with the sink unconfigured; D4 then
+    creates the EMPTY site root within the staleness window. The same digest
+    must not stop the seed: the run swaps and current/index.html exists."""
+    site_root = tmp_path / "site"
+    site_root.mkdir()  # D4 tmpfiles: empty root
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc == 0
+    assert (site_root / "current" / "index.html").is_file(), "D4 seed (test -s current/index.html) needs this"
+    assert state.get("host_sink") != "host_sink_unconfigured"
+
+
+def test_3_no_seed_while_the_site_root_is_still_absent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Reverse: no root yet -> the ordinary no-publish gate (same digest,
+    inside the staleness window) still skips the run."""
+    site_root = tmp_path / "site"
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc == 0 and uploads == []
+    assert not site_root.exists()
+    assert state.get("host_sink") == "host_sink_unconfigured"
+
+
+def test_2_root_with_complete_current_and_same_digest_skips_as_before(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A served, complete current snapshot and an unchanged digest: the
+    ordinary no-publish gate -- even though the previous run's flag still
+    says host_sink_unconfigured (the flag is reporting, not the trigger)."""
+    site_root = tmp_path / "site"
+    site_root.mkdir()
+    sinks.atomic_snapshot_swap(site_root, {"index.html": "<html>v0</html>"}, "v0")
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc == 0 and uploads == []
+    assert (site_root / "current").resolve().name == "v0"
