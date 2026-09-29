@@ -830,7 +830,8 @@ def test_m2_release_goals_charter_source_is_pinned() -> None:
         assert "text" not in projected["charter"]
         assert marker not in json.dumps(projected)
     allowed = _sanitize_public_value("derived_view", {
-        "status": "present", "charter": {"source": "release_goals_md", "text": "public goals"},
+        # the writer (build_derived_view) always sends merged=False (#378 B-F3)
+        "status": "present", "charter": {"source": "release_goals_md", "merged": False, "text": "public goals"},
     })
     assert allowed["charter"]["text"] == "public goals"
 

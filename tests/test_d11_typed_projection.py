@@ -197,9 +197,10 @@ def test_r5_operator_provenance_label_in_derived_priorities_is_withheld() -> Non
     public = _split(source)
     assert public["derived_view"]["derived_priorities"][0]["label"] == "Priority #3"
     _assert_nowhere(public)
-    # the same policy keeps self-derived labels public and numbers operator items
+    # the same policy keeps EXPLICIT self-derived labels public, numbers
+    # operator items, and (#378 B-F1) withholds a label with no provenance
     view = _split(full_source())["derived_view"]
-    assert view["derived_priorities"][0]["label"] == "Self label"
+    assert "label" not in view["derived_priorities"][0]
     assert view["priority_items"][1]["label"] == "Self label"
     assert view["priority_items"][0]["label"] == "Priority #1"
 

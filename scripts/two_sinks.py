@@ -424,9 +424,16 @@ def _bool(value: object, _w: dict[str, int] | None) -> object:
     return value if value is True or value is False else _DROP
 
 
+#: #378 review B-F5: the range every published int must lie in. A larger
+#: int cannot be formatted (str(10**5000) raises ValueError, so would the
+#: page and json.dumps) -- it is dropped before anything formats it.
+_INT_BOUND = 2 ** 63 - 1
+
+
 def _int(minimum: int | None = 0) -> _Node:
     def node(value: object, _w: dict[str, int] | None) -> object:
-        if isinstance(value, int) and not isinstance(value, bool) and (minimum is None or value >= minimum):
+        if (isinstance(value, int) and not isinstance(value, bool) and -_INT_BOUND <= value <= _INT_BOUND
+                and (minimum is None or value >= minimum)):
             return value
         return _DROP
     return node
@@ -439,6 +446,8 @@ def _num(minimum: float | None = None) -> _Node:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return _DROP
         if isinstance(value, float) and not math.isfinite(value):
+            return _DROP
+        if isinstance(value, int) and not -_INT_BOUND <= value <= _INT_BOUND:
             return _DROP
         return value if minimum is None or value >= minimum else _DROP
     return node
@@ -636,10 +645,12 @@ def _lesson_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
 
 _LESSON_ROW = _obj({
     "id": _ident, "title": _text(300), "date": _ts, "cycle_id": _ident, "task_id": _ident,
-    "hypothesis": _text(500), "source": _enum("live", "archive"), "severity": _token, "kind": _token,
+    "source": _enum("live", "archive"), "severity": _token, "kind": _token,
     "tags": _one_of(_list(_token, 20), _token), "seen_count": _count,
     "problem_chars": _count, "solution_chars": _count, "insight_chars": _count, "result_chars": _count,
-}, sized_text={"problem": "", "solution": "", "insight": "", "result": ""}, post=_lesson_post)
+    "hypothesis_chars": _count,
+}, sized_text={"problem": "", "solution": "", "insight": "", "result": "", "hypothesis": ""},
+    post=_lesson_post)  # #378 review B-F4: hypothesis is model output -- LAN only
 
 _SUBAGENT_ROW = _obj({
     "subagent_id": _ident, "cycle_id": _ident, "goal_id": _ident, "label": _text(200), "status": _token,
@@ -739,7 +750,10 @@ def _project_ci_freshness(value: object, withheld: dict[str, int] | None) -> obj
         return rows
 
     if isinstance(value.get("repositories"), dict):
-        result = {"repositories": with_state(repos(value["repositories"], withheld))}
+        rows = with_state(repos(value["repositories"], withheld))
+        if rows is _DROP:
+            return _DROP
+        result = {"repositories": rows}
         for name, node in (("schema_version", _count), ("observed_at_utc", _ts)):
             projected = node(value[name], withheld) if name in value else _DROP
             if projected is not _DROP:
@@ -748,35 +762,45 @@ def _project_ci_freshness(value: object, withheld: dict[str, int] | None) -> obj
     return with_state(repos(value, withheld))
 
 
-def _priority_label(item: dict, provenance: object) -> str | None:
+def _priority_label(row: dict, provenance: object, raw_label: object) -> str | None:
     """#356 R5: ONE provenance policy for derived_priorities and
     priority_items. An operator priority is published as its number only
-    (its wording is private goal_text); a self-derived label is public; any
-    other or unknown provenance withholds the label."""
-    number = item.get("number")
+    (its wording is private goal_text); a label is public only under an
+    EXPLICIT self-derived provenance (#378 review B-F1: absent or any other
+    provenance withholds it). ``row`` is the VALIDATED row, so its number is
+    already a bounded int (B-F5)."""
     if provenance == _PROVENANCE_OPERATOR:
+        number = row.get("number")
         return f"Priority #{number}" if _is_count(number) else "Operator priority"
     if provenance == _PROVENANCE_SELF_DERIVED:
-        label = _text(300)(item.get("label"), None)
+        label = _text(300)(raw_label, None)
         return None if label is _DROP else label
     return None
 
 
-def _priority_row(fields: Mapping[str, _Node], default_provenance: str | None) -> _Node:
+#: #378 review B-F2: fields published only under an explicit self-derived
+#: provenance (they are the loop's own wording, never the operator's).
+_SELF_DERIVED_ONLY = {"direction": _text(120), "id": _ident}
+
+
+def _priority_row(fields: Mapping[str, _Node]) -> _Node:
     base = _obj(fields)
 
     def node(value: object, withheld: dict[str, int] | None) -> object:
         row = base(value, withheld)
         if row is _DROP:
             return row
-        provenance = value.get("provenance", default_provenance)
-        label = _priority_label(value, provenance)
+        provenance = row.get("provenance")  # validated; absent is unknown (B-F1)
+        label = _priority_label(row, provenance, value.get("label"))
         if label is not None:
             row["label"] = label
-        if provenance != _PROVENANCE_SELF_DERIVED:
-            row.pop("id", None)  # an operator id is a hash of the private title
-            if value.get("label"):
-                _count_withheld(withheld, "priority_label")
+        if provenance == _PROVENANCE_SELF_DERIVED:
+            for name, field in _SELF_DERIVED_ONLY.items():
+                projected = field(value[name], withheld) if name in value else _DROP
+                if projected is not _DROP:
+                    row[name] = projected
+        elif value.get("label"):
+            _count_withheld(withheld, "priority_label")
         if isinstance(value.get("evidence"), str) and value["evidence"]:
             _count_withheld(withheld, "priority_evidence")
         return row
@@ -784,15 +808,14 @@ def _priority_row(fields: Mapping[str, _Node], default_provenance: str | None) -
 
 
 _DERIVED_PRIORITY = _priority_row({
-    "number": _nullable(_int(None)), "vector": _token, "direction": _text(120), "added_utc": _ts,
+    "number": _nullable(_int(None)), "vector": _token, "added_utc": _ts,
     "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED),
-}, default_provenance=_PROVENANCE_SELF_DERIVED)  # the list IS derived_priorities.json
+})
 
 _PRIORITY_ITEM = _priority_row({
-    "rank": _count, "id": _ident, "kind": _token, "vector": _token, "number": _nullable(_int(None)),
-    "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED), "direction": _text(120),
-    "state": _token,
-}, default_provenance=None)  # no provenance recorded: unknown
+    "rank": _count, "kind": _token, "vector": _token, "number": _nullable(_int(None)),
+    "provenance": _enum(_PROVENANCE_OPERATOR, _PROVENANCE_SELF_DERIVED), "state": _token,
+})
 
 
 def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None) -> None:
@@ -803,14 +826,19 @@ def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None)
     charter = source.get("charter")
     if isinstance(charter, dict):
         projected = {}
-        if charter.get("source") is not None and _token(charter["source"], None) is not _DROP:
-            projected["source"] = charter["source"]
-        if _bool(charter.get("merged"), None) is not _DROP:
-            projected["merged"] = charter["merged"]
-        text = charter.get("text")
-        if charter.get("source") == "release_goals_md" and isinstance(text, str) and len(text) <= 50000:
-            projected["text"] = text  # the repository goals.md charter is public
-        elif isinstance(text, str) and text:
+        for name, field in (("source", _token), ("merged", _bool)):
+            result = field(charter[name], withheld) if name in charter else _DROP
+            if result is not _DROP:
+                projected[name] = result
+        text = _text(50000)(charter.get("text"), withheld)
+        # #378 review B-F3: the text is public ONLY as the release goals.md
+        # charter, untouched. The writer (eeebot demand._charter_as_loop_sees_it)
+        # tags "release_goals_md" only on text resolve_charter(RELEASE_ROOT)
+        # read, and build_derived_view always writes merged=False; anything
+        # else -- merged, untagged, goal_text -- fails closed.
+        if projected.get("source") == "release_goals_md" and projected.get("merged") is False and text is not _DROP:
+            projected["text"] = text
+        elif isinstance(charter.get("text"), str) and charter["text"]:
             _count_withheld(withheld, "derived_charter_text")
         out["charter"] = projected
 
@@ -980,16 +1008,22 @@ _SCORECARD = _obj({
 
 _HYPOTHESIS_ENTRY = _obj({
     "status": _token, "verdict": _nullable(_one_of(_bool, _token)), "answered_at": _nullable(_ts), "first_seen": _ts,
-    "last_touched": _ts, "title": _text(300), "answered_evidence": _text(500),
+    "last_touched": _ts, "title": _text(300),
+    # #378 review B-F4: the writers (hypothesis_backlog) record a cycle id here
+    "answered_evidence": _ident,
 })
 
+#: #378 review B-F4: a durable hypothesis's texts are model output -- LAN
+#: only; the public page gets its title and each text's size.
+_DURABLE_TEXTS = ("hypothesis", "action", "insight_criterion", "success_criterion")
 _DURABLE_ENTRY = _obj({
     "hypothesis_id": _ident, "id": _ident, "title": _text(300), "selection_status": _token,
     "wsjf": _one_of(_number, _obj({"score": _number})),
-    "hadi": _obj({"hypothesis": _text(1000), "action": _text(1000)}),
-    "hypothesis": _text(1000), "action": _text(1000), "insight_criterion": _text(1000),
-    "success_criterion": _text(1000), "created_at": _ts, "created_ts": _ts,
-})
+    "hadi": _obj({"hypothesis_chars": _count, "action_chars": _count},
+                 sized_text={"hypothesis": "", "action": ""}),
+    **{f"{name}_chars": _count for name in _DURABLE_TEXTS},
+    "created_at": _ts, "created_ts": _ts,
+}, sized_text={name: "" for name in _DURABLE_TEXTS})
 
 _FUTILITY_GAP = _obj({"attempt_count": _count, "threshold": _num(0), "attempt_unit": _token,
                       "surface": _list(_relpath), "metric": _ident})
@@ -999,7 +1033,8 @@ def _project_demand_futility(value: object, withheld: dict[str, int] | None) -> 
     if not isinstance(value, dict):
         return _DROP
     if isinstance(value.get("gaps"), dict):
-        return {"gaps": _map(_ident, _FUTILITY_GAP)(value["gaps"], withheld)}
+        gaps = _map(_ident, _FUTILITY_GAP)(value["gaps"], withheld)
+        return _DROP if gaps is _DROP else {"gaps": gaps}
     return _map(_ident, _FUTILITY_GAP)(value, withheld)
 
 
