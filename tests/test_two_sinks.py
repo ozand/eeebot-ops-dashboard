@@ -633,16 +633,17 @@ def test_host_snapshot_failure_preserves_gh_fingerprints_and_records_failure(tmp
 
 
 def test_goal_meta_three_states_and_rendering(tmp_path: Path):
-    """ADR-036: goal_meta has absent / unexpected_shape / present states; priority_count/lines/chars null when not present."""
+    """ADR-036: goal_meta has absent / unexpected_shape / present states. #315 R7 (architect decision):
+    unavailable counters are OMITTED, never published as None."""
     from scripts.two_sinks import split_render_inputs
     from scripts import techtree_viewer as tv
 
     pub_absent, _ = split_render_inputs({"other": 1})
     meta_absent = pub_absent["goal_meta"]
     assert meta_absent["state"] == "absent"
-    assert meta_absent["priority_count"] is None
-    assert meta_absent["lines"] is None
-    assert meta_absent["chars"] is None
+    assert "priority_count" not in meta_absent
+    assert "lines" not in meta_absent
+    assert "chars" not in meta_absent
     panel_absent = tv.build_agent_panel(None, meta_absent, None)
     assert "0 lines" not in panel_absent
     assert "0 chars" not in panel_absent
@@ -651,9 +652,9 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     pub_shape, _ = split_render_inputs({"goal_text": "plain string not a dict"})
     meta_shape = pub_shape["goal_meta"]
     assert meta_shape["state"] == "unexpected_shape"
-    assert meta_shape["priority_count"] is None
-    assert meta_shape["lines"] is None
-    assert meta_shape["chars"] is None
+    assert "priority_count" not in meta_shape
+    assert "lines" not in meta_shape
+    assert "chars" not in meta_shape
     panel_shape = tv.build_agent_panel(None, meta_shape, None)
     assert "0 lines" not in panel_shape
     assert "0 chars" not in panel_shape
@@ -663,8 +664,8 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     meta_pres = pub_pres["goal_meta"]
     assert meta_pres["state"] == "present"
     assert meta_pres["priority_count"] == 2
-    assert meta_pres["lines"] is None
-    assert meta_pres["chars"] is None
+    assert "lines" not in meta_pres
+    assert "chars" not in meta_pres
     panel_pres = tv.build_agent_panel(None, meta_pres, None)
     assert "Goals charter (size unavailable)" in panel_pres
     assert "private canon" not in panel_pres
@@ -673,7 +674,7 @@ def test_goal_meta_three_states_and_rendering(tmp_path: Path):
     pub_no_prio, _ = split_render_inputs({"goal_text": {"charter": "line1"}})
     meta_no_prio = pub_no_prio["goal_meta"]
     assert meta_no_prio["state"] == "present"
-    assert meta_no_prio["priority_count"] is None
+    assert "priority_count" not in meta_no_prio
 
 
 def test_publisher_service_creates_shared_site_root_without_relaxing_private_state() -> None:

@@ -51,6 +51,10 @@ _PUBLIC_REASON_CODES = frozenset({
 })
 _PUBLIC_LEDGER_DECISIONS = frozenset({"skipped_duplicate", "proceeded", "skipped_recent_failure"})
 _COUNTER_SUFFIXES = ("_chars", "_lines", "_count")
+#: #315 R9: a counter is a snake_case FIELD NAME ending in a counter suffix.
+#: Map keys that are identifiers (a repository "ozand/request_count", a cycle
+#: id) are data, not fields, and are never scrubbed as counters.
+_COUNTER_FIELD_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _VERSION_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 PUBLIC_DATA_KEYS = frozenset({
@@ -283,13 +287,21 @@ def _project_reason(value: object, withheld: dict[str, int] | None, category: st
     return _reason_bucket(value if isinstance(value, str) else "")
 
 
+def _is_counter_field(key: object) -> bool:
+    return isinstance(key, str) and key.endswith(_COUNTER_SUFFIXES) and bool(_COUNTER_FIELD_RE.fullmatch(key))
+
+
+def _is_count(value: object) -> bool:
+    """#315 R6: a published counter is a non-negative int, never a bool."""
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
 def _drop_source_counters(value: object, generated: set[str] | None = None) -> object:
     if isinstance(value, dict):
         return {
             key: _drop_source_counters(item, generated)
             for key, item in value.items()
-            if not (isinstance(key, str) and key.endswith(_COUNTER_SUFFIXES)
-                    and (generated is None or key not in generated))
+            if not (_is_counter_field(key) and (generated is None or key not in generated))
         }
     if isinstance(value, list):
         return [_drop_source_counters(item, generated) for item in value]
@@ -301,15 +313,68 @@ def _drop_invalid_counters(value: object) -> object:
         return {
             key: _drop_invalid_counters(item)
             for key, item in value.items()
-            if not (isinstance(key, str) and key.endswith(_COUNTER_SUFFIXES)
-                    and (isinstance(item, bool) or not isinstance(item, int) or item < 0))
+            if not (_is_counter_field(key) and not _is_count(item))
         }
     if isinstance(value, list):
         return [_drop_invalid_counters(item) for item in value]
     return value
 
 
+_GOAL_META_STATES = frozenset({"absent", "unexpected_shape", "present"})
+
+
+def _project_meta(key: str, value: object) -> dict[str, Any]:
+    """#315 R6/R7: agents_meta / goal_meta carry only typed fields. The bare
+    counters (``lines``, ``chars``, ``priority_count``/``count``) are
+    published only as a non-negative int and are OMITTED when unavailable --
+    never None, a string or a bool. Applied to input-supplied values AND to
+    the metadata split_render_inputs builds itself."""
+    if not isinstance(value, dict):
+        value = {}
+    result: dict[str, Any] = {"present": value.get("present") is True}
+    counters = ("lines", "chars", "priority_count") if key == "goal_meta" else ("lines", "chars", "count")
+    for counter in counters:
+        if _is_count(value.get(counter)):
+            result[counter] = value[counter]
+    if key == "goal_meta":
+        state = value.get("state")
+        result["state"] = state if isinstance(state, str) and state in _GOAL_META_STATES else "unexpected_shape"
+    return result
+
+
+def _project_bridge_runs(value: object, withheld: dict[str, int] | None) -> list[dict[str, Any]]:
+    """#315 R1 (partial, D1 scope): the free-text fields of a bridge run --
+    ``error``, ``reason``, ``last_where`` -- become codes, as in the
+    bridge_exit_streak dict branch. (Full row allowlisting is D1.1 #356.)"""
+    if not isinstance(value, list):
+        return []
+    runs = []
+    for row in value:
+        if not isinstance(row, dict):
+            continue
+        run = dict(row)
+        if "error" in run:
+            run["error"] = "error" if run["error"] else ""
+        if "last_where" in run:
+            run["last_where"] = "withheld" if run["last_where"] else ""
+        if "reason" in run:
+            run["reason"] = _project_reason(run["reason"], withheld, "bridge_run_reason")
+        runs.append(run)
+    return runs
+
+
 def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | None = None) -> object:
+    if key in {"agents_meta", "goal_meta"}:
+        return _project_meta(key, value)
+    if key == "_error":
+        # #315 R1: the transport/state-read error text can embed host paths
+        # or stderr; only its presence is public.
+        return "state_read_failed" if value else None
+    if key == "bridge_runs":
+        return _drop_invalid_counters(_project_bridge_runs(_drop_source_counters(value), withheld))
+    if key == "bridge_exit_streak" and not isinstance(value, dict):
+        # #315 R1: a non-dict streak is never passed through raw.
+        return {}
     if key in {"cycle_titles_error", "probe_error"}:
         if value:
             if withheld is not None:
@@ -328,7 +393,7 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
                 continue
             state = row.get("state")
             result[str(repo)] = {
-                "state": state if state in allowed else "unknown",
+                "state": state if isinstance(state, str) and state in allowed else "unknown",
                 **({k: row[k] for k in ("latest_conclusion", "observed_at_utc", "actions_enabled") if k in row and isinstance(row[k], (str, int, bool))}),
             }
         return result
@@ -352,7 +417,17 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
             if isinstance(ctx.get(field), str):
                 ctx[f"{field}_chars"] = len(ctx[field])
                 ctx[field] = None
-        for skill in ctx.get("tier2_skills") or []:
+        # #315 R8: shapes the projection and the renderer iterate are
+        # normalized first -- a broken one becomes empty, never passes through.
+        if "tier2_skills" in ctx and not isinstance(ctx["tier2_skills"], list):
+            ctx["tier2_skills"] = []
+        if "tier2_memory" in ctx:
+            if not isinstance(ctx["tier2_memory"], dict):
+                ctx["tier2_memory"] = {}
+            elif "files" in ctx["tier2_memory"] and not isinstance(ctx["tier2_memory"]["files"], list):
+                ctx["tier2_memory"]["files"] = []
+        skills = ctx.get("tier2_skills")
+        for skill in skills if isinstance(skills, list) else []:
             if isinstance(skill, dict):
                 for field in ("content", "desc"):
                     if isinstance(skill.get(field), str):
@@ -362,7 +437,9 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
         if isinstance(fit, dict):
             fit.pop("reason", None)
             fit.pop("summary", None)
-        for mem in ctx.get("tier2_memory", {}).get("files") or []:
+        memory = ctx.get("tier2_memory")
+        mem_files = memory.get("files") if isinstance(memory, dict) else None
+        for mem in mem_files if isinstance(mem_files, list) else []:
             if isinstance(mem, dict) and isinstance(mem.get("content"), str):
                 mem["content_chars"] = len(mem["content"])
                 mem["content"] = ""
@@ -473,8 +550,13 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
         if state == "targets_missing":
             l_proj["summary"] = "targets missing"
         elif state == "ran":
-            code = value.get("exit_code")
-            l_proj["summary"] = "passed" if code == 0 else (f"failed (exit {code})" if code is not None else "failed")
+            # #315 R2: only the VALIDATED exit code (an int, never a bool --
+            # False == 0 would read "passed") may name the result.
+            code = l_proj.get("exit_code")
+            if code is None:
+                l_proj["summary"] = "result unavailable"
+            else:
+                l_proj["summary"] = "passed" if code == 0 else f"failed (exit {code})"
         elif value.get("probe") == "absent":
             l_proj["summary"] = "local CI status absent"
         elif value.get("probe") == "probe_unavailable":
@@ -487,7 +569,7 @@ def _sanitize_derived_view(value: dict[str, Any], withheld: dict[str, int] | Non
         if field in value:
             proj[field] = value[field]
     status = value.get("status")
-    if status in {"absent", "probe_unavailable", "present"}:
+    if isinstance(status, str) and status in {"absent", "probe_unavailable", "present"}:
         proj["reason"] = {"absent": "derived view absent", "probe_unavailable": "derived view unavailable", "present": "derived view present"}[status]
     charter = value.get("charter")
     if isinstance(charter, dict):
@@ -535,11 +617,17 @@ def _sanitize_derived_view(value: dict[str, Any], withheld: dict[str, int] | Non
 def split_render_inputs(data: dict) -> tuple[dict, dict]:
     """Allowlist public fields and replace private text with derived metadata."""
     withheld: dict[str, int] = {}
-    public = {
-        key: _sanitize_public_value(key, value, withheld)
-        for key, value in data.items()
-        if key in PUBLIC_DATA_KEYS and key not in PRIVATE_DATA_KEYS
-    }
+    public = {}
+    for key, value in data.items():
+        if key not in PUBLIC_DATA_KEYS or key in PRIVATE_DATA_KEYS:
+            continue
+        try:
+            public[key] = _sanitize_public_value(key, value, withheld)
+        except Exception:
+            # #315 R8: a broken section gets a fixed safe value for THAT
+            # section; it never aborts the projection of the others.
+            public[key] = None
+            withheld["projection_error"] = withheld.get("projection_error", 0) + 1
     private = dict(data)
     if withheld:
         private["withheld_reason_counts"] = withheld
@@ -556,35 +644,22 @@ def split_render_inputs(data: dict) -> tuple[dict, dict]:
         public["agents_meta"] = {"present": False, "lines": 0, "chars": 0}
 
     raw_goal = data.get("goal_text")
+    # #315 R7: unavailable counters are OMITTED, and the finished metadata
+    # goes through the same validator as input-supplied metadata (R6).
     if raw_goal is None:
-        public["goal_meta"] = {
-            "state": "absent",
-            "present": False,
-            "lines": None,
-            "chars": None,
-            "priority_count": None,
-        }
+        goal_meta: dict[str, Any] = {"state": "absent", "present": False}
     elif not isinstance(raw_goal, dict):
-        public["goal_meta"] = {
-            "state": "unexpected_shape",
-            "present": False,
-            "lines": None,
-            "chars": None,
-            "priority_count": None,
-        }
+        goal_meta = {"state": "unexpected_shape", "present": False}
     else:
         # goal_text.json is operator-private. Public metadata comes only from
         # the repository goals.md charter consumed by the release pipeline.
-        g_text = ""
         p_list = raw_goal.get("priorities")
-        priority_count = len(p_list) if isinstance(p_list, list) else None
-        public["goal_meta"] = {
-            "state": "present",
-            "present": True,
-            "lines": None,
-            "chars": None,
-            "priority_count": priority_count,
-        }
+        goal_meta = {"state": "present", "present": True}
+        if isinstance(p_list, list):
+            goal_meta["priority_count"] = len(p_list)
+    public["goal_meta"] = _project_meta("goal_meta", goal_meta)
+    if "agents_meta" in public:
+        public["agents_meta"] = _project_meta("agents_meta", public["agents_meta"])
 
     return public, private
 
