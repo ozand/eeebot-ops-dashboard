@@ -31,6 +31,17 @@ except ImportError:
         scan_pages as _publish_scan_pages,
     )  # type: ignore
 
+# #378: the CI vocabulary comes from its writer (techtree_viewer), so the
+# public enum cannot drift from what the reader emits.
+try:
+    from scripts.techtree_viewer import (
+        CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+    )
+except ImportError:
+    from techtree_viewer import (  # type: ignore
+        CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
+    )
+
 # Reason enums emitted by the ledger/proposer/strategist writers. Keep these
 # allowlists next to their sources: nanobot/runtime/cycle_ledger.py:76-96,217;
 # bridge.py:5909-5930; llm_proposer.py:736,1292,2957,3007; strategist.py:31,358,378,381.
@@ -605,14 +616,21 @@ def _obj(
 
 # -- enums (#356 R3) -------------------------------------------------------------
 
-_CI_CONCLUSIONS = (
-    "success", "failure", "cancelled", "skipped", "neutral", "timed_out", "action_required",
-    "stale", "startup_failure", "in_progress", "queued", "cannot_ask", "unanswerable", "absent", "unknown",
-)
-_CI_STATES = (
-    "success", "failure", "cancelled", "skipped", "in_progress", "queued", "cannot_ask",
-    "unanswerable", "absent", "unknown", "fresh", "stale", "pending", "no_runs", "disabled",
-)
+#: the writer's vocabulary (techtree_viewer CI_*), plus the values of the
+#: bare {repo: {"state": ...}} map D1 accepted.
+_CI_CONCLUSIONS = tuple(dict.fromkeys((
+    *CI_LATEST_CONCLUSIONS, "in_progress", "queued", "unanswerable", "absent", "unknown",
+)))
+_CI_STATES = tuple(dict.fromkeys((
+    *CI_FRESHNESS_STATES, *CI_ACTIONS_STATES,
+    "success", "failure", "cancelled", "skipped", "in_progress", "queued",
+    "unanswerable", "absent", "unknown", "fresh", "stale", "pending", "disabled",
+)))
+#: #378: error_card_recording skip reasons, as eeebot bridge.py writes them
+#: (7238 worktree_add_failed, 7260 write_failed, 7300 push_rejected,
+#: 7302 diff_touched_more_than_errors_yaml, 7312 exception:<class name>).
+_ERROR_CARD_SKIP_REASONS = ("worktree_add_failed", "write_failed", "push_rejected",
+                            "diff_touched_more_than_errors_yaml")
 _PROBE_STATES = ("absent", "probe_unavailable", "present", "present_uninitialized")
 _VIEW_STATES = ("absent", "probe_unavailable", "present")
 _LOCAL_CI_STATES = ("ran", "targets_missing", "not_run", "running", "skipped", "error", "absent", "unknown")
@@ -650,7 +668,8 @@ _LEDGER_ROW = _obj({
     "delivered": _bool, "delivery_state": _token, "delta": _number, "metric_delta": _number,
     "files_changed": _list(_relpath, 50), "lessons_context": _list(_ident, 50),
     "violations": _list(_violation_code, 50), "card_commit": _ident, "card_id": _ident,
-    "skip_reason": _enum(*_PUBLIC_REASON_CODES, "write_failed", fallback="[withheld]"),
+    "skip_reason": _one_of(_pattern(re.compile(r"^exception:[A-Za-z_][A-Za-z0-9_]{0,63}$")),
+                           _enum(*_PUBLIC_REASON_CODES, *_ERROR_CARD_SKIP_REASONS, fallback="[withheld]")),
     "error": _code("ledger_error"), "attempt": _pattern(re.compile(r"^\d{1,3}(?:/\d{1,3})?$")),
     "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
     "ledger_blind": _bool, "doc_budget_exceeded": _bool, "doc_only_deferred": _count,

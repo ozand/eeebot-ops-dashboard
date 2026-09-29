@@ -130,6 +130,19 @@ BRIDGE_UNIT_TIMEOUT_SECONDS = int(os.environ.get('EEEBOT_BRIDGE_TIMEOUT_SECONDS'
 BRIDGE_RUN_START_EARLY_TOLERANCE_SECONDS = 120
 
 
+#: #378: the CI freshness VOCABULARY the writer below emits. two_sinks
+#: imports these for the public projection, so the enum cannot drift from
+#: the writer (tests/test_d11_ci_vocabulary.py checks every literal the
+#: writer returns is listed here).
+CI_FRESHNESS_STATES = ('cannot_ask', 'runs_pending', 'no_runs', 'recent', 'runs_old')
+CI_ACTIONS_STATES = ('cannot_ask', 'unanswerable', 'known')
+CI_RUN_CONCLUSIONS = (
+    'success', 'failure', 'cancelled', 'neutral', 'skipped', 'timed_out',
+    'action_required', 'startup_failure', 'stale',
+)
+CI_LATEST_CONCLUSIONS = (*CI_RUN_CONCLUSIONS, 'none', 'cannot_ask')
+
+
 def _ci_cannot_ask(reason: str, *, observed_at_utc: str) -> dict[str, Any]:
     return {
         'state': 'cannot_ask',
@@ -251,11 +264,7 @@ def _ci_freshness_state(runs_payload: dict[str, Any], observed_at_utc: str) -> d
     latest_dt, latest, latest_ts = max(dated, key=lambda item: item[0])
     age_seconds = max(0, int((observed_dt - latest_dt).total_seconds()))
     conclusion = latest.get('conclusion')
-    valid_conclusions = {
-        'success', 'failure', 'cancelled', 'neutral', 'skipped', 'timed_out',
-        'action_required', 'startup_failure', 'stale',
-    }
-    if conclusion not in valid_conclusions:
+    if conclusion not in CI_RUN_CONCLUSIONS:
         return _ci_cannot_ask('latest_conclusion_invalid', observed_at_utc=observed_at_utc)
     return {
         'state': 'recent' if age_seconds <= CI_FRESHNESS_WINDOW_SECONDS else 'runs_old',
