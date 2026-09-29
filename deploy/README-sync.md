@@ -106,12 +106,21 @@ ls -la /etc/systemd/system/*.bak-$TS /etc/systemd/system/eeebot-techtree-publish
 echo "$TS"   # keep: the rollback below uses it
 ```
 
-0b. Stop the publish timer for steps 1-5, so it cannot start the unit halfway
-    through the installation:
+0b. Quiesce EVERY trigger of the publisher for steps 1-3, so nothing starts it
+    halfway through the installation. There are two independent triggers:
+    the timer, and the bridge unit's `OnSuccess=eeebot-techtree-publish.service`
+    (drop-in `eeepc-self-evolving-subagent-bridge.service.d/20-techtree-publish.conf`),
+    which fires whenever a bridge run completes. Stopping the timer does not
+    stop the second one. A runtime mask blocks both until it is removed in
+    step 4, and does not survive a reboot. Wait for any publisher run that is
+    already active to finish first:
 
 ```bash
 sudo systemctl stop eeebot-techtree-publish.timer
-systemctl is-active eeebot-techtree-publish.timer   # must print: inactive
+while systemctl is-active --quiet eeebot-techtree-publish.service; do sleep 10; done
+sudo systemctl mask --runtime eeebot-techtree-publish.service
+systemctl is-active eeebot-techtree-publish.timer     # must print: inactive
+systemctl is-enabled eeebot-techtree-publish.service  # must print: masked-runtime
 ```
 
 1. Install the publisher unit, the sync script and the sync drop-in:
@@ -152,14 +161,30 @@ sudo stat -c "%a %U" /var/lib/eeebot-site
    generator:
 
 ```bash
+sudo systemctl unmask --runtime eeebot-techtree-publish.service
 sudo systemctl start eeebot-techtree-publish.service
 sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
 sudo test -s /var/lib/eeebot-site/current/index.html
 ```
 
-This start also published gh-pages through the D1 projection. Open the public
-GitHub Pages site and check that it renders and shows no private detail (no
-bridge error text, no file paths, no prompt text), before going on.
+This start also published gh-pages through the D1 projection. `publish_to_pages`
+updates the `gh-pages` ref and returns without waiting for the Pages
+deployment, so the served page can still be the previous one for a while.
+Wait until the served page reports the seed's snapshot version (at most
+10 minutes), and only then run the visual check:
+
+```bash
+V=$(sudo basename "$(sudo readlink /var/lib/eeebot-site/current)")
+for i in $(seq 1 40); do
+  curl -fsS "https://ozand.github.io/eeebot-ops-dashboard/?v=$(date +%s)" | grep -q "<meta name=\"snapshot-version\" content=\"$V\">" && { echo "served: $V"; break; }
+  sleep 15
+done
+```
+
+If it never prints `served: <version>`, stop: the new projection is not yet
+what the public sees. Once it does, open the public GitHub Pages site and check
+that it renders and shows no private detail (no bridge error text, no file
+paths, no prompt text) before going on.
 
 5. Verify that the NEW generator produced the snapshot. `add_snapshot_version`
    (`scripts/two_sinks.py`) writes exactly one
@@ -205,6 +230,7 @@ sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/syst
 sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
 sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
 sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo systemctl unmask --runtime eeebot-techtree-publish.service   # harmless if already unmasked
 sudo systemctl daemon-reload
 sudo systemctl start eeebot-techtree-publish.timer
 sudo systemctl cat eeebot-techtree-publish.service   # must match the pre-cutover unit
