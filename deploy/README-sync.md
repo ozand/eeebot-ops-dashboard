@@ -86,6 +86,34 @@ bind the same `:8080` port. The replacement server refuses to start unless
 `current` points to a complete snapshot, so the seed must succeed before the
 legacy server stops.
 
+**Public effect of the cutover.** The first seed (step 4) runs the NEW
+generator, and it publishes to gh-pages through the D1 public projection at
+the same time. This changes what is publicly visible. Check the public page
+right after step 4 (see step 4's last command).
+
+0. Take a dated backup of everything the steps below overwrite. On
+   2026-09-29 the host had `/opt/eeebot-techtree/eeebot-techtree-sync.sh`
+   from #325 (sha256 prefix `afea3265`), and the drop-in directory already
+   contained `20-timeout.conf`:
+
+```bash
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS
+sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS
+sudo cp -a /etc/systemd/system/eeebot-dashboard.service /etc/systemd/system/eeebot-dashboard.service.bak-$TS
+ls -la /etc/systemd/system/*.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /opt/eeebot-techtree/*.bak-$TS
+echo "$TS"   # keep: the rollback below uses it
+```
+
+0b. Stop the publish timer for steps 1-5, so it cannot start the unit halfway
+    through the installation:
+
+```bash
+sudo systemctl stop eeebot-techtree-publish.timer
+systemctl is-active eeebot-techtree-publish.timer   # must print: inactive
+```
+
 1. Install the publisher unit, the sync script and the sync drop-in:
 
 ```bash
@@ -129,6 +157,10 @@ sudo journalctl -u eeebot-techtree-publish.service -n 50 --no-pager
 sudo test -s /var/lib/eeebot-site/current/index.html
 ```
 
+This start also published gh-pages through the D1 projection. Open the public
+GitHub Pages site and check that it renders and shows no private detail (no
+bridge error text, no file paths, no prompt text), before going on.
+
 5. Verify that the NEW generator produced the snapshot. `add_snapshot_version`
    (`scripts/two_sinks.py`) writes exactly one
    `<meta name="snapshot-version" content="<version>">` into every public
@@ -143,6 +175,13 @@ The `grep` must print exactly one line, and its `content` must equal the
 `basename` output. No line or a different value means the snapshot is not from
 the new generator: stop here and do not cut over.
 
+After step 5 passes, turn the publish timer back on:
+
+```bash
+sudo systemctl start eeebot-techtree-publish.timer
+systemctl is-active eeebot-techtree-publish.timer   # must print: active
+```
+
 6. Only now, cut the server over:
 
 ```bash
@@ -151,6 +190,33 @@ sudo systemctl daemon-reload
 sudo systemctl stop eeebot-dashboard.service
 sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
+```
+
+### Rollback
+
+Use the `$TS` printed in step 0.
+
+- **Steps 1-5** (the publisher side): restore the backups, reload, and restart
+  the timer. The site root `/var/lib/eeebot-site` and the tmpfiles entry can
+  stay; nothing reads them until step 6.
+
+```bash
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service
+sudo cp -a /opt/eeebot-techtree/eeebot-techtree-sync.sh.bak-$TS /opt/eeebot-techtree/eeebot-techtree-sync.sh
+sudo rm -rf /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo cp -a /etc/systemd/system/eeebot-techtree-publish.service.d.bak-$TS /etc/systemd/system/eeebot-techtree-publish.service.d
+sudo systemctl daemon-reload
+sudo systemctl start eeebot-techtree-publish.timer
+sudo systemctl cat eeebot-techtree-publish.service   # must match the pre-cutover unit
+```
+
+- **Step 6** (the server side): stop the new server and start the legacy one
+  again.
+
+```bash
+sudo systemctl disable --now eeebot-dashboard-server.service
+sudo systemctl start eeebot-dashboard.service
+sudo systemctl status eeebot-dashboard.service
 ```
 
 ## End-to-end verification
