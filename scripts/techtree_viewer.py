@@ -2278,10 +2278,23 @@ def read_local_state(
                             continue
                         if row.get('component') != 'executor':
                             continue
-                        prompt_tokens = row.get('prompt_tokens')
-                        if isinstance(prompt_tokens, int) and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0:
-                            if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
-                                latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': prompt_tokens, 'ts': row.get('ts')}
+                        if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
+                            prompt_tokens = row.get('prompt_tokens')
+                            valid_prompt_tokens = (
+                                prompt_tokens if isinstance(prompt_tokens, int)
+                                and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0 else None
+                            )
+                            context_window = row.get('context_window')
+                            valid_context_window = (
+                                context_window if isinstance(context_window, int)
+                                and not isinstance(context_window, bool) and context_window > 0 else None
+                            )
+                            latest = {
+                                'cycle_id': row.get('cycle_id'),
+                                'prompt_tokens': valid_prompt_tokens,
+                                'ts': row.get('ts'),
+                                'context_window': valid_context_window,
+                            }
             except OSError:
                 continue
         return latest
@@ -10900,7 +10913,7 @@ def _dry_run_pages(
     return 0, {fname: _page_fingerprint(html) for fname, html in pages.items()}
 
 
-def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]:
+def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str], bool]:
     """ADR-036 rule 3: bootstrap gh-pages from clean orphan tree, never master."""
     import base64
     import json as _json
@@ -10914,7 +10927,7 @@ def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]
                     '--input', '-', '--jq', '.sha'], input_text=blob_body)
         if blob.returncode != 0:
             print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}', file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
         tree_entries.append({
             'path': fname, 'mode': '100644', 'type': 'blob', 'sha': blob.stdout.strip()
         })
@@ -10923,34 +10936,34 @@ def _bootstrap_clean_branch(pages: dict[str, str]) -> tuple[int, dict[str, str]]
                input_text=_json.dumps({'tree': tree_entries}))
     if tree.returncode != 0:
         print(f'publish: initial tree creation failed: {tree.stderr.strip()[:200]}', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
     try:
         tree_sha = _json.loads(tree.stdout)['sha']
     except Exception as exc:
         print(f'publish: unparseable initial tree response: {exc}', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
 
     commit = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/commits', '--input', '-'],
                  input_text=_json.dumps({'tree': tree_sha, 'message': 'publish: initial site', 'parents': []}))
     if commit.returncode != 0:
         print(f'publish: initial commit failed: {commit.stderr.strip()[:200]}', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
     try:
         commit_sha = _json.loads(commit.stdout)['sha']
     except Exception as exc:
         print(f'publish: unparseable initial commit response: {exc}', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
 
     made = _gh(['api', '-X', 'POST', f'repos/{PUBLISH_REPO}/git/refs',
                 '-f', f'ref=refs/heads/{PUBLISH_BRANCH}', '-f', f'sha={commit_sha}'])
     if made.returncode != 0:
         print(f'publish: cannot create {PUBLISH_BRANCH}: {made.stderr.strip()[:200]}', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
 
     if not _ensure_pages_enabled():
-        return 1, {}
+        return 1, fingerprints, True
     print(f'published: https://{PUBLISH_REPO.split("/")[0]}.github.io/{PUBLISH_REPO.split("/")[1]}/ -- initial publication')
-    return 0, fingerprints
+    return 0, fingerprints, True
 
 
 def publish_to_pages(
@@ -10959,7 +10972,7 @@ def publish_to_pages(
     previous_fingerprints: 'dict[str, str] | None' = None,
     scan_cache: 'dict[str, bool] | None' = None,
     dry_run: bool = False,
-) -> 'tuple[int, dict[str, str]]':
+) -> 'tuple[int, dict[str, str], bool]':
     """Issue #70/#278: publish the multi-page site ATOMICALLY -- one
     gh-pages commit carries every page (git Data API: blobs -> tree ->
     commit -> ref update; any failure leaves the ref untouched). Accepts a
@@ -10973,12 +10986,13 @@ def publish_to_pages(
     the OLD blob for that path unchanged (git's own tree-inheritance
     semantics; no extra API call needed to look up the old blob sha).
 
-    Returns (rc, fingerprints): rc is 0 on success, 1 on any failure;
+    Returns (rc, fingerprints, ref_updated): whether the remote ref moved,
+    independently of later Pages-enable status.
     fingerprints is the fresh {filename: fingerprint} map for every page
     passed in (whether uploaded or skipped this run) for the caller to
-    persist for next time. On any failure path, fingerprints is {} -- the
-    caller must not persist a fingerprint for a publish that didn't
-    actually complete."""
+    persist for next time. On a post-ref-update Pages-enable failure,
+    fingerprints is returned with ``ref_updated=True`` so state-save failure
+    telemetry can report that the remote ref already changed."""
     import base64
     try:
         from scripts.publish_scan import scan_pages, PublicationScanError, is_allowed_publish_path
@@ -10989,7 +11003,7 @@ def publish_to_pages(
         pages = {'index.html': pages}
     if not pages:
         print('publish: nothing to publish', file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
 
     pages = dict(pages)
     # ADR-036 rule 3: scan all pages before blob creation; clean-cache
@@ -11011,16 +11025,18 @@ def publish_to_pages(
     # block was dead — the renderer is inlined and no page ever carried that path.)
 
     if dry_run:
-        return _dry_run_pages(pages, previous_fingerprints, scan_cache)
+        rc, fps = _dry_run_pages(pages, previous_fingerprints, scan_cache)
+        return rc, fps, False
 
     # Branch may not exist yet: bootstrap it from a clean tree (orphan root commit).
     branch_probe = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
     if branch_probe.returncode != 0:
         if _is_confirmed_not_found(branch_probe):
-            return _bootstrap_clean_branch(pages)
+            rc, fps, ref_updated = _bootstrap_clean_branch(pages)
+            return rc, fps, ref_updated
         print(f'publish: cannot probe {PUBLISH_BRANCH} (exit {branch_probe.returncode}): {branch_probe.stderr.strip()[:200]}',
               file=sys.stderr)
-        return 1, {}
+        return 1, {}, False
 
     # 1. Create a blob per CHANGED page only; unchanged pages are skipped
     # entirely (#278) -- base_tree carries their existing blob forward.
@@ -11049,7 +11065,7 @@ def publish_to_pages(
         if blob.returncode != 0:
             print(f'publish: blob {fname} failed: {blob.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
         entry = {'path': fname, 'mode': '100644', 'type': 'blob',
                  'sha': blob.stdout.strip()}
         tree_entries.append(entry)
@@ -11061,7 +11077,7 @@ def publish_to_pages(
         if head.returncode != 0:
             print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
         try:
             head_data = _json.loads(head.stdout)
             base_tree = head_data['commit']['commit']['tree']['sha']
@@ -11078,7 +11094,7 @@ def publish_to_pages(
         # affect any RENDERED page) can still land here; skip the
         # tree/commit/ref calls entirely rather than create a no-op commit.
         print(f'publish: {len(skipped)} page(s) unchanged, nothing to publish')
-        return 0, fingerprints
+        return 0, fingerprints, False
 
     # 2-4. One tree, one commit, one ref update -- retried as a whole
     # against a fresh read on a concurrent-write rejection (#270). The
@@ -11095,12 +11111,13 @@ def publish_to_pages(
     # against the new head rather than forcing the stale one through.
     import json as _json
     max_attempts = 3
+    ref_updated = False
     for attempt in range(1, max_attempts + 1):
         head = _gh(['api', f'repos/{PUBLISH_REPO}/branches/{PUBLISH_BRANCH}'])
         if head.returncode != 0:
             print(f'publish: cannot read {PUBLISH_BRANCH} HEAD: {head.stderr.strip()[:200]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
         try:
             head_data = _json.loads(head.stdout)
             parent_sha = head_data['commit']['sha']
@@ -11120,7 +11137,7 @@ def publish_to_pages(
         if tree.returncode != 0:
             print(f'publish: tree create failed: {tree.stderr.strip()[:300]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
 
         commit_payload = {
             'message': 'techtree multi-page snapshot (techtree_viewer --publish)',
@@ -11132,7 +11149,7 @@ def publish_to_pages(
         if commit.returncode != 0:
             print(f'publish: commit failed: {commit.stderr.strip()[:300]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
 
         # Non-forcing: GitHub rejects this if PUBLISH_BRANCH moved since
         # `head` was read above, rather than accepting a commit whose
@@ -11140,6 +11157,7 @@ def publish_to_pages(
         ref = _gh(['api', '-X', 'PATCH', f'repos/{PUBLISH_REPO}/git/refs/heads/{PUBLISH_BRANCH}',
                    '-f', f'sha={commit.stdout.strip()}'])
         if ref.returncode == 0:
+            ref_updated = True
             if attempt > 1:
                 print(f'publish: {PUBLISH_BRANCH} moved during publish -- '
                       f'retried and landed on attempt {attempt}/{max_attempts}')
@@ -11150,15 +11168,15 @@ def publish_to_pages(
         if not retryable or attempt >= max_attempts:
             print(f'publish: ref update failed after {attempt} attempt(s): {err[:300]}',
                   file=sys.stderr)
-            return 1, {}
+            return 1, {}, False
         print(f'publish: {PUBLISH_BRANCH} moved concurrently (attempt {attempt}/{max_attempts}), '
               f're-reading and retrying', file=sys.stderr)
 
     if not _ensure_pages_enabled():
-        return 1, {}
+        return 1, fingerprints, ref_updated
     print(f'published: {PUBLISH_URL} (Pages может обновляться ~минуту) '
           f'-- {len(tree_entries)} page(s) changed, {len(skipped)} unchanged')
-    return 0, fingerprints
+    return 0, fingerprints, ref_updated
 
 
 def main(argv: list[str] | None = None) -> int:

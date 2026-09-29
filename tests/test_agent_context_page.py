@@ -93,7 +93,8 @@ def test_issue261_skill_sources_are_joined_without_dropping_single_source_rows()
 def test_issue261_memory_index_and_compaction_empty_are_honest():
     html = tv.render_pages(_telemetry_fixture(), host='eeepc', generated_at='now')['agent.html']
     assert 'resident missing: memory-rule-missing' in html
-    assert '90,000 tokens' in html and '12,345 prompt tokens' in html
+    # #368: no context_window recorded -> window unknown, never a constant.
+    assert 'model window unknown' in html and '12,345 prompt tokens' in html
     assert 'compaction did not fire' in html
     assert 'results compacted: 0' not in html
 
@@ -260,7 +261,7 @@ def test_agent_page_renders_two_tier_context_and_reconciliation():
     assert 't1-owner-release' in html  # identity
     assert 't1-owner-instance' in html  # bootstrap -> AGENTS.md
     assert 't1-owner-generated' in html  # skills_catalogue / memory
-    assert '1,500c' in html  # identity's static cap
+    assert 'shared pool 15,500c' in html  # identity draws from the release pool (#368)
 
     # Arithmetic reconciliation
     assert 'Arithmetic Character Reconciliation' in html

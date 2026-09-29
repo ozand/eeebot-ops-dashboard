@@ -1088,7 +1088,7 @@ def test_publish_to_pages_returns_one_when_gh_raises(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(subprocess, 'run', _raise_timeout)
 
-    rc, _fp = tv.publish_to_pages('<html></html>')  # must not raise
+    rc, _fp, _ref_updated = tv.publish_to_pages('<html></html>')  # must not raise
 
     assert rc == 1
 
@@ -3679,7 +3679,7 @@ def test_issue70_publish_atomic_single_ref_update(monkeypatch) -> None:
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc, _fp = tv.publish_to_pages({'index.html': '<html>a</html>', 'cycles.html': '<html>b</html>'})
+    rc, _fp, _ref_updated = tv.publish_to_pages({'index.html': '<html>a</html>', 'cycles.html': '<html>b</html>'})
     assert rc == 0
     assert seq['blob'] == 2
     assert seq['tree'] == 1
@@ -3721,7 +3721,7 @@ def test_270_no_race_single_attempt_no_retry_message(monkeypatch, capsys) -> Non
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc, _fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    rc, _fp, _ref_updated = tv.publish_to_pages({'index.html': '<html>only</html>'})
     assert rc == 0
     # 1 bootstrap existence probe + exactly 1 retry-loop read -- no race.
     assert branch_reads['n'] == 2
@@ -3781,7 +3781,7 @@ def test_270_concurrent_commit_between_read_and_write_is_retried_not_lost(monkey
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc, _fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    rc, _fp, _ref_updated = tv.publish_to_pages({'index.html': '<html>only</html>'})
     assert rc == 0
     # 1 bootstrap probe + 2 retry-loop reads (the rejected attempt, then the
     # re-read that landed).
@@ -3830,7 +3830,7 @@ def test_270_retries_bounded_and_fails_loudly_on_exhaustion(monkeypatch, capsys)
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc, fp = tv.publish_to_pages({'index.html': '<html>only</html>'})
+    rc, fp, _ref_updated = tv.publish_to_pages({'index.html': '<html>only</html>'})
     assert rc == 1
     assert fp == {}
     # 1 bootstrap probe + 3 retry-loop reads -- bounded, never unbounded.
@@ -4211,7 +4211,7 @@ def test_issue81_large_blob_via_stdin_not_argv(monkeypatch) -> None:
         return cp('{}')
 
     monkeypatch.setattr(tv, '_gh', fake_gh)
-    rc, _fp = tv.publish_to_pages({'cycles.html': big_page})
+    rc, _fp, _ref_updated = tv.publish_to_pages({'cycles.html': big_page})
     assert rc == 0
     blob_calls = [(a, t) for a, t in captured if 'git/blobs' in ' '.join(a)]
     assert blob_calls, 'blob call missing'
@@ -4276,7 +4276,7 @@ def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
         'index.html': tv._page_fingerprint(unchanged_html),
         'cycles.html': tv._page_fingerprint(changed_html_old),
     }
-    rc, fingerprints = tv.publish_to_pages(
+    rc, fingerprints, _ref_updated = tv.publish_to_pages(
         {'index.html': unchanged_html, 'cycles.html': changed_html_new},
         previous_fingerprints=previous_fp,
     )
@@ -4293,7 +4293,7 @@ def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -
 
     html = 'generated 2026-09-17 03:00:00 UTC · newest source 5m old SAME'
     previous_fp = {'index.html': tv._page_fingerprint(html)}
-    rc, fingerprints = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
+    rc, fingerprints, _ref_updated = tv.publish_to_pages({'index.html': html}, previous_fingerprints=previous_fp)
     assert rc == 0
     assert not any('git/blobs' in ' '.join(c) for c in calls)
     assert not any('git/trees' in ' '.join(c) and '-X' in c for c in calls)
@@ -4375,12 +4375,12 @@ def test_278_steady_state_publish_skips_sealed_archive_chunks(monkeypatch) -> No
         return data
 
     pages1 = tv.render_pages(make_data(350), host='eeepc', generated_at='2026-09-17 03:00:00')
-    rc1, fp1 = tv.publish_to_pages(pages1)
+    rc1, fp1, _ref1 = tv.publish_to_pages(pages1)
     assert rc1 == 0
 
     calls.clear()
     pages2 = tv.render_pages(make_data(351), host='eeepc', generated_at='2026-09-17 03:05:00')
-    rc2, fp2 = tv.publish_to_pages(pages2, previous_fingerprints=fp1)
+    rc2, fp2, _ref2 = tv.publish_to_pages(pages2, previous_fingerprints=fp1)
     assert rc2 == 0
     blob_paths_uploaded = []
     for c in calls:
@@ -6225,6 +6225,20 @@ def test_1755_local_mirror_truncation_streak_no_data_when_ledger_missing(tmp_pat
     state.mkdir()
     result = tv.read_local_state(str(state))
     assert result['agent_context']['truncation_streak'] == {'status': 'no_data', 'total_rows': 0, 'entries': []}
+
+
+def test_368_agent_page_uses_window_from_latest_executor_row_even_without_tokens(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    _write_jsonl(state / 'llm_calls' / '2026-09-27.jsonl', [
+        {'ts': '2026-09-27T10:00:00Z', 'component': 'executor', 'prompt_tokens': 123, 'context_window': 65536},
+        {'ts': '2026-09-28T10:00:00Z', 'component': 'executor', 'context_window': 131072},
+    ])
+    data = _fixture()
+    local = tv.read_local_state(str(state))
+    data['agent_context'] = local['agent_context']
+    page = tv.render_pages(data, host='eeepc', generated_at='2026-09-28 13:00:00')['agent.html']
+    assert '131,072 tokens (executor llm_calls.context_window)' in page
+    assert '65,536 tokens (executor llm_calls.context_window)' not in page
 
 
 def test_1755_local_mirror_window_pressure_excludes_null_context_window(tmp_path: Path) -> None:

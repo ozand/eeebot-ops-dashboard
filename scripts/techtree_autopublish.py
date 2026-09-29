@@ -275,6 +275,7 @@ def save_publish_state(
     changed_publish_durations_seconds: list[float] | None = None,
     publish_duration_warning: str | None = None,
     published: bool = True,
+    ref_updated: bool = False,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -325,12 +326,18 @@ def save_publish_state(
         # `published=False` is the failed-attempt save (rc!=0 or a raised
         # scanner refusal): nothing reached gh-pages, so the journal must not
         # claim a successful publish.
-        outcome = (
-            'the page just published successfully, but every future cycle '
-            'will republish unnecessarily until this is fixed'
-            if published else
-            'this attempt did not publish; its duration telemetry is lost'
-        )
+        if published:
+            outcome = (
+                'the page just published successfully, but every future cycle '
+                'will republish unnecessarily until this is fixed'
+            )
+        elif ref_updated:
+            outcome = (
+                'the gh-pages ref moved but Pages activation failed; the page '
+                'may be unavailable; its duration telemetry is lost'
+            )
+        else:
+            outcome = 'this attempt did not publish; its duration telemetry is lost'
         print(
             f'techtree-autopublish: FAILED to save publish state to {state_dir} '
             f'({exc.__class__.__name__}: {exc}) -- {outcome}',
@@ -647,6 +654,8 @@ def run(args: argparse.Namespace) -> int:
             print(f'techtree-autopublish: publish duration {publish_duration:.1f}s; changed_pages={changed}')
         return warning, updated
 
+    ref_updated = False
+
     def save_failed_attempt(warning: str | None, updated: dict[str, Any]) -> None:
         save_publish_state(
             state_dir, state.get('digest'), state.get('published_at'),
@@ -658,6 +667,7 @@ def run(args: argparse.Namespace) -> int:
             changed_publish_durations_seconds=updated['changed_publish_durations_seconds'],
             publish_duration_warning=warning,
             published=False,
+            ref_updated=ref_updated,
         )
 
     def gh_publisher(pages_to_pub):
@@ -740,7 +750,14 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     if rc != 0:
-        print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
+        if ref_updated:
+            print(
+                f'techtree-autopublish: publish failed ({reason}); gh-pages ref moved '
+                'but Pages activation failed; the page may be unavailable',
+                file=sys.stderr,
+            )
+        else:
+            print(f'techtree-autopublish: publish failed ({reason}); previous page left untouched', file=sys.stderr)
         save_failed_attempt(duration_warning, duration_state)
         return 1
 
