@@ -1867,8 +1867,18 @@ def test_issue182_health_verdict_bridge_exit_streak() -> None:
     # 2. streak = 0 -> healthy
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 0}, scorecard=healthy_scorecard) == ('healthy', 'all signals within thresholds across 1 monitored feeds (usage)')
 
-    # 3. streak >= 1 -> investigate alarm with error details
-    assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak={'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}) == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+    # 3. streak >= 1 -> investigate alarm. ADR-036 D1 (77062603, "retain
+    # private bridge diagnostics"): the renderer shows the diagnostics it is
+    # given (the private/LAN pages get the raw streak); the PUBLIC pages get
+    # them only after split_render_inputs, which reduces them to codes.
+    raw = {'consecutive_failures': 5, 'last_error': 'NameError: x', 'last_where': 'bridge.py:1874'}
+    verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=raw)
+    assert verdict == ('investigate', 'bridge crash loop: 5 consecutive invocation failures: NameError: x at bridge.py:1874')
+    from scripts.two_sinks import split_render_inputs
+    public, _ = split_render_inputs({'bridge_exit_streak': raw})
+    public_verdict = tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], False, '2026-09-01T02:00:00Z', bridge_exit_streak=public['bridge_exit_streak'])
+    assert public_verdict[0] == 'investigate'
+    assert 'NameError' not in str(public_verdict) and 'bridge.py' not in str(public_verdict)
 
 
 def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
@@ -1885,15 +1895,23 @@ def test_issue182_now_panel_bridge_exit_streak_three_state() -> None:
     assert '0 failures (crash_record)' in p_zero
     assert 'eeebot#1683' in p_zero
 
-    # 3. streak > 0 -> alarm with details
-    p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak={
+    # 3. streak > 0 -> alarm. ADR-036 D1 (77062603): the raw streak (private
+    # pages) shows the diagnostics, HTML-escaped; the public pages get the
+    # streak only after split_render_inputs, which reduces them to codes.
+    raw = {
         'consecutive_failures': 140,
         'last_error': "NameError: name '_parse_explore_mode' is not defined",
         'last_where': 'bridge.py:1874',
-    })
+    }
+    p_alarm = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak=raw)
     assert '140 consecutive failures' in p_alarm
-    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined" in p_alarm or "NameError: name '_parse_explore_mode' is not defined" in p_alarm
-    assert 'bridge.py:1874' in p_alarm
+    assert "NameError: name &#x27;_parse_explore_mode&#x27; is not defined at bridge.py:1874" in p_alarm
+    assert "NameError: name '_parse_explore_mode' is not defined" not in p_alarm  # escaped, never raw
+    from scripts.two_sinks import split_render_inputs
+    public, _ = split_render_inputs({'bridge_exit_streak': raw})
+    p_public = tv.build_now_panel({'now': '2026-09-01T02:00:00Z'}, {}, [], None, None, bridge_exit_streak=public['bridge_exit_streak'])
+    assert '140 consecutive failures' in p_public
+    assert '_parse_explore_mode' not in p_public and 'bridge.py:1874' not in p_public
 
 
 def test_276_feeds_ok_does_not_print_healthy_over_a_strategist_error_and_doc_budget_cap() -> None:
@@ -2736,7 +2754,7 @@ def test_batch3_issue44_charter_boxes_are_details_with_line_counts() -> None:
     assert '<details class="charter-details agents-md-box">' in html_out
     assert '<details class="charter-details goal-text-box">' in html_out
     assert 'AGENTS.md charter (3 lines)' in html_out
-    assert 'Goals charter (1 lines)' in html_out
+    assert 'Goals charter (size unavailable)' in html_out
 
 
 def test_batch3_issue45_many_files_expandable_few_files_plain() -> None:
@@ -5157,7 +5175,7 @@ def test_272_build_cycle_details_joins_subagents_by_cycle_id_not_time() -> None:
     details = tv.build_cycle_details(ledger_rows, None, None, None, subagent_records=subagent_records)
     assert details['cycle-only-one']['subagents'] == [{
         'subagent_id': 'joined', 'label': 'l', 'status': 'ok', 'started_at': None, 'finished_at': None,
-        'task_truncated': False, 'task_bytes': 1, 'summary_chars': 1,
+        'task_truncated': False, 'task_bytes': 1, 'task_chars': 1, 'summary_chars': 1,
         'result_chars': 1, 'iteration_count': 2,
     }]
     assert details['__unjoined_subagents__']['unjoined_count'] == 1
@@ -5692,7 +5710,7 @@ class TestIssue204StrategistRunProvenance:
         assert "2 hypotheses, 2 advisories" in text
 
     def test_a_refusal_does_not_render_like_a_healthy_run(self) -> None:
-        refused = dict(self.LIVE, success=False, reason="refused: 2 of 5 inputs empty")
+        refused = dict(self.LIVE, success=False, refused=True, decision="refused", reason="withheld (<=64)")
         html = tv._build_strategist_run_item([refused])
         healthy = tv._build_strategist_run_item([dict(self.LIVE)])
         assert "refused" in self._text([refused])
@@ -6795,3 +6813,115 @@ def test_adr036_lesson_bodies_and_priority_summary_stay_off_public_pages() -> No
     for marker in ('ADR036-LESSON-PROBLEM-cc03', 'ADR036-LESSON-SOLUTION-dd04', 'ADR036-LESSON-INSIGHT-ee05'):
         assert marker not in blob
     assert details['cycle-l']['lesson_problem_chars'] == len('ADR036-LESSON-PROBLEM-cc03')
+
+
+def test_build_cycle_details_uses_preserved_reflection_projection_metrics() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
+    reflection = _sanitize_public_value('reflections', [{
+        'cycle_id': 'cycle-projected', 'summary': 'private summary',
+        'findings': ['finding'], 'recommendations': ['recommendation'],
+    }])[0]
+    details = tv.build_cycle_details([], None, [], [reflection])
+    assert details['cycle-projected']['reflection'] == {
+        'summary_chars': len('private summary'), 'findings_count': 1, 'recommendations_count': 1,
+    }
+
+
+def test_build_cycle_details_uses_preserved_v2_lesson_projection_metrics() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
+    lesson = _sanitize_public_value('lessons', [{
+        'cycle_id': 'cycle-projected', 'problem': 'private problem', 'solution': 'private fix',
+    }])[0]
+    details = tv.build_cycle_details([], None, [lesson], [])
+    assert details['cycle-projected']['lesson_problem_chars'] == len('private problem')
+    assert details['cycle-projected']['lesson_solution_chars'] == len('private fix')
+
+
+def test_cycle_detail_projection_consumes_all_preserved_text_lengths() -> None:
+    from scripts.two_sinks import _sanitize_public_value
+
+    agents = _sanitize_public_value("agent_context", {
+        "prompt_text": "private prompt", "task_text": "private task",
+        "tier2_skills": [{"content": "private skill content", "desc": "private skill description"}],
+        "tier2_memory": {"files": [{"content": "private memory"}]},
+    })
+    subagents = _sanitize_public_value("subagent_records", [{
+        "cycle_id": "cycle-lengths", "task": "private task", "summary": "private summary", "result": "private result",
+        "task_excerpt": "private task excerpt", "summary_excerpt": "private summary excerpt", "result_excerpt": "private result excerpt",
+    }])
+    lesson = _sanitize_public_value("lessons", [{
+        "cycle_id": "cycle-lengths", "problem": "private problem", "solution": "private solution",
+        "insight": "private insight", "result": "private result",
+    }])[0]
+
+    details = tv.build_cycle_details([], None, [lesson], [], subagent_records=subagents)
+    record = details["cycle-lengths"]
+    assert "private prompt" not in json.dumps(agents)
+    assert "private task excerpt" not in json.dumps(subagents)
+    assert "private problem" not in json.dumps(lesson)
+    assert record["lesson_problem_chars"] == len("private problem")
+    assert record["lesson_solution_chars"] == len("private solution")
+    assert record["lesson_insight_chars"] == len("private insight")
+    assert record["subagents"][0]["task_chars"] == len("private task excerpt")
+    assert record["subagents"][0]["summary_chars"] == len("private summary excerpt")
+    assert record["subagents"][0]["result_chars"] == len("private result excerpt")
+    assert agents["prompt_text"] is None and agents["task_text"] is None
+    assert agents["prompt_text_chars"] == len("private prompt")
+    assert agents["task_text_chars"] == len("private task")
+    assert agents["tier2_skills"][0]["content_chars"] == len("private skill content")
+    assert agents["tier2_skills"][0]["desc_chars"] == len("private skill description")
+    assert agents["tier2_memory"]["files"][0]["content_chars"] == len("private memory")
+    rendered_context = tv.build_two_tier_context_html(agents)
+    assert "14 chars received by model" in rendered_context
+    assert "12 chars" in rendered_context
+
+
+def test_full_render_uses_saved_lesson_body_lengths_after_public_projection() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "lessons": [{
+        "id": "lesson-full-render", "date": "2026-09-27", "cycle_id": "cycle-full-render",
+        "problem": "p" * 28, "solution": "s" * 31, "title": "safe title", "kind": "bug",
+    }]}
+    public, _ = split_render_inputs(source)
+    pages = tv.render_pages(public, host="eeepc")
+    assert "Problem:</span> text on the LAN site only (28 chars)" in pages["lessons.html"]
+    assert "Solution:</span> text on the LAN site only (31 chars)" in pages["lessons.html"]
+
+
+def test_lessons_panel_renders_saved_problem_and_solution_lengths() -> None:
+    html = tv.build_lessons_panel([{
+        "id": "lesson-sanitized", "date": "2026-09-27", "cycle_id": "cycle-sanitized",
+        "problem": "", "solution": "", "problem_chars": 28, "solution_chars": 31,
+        "_v2_lesson": True, "title": "safe title", "kind": "bug",
+    }])
+    assert "Problem:</span> text on the LAN site only (28 chars)" in html
+    assert "Solution:</span> text on the LAN site only (31 chars)" in html
+
+
+def test_public_ledger_reason_is_redacted_before_html_and_json_rendering() -> None:
+    marker = "PRIVATE_LEDGER_REASON_CANARY_4197"
+    data = {
+        "ledger_tail": [{"phase": "outcome", "cycle_id": "cycle-reason", "outcome": "failed", "reason": marker, "ts": "2026-09-26T10:00:00Z"}],
+        "ledger_history": [{"phase": "outcome", "cycle_id": "cycle-reason", "outcome": "failed", "reason": marker, "ts": "2026-09-26T10:00:00Z"}],
+        "evolution_tree": {"nodes": {}}, "portfolio": {}, "scorecard": {},
+    }
+    from scripts.two_sinks import split_render_inputs
+    public_data, _ = split_render_inputs(data)
+    pages = tv.render_pages(public_data, host="test-host")
+    leaked = [name for name, body in pages.items() if marker in body]
+    assert leaked == [], leaked
+
+
+def test_render_two_tier_context_uses_saved_private_text_sizes() -> None:
+    context = {
+        "prompt_text": None, "prompt_text_chars": 14,
+        "task_text": None, "task_text_chars": 12,
+        "system_prompt": {"chars": 14, "cap": 100, "sections": {}},
+    }
+    html = tv.build_two_tier_context_html(context)
+    assert "14 chars received by model" in html
+    assert "runtime_context + task" in html and "12c" in html
+    assert "task text withheld for privacy; captured size: 12 chars" in html

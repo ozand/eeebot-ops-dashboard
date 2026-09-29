@@ -824,6 +824,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     sys_prompt = agent_context.get("system_prompt") or {}
     prompt_text = agent_context.get("prompt_text")
     task_text = agent_context.get("task_text")
+    prompt_text_chars = agent_context.get("prompt_text_chars")
+    task_text_chars = agent_context.get("task_text_chars")
     skills = agent_context.get("tier2_skills") or []
     skills_status = agent_context.get("tier2_skills_status", "present" if "tier2_skills" in agent_context else "missing")
     lessons = agent_context.get("tier2_lessons") or {}
@@ -921,7 +923,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if details.get("text") is not None
     }
     outside_cap = parsed_prompt["outside_cap"]
-    actual_system_chars = len(prompt_text) if prompt_text is not None else None
+    actual_system_chars = len(prompt_text) if prompt_text is not None else prompt_text_chars
 
     if chars is None and sections:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of non-empty sections + separators
@@ -1103,7 +1105,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append(f'        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; {separator_count} &times; "\n\n---\n\n" Separators</span><span class="t1-sz">{separator_total_chars}c</span></div>')
     window_text = f"{window_summary} · occupancy {history_text}"
     out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">{window_text}</span></div>')
-    out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">{len(task_text) if task_text else 0:,}c</span></div>')
+    out.append(f'        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">{len(task_text) if task_text else (task_text_chars if isinstance(task_text_chars, int) else 0):,}c</span></div>')
     out.append('      </div>')
     out.append('    </div>')
 
@@ -1267,8 +1269,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             f'<div class="block-body">{_lan_only(outside["text"])}</div></details>'
         )
 
-    if task_text:
-        t_sz = len(task_text)
+    if task_text or isinstance(task_text_chars, int):
+        t_sz = len(task_text) if task_text else task_text_chars
         out.append(f'<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#{block_seq}</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">{t_sz:,} chars &bull; ~{estimate_tokens(t_sz):,} tokens</span></summary><div class="block-body">{_lan_only(task_text)}</div></details>')
 
     # #301: the user message's own section list (`build_task` `## ` headings)
@@ -1278,7 +1280,10 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    <div class="user-message-sections">')
     out.append('      <h4>User Message Sections (latest recorded task text)</h4>')
     if not task_text:
-        out.append(f'      <p class="unavailable-note">task {snapshot_text_unavailable}.</p>')
+        if isinstance(task_text_chars, int):
+            out.append(f'      <p class="unavailable-note">task text withheld for privacy; captured size: {task_text_chars:,} chars.</p>')
+        else:
+            out.append(f'      <p class="unavailable-note">task {snapshot_text_unavailable}.</p>')
     elif not task_sections:
         out.append('      <p class="unavailable-note">no `## ` headings found in the recorded task text.</p>')
     else:

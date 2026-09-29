@@ -1,0 +1,21 @@
+[Unit]
+Description=eeebot host dashboard static server (:8080) (ADR-036)
+After=network.target
+
+[Service]
+Type=exec
+DynamicUser=yes
+ExecStart=/usr/bin/python3 /opt/eeebot-techtree/scripts/techtree_autopublish.py --serve --site-root /var/lib/eeebot-site --bind-address 0.0.0.0 --bind-port 8080
+Restart=always
+RestartSec=5
+
+ReadOnlyPaths=/var/lib/eeebot-site
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+InaccessiblePaths=/var/lib/eeebot-techtree /etc/eeepc-agent
+
+[Install]
+WantedBy=multi-user.target
