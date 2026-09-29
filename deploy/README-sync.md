@@ -240,6 +240,21 @@ sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
 ```
 
+7. After the cutover, confirm that the host sink is really ACTIVE, not quietly
+   degraded to "not configured". Before D4, a missing site root made the
+   publisher skip the host sink and record `host_sink_unconfigured`. After the
+   cutover, the next publisher run must show neither sign:
+
+```bash
+sudo journalctl -u eeebot-techtree-publish.service --since "-20 min" --no-pager | grep -c "host sink not configured"   # must print: 0
+sudo -u eeebot-publish python3 -c "import json; print(json.load(open('/var/lib/eeebot-techtree/publish_state.json')).get('host_sink'))"   # must NOT print: host_sink_unconfigured
+```
+
+A missing site root after D4 does not degrade quietly. The unit's
+`ReadWritePaths=/var/lib/eeebot-site` has no `-`, so the unit fails loudly at
+namespace setup. Either check failing above means the cutover did not take
+effect: stop and investigate.
+
 ### Rollback
 
 Use the `$TS` printed in step 2.
