@@ -1363,22 +1363,22 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1790888184-9a7fc4173b6e"></head>
+<meta name="snapshot-version" content="1790889370-9b5171d2e317"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">81</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">58.6%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-01 23:38:59 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">11.3%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">11.3%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">35 events · 26 tasks · 9.4%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">20.8% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.5M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790888163.610" data-render-age-seconds="33">data: 33s old &middot; generated 20:56 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790889335.638" data-render-age-seconds="45">data: 45s old &middot; generated 21:16 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (3869 cycles)</h2>
-      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3819 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <h2 class="panel-title">Cycle History (3870 cycles)</h2>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3820 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
             (function(){
               var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
               if (!btn) return;
@@ -1412,6 +1412,22 @@
       <ul class="feed-list">
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
+        <li class="feed-day-header">2026-10-02 MSK</li>
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-c80c45405d62">
+          <div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: withheld (&lt;=64)</span>
+            <strong class="feed-title">Fix check_style.py validator execution and style rule failures</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-c80c45405d62)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-c80c45405d62">details</a>
+            
+            
+            <span class="feed-ts" title="2026-10-01T21:04:49.775464Z">00:04 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-7c53659b11b0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 6.58K tok &middot; dur 9s</div>
+        </li>
+        
         <li class="feed-day-header">2026-10-01 MSK</li>
         <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-644cc0c4a331">
           <div class="feed-header">
@@ -1421,7 +1437,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-644cc0c4a331">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T20:43:59.858581Z">23:43 MSK</span>
+            <span class="feed-ts" title="2026-10-01T20:43:59.858581Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-9fa04d2b12c0</span> &middot; <a class="lesson-link" href="lessons.html#q-intermediate_turn_empty_content">lesson:lessons/intermediate_turn_empty_content.md</a></div>
           
@@ -1436,7 +1452,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ce1db73aa924">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T20:04:06.563395Z">23:04 MSK</span>
+            <span class="feed-ts" title="2026-10-01T20:04:06.563395Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-006bd453aec6</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-facedd12">error:ERR-20260903-facedd12</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-521b6562 (unavailable)</span></div>
           
@@ -1451,7 +1467,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-30dabd1eb109">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T19:42:11.300708Z">22:42 MSK</span>
+            <span class="feed-ts" title="2026-10-01T19:42:11.300708Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ba1e817151b0</span></div>
           
@@ -1466,7 +1482,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-65b054618c31">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T19:22:59.518895Z">22:22 MSK</span>
+            <span class="feed-ts" title="2026-10-01T19:22:59.518895Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-23cd8809c5e6</span> &middot; <a class="lesson-link" href="lessons.html#q-compound_verification_commands">lesson:lessons/compound_verification_commands.md</a></div>
           
@@ -1481,7 +1497,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-d599affa7dee">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T19:01:28.678090Z">22:01 MSK</span>
+            <span class="feed-ts" title="2026-10-01T19:01:28.678090Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-adb79e89d9f2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a></div>
           
@@ -1496,7 +1512,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ccfb4f73215c">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T18:41:03.400488Z">21:41 MSK</span>
+            <span class="feed-ts" title="2026-10-01T18:41:03.400488Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-1947af1f0112</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260902-5774fcfc">error:ERR-20260902-5774fcfc</a> &middot; <a class="lesson-link" href="lessons.html#q-workspace_inspection_subprocess_timeout">lesson:lessons/workspace_inspection_subprocess_timeout.md</a></div>
           
@@ -1511,7 +1527,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-b9ff0931f6c0">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T18:20:45.127047Z">21:20 MSK</span>
+            <span class="feed-ts" title="2026-10-01T18:20:45.127047Z">Oct 1 MSK</span>
           </div>
           
           
@@ -1526,7 +1542,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-af35ad0d4906">details</a>
             
             <a href="lineage.html#node-a9026fb" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-01T17:53:30.322918Z">20:53 MSK</span>
+            <span class="feed-ts" title="2026-10-01T17:53:30.322918Z">Oct 1 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-01.md, scripts/verify_imports.py</div>
@@ -1541,7 +1557,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-df6de100818b">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T17:39:17.691633Z">20:39 MSK</span>
+            <span class="feed-ts" title="2026-10-01T17:39:17.691633Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-d5f63a047eb5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-markdown_code_block_validation_protocol">lesson:lessons/markdown_code_block_validation_protocol.md</a></div>
           
@@ -1556,7 +1572,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2926257839b0">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T17:17:31.955764Z">20:17 MSK</span>
+            <span class="feed-ts" title="2026-10-01T17:17:31.955764Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-9c2900b9ce23</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-6d238e44 (unavailable)</span></div>
           
@@ -1571,7 +1587,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-53f527870455">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T16:33:09.536673Z">19:33 MSK</span>
+            <span class="feed-ts" title="2026-10-01T16:33:09.536673Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cfeb081e8ad1</span></div>
           
@@ -1586,7 +1602,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f331175b1513">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T16:11:03.212115Z">19:11 MSK</span>
+            <span class="feed-ts" title="2026-10-01T16:11:03.212115Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b9628c530e17</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260905-4a577d44 (unavailable)</span></div>
           
@@ -1601,7 +1617,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-e1047728c7a6">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T15:51:10.871996Z">18:51 MSK</span>
+            <span class="feed-ts" title="2026-10-01T15:51:10.871996Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-cbb70ec99416</span></div>
           
@@ -1616,7 +1632,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-761b0d34987a">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T15:28:52.466977Z">18:28 MSK</span>
+            <span class="feed-ts" title="2026-10-01T15:28:52.466977Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d4c56a622a2a</span></div>
           
@@ -1631,7 +1647,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-75bf8f65456e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T15:09:02.754330Z">18:09 MSK</span>
+            <span class="feed-ts" title="2026-10-01T15:09:02.754330Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5b6fceecfea2</span> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
           
@@ -1646,7 +1662,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-273baf10da3e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T14:02:25.446514Z">17:02 MSK</span>
+            <span class="feed-ts" title="2026-10-01T14:02:25.446514Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-913536bd7e4a</span> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
           
@@ -1661,7 +1677,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f5f805820a7a">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T13:40:40.953568Z">16:40 MSK</span>
+            <span class="feed-ts" title="2026-10-01T13:40:40.953568Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-0c186356302b</span></div>
           
@@ -1676,7 +1692,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-73905a0cb6bf">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T13:21:11.171165Z">16:21 MSK</span>
+            <span class="feed-ts" title="2026-10-01T13:21:11.171165Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-25992a22b2d7</span></div>
           
@@ -1691,7 +1707,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a0c38b2a4d58">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T12:59:38.465166Z">15:59 MSK</span>
+            <span class="feed-ts" title="2026-10-01T12:59:38.465166Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-01b9b50cf66f</span></div>
           
@@ -1706,7 +1722,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-0df7388b2ae3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T12:39:23.632190Z">15:39 MSK</span>
+            <span class="feed-ts" title="2026-10-01T12:39:23.632190Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-8626b9accd61</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-9ff792579a7a-eef8 (unavailable)</span></div>
           
@@ -1721,7 +1737,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f8573b9df9bd">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T12:16:55.678189Z">15:16 MSK</span>
+            <span class="feed-ts" title="2026-10-01T12:16:55.678189Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c680650675f0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
           
@@ -1736,7 +1752,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-111c95aa3a2d">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T11:57:09.692515Z">14:57 MSK</span>
+            <span class="feed-ts" title="2026-10-01T11:57:09.692515Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-9742233ecbf1</span></div>
           
@@ -1751,7 +1767,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-398233240672">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T11:36:49.877388Z">14:36 MSK</span>
+            <span class="feed-ts" title="2026-10-01T11:36:49.877388Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a37000636e4d</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-51147d6c3412-c4ff (unavailable)</span></div>
           
@@ -1766,7 +1782,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a597e4936a19">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T11:16:27.779802Z">14:16 MSK</span>
+            <span class="feed-ts" title="2026-10-01T11:16:27.779802Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">goal-gap-2d9ab3aa9d09</span> &middot; <a class="lesson-link" href="lessons.html#q-safe_testing_of_destructive_patterns">lesson:lessons/safe_testing_of_destructive_patterns.md</a></div>
           
@@ -1781,7 +1797,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-59d96266b6fd">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T10:54:10.352039Z">13:54 MSK</span>
+            <span class="feed-ts" title="2026-10-01T10:54:10.352039Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-f7bdde4fa027</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           
@@ -1796,7 +1812,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2e537bf1893c">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T10:34:28.201979Z">13:34 MSK</span>
+            <span class="feed-ts" title="2026-10-01T10:34:28.201979Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-4bfd09353c11</span> &middot; <a class="lesson-link" href="lessons.html#q-posix_shell_pipeline_status">lesson:lessons/posix_shell_pipeline_status.md</a></div>
           
@@ -1811,7 +1827,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-8a98f21b465e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T09:51:18.870763Z">12:51 MSK</span>
+            <span class="feed-ts" title="2026-10-01T09:51:18.870763Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">goal-gap-efb0628c98a8</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
           
@@ -1826,7 +1842,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ac288a56020a">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T09:30:37.854933Z">12:30 MSK</span>
+            <span class="feed-ts" title="2026-10-01T09:30:37.854933Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5b335ea292c9</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <a class="lesson-link" href="lessons.html#q-isolated_script_verification">lesson:lessons/isolated_script_verification.md</a></div>
           
@@ -1841,7 +1857,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-75d3447b75c6">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T09:21:26.470889Z">12:21 MSK</span>
+            <span class="feed-ts" title="2026-10-01T09:21:26.470889Z">Oct 1 MSK</span>
           </div>
           
           
@@ -1856,7 +1872,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-07b478308721">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T09:08:26.589285Z">12:08 MSK</span>
+            <span class="feed-ts" title="2026-10-01T09:08:26.589285Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-70456b995369</span></div>
           
@@ -1871,7 +1887,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-331ca14ea5e3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T08:48:14.227405Z">11:48 MSK</span>
+            <span class="feed-ts" title="2026-10-01T08:48:14.227405Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-b53e504588f5</span></div>
           
@@ -1886,7 +1902,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-40cefe88b73d">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T08:18:02.854852Z">11:18 MSK</span>
+            <span class="feed-ts" title="2026-10-01T08:18:02.854852Z">Oct 1 MSK</span>
           </div>
           
           
@@ -1901,7 +1917,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-0b6a6cb33ffe">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T08:02:16.543379Z">11:02 MSK</span>
+            <span class="feed-ts" title="2026-10-01T08:02:16.543379Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d7e5c9ce7aaa</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-003">error:ERR-2026-09-06-003</a> &middot; <a class="lesson-link" href="lessons.html#q-inspect_script_cli_flags">lesson:lessons/inspect_script_cli_flags.md</a></div>
           
@@ -1916,7 +1932,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-85421646d8cd">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T07:42:05.239180Z">10:42 MSK</span>
+            <span class="feed-ts" title="2026-10-01T07:42:05.239180Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-692b32781228</span></div>
           
@@ -1931,7 +1947,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a09b2b2ff4fa">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T07:33:02.591716Z">10:33 MSK</span>
+            <span class="feed-ts" title="2026-10-01T07:33:02.591716Z">Oct 1 MSK</span>
           </div>
           
           
@@ -1946,7 +1962,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-5ef659b4cc36">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T07:17:24.565823Z">10:17 MSK</span>
+            <span class="feed-ts" title="2026-10-01T07:17:24.565823Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-1ec13dc529d2</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
           
@@ -1961,7 +1977,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c521311d3dd5">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T06:57:02.652989Z">09:57 MSK</span>
+            <span class="feed-ts" title="2026-10-01T06:57:02.652989Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-7c53659b11b0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-09-06-002">error:ERR-2026-09-06-002</a> &middot; <a class="lesson-link" href="lessons.html#q-cli_subprocess_exit_codes">lesson:lessons/cli_subprocess_exit_codes.md</a></div>
           
@@ -1976,7 +1992,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-25e0cc3a0ad2">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T06:36:42.823073Z">09:36 MSK</span>
+            <span class="feed-ts" title="2026-10-01T06:36:42.823073Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-adb79e89d9f2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a></div>
           
@@ -1991,7 +2007,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-775fea02180c">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T06:16:13.164127Z">09:16 MSK</span>
+            <span class="feed-ts" title="2026-10-01T06:16:13.164127Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-1947af1f0112</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260902-5774fcfc">error:ERR-20260902-5774fcfc</a> &middot; <a class="lesson-link" href="lessons.html#q-workspace_inspection_subprocess_timeout">lesson:lessons/workspace_inspection_subprocess_timeout.md</a></div>
           
@@ -2006,7 +2022,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-8eea158545b7">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T05:55:21.109436Z">08:55 MSK</span>
+            <span class="feed-ts" title="2026-10-01T05:55:21.109436Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-d5f63a047eb5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-markdown_code_block_validation_protocol">lesson:lessons/markdown_code_block_validation_protocol.md</a></div>
           
@@ -2021,7 +2037,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-846f7da5a5b3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T05:36:06.192587Z">08:36 MSK</span>
+            <span class="feed-ts" title="2026-10-01T05:36:06.192587Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-9c2900b9ce23</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-4996026d6b77-28a1 (unavailable)</span></div>
           
@@ -2036,7 +2052,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-78dc531c1014">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T05:14:15.622507Z">08:14 MSK</span>
+            <span class="feed-ts" title="2026-10-01T05:14:15.622507Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-ffd9dab27ebb</span></div>
           
@@ -2051,7 +2067,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f2340e4ea6e3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T04:56:52.105957Z">07:56 MSK</span>
+            <span class="feed-ts" title="2026-10-01T04:56:52.105957Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-cfeb081e8ad1</span> &middot; <a class="lesson-link" href="lessons.html#q-skip_check_diary_precedence">lesson:lessons/skip_check_diary_precedence.md</a></div>
           
@@ -2066,7 +2082,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-12c8bd73f4e5">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T04:47:38.829227Z">07:47 MSK</span>
+            <span class="feed-ts" title="2026-10-01T04:47:38.829227Z">Oct 1 MSK</span>
           </div>
           
           
@@ -2081,7 +2097,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-32d3a9a8cc04">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T04:35:17.171342Z">07:35 MSK</span>
+            <span class="feed-ts" title="2026-10-01T04:35:17.171342Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-b9628c530e17</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-2026-06-15-002">error:ERR-2026-06-15-002</a> &middot; <a class="lesson-link" href="lessons.html#q-skip_redundant_state_searches">lesson:lessons/skip_redundant_state_searches.md</a></div>
           
@@ -2096,7 +2112,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-3c085d380d84">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T04:14:42.325901Z">07:14 MSK</span>
+            <span class="feed-ts" title="2026-10-01T04:14:42.325901Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-de0bf0ff1ad1</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           
@@ -2111,7 +2127,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f906d2d3967b">details</a>
             
             <a href="lineage.html#node-94bcb0d" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-01T03:44:50.357733Z">06:44 MSK</span>
+            <span class="feed-ts" title="2026-10-01T03:44:50.357733Z">Oct 1 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-01.md, scripts/build_help_cmd.py, tests/test_build_help_cmd.py</div>
@@ -2126,7 +2142,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-34e3df91bfce">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T03:31:38.332221Z">06:31 MSK</span>
+            <span class="feed-ts" title="2026-10-01T03:31:38.332221Z">Oct 1 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-0f7c8eb58e7f</span> &middot; <a class="lesson-link" href="lessons.html#q-safe_testing_of_destructive_patterns">lesson:lessons/safe_testing_of_destructive_patterns.md</a></div>
           
@@ -2141,33 +2157,18 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-57221f7e13cf">details</a>
             
             
-            <span class="feed-ts" title="2026-10-01T03:22:29.469007Z">06:22 MSK</span>
+            <span class="feed-ts" title="2026-10-01T03:22:29.469007Z">Oct 1 MSK</span>
           </div>
           
           
           
-        </li>
-        
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-d3cb11fc3409">
-          <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">Add jitter calculation support to scripts/compute_demand_backoff_delay.py</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-d3cb11fc3409)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-d3cb11fc3409">details</a>
-            
-            
-            <span class="feed-ts" title="2026-10-01T03:07:59.854787Z">06:07 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-cbb70ec99416</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 7.66K tok &middot; dur 15s</div>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator 3d65bc6 · generated 2026-10-01 20:56:37 UTC &middot; host eeepc &middot; newest source 33s old &middot; <span class="footer-computed">scorecard computed 2026-10-01 23:38:59 MSK</span></footer>
+<footer class="page-footer">generator 3d65bc6 · generated 2026-10-01 21:16:21 UTC &middot; host eeepc &middot; newest source 45s old &middot; <span class="footer-computed">scorecard computed 2026-10-01 23:38:59 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2198,5 +2199,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1790888184-9a7fc4173b6e · generated 2026-10-01T20:56:24.486326+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1790889370-9b5171d2e317 · generated 2026-10-01T21:16:10.085264+00:00</footer></body>
 </html>
