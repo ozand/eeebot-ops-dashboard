@@ -1363,14 +1363,14 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1790863269-2f68755307cc"></head>
+<meta name="snapshot-version" content="1790864125-fa933f3c24ed"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">87</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">54.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-01 16:56:24 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.5%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">12.5%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">34 events · 26 tasks · 9.3%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">21.8% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">2.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790863208.998" data-render-age-seconds="76">data: 1m old &middot; generated 14:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1790864107.570" data-render-age-seconds="29">data: 29s old &middot; generated 14:15 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1379,7 +1379,7 @@
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        <section class="health-verdict health-degraded" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>DEGRADED</strong> <span class="health-verdict-reason">last integrated cycle is 9.9h old</span></section>
+        <section class="health-verdict health-degraded" aria-label="Health verdict"><span class="now-label">Health:</span> <strong>DEGRADED</strong> <span class="health-verdict-reason">last integrated cycle is 10.2h old</span></section>
         <div class="now-item"><span class="now-label">Direction:</span> <span class="badge badge-researching">automated-structural-assertion-for-doc-o</span> <span class="badge badge-available">active</span> <span class="now-detail" title="source: tech-tree portfolio, last cycle measurement">lever: <strong>loop.confirmed_integration_ratio</strong> &middot; aim: <em>higher</em></span></div>
         <div class="now-item"><span class="now-label">Latest Cycle:</span> <strong>selfevo: Build script help command (scripts/build_help_cmd.py): a static component that derives a script&#x27;s CLI usage sum</strong> <span class="now-sub">(cycle-f906d2d3967b [94bcb0d4])</span></div>
         <div class="now-item now-item-demand-queue" data-demand-queue-state="present"><span class="now-label">Next Up:</span> <span class="now-sub">5 ranked items, published 2026-10-01T13:55:31.960841Z</span><p class="demand-queue-head-reason">Head: self-derived &middot; vector V1 &mdash; provenance(operator&lt;self-derived), then vector(V1&lt;V2), as demand._priority_items</p><ol class="demand-queue-list"><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Rewrite bare time exec command</strong> <span class="now-sub">vector V1</span></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Detect pipeline exit code check</strong> <span class="now-sub">vector V1</span></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Select automated test runner</strong> <span class="now-sub">vector V1</span></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Detect broad filesystem search</strong> <span class="now-sub">vector V1</span></li><li class="demand-queue-row" data-demand-provenance="self-derived"><span class="badge badge-researching" translate="no">priority</span> <span class="provenance-badge provenance-self-derived">self-derived</span> <strong>Build script help command</strong> <span class="now-sub">vector V1</span></li></ol><p class="demand-queue-rule-note">Ranked by provenance (operator &lt; self-derived), then vector. Selection (eeebot#1708/#1711) takes the eligible operator item first, else LRU rotation (#902) -- the presented order above may differ from what is picked next.</p></div>
@@ -1424,7 +1424,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 4.1h/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 4.6h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 4.5h/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 4m/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-22T00:00:10 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
-        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-10-01T14:01:09.422071Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-10-01 16:43:24 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-10-01 12:26:47 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-10-01 16:58:49 MSK</li></ul></div>
+        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-10-01T14:15:25.633613Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, failure, last 2026-10-01 17:05:51 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-10-01 12:26:47 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-10-01 17:07:02 MSK</li></ul></div>
         <div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">12 defect(s), scanned 2026-10-01 02:00:02 MSK</span><ul class="systemd-drift-findings"><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li>installed, not in release: <code></code> (owner: dashboard)</li><li>installed, not in release: <code></code> (owner: preset)</li></ul></div>
         <div class="now-item"><span class="now-label">Local CI:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">pass: passed</span></div>
         <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 69 recent calls checked</span></div>
@@ -1444,9 +1444,9 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
-        <li><a href="cycles.html">cycles</a> &mdash; 52 cycles in full history</li>
+        <li><a href="cycles.html">cycles</a> &mdash; 53 cycles in full history</li>
         <li><a href="lineage.html">lineage</a> &mdash; 100 evolution nodes</li>
-        <li><a href="tokens.html">tokens</a> &mdash; 2.31B across 57 recorded days</li>
+        <li><a href="tokens.html">tokens</a> &mdash; 2.32B across 57 recorded days</li>
         <li><a href="hypotheses.html">hypotheses</a> &mdash; 134 active / 20 answered + 20 strategist durable</li>
         <li><a href="agent.html">agent</a> &mdash; charter, skills, proposer</li>
         <li><a href="lessons.html">lessons</a> &mdash; lessons history</li>
@@ -1458,6 +1458,21 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
       
       <ul class="feed-list">
         
+        
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-273baf10da3e">
+          <div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">Add structured JSON output to scripts/check_runner_compatibility.py</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-273baf10da3e)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-273baf10da3e">details</a>
+            
+            
+            <span class="feed-ts" title="2026-10-01T14:02:25.446514Z">17:02 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">defect-913536bd7e4a</span> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
+          
+          <div class="feed-cost">&#9889; 1 calls &middot; 8.28K tok &middot; dur 38s</div>
+        </li>
         
         <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-f5f805820a7a">
           <div class="feed-header">
@@ -1489,26 +1504,11 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
           <div class="feed-cost">&#9889; 1 calls &middot; 7.75K tok &middot; dur 11s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-a0c38b2a4d58">
-          <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">Enforce strict prohibition against conversational preamble in AGENTS.md</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-a0c38b2a4d58)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-a0c38b2a4d58">details</a>
-            
-            
-            <span class="feed-ts" title="2026-10-01T12:59:38.465166Z">15:59 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">reflection-01b9b50cf66f</span></div>
-          
-          <div class="feed-cost">&#9889; 1 calls &middot; 7.83K tok &middot; dur 14s</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator 3d65bc6 · generated 2026-10-01 14:01:25 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-10-01 16:56:24 MSK</span></footer>
+<footer class="page-footer">generator 3d65bc6 · generated 2026-10-01 14:15:37 UTC &middot; host eeepc &middot; newest source 29s old &middot; <span class="footer-computed">scorecard computed 2026-10-01 16:56:24 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1539,5 +1539,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1790863269-2f68755307cc · generated 2026-10-01T14:01:09.422008+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1790864125-fa933f3c24ed · generated 2026-10-01T14:15:25.633557+00:00</footer></body>
 </html>
