@@ -1202,6 +1202,10 @@ def test_issue385_measured_zero_chars_is_distinct_from_unavailable():
     assert _KPI_UNAVAILABLE_ELEM not in html, "Measured zero must not render as unavailable"
     assert _DERIVED_LABEL not in html
     assert _NO_TELEMETRY_MSG not in html
+    assert 'CAPACITY UNKNOWN' not in html
+    assert '0 / 24,000 chars' in html
+    assert 'width:0%' in html
+    assert 'WITHIN BUDGET (+24,000 chars spare)' in html
 
 
 def test_issue385_withheld_chars_key_annotated_as_derived():
@@ -1218,6 +1222,26 @@ def test_issue385_withheld_chars_key_annotated_as_derived():
     assert _KPI_UNAVAILABLE_ELEM not in html
     assert _MEASURED_ZERO_LABEL not in html
     assert _NO_TELEMETRY_MSG not in html
+    assert 'CAPACITY UNKNOWN' not in html
+    assert '23,900 chars spare' in html
+
+
+def test_issue385_null_chars_is_derived_in_private_projection_too():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-null-chars', 'chars': None, 'cap': 24000,
+            'sections': {'identity': 10},
+        },
+    }
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _DERIVED_LABEL in html
+        assert '10 capped chars' in html or '10 chars' in html
 
 
 def test_issue385_recorded_chars_renders_without_annotation():
@@ -1255,8 +1279,64 @@ def test_issue385_sections_absent_row_does_not_claim_pre1379_provenance():
     assert _SECTIONS_EMPTY_MSG not in html, "sections=None must not say 'recorded as empty'"
     assert 'recorded prior to structured section logging' not in html, "Must not perpetuate unsupported pre-#1379 claim"
     assert _NO_TELEMETRY_MSG not in html, "Present row must not claim 'no telemetry row found'"
+    assert 'CAPACITY UNKNOWN' not in html
+    assert 'WITHIN BUDGET' in html
     # Capacity still shown (chars=24960, cap=30000 are recorded)
     assert '24,960' in html
+
+
+def test_issue385_invalid_chars_never_derive_or_claim_capacity():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    for value in (True, -1, 1.5, '12'):
+        for sections in (None, {'identity': 10}):
+            fixture['agent_context'] = {
+                **_ctx_base(),
+                'system_prompt': {
+                    'cycle_id': f'invalid-{value!r}-{sections is not None}',
+                    'chars': value, 'cap': 24000, 'sections': sections,
+                },
+                'prompt_text': None,
+            }
+            public, private = split_render_inputs(fixture)
+            rendered = [
+                tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+                for data in (public, private)
+            ]
+            for html in rendered:
+                if sections:
+                    assert _KPI_UNAVAILABLE_ELEM not in html
+                    assert 'derived from sections' in html
+                    assert 'WITHIN BUDGET' in html
+                else:
+                    assert _KPI_UNAVAILABLE_ELEM in html
+                    assert 'CAPACITY UNKNOWN' in html
+                    assert 'WITHIN BUDGET' not in html
+                    assert _DERIVED_LABEL not in html
+            assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+            assert ('CAPACITY UNKNOWN' in rendered[0]) == ('CAPACITY UNKNOWN' in rendered[1])
+
+
+def test_issue385_private_prompt_does_not_make_unavailable_capacity_look_measured():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-unavailable-text', 'cap': 24000, 'sections': None,
+        },
+    }
+    fixture['agent_context']['prompt_text'] = 'PRIVATE PROMPT TEXT'
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _KPI_UNAVAILABLE_ELEM in html
+        assert 'CAPACITY UNKNOWN' in html
+        assert 'WITHIN BUDGET' not in html
+    public_html = tv.render_pages(public, host='eeepc', generated_at='now')['agent.html']
+    assert 'PRIVATE PROMPT TEXT' not in public_html
 
 
 def test_issue385_ac3_full_matrix_public_private_all_states():
@@ -1512,6 +1592,7 @@ def test_issue385_invalid_sections_types_do_not_crash_or_show_fake_zero():
     html_str = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM in html_str, "sections=str: must be unavailable"
     assert _INVALID_SECTIONS_MSG in html_str, "sections=str: must show invalid-value note"
+    assert 'format: pre-ADR-022 legacy' not in html_str
     assert _MEASURED_ZERO_LABEL not in html_str
     assert 'unexpected_string' not in html_str, "sections=str: raw string must not appear in KPI"
     assert _NO_TELEMETRY_MSG not in html_str
@@ -1523,5 +1604,6 @@ def test_issue385_invalid_sections_types_do_not_crash_or_show_fake_zero():
     html_list = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM in html_list, "sections=list: must be unavailable"
     assert _INVALID_SECTIONS_MSG in html_list, "sections=list: must show invalid-value note"
+    assert 'format: pre-ADR-022 legacy' not in html_list
     assert _MEASURED_ZERO_LABEL not in html_list
     assert _NO_TELEMETRY_MSG not in html_list

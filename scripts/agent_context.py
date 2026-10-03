@@ -935,10 +935,20 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     # - sys_prompt_absent → no telemetry row, all chars figures are unavailable
     # - chars_recorded=True, chars==0 → measured zero (genuine empty build)
     # - chars_recorded=False, derived from sections → withheld/not-recorded char total
-    chars_recorded = "chars" in sys_prompt  # key presence, independent of value
-    if chars is None and isinstance(sections, dict) and sections:
+    chars_recorded = (
+        isinstance(chars, int) and not isinstance(chars, bool) and chars >= 0
+    )
+    chars_invalid = chars is not None and not chars_recorded
+    valid_cap = isinstance(cap, int) and not isinstance(cap, bool) and cap > 0
+    if chars_invalid:
+        chars = None
+    sections_are_valid = isinstance(sections, dict) and all(
+        isinstance(value, int) and not isinstance(value, bool) and value >= 0
+        for value in sections.values()
+    )
+    if chars is None and sections_are_valid and sections and not sys_prompt_absent:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
-        if overflow and cap is not None and over_by is not None:
+        if overflow and valid_cap and over_by is not None:
             chars = cap + over_by
             chars_recorded = True  # overflow total is deterministic, not withheld
         else:
@@ -966,13 +976,18 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         chars_display_state = "recorded"  # recorded value
     total_tokens = estimate_tokens(total_chars)
 
-    if overflow and cap is not None:
+    if chars_display_state == "unavailable" or not valid_cap:
+        headroom_badge = '<span class="context-badge badge-secondary">CAPACITY UNKNOWN</span>'
+        headroom_text = '<span>n/a</span>'
+        bar_pct = None
+        bar_color = "var(--color-accent, #58a6ff)"
+    elif overflow:
         ov_amount = over_by if over_by else (total_chars - cap)
         headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap)</span>'
         headroom_text = f'<span class="stat-warn">-{ov_amount:,} chars (OVERFLOW)</span>'
         bar_pct = min(100, int((total_chars / cap) * 100)) if cap > 0 else None
         bar_color = "var(--color-danger, #f85149)"
-    elif cap is not None and cap > 0 and total_chars:
+    elif valid_cap:
         spare = cap - total_chars
         pct = (total_chars / cap) * 100
         headroom_badge = f'<span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+{spare:,} chars spare)</span>'
@@ -1177,7 +1192,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-detail-section">')
     format_badge = (
         '<span class="status-badge status-present">format: post-ADR-022 ontology</span>' if is_post_migration_row
-        else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections
+        else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections_are_valid and sections
         else '<span class="status-badge status-missing">format: unavailable</span>'
     )
     out.append(f'    <h3>Tier 1: Assembled Context Blocks (Recorded Order) {format_badge}</h3>')
