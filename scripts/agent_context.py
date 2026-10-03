@@ -1295,16 +1295,23 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
         out.append('    </div>')
     else:
-        # #385: Distinguish "no telemetry row at all" from "telemetry row present
-        # but sections field absent (pre-#1379 rows recorded before structured
-        # section logging)". The old message claimed a historical reason that
-        # is not evidenced when sys_prompt itself is absent.
+        # #385: Distinguish two sub-cases for absent/falsy sections:
+        # 1. No telemetry row at all (sys_prompt_absent)
+        # 2. Telemetry row present but sections field absent or null
+        # The old message claimed "recorded prior to structured section logging
+        # (#1379)" for ALL present rows with absent sections. That is an
+        # unsupported historical claim — the row's sections could be absent for
+        # reasons other than pre-#1379 provenance (malformed row, new schema,
+        # storage failure, withheld field). Report only what the data establishes.
         out.append('    <div class="reconciliation-box rec-unavailable">')
         out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">sections: unavailable</span></div>')
         if sys_prompt_absent:
             out.append('      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; No system_prompt telemetry row found in runtime state. No char totals or section sizes can be reported. Per honesty rules, section sizes are not reconstructed.</p>')
         else:
-            out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; This cycle row was recorded prior to structured section logging (#1379). Recorded total chars: <strong>{total_chars:,}</strong>. Per honesty rules, section sizes are not reconstructed.</p>')
+            # #385: Do not claim pre-#1379 provenance without evidence.
+            # The sections field is absent from this row; we do not know why.
+            chars_note = f' Recorded total chars: <strong>{total_chars:,}</strong>.' if chars_display_state not in ('unavailable',) else ''
+            out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; The sections field is absent from this telemetry row.{chars_note} Per honesty rules, section sizes are not reconstructed.</p>')
         out.append('    </div>')
         if prompt_text:
             out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body">{_lan_only(prompt_text)}</div></details>')

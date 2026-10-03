@@ -136,3 +136,20 @@ When no row exists, the claim is unsupported and corrected to "No system_prompt 
 
 No new architecture. The renderer uses key-presence test ("chars" in sys_prompt) to separate
 measured-zero from withheld, and sys_prompt_absent to separate no-telemetry from pre-#1379.
+
+## Amendment — Issue #385 follow-up (2026-10-03): Remove unsupported pre-#1379 historical claim
+
+The initial #385 amendment corrected the no-telemetry case but left the "recorded prior to
+structured section logging (#1379)" message for ALL present rows with absent/null sections.
+This is an unsupported historical claim: a row with sections=None may have that field absent
+for reasons other than pre-#1379 provenance (malformed row, withheld field, new schema).
+
+**Correction:** When a telemetry row IS present but sections is absent/null, show:
+"The sections field is absent from this telemetry row" — no provenance claimed.
+
+This also fixes the reconciliation for the case where chars is recorded but sections is null:
+the recorded chars total is still displayed; only the sections-breakdown note changes.
+
+**Test updates:** `test_agent_page_handles_missing_sections_before_1379_honestly` updated to
+assert the new honest message. `test_issue385_pre1379_row_keeps_historical_message` replaced
+by `test_issue385_sections_absent_row_does_not_claim_pre1379_provenance`.

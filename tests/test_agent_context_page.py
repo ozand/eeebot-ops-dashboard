@@ -391,9 +391,11 @@ def test_agent_page_handles_missing_sections_before_1379_honestly():
     pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')
     html = pages['agent.html']
 
-    # Must honestly report sections unavailable
+    # Must honestly report sections unavailable — without claiming a historical provenance
+    # that the data does not establish (#385: unsupported pre-#1379 claim removed)
     assert 'sections breakdown: unavailable' in html
-    assert 'recorded prior to structured section logging' in html
+    assert 'sections field is absent from this telemetry row' in html
+    assert 'recorded prior to structured section logging' not in html
     # Capacity still shown accurately
     assert '24,960 / 30,000' in html
     assert '+5,040 chars spare' in html
@@ -1152,7 +1154,9 @@ def test_adr036_unknown_task_section_heading_is_lan_only() -> None:
 _KPI_UNAVAILABLE_ELEM = 'class="kpi-value kpi-unavailable"'
 _MEASURED_ZERO_LABEL = 'measured zero'
 _DERIVED_LABEL = 'derived from sections'
-_PRE1379_CLAIM = 'recorded prior to structured section logging'
+# #385 follow-up: the unsupported pre-#1379 claim was removed.
+# Any row with absent sections now says 'sections field is absent from this telemetry row'.
+_SECTIONS_ABSENT_MSG = 'sections field is absent from this telemetry row'
 _NO_TELEMETRY_MSG = 'No system_prompt telemetry row found'
 
 
@@ -1177,8 +1181,8 @@ def test_issue385_no_telemetry_row_renders_unavailable_not_zero():
     assert _KPI_UNAVAILABLE_ELEM in html, "KPI must show kpi-unavailable element when no telemetry row"
     assert _MEASURED_ZERO_LABEL not in html
     assert _DERIVED_LABEL not in html
-    # Reconciliation must not claim a pre-#1379 historical reason (no evidence for that)
-    assert _PRE1379_CLAIM not in html, "False pre-#1379 historical claim must not appear when telemetry absent"
+    # Reconciliation must say no telemetry row found (not any historical claim)
+    assert 'recorded prior to structured section logging' not in html, "No historical claim when telemetry absent"
     assert _NO_TELEMETRY_MSG in html
 
 
@@ -1228,42 +1232,136 @@ def test_issue385_recorded_chars_renders_without_annotation():
     assert '1,234' in html
 
 
-def test_issue385_pre1379_row_keeps_historical_message():
-    """#385 regression: a row WITH sections=None (pre-#1379) still gets the historical note, not the no-telemetry msg."""
+def test_issue385_sections_absent_row_does_not_claim_pre1379_provenance():
+    """#385 follow-up: a present telemetry row with sections=None must NOT claim
+    pre-#1379 historical provenance (unsupported claim). Must show sections absent
+    without fabricating a historical reason for why."""
     fixture = _base_fixture()
     ctx = _ctx_base()
     ctx['system_prompt'] = {
         'phase': 'system_prompt', 'cycle_id': 'cycle-old', 'chars': 24960,
-        'cap': 30000, 'sections': None,  # pre-#1379 row, sections absent but row present
+        'cap': 30000, 'sections': None,
     }
     fixture['agent_context'] = ctx
 
     html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
 
-    assert _PRE1379_CLAIM in html, "Pre-#1379 row must retain the historical 'recorded prior to...' note"
-    assert _NO_TELEMETRY_MSG not in html, "Pre-#1379 row must not claim 'no telemetry row'"
+    # The honest message: report absence without claiming historical provenance
+    assert 'sections breakdown: unavailable' in html
+    assert _SECTIONS_ABSENT_MSG in html, "Must say sections field is absent, not claim historical reason"
+    assert 'recorded prior to structured section logging' not in html, "Must not perpetuate unsupported pre-#1379 claim"
+    assert _NO_TELEMETRY_MSG not in html, "Present row must not claim 'no telemetry row found'"
+    # Capacity still shown (chars=24960, cap=30000 are recorded)
+    assert '24,960' in html
 
 
 def test_issue385_public_private_full_render_both_distinguish_states():
     """#385 AC3: fault fixtures exercise public and private full-page rendering.
 
-    Both public (agent_context=None) and private (system_prompt=None dict) must render
-    with explicit unavailable signals, not fall through to synthetic zeros.
+    Uses real split_render_inputs to generate the actual public projection shape
+    (not agent_context=None, which is not a realistic public render).
+    Verifies that KPI and reconciliation distinctions are preserved in the
+    public render where prompt_text and task_text are withheld.
     """
+    from scripts.two_sinks import split_render_inputs
+
     base = _base_fixture()
 
-    # Public-equivalent path: agent_context is None entirely
-    f_pub = dict(base)
-    f_pub['agent_context'] = None
-    html_pub = tv.render_pages(f_pub, host='eeepc', generated_at='now')['agent.html']
-    # agent_context=None triggers the outer guard, rendering 'context unavailable'
-    assert 'context unavailable' in html_pub
-    assert _MEASURED_ZERO_LABEL not in html_pub
+    # Build a realistic private input with system_prompt present and chars recorded
+    private_input = dict(base)
+    private_input['agent_context'] = {
+        'system_prompt': {
+            'cycle_id': 'cycle-pub-test', 'chars': 1234, 'cap': 24000,
+            'sections': {'identity': 1234},
+        },
+        'prompt_text': 'PRIVATE prompt content that must not leak',
+        'task_text': 'PRIVATE task content that must not leak',
+        'tier2_skills': [{'name': 'sk', 'size_bytes': 50, 'desc': 'a', 'content': 'secret', 'path': 'skills/sk/SKILL.md'}],
+        'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'corpus_status': 'present', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+    public_data, private_data = split_render_inputs(private_input)
 
-    # Private path: agent_context is a dict but no system_prompt row
-    f_priv = dict(base)
-    f_priv['agent_context'] = _ctx_base()
-    html_priv = tv.render_pages(f_priv, host='eeepc', generated_at='now')['agent.html']
-    assert _KPI_UNAVAILABLE_ELEM in html_priv
-    assert _NO_TELEMETRY_MSG in html_priv
-    assert _MEASURED_ZERO_LABEL not in html_priv
+    # Public render: prompt_text must be None, but system_prompt and chars still present
+    html_pub = tv.render_pages(public_data, host='eeepc', generated_at='now')['agent.html']
+    # The system_prompt row is present in public form (chars preserved)
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub, "Public render with valid sys_prompt must not show unavailable KPI"
+    assert _MEASURED_ZERO_LABEL not in html_pub
+    assert '1,234' in html_pub  # chars recorded
+    # Prompt text is withheld in public: only size annotation should appear
+    assert 'PRIVATE prompt content' not in html_pub, "Private prompt text must not appear in public render"
+    assert 'PRIVATE task content' not in html_pub, "Private task text must not appear in public render"
+    assert 'secret' not in html_pub, "Private skill content must not appear in public render"
+
+    # Private render: all fields present including prompt_text
+    html_priv = tv.render_pages(private_data, host='eeepc', generated_at='now')['agent.html']
+    assert '1,234' in html_priv  # chars same
+
+    # Separate: agent_context=None path (outer guard, not a public projection shape)
+    f_outer = dict(base)
+    f_outer['agent_context'] = None
+    html_outer = tv.render_pages(f_outer, host='eeepc', generated_at='now')['agent.html']
+    assert 'context unavailable' in html_outer
+    assert _MEASURED_ZERO_LABEL not in html_outer
+
+    # Separate: private input with no system_prompt row
+    private_no_telemetry = dict(base)
+    private_no_telemetry['agent_context'] = _ctx_base()  # system_prompt=None
+    html_no_tel = tv.render_pages(private_no_telemetry, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_no_tel
+    assert _NO_TELEMETRY_MSG in html_no_tel
+    assert _MEASURED_ZERO_LABEL not in html_no_tel
+
+
+def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
+    """#385 follow-up (MAJOR confirmed safe, but add explicit coverage):
+    Present sys_prompt rows with malformed/null/empty sections must not crash
+    and must not produce a synthetic zero that looks like a measured value.
+
+    Cases:
+    - sections=None, chars absent: unavailable (no derivation possible)
+    - sections={}, chars absent: unavailable (empty dict, sum=0, still renders)
+    - sections=None, chars recorded: recorded chars shown, sections unavailable note
+    - sections={}, chars recorded: rendered with no section rows but chars shown
+    """
+    fixture = _base_fixture()
+
+    # Case A: sections=None, chars key absent
+    ctx_a = _ctx_base()
+    ctx_a['system_prompt'] = {'cycle_id': 'c-a', 'cap': 24000, 'sections': None}
+    fixture['agent_context'] = ctx_a
+    html_a = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_a, "sections=None+chars_absent: must be unavailable"
+    assert 'sections breakdown: unavailable' in html_a
+    assert _SECTIONS_ABSENT_MSG in html_a
+    assert _NO_TELEMETRY_MSG not in html_a  # row IS present
+
+    # Case B: sections={}, chars key absent
+    ctx_b = _ctx_base()
+    ctx_b['system_prompt'] = {'cycle_id': 'c-b', 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx_b
+    html_b = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    # Empty dict is falsy for derivation; chars stays None -> unavailable
+    assert _KPI_UNAVAILABLE_ELEM in html_b, "sections={}+chars_absent: must be unavailable"
+    assert _NO_TELEMETRY_MSG not in html_b
+
+    # Case C: sections=None, chars recorded
+    ctx_c = _ctx_base()
+    ctx_c['system_prompt'] = {'cycle_id': 'c-c', 'chars': 12345, 'cap': 24000, 'sections': None}
+    fixture['agent_context'] = ctx_c
+    html_c = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM not in html_c, "sections=None+chars_recorded: chars must render normally"
+    assert '12,345' in html_c, "Recorded chars must appear in KPI"
+    assert 'sections breakdown: unavailable' in html_c
+    assert _SECTIONS_ABSENT_MSG in html_c
+    assert 'recorded prior to structured section logging' not in html_c
+
+    # Case D: sections={} (empty dict), chars recorded — renders no section rows but no crash
+    ctx_d = _ctx_base()
+    ctx_d['system_prompt'] = {'cycle_id': 'c-d', 'chars': 999, 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx_d
+    html_d = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM not in html_d, "sections={}+chars_recorded: chars must render normally"
+    assert '999' in html_d
+    # Empty sections dict renders the reconciliation block (sections is falsy)
+    assert 'sections breakdown: unavailable' in html_d
