@@ -366,7 +366,7 @@ _UNIT_PATH_RE = re.compile(
 #: Bumped whenever the projection's output domain changes; part of the
 #: publish digest (techtree_autopublish.compute_tree_digest), so a deployed
 #: projection change republishes even when the source tree is quiet.
-PROJECTION_VERSION = "d1.1-typed-1"
+PROJECTION_VERSION = "d1.1-typed-2"
 
 
 def _count_withheld(withheld: dict[str, int] | None, category: str) -> None:
