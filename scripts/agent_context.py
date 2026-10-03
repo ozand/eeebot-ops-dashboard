@@ -852,8 +852,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         name in sections for name in ("soul", "user", "operating", "agents", "runtime")
     )
     nonzero_section_names = [
-        name for name in (sections or {}) if (sections.get(name) or 0) > 0
-    ] if sections else []
+        name for name in sections if (sections.get(name) or 0) > 0
+    ] if isinstance(sections, dict) else []
     separator_count = max(0, len(nonzero_section_names) - 1)
     separator_total_chars = separator_count * SEPARATOR_LEN
     dropped = sys_prompt.get("dropped") or []
@@ -936,7 +936,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     # - chars_recorded=True, chars==0 → measured zero (genuine empty build)
     # - chars_recorded=False, derived from sections → withheld/not-recorded char total
     chars_recorded = "chars" in sys_prompt  # key presence, independent of value
-    if chars is None and sections:
+    if chars is None and isinstance(sections, dict) and sections:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
         if overflow and cap is not None and over_by is not None:
             chars = cap + over_by
@@ -1022,8 +1022,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if all(status == "present" for status, _ in corpus_counts)
         else "unavailable"
     )
-    cat_sz = sections.get("skills_catalogue", 0) if sections else len(raw_sections_text.get("skills_catalogue", ""))
-    mem_sz = sections.get("memory", 0) if sections else len(raw_sections_text.get("memory", ""))
+    cat_sz = sections.get("skills_catalogue", 0) if isinstance(sections, dict) else len(raw_sections_text.get("skills_catalogue", ""))
+    mem_sz = sections.get("memory", 0) if isinstance(sections, dict) else len(raw_sections_text.get("memory", ""))
 
     out = []
     out.append('<section class="panel context-panel">')
@@ -1135,7 +1135,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     # ledger row's `sections`, in the RECORDED order (whatever the harness
     # emitted that cycle). Owner/file/cap come from the static ADR-022 map;
     # unknown names fall through to "unmapped" and still render their chars.
-    for t1_seq, sec_name in enumerate(sections or {}, start=1):
+    for t1_seq, sec_name in enumerate(sections if isinstance(sections, dict) else {}, start=1):
         sec_sz = sections.get(sec_name) or 0
         meta = section_owner_meta(sec_name)
         is_empty = sec_sz == 0
@@ -1191,7 +1191,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     pool_floors = release_floors(sys_prompt)
     pool_used_from_sections = 0
 
-    if sections:
+    if isinstance(sections, dict) and sections:
         for sec_name in sections:
             sec_sz = sections.get(sec_name) or 0
             meta = section_owner_meta(sec_name)
@@ -1295,18 +1295,20 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
         out.append('    </div>')
     else:
-        # #385: Distinguish three sub-cases for falsy sections:
+        # #385: Distinguish four sub-cases for non-truthy-dict sections:
         # 1. No telemetry row at all (sys_prompt_absent)
         # 2. Row present, sections key absent or null (sections is None)
         # 3. Row present, sections key present but recorded as empty dict (sections == {})
-        # Cases 2 and 3 are distinct: {} is "recorded as empty", None is "field absent/null".
-        # Neither is claimed to be a pre-#1379 row without evidence.
+        # 4. Row present, sections key present but invalid type (not None, not dict)
+        # Cases 2/3/4 are deliberately distinct from each other and from case 1.
         if sections is None and not sys_prompt_absent:
             sections_note = 'sections field absent or null in this telemetry row'
         elif sections == {} and not sys_prompt_absent:
             sections_note = 'sections recorded as empty in this telemetry row'
+        elif not isinstance(sections, dict) and not sys_prompt_absent:
+            sections_note = f'sections field contains an invalid value (not a dict or null); treating as unavailable'
         else:
-            sections_note = ''
+            sections_note = 'sections breakdown unavailable'  # fallback; sys_prompt_absent handled below
         out.append('    <div class="reconciliation-box rec-unavailable">')
         out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">sections: unavailable</span></div>')
         if sys_prompt_absent:

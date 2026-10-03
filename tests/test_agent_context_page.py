@@ -1467,3 +1467,61 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     assert 'sections breakdown: unavailable' in html_d
     assert _SECTIONS_EMPTY_MSG in html_d, "sections={} must use 'recorded as empty' message"
     assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
+
+
+_INVALID_SECTIONS_MSG = 'sections field contains an invalid value (not a dict or null)'
+
+
+def test_issue385_invalid_sections_types_do_not_crash_or_show_fake_zero():
+    """#385 MINOR: sections field with invalid types (False, 0, str, list) must:
+    - Not crash (no AttributeError from .get() on non-dict)
+    - Render as unavailable, not as fake numeric zero
+    - Show an accurate 'invalid value' note in reconciliation
+    - Not produce a leading period ('-> .') in the reconciliation text
+    """
+    fixture = _base_fixture()
+
+    # Case: sections=False (falsy non-None non-dict)
+    ctx_f = _ctx_base()
+    ctx_f['system_prompt'] = {'cycle_id': 'c-false', 'cap': 24000, 'sections': False}
+    fixture['agent_context'] = ctx_f
+    html_false = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_false, "sections=False: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_false, "sections=False: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_false, "sections=False: must not show measured-zero"
+    assert '0 capped chars' not in html_false, "sections=False: must not fabricate numeric zero"
+    assert _SECTIONS_NULL_MSG not in html_false
+    assert _SECTIONS_EMPTY_MSG not in html_false
+    assert _NO_TELEMETRY_MSG not in html_false
+
+    # Case: sections=0 (falsy non-None non-dict)
+    ctx_z = _ctx_base()
+    ctx_z['system_prompt'] = {'cycle_id': 'c-zero-int', 'cap': 24000, 'sections': 0}
+    fixture['agent_context'] = ctx_z
+    html_zeroint = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_zeroint, "sections=0: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_zeroint, "sections=0: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_zeroint, "sections=0: must not show measured-zero"
+    assert '0 capped chars' not in html_zeroint, "sections=0: must not fabricate numeric zero"
+    assert _NO_TELEMETRY_MSG not in html_zeroint
+
+    # Case: sections="string" (truthy non-dict — previously caused AttributeError crash)
+    ctx_s = _ctx_base()
+    ctx_s['system_prompt'] = {'cycle_id': 'c-str', 'cap': 24000, 'sections': 'unexpected_string'}
+    fixture['agent_context'] = ctx_s
+    html_str = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_str, "sections=str: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_str, "sections=str: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_str
+    assert 'unexpected_string' not in html_str, "sections=str: raw string must not appear in KPI"
+    assert _NO_TELEMETRY_MSG not in html_str
+
+    # Case: sections=[list] (truthy non-dict — previously caused AttributeError crash)
+    ctx_l = _ctx_base()
+    ctx_l['system_prompt'] = {'cycle_id': 'c-list', 'cap': 24000, 'sections': [1, 2, 3]}
+    fixture['agent_context'] = ctx_l
+    html_list = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_list, "sections=list: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_list, "sections=list: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_list
+    assert _NO_TELEMETRY_MSG not in html_list
