@@ -1226,6 +1226,29 @@ def test_issue385_withheld_chars_key_annotated_as_derived():
     assert '23,900 chars spare' in html
 
 
+def test_issue385_empty_sections_overflow_reconciles_derived_total_in_both_sinks():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-empty-overflow', 'cap': 24000, 'over_by': 100,
+            'overflow': True, 'sections': {},
+        },
+    }
+    # Empty section arithmetic is zero; the independently derived overflow total differs.
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert '24,100' in html
+        assert 'sections: empty (0 chars)' in html
+        assert 'expected total is <strong>0 chars</strong>' in html
+        assert 'derived from cap + over_by total is <strong>24,100 chars</strong> (mismatch, +24,100 chars)' in html
+        assert 'derived from cap + over_by' in html
+        assert 'OVERFLOW' in html
+
+
 def test_issue385_null_chars_is_derived_in_private_projection_too():
     from scripts.two_sinks import split_render_inputs
 
@@ -1571,9 +1594,10 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     html_d = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM not in html_d, "sections={}+chars_recorded: chars must render normally"
     assert '999' in html_d
-    # Present-empty sections remain distinct from absent/null even with recorded chars.
+    # Present-empty sections reconcile the known zero section sum against recorded chars.
     assert 'sections: empty (0 chars)' in html_d
-    assert 'Recorded total chars: <strong>999</strong>' in html_d
+    assert 'expected total is <strong>0 chars</strong>' in html_d
+    assert 'recorded total is <strong>999 chars</strong> (mismatch, +999 chars)' in html_d
     assert _SECTIONS_EMPTY_MSG not in html_d
     assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
 

@@ -950,7 +950,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
         if overflow and valid_cap and over_by is not None:
             chars = cap + over_by
-            chars_recorded = True  # overflow total is deterministic, not withheld
+            chars_recorded = False  # deterministically derived from cap + over_by
         else:
             chars = sum(sections.values()) + separator_total_chars
             # chars_recorded stays False: total is derived, not a recorded field
@@ -1074,7 +1074,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'      <span class="kpi-sub">~0 est. tokens · recorded as 0 (genuine empty build)</span>')
     elif chars_display_state == "derived":
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
-        derived_note = "recorded empty section map" if not sections else "chars field not recorded"
+        derived_note = (
+            "cap + over_by" if overflow and over_by is not None
+            else "recorded empty section map" if not sections
+            else "chars field not recorded"
+        )
         out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens · <em>derived from sections ({derived_note})</em></span>')
     else:
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
@@ -1318,11 +1322,22 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append('    </div>')
     elif isinstance(sections, dict) and not sections and not sys_prompt_absent:
         out.append('    <div class="reconciliation-box rec-empty">')
-        out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">sections: empty (0 chars)</span></div>')
-        if chars_display_state == "derived":
-            empty_note = 'Sections recorded as an empty map; derived total is <strong>0 chars</strong>. This is distinct from a recorded chars=0 value.'
+        is_overflow_derived = (
+            chars_display_state == "derived" and overflow and valid_cap and over_by is not None
+        )
+        expected_total = 0
+        if total_chars == expected_total:
+            empty_status = 'status-present'
+            empty_label = 'sections: empty (0 chars)'
+            empty_note = f'Sections recorded as an empty map; derived total is <strong>{expected_total:,} chars</strong> (exact match).'
         else:
-            empty_note = f'Sections recorded as an empty map. Recorded total chars: <strong>{total_chars:,}</strong>; section arithmetic is unavailable.'
+            empty_status = 'status-warning'
+            empty_label = 'sections: empty (0 chars)'
+            total_source = "derived" if is_overflow_derived or chars_display_state == "derived" else "recorded"
+            derivation = " from cap + over_by" if is_overflow_derived else ""
+            delta = total_chars - expected_total
+            empty_note = f'Sections recorded as an empty map; expected total is <strong>{expected_total:,} chars</strong>, but {total_source}{derivation} total is <strong>{total_chars:,} chars</strong> (mismatch, {delta:+,} chars).'
+        out.append(f'      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge {empty_status}">{empty_label}</span></div>')
         out.append(f'      <p class="rec-note">{empty_note}</p>')
         out.append('    </div>')
     else:
