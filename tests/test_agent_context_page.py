@@ -391,9 +391,12 @@ def test_agent_page_handles_missing_sections_before_1379_honestly():
     pages = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-06 12:00:00')
     html = pages['agent.html']
 
-    # Must honestly report sections unavailable
+    # Must honestly report sections unavailable — without claiming a historical provenance
+    # that the data does not establish (#385 follow-up: sections=None uses null/absent message)
     assert 'sections breakdown: unavailable' in html
-    assert 'recorded prior to structured section logging' in html
+    assert _SECTIONS_NULL_MSG in html, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html
+    assert 'recorded prior to structured section logging' not in html
     # Capacity still shown accurately
     assert '24,960 / 30,000' in html
     assert '+5,040 chars spare' in html
@@ -1145,3 +1148,677 @@ def test_adr036_unknown_task_section_heading_is_lan_only() -> None:
     sections = build_task_sections(task)
     shown = [public_section_heading(s["heading"], i) for i, s in enumerate(sections, start=1)]
     assert shown == ["Concrete task to implement", "section 2 (LAN)"]
+
+
+# ── Issue #385: distinguish unavailable context telemetry from genuine zero ──
+
+_KPI_UNAVAILABLE_ELEM = 'class="kpi-value kpi-unavailable"'
+_MEASURED_ZERO_LABEL = 'measured zero'
+_DERIVED_LABEL = 'derived from sections'
+# #385 follow-up: distinguish sections=None (absent/null) from sections={} (present-empty).
+# sections=None renders: 'sections field absent or null in this telemetry row'
+# sections={}  renders: 'sections recorded as empty in this telemetry row'
+_SECTIONS_NULL_MSG = 'sections field absent or null in this telemetry row'
+_SECTIONS_EMPTY_MSG = 'sections recorded as empty in this telemetry row'
+_NO_TELEMETRY_MSG = 'No system_prompt telemetry row found'
+
+
+def _ctx_base() -> dict:
+    """Minimal agent_context dict with Tier 2 corpus present-and-empty."""
+    return {
+        'system_prompt': None,
+        'prompt_text': None, 'task_text': None, 'tier2_skills': [],
+        'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'corpus_status': 'present', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+
+def test_issue385_no_telemetry_row_renders_unavailable_not_zero():
+    """#385 AC1: Missing system_prompt row must render KPI as unavailable, not as 0 chars."""
+    fixture = _base_fixture()
+    fixture['agent_context'] = _ctx_base()  # system_prompt=None
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    # KPI must use unavailable element, not emit a raw 0
+    assert _KPI_UNAVAILABLE_ELEM in html, "KPI must show kpi-unavailable element when no telemetry row"
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _DERIVED_LABEL not in html
+    # Reconciliation must say no telemetry row found (not any historical claim)
+    assert 'recorded prior to structured section logging' not in html, "No historical claim when telemetry absent"
+    assert _NO_TELEMETRY_MSG in html
+
+
+def test_issue385_measured_zero_chars_is_distinct_from_unavailable():
+    """#385 AC1: chars=0 recorded in a valid row is a measured zero, not unavailable."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-mz', 'chars': 0, 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _MEASURED_ZERO_LABEL in html, "Measured zero must be labelled explicitly"
+    assert _KPI_UNAVAILABLE_ELEM not in html, "Measured zero must not render as unavailable"
+    assert _DERIVED_LABEL not in html
+    assert _NO_TELEMETRY_MSG not in html
+    assert 'CAPACITY UNKNOWN' not in html
+    assert '0 / 24,000 chars' in html
+    assert 'width:0%' in html
+    assert 'WITHIN BUDGET (+24,000 chars spare)' in html
+
+
+def test_issue385_withheld_chars_key_annotated_as_derived():
+    """#385 AC1: absent chars key in valid row is withheld/not-recorded; KPI annotates derivation."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-w', 'cap': 24000, 'sections': {'identity': 100}}
+    # 'chars' key deliberately absent
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _DERIVED_LABEL in html, "Absent chars key must annotate KPI as derived from sections"
+    assert _KPI_UNAVAILABLE_ELEM not in html
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _NO_TELEMETRY_MSG not in html
+    assert 'CAPACITY UNKNOWN' not in html
+    assert '23,900 chars spare' in html
+
+
+def test_issue385_overflow_operand_matrix_uses_only_explicit_valid_operands():
+    from scripts.two_sinks import split_render_inputs
+
+    fixtures = [
+        ('missing-over-by', {'overflow': True, 'cap': 24000, 'sections': {}}),
+        ('null-over-by', {'overflow': True, 'cap': 24000, 'over_by': None, 'sections': {}}),
+        ('zero-over-by', {'overflow': True, 'cap': 24000, 'over_by': 0, 'sections': {}}),
+        ('invalid-over-by', {'overflow': True, 'cap': 24000, 'over_by': '100', 'sections': {'identity': 10}}),
+        ('invalid-over-by-positive-sections', {'overflow': True, 'cap': 24000, 'over_by': '100',
+                                               'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('missing-cap', {'overflow': True, 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('boolean-cap', {'overflow': True, 'cap': True, 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('invalid-cap', {'overflow': True, 'cap': '24000', 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('valid-overflow', {'overflow': True, 'cap': 24000, 'over_by': 100, 'sections': {}}),
+        ('recorded-over-cap-over-by-missing', {'overflow': True, 'chars': 24100, 'cap': 24000, 'sections': {}}),
+        ('recorded-over-cap-over-by-null', {'overflow': True, 'chars': 24100, 'cap': 24000, 'over_by': None, 'sections': {}}),
+        ('recorded-over-cap-over-by-invalid', {'overflow': True, 'chars': 24100, 'cap': 24000, 'over_by': '100', 'sections': {}}),
+        ('recorded-under-cap-overflow-flag', {'overflow': True, 'chars': 23000, 'cap': 24000, 'sections': {}}),
+        ('recorded-under-cap-overby-disagrees', {'overflow': True, 'chars': 100, 'cap': 200,
+                                                 'over_by': 50, 'sections': {}}),
+        ('recorded-over-cap-overby-disagrees', {'overflow': True, 'chars': 300, 'cap': 200,
+                                                'over_by': 50, 'sections': {}}),
+        ('invalid-section-map', {'overflow': True, 'cap': 24000, 'over_by': 100,
+                                 'sections': {'identity': 10, 'bad': None}}),
+    ]
+    for name, row in fixtures:
+        fixture = _base_fixture()
+        fixture['agent_context'] = {
+            **_ctx_base(), 'system_prompt': {'cycle_id': name, **row},
+        }
+        public, private = split_render_inputs(fixture)
+        rendered = [
+            tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+            for data in (public, private)
+        ]
+        assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+        assert ('derived from sections (cap + over_by)' in rendered[0]) == ('derived from sections (cap + over_by)' in rendered[1])
+        if name == 'missing-over-by':
+            for html in rendered:
+                assert '0 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (recorded empty section map)' in html
+                assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html
+                assert 'WITHIN BUDGET (+24,000 chars spare)' in html
+        elif name == 'null-over-by':
+            for html in rendered:
+                assert '0 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (recorded empty section map)' in html
+        elif name == 'invalid-over-by':
+            for html in rendered:
+                assert '10 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (chars field not recorded)' in html
+        elif name == 'invalid-over-by-positive-sections':
+            for html in rendered:
+                assert '37 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (chars field not recorded)' in html
+        if name in {'recorded-over-cap-over-by-missing', 'recorded-over-cap-over-by-null', 'recorded-over-cap-over-by-invalid'}:
+            for html in rendered:
+                assert '24,100 <span class="kpi-unit">capped chars</span>' in html
+                assert 'OVERFLOW (+100 chars over cap)' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (24,100 / 24,000 chars)' in html
+        if name == 'recorded-under-cap-overflow-flag':
+            for html in rendered:
+                assert '23,000 <span class="kpi-unit">capped chars</span>' in html
+                assert 'WITHIN BUDGET (+1,000 chars spare)' in html
+                assert 'OVERFLOW' not in html
+        if name == 'recorded-under-cap-overby-disagrees':
+            for html in rendered:
+                assert '100 <span class="kpi-unit">capped chars</span>' in html
+                assert 'WITHIN BUDGET (+100 chars spare)' not in html
+                assert 'TELEMETRY MISMATCH (overflow flag without load above cap)' in html
+                assert 'Prompt Budget Utilization: <strong>50%</strong> (100 / 200 chars)' in html
+        if name == 'recorded-over-cap-overby-disagrees':
+            for html in rendered:
+                assert '300 <span class="kpi-unit">capped chars</span>' in html
+                assert 'OVERFLOW (+100 chars over cap (telemetry mismatch))' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (300 / 200 chars)' in html
+        if name == 'zero-over-by':
+            for html in rendered:
+                assert '24,000 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (cap + over_by)' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (24,000 / 24,000 chars)' in html
+                assert 'OVERFLOW (+0 chars over cap)' in html
+        if name in {'missing-over-by', 'null-over-by', 'invalid-over-by', 'invalid-over-by-positive-sections', 'missing-cap', 'boolean-cap', 'invalid-cap', 'invalid-section-map', 'recorded-over-cap-over-by-missing', 'recorded-over-cap-over-by-null', 'recorded-over-cap-over-by-invalid', 'recorded-under-cap-overflow-flag', 'recorded-under-cap-overby-disagrees', 'recorded-over-cap-overby-disagrees'}:
+            assert 'derived from sections (cap + over_by)' not in rendered[0]
+            assert 'derived from sections (cap + over_by)' not in rendered[1]
+        else:
+            assert 'derived from sections (cap + over_by)' in rendered[0]
+            assert 'derived from sections (cap + over_by)' in rendered[1]
+
+
+def test_issue385_partial_invalid_sections_map_is_unavailable_in_both_sinks():
+    from scripts.two_sinks import split_render_inputs
+
+    for sections in (
+        {},
+        {'identity': 10},
+        {'identity': 10, 'bad': None},
+        {'identity': 10, 'bad': True},
+        {'identity': 10, 'bad': -1},
+        {'identity': 10, 42: 20},
+        [10, 20],
+    ):
+        fixture = _base_fixture()
+        fixture['agent_context'] = {
+            **_ctx_base(),
+            'system_prompt': {
+                'cycle_id': f'invalid-sections-{type(sections).__name__}',
+                'cap': 24000, 'sections': sections,
+            },
+        }
+        public, private = split_render_inputs(fixture)
+        if not isinstance(sections, dict) or any(
+            not isinstance(name, str) or not name.strip()
+            or not isinstance(count, int) or isinstance(count, bool) or count < 0
+            for name, count in sections.items()
+        ):
+            assert 'sections' not in public['agent_context']['system_prompt']
+        else:
+            assert public['agent_context']['system_prompt']['sections'] == sections
+        rendered = [
+            tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+            for data in (public, private)
+        ]
+        sections_valid = isinstance(sections, dict) and all(
+            isinstance(name, str) and name.strip()
+            and isinstance(count, int) and not isinstance(count, bool) and count >= 0
+            for name, count in sections.items()
+        )
+        for html in rendered:
+            if sections_valid:
+                assert _KPI_UNAVAILABLE_ELEM not in html
+                assert _DERIVED_LABEL in html
+            else:
+                assert _KPI_UNAVAILABLE_ELEM in html
+                assert 'CAPACITY UNKNOWN' in html
+                assert 'WITHIN BUDGET' not in html
+                assert _DERIVED_LABEL not in html
+        assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+        assert ('CAPACITY UNKNOWN' in rendered[0]) == ('CAPACITY UNKNOWN' in rendered[1])
+        if not sections_valid and isinstance(sections, dict):
+            for html in rendered:
+                assert 'Arithmetic Character Reconciliation' in html
+                assert 'sections: unavailable' in html
+                assert 'Sum of Sections' not in html
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-overflow-no-cap', 'overflow': True, 'over_by': 100,
+            'sections': {'identity': 10, 'bootstrap': 20},
+        },
+    }
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert '37 <span class="kpi-unit">capped chars</span>' in html
+        assert 'derived from sections (chars field not recorded)' in html
+        assert 'derived from sections (cap + over_by)' not in html
+
+
+def test_issue385_empty_sections_overflow_reconciles_derived_total_in_both_sinks():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-empty-overflow', 'cap': 24000, 'over_by': 100,
+            'overflow': True, 'sections': {},
+        },
+    }
+    # Empty section arithmetic is zero; the independently derived overflow total differs.
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert '24,100' in html
+        assert 'sections: empty (0 chars)' in html
+        assert 'expected total is <strong>0 chars</strong>' in html
+        assert 'derived from cap + over_by total is <strong>24,100 chars</strong> (mismatch, +24,100 chars)' in html
+        assert 'derived from cap + over_by' in html
+        assert 'OVERFLOW' in html
+
+
+def test_issue385_null_chars_is_derived_in_private_projection_too():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-null-chars', 'chars': None, 'cap': 24000,
+            'sections': {'identity': 10},
+        },
+    }
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _DERIVED_LABEL in html
+        assert '10 capped chars' in html or '10 chars' in html
+
+    empty = _base_fixture()
+    empty['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {'cycle_id': 'cycle-empty-sections', 'cap': 24000, 'sections': {}},
+    }
+    public, private = split_render_inputs(empty)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _DERIVED_LABEL in html
+        assert '0 <span class="kpi-unit">capped chars</span>' in html
+        assert 'derived from sections (recorded empty section map)' in html
+        assert 'sections: empty (0 chars)' in html
+        assert 'derived total is <strong>0 chars</strong>' in html
+        assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html
+        assert 'WITHIN BUDGET (+24,000 chars spare)' in html
+
+
+def test_issue385_recorded_chars_renders_without_annotation():
+    """#385 regression: a normally recorded row renders cleanly without spurious annotations."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-ok', 'chars': 1234, 'cap': 24000, 'sections': {'identity': 1234}}
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _KPI_UNAVAILABLE_ELEM not in html
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _DERIVED_LABEL not in html
+    assert '1,234' in html
+
+
+def test_issue385_sections_absent_row_does_not_claim_pre1379_provenance():
+    """#385 follow-up: a present telemetry row with sections=None must NOT claim
+    pre-#1379 historical provenance (unsupported claim). Must show sections absent
+    without fabricating a historical reason for why."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {
+        'phase': 'system_prompt', 'cycle_id': 'cycle-old', 'chars': 24960,
+        'cap': 30000, 'sections': None,
+    }
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    # The honest message: report null/absent without claiming historical provenance
+    assert 'sections breakdown: unavailable' in html
+    assert _SECTIONS_NULL_MSG in html, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html, "sections=None must not say 'recorded as empty'"
+    assert 'recorded prior to structured section logging' not in html, "Must not perpetuate unsupported pre-#1379 claim"
+    assert _NO_TELEMETRY_MSG not in html, "Present row must not claim 'no telemetry row found'"
+    assert 'CAPACITY UNKNOWN' not in html
+    assert 'WITHIN BUDGET' in html
+    # Capacity still shown (chars=24960, cap=30000 are recorded)
+    assert '24,960' in html
+
+
+def test_issue385_invalid_chars_never_derive_or_claim_capacity():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    for value in (True, -1, 1.5, '12'):
+        for sections in (None, {'identity': 10}):
+            fixture['agent_context'] = {
+                **_ctx_base(),
+                'system_prompt': {
+                    'cycle_id': f'invalid-{value!r}-{sections is not None}',
+                    'chars': value, 'cap': 24000, 'sections': sections,
+                },
+                'prompt_text': None,
+            }
+            public, private = split_render_inputs(fixture)
+            rendered = [
+                tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+                for data in (public, private)
+            ]
+            for html in rendered:
+                if sections is not None:
+                    assert _KPI_UNAVAILABLE_ELEM not in html
+                    assert _DERIVED_LABEL in html
+                    assert 'WITHIN BUDGET' in html
+                else:
+                    assert _KPI_UNAVAILABLE_ELEM in html
+                    assert 'CAPACITY UNKNOWN' in html
+                    assert 'WITHIN BUDGET' not in html
+                    assert _DERIVED_LABEL not in html
+            assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+            assert ('CAPACITY UNKNOWN' in rendered[0]) == ('CAPACITY UNKNOWN' in rendered[1])
+
+
+def test_issue385_private_prompt_does_not_make_unavailable_capacity_look_measured():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-unavailable-text', 'cap': 24000, 'sections': None,
+        },
+    }
+    fixture['agent_context']['prompt_text'] = 'PRIVATE PROMPT TEXT'
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _KPI_UNAVAILABLE_ELEM in html
+        assert 'CAPACITY UNKNOWN' in html
+        assert 'WITHIN BUDGET' not in html
+        assert 'Prompt Budget Utilization: <strong>unavailable</strong> (load unavailable)' in html
+        assert 'recorded cap unavailable' not in html
+    public_html = tv.render_pages(public, host='eeepc', generated_at='now')['agent.html']
+    assert 'PRIVATE PROMPT TEXT' not in public_html
+
+
+def test_issue385_ac3_full_matrix_public_private_all_states():
+    """#385 AC3: full 5-state × 2-render matrix through real split_render_inputs.
+
+    Each of the five distinct sys_prompt telemetry states is exercised through
+    the actual split_render_inputs() projection and both render_pages() outputs.
+    Assertions verify:
+    - distinct KPI/reconciliation status in each render
+    - no unrelated-cycle sentinel values
+    - no fake numeric zero when state is unknown/unavailable
+    - no private text in public render
+    - task text marked as withheld-for-privacy in public (size known, text not)
+    """
+    from scripts.two_sinks import split_render_inputs
+
+    def _private_fixture(sys_p, prompt='PRIVATE_PR_TEXT', task='PRIVATE_TASK_TEXT'):
+        base = _base_fixture()
+        base['agent_context'] = {
+            'system_prompt': sys_p,
+            'prompt_text': prompt, 'task_text': task, 'tier2_skills': [],
+            'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0,
+                              'total_size_bytes': 0, 'files': []},
+            'tier2_memory': {'corpus_status': 'present', 'total_files': 0,
+                             'total_size_bytes': 0, 'files': []},
+        }
+        return base
+
+    # --- State 1: missing-row (no system_prompt row) ---
+    priv1 = _private_fixture(None, None, None)
+    pub1, priv1_data = split_render_inputs(priv1)
+    html_pub1 = tv.render_pages(pub1, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv1 = tv.render_pages(priv1_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: missing row is unavailable
+    assert _KPI_UNAVAILABLE_ELEM in html_pub1, "pub/missing-row: must show kpi-unavailable"
+    assert _KPI_UNAVAILABLE_ELEM in html_priv1, "priv/missing-row: must show kpi-unavailable"
+    assert _NO_TELEMETRY_MSG in html_pub1, "pub/missing-row: must say no telemetry row"
+    assert _NO_TELEMETRY_MSG in html_priv1, "priv/missing-row: must say no telemetry row"
+    # No cross-contamination
+    assert _MEASURED_ZERO_LABEL not in html_pub1
+    assert _DERIVED_LABEL not in html_pub1
+    assert '0 capped chars' not in html_pub1, "pub/missing-row: must not show fake 0"
+    assert _MEASURED_ZERO_LABEL not in html_priv1
+    assert '0 capped chars' not in html_priv1, "priv/missing-row: must not show fake 0"
+
+    # --- State 2: missing-chars, sections=None (no derivable sections) ---
+    priv2 = _private_fixture({'cycle_id': 'c-null', 'cap': 24000, 'sections': None})
+    pub2, priv2_data = split_render_inputs(priv2)
+    html_pub2 = tv.render_pages(pub2, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv2 = tv.render_pages(priv2_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars absent + sections=None -> unavailable (cannot derive)
+    assert _KPI_UNAVAILABLE_ELEM in html_pub2, "pub/null-sections-no-chars: must be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM in html_priv2, "priv/null-sections-no-chars: must be unavailable"
+    assert _NO_TELEMETRY_MSG not in html_pub2, "pub/null-sections-no-chars: row IS present"
+    assert _NO_TELEMETRY_MSG not in html_priv2, "priv/null-sections-no-chars: row IS present"
+    # sections=None: null/absent message (not empty message)
+    assert _SECTIONS_NULL_MSG in html_priv2, "priv/null-sections: must say null/absent"
+    assert _SECTIONS_EMPTY_MSG not in html_priv2
+    assert _MEASURED_ZERO_LABEL not in html_pub2
+    assert _MEASURED_ZERO_LABEL not in html_priv2
+    assert '0 capped chars' not in html_pub2, "pub/null-sections-no-chars: must not show fake 0"
+    assert '0 capped chars' not in html_priv2, "priv/null-sections-no-chars: must not show fake 0"
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub2
+    assert 'PRIVATE_TASK_TEXT' not in html_pub2
+
+    # --- State 3: derived (sections present, chars key absent) ---
+    priv3 = _private_fixture(
+        {'cycle_id': 'c-der', 'cap': 24000,
+         'sections': {'identity': 800, 'bootstrap': 4200}}
+    )
+    pub3, priv3_data = split_render_inputs(priv3)
+    html_pub3 = tv.render_pages(pub3, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv3 = tv.render_pages(priv3_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars derived from sections
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub3, "pub/derived: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv3, "priv/derived: must not be unavailable"
+    assert _DERIVED_LABEL in html_pub3, "pub/derived: must show derived label"
+    assert _DERIVED_LABEL in html_priv3, "priv/derived: must show derived label"
+    assert '5,007' in html_pub3, "pub/derived: must show derived total (800+4200+7sep)"
+    assert '5,007' in html_priv3, "priv/derived: must show derived total"
+    assert _MEASURED_ZERO_LABEL not in html_pub3
+    assert _MEASURED_ZERO_LABEL not in html_priv3
+    assert _NO_TELEMETRY_MSG not in html_pub3
+    assert _NO_TELEMETRY_MSG not in html_priv3
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub3
+    assert 'PRIVATE_TASK_TEXT' not in html_pub3
+
+    # --- State 4: measured-zero (chars=0 explicitly recorded) ---
+    priv4 = _private_fixture(
+        {'cycle_id': 'c-mz', 'chars': 0, 'cap': 24000, 'sections': {}}
+    )
+    pub4, priv4_data = split_render_inputs(priv4)
+    html_pub4 = tv.render_pages(pub4, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv4 = tv.render_pages(priv4_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars=0 explicitly recorded
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub4, "pub/measured-zero: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv4, "priv/measured-zero: must not be unavailable"
+    assert _MEASURED_ZERO_LABEL in html_pub4, "pub/measured-zero: must show measured-zero label"
+    assert _MEASURED_ZERO_LABEL in html_priv4, "priv/measured-zero: must show measured-zero label"
+    assert _DERIVED_LABEL not in html_pub4
+    assert _DERIVED_LABEL not in html_priv4
+    assert _NO_TELEMETRY_MSG not in html_pub4
+    assert _NO_TELEMETRY_MSG not in html_priv4
+    # sections={} (present-empty): empty-sections message, not null message
+    assert 'sections: empty (0 chars)' in html_priv4
+    assert _SECTIONS_EMPTY_MSG not in html_priv4
+    assert _SECTIONS_NULL_MSG not in html_priv4
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub4
+    assert 'PRIVATE_TASK_TEXT' not in html_pub4
+
+    # --- State 5: recorded-nonzero (chars present and non-zero) ---
+    priv5 = _private_fixture(
+        {'cycle_id': 'c-rec', 'chars': 9000, 'cap': 24000,
+         'sections': {'identity': 4000, 'bootstrap': 5000}}
+    )
+    pub5, priv5_data = split_render_inputs(priv5)
+    html_pub5 = tv.render_pages(pub5, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv5 = tv.render_pages(priv5_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: full recorded chars
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub5, "pub/recorded: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv5, "priv/recorded: must not be unavailable"
+    assert '9,000' in html_pub5, "pub/recorded: must show chars"
+    assert '9,000' in html_priv5, "priv/recorded: must show chars"
+    assert _MEASURED_ZERO_LABEL not in html_pub5
+    assert _MEASURED_ZERO_LABEL not in html_priv5
+    assert _DERIVED_LABEL not in html_pub5
+    assert _DERIVED_LABEL not in html_priv5
+    assert _NO_TELEMETRY_MSG not in html_pub5
+    assert _NO_TELEMETRY_MSG not in html_priv5
+    # Public: private text withheld; size known but text not shown
+    assert 'PRIVATE_PR_TEXT' not in html_pub5, "pub/recorded: private prompt text must not appear"
+    assert 'PRIVATE_TASK_TEXT' not in html_pub5, "pub/recorded: private task text must not appear"
+    assert 'withheld for privacy' in html_pub5, "pub/recorded: task text size known but text withheld"
+    # Private: chars match
+    assert '9,000' in html_priv5
+
+    # --- Cross-state: each state uses a distinct cycle_id, no unrelated-cycle bleed ---
+    cycle_ids = ['c-null', 'c-der', 'c-mz', 'c-rec']
+    pages = [
+        (html_pub2, html_priv2), (html_pub3, html_priv3),
+        (html_pub4, html_priv4), (html_pub5, html_priv5)
+    ]
+    rendered_ids = [cid for cid in cycle_ids]
+    for i, (html_pub, html_priv) in enumerate(pages):
+        own_cid = cycle_ids[i]
+        other_cids = [c for c in cycle_ids if c != own_cid]
+        for other in other_cids:
+            # Other cycle IDs must not appear in this fixture's render
+            assert other not in html_pub, f"pub/{own_cid}: unrelated cycle {other} must not bleed"
+            assert other not in html_priv, f"priv/{own_cid}: unrelated cycle {other} must not bleed"
+
+
+def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
+    """#385 follow-up: sections=None and sections={} must be distinguished.
+
+    Cases:
+    - sections=None, chars absent: unavailable (no derivation possible)
+    - sections={}, chars absent: derived zero (empty recorded section map)
+    - sections=None, chars recorded: recorded chars shown, null sections note
+    - sections={}, chars recorded: recorded chars shown, empty-sections note (distinct from None)
+    """
+    fixture = _base_fixture()
+
+    # Case A: sections=None, chars key absent
+    ctx_a = _ctx_base()
+    ctx_a['system_prompt'] = {'cycle_id': 'c-a', 'cap': 24000, 'sections': None}
+    fixture['agent_context'] = ctx_a
+    html_a = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_a, "sections=None+chars_absent: must be unavailable"
+    assert 'sections breakdown: unavailable' in html_a
+    assert _SECTIONS_NULL_MSG in html_a, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html_a, "sections=None must not claim 'recorded as empty'"
+    assert _NO_TELEMETRY_MSG not in html_a  # row IS present
+
+    # Case B: sections={}, chars key absent
+    ctx_b = _ctx_base()
+    ctx_b['system_prompt'] = {'cycle_id': 'c-b', 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx_b
+    html_b = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    # A valid present-empty map deterministically derives zero, unlike an absent row.
+    assert _KPI_UNAVAILABLE_ELEM not in html_b
+    assert _DERIVED_LABEL in html_b
+    assert '0 <span class="kpi-unit">capped chars</span>' in html_b
+    assert 'derived from sections (recorded empty section map)' in html_b
+    assert 'sections: empty (0 chars)' in html_b
+    assert 'derived total is <strong>0 chars</strong>' in html_b
+    assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html_b
+    assert 'CAPACITY UNKNOWN' not in html_b
+    assert '0 / 24,000 chars' in html_b
+    assert 'WITHIN BUDGET (+24,000 chars spare)' in html_b
+    assert _SECTIONS_EMPTY_MSG not in html_b, "derived-empty reconciliation must not claim unavailable sections"
+    assert _SECTIONS_NULL_MSG not in html_b, "sections={} must not say 'absent or null'"
+    assert _NO_TELEMETRY_MSG not in html_b
+
+    # Case C: sections=None, chars recorded
+    ctx_c = _ctx_base()
+    ctx_c['system_prompt'] = {'cycle_id': 'c-c', 'chars': 12345, 'cap': 24000, 'sections': None}
+    fixture['agent_context'] = ctx_c
+    html_c = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM not in html_c, "sections=None+chars_recorded: chars must render normally"
+    assert '12,345' in html_c, "Recorded chars must appear in KPI"
+    assert 'sections breakdown: unavailable' in html_c
+    assert _SECTIONS_NULL_MSG in html_c, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html_c
+    assert 'recorded prior to structured section logging' not in html_c
+
+    # Case D: sections={} (present-empty), chars recorded — distinct from sections=None
+    ctx_d = _ctx_base()
+    ctx_d['system_prompt'] = {'cycle_id': 'c-d', 'chars': 999, 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx_d
+    html_d = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM not in html_d, "sections={}+chars_recorded: chars must render normally"
+    assert '999' in html_d
+    # Present-empty sections reconcile the known zero section sum against recorded chars.
+    assert 'sections: empty (0 chars)' in html_d
+    assert 'expected total is <strong>0 chars</strong>' in html_d
+    assert 'recorded total is <strong>999 chars</strong> (mismatch, +999 chars)' in html_d
+    assert _SECTIONS_EMPTY_MSG not in html_d
+    assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
+
+
+_INVALID_SECTIONS_MSG = 'sections field contains an invalid value (not a dict or null)'
+
+
+def test_issue385_invalid_sections_types_do_not_crash_or_show_fake_zero():
+    """#385 MINOR: sections field with invalid types (False, 0, str, list) must:
+    - Not crash (no AttributeError from .get() on non-dict)
+    - Render as unavailable, not as fake numeric zero
+    - Show an accurate 'invalid value' note in reconciliation
+    - Not produce a leading period ('-> .') in the reconciliation text
+    """
+    fixture = _base_fixture()
+
+    # Case: sections=False (falsy non-None non-dict)
+    ctx_f = _ctx_base()
+    ctx_f['system_prompt'] = {'cycle_id': 'c-false', 'cap': 24000, 'sections': False}
+    fixture['agent_context'] = ctx_f
+    html_false = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_false, "sections=False: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_false, "sections=False: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_false, "sections=False: must not show measured-zero"
+    assert '0 capped chars' not in html_false, "sections=False: must not fabricate numeric zero"
+    assert _SECTIONS_NULL_MSG not in html_false
+    assert _SECTIONS_EMPTY_MSG not in html_false
+    assert _NO_TELEMETRY_MSG not in html_false
+
+    # Case: sections=0 (falsy non-None non-dict)
+    ctx_z = _ctx_base()
+    ctx_z['system_prompt'] = {'cycle_id': 'c-zero-int', 'cap': 24000, 'sections': 0}
+    fixture['agent_context'] = ctx_z
+    html_zeroint = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_zeroint, "sections=0: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_zeroint, "sections=0: must show invalid-value note"
+    assert _MEASURED_ZERO_LABEL not in html_zeroint, "sections=0: must not show measured-zero"
+    assert '0 capped chars' not in html_zeroint, "sections=0: must not fabricate numeric zero"
+    assert _NO_TELEMETRY_MSG not in html_zeroint
+
+    # Case: sections="string" (truthy non-dict — previously caused AttributeError crash)
+    ctx_s = _ctx_base()
+    ctx_s['system_prompt'] = {'cycle_id': 'c-str', 'cap': 24000, 'sections': 'unexpected_string'}
+    fixture['agent_context'] = ctx_s
+    html_str = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_str, "sections=str: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_str, "sections=str: must show invalid-value note"
+    assert 'format: pre-ADR-022 legacy' not in html_str
+    assert _MEASURED_ZERO_LABEL not in html_str
+    assert 'unexpected_string' not in html_str, "sections=str: raw string must not appear in KPI"
+    assert _NO_TELEMETRY_MSG not in html_str
+
+    # Case: sections=[list] (truthy non-dict — previously caused AttributeError crash)
+    ctx_l = _ctx_base()
+    ctx_l['system_prompt'] = {'cycle_id': 'c-list', 'cap': 24000, 'sections': [1, 2, 3]}
+    fixture['agent_context'] = ctx_l
+    html_list = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_list, "sections=list: must be unavailable"
+    assert _INVALID_SECTIONS_MSG in html_list, "sections=list: must show invalid-value note"
+    assert 'format: pre-ADR-022 legacy' not in html_list
+    assert _MEASURED_ZERO_LABEL not in html_list
+    assert _NO_TELEMETRY_MSG not in html_list
