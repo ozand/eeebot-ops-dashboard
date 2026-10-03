@@ -113,3 +113,26 @@ The two-tier model itself (#227) and its Tier 1 / Tier 2 vocabulary. The assembl
 - `nanobot/agent/context.py` — assembly order, `SECTION_SEPARATOR`, `MAX_SYSTEM_PROMPT_CHARS`.
 - `nanobot/agent/subagent.py:746-751` — `system_context` appended after the fit.
 - `nanobot/runtime/context_compaction.py` — `WINDOW_TOKENS`, `RESERVE_TOKENS`, `KEEP_RESULTS`, the journal's write condition.
+
+---
+
+## Amendment — Issue #385 (2026-10-03): Three-state system_prompt telemetry distinction
+
+Rule 2 of this ADR says "a failed or unattempted read never renders as 0". Issue #385 found that
+the system_prompt row itself can be absent, and that the old renderer collapsed three distinct
+states into a single synthetic-zero KPI:
+
+- **Unavailable** (system_prompt key is None/absent): KPI shows "unavailable capped chars";
+  reconciliation shows "No system_prompt telemetry row found" — not the pre-#1379 historical claim.
+- **Measured zero** (system_prompt dict present, chars key present, value 0): KPI shows
+  "0 capped chars (measured zero)" — distinguishable from unavailable.
+- **Withheld / derived** (system_prompt dict present, chars key absent, not overflow): KPI shows
+  the derived total with annotation "derived from sections (chars field not recorded)".
+- **Recorded** (system_prompt dict present, chars key present, value non-zero): unchanged rendering.
+
+The reconciliation block claimed "recorded prior to structured section logging (#1379)" for ALL
+no-sections cases. That text is only valid when a telemetry row IS present with sections=None.
+When no row exists, the claim is unsupported and corrected to "No system_prompt telemetry row found".
+
+No new architecture. The renderer uses key-presence test ("chars" in sys_prompt) to separate
+measured-zero from withheld, and sys_prompt_absent to separate no-telemetry from pre-#1379.

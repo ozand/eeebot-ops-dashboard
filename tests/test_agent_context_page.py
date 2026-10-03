@@ -1145,3 +1145,125 @@ def test_adr036_unknown_task_section_heading_is_lan_only() -> None:
     sections = build_task_sections(task)
     shown = [public_section_heading(s["heading"], i) for i, s in enumerate(sections, start=1)]
     assert shown == ["Concrete task to implement", "section 2 (LAN)"]
+
+
+# ── Issue #385: distinguish unavailable context telemetry from genuine zero ──
+
+_KPI_UNAVAILABLE_ELEM = 'class="kpi-value kpi-unavailable"'
+_MEASURED_ZERO_LABEL = 'measured zero'
+_DERIVED_LABEL = 'derived from sections'
+_PRE1379_CLAIM = 'recorded prior to structured section logging'
+_NO_TELEMETRY_MSG = 'No system_prompt telemetry row found'
+
+
+def _ctx_base() -> dict:
+    """Minimal agent_context dict with Tier 2 corpus present-and-empty."""
+    return {
+        'system_prompt': None,
+        'prompt_text': None, 'task_text': None, 'tier2_skills': [],
+        'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
+        'tier2_memory': {'corpus_status': 'present', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
+    }
+
+
+def test_issue385_no_telemetry_row_renders_unavailable_not_zero():
+    """#385 AC1: Missing system_prompt row must render KPI as unavailable, not as 0 chars."""
+    fixture = _base_fixture()
+    fixture['agent_context'] = _ctx_base()  # system_prompt=None
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    # KPI must use unavailable element, not emit a raw 0
+    assert _KPI_UNAVAILABLE_ELEM in html, "KPI must show kpi-unavailable element when no telemetry row"
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _DERIVED_LABEL not in html
+    # Reconciliation must not claim a pre-#1379 historical reason (no evidence for that)
+    assert _PRE1379_CLAIM not in html, "False pre-#1379 historical claim must not appear when telemetry absent"
+    assert _NO_TELEMETRY_MSG in html
+
+
+def test_issue385_measured_zero_chars_is_distinct_from_unavailable():
+    """#385 AC1: chars=0 recorded in a valid row is a measured zero, not unavailable."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-mz', 'chars': 0, 'cap': 24000, 'sections': {}}
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _MEASURED_ZERO_LABEL in html, "Measured zero must be labelled explicitly"
+    assert _KPI_UNAVAILABLE_ELEM not in html, "Measured zero must not render as unavailable"
+    assert _DERIVED_LABEL not in html
+    assert _NO_TELEMETRY_MSG not in html
+
+
+def test_issue385_withheld_chars_key_annotated_as_derived():
+    """#385 AC1: absent chars key in valid row is withheld/not-recorded; KPI annotates derivation."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-w', 'cap': 24000, 'sections': {'identity': 100}}
+    # 'chars' key deliberately absent
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _DERIVED_LABEL in html, "Absent chars key must annotate KPI as derived from sections"
+    assert _KPI_UNAVAILABLE_ELEM not in html
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _NO_TELEMETRY_MSG not in html
+
+
+def test_issue385_recorded_chars_renders_without_annotation():
+    """#385 regression: a normally recorded row renders cleanly without spurious annotations."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {'cycle_id': 'cycle-ok', 'chars': 1234, 'cap': 24000, 'sections': {'identity': 1234}}
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _KPI_UNAVAILABLE_ELEM not in html
+    assert _MEASURED_ZERO_LABEL not in html
+    assert _DERIVED_LABEL not in html
+    assert '1,234' in html
+
+
+def test_issue385_pre1379_row_keeps_historical_message():
+    """#385 regression: a row WITH sections=None (pre-#1379) still gets the historical note, not the no-telemetry msg."""
+    fixture = _base_fixture()
+    ctx = _ctx_base()
+    ctx['system_prompt'] = {
+        'phase': 'system_prompt', 'cycle_id': 'cycle-old', 'chars': 24960,
+        'cap': 30000, 'sections': None,  # pre-#1379 row, sections absent but row present
+    }
+    fixture['agent_context'] = ctx
+
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+
+    assert _PRE1379_CLAIM in html, "Pre-#1379 row must retain the historical 'recorded prior to...' note"
+    assert _NO_TELEMETRY_MSG not in html, "Pre-#1379 row must not claim 'no telemetry row'"
+
+
+def test_issue385_public_private_full_render_both_distinguish_states():
+    """#385 AC3: fault fixtures exercise public and private full-page rendering.
+
+    Both public (agent_context=None) and private (system_prompt=None dict) must render
+    with explicit unavailable signals, not fall through to synthetic zeros.
+    """
+    base = _base_fixture()
+
+    # Public-equivalent path: agent_context is None entirely
+    f_pub = dict(base)
+    f_pub['agent_context'] = None
+    html_pub = tv.render_pages(f_pub, host='eeepc', generated_at='now')['agent.html']
+    # agent_context=None triggers the outer guard, rendering 'context unavailable'
+    assert 'context unavailable' in html_pub
+    assert _MEASURED_ZERO_LABEL not in html_pub
+
+    # Private path: agent_context is a dict but no system_prompt row
+    f_priv = dict(base)
+    f_priv['agent_context'] = _ctx_base()
+    html_priv = tv.render_pages(f_priv, host='eeepc', generated_at='now')['agent.html']
+    assert _KPI_UNAVAILABLE_ELEM in html_priv
+    assert _NO_TELEMETRY_MSG in html_priv
+    assert _MEASURED_ZERO_LABEL not in html_priv

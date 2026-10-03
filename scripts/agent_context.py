@@ -821,7 +821,13 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         </section>
         """
 
-    sys_prompt = agent_context.get("system_prompt") or {}
+    # #385: preserve whether the system_prompt telemetry row is absent (None/missing).
+    # ``or {}`` would collapse None to {} and lose the distinction between
+    # "no row found" (unavailable), "row present but chars withheld" and
+    # "row present with chars=0" (measured zero).
+    _raw_sys_prompt = agent_context.get("system_prompt")
+    sys_prompt_absent = not isinstance(_raw_sys_prompt, dict)
+    sys_prompt = _raw_sys_prompt if isinstance(_raw_sys_prompt, dict) else {}
     prompt_text = agent_context.get("prompt_text")
     task_text = agent_context.get("task_text")
     prompt_text_chars = agent_context.get("prompt_text_chars")
@@ -925,14 +931,39 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     outside_cap = parsed_prompt["outside_cap"]
     actual_system_chars = len(prompt_text) if prompt_text is not None else prompt_text_chars
 
+    # #385: Track how chars was obtained to distinguish states:
+    # - sys_prompt_absent → no telemetry row, all chars figures are unavailable
+    # - chars_recorded=True, chars==0 → measured zero (genuine empty build)
+    # - chars_recorded=False, derived from sections → withheld/not-recorded char total
+    chars_recorded = "chars" in sys_prompt  # key presence, independent of value
     if chars is None and sections:
-        # For overflow rows, chars key is absent; total is cap + over_by or sum of non-empty sections + separators
+        # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
         if overflow and cap is not None and over_by is not None:
             chars = cap + over_by
+            chars_recorded = True  # overflow total is deterministic, not withheld
         else:
             chars = sum(sections.values()) + separator_total_chars
+            # chars_recorded stays False: total is derived, not a recorded field
 
-    total_chars = chars or (len(prompt_text) if prompt_text else 0)
+    # Distinguish three presentation states:
+    # - sys_prompt_absent: no row at all → KPI shows "unavailable"
+    # - chars is 0 and chars_recorded: measured zero → show as "0 chars (measured zero)"
+    # - chars is None after derivation attempt: neither recorded nor derivable → unavailable
+    if sys_prompt_absent:
+        total_chars = 0  # sentinel; KPI will render as unavailable, not as 0
+        chars_display_state = "unavailable"  # no telemetry row
+    elif chars is None:
+        total_chars = len(prompt_text) if prompt_text else 0
+        chars_display_state = "unavailable"  # not recorded, not derivable
+    elif chars_recorded and chars == 0:
+        total_chars = 0
+        chars_display_state = "measured_zero"  # explicitly recorded as 0
+    elif not chars_recorded:
+        total_chars = chars
+        chars_display_state = "derived"  # derived from sections sum, not recorded
+    else:
+        total_chars = chars
+        chars_display_state = "recorded"  # recorded value
     total_tokens = estimate_tokens(total_chars)
 
     if overflow and cap is not None:
@@ -1015,8 +1046,23 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-kpis">')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Capped Prompt Load</span>')
-    out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
-    out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
+    # #385: render KPI distinctly for three states:
+    # - unavailable (no telemetry row, or chars not derivable)
+    # - measured_zero (recorded as 0, not an absence of data)
+    # - derived (fallback sum from sections, chars key absent)
+    # - recorded (normal: chars key present with non-zero value)
+    if chars_display_state == "unavailable":
+        out.append('      <span class="kpi-value kpi-unavailable">unavailable <span class="kpi-unit">capped chars</span></span>')
+        out.append('      <span class="kpi-sub">system_prompt telemetry unavailable</span>')
+    elif chars_display_state == "measured_zero":
+        out.append(f'      <span class="kpi-value">0 <span class="kpi-unit">capped chars (measured zero)</span></span>')
+        out.append(f'      <span class="kpi-sub">~0 est. tokens · recorded as 0 (genuine empty build)</span>')
+    elif chars_display_state == "derived":
+        out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
+        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens · <em>derived from sections (chars field not recorded)</em></span>')
+    else:
+        out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
+        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
     actual_system_display = f'<strong>Actual System Message:</strong> {actual_system_chars:,} chars received by model' if actual_system_chars is not None else f'<strong>Actual System Message:</strong> {snapshot_text_unavailable}'
     out.append(f'      <span class="kpi-sub">{actual_system_display}</span>')
     out.append('    </div>')
@@ -1249,9 +1295,16 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
         out.append('    </div>')
     else:
+        # #385: Distinguish "no telemetry row at all" from "telemetry row present
+        # but sections field absent (pre-#1379 rows recorded before structured
+        # section logging)". The old message claimed a historical reason that
+        # is not evidenced when sys_prompt itself is absent.
         out.append('    <div class="reconciliation-box rec-unavailable">')
         out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">sections: unavailable</span></div>')
-        out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; This cycle row was recorded prior to structured section logging (#1379). Recorded total chars: <strong>{total_chars:,}</strong>. Per honesty rules, section sizes are not reconstructed.</p>')
+        if sys_prompt_absent:
+            out.append('      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; No system_prompt telemetry row found in runtime state. No char totals or section sizes can be reported. Per honesty rules, section sizes are not reconstructed.</p>')
+        else:
+            out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; This cycle row was recorded prior to structured section logging (#1379). Recorded total chars: <strong>{total_chars:,}</strong>. Per honesty rules, section sizes are not reconstructed.</p>')
         out.append('    </div>')
         if prompt_text:
             out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body">{_lan_only(prompt_text)}</div></details>')
@@ -1460,6 +1513,7 @@ AGENT_CONTEXT_CSS = """
 }
 .kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
 .kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-value.kpi-unavailable { color: #8b949e; font-style: italic; }
 .kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
 .kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
 .stat-good { color: #3fb950; }
