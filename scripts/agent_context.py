@@ -1319,7 +1319,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     elif isinstance(sections, dict) and not sections and not sys_prompt_absent:
         out.append('    <div class="reconciliation-box rec-empty">')
         out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">sections: empty (0 chars)</span></div>')
-        out.append('      <p class="rec-note">Sections recorded as an empty map; derived total is <strong>0 chars</strong>. This is distinct from a recorded chars=0 value.</p>')
+        if chars_display_state == "derived":
+            empty_note = 'Sections recorded as an empty map; derived total is <strong>0 chars</strong>. This is distinct from a recorded chars=0 value.'
+        else:
+            empty_note = f'Sections recorded as an empty map. Recorded total chars: <strong>{total_chars:,}</strong>; section arithmetic is unavailable.'
+        out.append(f'      <p class="rec-note">{empty_note}</p>')
         out.append('    </div>')
     else:
         # #385: Distinguish four sub-cases for non-truthy-dict sections:

@@ -1573,6 +1573,7 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     assert '999' in html_d
     # Present-empty sections remain distinct from absent/null even with recorded chars.
     assert 'sections: empty (0 chars)' in html_d
+    assert 'Recorded total chars: <strong>999</strong>' in html_d
     assert _SECTIONS_EMPTY_MSG not in html_d
     assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
 
