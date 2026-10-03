@@ -1243,6 +1243,19 @@ def test_issue385_null_chars_is_derived_in_private_projection_too():
         assert _DERIVED_LABEL in html
         assert '10 capped chars' in html or '10 chars' in html
 
+    empty = _base_fixture()
+    empty['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {'cycle_id': 'cycle-empty-sections', 'cap': 24000, 'sections': {}},
+    }
+    public, private = split_render_inputs(empty)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert _DERIVED_LABEL in html
+        assert '0 <span class="kpi-unit">capped chars</span>' in html
+        assert 'derived from sections (recorded empty section map)' in html
+        assert 'WITHIN BUDGET (+24,000 chars spare)' in html
+
 
 def test_issue385_recorded_chars_renders_without_annotation():
     """#385 regression: a normally recorded row renders cleanly without spurious annotations."""
@@ -1305,9 +1318,9 @@ def test_issue385_invalid_chars_never_derive_or_claim_capacity():
                 for data in (public, private)
             ]
             for html in rendered:
-                if sections:
+                if sections is not None:
                     assert _KPI_UNAVAILABLE_ELEM not in html
-                    assert 'derived from sections' in html
+                    assert _DERIVED_LABEL in html
                     assert 'WITHIN BUDGET' in html
                 else:
                     assert _KPI_UNAVAILABLE_ELEM in html
@@ -1496,7 +1509,7 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
 
     Cases:
     - sections=None, chars absent: unavailable (no derivation possible)
-    - sections={}, chars absent: unavailable (empty recorded, no derivable sum)
+    - sections={}, chars absent: derived zero (empty recorded section map)
     - sections=None, chars recorded: recorded chars shown, null sections note
     - sections={}, chars recorded: recorded chars shown, empty-sections note (distinct from None)
     """
@@ -1518,8 +1531,14 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     ctx_b['system_prompt'] = {'cycle_id': 'c-b', 'cap': 24000, 'sections': {}}
     fixture['agent_context'] = ctx_b
     html_b = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
-    # Empty dict - chars stays None -> unavailable
-    assert _KPI_UNAVAILABLE_ELEM in html_b, "sections={}+chars_absent: must be unavailable"
+    # A valid present-empty map deterministically derives zero, unlike an absent row.
+    assert _KPI_UNAVAILABLE_ELEM not in html_b
+    assert _DERIVED_LABEL in html_b
+    assert '0 <span class="kpi-unit">capped chars</span>' in html_b
+    assert 'derived from sections (recorded empty section map)' in html_b
+    assert 'CAPACITY UNKNOWN' not in html_b
+    assert '0 / 24,000 chars' in html_b
+    assert 'WITHIN BUDGET (+24,000 chars spare)' in html_b
     assert _SECTIONS_EMPTY_MSG in html_b, "sections={} must use 'recorded as empty' message"
     assert _SECTIONS_NULL_MSG not in html_b, "sections={} must not say 'absent or null'"
     assert _NO_TELEMETRY_MSG not in html_b

@@ -946,7 +946,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         isinstance(value, int) and not isinstance(value, bool) and value >= 0
         for value in sections.values()
     )
-    if chars is None and sections_are_valid and sections and not sys_prompt_absent:
+    if chars is None and sections_are_valid and not sys_prompt_absent:
         # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
         if overflow and valid_cap and over_by is not None:
             chars = cap + over_by
@@ -1074,7 +1074,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         out.append(f'      <span class="kpi-sub">~0 est. tokens · recorded as 0 (genuine empty build)</span>')
     elif chars_display_state == "derived":
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
-        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens · <em>derived from sections (chars field not recorded)</em></span>')
+        derived_note = "recorded empty section map" if not sections else "chars field not recorded"
+        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens · <em>derived from sections ({derived_note})</em></span>')
     else:
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
         out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
