@@ -1254,6 +1254,9 @@ def test_issue385_null_chars_is_derived_in_private_projection_too():
         assert _DERIVED_LABEL in html
         assert '0 <span class="kpi-unit">capped chars</span>' in html
         assert 'derived from sections (recorded empty section map)' in html
+        assert 'sections: empty (0 chars)' in html
+        assert 'derived total is <strong>0 chars</strong>' in html
+        assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html
         assert 'WITHIN BUDGET (+24,000 chars spare)' in html
 
 
@@ -1348,6 +1351,8 @@ def test_issue385_private_prompt_does_not_make_unavailable_capacity_look_measure
         assert _KPI_UNAVAILABLE_ELEM in html
         assert 'CAPACITY UNKNOWN' in html
         assert 'WITHIN BUDGET' not in html
+        assert 'Prompt Budget Utilization: <strong>unavailable</strong> (load unavailable)' in html
+        assert 'recorded cap unavailable' not in html
     public_html = tv.render_pages(public, host='eeepc', generated_at='now')['agent.html']
     assert 'PRIVATE PROMPT TEXT' not in public_html
 
@@ -1456,7 +1461,8 @@ def test_issue385_ac3_full_matrix_public_private_all_states():
     assert _NO_TELEMETRY_MSG not in html_pub4
     assert _NO_TELEMETRY_MSG not in html_priv4
     # sections={} (present-empty): empty-sections message, not null message
-    assert _SECTIONS_EMPTY_MSG in html_priv4, "priv/measured-zero: sections={} must say 'recorded as empty'"
+    assert 'sections: empty (0 chars)' in html_priv4
+    assert _SECTIONS_EMPTY_MSG not in html_priv4
     assert _SECTIONS_NULL_MSG not in html_priv4
     # Public: private text must not appear
     assert 'PRIVATE_PR_TEXT' not in html_pub4
@@ -1536,10 +1542,13 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     assert _DERIVED_LABEL in html_b
     assert '0 <span class="kpi-unit">capped chars</span>' in html_b
     assert 'derived from sections (recorded empty section map)' in html_b
+    assert 'sections: empty (0 chars)' in html_b
+    assert 'derived total is <strong>0 chars</strong>' in html_b
+    assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html_b
     assert 'CAPACITY UNKNOWN' not in html_b
     assert '0 / 24,000 chars' in html_b
     assert 'WITHIN BUDGET (+24,000 chars spare)' in html_b
-    assert _SECTIONS_EMPTY_MSG in html_b, "sections={} must use 'recorded as empty' message"
+    assert _SECTIONS_EMPTY_MSG not in html_b, "derived-empty reconciliation must not claim unavailable sections"
     assert _SECTIONS_NULL_MSG not in html_b, "sections={} must not say 'absent or null'"
     assert _NO_TELEMETRY_MSG not in html_b
 
@@ -1562,9 +1571,9 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     html_d = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM not in html_d, "sections={}+chars_recorded: chars must render normally"
     assert '999' in html_d
-    # Present-empty sections: distinct message from absent/null
-    assert 'sections breakdown: unavailable' in html_d
-    assert _SECTIONS_EMPTY_MSG in html_d, "sections={} must use 'recorded as empty' message"
+    # Present-empty sections remain distinct from absent/null even with recorded chars.
+    assert 'sections: empty (0 chars)' in html_d
+    assert _SECTIONS_EMPTY_MSG not in html_d
     assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
 
 

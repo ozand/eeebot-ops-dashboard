@@ -1084,8 +1084,9 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Context Budget Cap</span>')
-    cap_display = f'{cap:,} <span class="kpi-unit">chars</span>' if cap is not None else 'unavailable'
-    cap_tokens_display = f'~{estimate_tokens(cap):,} est. tokens limit' if cap is not None else 'recorded cap unavailable'
+    cap_valid = isinstance(cap, int) and not isinstance(cap, bool) and cap >= 0
+    cap_display = f'{cap:,} <span class="kpi-unit">chars</span>' if cap_valid else 'unavailable'
+    cap_tokens_display = f'~{estimate_tokens(cap):,} est. tokens limit' if cap_valid else 'recorded cap unavailable'
     out.append(f'      <span class="kpi-value">{cap_display}</span>')
     out.append(f'      <span class="kpi-sub">{cap_tokens_display}</span>')
     out.append('    </div>')
@@ -1104,7 +1105,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-subject-group context-overview-group">')
     out.append('    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>')
     out.append('  <div class="context-meter-box">')
-    meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)' if bar_pct is not None and cap is not None else '<strong>unavailable</strong> (recorded cap unavailable)'
+    if bar_pct is not None and cap_valid:
+        meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)'
+    elif chars_display_state == "unavailable":
+        meter_value = '<strong>unavailable</strong> (load unavailable)'
+    else:
+        meter_value = '<strong>unavailable</strong> (recorded cap unavailable)'
     out.append(f'    <div class="meter-labels"><span>Prompt Budget Utilization: {meter_value}</span><span>{ts_display}</span></div>')
     out.append('    <div class="context-progress-bar">')
     meter_fill = f'<div class="context-progress-fill" style="width:{bar_pct}%;background:{bar_color};"></div>' if bar_pct is not None else '<div class="context-progress-fill meter-unavailable" style="width:0%;"></div>'
@@ -1309,6 +1315,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
                 for item in parsed_prompt["mismatches"]
             ) or "recorded section boundaries unavailable"
             out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
+        out.append('    </div>')
+    elif isinstance(sections, dict) and not sections and not sys_prompt_absent:
+        out.append('    <div class="reconciliation-box rec-empty">')
+        out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">sections: empty (0 chars)</span></div>')
+        out.append('      <p class="rec-note">Sections recorded as an empty map; derived total is <strong>0 chars</strong>. This is distinct from a recorded chars=0 value.</p>')
         out.append('    </div>')
     else:
         # #385: Distinguish four sub-cases for non-truthy-dict sections:
