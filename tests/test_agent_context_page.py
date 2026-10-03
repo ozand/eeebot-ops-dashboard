@@ -1226,6 +1226,25 @@ def test_issue385_withheld_chars_key_annotated_as_derived():
     assert '23,900 chars spare' in html
 
 
+def test_issue385_overflow_provenance_requires_a_valid_cap_in_both_sinks():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _base_fixture()
+    fixture['agent_context'] = {
+        **_ctx_base(),
+        'system_prompt': {
+            'cycle_id': 'cycle-overflow-no-cap', 'overflow': True, 'over_by': 100,
+            'sections': {'identity': 10, 'bootstrap': 20},
+        },
+    }
+    public, private = split_render_inputs(fixture)
+    for data in (public, private):
+        html = tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+        assert '37 <span class="kpi-unit">capped chars</span>' in html
+        assert 'derived from sections (chars field not recorded)' in html
+        assert 'derived from sections (cap + over_by)' not in html
+
+
 def test_issue385_empty_sections_overflow_reconciles_derived_total_in_both_sinks():
     from scripts.two_sinks import split_render_inputs
 

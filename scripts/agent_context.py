@@ -1075,7 +1075,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     elif chars_display_state == "derived":
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
         derived_note = (
-            "cap + over_by" if overflow and over_by is not None
+            "cap + over_by" if overflow and valid_cap and over_by is not None
             else "recorded empty section map" if not sections
             else "chars field not recorded"
         )
