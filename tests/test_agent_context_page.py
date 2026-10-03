@@ -392,9 +392,10 @@ def test_agent_page_handles_missing_sections_before_1379_honestly():
     html = pages['agent.html']
 
     # Must honestly report sections unavailable — without claiming a historical provenance
-    # that the data does not establish (#385: unsupported pre-#1379 claim removed)
+    # that the data does not establish (#385 follow-up: sections=None uses null/absent message)
     assert 'sections breakdown: unavailable' in html
-    assert 'sections field is absent from this telemetry row' in html
+    assert _SECTIONS_NULL_MSG in html, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html
     assert 'recorded prior to structured section logging' not in html
     # Capacity still shown accurately
     assert '24,960 / 30,000' in html
@@ -1154,9 +1155,11 @@ def test_adr036_unknown_task_section_heading_is_lan_only() -> None:
 _KPI_UNAVAILABLE_ELEM = 'class="kpi-value kpi-unavailable"'
 _MEASURED_ZERO_LABEL = 'measured zero'
 _DERIVED_LABEL = 'derived from sections'
-# #385 follow-up: the unsupported pre-#1379 claim was removed.
-# Any row with absent sections now says 'sections field is absent from this telemetry row'.
-_SECTIONS_ABSENT_MSG = 'sections field is absent from this telemetry row'
+# #385 follow-up: distinguish sections=None (absent/null) from sections={} (present-empty).
+# sections=None renders: 'sections field absent or null in this telemetry row'
+# sections={}  renders: 'sections recorded as empty in this telemetry row'
+_SECTIONS_NULL_MSG = 'sections field absent or null in this telemetry row'
+_SECTIONS_EMPTY_MSG = 'sections recorded as empty in this telemetry row'
 _NO_TELEMETRY_MSG = 'No system_prompt telemetry row found'
 
 
@@ -1246,83 +1249,176 @@ def test_issue385_sections_absent_row_does_not_claim_pre1379_provenance():
 
     html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
 
-    # The honest message: report absence without claiming historical provenance
+    # The honest message: report null/absent without claiming historical provenance
     assert 'sections breakdown: unavailable' in html
-    assert _SECTIONS_ABSENT_MSG in html, "Must say sections field is absent, not claim historical reason"
+    assert _SECTIONS_NULL_MSG in html, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html, "sections=None must not say 'recorded as empty'"
     assert 'recorded prior to structured section logging' not in html, "Must not perpetuate unsupported pre-#1379 claim"
     assert _NO_TELEMETRY_MSG not in html, "Present row must not claim 'no telemetry row found'"
     # Capacity still shown (chars=24960, cap=30000 are recorded)
     assert '24,960' in html
 
 
-def test_issue385_public_private_full_render_both_distinguish_states():
-    """#385 AC3: fault fixtures exercise public and private full-page rendering.
+def test_issue385_ac3_full_matrix_public_private_all_states():
+    """#385 AC3: full 5-state × 2-render matrix through real split_render_inputs.
 
-    Uses real split_render_inputs to generate the actual public projection shape
-    (not agent_context=None, which is not a realistic public render).
-    Verifies that KPI and reconciliation distinctions are preserved in the
-    public render where prompt_text and task_text are withheld.
+    Each of the five distinct sys_prompt telemetry states is exercised through
+    the actual split_render_inputs() projection and both render_pages() outputs.
+    Assertions verify:
+    - distinct KPI/reconciliation status in each render
+    - no unrelated-cycle sentinel values
+    - no fake numeric zero when state is unknown/unavailable
+    - no private text in public render
+    - task text marked as withheld-for-privacy in public (size known, text not)
     """
     from scripts.two_sinks import split_render_inputs
 
-    base = _base_fixture()
+    def _private_fixture(sys_p, prompt='PRIVATE_PR_TEXT', task='PRIVATE_TASK_TEXT'):
+        base = _base_fixture()
+        base['agent_context'] = {
+            'system_prompt': sys_p,
+            'prompt_text': prompt, 'task_text': task, 'tier2_skills': [],
+            'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0,
+                              'total_size_bytes': 0, 'files': []},
+            'tier2_memory': {'corpus_status': 'present', 'total_files': 0,
+                             'total_size_bytes': 0, 'files': []},
+        }
+        return base
 
-    # Build a realistic private input with system_prompt present and chars recorded
-    private_input = dict(base)
-    private_input['agent_context'] = {
-        'system_prompt': {
-            'cycle_id': 'cycle-pub-test', 'chars': 1234, 'cap': 24000,
-            'sections': {'identity': 1234},
-        },
-        'prompt_text': 'PRIVATE prompt content that must not leak',
-        'task_text': 'PRIVATE task content that must not leak',
-        'tier2_skills': [{'name': 'sk', 'size_bytes': 50, 'desc': 'a', 'content': 'secret', 'path': 'skills/sk/SKILL.md'}],
-        'tier2_lessons': {'corpus_status': 'present', 'corpus_count': 0, 'total_size_bytes': 0, 'files': []},
-        'tier2_memory': {'corpus_status': 'present', 'total_files': 0, 'total_size_bytes': 0, 'files': []},
-    }
-    public_data, private_data = split_render_inputs(private_input)
+    # --- State 1: missing-row (no system_prompt row) ---
+    priv1 = _private_fixture(None, None, None)
+    pub1, priv1_data = split_render_inputs(priv1)
+    html_pub1 = tv.render_pages(pub1, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv1 = tv.render_pages(priv1_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: missing row is unavailable
+    assert _KPI_UNAVAILABLE_ELEM in html_pub1, "pub/missing-row: must show kpi-unavailable"
+    assert _KPI_UNAVAILABLE_ELEM in html_priv1, "priv/missing-row: must show kpi-unavailable"
+    assert _NO_TELEMETRY_MSG in html_pub1, "pub/missing-row: must say no telemetry row"
+    assert _NO_TELEMETRY_MSG in html_priv1, "priv/missing-row: must say no telemetry row"
+    # No cross-contamination
+    assert _MEASURED_ZERO_LABEL not in html_pub1
+    assert _DERIVED_LABEL not in html_pub1
+    assert '0 capped chars' not in html_pub1, "pub/missing-row: must not show fake 0"
+    assert _MEASURED_ZERO_LABEL not in html_priv1
+    assert '0 capped chars' not in html_priv1, "priv/missing-row: must not show fake 0"
 
-    # Public render: prompt_text must be None, but system_prompt and chars still present
-    html_pub = tv.render_pages(public_data, host='eeepc', generated_at='now')['agent.html']
-    # The system_prompt row is present in public form (chars preserved)
-    assert _KPI_UNAVAILABLE_ELEM not in html_pub, "Public render with valid sys_prompt must not show unavailable KPI"
-    assert _MEASURED_ZERO_LABEL not in html_pub
-    assert '1,234' in html_pub  # chars recorded
-    # Prompt text is withheld in public: only size annotation should appear
-    assert 'PRIVATE prompt content' not in html_pub, "Private prompt text must not appear in public render"
-    assert 'PRIVATE task content' not in html_pub, "Private task text must not appear in public render"
-    assert 'secret' not in html_pub, "Private skill content must not appear in public render"
+    # --- State 2: missing-chars, sections=None (no derivable sections) ---
+    priv2 = _private_fixture({'cycle_id': 'c-null', 'cap': 24000, 'sections': None})
+    pub2, priv2_data = split_render_inputs(priv2)
+    html_pub2 = tv.render_pages(pub2, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv2 = tv.render_pages(priv2_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars absent + sections=None -> unavailable (cannot derive)
+    assert _KPI_UNAVAILABLE_ELEM in html_pub2, "pub/null-sections-no-chars: must be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM in html_priv2, "priv/null-sections-no-chars: must be unavailable"
+    assert _NO_TELEMETRY_MSG not in html_pub2, "pub/null-sections-no-chars: row IS present"
+    assert _NO_TELEMETRY_MSG not in html_priv2, "priv/null-sections-no-chars: row IS present"
+    # sections=None: null/absent message (not empty message)
+    assert _SECTIONS_NULL_MSG in html_priv2, "priv/null-sections: must say null/absent"
+    assert _SECTIONS_EMPTY_MSG not in html_priv2
+    assert _MEASURED_ZERO_LABEL not in html_pub2
+    assert _MEASURED_ZERO_LABEL not in html_priv2
+    assert '0 capped chars' not in html_pub2, "pub/null-sections-no-chars: must not show fake 0"
+    assert '0 capped chars' not in html_priv2, "priv/null-sections-no-chars: must not show fake 0"
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub2
+    assert 'PRIVATE_TASK_TEXT' not in html_pub2
 
-    # Private render: all fields present including prompt_text
-    html_priv = tv.render_pages(private_data, host='eeepc', generated_at='now')['agent.html']
-    assert '1,234' in html_priv  # chars same
+    # --- State 3: derived (sections present, chars key absent) ---
+    priv3 = _private_fixture(
+        {'cycle_id': 'c-der', 'cap': 24000,
+         'sections': {'identity': 800, 'bootstrap': 4200}}
+    )
+    pub3, priv3_data = split_render_inputs(priv3)
+    html_pub3 = tv.render_pages(pub3, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv3 = tv.render_pages(priv3_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars derived from sections
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub3, "pub/derived: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv3, "priv/derived: must not be unavailable"
+    assert _DERIVED_LABEL in html_pub3, "pub/derived: must show derived label"
+    assert _DERIVED_LABEL in html_priv3, "priv/derived: must show derived label"
+    assert '5,007' in html_pub3, "pub/derived: must show derived total (800+4200+7sep)"
+    assert '5,007' in html_priv3, "priv/derived: must show derived total"
+    assert _MEASURED_ZERO_LABEL not in html_pub3
+    assert _MEASURED_ZERO_LABEL not in html_priv3
+    assert _NO_TELEMETRY_MSG not in html_pub3
+    assert _NO_TELEMETRY_MSG not in html_priv3
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub3
+    assert 'PRIVATE_TASK_TEXT' not in html_pub3
 
-    # Separate: agent_context=None path (outer guard, not a public projection shape)
-    f_outer = dict(base)
-    f_outer['agent_context'] = None
-    html_outer = tv.render_pages(f_outer, host='eeepc', generated_at='now')['agent.html']
-    assert 'context unavailable' in html_outer
-    assert _MEASURED_ZERO_LABEL not in html_outer
+    # --- State 4: measured-zero (chars=0 explicitly recorded) ---
+    priv4 = _private_fixture(
+        {'cycle_id': 'c-mz', 'chars': 0, 'cap': 24000, 'sections': {}}
+    )
+    pub4, priv4_data = split_render_inputs(priv4)
+    html_pub4 = tv.render_pages(pub4, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv4 = tv.render_pages(priv4_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: chars=0 explicitly recorded
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub4, "pub/measured-zero: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv4, "priv/measured-zero: must not be unavailable"
+    assert _MEASURED_ZERO_LABEL in html_pub4, "pub/measured-zero: must show measured-zero label"
+    assert _MEASURED_ZERO_LABEL in html_priv4, "priv/measured-zero: must show measured-zero label"
+    assert _DERIVED_LABEL not in html_pub4
+    assert _DERIVED_LABEL not in html_priv4
+    assert _NO_TELEMETRY_MSG not in html_pub4
+    assert _NO_TELEMETRY_MSG not in html_priv4
+    # sections={} (present-empty): empty-sections message, not null message
+    assert _SECTIONS_EMPTY_MSG in html_priv4, "priv/measured-zero: sections={} must say 'recorded as empty'"
+    assert _SECTIONS_NULL_MSG not in html_priv4
+    # Public: private text must not appear
+    assert 'PRIVATE_PR_TEXT' not in html_pub4
+    assert 'PRIVATE_TASK_TEXT' not in html_pub4
 
-    # Separate: private input with no system_prompt row
-    private_no_telemetry = dict(base)
-    private_no_telemetry['agent_context'] = _ctx_base()  # system_prompt=None
-    html_no_tel = tv.render_pages(private_no_telemetry, host='eeepc', generated_at='now')['agent.html']
-    assert _KPI_UNAVAILABLE_ELEM in html_no_tel
-    assert _NO_TELEMETRY_MSG in html_no_tel
-    assert _MEASURED_ZERO_LABEL not in html_no_tel
+    # --- State 5: recorded-nonzero (chars present and non-zero) ---
+    priv5 = _private_fixture(
+        {'cycle_id': 'c-rec', 'chars': 9000, 'cap': 24000,
+         'sections': {'identity': 4000, 'bootstrap': 5000}}
+    )
+    pub5, priv5_data = split_render_inputs(priv5)
+    html_pub5 = tv.render_pages(pub5, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    html_priv5 = tv.render_pages(priv5_data, host='eeepc', generated_at='2026-10-03 04:00:00')['agent.html']
+    # Both renders: full recorded chars
+    assert _KPI_UNAVAILABLE_ELEM not in html_pub5, "pub/recorded: must not be unavailable"
+    assert _KPI_UNAVAILABLE_ELEM not in html_priv5, "priv/recorded: must not be unavailable"
+    assert '9,000' in html_pub5, "pub/recorded: must show chars"
+    assert '9,000' in html_priv5, "priv/recorded: must show chars"
+    assert _MEASURED_ZERO_LABEL not in html_pub5
+    assert _MEASURED_ZERO_LABEL not in html_priv5
+    assert _DERIVED_LABEL not in html_pub5
+    assert _DERIVED_LABEL not in html_priv5
+    assert _NO_TELEMETRY_MSG not in html_pub5
+    assert _NO_TELEMETRY_MSG not in html_priv5
+    # Public: private text withheld; size known but text not shown
+    assert 'PRIVATE_PR_TEXT' not in html_pub5, "pub/recorded: private prompt text must not appear"
+    assert 'PRIVATE_TASK_TEXT' not in html_pub5, "pub/recorded: private task text must not appear"
+    assert 'withheld for privacy' in html_pub5, "pub/recorded: task text size known but text withheld"
+    # Private: chars match
+    assert '9,000' in html_priv5
+
+    # --- Cross-state: each state uses a distinct cycle_id, no unrelated-cycle bleed ---
+    cycle_ids = ['c-null', 'c-der', 'c-mz', 'c-rec']
+    pages = [
+        (html_pub2, html_priv2), (html_pub3, html_priv3),
+        (html_pub4, html_priv4), (html_pub5, html_priv5)
+    ]
+    rendered_ids = [cid for cid in cycle_ids]
+    for i, (html_pub, html_priv) in enumerate(pages):
+        own_cid = cycle_ids[i]
+        other_cids = [c for c in cycle_ids if c != own_cid]
+        for other in other_cids:
+            # Other cycle IDs must not appear in this fixture's render
+            assert other not in html_pub, f"pub/{own_cid}: unrelated cycle {other} must not bleed"
+            assert other not in html_priv, f"priv/{own_cid}: unrelated cycle {other} must not bleed"
 
 
 def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
-    """#385 follow-up (MAJOR confirmed safe, but add explicit coverage):
-    Present sys_prompt rows with malformed/null/empty sections must not crash
-    and must not produce a synthetic zero that looks like a measured value.
+    """#385 follow-up: sections=None and sections={} must be distinguished.
 
     Cases:
     - sections=None, chars absent: unavailable (no derivation possible)
-    - sections={}, chars absent: unavailable (empty dict, sum=0, still renders)
-    - sections=None, chars recorded: recorded chars shown, sections unavailable note
-    - sections={}, chars recorded: rendered with no section rows but chars shown
+    - sections={}, chars absent: unavailable (empty recorded, no derivable sum)
+    - sections=None, chars recorded: recorded chars shown, null sections note
+    - sections={}, chars recorded: recorded chars shown, empty-sections note (distinct from None)
     """
     fixture = _base_fixture()
 
@@ -1333,7 +1429,8 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     html_a = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM in html_a, "sections=None+chars_absent: must be unavailable"
     assert 'sections breakdown: unavailable' in html_a
-    assert _SECTIONS_ABSENT_MSG in html_a
+    assert _SECTIONS_NULL_MSG in html_a, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html_a, "sections=None must not claim 'recorded as empty'"
     assert _NO_TELEMETRY_MSG not in html_a  # row IS present
 
     # Case B: sections={}, chars key absent
@@ -1341,8 +1438,10 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     ctx_b['system_prompt'] = {'cycle_id': 'c-b', 'cap': 24000, 'sections': {}}
     fixture['agent_context'] = ctx_b
     html_b = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
-    # Empty dict is falsy for derivation; chars stays None -> unavailable
+    # Empty dict - chars stays None -> unavailable
     assert _KPI_UNAVAILABLE_ELEM in html_b, "sections={}+chars_absent: must be unavailable"
+    assert _SECTIONS_EMPTY_MSG in html_b, "sections={} must use 'recorded as empty' message"
+    assert _SECTIONS_NULL_MSG not in html_b, "sections={} must not say 'absent or null'"
     assert _NO_TELEMETRY_MSG not in html_b
 
     # Case C: sections=None, chars recorded
@@ -1353,15 +1452,18 @@ def test_issue385_malformed_sections_do_not_crash_or_show_synthetic_zero():
     assert _KPI_UNAVAILABLE_ELEM not in html_c, "sections=None+chars_recorded: chars must render normally"
     assert '12,345' in html_c, "Recorded chars must appear in KPI"
     assert 'sections breakdown: unavailable' in html_c
-    assert _SECTIONS_ABSENT_MSG in html_c
+    assert _SECTIONS_NULL_MSG in html_c, "sections=None must use null/absent message"
+    assert _SECTIONS_EMPTY_MSG not in html_c
     assert 'recorded prior to structured section logging' not in html_c
 
-    # Case D: sections={} (empty dict), chars recorded — renders no section rows but no crash
+    # Case D: sections={} (present-empty), chars recorded — distinct from sections=None
     ctx_d = _ctx_base()
     ctx_d['system_prompt'] = {'cycle_id': 'c-d', 'chars': 999, 'cap': 24000, 'sections': {}}
     fixture['agent_context'] = ctx_d
     html_d = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
     assert _KPI_UNAVAILABLE_ELEM not in html_d, "sections={}+chars_recorded: chars must render normally"
     assert '999' in html_d
-    # Empty sections dict renders the reconciliation block (sections is falsy)
+    # Present-empty sections: distinct message from absent/null
     assert 'sections breakdown: unavailable' in html_d
+    assert _SECTIONS_EMPTY_MSG in html_d, "sections={} must use 'recorded as empty' message"
+    assert _SECTIONS_NULL_MSG not in html_d, "sections={} must not say 'absent or null'"
