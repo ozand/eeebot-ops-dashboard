@@ -1240,6 +1240,14 @@ def test_issue385_overflow_operand_matrix_uses_only_explicit_valid_operands():
         ('boolean-cap', {'overflow': True, 'cap': True, 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
         ('invalid-cap', {'overflow': True, 'cap': '24000', 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
         ('valid-overflow', {'overflow': True, 'cap': 24000, 'over_by': 100, 'sections': {}}),
+        ('recorded-over-cap-over-by-missing', {'overflow': True, 'chars': 24100, 'cap': 24000, 'sections': {}}),
+        ('recorded-over-cap-over-by-null', {'overflow': True, 'chars': 24100, 'cap': 24000, 'over_by': None, 'sections': {}}),
+        ('recorded-over-cap-over-by-invalid', {'overflow': True, 'chars': 24100, 'cap': 24000, 'over_by': '100', 'sections': {}}),
+        ('recorded-under-cap-overflow-flag', {'overflow': True, 'chars': 23000, 'cap': 24000, 'sections': {}}),
+        ('recorded-under-cap-overby-disagrees', {'overflow': True, 'chars': 100, 'cap': 200,
+                                                 'over_by': 50, 'sections': {}}),
+        ('recorded-over-cap-overby-disagrees', {'overflow': True, 'chars': 300, 'cap': 200,
+                                                'over_by': 50, 'sections': {}}),
         ('invalid-section-map', {'overflow': True, 'cap': 24000, 'over_by': 100,
                                  'sections': {'identity': 10, 'bad': None}}),
     ]
@@ -1273,13 +1281,34 @@ def test_issue385_overflow_operand_matrix_uses_only_explicit_valid_operands():
             for html in rendered:
                 assert '37 <span class="kpi-unit">capped chars</span>' in html
                 assert 'derived from sections (chars field not recorded)' in html
+        if name in {'recorded-over-cap-over-by-missing', 'recorded-over-cap-over-by-null', 'recorded-over-cap-over-by-invalid'}:
+            for html in rendered:
+                assert '24,100 <span class="kpi-unit">capped chars</span>' in html
+                assert 'OVERFLOW (+100 chars over cap)' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (24,100 / 24,000 chars)' in html
+        if name == 'recorded-under-cap-overflow-flag':
+            for html in rendered:
+                assert '23,000 <span class="kpi-unit">capped chars</span>' in html
+                assert 'WITHIN BUDGET (+1,000 chars spare)' in html
+                assert 'OVERFLOW' not in html
+        if name == 'recorded-under-cap-overby-disagrees':
+            for html in rendered:
+                assert '100 <span class="kpi-unit">capped chars</span>' in html
+                assert 'WITHIN BUDGET (+100 chars spare)' not in html
+                assert 'TELEMETRY MISMATCH (overflow flag without load above cap)' in html
+                assert 'Prompt Budget Utilization: <strong>50%</strong> (100 / 200 chars)' in html
+        if name == 'recorded-over-cap-overby-disagrees':
+            for html in rendered:
+                assert '300 <span class="kpi-unit">capped chars</span>' in html
+                assert 'OVERFLOW (+100 chars over cap (telemetry mismatch))' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (300 / 200 chars)' in html
         if name == 'zero-over-by':
             for html in rendered:
                 assert '24,000 <span class="kpi-unit">capped chars</span>' in html
                 assert 'derived from sections (cap + over_by)' in html
                 assert 'Prompt Budget Utilization: <strong>100%</strong> (24,000 / 24,000 chars)' in html
                 assert 'OVERFLOW (+0 chars over cap)' in html
-        if name in {'missing-over-by', 'null-over-by', 'invalid-over-by', 'invalid-over-by-positive-sections', 'missing-cap', 'boolean-cap', 'invalid-cap', 'invalid-section-map'}:
+        if name in {'missing-over-by', 'null-over-by', 'invalid-over-by', 'invalid-over-by-positive-sections', 'missing-cap', 'boolean-cap', 'invalid-cap', 'invalid-section-map', 'recorded-over-cap-over-by-missing', 'recorded-over-cap-over-by-null', 'recorded-over-cap-over-by-invalid', 'recorded-under-cap-overflow-flag', 'recorded-under-cap-overby-disagrees', 'recorded-over-cap-overby-disagrees'}:
             assert 'derived from sections (cap + over_by)' not in rendered[0]
             assert 'derived from sections (cap + over_by)' not in rendered[1]
         else:
@@ -1336,9 +1365,11 @@ def test_issue385_partial_invalid_sections_map_is_unavailable_in_both_sinks():
                 assert _DERIVED_LABEL not in html
         assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
         assert ('CAPACITY UNKNOWN' in rendered[0]) == ('CAPACITY UNKNOWN' in rendered[1])
-
-
-def test_issue385_overflow_provenance_requires_a_valid_cap_in_both_sinks():
+        if not sections_valid and isinstance(sections, dict):
+            for html in rendered:
+                assert 'Arithmetic Character Reconciliation' in html
+                assert 'sections: unavailable' in html
+                assert 'Sum of Sections' not in html
     from scripts.two_sinks import split_render_inputs
 
     fixture = _base_fixture()

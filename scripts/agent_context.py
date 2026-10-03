@@ -987,12 +987,24 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         headroom_text = '<span>n/a</span>'
         bar_pct = None
         bar_color = "var(--color-accent, #58a6ff)"
-    elif overflow and valid_over_by:
-        ov_amount = over_by if over_by else (total_chars - cap)
-        headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap)</span>'
+    elif total_chars > cap:
+        ov_amount = total_chars - cap
+        overflow_mismatch = overflow and valid_over_by and over_by != ov_amount
+        overflow_note = " (telemetry mismatch)" if overflow_mismatch else ""
+        headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap{overflow_note})</span>'
         headroom_text = f'<span class="stat-warn">-{ov_amount:,} chars (OVERFLOW)</span>'
         bar_pct = min(100, int((total_chars / cap) * 100)) if cap > 0 else None
         bar_color = "var(--color-danger, #f85149)"
+    elif valid_cap and overflow and valid_over_by and over_by == 0 and total_chars == cap:
+        headroom_badge = '<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+0 chars over cap)</span>'
+        headroom_text = '<span class="stat-warn">0 chars (OVERFLOW)</span>'
+        bar_pct = 100
+        bar_color = "var(--color-danger, #f85149)"
+    elif valid_cap and overflow and chars_recorded and total_chars <= cap and valid_over_by and over_by > 0:
+        headroom_badge = '<span class="context-badge badge-warning">TELEMETRY MISMATCH (overflow flag without load above cap)</span>'
+        headroom_text = '<span>n/a</span>'
+        bar_pct = min(100, int((total_chars / cap) * 100))
+        bar_color = "var(--color-warning, #d29922)"
     elif valid_cap:
         spare = cap - total_chars
         pct = (total_chars / cap) * 100
@@ -1223,7 +1235,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     pool_floors = release_floors(sys_prompt)
     pool_used_from_sections = 0
 
-    if isinstance(sections, dict) and sections:
+    if sections_are_valid and sections:
         for sec_name in sections:
             sec_sz = sections.get(sec_name) or 0
             meta = section_owner_meta(sec_name)
