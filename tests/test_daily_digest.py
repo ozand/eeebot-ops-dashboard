@@ -25,6 +25,9 @@ def _completed(entries: dict) -> dict:
     return {"entries": entries}
 
 
+DIGEST_FIXTURE_NOW = datetime(2026, 9, 19, 12, tzinfo=timezone.utc)
+
+
 class TestThreeStateReporting:
     def test_ledger_none_is_unavailable(self):
         html = tv.build_daily_digest(None)
@@ -41,7 +44,7 @@ class TestThreeStateReporting:
 
     def test_readable_ledger_with_a_real_integration_shows_a_count(self):
         rows = [_outcome_row("c1", "2026-09-19T01:00:00Z")]
-        html = tv.build_daily_digest(rows, evolution_tree=_tree({"c1": "abc123"}))
+        html = tv.build_daily_digest(rows, evolution_tree=_tree({"c1": "abc123"}), now=DIGEST_FIXTURE_NOW)
         assert "1 integration(s)" in html
         assert "no integrations" not in html and "unavailable" not in html
 
@@ -50,7 +53,7 @@ class TestFieldsAndJoins:
     def test_all_five_fields_present(self):
         rows = [_outcome_row("c1", "2026-09-19T01:00:00Z", files=["scripts/a.py", "docs/b.md"], tier="documentation")]
         completed = _completed({"d1": {"cycle_id": "c1", "confirmed": True, "signal": "reference"}})
-        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "abc1234567"}))
+        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "abc1234567"}), now=DIGEST_FIXTURE_NOW)
         assert "c1" in html
         assert "abc123" in html  # short sha
         assert "scripts/a.py" in html and "docs/b.md" in html
@@ -60,14 +63,14 @@ class TestFieldsAndJoins:
     def test_missing_completed_entry_renders_untracked_not_a_false_negative(self):
         """#1772 AC: a failed join must never read as a false 'not confirmed'."""
         rows = [_outcome_row("c1", "2026-09-19T01:00:00Z")]
-        html = tv.build_daily_digest(rows, demand_completed=_completed({}), evolution_tree=_tree({"c1": "sha1"}))
+        html = tv.build_daily_digest(rows, demand_completed=_completed({}), evolution_tree=_tree({"c1": "sha1"}), now=DIGEST_FIXTURE_NOW)
         assert "untracked" in html
         assert "unconfirmed" not in html
 
     def test_entry_present_but_not_confirmed_renders_unconfirmed(self):
         rows = [_outcome_row("c1", "2026-09-19T01:00:00Z")]
         completed = _completed({"d1": {"cycle_id": "c1", "confirmed": False}})
-        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "sha1"}))
+        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "sha1"}), now=DIGEST_FIXTURE_NOW)
         assert "unconfirmed" in html
         assert ">untracked<" not in html
 
@@ -77,7 +80,7 @@ class TestFieldsAndJoins:
         read as confirmed here either."""
         rows = [_outcome_row("c1", "2026-09-19T01:00:00Z")]
         completed = _completed({"d1": {"cycle_id": "c1", "confirmed": True, "signal": "self-reported"}})
-        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "sha1"}))
+        html = tv.build_daily_digest(rows, demand_completed=completed, evolution_tree=_tree({"c1": "sha1"}), now=DIGEST_FIXTURE_NOW)
         assert "unconfirmed" in html
 
     def test_cycle_without_an_evolution_tree_sha_is_omitted(self):
@@ -125,5 +128,5 @@ class TestDayGrouping:
             _outcome_row("c1", "2026-09-19T01:00:00Z"),
             _outcome_row("c1", "2026-09-19T01:05:00Z"),
         ]
-        html = tv.build_daily_digest(rows, evolution_tree=_tree({"c1": "sha1"}))
+        html = tv.build_daily_digest(rows, evolution_tree=_tree({"c1": "sha1"}), now=DIGEST_FIXTURE_NOW)
         assert "1 integration(s)" in html
