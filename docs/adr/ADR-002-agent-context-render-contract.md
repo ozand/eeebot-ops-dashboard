@@ -134,8 +134,16 @@ The reconciliation block claimed "recorded prior to structured section logging (
 no-sections cases. That text is only valid when a telemetry row IS present with sections=None.
 When no row exists, the claim is unsupported and corrected to "No system_prompt telemetry row found".
 
-No new architecture. The renderer uses key-presence test ("chars" in sys_prompt) to separate
-measured-zero from withheld, and sys_prompt_absent to separate no-telemetry from pre-#1379.
+No new architecture. A valid recorded chars value is a non-boolean, non-negative integer;
+null and invalid values are treated as unrecorded and may derive only from valid section counts.
+A present empty sections map derives a distinct zero result (not the same as explicitly recorded
+chars=0). A missing telemetry row or missing sections with no valid chars stays unavailable.
+Derived/measured counts and capacity labels require valid data and never use private prompt text
+as the capped-load fallback. The capacity meter distinguishes an unavailable load from an
+unavailable cap. For empty sections, reconciliation compares the known empty-section sum (0)
+against recorded or derived totals and reports exact match or discrepancy, including overflow
+rows whose total derives from cap + over_by. Public and private projections must render the same
+load state without changing their text-redaction boundary.
 
 ## Amendment — Issue #385 follow-up (2026-10-03): Remove unsupported pre-#1379 historical claim
 
