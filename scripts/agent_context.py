@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -844,7 +845,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     chars = sys_prompt.get("chars")
     cap = sys_prompt.get("cap")
     overflow = sys_prompt.get("overflow", False)
-    over_by = sys_prompt.get("over_by", 0)
+    over_by = sys_prompt.get("over_by")
     sections = sys_prompt.get("sections")
     missing_files = sys_prompt.get("missing") or []
     truncated_files = sys_prompt.get("truncated") or []
@@ -943,12 +944,17 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     if chars_invalid:
         chars = None
     sections_are_valid = isinstance(sections, dict) and all(
-        isinstance(value, int) and not isinstance(value, bool) and value >= 0
-        for value in sections.values()
+        isinstance(name, str) and bool(name.strip())
+        and isinstance(value, int) and not isinstance(value, bool) and value >= 0
+        for name, value in sections.items()
+    )
+    valid_over_by = (
+        (isinstance(over_by, int) and not isinstance(over_by, bool) and over_by >= 0)
+        or (isinstance(over_by, float) and math.isfinite(over_by) and over_by >= 0)
     )
     if chars is None and sections_are_valid and not sys_prompt_absent:
-        # For overflow rows, chars key is absent; total is cap + over_by or sum of sections + separators
-        if overflow and valid_cap and over_by is not None:
+        # The overflow formula requires both operands to be explicitly recorded and valid.
+        if overflow and valid_cap and valid_over_by:
             chars = cap + over_by
             chars_recorded = False  # deterministically derived from cap + over_by
         else:
@@ -981,7 +987,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         headroom_text = '<span>n/a</span>'
         bar_pct = None
         bar_color = "var(--color-accent, #58a6ff)"
-    elif overflow:
+    elif overflow and valid_over_by:
         ov_amount = over_by if over_by else (total_chars - cap)
         headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap)</span>'
         headroom_text = f'<span class="stat-warn">-{ov_amount:,} chars (OVERFLOW)</span>'
@@ -1075,7 +1081,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     elif chars_display_state == "derived":
         out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
         derived_note = (
-            "cap + over_by" if overflow and valid_cap and over_by is not None
+            "cap + over_by" if overflow and valid_cap and valid_over_by
             else "recorded empty section map" if not sections
             else "chars field not recorded"
         )
@@ -1323,7 +1329,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     elif isinstance(sections, dict) and not sections and not sys_prompt_absent:
         out.append('    <div class="reconciliation-box rec-empty">')
         is_overflow_derived = (
-            chars_display_state == "derived" and overflow and valid_cap and over_by is not None
+            chars_display_state == "derived" and overflow and valid_cap and valid_over_by
         )
         expected_total = 0
         if total_chars == expected_total:

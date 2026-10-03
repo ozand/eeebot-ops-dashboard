@@ -1226,6 +1226,118 @@ def test_issue385_withheld_chars_key_annotated_as_derived():
     assert '23,900 chars spare' in html
 
 
+def test_issue385_overflow_operand_matrix_uses_only_explicit_valid_operands():
+    from scripts.two_sinks import split_render_inputs
+
+    fixtures = [
+        ('missing-over-by', {'overflow': True, 'cap': 24000, 'sections': {}}),
+        ('null-over-by', {'overflow': True, 'cap': 24000, 'over_by': None, 'sections': {}}),
+        ('zero-over-by', {'overflow': True, 'cap': 24000, 'over_by': 0, 'sections': {}}),
+        ('invalid-over-by', {'overflow': True, 'cap': 24000, 'over_by': '100', 'sections': {'identity': 10}}),
+        ('invalid-over-by-positive-sections', {'overflow': True, 'cap': 24000, 'over_by': '100',
+                                               'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('missing-cap', {'overflow': True, 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('boolean-cap', {'overflow': True, 'cap': True, 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('invalid-cap', {'overflow': True, 'cap': '24000', 'over_by': 100, 'sections': {'identity': 10, 'bootstrap': 20}}),
+        ('valid-overflow', {'overflow': True, 'cap': 24000, 'over_by': 100, 'sections': {}}),
+        ('invalid-section-map', {'overflow': True, 'cap': 24000, 'over_by': 100,
+                                 'sections': {'identity': 10, 'bad': None}}),
+    ]
+    for name, row in fixtures:
+        fixture = _base_fixture()
+        fixture['agent_context'] = {
+            **_ctx_base(), 'system_prompt': {'cycle_id': name, **row},
+        }
+        public, private = split_render_inputs(fixture)
+        rendered = [
+            tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+            for data in (public, private)
+        ]
+        assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+        assert ('derived from sections (cap + over_by)' in rendered[0]) == ('derived from sections (cap + over_by)' in rendered[1])
+        if name == 'missing-over-by':
+            for html in rendered:
+                assert '0 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (recorded empty section map)' in html
+                assert 'Prompt Budget Utilization: <strong>0%</strong> (0 / 24,000 chars)' in html
+                assert 'WITHIN BUDGET (+24,000 chars spare)' in html
+        elif name == 'null-over-by':
+            for html in rendered:
+                assert '0 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (recorded empty section map)' in html
+        elif name == 'invalid-over-by':
+            for html in rendered:
+                assert '10 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (chars field not recorded)' in html
+        elif name == 'invalid-over-by-positive-sections':
+            for html in rendered:
+                assert '37 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (chars field not recorded)' in html
+        if name == 'zero-over-by':
+            for html in rendered:
+                assert '24,000 <span class="kpi-unit">capped chars</span>' in html
+                assert 'derived from sections (cap + over_by)' in html
+                assert 'Prompt Budget Utilization: <strong>100%</strong> (24,000 / 24,000 chars)' in html
+                assert 'OVERFLOW (+0 chars over cap)' in html
+        if name in {'missing-over-by', 'null-over-by', 'invalid-over-by', 'invalid-over-by-positive-sections', 'missing-cap', 'boolean-cap', 'invalid-cap', 'invalid-section-map'}:
+            assert 'derived from sections (cap + over_by)' not in rendered[0]
+            assert 'derived from sections (cap + over_by)' not in rendered[1]
+        else:
+            assert 'derived from sections (cap + over_by)' in rendered[0]
+            assert 'derived from sections (cap + over_by)' in rendered[1]
+
+
+def test_issue385_partial_invalid_sections_map_is_unavailable_in_both_sinks():
+    from scripts.two_sinks import split_render_inputs
+
+    for sections in (
+        {},
+        {'identity': 10},
+        {'identity': 10, 'bad': None},
+        {'identity': 10, 'bad': True},
+        {'identity': 10, 'bad': -1},
+        {'identity': 10, 42: 20},
+        [10, 20],
+    ):
+        fixture = _base_fixture()
+        fixture['agent_context'] = {
+            **_ctx_base(),
+            'system_prompt': {
+                'cycle_id': f'invalid-sections-{type(sections).__name__}',
+                'cap': 24000, 'sections': sections,
+            },
+        }
+        public, private = split_render_inputs(fixture)
+        if not isinstance(sections, dict) or any(
+            not isinstance(name, str) or not name.strip()
+            or not isinstance(count, int) or isinstance(count, bool) or count < 0
+            for name, count in sections.items()
+        ):
+            assert 'sections' not in public['agent_context']['system_prompt']
+        else:
+            assert public['agent_context']['system_prompt']['sections'] == sections
+        rendered = [
+            tv.render_pages(data, host='eeepc', generated_at='now')['agent.html']
+            for data in (public, private)
+        ]
+        sections_valid = isinstance(sections, dict) and all(
+            isinstance(name, str) and name.strip()
+            and isinstance(count, int) and not isinstance(count, bool) and count >= 0
+            for name, count in sections.items()
+        )
+        for html in rendered:
+            if sections_valid:
+                assert _KPI_UNAVAILABLE_ELEM not in html
+                assert _DERIVED_LABEL in html
+            else:
+                assert _KPI_UNAVAILABLE_ELEM in html
+                assert 'CAPACITY UNKNOWN' in html
+                assert 'WITHIN BUDGET' not in html
+                assert _DERIVED_LABEL not in html
+        assert ('kpi-unavailable' in rendered[0]) == ('kpi-unavailable' in rendered[1])
+        assert ('CAPACITY UNKNOWN' in rendered[0]) == ('CAPACITY UNKNOWN' in rendered[1])
+
+
 def test_issue385_overflow_provenance_requires_a_valid_cap_in_both_sinks():
     from scripts.two_sinks import split_render_inputs
 
