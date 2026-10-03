@@ -113,3 +113,51 @@ The two-tier model itself (#227) and its Tier 1 / Tier 2 vocabulary. The assembl
 - `nanobot/agent/context.py` — assembly order, `SECTION_SEPARATOR`, `MAX_SYSTEM_PROMPT_CHARS`.
 - `nanobot/agent/subagent.py:746-751` — `system_context` appended after the fit.
 - `nanobot/runtime/context_compaction.py` — `WINDOW_TOKENS`, `RESERVE_TOKENS`, `KEEP_RESULTS`, the journal's write condition.
+
+---
+
+## Amendment — Issue #385 (2026-10-03): Three-state system_prompt telemetry distinction
+
+Rule 2 of this ADR says "a failed or unattempted read never renders as 0". Issue #385 found that
+the system_prompt row itself can be absent, and that the old renderer collapsed three distinct
+states into a single synthetic-zero KPI:
+
+- **Unavailable** (system_prompt key is None/absent): KPI shows "unavailable capped chars";
+  reconciliation shows "No system_prompt telemetry row found" — not the pre-#1379 historical claim.
+- **Measured zero** (system_prompt dict present, chars key present, value 0): KPI shows
+  "0 capped chars (measured zero)" — distinguishable from unavailable.
+- **Withheld / derived** (system_prompt dict present, chars key absent, not overflow): KPI shows
+  the derived total with annotation "derived from sections (chars field not recorded)".
+- **Recorded** (system_prompt dict present, chars key present, value non-zero): unchanged rendering.
+
+The reconciliation block claimed "recorded prior to structured section logging (#1379)" for ALL
+no-sections cases. That text is only valid when a telemetry row IS present with sections=None.
+When no row exists, the claim is unsupported and corrected to "No system_prompt telemetry row found".
+
+No new architecture. A valid recorded chars value is a non-boolean, non-negative integer;
+null and invalid values are treated as unrecorded and may derive only from valid section counts.
+A present empty sections map derives a distinct zero result (not the same as explicitly recorded
+chars=0). A missing telemetry row or missing sections with no valid chars stays unavailable.
+Derived/measured counts and capacity labels require valid data and never use private prompt text
+as the capped-load fallback. The capacity meter distinguishes an unavailable load from an
+unavailable cap. For empty sections, reconciliation compares the known empty-section sum (0)
+against recorded or derived totals and reports exact match or discrepancy, including overflow
+rows whose total derives from cap + over_by. Public and private projections must render the same
+load state without changing their text-redaction boundary.
+
+## Amendment — Issue #385 follow-up (2026-10-03): Remove unsupported pre-#1379 historical claim
+
+The initial #385 amendment corrected the no-telemetry case but left the "recorded prior to
+structured section logging (#1379)" message for ALL present rows with absent/null sections.
+This is an unsupported historical claim: a row with sections=None may have that field absent
+for reasons other than pre-#1379 provenance (malformed row, withheld field, new schema).
+
+**Correction:** When a telemetry row IS present but sections is absent/null, show:
+"The sections field is absent from this telemetry row" — no provenance claimed.
+
+This also fixes the reconciliation for the case where chars is recorded but sections is null:
+the recorded chars total is still displayed; only the sections-breakdown note changes.
+
+**Test updates:** `test_agent_page_handles_missing_sections_before_1379_honestly` updated to
+assert the new honest message. `test_issue385_pre1379_row_keeps_historical_message` replaced
+by `test_issue385_sections_absent_row_does_not_claim_pre1379_provenance`.
