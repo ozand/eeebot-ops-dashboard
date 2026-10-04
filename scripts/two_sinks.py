@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import stat
+import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
 from pathlib import Path
@@ -1635,8 +1636,11 @@ def publish_ordered(
     except Exception as exc:
         host_error = exc
     if host_error is not None and getattr(host_error, "activated", False) is True:
+        warning = f"ADR-036 host snapshot cleanup warning: {host_error}"
         if host_warnings is not None:
-            host_warnings.append(f"ADR-036 host snapshot cleanup warning: {host_error}")
+            host_warnings.append(warning)
+        else:
+            print(f"two_sinks: WARNING: {warning}", file=sys.stderr)
         host_error = None
 
     try:
