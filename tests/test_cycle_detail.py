@@ -548,6 +548,10 @@ def test_d2_connected_end_to_end_from_state_tree_to_host_snapshot(tmp_path: Path
     assert not any(path.startswith("cycles/") for path in gh_pages)
     snapshot_files = {path.relative_to(site_root / "current").as_posix() for path in (site_root / "current").rglob("*") if path.is_file()}
     assert "cycles/c-end-to-end.html" in snapshot_files
+    host_cycle_page = (site_root / "current" / "cycle.html").read_text(encoding="utf-8")
+    assert 'new Set(["c-end-to-end"])' in host_cycle_page
+    assert "LAN-only" not in gh_pages["cycle.html"]
+    assert "c-end-to-end" not in gh_pages["cycle.html"]
 
 
 def test_jsonl_read_failure_marks_history_incomplete(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

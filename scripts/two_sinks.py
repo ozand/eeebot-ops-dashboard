@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime
+import html
 import json
 import math
 import os
@@ -1631,6 +1632,33 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
     return destination
 
 
+def _add_private_cycle_navigation(host_pages: dict[str, str], private_pages: Mapping[str, str]) -> None:
+    """Route the host cycle-detail query to an indexed LAN-only page."""
+    cycle_ids = sorted(
+        name[len("cycles/"):-len(".html")]
+        for name in private_pages
+        if name.startswith("cycles/") and name.endswith(".html")
+        and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name[len("cycles/"):-len(".html")])
+    )
+    cycle_page = host_pages.get("cycle.html")
+    if not isinstance(cycle_page, str):
+        return
+    allowed_json = json.dumps(cycle_ids, ensure_ascii=True).replace("</", "<\\/")
+    router = f'''<script id="lan-private-cycle-router">
+(function() {{
+  var allowed = new Set({allowed_json});
+  var id = new URLSearchParams(window.location.search).get('id') || '';
+  if (allowed.has(id)) {{
+    window.location.replace('cycles/' + encodeURIComponent(id) + '.html');
+  }} else {{
+    document.body.innerHTML = '<main><h1>Cycle detail unavailable</h1><p class="unavailable-note">No retained LAN-only detail page exists for this cycle.</p></main>';
+  }}
+}})();
+</script>'''
+    marker = "</body>"
+    host_pages["cycle.html"] = cycle_page.replace(marker, router + marker, 1) if marker in cycle_page else cycle_page + router
+
+
 class HostSnapshotError(RuntimeError):
     def __init__(
         self,
@@ -1674,6 +1702,7 @@ def publish_ordered(
         **versioned_public,
         **versioned_private,
     }
+    _add_private_cycle_navigation(host_pages, versioned_private)
     host_error = None
     try:
         os.lstat(site_root)
