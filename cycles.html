@@ -292,6 +292,7 @@
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-proposed { border-left: 4px solid #d19a66; }
     .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {
@@ -1364,14 +1365,14 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1791079781-063e498bc429"></head>
+<meta name="snapshot-version" content="1791080109-9684507aea44"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">42</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">77.8%</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-04 04:57:17 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">11.7%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">11.7%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">24 events · 17 tasks · 7.8%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">19.4% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">3.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791079765.515" data-render-age-seconds="28">data: 28s old &middot; generated 02:09 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791080087.988" data-render-age-seconds="34">data: 34s old &middot; generated 02:15 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1379,7 +1380,7 @@
 
     <section class="panel panel-feed" id="panel-feed">
       <h2 class="panel-title">Cycle History (3905 cycles)</h2>
-      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3855 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button><button class="filter-btn" data-filter="proposed">proposed</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3855 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
             (function(){
               var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
               if (!btn) return;
@@ -1414,9 +1415,9 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-10-03 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-4612ced4b3be">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-4612ced4b3be">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Extend scripts/extract_cli_flags.py to parse argument metadata and defaults</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4612ced4b3be)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-4612ced4b3be">details</a>
@@ -1444,9 +1445,9 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-c145d90239a9">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-c145d90239a9">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused scripts/control_plane_summary.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c145d90239a9)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c145d90239a9">details</a>
@@ -1460,9 +1461,9 @@
         </li>
         
         <li class="feed-day-header">2026-10-02 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-ea7ecc3904c5">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-ea7ecc3904c5">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and mark scripts/model_fallback_routing.py as archived</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ea7ecc3904c5)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ea7ecc3904c5">details</a>
@@ -1490,9 +1491,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.05K tok &middot; dur 12s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-68e10ff28b2a">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-68e10ff28b2a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add empty content directive for tool-calling turns to AGENTS.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-68e10ff28b2a)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-68e10ff28b2a">details</a>
@@ -1505,9 +1506,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.94K tok &middot; dur 15s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-6defaa749b88">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-6defaa749b88">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Assert AGENTS.md line count budget in tests/test_agents_structure.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6defaa749b88)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-6defaa749b88">details</a>
@@ -1535,9 +1536,9 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-76d52fffbb26">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-76d52fffbb26">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add planner reconnaissance scope boundary directive to AGENTS.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-76d52fffbb26)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-76d52fffbb26">details</a>
@@ -1565,9 +1566,9 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-75664a6c4752">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-75664a6c4752">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add skill for checking and condensing files constrained by line caps</strong>
             <span class="feed-cid copyable" translate="no">(cycle-75664a6c4752)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-75664a6c4752">details</a>
@@ -1580,9 +1581,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.25K tok &middot; dur 11s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-4815cda66d40">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-4815cda66d40">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused scripts/scaffold_script_entrypoint.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4815cda66d40)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-4815cda66d40">details</a>
@@ -1625,9 +1626,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.81K tok &middot; dur 9s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-3a8303d3c8a3">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-3a8303d3c8a3">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused scripts/smoke_test_loop.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3a8303d3c8a3)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-3a8303d3c8a3">details</a>
@@ -1640,9 +1641,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.34K tok &middot; dur 13s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-6de732f13578">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-6de732f13578">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Package markdown format validation procedure into reusable skill</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6de732f13578)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-6de732f13578">details</a>
@@ -1655,9 +1656,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 18.77K tok &middot; dur 1m39s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-e995ee732fc6">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-e995ee732fc6">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Package lesson integrity verification procedure into skill</strong>
             <span class="feed-cid copyable" translate="no">(cycle-e995ee732fc6)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-e995ee732fc6">details</a>
@@ -1685,9 +1686,9 @@
           
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-3d4b71d3ef89">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-3d4b71d3ef89">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add decorrelated jitter calculation to compute_demand_backoff_delay.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3d4b71d3ef89)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-3d4b71d3ef89">details</a>
@@ -1700,9 +1701,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 10.23K tok &middot; dur 19s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-36f0269b1466">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-36f0269b1466">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add CLI entry point and candidate similarity scoring to scripts/dedup_digest.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-36f0269b1466)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-36f0269b1466">details</a>
@@ -1715,9 +1716,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.93K tok &middot; dur 16s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-575c7bb577d7">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-575c7bb577d7">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add doctest and unittest fallback heuristics to scripts/select_test_runner.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-575c7bb577d7)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-575c7bb577d7">details</a>
@@ -1730,9 +1731,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 20.79K tok &middot; dur 42s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-4b6d3e3308de">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-4b6d3e3308de">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement has_bash_conditional in scripts/detect_bash_conditional.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4b6d3e3308de)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-4b6d3e3308de">details</a>
@@ -1745,9 +1746,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.47K tok &middot; dur 28s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-1e2617d378db">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-1e2617d378db">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement has_broad_fs_search in scripts/detect_broad_search.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1e2617d378db)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-1e2617d378db">details</a>
@@ -1760,9 +1761,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.55K tok &middot; dur 8s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-0193cc6a2794">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-0193cc6a2794">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement select_test_runner function in scripts/select_test_runner.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0193cc6a2794)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-0193cc6a2794">details</a>
@@ -1775,9 +1776,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.80K tok &middot; dur 14s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-ae70dfc741b9">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-ae70dfc741b9">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add CLI interface and JSON summary output to scripts/approval_truth.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ae70dfc741b9)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ae70dfc741b9">details</a>
@@ -1790,9 +1791,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.03K tok &middot; dur 9s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-7184120b51a1">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-7184120b51a1">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Optimize scripts/validate_unused_imports.py traversal to finish within timeout</strong>
             <span class="feed-cid copyable" translate="no">(cycle-7184120b51a1)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-7184120b51a1">details</a>
@@ -1820,9 +1821,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 14.57K tok &middot; dur 29s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-4f7a5bf15c82">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-4f7a5bf15c82">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Archive unused script scripts/preflight_failure_check.py with deprecation notice</strong>
             <span class="feed-cid copyable" translate="no">(cycle-4f7a5bf15c82)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-4f7a5bf15c82">details</a>
@@ -1835,9 +1836,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.73K tok &middot; dur 8s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-40ae1e3c0b74">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-40ae1e3c0b74">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement rewrite_time_cmd to rewrite bare time command to /usr/bin/time</strong>
             <span class="feed-cid copyable" translate="no">(cycle-40ae1e3c0b74)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-40ae1e3c0b74">details</a>
@@ -1880,9 +1881,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.47K tok &middot; dur 24s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-1740d3b48594">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-1740d3b48594">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add JSON input and output format options to scripts/filter_linter_diagnostics.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1740d3b48594)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-1740d3b48594">details</a>
@@ -1895,9 +1896,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.33K tok &middot; dur 20s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-07a8b12e40fc">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-07a8b12e40fc">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Extend extract_cli_flags.py AST parser to extract positional arguments and flag help metadata</strong>
             <span class="feed-cid copyable" translate="no">(cycle-07a8b12e40fc)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-07a8b12e40fc">details</a>
@@ -1910,9 +1911,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 9.30K tok &middot; dur 16s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-54f87dd0f108">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-54f87dd0f108">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Archive scripts/control_plane_summary.py with deprecation notice</strong>
             <span class="feed-cid copyable" translate="no">(cycle-54f87dd0f108)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-54f87dd0f108">details</a>
@@ -1925,9 +1926,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.90K tok &middot; dur 8s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-eff53dc285e4">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-eff53dc285e4">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Archive unused script scripts/model_fallback_routing.py with deprecation notice</strong>
             <span class="feed-cid copyable" translate="no">(cycle-eff53dc285e4)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-eff53dc285e4">details</a>
@@ -1956,9 +1957,9 @@
         </li>
         
         <li class="feed-day-header">2026-10-01 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-644cc0c4a331">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-644cc0c4a331">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add directive to AGENTS.md requiring empty content on tool call turns</strong>
             <span class="feed-cid copyable" translate="no">(cycle-644cc0c4a331)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-644cc0c4a331">details</a>
@@ -1971,9 +1972,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.01K tok &middot; dur 13s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-ce1db73aa924">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-ce1db73aa924">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add AGENTS.md 150-line count limit assertion to tests/test_agents_structure.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ce1db73aa924)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ce1db73aa924">details</a>
@@ -1986,9 +1987,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 6.45K tok &middot; dur 10s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-30dabd1eb109">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-30dabd1eb109">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add planner reconnaissance scope restriction directive to AGENTS.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-30dabd1eb109)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-30dabd1eb109">details</a>
@@ -2001,9 +2002,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.59K tok &middot; dur 20s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-65b054618c31">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-65b054618c31">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add line cap verification and condensation procedure to skills/check_line_caps.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-65b054618c31)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-65b054618c31">details</a>
@@ -2016,9 +2017,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.51K tok &middot; dur 11s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-d599affa7dee">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-d599affa7dee">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Archive scripts/scaffold_script_entrypoint.py with deprecation notice</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d599affa7dee)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-d599affa7dee">details</a>
@@ -2076,9 +2077,9 @@
           <div class="feed-cost">&#9889; 30 calls &middot; 1.56M tok &middot; dur 28m45s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-df6de100818b">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-df6de100818b">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Package markdown format validation procedure into skills/validate_markdown_format.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-df6de100818b)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-df6de100818b">details</a>
@@ -2091,9 +2092,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 7.34K tok &middot; dur 13s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-2926257839b0">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-2926257839b0">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Package lesson integrity verification procedure into skills/check_lessons_integrity.md</strong>
             <span class="feed-cid copyable" translate="no">(cycle-2926257839b0)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2926257839b0">details</a>
@@ -2106,9 +2107,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.57K tok &middot; dur 16s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-53f527870455">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-53f527870455">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Document atomic commit discipline for diary and deliverable changes</strong>
             <span class="feed-cid copyable" translate="no">(cycle-53f527870455)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-53f527870455">details</a>
@@ -2121,9 +2122,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.39K tok &middot; dur 14s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-f331175b1513">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-f331175b1513">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Document shell execution rules for python3 binary and workspace state paths</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f331175b1513)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f331175b1513">details</a>
@@ -2136,9 +2137,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 11.27K tok &middot; dur 26s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-e1047728c7a6">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-e1047728c7a6">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add deterministic jitter and reset window to scripts/compute_demand_backoff_delay.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-e1047728c7a6)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-e1047728c7a6">details</a>
@@ -2151,9 +2152,9 @@
           <div class="feed-cost">&#9889; 1 calls &middot; 8.40K tok &middot; dur 14s</div>
         </li>
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-761b0d34987a">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-761b0d34987a">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add CLI entry point and token digest helper to scripts/dedup_digest.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-761b0d34987a)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-761b0d34987a">details</a>
@@ -2170,7 +2171,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator e8099aa · generated 2026-10-04 02:09:54 UTC &middot; host eeepc &middot; newest source 28s old &middot; <span class="footer-computed">scorecard computed 2026-10-04 04:57:17 MSK</span></footer>
+<footer class="page-footer">generator 797f5c5 · generated 2026-10-04 02:15:22 UTC &middot; host eeepc &middot; newest source 34s old &middot; <span class="footer-computed">scorecard computed 2026-10-04 04:57:17 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2201,5 +2202,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1791079781-063e498bc429 · generated 2026-10-04T02:09:41.458963+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1791080109-9684507aea44 · generated 2026-10-04T02:15:09.024359+00:00</footer></body>
 </html>
