@@ -437,6 +437,55 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
             })
     return steps
 
+
+def _response_tool_continuations(prompt: dict[str, Any], later_prompts: list[dict[str, Any]]) -> list[tuple[str, str, str]]:
+    """Describe later-observed tool requests for reconciling response calls.
+
+    IDs are reduced to hashes. Id-less calls use tool name plus the existing
+    argument digest; a multiset preserves repeated identical calls.
+    """
+    observed: list[tuple[str, str, str]] = []
+    for later in later_prompts:
+        messages = later.get("messages") or []
+        if isinstance(messages, str):
+            try:
+                messages = json.loads(messages)
+            except (json.JSONDecodeError, TypeError):
+                messages = []
+        for message in messages if isinstance(messages, list) else []:
+            if not isinstance(message, dict) or message.get("role") != "assistant":
+                continue
+            for call in message.get("tool_calls") or []:
+                if not isinstance(call, dict):
+                    continue
+                function = call.get("function") or call
+                if not isinstance(function, dict):
+                    continue
+                call_id = call.get("id")
+                id_digest = __import__("hashlib").sha256(str(call_id).encode()).hexdigest()[:12] if call_id else ""
+                args = sanitize_tool_arguments(function.get("arguments"))
+                observed.append((id_digest, str(function.get("name") or "tool"), _content_fingerprint(str(args))[1]))
+    return observed
+
+
+def _later_prompts_in_attempt(prompt: dict[str, Any], later_prompts: list[dict[str, Any]], runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    stamp = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
+    if stamp is None:
+        return []
+    owners = []
+    for run in runs:
+        start = _parse_timestamp(run.get("started_at") or run.get("start_time"))
+        finish = _parse_timestamp(run.get("finished_at") or run.get("end_time"))
+        if start is not None and finish is not None and start <= stamp <= finish:
+            owners.append((start, finish))
+    if len(owners) != 1:
+        return []
+    start, finish = owners[0]
+    return [row for row in later_prompts
+            if (next_stamp := _parse_timestamp(row.get("ts") or row.get("timestamp"))) is not None
+            and start <= next_stamp <= finish]
+
+
 def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None = None) -> dict[str, dict[str, Any]]:
     reference = now or datetime.now(timezone.utc)
     dates = [(reference.date() - timedelta(days=offset)).isoformat() for offset in range(days)]
@@ -553,30 +602,32 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             dur = duration_row.get("duration_ms") if duration_row is not None else None
             sanitized_prompt = dict(p)
             sanitized_prompt["messages"] = sanitize_messages(p.get("messages"))
-            if prompt_index + 1 < len(c_prompts):
-                following = c_prompts[prompt_index + 1].get("messages") or []
-                if isinstance(following, str):
-                    try:
-                        following = json.loads(following)
-                    except (json.JSONDecodeError, TypeError):
-                        following = []
-                continued = set()
-                for message in following if isinstance(following, list) else []:
-                    if not isinstance(message, dict) or message.get("role") != "assistant":
-                        continue
-                    for call in message.get("tool_calls") or []:
-                        if isinstance(call, dict) and call.get("id"):
-                            continued.add(str(call["id"]))
-                response_calls = p.get("tool_calls") or []
-                if isinstance(response_calls, str):
-                    try:
-                        response_calls = json.loads(response_calls)
-                    except (json.JSONDecodeError, TypeError):
-                        response_calls = []
-                sanitized_prompt["tool_calls"] = [
-                    call for call in response_calls
-                    if not (isinstance(call, dict) and call.get("id") and str(call["id"]) in continued)
-                ] if isinstance(response_calls, list) else []
+            response_calls = p.get("tool_calls") or []
+            if isinstance(response_calls, str):
+                try:
+                    response_calls = json.loads(response_calls)
+                except (json.JSONDecodeError, TypeError):
+                    response_calls = []
+            later_prompts = _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs)
+            continuation_rows = _response_tool_continuations(p, later_prompts)
+            filtered_calls = []
+            for call in response_calls if isinstance(response_calls, list) else []:
+                if not isinstance(call, dict):
+                    filtered_calls.append(call)
+                    continue
+                function = call.get("function") or call
+                if not isinstance(function, dict):
+                    filtered_calls.append(call)
+                    continue
+                call_id = call.get("id")
+                id_digest = __import__("hashlib").sha256(str(call_id).encode()).hexdigest()[:12] if call_id else ""
+                args_digest = _content_fingerprint(str(sanitize_tool_arguments(function.get("arguments"))))[1]
+                signature = (id_digest, str(function.get("name") or "tool"), args_digest)
+                try:
+                    continuation_rows.remove(signature)
+                except ValueError:
+                    filtered_calls.append(call)
+            sanitized_prompt["tool_calls"] = filtered_calls
             tools = extract_tool_steps(sanitized_prompt)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools) or any(
                 isinstance(message, dict) and message.get("_pending_tool_calls")
@@ -584,7 +635,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             ):
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
-            if p.get("finish_reason") == "tool_calls" and p is c_prompts[-1]:
+            if p.get("finish_reason") == "tool_calls" and not _response_tool_continuations(
+                p, _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs),
+            ):
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
             sanitized_msgs = sanitize_messages(p.get("messages"))
@@ -593,7 +646,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 "messages": _project_value(sanitized_msgs) if sanitized_msgs else None,
                 "answer": _project_value(p.get("content")) if p.get("content") is not None else None,
                 "tools": _project_value(p.get("tool_calls")) if p.get("tool_calls") else None,
-                "tool_status": "incomplete" if p.get("finish_reason") == "tool_calls" and p is c_prompts[-1] else "observed",
+                "tool_status": "incomplete" if p.get("finish_reason") == "tool_calls" and not _response_tool_continuations(
+                    p, _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs),
+                ) else "observed",
                 "function_call": _project_value(p.get("function_call")) if p.get("function_call") else None,
                 "reasoning": _project_value(p.get("reasoning_content")) if p.get("reasoning_content") is not None else None,
                 "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
