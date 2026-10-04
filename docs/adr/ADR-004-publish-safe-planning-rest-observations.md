@@ -10,9 +10,9 @@
 
 The existing cycle feed is derived from allowlisted execution-cycle ledger phases. Planning sessions and planner rest-held observations are recorded in the same approved state root but are not actual execution cycles and must not be fabricated as such. A published page can therefore show an older cycle while a newer planning observation exists. Showing that observation requires a new public projection field, freshness semantics, and an explicit privacy boundary: rest state includes a raw wake-condition reference and snapshot value that must not be published.
 
-The existing remote reader already reads `STATE_ROOT/ledger/cycles.jsonl`; the planner state is the adjacent `STATE_ROOT/planner/rest_state.json`, schema `planner-rest-v1`. This reuses the same documented SSH reader identity/root and adds no host permission or path. Source fields are constrained to planning phases `planning_session`, `planner_rest`, `planner_rest_held`; outcomes `integrated`, `refused`, `malformed`, `no_plan`, `spawn_failed`, `commit_failed`, `timed_out`, `rest`, `rest_unchanged`; and rest fields `active_rest` presence, `wake_condition.kind` allowlisted, `deadline`, `consecutive_rests`, `held_ticks_since_last_session`, and `review_signal`. The reference, snapshot, free-text reason, and raw lines are excluded.
+The existing remote reader already reads `STATE_ROOT/ledger/cycles.jsonl`; the planner state is the adjacent `STATE_ROOT/planner/rest_state.json`, schema `planner-rest-v1`, owned by `nanobot/runtime/planner_rest.py` at the inspected runtime revision. This reuses the reader's existing `STATE_ROOT` authority and SSH execution identity but does add a new relative file access (`planner/rest_state.json`), which must remain inside that already-approved root and reader contract. Source fields are constrained to planning phases `planning_session`, `planner_rest`, `planner_rest_held`; outcomes `integrated`, `refused`, `malformed`, `no_plan`, `spawn_failed`, `commit_failed`, `timed_out`, `rest`, `rest_unchanged`; and rest fields `active_rest` presence, `wake_condition.kind` allowlisted by `VALID_WAKE_KINDS`, `deadline`, `consecutive_rests`, `held_ticks_since_last_session`, and `review_signal`. The `active_rest` object or null must be validated as a whole before deriving status. Missing/invalid active fields yield unknown, not inactive. The reference, snapshot, free-text reason, and raw lines are excluded. The local reader accesses the same state-root-relative source under the caller-provided state root.
 
-The evidence for the October 4 incident is a bounded read-only observation: planning outcome `rest_unchanged` and `planner_rest_held` entries existed while no new actual execution-cycle row was observed in the inspected window. This does not establish active work or why the candidate wake condition remains unchanged.
+The evidence for the October 4 incident is a bounded read-only observation: planning outcome `rest_unchanged` and `planner_rest_held` entries existed while no new actual execution-cycle row was observed in the inspected window. This does not establish active work or why the candidate wake condition remains unchanged. Planning-event time and rest-file modification time are independent evidence sources; neither supersedes the other. If either source is stale, show its last recorded evidence and age, but current status for that source is unknown.
 
 ## Decision
 
@@ -36,7 +36,7 @@ Operators can see recent planner/rest observations without confusing them with e
 
 ### What gets harder
 
-The remote and local readers, typed schema, privacy canaries, freshness behavior, and projection version must remain synchronized. The 15-minute freshness boundary is presentation policy, not evidence of runtime health; it may not align with the actual bridge cadence.
+The remote and local readers, typed schema, privacy canaries, freshness behavior, and projection version must remain synchronized. Adding one file read expands the reader's source inventory and public projection surface; it requires explicit path-confinement and serialized-public-output tests. The 15-minute freshness boundary is presentation policy, not evidence of runtime health; it may not align with the actual bridge cadence.
 
 ### What does not change
 
@@ -61,9 +61,10 @@ Rejected: the observed mismatch remains unexplained to dashboard users, although
 | Claim in Decision | Test | Currently |
 |---|---|---|
 | Rest-held status is distinct from actual cycle rows | `tests/test_planning_activity.py::test_rest_observation_renders_separately_from_cycles` | not yet written |
-| Missing/stale/error inputs remain unknown | `tests/test_planning_activity.py::test_source_freshness_boundary_and_unavailable_states` | not yet written |
-| Raw wake reference/snapshot/free text is withheld | `tests/test_planning_activity.py::test_rest_projection_withholds_private_fields` | not yet written |
-| Local and remote readers agree | `tests/test_planning_activity.py::test_local_remote_reader_parity` | not yet written |
+| A valid active rest object exposes typed status; null means no active rest only when the enclosing schema/state is valid | `tests/test_planning_activity.py::test_rest_state_valid_object_and_null` | not yet written |
+| Missing/stale/error inputs remain unknown, with independent source ages and exact 899/900/901-second boundary tests | `tests/test_planning_activity.py::test_source_freshness_boundary_and_unavailable_states` | not yet written |
+| The new state-root-relative file read stays within `STATE_ROOT` and the serialized public allowlist excludes raw wake reference/snapshot/free text | `tests/test_planning_activity.py::test_planning_reader_confines_path_and_projection_withholds_private_fields` | not yet written |
+| Local and remote readers agree on allowlisted fields and states | `tests/test_planning_activity.py::test_local_remote_reader_parity` | not yet written |
 | Schema change invalidates publish digest | `tests/test_planning_activity.py::test_projection_version_changes_publish_digest` | not yet written |
 
 ## Rollback
@@ -73,6 +74,9 @@ Revert the dashboard projection, reader, and renderer change and bump/revert the
 ## References
 
 - `scripts/techtree_viewer.py`: `REMOTE_READER_SCRIPT`, local mirror, `render_public_pages()`
+- `ozand/eeebot` `nanobot/runtime/planner_rest.py` at inspected revision `6d476b715aa5989d5036e1385f6262d0f2a70f4b`: `_STATE_RELPATH`, `_SCHEMA`, `VALID_WAKE_KINDS`, `RestState`, `load_state()`.
+- `ozand/eeebot` `nanobot/runtime/cycle_ledger.py` at the same inspected revision: `VALID_PLANNING_OUTCOMES`, `record_planning_session()`.
+- `ozand/eeebot` `host/eeepc/systemd/eeepc-self-evolving-subagent-bridge.timer`: tracked `OnUnitActiveSec=15m`; this does not prove current installed timer behavior.
 - `scripts/two_sinks.py`: `PUBLIC_DATA_KEYS`, `_PUBLIC_SCHEMA`, `PROJECTION_VERSION`
 - Issue #395 research record: https://github.com/ozand/eeebot-ops-dashboard/issues/395#issuecomment-5981707778
 - Issue #395 freshness decision update: https://github.com/ozand/eeebot-ops-dashboard/issues/395#issuecomment-5981740215
