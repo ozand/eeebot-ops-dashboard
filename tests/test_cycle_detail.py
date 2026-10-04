@@ -44,6 +44,57 @@ def test_structured_message_fields_project_to_metadata_without_source_text() -> 
     assert secret not in page
 
 
+def test_forged_sanitized_text_is_withheld_by_direct_formatters():
+    from scripts.cycle_detail import SanitizedText, format_model_step, format_tool_step
+
+    model_canary = "SENTINEL_UNTRUSTED_SANITIZED_CANARY_4421"
+    forged = SanitizedText(f"[withheld: {model_canary}]")
+    model = format_model_step({"answer": forged})
+    tool = format_tool_step({"name": "read_file", "arguments": SanitizedText(
+        json.dumps({"keys": [model_canary], "size": 1, "sha256": "0" * 12})
+    ), "result": forged})
+    assert model_canary not in model
+    assert model_canary not in tool
+    assert "withheld:" in model and "withheld:" in tool
+
+
+def test_tool_argument_keys_do_not_disclose_untrusted_names():
+    from scripts.cycle_detail import SanitizedText, format_tool_step, sanitize_tool_arguments
+
+    canary = "CANARY_SECRET_AS_KEY_992818"
+    nested_canary = "NESTED_PRIVATE_KEY_NAME_71623"
+    args = sanitize_tool_arguments({canary: {nested_canary: "ordinary-value"}})
+    assert canary not in args and nested_canary not in args
+    rendered = format_tool_step({"name": "read_file", "arguments": args, "result": SanitizedText("[withheld: result]")})
+    assert canary not in rendered and nested_canary not in rendered
+    assert "key-" in rendered
+
+
+def test_private_renderer_fields_reject_untrusted_text_and_invalid_types():
+    from scripts.cycle_detail import render_cycle_page
+
+    canary = "CANARY_SECRET_DO_NOT_RENDER_92817"
+    page = render_cycle_page("cycle-safe", {
+        "available": True, "history_complete": False, "total_model_calls": canary,
+        "attempts": [{"run_id": canary, "classification": canary, "model_call_count": canary,
+                      "history_complete": False, "sessions": [{"role": canary, "model_calls": canary,
+                      "tokens": canary, "duration_ms": canary, "tool_names": [canary],
+                      "steps": [{"kind": "tool", "name": canary, "status": canary,
+                      "source": canary, "duration": canary, "arguments": display_text(canary),
+                      "result": display_text(canary)}]}]}],
+        "reflection": {"summary_chars": canary, "findings_count": True,
+                       "recommendations_count": -1},
+    })
+    assert canary not in page
+    assert "Classification: unknown" in page
+    assert "Tokens: unknown" in page
+    assert "Duration: unknown" in page
+    assert "Tool step: tool(" in page
+    assert "status: unknown" in page and "source: recorded" in page
+    assert "Tool sequence: unknown" in page
+    assert "Outcome: unknown" in page
+    assert "Cycle unavailable" in render_cycle_page("../" + canary, {"available": True})
+
 
 def test_attempts_are_rows_with_per_attempt_counts():
     """ADR-036 §4: attempts remain distinct rows with their own counts."""
@@ -52,8 +103,9 @@ def test_attempts_are_rows_with_per_attempt_counts():
         {"run_id": "run-b", "model_call_count": 1, "history_complete": False},
     ]})
     assert page.count('<article class="attempt-row">') == 2
-    assert "Attempt run-a" in page and "Model calls: 2" in page
-    assert "Attempt run-b" in page and "Model calls: 1" in page
+    assert "Model calls: 2" in page
+    assert "Model calls: 1" in page
+    assert page.count("Attempt id-") == 2
 
 
 def test_model_and_tool_steps_render_only_typed_metadata():

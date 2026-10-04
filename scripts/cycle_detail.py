@@ -12,6 +12,17 @@ from typing import Any
 from scripts.publish_scan import scan_text
 
 DEFAULT_DISPLAY_LIMIT = 4000
+IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+CLASSIFICATIONS = frozenset({
+    "completion", "completed", "failed", "failure", "unit_timeout", "killed",
+    "loop_breaker_abort", "wall_clock_abort", "progress_watchdog_abort", "timeout",
+    "timed_out", "crash", "error", "interrupted", "clean", "signal", "paused-supplier",
+    "paused_supplier", "supplier_failure", "other", "unknown",
+})
+OUTCOMES = frozenset({"success", "failure", "failed", "interrupted", "clean", "unknown"})
+SESSION_ROLES = frozenset({"planner", "executor", "unassigned", "unknown"})
+TOOL_STATUSES = frozenset({"ok", "incomplete", "pending", "unknown", "result recorded"})
+
 
 class SanitizedText(str):
     """Display-safe text created only from typed private-cycle projections."""
@@ -23,6 +34,52 @@ WITHHELD_ENV = SanitizedText("[withheld: env file]")
 
 def _escape(value: str) -> str:
     return html.escape(value, quote=True)
+
+
+def _safe_identifier(value: Any, fallback: str = "unavailable") -> str:
+    if not isinstance(value, str) or not IDENTIFIER_RE.fullmatch(value):
+        return fallback
+    digest = __import__("hashlib").sha256(value.encode("utf-8", errors="replace")).hexdigest()[:12]
+    return f"id-{digest}"
+
+
+def _safe_tool_name(value: Any) -> str:
+    if not isinstance(value, str) or not IDENTIFIER_RE.fullmatch(value):
+        return "unavailable"
+    return value if value in {"read_file", "write_file", "shell", "search", "unknown"} else "tool"
+
+
+def _safe_tool_sequence(value: Any) -> str:
+    if not isinstance(value, list):
+        return "unknown"
+    safe_names = [name for name in (_safe_tool_name(item) for item in value[:100]) if name != "tool"]
+    return ", ".join(safe_names) if safe_names else "unknown"
+
+
+def _safe_enum(value: Any, allowed: frozenset[str], fallback: str = "unknown") -> str:
+    return value if isinstance(value, str) and value in allowed else fallback
+
+
+def _safe_state_text(value: Any) -> str:
+    if value == "history complete":
+        return "history complete"
+    return "history incomplete"
+
+
+def _safe_count(value: Any) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 1_000_000:
+        return None
+    return value
+
+
+def _safe_duration(value: Any) -> str:
+    if isinstance(value, bool):
+        return "unknown"
+    if isinstance(value, int) and 0 <= value <= 86_400_000:
+        return str(value)
+    if isinstance(value, float) and 0 <= value <= 86_400_000:
+        return f"{value:g}"
+    return "unknown"
 
 
 def _serialized_block(value: Any) -> str:
@@ -84,10 +141,24 @@ def is_env_path(path_str: str) -> bool:
     )
 
 
-def _argument_keys(value: Any) -> list[str]:
-    if isinstance(value, dict):
-        return sorted(str(key) for key in value)
-    return []
+def _argument_keys(value: Any, *, limit: int = 50, depth: int = 4) -> list[str]:
+    """Project argument shape without disclosing arbitrary mapping keys."""
+    if depth <= 0 or not isinstance(value, dict):
+        return []
+    common = {"command", "content", "cwd", "file", "filename", "flags", "mode", "path", "query", "url"}
+    names = []
+    for key, item in list(value.items())[:limit]:
+        name = str(key)
+        if name.lower() in common:
+            label = name.lower()
+        else:
+            digest = __import__("hashlib").sha256(name.encode("utf-8", errors="replace")).hexdigest()[:10]
+            label = f"key-{digest}"
+        nested = _argument_keys(item, limit=limit, depth=depth - 1)
+        names.append(f"{label}{{{','.join(nested)}}}" if nested else label)
+    if len(value) > limit:
+        names.append("additional-keys-withheld")
+    return sorted(names)
 
 
 def sanitize_tool_arguments(arguments: Any) -> SanitizedText:
@@ -132,12 +203,47 @@ def sanitize_tool_output(args: Any, result: Any) -> SanitizedText:
     return _project_value(result)
 
 
+def _valid_argument_label(value: str, depth: int = 4) -> bool:
+    if depth < 0:
+        return False
+    base, separator, nested = value.partition("{")
+    if not re.fullmatch(r"(?:command|content|cwd|file|filename|flags|mode|path|query|url|key-[0-9a-f]{10}|additional-keys-withheld)", base):
+        return False
+    if not separator:
+        return True
+    if not nested.endswith("}"):
+        return False
+    body = nested[:-1]
+    labels = body.split(",") if body else []
+    return len(labels) <= 50 and all(_valid_argument_label(label, depth - 1) for label in labels)
+
+
+def _validated_projection(value: str) -> bool:
+    if value in {"[withheld: secret pattern]", "[withheld: env file]", "unavailable"}:
+        return True
+    if re.fullmatch(r"\[withheld: \d+ bytes, sha256:[0-9a-f]{12}\]", value):
+        return True
+    try:
+        parsed = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    if not isinstance(parsed, dict) or set(parsed) != {"keys", "size", "sha256"}:
+        return False
+    keys = parsed.get("keys")
+    return (
+        isinstance(keys, list) and len(keys) <= 51
+        and all(isinstance(key, str) and _valid_argument_label(key) for key in keys)
+        and _safe_count(parsed.get("size")) is not None
+        and isinstance(parsed.get("sha256"), str) and re.fullmatch(r"[0-9a-f]{12}", parsed["sha256"])
+    )
+
+
 def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> SanitizedText:
-    """Preserve an existing typed projection; otherwise withhold raw content."""
+    """Preserve only a recognized safe projection; withhold forged wrappers."""
     del limit
-    if isinstance(value, SanitizedText) and (str(value).startswith("[withheld:") or str(value).startswith('{"keys"')):
+    if isinstance(value, SanitizedText) and _validated_projection(str(value)):
         return value
-    return _project_value(value)
+    return _project_value(str(value))
 
 
 def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
@@ -620,16 +726,17 @@ def format_model_step(step: dict[str, Any]) -> str:
             if not isinstance(value, SanitizedText):
                 raise TypeError(f"{label} must be SanitizedText")
             parts.append(f"<p><b>{label.title()}:</b> {_escape(str(display_text(value)))}</p>")
-    if step.get("tokens") is not None:
-        parts.append(f"<p>Tokens: {step['tokens']}</p>")
+    tokens = _safe_count(step.get("tokens"))
+    if tokens is not None:
+        parts.append(f"<p>Tokens: {tokens}</p>")
     if step.get("duration") is not None:
-        parts.append(f"<p>Duration: {_escape(str(step['duration']))}</p>")
+        parts.append(f"<p>Duration: {_escape(_safe_duration(step['duration']))}</p>")
     parts.append("</div>")
     return "".join(parts)
 
 
 def format_tool_step(step: dict[str, Any]) -> str:
-    name = display_text(str(step.get("name", "unavailable")))
+    name = _safe_identifier(step.get("name"))
     raw_args = step.get("arguments", SanitizedText("unavailable"))
     if not isinstance(raw_args, SanitizedText):
         raise TypeError("arguments must be SanitizedText")
@@ -639,61 +746,84 @@ def format_tool_step(step: dict[str, Any]) -> str:
         raise TypeError("result must be SanitizedText")
     result = display_text(sanitize_tool_output(str(raw_args), str(res_val))) if res_val is not None else SanitizedText("unavailable")
     dur_val = step.get("duration")
-    duration = display_text(str(dur_val)) if dur_val is not None else "unknown"
-    source = display_text(str(step.get("source", "reconstructed from request")))
-    return f"<div class=\"step-tool\"><p>Tool step: {_escape(name)}({_escape(args)}) → {_escape(result)}; status: {_escape(display_text(str(step.get('status', 'unavailable'))))}; duration: {_escape(duration)}; source: {_escape(source)}</p></div>"
+    duration = _safe_duration(dur_val)
+    source_value = step.get("source")
+    source = "reconstructed from request" if isinstance(source_value, str) and source_value.startswith("reconstructed from request") else "recorded"
+    status = _safe_enum(step.get("status"), TOOL_STATUSES)
+    return f"<div class=\"step-tool\"><p>Tool step: {_escape(_safe_tool_name(name))}({_escape(args)}) → {_escape(result)}; status: {_escape(status)}; duration: {_escape(duration)}; source: {_escape(source)}</p></div>"
 
 
 def render_cycle_page(cycle_id: str, data: dict[str, Any] | None) -> str:
-    """Render private cycle detail page (ADR-036 D2); missing sources are explicit."""
-    if not isinstance(data, dict) or data.get("available") is False:
-        return f'<main><h1>Cycle {_escape(cycle_id)}</h1><p class="unavailable">Cycle detail unavailable: source data unavailable.</p></main>'
+    """Render private cycle details from bounded, typed display fields only."""
+    safe_cycle_id = _safe_identifier(cycle_id)
+    if (safe_cycle_id == "unavailable" or not isinstance(data, dict)
+            or data.get("available") is False):
+        return f'<main><h1>Cycle {_escape(safe_cycle_id)}</h1><p class="unavailable">Cycle detail unavailable: source data unavailable.</p></main>'
 
-    attempts = data.get("attempts") or []
-    sessions = data.get("sessions") or []
-    total_calls = data.get("total_model_calls", 0)
+    attempts = data.get("attempts")
+    attempts = attempts[:100] if isinstance(attempts, list) else []
+    sessions = data.get("sessions")
+    sessions = sessions[:100] if isinstance(sessions, list) else []
+    total_calls = _safe_count(data.get("total_model_calls"))
     reflection = data.get("reflection") if isinstance(data.get("reflection"), dict) else None
 
-    rows = [f'<main><h1>Cycle {_escape(cycle_id)}</h1>']
-    rows.append(f'<div class="cycle-summary"><p>Total model calls: {total_calls}</p>')
-    rows.append(f'<p>{"history incomplete" if data.get("history_complete") is not True else "history complete"}</p></div>')
+    rows = [f'<main><h1>Cycle {_escape(safe_cycle_id)}</h1>']
+    rows.append(f'<div class="cycle-summary"><p>Total model calls: {total_calls if total_calls is not None else "unknown"}</p>')
+    rows.append(f'<p>{_safe_state_text(data.get("history_state") if "history_state" in data else ("history complete" if data.get("history_complete") is True else "history incomplete"))}</p></div>')
 
     if reflection:
         rows.append('<section class="reflection-summary"><h2>Reflector summary</h2>')
-        rows.append(f'<p>Summary chars: {_escape(str(reflection.get("summary_chars", "unknown")))}</p>')
-        rows.append(f'<p>Findings count: {_escape(str(reflection.get("findings_count", "unknown")))}</p>')
-        rows.append(f'<p>Recommendations count: {_escape(str(reflection.get("recommendations_count", "unknown")))}</p></section>')
+        for label, key in (("Summary chars", "summary_chars"), ("Findings count", "findings_count"), ("Recommendations count", "recommendations_count")):
+            count = _safe_count(reflection.get(key))
+            rows.append(f'<p>{label}: {count if count is not None else "unknown"}</p>')
+        rows.append('</section>')
 
     rows.append('<section class="attempts-section"><h2>Attempts</h2>')
     if not attempts:
-        rows.append('<p class="unavailable">No attempt records found.</p>')
+        rows.append('<p class="unavailable">Attempt records unavailable.</p>')
     for att in attempts:
-        att_marked = mark_incomplete_history(att)
-        calls_text = f"<p>Model calls: {att['model_call_count']}</p>" if att.get("model_call_count") is not None else ""
-        rows.append(f'<article class="attempt-row"><h3>Attempt {_escape(str(att.get("run_id", "unavailable")))}</h3>{calls_text}<p>Classification: {_escape(str(att.get("classification", "unknown")))}</p><p>{att_marked["history_state"]}</p>')
-        for sess in att.get("sessions") or []:
-            rows.append(f'<section class="attempt-session"><h4>Session {_escape(str(sess.get("role", "unassigned")))}</h4><p>Model calls: {sess.get("model_calls", 0)}</p><p>Tokens: {sess.get("tokens", 0)}</p><p>Duration: {sess.get("duration_ms", "unknown")}</p><p>Tool sequence: {_escape(", ".join(sess.get("tool_names", [])))}</p>')
-            for step in sess.get("steps") or []:
-                rows.append(format_tool_step(step) if step.get("kind") == "tool" else format_model_step(step))
+        if not isinstance(att, dict):
+            continue
+        run_id = _safe_identifier(att.get("run_id"))
+        classification = _safe_enum(att.get("classification"), CLASSIFICATIONS)
+        call_count = _safe_count(att.get("model_call_count"))
+        calls_text = f"<p>Model calls: {call_count}</p>" if call_count is not None else ""
+        outcome = _safe_enum(att.get("outcome"), OUTCOMES)
+        rows.append(f'<article class="attempt-row"><h3>Attempt {_escape(run_id)}</h3>{calls_text}<p>Classification: {_escape(classification)}</p><p>Outcome: {_escape(outcome)}</p><p>{_safe_state_text("history complete" if att.get("history_complete") is True else "history incomplete")}</p>')
+        att_sessions = att.get("sessions")
+        att_sessions = att_sessions[:100] if isinstance(att_sessions, list) else []
+        for sess in att_sessions:
+            if not isinstance(sess, dict):
+                continue
+            role = _safe_enum(sess.get("role"), SESSION_ROLES)
+            model_calls = _safe_count(sess.get("model_calls"))
+            tokens = _safe_count(sess.get("tokens"))
+            duration = _safe_duration(sess.get("duration_ms"))
+            tools = _safe_tool_sequence(sess.get("tool_names"))
+            rows.append(f'<section class="attempt-session"><h4>Session {_escape(role)}</h4><p>Model calls: {model_calls if model_calls is not None else "unknown"}</p><p>Tokens: {tokens if tokens is not None else "unknown"}</p><p>Duration: {_escape(duration)}</p><p>Tool sequence: {_escape(tools)}</p>')
+            steps = sess.get("steps")
+            for step in steps[:500] if isinstance(steps, list) else []:
+                if isinstance(step, dict):
+                    rows.append(format_tool_step(step) if step.get("kind") == "tool" else format_model_step(step))
             rows.append('</section>')
         rows.append('</article>')
     rows.append('</section>')
 
     if not attempts:
         rows.append('<section class="sessions-section"><h2>Sessions</h2>')
-    if not attempts and not sessions:
-        rows.append('<p class="unavailable">No session records found.</p>')
-    for sess in sessions if not attempts else []:
-        role = sess.get("role", "unknown")
-        sess_marked = mark_incomplete_history(sess)
-        rows.append(f'<article class="session-block"><h3>Session {_escape(role)}</h3><p>Model calls: {sess.get("model_calls", 0)}</p><p>{sess_marked["history_state"]}</p>')
-        for step in sess.get("steps") or []:
-            if step.get("kind") == "tool":
-                rows.append(format_tool_step(step))
-            else:
-                rows.append(format_model_step(step))
-        rows.append('</article>')
-    if not attempts:
+        if not sessions:
+            rows.append('<p class="unavailable">Session records unavailable.</p>')
+        for sess in sessions:
+            if not isinstance(sess, dict):
+                continue
+            role = _safe_enum(sess.get("role"), SESSION_ROLES)
+            model_calls = _safe_count(sess.get("model_calls"))
+            rows.append(f'<article class="session-block"><h3>Session {_escape(role)}</h3><p>Model calls: {model_calls if model_calls is not None else "unknown"}</p><p>{_safe_state_text("history complete" if sess.get("history_complete") is True else "history incomplete")}</p>')
+            steps = sess.get("steps")
+            for step in steps[:500] if isinstance(steps, list) else []:
+                if isinstance(step, dict):
+                    rows.append(format_tool_step(step) if step.get("kind") == "tool" else format_model_step(step))
+            rows.append('</article>')
         rows.append('</section>')
     rows.append('</main>')
     return "".join(rows)
