@@ -268,6 +268,8 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
             if isinstance(calls, list) and calls:
                 row["tool_calls"] = [
                     {
+                        "id": _content_fingerprint(str(call["id"]))[1]
+                        if isinstance(call, dict) and call.get("id") else "",
                         "name": str((call.get("function") or call).get("name") or "tool")
                         if isinstance(call, dict) and isinstance(call.get("function") or call, dict) else "tool",
                         "arguments": sanitize_tool_arguments(
@@ -287,6 +289,8 @@ def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
                 }]
         elif role == "tool":
             row["name"] = str(message.get("name") or "tool")
+            if message.get("tool_call_id"):
+                row["tool_call_id"] = _content_fingerprint(str(message["tool_call_id"]))[1]
             row["status"] = "result recorded"
             row["result"] = _project_value(message.get("content"))
         for field in ("error", "metadata", "reasoning_content"):
@@ -398,16 +402,26 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
         elif role == "tool":
             cid = msg.get("tool_call_id")
             content = str(msg.get("content") or "")
+            matched = False
             if cid and cid in pending_calls:
                 call_step = pending_calls.pop(cid)
                 call_step["result"] = sanitize_tool_output(call_step["arguments"], content)
                 call_step["status"] = "ok"
+                matched = True
             elif not cid and steps:
                 for s in reversed(steps):
                     if s["status"] == "pending":
                         s["result"] = sanitize_tool_output(s["arguments"], content)
                         s["status"] = "ok"
+                        matched = True
                         break
+            if not matched:
+                steps.append({
+                    "kind": "tool", "tool_call_id": str(cid or ""),
+                    "name": "unknown", "arguments": sanitize_tool_arguments(None),
+                    "result": _project_value(content), "source": source,
+                    "status": "incomplete", "duration": None, "tokens": None,
+                })
     response_tools = prompt.get("tool_calls") or []
     if isinstance(response_tools, str):
         try:
@@ -732,14 +746,21 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 model_calls = [step for step in model_steps if step.get("kind") == "model"]
                 token_values = [step.get("tokens") for step in model_calls]
                 duration_values = [step.get("duration") for step in model_calls]
-                sessions.append({"role": role, "history_complete": not cycle_broken and read_state == "ok",
+                session_complete = (
+                    not cycle_broken and read_state == "ok" and not has_compaction
+                    and not any(prompt.get("truncated") for prompt in prompts_for_role)
+                    and not any(step.get("status") in {"pending", "incomplete"}
+                                or step.get("tool_status") == "incomplete" for step in model_steps)
+                )
+                sessions.append({"role": role, "history_complete": session_complete,
                                  "model_calls": len(prompts_for_role), "steps": model_steps,
                                  "tool_names": tool_names,
                                  "tokens": sum(value for value in token_values if isinstance(value, int)) if all(isinstance(value, int) for value in token_values) else None,
                                  "duration_ms": sum(value for value in duration_values if isinstance(value, (int, float))) if all(isinstance(value, (int, float)) for value in duration_values) else None})
             killed = run.get("classification") in {"unit_timeout", "killed"}
             run_state = not killed
-            complete = read_state == "ok" and not cycle_broken and not has_compaction and bool(owned) and run_state
+            complete = (read_state == "ok" and not cycle_broken and not has_compaction
+                        and bool(owned) and run_state and all(session["history_complete"] for session in sessions))
             attempts.append({"run_id": run_id, "classification": run.get("classification") or "unknown",
                              "model_call_count": call_count, "sessions": sessions,
                              "history_complete": complete, "outcome": run.get("outcome") or run.get("classification") or "unknown"})
@@ -753,6 +774,8 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                     owned_prompts.add(id(prompt))
         unassigned = [prompt for prompt in c_prompts if id(prompt) not in owned_prompts]
         if unassigned:
+            reconstruction_state = "incomplete"
+            cycle_reconstruction_incomplete = True
             tool_names = []
             for prompt in unassigned:
                 messages = prompt.get("messages") or []
@@ -775,6 +798,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             and capture_state == "complete"
             and reconstruction_state == "complete"
             and not cycle_reconstruction_incomplete
+            and all(a["history_complete"] for a in attempts)
             and not any(a["classification"] in {"unit_timeout", "killed"} for a in attempts)
             and bool(attempts)
             and bool(c_prompts)

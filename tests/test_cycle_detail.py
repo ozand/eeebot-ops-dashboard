@@ -272,8 +272,9 @@ def test_mismatched_tool_response_id_does_not_complete_pending_call() -> None:
         {"role": "assistant", "tool_calls": [{"id": "expected", "function": {"name": "read", "arguments": "{}"}}]},
         {"role": "tool", "tool_call_id": "different", "content": "response"},
     ]})
-    assert len(steps) == 1
+    assert len(steps) == 2
     assert steps[0]["status"] == "pending"
+    assert steps[1]["status"] == "incomplete"
 
 
 def test_reconstructed_steps_have_source_and_unknown_duration():
@@ -726,9 +727,9 @@ def test_only_affected_source_marks_matching_cycle_incomplete(tmp_path: Path) ->
     )
     prompt_dir = root / "llm_calls" / "prompts"
     prompt_dir.mkdir(parents=True)
-    valid = {"cycle_id": "c-a", "component": "executor", "seq": 1, "messages": []}
-    bad = {"cycle_id": "c-b", "component": "executor", "seq": 1, "messages": []}
-    unrelated = {"cycle_id": "c-c", "component": "executor", "seq": 1, "messages": []}
+    valid = {"cycle_id": "c-a", "component": "executor", "seq": 1, "messages": [], "ts": "2026-09-25T10:00:00Z"}
+    bad = {"cycle_id": "c-b", "component": "executor", "seq": 1, "messages": [], "ts": "2026-09-25T10:00:00Z"}
+    unrelated = {"cycle_id": "c-c", "component": "executor", "seq": 1, "messages": [], "ts": "2026-09-25T10:00:00Z"}
     (prompt_dir / "2026-09-25.jsonl").write_text(
         json.dumps(valid) + "\n" + json.dumps(bad) + "\n{" + json.dumps({"cycle_id": "c-b"})[1:] + "BROKEN\n" + json.dumps(unrelated) + "\n{" + json.dumps({"cycle_id": "c-d"})[1:] + "BROKEN\n", encoding="utf-8",
     )
@@ -1003,7 +1004,7 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
     assert len(detail["attempts"][0]["sessions"][0]["steps"]) == 4
     assert len(detail["attempts"][1]["sessions"][0]["steps"]) == 2
     assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
-    assert detail["attempts"][0]["sessions"][0]["history_complete"] is True
+    assert detail["attempts"][0]["sessions"][0]["history_complete"] is False
     assert detail["attempts"][1]["sessions"][0]["history_complete"] is True
     assert detail["attempts"][1]["history_complete"] is True
     steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
