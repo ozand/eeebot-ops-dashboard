@@ -758,6 +758,83 @@ def test_f8_unattributed_prompt_counts_only_model_calls(tmp_path: Path) -> None:
     assert session["model_calls"] == 1
 
 
+def test_response_tool_calls_reconciled_with_following_prompt_messages(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    (root / "bridge" / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r-tools", "cycle_id": "c-tools", "classification": "completed",
+        "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z",
+    }) + "\n", encoding="utf-8")
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    rows = [
+        {"cycle_id": "c-tools", "component": "executor", "seq": 1,
+         "ts": "2026-09-25T10:00:00Z", "finish_reason": "tool_calls", "messages": [],
+         "tool_calls": [{"id": "call-1", "function": {"name": "read_file", "arguments": "{}"}}]},
+        {"cycle_id": "c-tools", "component": "executor", "seq": 2,
+         "ts": "2026-09-25T10:00:01Z", "messages": [
+             {"role": "assistant", "tool_calls": [{"id": "call-1", "function": {"name": "read_file", "arguments": "{}"}}]},
+             {"role": "tool", "tool_call_id": "call-1", "content": "synthetic result"},
+         ]},
+    ]
+    (prompts / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-tools"]
+    steps = [step for session in detail["sessions"] for step in session["steps"] if step.get("kind") == "tool"]
+    assert len(steps) == 1
+    assert steps[0]["status"] == "ok"
+    assert detail["history_complete"] is True
+
+
+def test_idless_tool_call_ids_are_unique_across_prompts() -> None:
+    from scripts.cycle_detail import extract_tool_steps
+
+    first = extract_tool_steps({"seq": 1, "component": "executor", "ts": "2026-09-25T10:00:00Z",
+                                "messages": [{"role": "assistant", "tool_calls": [{"function": {"name": "read_file", "arguments": "{}"}}]}]})
+    second = extract_tool_steps({"seq": 2, "component": "executor", "ts": "2026-09-25T10:01:00Z",
+                                 "messages": [{"role": "assistant", "tool_calls": [{"function": {"name": "read_file", "arguments": "{}"}}]}]})
+    assert first[0]["tool_call_id"] != second[0]["tool_call_id"]
+
+
+def test_response_tool_call_without_following_prompt_stays_incomplete(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    (root / "bridge" / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r-final", "cycle_id": "c-final", "classification": "completed",
+        "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z",
+    }) + "\n", encoding="utf-8")
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    row = {"cycle_id": "c-final", "component": "executor", "seq": 1,
+           "ts": "2026-09-25T10:00:00Z", "finish_reason": "tool_calls", "messages": [],
+           "tool_calls": [{"id": "call-final", "function": {"name": "read_file", "arguments": "{}"}}]}
+    (prompts / "2026-09-25.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-final"]
+    assert detail["history_complete"] is False
+    assert any(step.get("status") == "incomplete" for session in detail["sessions"] for step in session["steps"] if step.get("kind") == "tool")
+
+
+def test_completed_attempt_with_empty_prompt_file_is_incomplete(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r-empty", "cycle_id": "c-empty", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    prompt_dir = tmp_path / "llm_calls" / "prompts"
+    prompt_dir.mkdir(parents=True)
+    (prompt_dir / "2026-09-25.jsonl").write_text("", encoding="utf-8")
+    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-empty"]
+    assert detail["reconstruction"] == "incomplete"
+    assert detail["history_complete"] is False
+    assert detail["attempts"][0]["history_complete"] is False
+    assert detail["attempts"][0]["model_call_count"] == 0
+
+
 def test_duplicate_daily_prompt_compression_is_counted_once(tmp_path: Path) -> None:
     import gzip
     import json
@@ -835,14 +912,14 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
 
     detail = cd.build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-f8"]
     assert [a["model_call_count"] for a in detail["attempts"]] == [2, 1]
-    assert len(detail["attempts"][0]["sessions"][0]["steps"]) == 2
-    assert len(detail["attempts"][1]["sessions"][0]["steps"]) == 1
+    assert len(detail["attempts"][0]["sessions"][0]["steps"]) == 4
+    assert len(detail["attempts"][1]["sessions"][0]["steps"]) == 2
     assert [len(a["sessions"]) for a in detail["attempts"]] == [1, 1]
     assert detail["attempts"][0]["sessions"][0]["history_complete"] is True
     assert detail["attempts"][1]["sessions"][0]["history_complete"] is True
     assert detail["attempts"][1]["history_complete"] is True
     steps = [step for attempt in detail["attempts"] for session in attempt["sessions"] for step in session["steps"]]
-    assert sum(step.get("kind") == "tool" for step in steps) == 0
+    assert sum(step.get("kind") == "tool" for step in steps) == 3
     assert all(step.get("duration") == "unknown" for step in steps if step.get("kind") == "model")
     page = cd.render_cycle_page("c-f8", detail)
     assert page.count('class="attempt-row"') == 2

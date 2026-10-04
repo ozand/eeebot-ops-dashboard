@@ -366,6 +366,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
             messages = []
     steps: list[dict[str, Any]] = []
     pending_calls: dict[str, dict[str, Any]] = {}
+    prompt_identity = _content_fingerprint(prompt)[1]
     for msg in messages:
         if not isinstance(msg, dict):
             continue
@@ -373,7 +374,10 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
         if role == "assistant":
             for tc in msg.get("tool_calls") or []:
                 if isinstance(tc, dict):
-                    cid = tc.get("id") or f"call_{len(steps)}"
+                    prompt_id = _safe_count(prompt.get("seq"))
+                    prompt_stamp = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
+                    stamp_key = prompt_stamp.isoformat() if prompt_stamp is not None else "unknown-time"
+                    cid = tc.get("id") or f"call_{prompt.get('component', 'unknown')}_{prompt_id if prompt_id is not None else 'unknown'}_{stamp_key}_{prompt_identity}_{len(steps)}"
                     fn = tc.get("function") or tc
                     args = fn.get("arguments") or ""
                     if isinstance(args, dict):
@@ -519,7 +523,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         if read_state != "ok":
             reconstruction_state = "incomplete"
             cycle_reconstruction_incomplete = True
-        elif not c_prompts and c_runs:
+        elif c_runs and not c_prompts:
             reconstruction_state = "incomplete"
             cycle_reconstruction_incomplete = True
         elif cycle_broken or has_compaction:
@@ -532,7 +536,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
         steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
         used_duration_ids: set[int] = set()
-        for p in c_prompts:
+        for prompt_index, p in enumerate(c_prompts):
             role = str(p.get("component") or "executor")
             duration_key = (cid, role, str(p.get("seq")))
             candidates = duration_rows.get(duration_key, [])
@@ -549,6 +553,30 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             dur = duration_row.get("duration_ms") if duration_row is not None else None
             sanitized_prompt = dict(p)
             sanitized_prompt["messages"] = sanitize_messages(p.get("messages"))
+            if prompt_index + 1 < len(c_prompts):
+                following = c_prompts[prompt_index + 1].get("messages") or []
+                if isinstance(following, str):
+                    try:
+                        following = json.loads(following)
+                    except (json.JSONDecodeError, TypeError):
+                        following = []
+                continued = set()
+                for message in following if isinstance(following, list) else []:
+                    if not isinstance(message, dict) or message.get("role") != "assistant":
+                        continue
+                    for call in message.get("tool_calls") or []:
+                        if isinstance(call, dict) and call.get("id"):
+                            continued.add(str(call["id"]))
+                response_calls = p.get("tool_calls") or []
+                if isinstance(response_calls, str):
+                    try:
+                        response_calls = json.loads(response_calls)
+                    except (json.JSONDecodeError, TypeError):
+                        response_calls = []
+                sanitized_prompt["tool_calls"] = [
+                    call for call in response_calls
+                    if not (isinstance(call, dict) and call.get("id") and str(call["id"]) in continued)
+                ] if isinstance(response_calls, list) else []
             tools = extract_tool_steps(sanitized_prompt)
             if any(t.get("status") in {"incomplete", "pending"} for t in tools) or any(
                 isinstance(message, dict) and message.get("_pending_tool_calls")
@@ -634,16 +662,16 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                             if isinstance(function, dict) and function.get("name"):
                                 names.append(str(function["name"]))
                     tool_names.extend(names)
-                    model_steps.append({
-                        "kind": "model",
-                        "tokens": (prompt.get("prompt_tokens") or 0) + (prompt.get("completion_tokens") or 0),
-                        "duration": duration if duration is not None else "unknown",
-                    })
+                    prompt_steps = steps_by_prompt.get(id(prompt), [])
+                    model_steps.extend(prompt_steps)
+                model_calls = [step for step in model_steps if step.get("kind") == "model"]
+                token_values = [step.get("tokens") for step in model_calls]
+                duration_values = [step.get("duration") for step in model_calls]
                 sessions.append({"role": role, "history_complete": not cycle_broken and read_state == "ok",
                                  "model_calls": len(prompts_for_role), "steps": model_steps,
                                  "tool_names": tool_names,
-                                 "tokens": sum(step["tokens"] for step in model_steps),
-                                 "duration_ms": sum(step["duration"] for step in model_steps if isinstance(step["duration"], (int, float)))})
+                                 "tokens": sum(value for value in token_values if isinstance(value, int)) if all(isinstance(value, int) for value in token_values) else None,
+                                 "duration_ms": sum(value for value in duration_values if isinstance(value, (int, float))) if all(isinstance(value, (int, float)) for value in duration_values) else None})
             killed = run.get("classification") in {"unit_timeout", "killed"}
             run_state = not killed
             complete = read_state == "ok" and not cycle_broken and not has_compaction and bool(owned) and run_state
