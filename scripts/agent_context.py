@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -821,7 +822,13 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         </section>
         """
 
-    sys_prompt = agent_context.get("system_prompt") or {}
+    # #385: preserve whether the system_prompt telemetry row is absent (None/missing).
+    # ``or {}`` would collapse None to {} and lose the distinction between
+    # "no row found" (unavailable), "row present but chars withheld" and
+    # "row present with chars=0" (measured zero).
+    _raw_sys_prompt = agent_context.get("system_prompt")
+    sys_prompt_absent = not isinstance(_raw_sys_prompt, dict)
+    sys_prompt = _raw_sys_prompt if isinstance(_raw_sys_prompt, dict) else {}
     prompt_text = agent_context.get("prompt_text")
     task_text = agent_context.get("task_text")
     prompt_text_chars = agent_context.get("prompt_text_chars")
@@ -838,7 +845,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     chars = sys_prompt.get("chars")
     cap = sys_prompt.get("cap")
     overflow = sys_prompt.get("overflow", False)
-    over_by = sys_prompt.get("over_by", 0)
+    over_by = sys_prompt.get("over_by")
     sections = sys_prompt.get("sections")
     missing_files = sys_prompt.get("missing") or []
     truncated_files = sys_prompt.get("truncated") or []
@@ -846,8 +853,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         name in sections for name in ("soul", "user", "operating", "agents", "runtime")
     )
     nonzero_section_names = [
-        name for name in (sections or {}) if (sections.get(name) or 0) > 0
-    ] if sections else []
+        name for name in sections if (sections.get(name) or 0) > 0
+    ] if isinstance(sections, dict) else []
     separator_count = max(0, len(nonzero_section_names) - 1)
     separator_total_chars = separator_count * SEPARATOR_LEN
     dropped = sys_prompt.get("dropped") or []
@@ -925,23 +932,80 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     outside_cap = parsed_prompt["outside_cap"]
     actual_system_chars = len(prompt_text) if prompt_text is not None else prompt_text_chars
 
-    if chars is None and sections:
-        # For overflow rows, chars key is absent; total is cap + over_by or sum of non-empty sections + separators
-        if overflow and cap is not None and over_by is not None:
+    # #385: Track how chars was obtained to distinguish states:
+    # - sys_prompt_absent → no telemetry row, all chars figures are unavailable
+    # - chars_recorded=True, chars==0 → measured zero (genuine empty build)
+    # - chars_recorded=False, derived from sections → withheld/not-recorded char total
+    chars_recorded = (
+        isinstance(chars, int) and not isinstance(chars, bool) and chars >= 0
+    )
+    chars_invalid = chars is not None and not chars_recorded
+    valid_cap = isinstance(cap, int) and not isinstance(cap, bool) and cap > 0
+    if chars_invalid:
+        chars = None
+    sections_are_valid = isinstance(sections, dict) and all(
+        isinstance(name, str) and bool(name.strip())
+        and isinstance(value, int) and not isinstance(value, bool) and value >= 0
+        for name, value in sections.items()
+    )
+    valid_over_by = (
+        (isinstance(over_by, int) and not isinstance(over_by, bool) and over_by >= 0)
+        or (isinstance(over_by, float) and math.isfinite(over_by) and over_by >= 0)
+    )
+    if chars is None and sections_are_valid and not sys_prompt_absent:
+        # The overflow formula requires both operands to be explicitly recorded and valid.
+        if overflow and valid_cap and valid_over_by:
             chars = cap + over_by
+            chars_recorded = False  # deterministically derived from cap + over_by
         else:
             chars = sum(sections.values()) + separator_total_chars
+            # chars_recorded stays False: total is derived, not a recorded field
 
-    total_chars = chars or (len(prompt_text) if prompt_text else 0)
+    # Distinguish three presentation states:
+    # - sys_prompt_absent: no row at all → KPI shows "unavailable"
+    # - chars is 0 and chars_recorded: measured zero → show as "0 chars (measured zero)"
+    # - chars is None after derivation attempt: neither recorded nor derivable → unavailable
+    if sys_prompt_absent:
+        total_chars = 0  # sentinel; KPI will render as unavailable, not as 0
+        chars_display_state = "unavailable"  # no telemetry row
+    elif chars is None:
+        total_chars = len(prompt_text) if prompt_text else 0
+        chars_display_state = "unavailable"  # not recorded, not derivable
+    elif chars_recorded and chars == 0:
+        total_chars = 0
+        chars_display_state = "measured_zero"  # explicitly recorded as 0
+    elif not chars_recorded:
+        total_chars = chars
+        chars_display_state = "derived"  # derived from sections sum, not recorded
+    else:
+        total_chars = chars
+        chars_display_state = "recorded"  # recorded value
     total_tokens = estimate_tokens(total_chars)
 
-    if overflow and cap is not None:
-        ov_amount = over_by if over_by else (total_chars - cap)
-        headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap)</span>'
+    if chars_display_state == "unavailable" or not valid_cap:
+        headroom_badge = '<span class="context-badge badge-secondary">CAPACITY UNKNOWN</span>'
+        headroom_text = '<span>n/a</span>'
+        bar_pct = None
+        bar_color = "var(--color-accent, #58a6ff)"
+    elif total_chars > cap:
+        ov_amount = total_chars - cap
+        overflow_mismatch = overflow and valid_over_by and over_by != ov_amount
+        overflow_note = " (telemetry mismatch)" if overflow_mismatch else ""
+        headroom_badge = f'<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+{ov_amount:,} chars over cap{overflow_note})</span>'
         headroom_text = f'<span class="stat-warn">-{ov_amount:,} chars (OVERFLOW)</span>'
         bar_pct = min(100, int((total_chars / cap) * 100)) if cap > 0 else None
         bar_color = "var(--color-danger, #f85149)"
-    elif cap is not None and cap > 0 and total_chars:
+    elif valid_cap and overflow and valid_over_by and over_by == 0 and total_chars == cap:
+        headroom_badge = '<span class="context-badge badge-danger context-badge-overflow">OVERFLOW (+0 chars over cap)</span>'
+        headroom_text = '<span class="stat-warn">0 chars (OVERFLOW)</span>'
+        bar_pct = 100
+        bar_color = "var(--color-danger, #f85149)"
+    elif valid_cap and overflow and chars_recorded and total_chars <= cap and valid_over_by and over_by > 0:
+        headroom_badge = '<span class="context-badge badge-warning">TELEMETRY MISMATCH (overflow flag without load above cap)</span>'
+        headroom_text = '<span>n/a</span>'
+        bar_pct = min(100, int((total_chars / cap) * 100))
+        bar_color = "var(--color-warning, #d29922)"
+    elif valid_cap:
         spare = cap - total_chars
         pct = (total_chars / cap) * 100
         headroom_badge = f'<span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+{spare:,} chars spare)</span>'
@@ -991,8 +1055,8 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         if all(status == "present" for status, _ in corpus_counts)
         else "unavailable"
     )
-    cat_sz = sections.get("skills_catalogue", 0) if sections else len(raw_sections_text.get("skills_catalogue", ""))
-    mem_sz = sections.get("memory", 0) if sections else len(raw_sections_text.get("memory", ""))
+    cat_sz = sections.get("skills_catalogue", 0) if isinstance(sections, dict) else len(raw_sections_text.get("skills_catalogue", ""))
+    mem_sz = sections.get("memory", 0) if isinstance(sections, dict) else len(raw_sections_text.get("memory", ""))
 
     out = []
     out.append('<section class="panel context-panel">')
@@ -1015,15 +1079,36 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-kpis">')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Capped Prompt Load</span>')
-    out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
-    out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
+    # #385: render KPI distinctly for three states:
+    # - unavailable (no telemetry row, or chars not derivable)
+    # - measured_zero (recorded as 0, not an absence of data)
+    # - derived (fallback sum from sections, chars key absent)
+    # - recorded (normal: chars key present with non-zero value)
+    if chars_display_state == "unavailable":
+        out.append('      <span class="kpi-value kpi-unavailable">unavailable <span class="kpi-unit">capped chars</span></span>')
+        out.append('      <span class="kpi-sub">system_prompt telemetry unavailable</span>')
+    elif chars_display_state == "measured_zero":
+        out.append(f'      <span class="kpi-value">0 <span class="kpi-unit">capped chars (measured zero)</span></span>')
+        out.append(f'      <span class="kpi-sub">~0 est. tokens · recorded as 0 (genuine empty build)</span>')
+    elif chars_display_state == "derived":
+        out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
+        derived_note = (
+            "cap + over_by" if overflow and valid_cap and valid_over_by
+            else "recorded empty section map" if not sections
+            else "chars field not recorded"
+        )
+        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens · <em>derived from sections ({derived_note})</em></span>')
+    else:
+        out.append(f'      <span class="kpi-value">{total_chars:,} <span class="kpi-unit">capped chars</span></span>')
+        out.append(f'      <span class="kpi-sub">~{total_tokens:,} est. tokens under builder cap</span>')
     actual_system_display = f'<strong>Actual System Message:</strong> {actual_system_chars:,} chars received by model' if actual_system_chars is not None else f'<strong>Actual System Message:</strong> {snapshot_text_unavailable}'
     out.append(f'      <span class="kpi-sub">{actual_system_display}</span>')
     out.append('    </div>')
     out.append('    <div class="context-kpi-card">')
     out.append('      <span class="kpi-label">Context Budget Cap</span>')
-    cap_display = f'{cap:,} <span class="kpi-unit">chars</span>' if cap is not None else 'unavailable'
-    cap_tokens_display = f'~{estimate_tokens(cap):,} est. tokens limit' if cap is not None else 'recorded cap unavailable'
+    cap_valid = isinstance(cap, int) and not isinstance(cap, bool) and cap >= 0
+    cap_display = f'{cap:,} <span class="kpi-unit">chars</span>' if cap_valid else 'unavailable'
+    cap_tokens_display = f'~{estimate_tokens(cap):,} est. tokens limit' if cap_valid else 'recorded cap unavailable'
     out.append(f'      <span class="kpi-value">{cap_display}</span>')
     out.append(f'      <span class="kpi-sub">{cap_tokens_display}</span>')
     out.append('    </div>')
@@ -1042,7 +1127,12 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-subject-group context-overview-group">')
     out.append('    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>')
     out.append('  <div class="context-meter-box">')
-    meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)' if bar_pct is not None and cap is not None else '<strong>unavailable</strong> (recorded cap unavailable)'
+    if bar_pct is not None and cap_valid:
+        meter_value = f'<strong>{bar_pct}%</strong> ({total_chars:,} / {cap:,} chars)'
+    elif chars_display_state == "unavailable":
+        meter_value = '<strong>unavailable</strong> (load unavailable)'
+    else:
+        meter_value = '<strong>unavailable</strong> (recorded cap unavailable)'
     out.append(f'    <div class="meter-labels"><span>Prompt Budget Utilization: {meter_value}</span><span>{ts_display}</span></div>')
     out.append('    <div class="context-progress-bar">')
     meter_fill = f'<div class="context-progress-fill" style="width:{bar_pct}%;background:{bar_color};"></div>' if bar_pct is not None else '<div class="context-progress-fill meter-unavailable" style="width:0%;"></div>'
@@ -1089,7 +1179,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     # ledger row's `sections`, in the RECORDED order (whatever the harness
     # emitted that cycle). Owner/file/cap come from the static ADR-022 map;
     # unknown names fall through to "unmapped" and still render their chars.
-    for t1_seq, sec_name in enumerate(sections or {}, start=1):
+    for t1_seq, sec_name in enumerate(sections if isinstance(sections, dict) else {}, start=1):
         sec_sz = sections.get(sec_name) or 0
         meta = section_owner_meta(sec_name)
         is_empty = sec_sz == 0
@@ -1131,7 +1221,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  <div class="context-detail-section">')
     format_badge = (
         '<span class="status-badge status-present">format: post-ADR-022 ontology</span>' if is_post_migration_row
-        else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections
+        else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections_are_valid and sections
         else '<span class="status-badge status-missing">format: unavailable</span>'
     )
     out.append(f'    <h3>Tier 1: Assembled Context Blocks (Recorded Order) {format_badge}</h3>')
@@ -1145,7 +1235,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     pool_floors = release_floors(sys_prompt)
     pool_used_from_sections = 0
 
-    if sections:
+    if sections_are_valid and sections:
         for sec_name in sections:
             sec_sz = sections.get(sec_name) or 0
             meta = section_owner_meta(sec_name)
@@ -1248,10 +1338,48 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
             ) or "recorded section boundaries unavailable"
             out.append(f'      <p class="rec-note"><strong>Structural prompt parse mismatch:</strong> {evidence}</p>')
         out.append('    </div>')
+    elif isinstance(sections, dict) and not sections and not sys_prompt_absent:
+        out.append('    <div class="reconciliation-box rec-empty">')
+        is_overflow_derived = (
+            chars_display_state == "derived" and overflow and valid_cap and valid_over_by
+        )
+        expected_total = 0
+        if total_chars == expected_total:
+            empty_status = 'status-present'
+            empty_label = 'sections: empty (0 chars)'
+            empty_note = f'Sections recorded as an empty map; derived total is <strong>{expected_total:,} chars</strong> (exact match).'
+        else:
+            empty_status = 'status-warning'
+            empty_label = 'sections: empty (0 chars)'
+            total_source = "derived" if is_overflow_derived or chars_display_state == "derived" else "recorded"
+            derivation = " from cap + over_by" if is_overflow_derived else ""
+            delta = total_chars - expected_total
+            empty_note = f'Sections recorded as an empty map; expected total is <strong>{expected_total:,} chars</strong>, but {total_source}{derivation} total is <strong>{total_chars:,} chars</strong> (mismatch, {delta:+,} chars).'
+        out.append(f'      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge {empty_status}">{empty_label}</span></div>')
+        out.append(f'      <p class="rec-note">{empty_note}</p>')
+        out.append('    </div>')
     else:
+        # #385: Distinguish four sub-cases for non-truthy-dict sections:
+        # 1. No telemetry row at all (sys_prompt_absent)
+        # 2. Row present, sections key absent or null (sections is None)
+        # 3. Row present, sections key present but recorded as empty dict (sections == {})
+        # 4. Row present, sections key present but invalid type (not None, not dict)
+        # Cases 2/3/4 are deliberately distinct from each other and from case 1.
+        if sections is None and not sys_prompt_absent:
+            sections_note = 'sections field absent or null in this telemetry row'
+        elif sections == {} and not sys_prompt_absent:
+            sections_note = 'sections recorded as empty in this telemetry row'
+        elif not isinstance(sections, dict) and not sys_prompt_absent:
+            sections_note = f'sections field contains an invalid value (not a dict or null); treating as unavailable'
+        else:
+            sections_note = 'sections breakdown unavailable'  # fallback; sys_prompt_absent handled below
         out.append('    <div class="reconciliation-box rec-unavailable">')
         out.append('      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">sections: unavailable</span></div>')
-        out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; This cycle row was recorded prior to structured section logging (#1379). Recorded total chars: <strong>{total_chars:,}</strong>. Per honesty rules, section sizes are not reconstructed.</p>')
+        if sys_prompt_absent:
+            out.append('      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; No system_prompt telemetry row found in runtime state. No char totals or section sizes can be reported. Per honesty rules, section sizes are not reconstructed.</p>')
+        else:
+            chars_note = f' Recorded total chars: <strong>{total_chars:,}</strong>.' if chars_display_state not in ('unavailable',) else ''
+            out.append(f'      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; {sections_note}.{chars_note} Per honesty rules, section sizes are not reconstructed.</p>')
         out.append('    </div>')
         if prompt_text:
             out.append(f'<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">system_prompt (full text)</strong><span class="block-meta">{total_chars:,} chars &bull; ~{total_tokens:,} tokens</span></summary><div class="block-body">{_lan_only(prompt_text)}</div></details>')
@@ -1460,6 +1588,7 @@ AGENT_CONTEXT_CSS = """
 }
 .kpi-label { font-size: 12px; color: var(--color-fg-muted, #8b949e); margin-bottom: 4px; }
 .kpi-value { font-size: 20px; font-weight: 600; color: var(--color-fg-default, #c9d1d9); }
+.kpi-value.kpi-unavailable { color: #8b949e; font-style: italic; }
 .kpi-unit { font-size: 13px; font-weight: normal; color: #8b949e; }
 .kpi-sub { font-size: 11px; color: var(--color-fg-muted, #8b949e); margin-top: 2px; }
 .stat-good { color: #3fb950; }

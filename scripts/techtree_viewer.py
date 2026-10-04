@@ -1664,9 +1664,16 @@ def read_executor_stats():
                 for line in fh:
                     try: row = json.loads(line)
                     except Exception: continue
-                    if row.get('component') == 'executor' and isinstance(row.get('prompt_tokens'), int):
+                    if row.get('component') == 'executor':
                         if latest is None or str(row.get('ts') or '') >= str(latest.get('ts') or ''):
-                            latest = {'cycle_id': row.get('cycle_id'), 'prompt_tokens': row.get('prompt_tokens'), 'ts': row.get('ts')}
+                            prompt_tokens = row.get('prompt_tokens')
+                            context_window = row.get('context_window')
+                            latest = {
+                                'cycle_id': row.get('cycle_id'),
+                                'prompt_tokens': prompt_tokens if isinstance(prompt_tokens, int) and not isinstance(prompt_tokens, bool) and prompt_tokens >= 0 else None,
+                                'context_window': context_window if isinstance(context_window, int) and not isinstance(context_window, bool) and context_window > 0 else None,
+                                'ts': row.get('ts'),
+                            }
         except Exception:
             continue
     return latest
@@ -1862,7 +1869,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         agent_context.update({
             'skill_reads': data.get('skill_reads'),
             'skill_evals': data.get('skill_evals'),
-            'executor_llm_stats': _executor_stats_from_llm_stats(data.get('llm_stats')),
+            'executor_llm_stats': data.get('executor_llm_stats'),
             'compaction': _compaction_status_from_remote(data.get('compaction')),
             'window_pressure': data.get('window_pressure'),
         })
@@ -6006,7 +6013,9 @@ def build_cycle_feed(
             if p.get('task_title') and str(p.get('task_title')).strip()
         ), '')
 
-        # Outcome derivation from phases
+        # A proposal is not evidence that execution started. Keep the state
+        # explicitly non-terminal until a `started` phase is observed.
+        has_proposal = any(p.get('phase') == 'proposed' for p in phases)
         outcome_kind = 'in_progress'
         outcome_label = 'running'
         badge_class = 'badge-available'
@@ -6279,6 +6288,12 @@ def build_cycle_feed(
                 elif p.get('metric_delta') is not None:
                     metric_delta = str(p.get('metric_delta'))
 
+        # Without a start marker, neither running nor an ended execution is
+        # established. Preserve the proposal as an explicitly unobserved state.
+        if outcome_kind == 'in_progress' and not started_seen and has_proposal:
+            outcome_kind = 'proposed'
+            outcome_label = 'PROPOSED · execution not observed'
+
         # Issue #311: check if an in-progress cycle run without a terminal row has already ended
         if outcome_kind == 'in_progress':
             started_ts = ''
@@ -6525,7 +6540,7 @@ def build_cycle_feed(
                 # #297: pushed_late folds into 'integrated' above (a delayed
                 # success, not its own bucket) -- no chip for it. superseded
                 # and abandoned are their own neutral outcomes.
-                'superseded', 'abandoned', 'incomplete', 'running',
+                'superseded', 'abandoned', 'incomplete', 'running', 'proposed',
             )
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
@@ -9102,6 +9117,7 @@ CSS = '''
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-proposed { border-left: 4px solid #d19a66; }
     .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {

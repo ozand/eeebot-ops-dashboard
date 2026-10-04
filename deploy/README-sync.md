@@ -243,17 +243,34 @@ sudo systemctl status eeebot-dashboard-server.service
 7. After the cutover, confirm that the host sink is really ACTIVE, not quietly
    degraded to "not configured". Before D4, a missing site root made the
    publisher skip the host sink and record `host_sink_unconfigured`. After the
-   cutover, the next publisher run must show neither sign:
+   cutover, inspect the verified seed invocation `$I1` from step 5, not a
+   time window that can include an expected pre-reload run. Require an
+   explicit active state and the currently served local snapshot version:
 
 ```bash
-sudo journalctl -u eeebot-techtree-publish.service --since "-20 min" --no-pager | grep -c "host sink not configured"   # must print: 0
-sudo -u eeebot-publish python3 -c "import json; print(json.load(open('/var/lib/eeebot-techtree/publish_state.json')).get('host_sink'))"   # must NOT print: host_sink_unconfigured
+[ -n "$I1" ] || { echo "STOP: no verified seed invocation"; exit 1; }
+sudo journalctl _SYSTEMD_INVOCATION_ID="$I1" --no-pager > /tmp/eeebot-seed-journal.txt || exit 1
+if grep -q "host sink not configured" /tmp/eeebot-seed-journal.txt; then
+  echo "STOP: seed invocation skipped the host sink"; exit 1
+fi
+sudo -u eeebot-publish python3 - <<'PY'
+import json
+from pathlib import Path
+state = json.loads(Path('/var/lib/eeebot-techtree/publish_state.json').read_text())
+current = Path('/var/lib/eeebot-site/current').resolve(strict=True)
+assert state.get('host_sink') == 'host_sink_active', 'STOP: host sink is not explicitly active'
+expected = f"{int(state['published_at'])}-{state['digest'][:12]}"
+assert expected == current.name, 'STOP: state and served snapshot differ'
+assert (current / 'index.html').is_file(), 'STOP: served snapshot is incomplete'
+print('host sink active; snapshot', current.name)
+PY
 ```
 
 A missing site root after D4 does not degrade quietly. The unit's
 `ReadWritePaths=/var/lib/eeebot-site` has no `-`, so the unit fails loudly at
 namespace setup. Either check failing above means the cutover did not take
-effect: stop and investigate.
+effect: stop and investigate. Missing or unknown `host_sink` values fail this
+check; an old generator that does not record the field cannot pass it.
 
 ### Rollback
 

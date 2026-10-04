@@ -366,7 +366,7 @@ _UNIT_PATH_RE = re.compile(
 #: Bumped whenever the projection's output domain changes; part of the
 #: publish digest (techtree_autopublish.compute_tree_digest), so a deployed
 #: projection change republishes even when the source tree is quiet.
-PROJECTION_VERSION = "d1.1-typed-1"
+PROJECTION_VERSION = "d1.1-typed-2"
 
 
 def _count_withheld(withheld: dict[str, int] | None, category: str) -> None:
@@ -983,6 +983,27 @@ _SYSTEM_PROMPT = _obj({
                           "resident_matched": _one_of(_count, _list(_ident))}),
 })
 
+
+def _project_system_prompt(value: object, withheld: dict[str, int] | None) -> object:
+    """Project whole system_prompt records and reject partial sections maps."""
+    if not isinstance(value, dict):
+        return _DROP
+    sections = value.get("sections", _DROP)
+    if sections is not _DROP and sections is not None and (
+        not isinstance(sections, dict)
+        or any(not isinstance(name, str) or not name.strip() or not _is_count(count)
+               for name, count in sections.items())
+    ):
+        if withheld is not None:
+            withheld["projection_shape"] = withheld.get("projection_shape", 0) + 1
+        value = {name: item for name, item in value.items() if name != "sections"}
+    return _SYSTEM_PROMPT(value, withheld)
+
+
+_project_system_prompt.public_keys = _SYSTEM_PROMPT.public_keys  # type: ignore[attr-defined]
+_project_system_prompt.children = (_SYSTEM_PROMPT,)  # type: ignore[attr-defined]
+
+
 _TIER2_FILE = _obj({"name": _ident, "size_bytes": _count, "content_chars": _count}, sized_text={"content": ""})
 
 
@@ -999,7 +1020,7 @@ def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> N
 
 _AGENT_CONTEXT = _obj({
     "prompt_text_chars": _count, "task_text_chars": _count,
-    "system_prompt": _SYSTEM_PROMPT,
+    "system_prompt": _project_system_prompt,
     "truncation_streak": _obj({"status": _token, "total_rows": _count, "entries": _list(_obj({
         "kind": _enum("truncated", "dropped"), "name": _ident, "streak": _count}))}),
     "tier2_skills": _list(_obj({"name": _ident, "size_bytes": _count, "content_chars": _count, "desc_chars": _count},

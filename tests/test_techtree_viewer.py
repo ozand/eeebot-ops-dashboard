@@ -4338,6 +4338,28 @@ def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> 
         assert f'id="{m.group(1)}"' not in html
 
 
+def test_390_archived_proposal_without_start_is_not_running_in_public_feed() -> None:
+    """A proposal-only archived cycle has no execution evidence or terminal verdict."""
+    cid = "cycle-4612ced4b3be"
+    data = _fixture()
+    data['ledger_tail'] = []
+    data['ledger_history'] = [
+        {'phase': 'proposed', 'cycle_id': cid, 'ts': '2026-10-03T00:32:02.449501Z'},
+    ]
+    data['bridge_runs'] = []
+    data['bridge_active_run'] = None
+
+    pages = tv.render_public_pages(data, host='eeepc', generated_at='2026-10-04 01:00:00')
+    html = pages['cycles.html']
+    row = html.split(f'id="cycle-{cid}"', 1)[1].split('</li>', 1)[0]
+
+    assert 'data-outcome="proposed"' in html
+    assert 'PROPOSED · execution not observed' in row
+    assert 'running' not in row
+    assert 'incomplete' not in row
+    assert tv.CYCLES_ARCHIVE_INDEX_FILE in pages
+
+
 def test_278_cycles_html_archive_sibling_published_in_render_pages() -> None:
     data = _fixture()
     data['ledger_tail'] = [
@@ -6256,6 +6278,50 @@ def test_368_agent_page_uses_window_from_latest_executor_row_even_without_tokens
     page = tv.render_pages(data, host='eeepc', generated_at='2026-09-28 13:00:00')['agent.html']
     assert '131,072 tokens (executor llm_calls.context_window)' in page
     assert '65,536 tokens (executor llm_calls.context_window)' not in page
+
+
+def test_374_remote_reader_carries_latest_executor_context_window(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import contextlib
+    import io
+
+    state = tmp_path / 'state'
+    rows = [
+        {'ts': '2026-10-01T09:00:00Z', 'component': 'executor', 'prompt_tokens': 50000, 'context_window': 98304},
+        # Latest executor row intentionally omits prompt_tokens: window evidence
+        # is independent and older rows must not be reused.
+        {'ts': '2026-10-01T10:00:00Z', 'component': 'executor', 'context_window': 131072},
+    ]
+    path = state / 'llm_calls' / '2026-10-01.jsonl'
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(rows[0]) + chr(10) + json.dumps(rows[1]) + chr(10), encoding='utf-8')
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(state)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    namespace['result']['agent_context'] = {'system_prompt': {}, 'truncation_streak': {}}
+    remote_json = json.dumps(namespace['result'])
+    assert namespace['result']['executor_llm_stats']['context_window'] == 131072
+
+    def fake_ssh(*_args, **kwargs):
+        return subprocess.CompletedProcess(args=['ssh'], returncode=0, stdout=remote_json, stderr='')
+
+    monkeypatch.setattr(tv.subprocess, 'run', fake_ssh)
+    fetched = tv.fetch_remote_state('test-host')
+    assert fetched['executor_llm_stats']['context_window'] == 131072
+    assert fetched['agent_context']['executor_llm_stats']['context_window'] == 131072
+
+    rows = [
+        {'ts': '2026-10-01T09:00:00Z', 'component': 'executor', 'prompt_tokens': 50000, 'context_window': 98304},
+        {'ts': '2026-10-01T10:00:00Z', 'component': 'executor', 'prompt_tokens': 42000},
+    ]
+    path.write_text(json.dumps(rows[0]) + chr(10) + json.dumps(rows[1]) + chr(10), encoding='utf-8')
+    namespace = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    assert namespace['result']['executor_llm_stats']['context_window'] is None
 
 
 def test_1755_local_mirror_window_pressure_excludes_null_context_window(tmp_path: Path) -> None:
