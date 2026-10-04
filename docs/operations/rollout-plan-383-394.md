@@ -12,17 +12,43 @@
 
 ## Staged authorization gates
 
-1. **Code gate:** #394 acceptance, exact-head review, and CI. Code merge is separate from host rollout approval.
-2. **Explicit class-3 approval:** before any host inspection, deployment, publisher invocation, restart, permission/path change, or rollout, obtain a separate operator authorization naming target and allowed read/write operations. An issue, PR merge, this plan, or a successful verify-only run is not that authorization.
-3. **Read-only preflight (only after approval):**
-   - Record current `master` SHA and candidate merge SHA; require the intended SHA to be merged and reviewed.
-   - Inspect the specific installed publisher service/drop-in and sync script wiring; establish whether sync `ExecStartPre` is installed and active. If its status cannot be proven, stop and preserve `UNKNOWN`.
-   - Record installed generator file revision/hash and compare it with the approved target. Verify manifest entries and compilation evidence without reading credentials or environment-file contents.
-   - Verify site-root existence/type/ownership/mode and effective `ReadWritePaths`; do not create the root, chmod, repair, or guess paths during preflight.
-   - Capture the current publisher invocation/result and the existing `current` snapshot identity as rollback baseline. Do not invoke the publisher unless a later explicit action authorization names it.
-4. **Rollout decision:** if any preflight evidence is absent, inconsistent, the installed source is not the intended pin, or the sync mechanism is uncertain, stop. Request a fresh scoped operator decision; do not infer permission to fix the host.
-5. **Post-action verification (only if separately authorized):** use the documented verify-only path before activation where applicable; after any approved rollout, check only safe public canaries/page status and snapshot version. Confirm private D2 cycle pages are never present on public `gh-pages`. Do not publish or quote private cycle payloads.
-6. **Rollback (only if separately authorized):** restore the previous pinned generator files/assets from verified backups or immutable revision, verify their hashes against the preflight baseline, and run the documented validation. Never improvise file copying or permission changes. If rollback's preconditions are not met, stop and escalate.
+1. **Code gate:** #394 acceptance, exact-head review, and CI. Code merge is separate from host rollout approval. Because the installed sync drop-in is unknown, do not assume merge is operationally inert.
+2. **Pre-merge read-only decision gate (requires separate explicit class-3 operator approval for host inspection):** before merging #383, gather a bounded read-only snapshot of the target host's relevant state. Until this permission is explicitly granted, all host values remain UNKNOWN. Host inspection approval is not merge approval.
+   - Record current repository `master` SHA, PR #383 head SHA, and the prospective merge SHA only when GitHub exposes it. A future merge SHA cannot be predeclared.
+   - Inspect only the named publisher unit and exact drop-in directory/entry for the sync `ExecStartPre`; record whether it is installed, loaded, and effective. Do not `systemctl cat` credential-bearing EnvironmentFiles or dump environment values.
+   - Record installed generator file SHA-256/revision from manifest files and compare it with the planned target. Do not read credentials or environment-file contents.
+   - Verify `/var/lib/eeebot-site` existence/type/owner/mode and effective `ReadWritePaths`; do not create the root, chmod, repair, or guess paths.
+   - Identify the prior generator revision and the complete set of files named by the installed/approved manifest (including JS/CSS assets), plus backups or immutable retrieval for each; prove the whole set is available for rollback before any rollout decision. Do not invoke the publisher during this preflight.
+3. **Merge decision:** if sync is installed/effective, treat merge as potentially triggering a host generator update on the next publisher run. Merge requires its own explicit operator decision after reviewing the pre-merge evidence, with the auto-sync effect and rollback readiness visible. If sync status, the complete prior manifest asset set, or rollback artifact is unknown, stop; do not infer approval or merge permission. No merge is authorized by the read-only preflight.
+4. **Post-merge evidence gate (requires separate explicit class-3 approval for any host inspection):** pin the actual merge SHA and compare it with the pre-merge target. The dashboard repository has no dedicated `--verify-only` command for this generator. Its documented D4 procedure instead uses a staged sequence: sync/seed the host snapshot, verify the local and public snapshot-version markers, and inspect safe public canaries before the separately gated server cutover. Treat that as a host-changing rollout, not a verify-only check. Do not substitute runtime #2016's `deploy_release.sh --verify-only` (a different product). If the operator requires a no-host-mutation preactivation check, the current dashboard docs do not define one; record it as unavailable and request a separate design decision rather than inventing a command.
+5. **Deployment decision and action (separate explicit class-3 authorization):** a further explicit operator decision must name whether the publisher's next run may perform the conditional auto-sync and/or whether a manual deployment is permitted. If authorized, follow only the approved route; verify the installed generator and manifest match the pinned merge SHA and inspect only safe public canaries/page status/snapshot version. Confirm private D2 cycle pages remain absent from public `gh-pages`; never publish or quote private cycle payloads.
+6. **Rollback (separate explicit class-3 authorization):** before any deployment action, prove that the prior pinned generator and matching assets are available as verified backups or immutable revision. If rollback is authorized, restore those exact artifacts, verify their hashes against the pre-merge baseline, and use only a documented validation procedure. Never improvise file copying or permission changes. If prerequisites fail, stop and escalate.
+
+## Bounded read-only preflight commands (execute only after separate class-3 approval)
+
+The following are a command *plan*, not commands already run. Run from the approved operator session and redact host/path identifiers from any public record except the already documented fixed paths. Never print EnvironmentFile contents.
+
+```sh
+# Identify the publisher unit's loaded fragment/drop-in names and effective command/path properties only.
+systemctl show eeebot-techtree-publish.service \
+  -p LoadState -p FragmentPath -p DropInPaths -p ExecStartPre -p ExecStart \
+  -p ReadWritePaths -p User -p Group -p StateDirectory
+
+# Show only the exact known sync drop-in filename if present; do not enumerate unrelated unit files.
+test -f /etc/systemd/system/eeebot-techtree-publish.service.d/20-repo-sync.conf \
+  && printf 'repo-sync-dropin=present\n' || printf 'repo-sync-dropin=absent\n'
+
+# Stat only the configured site root. Do not create/chmod it.
+stat -c '%F %a %U:%G' /var/lib/eeebot-site
+
+# Hash only the installed generator and manifest-listed generator files; never config/env files.
+sha256sum /opt/eeebot-techtree/scripts/techtree_viewer.py \
+  /opt/eeebot-techtree/scripts/techtree_autopublish.py \
+  /opt/eeebot-techtree/scripts/two_sinks.py \
+  /opt/eeebot-techtree/scripts/publish_scan.py
+```
+
+The above is intentionally narrow but does not itself prove that the installed sync script or manifest matches the canonical repository. Before any merge decision, obtain separate scoped approval to read the exact installed sync-script and manifest files as non-secret artifacts; record their SHA-256 and compare with the intended repository revision. If that file-level read approval is absent, or any manifest asset's prior version cannot be recovered, stop and keep rollout blocked. Do not read secrets or execute the sync script as part of preflight.
 
 ## Stop conditions
 
@@ -33,4 +59,4 @@
 
 ## Not performed
 
-No host probe, service/publisher invocation, merge, deployment, restart, permission change, issue/PR mutation, or public publication occurred while preparing this plan.
+No host probe, service/publisher invocation, merge of #383, deployment, restart, permission change, or public publication occurred while preparing this plan. The docs-only #396 issue and PR #397 were created to review this plan; those GitHub/documentation actions do not change the host authorization boundary.
