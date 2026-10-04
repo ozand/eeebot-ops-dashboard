@@ -62,6 +62,7 @@ def snapshot() -> dict:
                              "pane": expected_pane,
                              "revision": pane.get("revision") if isinstance(pane.get("revision"), int) else None}
     issues = {}
+    issue_errors = []
     for repo, numbers in ISSUES.items():
         for number in numbers:
             try:
@@ -70,8 +71,10 @@ def snapshot() -> dict:
                 issues[f"{repo}#{number}"] = {"state": data.get("state", "unknown")}
             except Exception:
                 issues[f"{repo}#{number}"] = {"state": "unknown"}
+                issue_errors.append(f"gh_issue_unavailable:{repo}#{number}")
+    errors = (["herdr_unavailable"] if pane_error else []) + issue_errors
     return {"timestamp": now(), "sessions": sessions, "issues": issues,
-            "errors": ["herdr_unavailable"] if pane_error else []}
+            "errors": errors}
 
 
 def persist(path: Path, value: dict) -> None:
@@ -141,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
                 current = snapshot()
                 persist(args.state, current)
                 if current.get("errors"):
-                    emit("WATCH_ERROR", {"timestamp": current["timestamp"], "error": "herdr_unavailable"})
+                    emit("WATCH_ERROR", {"timestamp": current["timestamp"], "errors": current["errors"]})
                 if previous is None or {k: v for k, v in current.items() if k != "timestamp"} != {k: v for k, v in previous.items() if k != "timestamp"}:
                     emit("WATCH_CHANGE", current)
                 else:

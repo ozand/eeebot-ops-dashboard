@@ -85,3 +85,17 @@ def test_once_emits_sanitized_status(monkeypatch, tmp_path: Path, capsys):
     monkeypatch.setattr(monitor, "persist", lambda path, value: None)
     assert monitor.main(["--once", "--state", str(tmp_path / "state.json")]) == 0
     assert capsys.readouterr().out.startswith("WATCH_CHANGE ")
+
+
+def test_issue_failure_adds_sanitized_error_marker(monkeypatch):
+    def fail(args, timeout):
+        if args[0] == "herdr":
+            return {"result": {"panes": []}}
+        raise RuntimeError("private command output must not leak")
+    monkeypatch.setattr(monitor, "run_json", fail)
+    result = monitor.snapshot()
+    assert all(value["state"] == "unknown" for value in result["issues"].values())
+    assert result["errors"] == [
+        f"gh_issue_unavailable:{repo}#{number}"
+        for repo, numbers in monitor.ISSUES.items() for number in numbers
+    ]
