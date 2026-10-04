@@ -1639,7 +1639,7 @@ def publish_ordered(
     }
     host_error = None
     try:
-        os.stat(site_root)
+        os.lstat(site_root)
         configured = True
     except FileNotFoundError:
         configured = False

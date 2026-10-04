@@ -391,6 +391,14 @@ def _host_snapshot_needs_seed(site_root: Path) -> bool:
         return False  # host sink not configured (D4 has not created it)
     except OSError:
         return True
+    if stat.S_ISLNK(mode):
+        # A configured root may itself be a symlink (e.g. an operator-managed
+        # mount point). Follow a valid link for snapshot checks; a dangling or
+        # inaccessible target is an existing but unusable root, not absent.
+        try:
+            mode = os.stat(site_root).st_mode
+        except OSError:
+            return True
     try:
         return not stat.S_ISDIR(mode) or sinks.current_snapshot_target(site_root) is None
     except OSError:

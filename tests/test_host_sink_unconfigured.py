@@ -170,6 +170,48 @@ def test_2_root_with_complete_current_and_same_digest_skips_as_before(
 
 
 
+def test_6_valid_site_root_symlink_with_current_keeps_unchanged_digest_noop(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    if not hasattr(os, "symlink"):
+        pytest.skip("symlinks are unavailable on this platform")
+    target = tmp_path / "site-target"
+    target.mkdir()
+    sinks.atomic_snapshot_swap(target, {"index.html": "<html>v0</html>"}, "v0")
+    site_root = tmp_path / "site-link"
+    try:
+        site_root.symlink_to(target, target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"directory symlink creation unavailable: {type(exc).__name__}")
+
+    rc, state, uploads = _run(tmp_path, monkeypatch, site_root, recent_unconfigured_publish=True)
+
+    assert rc == 0 and uploads == []
+    assert (target / "current").resolve().name == "v0"
+
+
+def test_7_dangling_site_root_symlink_is_existing_invalid_host_failure(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    if not hasattr(os, "symlink"):
+        pytest.skip("symlinks are unavailable on this platform")
+    site_root = tmp_path / "site-link"
+    try:
+        site_root.symlink_to(tmp_path / "missing-target", target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"directory symlink creation unavailable: {type(exc).__name__}")
+    uploads: list = []
+    outcome: dict[str, str] = {}
+
+    with pytest.raises(sinks.HostSnapshotError):
+        sinks.publish_ordered(
+            site_root, {"index.html": "<html>safe</html>"}, {}, "v1",
+            lambda pages: (uploads.append(pages) or (0, {})), host_outcome=outcome,
+        )
+
+    assert uploads, "public publishing remains observable despite host failure"
+    assert outcome == {"status": "host_snapshot_failed"}
+    assert site_root.is_symlink()
+
+
 # --- Codex 4136782725: an existing but unusable root is a host FAILURE ----------
 
 def _refuse_site_lock(monkeypatch: pytest.MonkeyPatch, site_root: Path) -> None:
