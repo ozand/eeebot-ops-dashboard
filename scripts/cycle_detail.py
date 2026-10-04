@@ -438,6 +438,16 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
     return steps
 
 
+def _tool_argument_identity(value: Any) -> str:
+    """Stable digest for matching calls without exposing argument text."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return _content_fingerprint(value)[1]
+
+
 def _response_tool_continuations(prompt: dict[str, Any], later_prompts: list[dict[str, Any]]) -> list[tuple[str, str, str]]:
     """Describe later-observed tool requests for reconciling response calls.
 
@@ -463,8 +473,8 @@ def _response_tool_continuations(prompt: dict[str, Any], later_prompts: list[dic
                     continue
                 call_id = call.get("id")
                 id_digest = __import__("hashlib").sha256(str(call_id).encode()).hexdigest()[:12] if call_id else ""
-                args = sanitize_tool_arguments(function.get("arguments"))
-                observed.append((id_digest, str(function.get("name") or "tool"), _content_fingerprint(str(args))[1]))
+                args_digest = _tool_argument_identity(function.get("arguments"))
+                observed.append((id_digest, str(function.get("name") or "tool"), args_digest))
     return observed
 
 
@@ -621,7 +631,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                     continue
                 call_id = call.get("id")
                 id_digest = __import__("hashlib").sha256(str(call_id).encode()).hexdigest()[:12] if call_id else ""
-                args_digest = _content_fingerprint(str(sanitize_tool_arguments(function.get("arguments"))))[1]
+                args_digest = _tool_argument_identity(function.get("arguments"))
                 signature = (id_digest, str(function.get("name") or "tool"), args_digest)
                 try:
                     continuation_rows.remove(signature)

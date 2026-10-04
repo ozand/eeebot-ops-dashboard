@@ -797,6 +797,33 @@ def test_idless_tool_call_ids_are_unique_across_prompts() -> None:
     assert first[0]["tool_call_id"] != second[0]["tool_call_id"]
 
 
+def test_same_named_idless_calls_with_different_arguments_are_not_reconciled(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r-different-args", "cycle_id": "c-different-args", "classification": "completed",
+        "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z",
+    }) + "\n", encoding="utf-8")
+    prompts = tmp_path / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    rows = [
+        {"cycle_id": "c-different-args", "component": "executor", "seq": 1,
+         "ts": "2026-09-25T10:00:00Z", "finish_reason": "tool_calls", "messages": [],
+         "tool_calls": [{"function": {"name": "read_file", "arguments": json.dumps({"query": "one"})}}]},
+        {"cycle_id": "c-different-args", "component": "executor", "seq": 2,
+         "ts": "2026-09-25T10:00:01Z", "messages": [
+             {"role": "assistant", "tool_calls": [{"function": {"name": "read_file", "arguments": json.dumps({"query": "two"})}}]},
+             {"role": "tool", "content": "synthetic"},
+         ]},
+    ]
+    (prompts / "2026-09-25.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-different-args"]
+    assert detail["history_complete"] is False
+    incomplete = [step for session in detail["sessions"] for step in session["steps"] if step.get("kind") == "tool" and step.get("status") == "incomplete"]
+    assert len(incomplete) == 1
+
+
 def test_idless_response_call_reconciles_with_later_idless_message_call(tmp_path: Path) -> None:
     from scripts.cycle_detail import build_cycle_index
 
