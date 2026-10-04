@@ -845,7 +845,7 @@ def run(args: argparse.Namespace) -> int:
         host_snapshot_failed_since=None,
         last_host_error=None,
         clear_host_failure=True,
-        host_sink=host_outcome.get('status') if host_outcome.get('status') == 'host_sink_unconfigured' else None,
+        host_sink=host_outcome.get('status'),
         clean_scan_cache=state.get('clean_scan_cache'),
         changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
         publish_duration_warning=duration_warning,

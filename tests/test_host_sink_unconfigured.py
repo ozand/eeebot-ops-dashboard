@@ -121,6 +121,7 @@ def test_c_existing_writable_site_root_swaps_normally(tmp_path: Path, monkeypatc
     assert rc == 0 and uploads
     assert (site_root / "current" / "index.html").is_file()
     assert "host_snapshot_failed_since" not in state
+    assert state["host_sink"] == "host_sink_active"
 
 
 # --- Codex 4136424439: the D4 seed after a pre-D4 (unconfigured) publish ---------
@@ -139,7 +140,7 @@ def test_1_root_appears_without_current_same_digest_publishes_a_seed(
 
     assert rc == 0
     assert (site_root / "current" / "index.html").is_file(), "D4 seed (test -s current/index.html) needs this"
-    assert state.get("host_sink") != "host_sink_unconfigured"
+    assert state["host_sink"] == "host_sink_active"
 
 
 def test_3_no_seed_while_the_site_root_is_still_absent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
