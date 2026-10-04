@@ -54,7 +54,7 @@ The above is intentionally narrow but does not itself prove that the installed s
 
 - No explicit class-3 approval for the specific host operation.
 - Unknown installed drop-in/service wiring, generator revision, site-root state, or effective `ReadWritePaths`.
-- Target SHA mismatch, failed verify-only, missing backup/rollback identity, public/private boundary failure, or any request to expose credentials/private page content.
+- Target SHA mismatch, failed approved verification/validation, missing backup/rollback identity, public/private boundary failure, or any request to expose credentials/private page content.
 - Do not treat `gh-pages` freshness or code merge as proof that the host generator was updated.
 
 ## Not performed
