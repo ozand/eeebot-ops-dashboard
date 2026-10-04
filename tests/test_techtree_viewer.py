@@ -4338,6 +4338,28 @@ def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> 
         assert f'id="{m.group(1)}"' not in html
 
 
+def test_390_archived_proposal_without_start_is_not_running_in_public_feed() -> None:
+    """A proposal-only archived cycle has no execution evidence or terminal verdict."""
+    cid = "cycle-4612ced4b3be"
+    data = _fixture()
+    data['ledger_tail'] = []
+    data['ledger_history'] = [
+        {'phase': 'proposed', 'cycle_id': cid, 'ts': '2026-10-03T00:32:02.449501Z'},
+    ]
+    data['bridge_runs'] = []
+    data['bridge_active_run'] = None
+
+    pages = tv.render_public_pages(data, host='eeepc', generated_at='2026-10-04 01:00:00')
+    html = pages['cycles.html']
+    row = html.split(f'id="cycle-{cid}"', 1)[1].split('</li>', 1)[0]
+
+    assert 'data-outcome="proposed"' in html
+    assert 'PROPOSED · execution not observed' in row
+    assert 'running' not in row
+    assert 'incomplete' not in row
+    assert tv.CYCLES_ARCHIVE_INDEX_FILE in pages
+
+
 def test_278_cycles_html_archive_sibling_published_in_render_pages() -> None:
     data = _fixture()
     data['ledger_tail'] = [

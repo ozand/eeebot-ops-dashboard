@@ -6006,7 +6006,9 @@ def build_cycle_feed(
             if p.get('task_title') and str(p.get('task_title')).strip()
         ), '')
 
-        # Outcome derivation from phases
+        # A proposal is not evidence that execution started. Keep the state
+        # explicitly non-terminal until a `started` phase is observed.
+        has_proposal = any(p.get('phase') == 'proposed' for p in phases)
         outcome_kind = 'in_progress'
         outcome_label = 'running'
         badge_class = 'badge-available'
@@ -6279,6 +6281,12 @@ def build_cycle_feed(
                 elif p.get('metric_delta') is not None:
                     metric_delta = str(p.get('metric_delta'))
 
+        # Without a start marker, neither running nor an ended execution is
+        # established. Preserve the proposal as an explicitly unobserved state.
+        if outcome_kind == 'in_progress' and not started_seen and has_proposal:
+            outcome_kind = 'proposed'
+            outcome_label = 'PROPOSED · execution not observed'
+
         # Issue #311: check if an in-progress cycle run without a terminal row has already ended
         if outcome_kind == 'in_progress':
             started_ts = ''
@@ -6525,7 +6533,7 @@ def build_cycle_feed(
                 # #297: pushed_late folds into 'integrated' above (a delayed
                 # success, not its own bucket) -- no chip for it. superseded
                 # and abandoned are their own neutral outcomes.
-                'superseded', 'abandoned', 'incomplete', 'running',
+                'superseded', 'abandoned', 'incomplete', 'running', 'proposed',
             )
         )
         filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
@@ -9102,6 +9110,7 @@ CSS = '''
     .feed-outcome-partial { border-left: 4px solid #56d364; }
     .feed-outcome-skipped { border-left: 4px solid #7d9c8a; }
     .feed-outcome-in_progress { border-left: 4px solid #61afef; }
+    .feed-outcome-proposed { border-left: 4px solid #d19a66; }
     .feed-outcome-incomplete { border-left: 4px solid #e06c75; }
 
     .feed-header {
