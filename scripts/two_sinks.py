@@ -1384,10 +1384,46 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
     return updated
 
 
-def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
-    """D1 boundary seam; private cycle rendering is deliberately deferred to D2."""
-    del private_data, host
-    return {}
+def render_private_pages(
+    private_data: dict, host: str, state_root: Path | None = None,
+) -> dict[str, str]:
+    """Render bounded D2 cycle details for the host snapshot only.
+
+    The private renderer reads the host-authority state tree directly; its
+    output is passed only to ``publish_ordered``'s host snapshot sink.
+    """
+    del host
+    if state_root is None or not isinstance(private_data, dict):
+        return {}
+    ledger = private_data.get("ledger_history")
+    if not isinstance(ledger, list):
+        return {}
+    cycle_ids = {
+        row.get("cycle_id") for row in ledger
+        if isinstance(row, dict) and isinstance(row.get("cycle_id"), str)
+        and row.get("cycle_id")
+    }
+    if not cycle_ids:
+        return {}
+    try:
+        from scripts.cycle_detail import build_cycle_index, render_cycle_page
+    except ImportError:
+        from cycle_detail import build_cycle_index, render_cycle_page
+    index = build_cycle_index(Path(state_root), days=7)
+    pages = {}
+    for cycle_id in sorted(cycle_ids & index.keys()):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", cycle_id):
+            continue
+        page_name = f"cycles/{cycle_id}.html"
+        _validate_page_name(page_name)
+        record = index[cycle_id]
+        details = private_data.get("cycle_details")
+        if isinstance(details, dict) and isinstance(details.get(cycle_id), dict):
+            reflection = details[cycle_id].get("reflection")
+            if isinstance(reflection, dict):
+                record = {**record, "reflection": reflection}
+        pages[page_name] = render_cycle_page(cycle_id, record)
+    return pages
 
 
 class SnapshotActivationError(RuntimeError):

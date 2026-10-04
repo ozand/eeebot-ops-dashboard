@@ -11238,7 +11238,7 @@ def main(argv: list[str] | None = None) -> int:
         public_data, private_data = split_render_inputs(data)
         public_data["ci_freshness"] = _sanitize_public_value("ci_freshness", data.get("ci_freshness"))
         public_pages = render_public_pages(public_data, args.host)
-        private_pages = render_private_pages(private_data, args.host)
+        private_pages = render_private_pages(private_data, args.host, state_root=Path(args.state_root))
         now_ts = time.time()
         version = f"{int(now_ts)}-manual"
         stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()

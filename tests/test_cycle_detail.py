@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import pytest
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -298,12 +299,17 @@ def test_load_cycle_detail_uses_inventory_paths_and_marks_missing_sources(tmp_pa
     assert result["total_model_calls"] == 1
 
 
-def test_existing_cycle_detail_links_are_rendered_privately(tmp_path: Path) -> None:
-    from scripts.two_sinks import build_private_cycle_pages
+def test_private_renderer_builds_only_indexed_cycle_pages(tmp_path: Path) -> None:
+    from scripts.two_sinks import render_private_pages
 
-    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=cycle-linked">details</a>'}, tmp_path)
-    assert "cycles/cycle-linked.html" in pages
-    assert "cycle-linked" in pages["cycles/cycle-linked.html"]
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "cycle_id": "cycle-linked", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    pages = render_private_pages({"ledger_history": [{"cycle_id": "cycle-linked"}, {"cycle_id": "unavailable"}]}, "eeepc", tmp_path)
+    assert set(pages) == {"cycles/cycle-linked.html"}
+    assert "history incomplete" in pages["cycles/cycle-linked.html"]
 
 
 def test_cycle_detail_reflection_projection_uses_sanitized_metrics_only() -> None:
@@ -327,6 +333,8 @@ def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path
     from scripts import techtree_viewer as tv
     from scripts import two_sinks as sinks
 
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(json.dumps({"run_id": "r1", "cycle_id": "cycle-manual", "classification": "completed"}) + "\n", encoding="utf-8")
     monkeypatch.setattr(tv, "read_local_state", lambda *args, **kwargs: {"ledger_history": [{"cycle_id": "cycle-manual"}], "ledger_tail": []})
     monkeypatch.setattr(tv, "render_pages", lambda *_args: {"index.html": "local"})
     monkeypatch.setattr(tv, "render_public_pages", lambda *_args: {"index.html": "public"})
@@ -341,15 +349,21 @@ def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path
 
 def test_reflection_metrics_are_preserved_in_host_cycle_pages(tmp_path: Path) -> None:
     from scripts.techtree_viewer import build_cycle_details
-    from scripts.two_sinks import build_private_cycle_pages, split_render_inputs
+    from scripts.two_sinks import render_private_pages, split_render_inputs
 
     public, private = split_render_inputs({"reflections": [{
         "cycle_id": "cycle-reflection-host", "summary": "some summary",
         "findings": [{"kind": "wasted_steps", "detail": "finding"}],
         "recommendations": [{"kind": "good_practice", "detail": "recommendation"}],
     }]})
+    private["ledger_history"] = [{"cycle_id": "cycle-reflection-host"}]
     private["cycle_details"] = build_cycle_details([], None, None, public.get("reflections"))
-    pages = build_private_cycle_pages(private, tmp_path)
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "cycle_id": "cycle-reflection-host", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    pages = render_private_pages(private, "eeepc", tmp_path)
     page = pages["cycles/cycle-reflection-host.html"]
     assert "Summary chars: 12" in page
     assert "Findings count: 1" in page
@@ -358,13 +372,16 @@ def test_reflection_metrics_are_preserved_in_host_cycle_pages(tmp_path: Path) ->
 
 
 def test_manual_cycle_page_links_are_safely_encoded_and_bounded(tmp_path: Path) -> None:
-    from scripts.two_sinks import build_private_cycle_pages, _validate_page_name
+    from scripts.two_sinks import render_private_pages, _validate_page_name
 
-    pages = build_private_cycle_pages({"lineage": '<a href="cycle.html?id=../../escape">details</a>'}, tmp_path)
-    assert "cycles/../../escape.html" not in pages
-    for key in pages:
-        _validate_page_name(key)
-        assert Path(key).name == key.split("/", 1)[1]
+    (tmp_path / "bridge").mkdir()
+    (tmp_path / "bridge" / "runs.jsonl").write_text(
+        json.dumps({"run_id": "r1", "cycle_id": "../../escape", "classification": "completed"}) + "\n",
+        encoding="utf-8",
+    )
+    pages = render_private_pages({"ledger_history": [{"cycle_id": "../../escape"}]}, "eeepc", tmp_path)
+    assert pages == {}
+    assert _validate_page_name("cycles/safe-id.html") is None
 
 
 def test_missing_cycle_sources_render_unavailable_not_empty():
@@ -463,7 +480,7 @@ def test_d2_connected_end_to_end_from_state_tree_to_host_snapshot(tmp_path: Path
 
     published_to_gh = []
     monkeypatch.setenv("GH_TOKEN", "mock-token")
-    monkeypatch.setattr(ap.tv, "publish_to_pages", lambda pages, **_: (published_to_gh.append(pages) or 0, {}))
+    monkeypatch.setattr(ap.tv, "publish_to_pages", lambda pages, **_: (published_to_gh.append(pages) or 0, {}, False))
 
     args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
     rc = ap.run(args)

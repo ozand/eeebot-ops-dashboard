@@ -699,7 +699,7 @@ def run(args: argparse.Namespace) -> int:
     data['ci_freshness'] = tv.read_ci_freshness()
     public_data['ci_freshness'] = sinks._sanitize_public_value('ci_freshness', data['ci_freshness'])
     public_pages = tv.render_public_pages(public_data, args.host_label)
-    private_pages = sinks.render_private_pages(private_data, args.host_label)
+    private_pages = sinks.render_private_pages(private_data, args.host_label, state_root=state_root)
     version = f"{int(now)}-{digest[:12]}"
     stamp = datetime.fromtimestamp(now, timezone.utc).isoformat()
 
