@@ -6280,6 +6280,50 @@ def test_368_agent_page_uses_window_from_latest_executor_row_even_without_tokens
     assert '65,536 tokens (executor llm_calls.context_window)' not in page
 
 
+def test_374_remote_reader_carries_latest_executor_context_window(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import contextlib
+    import io
+
+    state = tmp_path / 'state'
+    rows = [
+        {'ts': '2026-10-01T09:00:00Z', 'component': 'executor', 'prompt_tokens': 50000, 'context_window': 98304},
+        # Latest executor row intentionally omits prompt_tokens: window evidence
+        # is independent and older rows must not be reused.
+        {'ts': '2026-10-01T10:00:00Z', 'component': 'executor', 'context_window': 131072},
+    ]
+    path = state / 'llm_calls' / '2026-10-01.jsonl'
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(rows[0]) + chr(10) + json.dumps(rows[1]) + chr(10), encoding='utf-8')
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(state)!r}',
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    namespace['result']['agent_context'] = {'system_prompt': {}, 'truncation_streak': {}}
+    remote_json = json.dumps(namespace['result'])
+    assert namespace['result']['executor_llm_stats']['context_window'] == 131072
+
+    def fake_ssh(*_args, **kwargs):
+        return subprocess.CompletedProcess(args=['ssh'], returncode=0, stdout=remote_json, stderr='')
+
+    monkeypatch.setattr(tv.subprocess, 'run', fake_ssh)
+    fetched = tv.fetch_remote_state('test-host')
+    assert fetched['executor_llm_stats']['context_window'] == 131072
+    assert fetched['agent_context']['executor_llm_stats']['context_window'] == 131072
+
+    rows = [
+        {'ts': '2026-10-01T09:00:00Z', 'component': 'executor', 'prompt_tokens': 50000, 'context_window': 98304},
+        {'ts': '2026-10-01T10:00:00Z', 'component': 'executor', 'prompt_tokens': 42000},
+    ]
+    path.write_text(json.dumps(rows[0]) + chr(10) + json.dumps(rows[1]) + chr(10), encoding='utf-8')
+    namespace = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)
+    assert namespace['result']['executor_llm_stats']['context_window'] is None
+
+
 def test_1755_local_mirror_window_pressure_excludes_null_context_window(tmp_path: Path) -> None:
     # Uses real "now" (rather than a pinned clock) so the rows always fall
     # inside the last-24h window `read_local_state` computes internally --
