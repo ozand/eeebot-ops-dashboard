@@ -1365,14 +1365,14 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1791234055-20660310bfbb"></head>
+<meta name="snapshot-version" content="1791234497-5f8110e2f8d3"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">4</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-05 23:29:39 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">12.9%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">12.9%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">6 events · 0 tasks · 2.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">15.1% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">30.7M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791234046.122" data-render-age-seconds="22">data: 21s old &middot; generated 21:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791234475.275" data-render-age-seconds="33">data: 32s old &middot; generated 21:08 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1387,28 +1387,28 @@
       <p class="panel-subtitle">Two-tier architecture: assembled messages inside the model active context window vs. reachable resources on disk. Source in UTC, displayed in MSK.</p>
     </div>
     <div class="context-header-badges">
-      <span class="context-badge badge-success context-badge-safe">WITHIN BUDGET (+12,431 chars spare)</span>
-      <span class="context-badge badge-success prompt-stage-badge">Assembly fit: full</span>
-      <span class="context-badge badge-danger prompt-stage-badge">Source instructions: 1 truncated (AGENTS.md)</span>
-      <span class="context-badge badge-success prompt-stage-badge">History: not compacted</span>
-      <span class="cycle-pill">cycle-86b91f8a7301</span>
+      <span class="context-badge badge-secondary">CAPACITY UNKNOWN</span>
+      <span class="context-badge badge-secondary prompt-stage-badge">Assembly fit: unavailable</span>
+      <span class="context-badge badge-secondary prompt-stage-badge">Source instructions: unavailable</span>
+      <span class="context-badge badge-secondary prompt-stage-badge">History: unavailable</span>
+      <span class="cycle-pill">latest</span>
     </div>
   </div>
   <div class="context-kpis">
     <div class="context-kpi-card">
       <span class="kpi-label">Capped Prompt Load</span>
-      <span class="kpi-value">22,569 <span class="kpi-unit">capped chars</span></span>
-      <span class="kpi-sub">~5,642 est. tokens under builder cap</span>
-      <span class="kpi-sub"><strong>Actual System Message:</strong> 22,569 chars received by model</span>
+      <span class="kpi-value kpi-unavailable">unavailable <span class="kpi-unit">capped chars</span></span>
+      <span class="kpi-sub">system_prompt telemetry unavailable</span>
+      <span class="kpi-sub"><strong>Actual System Message:</strong> unavailable</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Context Budget Cap</span>
-      <span class="kpi-value">35,000 <span class="kpi-unit">chars</span></span>
-      <span class="kpi-sub">~8,750 est. tokens limit</span>
+      <span class="kpi-value">unavailable</span>
+      <span class="kpi-sub">recorded cap unavailable</span>
     </div>
     <div class="context-kpi-card">
       <span class="kpi-label">Remaining Headroom</span>
-      <span class="kpi-value"><span class="stat-good">+12,431 chars (35.5%)</span></span>
+      <span class="kpi-value"><span>n/a</span></span>
       <span class="kpi-sub">margin before overflow trim</span>
     </div>
     <div class="context-kpi-card">
@@ -1420,13 +1420,13 @@
   <div class="context-subject-group context-overview-group">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
-    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>64%</strong> (22,569 / 35,000 chars)</span><span>2026-10-05 10:59:42 MSK</span></div>
+    <div class="meter-labels"><span>Prompt Budget Utilization: <strong>unavailable</strong> (load unavailable)</span><span>active cycle</span></div>
     <div class="context-progress-bar">
-      <div class="context-progress-fill" style="width:64%;background:var(--color-success, #2ea043);"></div>
+      <div class="context-progress-fill meter-unavailable" style="width:0%;"></div>
     </div>
   </div>
-  <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 4 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 4/4 consecutive cycles: AGENTS.md</span></div></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 69.6%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 541 row(s) with a known context_window &bull; window unknown: 45 rows (excluded, not counted as 0%) of 586 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-no-data"><span class="context-badge badge-secondary">TRUNCATION/DROP STREAK: NO DATA</span> <span class="indicator-note">ledger unreadable or no <code>phase: system_prompt</code> rows recorded — not the same as a healthy 0, healthy: 0 consecutive cycles.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 69.5%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 550 row(s) with a known context_window &bull; window unknown: 47 rows (excluded, not counted as 0%) of 597 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-10-05T07:59:42.621751Z · source: published</p>
@@ -1448,25 +1448,13 @@
     <div class="tier-col tier1-col">
       <div class="tier-col-header"><span class="tier-tag tag-t1">TIER 1</span><div><h3>In Active Context (Attention Window)</h3><p>Assembled into system and user messages.</p></div></div>
       <div class="tier1-blocks-list">
-        <div class="t1-block-item "><span class="t1-seq">1</span><span class="t1-name">identity</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,244c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">2</span><span class="t1-name">soul</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">1,590c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">3</span><span class="t1-name">goals</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">3,849c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">4</span><span class="t1-name">user</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">2,585c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">5</span><span class="t1-name">operating</span><span class="t1-owner t1-owner-release">release</span><span class="t1-sz">6,103c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">6</span><span class="t1-name">agents</span><span class="t1-owner t1-owner-instance">instance</span><span class="t1-sz">3,992c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">7</span><span class="t1-name">priorities</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">1,380c</span></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">8</span><span class="t1-name">skills_catalogue</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">0c (empty under loop profile)</span></div><a href="#tier2-skills-section" class="tier-link-badge tier-link-origin">&#10140; Indexes 36 Skills in Tier 2 (227.5 KB)</a></div>
-        <div class="t1-block-item t1-linked"><div class="t1-row"><span class="t1-seq">9</span><span class="t1-name">memory</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">532c</span></div><a href="#tier2-memory-section" class="tier-link-badge">&#10140; Indexes 64 files in Tier 2</a></div>
-        <div class="t1-block-item "><span class="t1-seq">10</span><span class="t1-name">runtime</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">390c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">11</span><span class="t1-name">scorecard</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">261c</span></div>
-        <div class="t1-block-item "><span class="t1-seq">12</span><span class="t1-name">position</span><span class="t1-owner t1-owner-generated">generated</span><span class="t1-sz">573c</span></div>
-        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 10 &times; "
+        <div class="t1-block-item t1-sep-row"><span class="t1-name">&#8230; 0 &times; "
 
 ---
 
-" Separators</span><span class="t1-sz">70c</span></div>
+" Separators</span><span class="t1-sz">0c</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">model window 98,304 tokens (executor llm_calls.context_window) · compaction reserve unknown (not published by runtime) · usable budget unknown · occupancy 33,992 prompt tokens (executor)</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">1,953c</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">0c</span></div>
       </div>
     </div>
     <div class="tier-bridge">
@@ -1474,7 +1462,7 @@
         <span class="bridge-arrow">&#10132;</span>
         <strong>On-Demand Access</strong>
         <p>read_file · search_memory · exec</p>
-        <span class="bridge-cost">Tier 1 index costs: catalogue 0c · memory 532c · exec path unavailable</span>
+        <span class="bridge-cost">Tier 1 index costs: catalogue 0c · memory 0c · exec path unavailable</span>
       </div>
     </div>
     <div class="tier-col tier2-col">
@@ -1487,33 +1475,15 @@
     </div>
   </div>
   <div class="context-detail-section">
-    <h3>Tier 1: Assembled Context Blocks (Recorded Order) <span class="status-badge status-present">format: post-ADR-022 ontology</span></h3>
+    <h3>Tier 1: Assembled Context Blocks (Recorded Order) <span class="status-badge status-missing">format: unavailable</span></h3>
     <p class="section-sub">Blocks follow the ledger row's own recorded `sections` order for this cycle -- never a hard-coded assembly order. Click to view exact text.</p>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">identity</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting)</span><span class="block-meta">1,244 chars &bull; ~311 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#2</span><strong class="block-title">soul</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting)</span><span class="block-meta">1,590 chars &bull; ~397 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#3</span><strong class="block-title">goals</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting)</span><span class="block-meta">3,849 chars &bull; ~962 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#4</span><strong class="block-title">user</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting)</span><span class="block-meta">2,585 chars &bull; ~646 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#5</span><strong class="block-title">operating</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting) · floor 5,000c (static, runtime not reporting)</span><span class="block-meta">6,103 chars &bull; ~1,525 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#6</span><strong class="block-title">agents</strong><span class="block-label"><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code> &bull; cap 4,000c (static, runtime not reporting)</span><span class="block-meta">3,992 chars &bull; ~998 tokens <span class="badge-flag badge-flag-truncated">TRUNCATED</span></span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#7</span><strong class="block-title">priorities</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>operator + derived priorities</code> &bull; cap 3,000c (static, runtime not reporting)</span><span class="block-meta">1,380 chars &bull; ~345 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<div class="context-block-empty"><span class="block-seq">#8</span><strong>skills_catalogue</strong> <span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code> &mdash; 0 chars (empty under loop profile) &mdash;</div>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#9</span><strong class="block-title">memory</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code> &bull; cap 1,000c (static, runtime not reporting)</span><span class="block-meta">532 chars &bull; ~133 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#10</span><strong class="block-title">runtime</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code> &bull; cap 400c (static, runtime not reporting)</span><span class="block-meta">390 chars &bull; ~97 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#11</span><strong class="block-title">scorecard</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>scorecard/latest.json</code> &bull; cap 600c (static, runtime not reporting)</span><span class="block-meta">261 chars &bull; ~65 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-<details class="context-block-details"><summary class="block-summary"><span class="block-seq">#12</span><strong class="block-title">position</strong><span class="block-label"><span class="t1-owner t1-owner-generated">generated</span> <code>step/cycle/day position</code> &bull; cap 1,200c (static, runtime not reporting)</span><span class="block-meta">573 chars &bull; ~143 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
-    <div class="reconciliation-box">
-      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-present">&#10003; Exact Match &bull; Reconciliation verified</span></div>
-      <table class="reconciliation-table">
-        <thead><tr><th>Key</th><th>Owner / Source</th><th class="num">Chars</th><th class="num">Cap</th><th>Flags</th><th>Notes</th></tr></thead>
-        <tbody><tr class=""><td><code>identity</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code></td><td class="num">1,244</td><td class="num">shared pool 15,500c (static, runtime not reporting)</td><td>&mdash;</td><td>~311 tokens</td></tr><tr class=""><td><code>soul</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>SOUL.md</code></td><td class="num">1,590</td><td class="num">shared pool 15,500c (static, runtime not reporting)</td><td>&mdash;</td><td>~397 tokens</td></tr><tr class=""><td><code>goals</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>goals.md</code></td><td class="num">3,849</td><td class="num">shared pool 15,500c (static, runtime not reporting)</td><td>&mdash;</td><td>~962 tokens</td></tr><tr class=""><td><code>user</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>USER.md</code></td><td class="num">2,585</td><td class="num">shared pool 15,500c (static, runtime not reporting)</td><td>&mdash;</td><td>~646 tokens</td></tr><tr class=""><td><code>operating</code></td><td><span class="t1-owner t1-owner-release">release</span> <code>OPERATING.md</code></td><td class="num">6,103</td><td class="num">shared pool 15,500c (static, runtime not reporting) · floor 5,000c (static, runtime not reporting)</td><td>&mdash;</td><td>~1,525 tokens</td></tr><tr class=""><td><code>agents</code></td><td><span class="t1-owner t1-owner-instance">instance</span> <code>AGENTS.md</code></td><td class="num">3,992</td><td class="num">4,000c (static, runtime not reporting)</td><td><span class="badge-flag badge-flag-truncated">TRUNCATED</span></td><td>~998 tokens</td></tr><tr class=""><td><code>priorities</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>operator + derived priorities</code></td><td class="num">1,380</td><td class="num">3,000c (static, runtime not reporting)</td><td>&mdash;</td><td>~345 tokens</td></tr><tr class="muted-row"><td><code>skills_catalogue</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>skills index</code></td><td class="num">0</td><td class="num">dynamic</td><td>&mdash;</td><td>~0 tokens</td></tr><tr class=""><td><code>memory</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>memory index</code></td><td class="num">532</td><td class="num">1,000c (static, runtime not reporting)</td><td>&mdash;</td><td>~133 tokens</td></tr><tr class=""><td><code>runtime</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>runtime facts</code></td><td class="num">390</td><td class="num">400c (static, runtime not reporting)</td><td>&mdash;</td><td>~97 tokens</td></tr><tr class=""><td><code>scorecard</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>scorecard/latest.json</code></td><td class="num">261</td><td class="num">600c (static, runtime not reporting)</td><td>&mdash;</td><td>~65 tokens</td></tr><tr class=""><td><code>position</code></td><td><span class="t1-owner t1-owner-generated">generated</span> <code>step/cycle/day position</code></td><td class="num">573</td><td class="num">1,200c (static, runtime not reporting)</td><td>&mdash;</td><td>~143 tokens</td></tr><tr class="subtotal-row"><td colspan="2"><strong>Sum of Sections</strong></td><td class="num"><strong>22,499</strong></td><td colspan="2"></td><td>&sum; section chars</td></tr><tr class="sep-row"><td colspan="2"><strong>Separators (\n\n---\n\n)</strong></td><td class="num"><strong>70</strong></td><td colspan="2"></td><td>10 &times; 7 chars</td></tr><tr class="total-row"><td colspan="2"><strong>Total (sections + separators)</strong></td><td class="num"><strong>22,569</strong></td><td colspan="2"></td><td><strong>Recorded chars: 22,569</strong> (actual system message received by model)</td></tr></tbody>
-      </table>
-      <p class="rec-note">Formula: &sum;(recorded sections: 22,499c) + 10 separators &times; 7c (70c) = 22,569 chars, compared against actual system message received by model (22,569c).</p>
-      <p class="rec-note release-pool-note"><strong>Release pool (shared by release files):</strong> 15,371 / 15,500c (static, runtime not reporting) used (used = &sum; recorded release sections) · OPERATING.md floor 5,000c (static, runtime not reporting) (a minimum, not a ceiling)</p>
+    <div class="reconciliation-box rec-unavailable">
+      <div class="rec-header"><h4>Arithmetic Character Reconciliation</h4><span class="status-badge status-missing">sections: unavailable</span></div>
+      <p class="unavailable-note"><strong>sections breakdown: unavailable</strong> &mdash; No system_prompt telemetry row found in runtime state. No char totals or section sizes can be reported. Per honesty rules, section sizes are not reconstructed.</p>
     </div>
-<details class="context-block-details user-block-details"><summary class="block-summary"><span class="block-seq">#13</span><strong class="block-title">user (runtime_context + task)</strong><span class="block-meta">1,953 chars &bull; ~488 tokens</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
     <div class="user-message-sections">
       <h4>User Message Sections (latest recorded task text)</h4>
-      <p class="unavailable-note">task text withheld for privacy; captured size: 1,953 chars.</p>
+      <p class="unavailable-note">task unavailable.</p>
     </div>
     <div class="rule-owners-panel">
       <h4>Rule Owners <span class="status-badge status-missing">static (until harness publishes rule_owners)</span></h4>
@@ -1530,7 +1500,7 @@
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
     <p class="section-sub">Assets residing on disk, accessible by tool calls during cycle loop. Total: <strong>~1247.4 KB</strong> across <strong>244</strong> files.</p>
 <div class="context-telemetry-box"><strong>Skills catalogue:</strong> budget unavailablec · retained unavailable/unavailable · unavailable · omitted: none</div>
-<div class="context-telemetry-box"><strong>Memory index:</strong> status present · resident matched 5 · resident missing: none</div>
+<div class="context-telemetry-box"><strong>Memory index:</strong> status unavailable · resident matched unavailable · resident missing: unavailable</div>
 <div class="context-telemetry-box"><strong>Skill source join:</strong> catalogue · Tier 2 disk · skill fitness reads</div><table class="skills-table"><thead><tr><th>Skill</th><th>In catalogue</th><th>On disk</th><th>Reads</th><th>Confirmed</th><th>State</th></tr></thead><tbody><tr><td>batch-grep</td><td>unavailable</td><td>yes</td><td>7</td><td>5</td><td>working</td></tr><tr><td>bounded-reading-search-prevent-context-bloat</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>chained-python-execution</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>check-target-completion</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>classify-python-module</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>command-output-bounding-prevent-token-exhaustion</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>composite-context-inspection</td><td>unavailable</td><td>yes</td><td>1</td><td>0</td><td>working</td></tr><tr><td>demand-and-reflection-lookup-paths</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-implementation-transition</td><td>unavailable</td><td>yes</td><td>4</td><td>3</td><td>working</td></tr><tr><td>early-skip-evaluation</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>early-turn-direct-file-inspection-and-editing-turns-1-4</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>early-turn-staging</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>early-validation-and-commit-budgeting</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>eeebot-agent-work-review</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>fast-path-redundancy-skip</td><td>unavailable</td><td>yes</td><td>14</td><td>12</td><td>working</td></tr><tr><td>handle-loop-breaker</td><td>unavailable</td><td>yes</td><td>5</td><td>3</td><td>working</td></tr><tr><td>immediate-skip-protocol</td><td>unavailable</td><td>no</td><td>2</td><td>0</td><td>not on disk</td></tr><tr><td>incremental-script-refactoring-under-step-limits</td><td>unavailable</td><td>yes</td><td>2</td><td>0</td><td>working</td></tr><tr><td>inspect-verify-and-proof</td><td>unavailable</td><td>yes</td><td>6</td><td>1</td><td>working</td></tr><tr><td>jsonl-stream-filter</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>locate-failure-logs</td><td>unavailable</td><td>yes</td><td>4</td><td>1</td><td>working</td></tr><tr><td>memory-lookup</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>multi-script-refactor</td><td>unavailable</td><td>yes</td><td>4</td><td>4</td><td>working</td></tr><tr><td>pair-agents-instructions-with-tests</td><td>unavailable</td><td>yes</td><td>8</td><td>8</td><td>working</td></tr><tr><td>posix-background-execution-in-sh</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>pure-documentation-changes-test-bypass-workflow</td><td>unavailable</td><td>yes</td><td>3</td><td>3</td><td>working</td></tr><tr><td>raw-json-final-turn</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>recursive-unittest-testsuite-traversal</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>run-tests</td><td>unavailable</td><td>yes</td><td>59</td><td>52</td><td>working</td></tr><tr><td>search-subagent-archive</td><td>unavailable</td><td>yes</td><td>1</td><td>1</td><td>working</td></tr><tr><td>secret-verification-scoping</td><td>unavailable</td><td>yes</td><td>3</td><td>1</td><td>working</td></tr><tr><td>standard-test-runner-unittest-over-pytest</td><td>unavailable</td><td>no</td><td>4</td><td>4</td><td>not on disk</td></tr><tr><td>sync-agents-sections-in-structural-tests</td><td>unavailable</td><td>yes</td><td>2</td><td>1</td><td>working</td></tr><tr><td>target-git-log-history-inspection-single-file-fixes</td><td>unavailable</td><td>yes</td><td>5</td><td>4</td><td>working</td></tr><tr><td>targeted-file-slice</td><td>unavailable</td><td>yes</td><td>4</td><td>1</td><td>working</td></tr><tr><td>targeted-test-discovery</td><td>unavailable</td><td>no</td><td>2</td><td>2</td><td>not on disk</td></tr><tr><td>targeted-test-validation-legacy-glob-suites</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>turn-budget-checkpoints-80-iteration-cycles</td><td>unavailable</td><td>yes</td><td>2</td><td>2</td><td>working</td></tr><tr><td>verify-lessons-integrity</td><td>unavailable</td><td>yes</td><td>9</td><td>6</td><td>working</td></tr></tbody></table>
     <div class="t2-group" id="tier2-skills-section">
       <div class="t2-group-header"><h4>Skills Store (36 skills &bull; ~227.5 KB)</h4><span class="t2-group-note">Corpus: present; indexed in Tier 1 via <code>skills_catalogue</code> (0 chars)</span></div>
@@ -1908,12 +1878,12 @@
       </div>
       <div class="proposer-block">
         <h3>Proposer</h3>
-        <p class="proposer-decision">last proposal: <strong>Instruct agents in AGENTS.md to consult key paths before running filesystem searches</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 198 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-10-05</td><td class="skill-reads">38</td><td>334.7K</td><td>33s</td></tr><tr><td>2026-10-03</td><td class="skill-reads">3</td><td>27.66K</td><td>15s</td></tr><tr><td>2026-10-02</td><td class="skill-reads">25</td><td>243.8K</td><td>26s</td></tr><tr><td>2026-10-01</td><td class="skill-reads">67</td><td>547.0K</td><td>20s</td></tr><tr><td>2026-09-30</td><td class="skill-reads">65</td><td>620.7K</td><td>18s</td></tr></tbody></table>
+        <p class="unavailable-note">no proposal decisions in the recent ledger</p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 198 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-10-05</td><td class="skill-reads">38</td><td>334.7K</td><td>33s</td></tr><tr><td>2026-10-03</td><td class="skill-reads">3</td><td>27.66K</td><td>15s</td></tr><tr><td>2026-10-02</td><td class="skill-reads">25</td><td>243.8K</td><td>26s</td></tr><tr><td>2026-10-01</td><td class="skill-reads">67</td><td>547.0K</td><td>20s</td></tr><tr><td>2026-09-30</td><td class="skill-reads">65</td><td>620.7K</td><td>18s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator d8b0ea4 · generated 2026-10-05 21:01:08 UTC &middot; host eeepc &middot; newest source 21s old &middot; <span class="footer-computed">scorecard computed 2026-10-05 23:29:39 MSK</span></footer>
+<footer class="page-footer">generator d8b0ea4 · generated 2026-10-05 21:08:28 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-10-05 23:29:39 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1944,5 +1914,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1791234055-20660310bfbb · generated 2026-10-05T21:00:55.666966+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1791234497-5f8110e2f8d3 · generated 2026-10-05T21:08:17.101784+00:00</footer></body>
 </html>
