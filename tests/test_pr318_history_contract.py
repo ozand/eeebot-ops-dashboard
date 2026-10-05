@@ -105,6 +105,23 @@ def test_allowlisted_tool_name_is_visible_without_untrusted_names():
     assert "PRIVATE_TOOL_NAME_CANARY" not in page
 
 
+def test_tool_projections_are_idempotent_without_trusting_forged_wrappers():
+    from scripts.cycle_detail import (
+        SanitizedText, format_tool_step, sanitize_tool_arguments, sanitize_tool_output,
+    )
+
+    args = sanitize_tool_arguments({"path": "/synthetic/a"})
+    result = sanitize_tool_output(args, "done")
+    assert sanitize_tool_arguments(args) == args
+    assert sanitize_tool_output(args, result) == result
+    page = format_tool_step({"name": "read_file", "arguments": args, "result": result})
+    assert "4 bytes" in page
+    assert json.loads(sanitize_tool_arguments(args))["keys"] == ["path"]
+    forged = SanitizedText("PRIVATE_PROJECTION_CANARY")
+    assert "PRIVATE_PROJECTION_CANARY" not in sanitize_tool_arguments(forged)
+    assert "PRIVATE_PROJECTION_CANARY" not in sanitize_tool_output(args, forged)
+
+
 def test_manifest_delivers_private_cycle_reader():
     root = Path(__file__).resolve().parents[1]
     entries = (root / "deploy/sync-manifest.txt").read_text().splitlines()

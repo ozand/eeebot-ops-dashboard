@@ -162,6 +162,8 @@ def _argument_keys(value: Any, *, limit: int = 50, depth: int = 4) -> list[str]:
 
 
 def sanitize_tool_arguments(arguments: Any) -> SanitizedText:
+    if isinstance(arguments, SanitizedText):
+        return display_text(arguments)
     try:
         parsed = json.loads(arguments) if isinstance(arguments, str) else arguments
     except (json.JSONDecodeError, TypeError):
@@ -200,6 +202,8 @@ def _sanitize_nested_value(value: Any) -> Any:
 
 def sanitize_tool_output(args: Any, result: Any) -> SanitizedText:
     del args
+    if isinstance(result, SanitizedText):
+        return display_text(result)
     return _project_value(result)
 
 
@@ -401,7 +405,7 @@ def extract_tool_steps(prompt: dict[str, Any]) -> list[dict[str, Any]]:
                     steps.append(step)
         elif role == "tool":
             cid = msg.get("tool_call_id")
-            content = str(msg.get("content") or "")
+            content = msg.get("content") if msg.get("content") is not None else ""
             matched = False
             if cid and cid in pending_calls:
                 call_step = pending_calls.pop(cid)
@@ -873,7 +877,7 @@ def format_tool_step(step: dict[str, Any]) -> str:
     res_val = step.get("result")
     if res_val is not None and not isinstance(res_val, SanitizedText):
         raise TypeError("result must be SanitizedText")
-    result = display_text(sanitize_tool_output(str(raw_args), str(res_val))) if res_val is not None else SanitizedText("unavailable")
+    result = display_text(res_val) if res_val is not None else SanitizedText("unavailable")
     dur_val = step.get("duration")
     duration = _safe_duration(dur_val)
     source_value = step.get("source")
