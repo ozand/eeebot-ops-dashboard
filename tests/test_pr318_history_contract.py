@@ -122,6 +122,28 @@ def test_tool_projections_are_idempotent_without_trusting_forged_wrappers():
     assert "PRIVATE_PROJECTION_CANARY" not in sanitize_tool_output(args, forged)
 
 
+def test_legacy_function_call_without_proven_result_is_incomplete(tmp_path):
+    bridge = tmp_path / "bridge"
+    bridge.mkdir()
+    (bridge / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r1", "cycle_id": "legacy", "started_at": "2026-10-04T09:00:00Z",
+        "finished_at": "2026-10-04T11:00:00Z",
+    }) + "\n")
+    prompts = tmp_path / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    (prompts / "2026-10-04.jsonl").write_text(json.dumps({
+        "cycle_id": "legacy", "component": "executor", "seq": 1,
+        "ts": "2026-10-04T10:00:00Z", "messages": [],
+        "finish_reason": "function_call",
+        "function_call": {"name": "read_file", "arguments": "PRIVATE_LEGACY_CANARY"},
+    }) + "\n")
+    record = build_cycle_index(tmp_path, now=datetime(2026, 10, 4, 12, tzinfo=timezone.utc))["legacy"]
+    assert record["history_complete"] is False
+    assert record["reconstruction"] == "incomplete"
+    assert record["sessions"][0]["steps"][0]["tool_status"] == "incomplete"
+    assert "PRIVATE_LEGACY_CANARY" not in render_cycle_page("legacy", record)
+
+
 def test_manifest_delivers_private_cycle_reader():
     root = Path(__file__).resolve().parents[1]
     entries = (root / "deploy/sync-manifest.txt").read_text().splitlines()

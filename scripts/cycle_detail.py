@@ -672,6 +672,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             ):
                 reconstruction_state = "incomplete"
                 cycle_reconstruction_incomplete = True
+            if p.get("finish_reason") == "function_call":
+                # Legacy responses have no reliable modern call-ID provenance.
+                reconstruction_state = "incomplete"
+                cycle_reconstruction_incomplete = True
             if p.get("finish_reason") == "tool_calls" and not _response_tool_continuations(
                 p, _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs),
             ):
@@ -683,8 +687,11 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 "messages": _project_value(sanitized_msgs) if sanitized_msgs else None,
                 "answer": _project_value(p.get("content")) if p.get("content") is not None else None,
                 "tools": _project_value(p.get("tool_calls")) if p.get("tool_calls") else None,
-                "tool_status": "incomplete" if p.get("finish_reason") == "tool_calls" and not _response_tool_continuations(
-                    p, _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs),
+                "tool_status": "incomplete" if (
+                    p.get("finish_reason") == "function_call"
+                    or p.get("finish_reason") == "tool_calls" and not _response_tool_continuations(
+                        p, _later_prompts_in_attempt(p, c_prompts[prompt_index + 1:], c_runs),
+                    )
                 ) else "observed",
                 "function_call": _project_value(p.get("function_call")) if p.get("function_call") else None,
                 "reasoning": _project_value(p.get("reasoning_content")) if p.get("reasoning_content") is not None else None,
