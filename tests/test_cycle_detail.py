@@ -1037,3 +1037,76 @@ def test_f8_attempt_scoped_sessions_deduped_tools_and_unknown_duration(tmp_path:
     assert "Session executor" in page
     assert "tool-1" not in page
     assert "Duration: unknown" in page
+@pytest.mark.parametrize("messages", [
+    None, "malformed-json", "{}", json.dumps({"role": "user", "content": "ignored"}),
+    [None], [{"role": "user", "content": "visible-safe"}, None],
+])
+def test_malformed_message_collection_marks_history_incomplete(tmp_path: Path, messages: object) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    (tmp_path / "bridge").mkdir()
+    run = {"run_id": "r-malformed", "cycle_id": "c-malformed", "classification": "completed",
+           "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z"}
+    (tmp_path / "bridge" / "runs.jsonl").write_text(json.dumps(run) + "\n", encoding="utf-8")
+    prompts = tmp_path / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    prompt = {"cycle_id": "c-malformed", "component": "executor", "seq": 1,
+              "ts": "2026-09-25T10:00:00Z", "finish_reason": "stop", "messages": messages}
+    (prompts / "2026-09-25.jsonl").write_text(json.dumps(prompt) + "\n", encoding="utf-8")
+    detail = build_cycle_index(tmp_path, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-malformed"]
+    assert detail["history_complete"] is False
+    assert detail["reconstruction"] == "incomplete"
+    assert detail["attempts"][0]["history_complete"] is False
+    assert detail["attempts"][0]["sessions"][0]["history_complete"] is False
+    assert "visible-safe" not in json.dumps(detail)
+
+
+def test_absent_and_empty_message_collections_remain_compatible(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    runs = []
+    prompt_rows = []
+    for suffix, extra in (("absent", {}), ("empty", {"messages": []})):
+        cycle = f"c-{suffix}"
+        run = {"run_id": f"r-{suffix}", "cycle_id": cycle, "classification": "completed",
+               "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z"}
+        prompt = {"cycle_id": cycle, "component": "executor", "seq": 1,
+                  "ts": "2026-09-25T10:00:00Z", "finish_reason": "stop", **extra}
+        runs.append(run)
+        prompt_rows.append(prompt)
+    (root / "bridge" / "runs.jsonl").write_text("".join(json.dumps(run) + "\n" for run in runs), encoding="utf-8")
+    (prompts / "2026-09-25.jsonl").write_text("".join(json.dumps(prompt) + "\n" for prompt in prompt_rows), encoding="utf-8")
+    index = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
+    assert index["c-absent"]["history_complete"] is True
+    assert index["c-empty"]["history_complete"] is True
+
+
+def test_unproven_legacy_function_messages_mark_history_incomplete(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    cases = (
+        ("call", [{"role": "assistant", "function_call": {"name": "lookup", "arguments": "{}"}}]),
+        ("result", [{"role": "assistant", "function_call": {"name": "lookup", "arguments": "{}"}},
+                     {"role": "function", "name": "lookup", "content": "safe result"}]),
+    )
+    for suffix, messages in cases:
+        cycle = f"c-legacy-{suffix}"
+        run = {"run_id": f"r-legacy-{suffix}", "cycle_id": cycle, "classification": "completed",
+               "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T12:00:00Z"}
+        prompt = {"cycle_id": cycle, "component": "executor", "seq": 1,
+                  "ts": "2026-09-25T10:00:00Z", "finish_reason": "stop", "messages": messages}
+        (root / "bridge" / "runs.jsonl").write_text(json.dumps(run) + "\n", encoding="utf-8")
+        (prompts / "2026-09-25.jsonl").write_text(json.dumps(prompt) + "\n", encoding="utf-8")
+        detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))[cycle]
+        assert detail["history_complete"] is False
+        assert detail["attempts"][0]["history_complete"] is False
+        assert detail["attempts"][0]["sessions"][0]["history_complete"] is False
+        assert "safe result" not in json.dumps(detail)

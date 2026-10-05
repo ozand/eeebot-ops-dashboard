@@ -250,6 +250,18 @@ def display_text(value: str, *, limit: int = DEFAULT_DISPLAY_LIMIT) -> Sanitized
     return _project_value(str(value))
 
 
+def _messages_are_malformed(raw_messages: Any) -> bool:
+    """Detect present message collections whose structure cannot be trusted."""
+    if isinstance(raw_messages, str):
+        try:
+            raw_messages = json.loads(raw_messages)
+        except (json.JSONDecodeError, TypeError):
+            return True
+    return not isinstance(raw_messages, list) or any(
+        not isinstance(message, dict) for message in raw_messages
+    )
+
+
 def sanitize_messages(raw_messages: Any) -> list[dict[str, Any]]:
     """Project message records to safe metadata; never copy source payload text."""
     if isinstance(raw_messages, str):
@@ -621,9 +633,31 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
 
         sessions_by_role: dict[str, list[dict[str, Any]]] = {}
         steps_by_prompt: dict[int, list[dict[str, Any]]] = {}
+        malformed_prompt_ids: set[int] = set()
+        unproven_legacy_prompt_ids: set[int] = set()
         used_duration_ids: set[int] = set()
         for prompt_index, p in enumerate(c_prompts):
             role = str(p.get("component") or "executor")
+            if "messages" in p and _messages_are_malformed(p["messages"]):
+                malformed_prompt_ids.add(id(p))
+                reconstruction_state = "incomplete"
+                cycle_reconstruction_incomplete = True
+            raw_messages = p.get("messages")
+            if isinstance(raw_messages, str):
+                try:
+                    raw_messages = json.loads(raw_messages)
+                except (json.JSONDecodeError, TypeError):
+                    raw_messages = []
+            if isinstance(raw_messages, list) and any(
+                isinstance(message, dict) and (
+                    isinstance(message.get("function_call"), dict)
+                    or message.get("role") == "function"
+                )
+                for message in raw_messages
+            ):
+                unproven_legacy_prompt_ids.add(id(p))
+                reconstruction_state = "incomplete"
+                cycle_reconstruction_incomplete = True
             duration_key = (cid, role, str(p.get("seq")))
             candidates = duration_rows.get(duration_key, [])
             prompt_ts = _parse_timestamp(p.get("ts") or p.get("timestamp"))
@@ -771,6 +805,8 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 duration_values = [step.get("duration") for step in model_calls]
                 session_complete = (
                     not cycle_broken and read_state == "ok" and not has_compaction
+                    and not any(id(prompt) in malformed_prompt_ids or id(prompt) in unproven_legacy_prompt_ids
+                                for prompt in prompts_for_role)
                     and not any(prompt.get("truncated") for prompt in prompts_for_role)
                     and not any(step.get("status") in {"pending", "incomplete"}
                                 or step.get("tool_status") == "incomplete" for step in model_steps)
@@ -783,7 +819,9 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             killed = run.get("classification") in {"unit_timeout", "killed"}
             run_state = not killed
             complete = (read_state == "ok" and not cycle_broken and not has_compaction
-                        and bool(owned) and run_state and all(session["history_complete"] for session in sessions))
+                        and bool(owned) and run_state and all(session["history_complete"] for session in sessions)
+                        and not any(id(prompt) in malformed_prompt_ids or id(prompt) in unproven_legacy_prompt_ids
+                                    for prompt in owned))
             attempts.append({"run_id": run_id, "classification": run.get("classification") or "unknown",
                              "model_call_count": call_count, "sessions": sessions,
                              "history_complete": complete, "outcome": run.get("outcome") or run.get("classification") or "unknown"})
