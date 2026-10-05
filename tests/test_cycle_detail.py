@@ -352,6 +352,28 @@ def test_load_cycle_detail_uses_inventory_paths_and_marks_missing_sources(tmp_pa
     assert result["total_model_calls"] == 1
 
 
+def test_active_run_history_respects_retained_calendar_days(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    (tmp_path / "bridge").mkdir()
+    rows = [
+        {"cycle_id": "old", "started_at": "2026-06-01T12:00:00Z"},
+        {"cycle_id": "old-fallback", "started_at": "malformed",
+         "finished_at": "2026-06-01T12:00:00Z"},
+        {"cycle_id": "retained", "started_at": "2026-09-19T00:00:00Z"},
+        {"cycle_id": "recent", "started_at": "2026-09-25T12:00:00Z"},
+        {"cycle_id": "future", "started_at": "2026-09-26T00:00:00Z"},
+        {"cycle_id": "unknown-time"},
+    ]
+    (tmp_path / "bridge" / "runs.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8",
+    )
+    index = build_cycle_index(tmp_path, days=7,
+                              now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))
+    assert set(index) == {"retained", "recent", "unknown-time"}
+    assert index["unknown-time"]["history_complete"] is False
+
+
 def test_private_renderer_builds_only_indexed_cycle_pages(tmp_path: Path) -> None:
     from scripts.two_sinks import render_private_pages
 

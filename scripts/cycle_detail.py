@@ -541,6 +541,14 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
     prompts_result = _read_jsonl(prompt_paths)
     durations_result = _read_jsonl(duration_paths)
     raw_runs, runs_ok = runs_result
+    # The active file is not date-partitioned and may retain historical rows.
+    # Apply the same calendar-day window used for rotated source selection.
+    first_retained_day = reference.date() - timedelta(days=days - 1)
+    raw_runs = [row for row in raw_runs if (
+        (stamp := next((parsed for key in ("started_at", "start_time", "finished_at", "end_time")
+                        if (parsed := _parse_timestamp(row.get(key))) is not None), None)) is None
+        or first_retained_day <= stamp.date() <= reference.date()
+    )]
     raw_prompts, prompts_ok = prompts_result
     durations, durations_ok = durations_result
     broken_runs = runs_result.broken
