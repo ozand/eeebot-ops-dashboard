@@ -684,7 +684,10 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 ) else "observed",
                 "function_call": _project_value(p.get("function_call")) if p.get("function_call") else None,
                 "reasoning": _project_value(p.get("reasoning_content")) if p.get("reasoning_content") is not None else None,
-                "tokens": (p.get("prompt_tokens") or 0) + (p.get("completion_tokens") or 0),
+                "tokens": (prompt_tokens + completion_tokens
+                           if (prompt_tokens := _safe_count(p.get("prompt_tokens"))) is not None
+                           and (completion_tokens := _safe_count(p.get("completion_tokens"))) is not None
+                           else None),
                 "duration": dur if dur is not None else "unknown",
             }
             sessions_by_role.setdefault(role, []).append(model_step)
@@ -764,7 +767,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 sessions.append({"role": role, "history_complete": session_complete,
                                  "model_calls": len(prompts_for_role), "steps": model_steps,
                                  "tool_names": tool_names,
-                                 "tokens": sum(value for value in token_values if isinstance(value, int)) if all(isinstance(value, int) for value in token_values) else None,
+                                 "tokens": sum(value for value in token_values if isinstance(value, int)) if token_values and all(_safe_count(value) is not None for value in token_values) else None,
                                  "duration_ms": sum(value for value in duration_values if isinstance(value, (int, float))) if all(isinstance(value, (int, float)) for value in duration_values) else None})
             killed = run.get("classification") in {"unit_timeout", "killed"}
             run_state = not killed
@@ -799,7 +802,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                              "model_call_count": len(unassigned), "history_complete": False,
                              "outcome": "unknown", "sessions": [{"role": "unassigned",
                              "history_complete": False, "model_calls": len(unassigned),
-                             "steps": [{"kind": "model", "tokens": 0, "duration": "unknown"} for _ in unassigned],
+                             "steps": [{"kind": "model", "tokens": None, "duration": "unknown"} for _ in unassigned],
                              "tool_names": tool_names}]})
 
         history_complete = (
@@ -862,7 +865,7 @@ def format_model_step(step: dict[str, Any]) -> str:
 
 
 def format_tool_step(step: dict[str, Any]) -> str:
-    name = _safe_identifier(step.get("name"))
+    name = _safe_tool_name(step.get("name"))
     raw_args = step.get("arguments", SanitizedText("unavailable"))
     if not isinstance(raw_args, SanitizedText):
         raise TypeError("arguments must be SanitizedText")

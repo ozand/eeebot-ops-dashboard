@@ -69,6 +69,42 @@ def test_unattributable_corruption_breaks_all_retained_cycles(tmp_path, corrupt_
     assert record["reconstruction"] == "incomplete"
 
 
+@pytest.mark.parametrize("usage,expected", [
+    ({}, None), ({"prompt_tokens": 4}, None),
+    ({"prompt_tokens": True, "completion_tokens": 2}, None),
+    ({"prompt_tokens": -1, "completion_tokens": 2}, None),
+    ({"prompt_tokens": 0, "completion_tokens": 0}, 0),
+    ({"prompt_tokens": 4, "completion_tokens": 2}, 6),
+])
+def test_model_usage_preserves_unknown_and_observed_zero(tmp_path, usage, expected):
+    bridge = tmp_path / "bridge"
+    bridge.mkdir()
+    (bridge / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r1", "cycle_id": "c1", "started_at": "2026-10-04T09:00:00Z",
+        "finished_at": "2026-10-04T11:00:00Z",
+    }) + "\n")
+    prompts = tmp_path / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    (prompts / "2026-10-04.jsonl").write_text(json.dumps({
+        "cycle_id": "c1", "component": "executor", "seq": 1,
+        "ts": "2026-10-04T10:00:00Z", "messages": [], **usage,
+    }) + "\n")
+    record = build_cycle_index(tmp_path, now=datetime(2026, 10, 4, 12, tzinfo=timezone.utc))["c1"]
+    assert record["sessions"][0]["steps"][0]["tokens"] == expected
+    assert record["attempts"][0]["sessions"][0]["tokens"] == expected
+
+
+def test_allowlisted_tool_name_is_visible_without_untrusted_names():
+    from scripts.cycle_detail import format_tool_step, sanitize_tool_arguments
+
+    step = {"name": "search", "arguments": sanitize_tool_arguments({})}
+    assert "Tool step: search(" in format_tool_step(step)
+    step["name"] = "PRIVATE_TOOL_NAME_CANARY"
+    page = format_tool_step(step)
+    assert "Tool step: tool(" in page
+    assert "PRIVATE_TOOL_NAME_CANARY" not in page
+
+
 def test_manifest_delivers_private_cycle_reader():
     root = Path(__file__).resolve().parents[1]
     entries = (root / "deploy/sync-manifest.txt").read_text().splitlines()
