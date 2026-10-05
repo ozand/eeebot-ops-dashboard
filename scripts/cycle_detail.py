@@ -593,7 +593,8 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             (p for p in raw_prompts if str(p.get("cycle_id")) == cid),
             key=lambda p: (_parse_timestamp(p.get("ts") or p.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc), str(p.get("seq") or "")),
         )
-        cycle_broken = any(cid in errors for errors in (broken_runs, broken_prompts, broken_dur, broken_comp))
+        cycle_broken = any(cid in errors or "*" in errors
+                           for errors in (broken_runs, broken_prompts, broken_dur, broken_comp))
         c_compactions = [c for c in compactions if str(c.get("cycle_id")) == cid]
         has_compaction = any(c.get("reason") == "compacted" or "compact" in str(c.get("reason", "")) for c in c_compactions)
         has_truncation = any(bool(p.get("truncated")) for p in c_prompts)
