@@ -164,7 +164,7 @@ def _unreadable_tree_source(data: dict[str, Any], state_root: Path) -> str | Non
     return None
 
 
-def compute_tree_digest(state_root: Path) -> str:
+def compute_tree_digest(state_root: Path, *, generator_sha: str | None = None) -> str:
     """SHA-256 over the raw bytes of TREE_DIGEST_SOURCES only, in a fixed
     order, each length-delimited by a NUL so an absent file cannot be
     confused with a present-but-empty one. A missing file hashes as a
@@ -208,6 +208,11 @@ def compute_tree_digest(state_root: Path) -> str:
     # #356: the public projection's version -- a deployed projection change
     # (e.g. a field it now withholds) republishes even on a quiet tree.
     hasher.update(f'projection:{sinks.PROJECTION_VERSION}'.encode('utf-8'))
+    hasher.update(b'\x00')
+    # #364: include the rendered generator identity in the skip key. A
+    # synced renderer can change while tree sources remain byte-identical.
+    generator_sha = tv._generator_sha() if generator_sha is None else generator_sha
+    hasher.update(f'generator:{generator_sha}'.encode('utf-8'))
     hasher.update(b'\x00')
     return hasher.hexdigest()
 
