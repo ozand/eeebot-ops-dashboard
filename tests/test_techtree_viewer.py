@@ -6963,8 +6963,8 @@ def test_issue338_full_render_uses_presaved_legacy_lesson_lengths_after_projecti
     assert projected["result_chars"] == 14
     pages = tv.render_pages(public, host="eeepc")
     assert 'data-text="legacy-lengths' in pages["lessons.html"]
-    assert "insight: text on the LAN site only (28 chars)" in pages["lessons.html"]
-    assert "result: text on the LAN site only (14 chars)" in pages["lessons.html"]
+    assert "Problem:</span> text on the LAN site only (28 chars)" in pages["lessons.html"]
+    assert "Solution:</span> text on the LAN site only (31 chars)" in pages["lessons.html"]
     assert marker not in pages["lessons.html"]
     assert "PRIVATE_LESSON_LENGTH_CANARY" not in pages["lessons.html"]
 
