@@ -42,7 +42,9 @@ import techtree_viewer as tv  # noqa: E402
 import two_sinks as sinks  # noqa: E402
 try:
     from scripts.publish_scan import PublicationScanError, scan_pages
-except ImportError:
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.publish_scan"}:
+        raise
     from publish_scan import PublicationScanError, scan_pages  # type: ignore  # noqa: E402
 
 DEFAULT_STATE_DIR = '/var/lib/eeebot-techtree'

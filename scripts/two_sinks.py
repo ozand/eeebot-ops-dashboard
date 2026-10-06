@@ -25,7 +25,9 @@ try:
         is_allowed_publish_path,
         scan_pages as _publish_scan_pages,
     )
-except ImportError:
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.publish_scan"}:
+        raise
     from publish_scan import (
         PUBLIC_PAGE_PATHS as PUBLIC_PAGES,
         PublicationScanError,
@@ -40,7 +42,9 @@ try:
         CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
         COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,
     )
-except ImportError:
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.techtree_viewer"}:
+        raise
     from techtree_viewer import (  # type: ignore
         CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
         COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,

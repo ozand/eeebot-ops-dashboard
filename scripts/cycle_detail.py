@@ -9,7 +9,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.publish_scan import scan_text
+try:
+    from scripts.publish_scan import scan_text
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.publish_scan"}:
+        raise
+    from publish_scan import scan_text
 
 DEFAULT_DISPLAY_LIMIT = 4000
 IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
