@@ -97,6 +97,31 @@ def test_publisher_unit_installation_and_post_install_checks_are_documented() ->
     assert "owner: ozand" in text
 
 
+def test_private_cycle_navigation_is_host_only_and_routes_only_indexed_ids(tmp_path: Path):
+    public = {"cycle.html": '<html><body><main><h1>Cycle Detail</h1></main></body></html>', "index.html": "<html></html>"}
+    private = {"cycles/cycle-safe.html": "<main>private detail</main>"}
+    (tmp_path / "site").mkdir()
+    published = []
+    publish_ordered(tmp_path / "site", public, private, "nav1", lambda pages: published.append(pages) or (0, {}))
+    host_cycle = (tmp_path / "site" / "nav1" / "cycle.html").read_text(encoding="utf-8")
+    assert 'new Set(["cycle-safe"])' in host_cycle
+    assert "window.location.replace('cycles/' + encodeURIComponent(id) + '.html')" in host_cycle
+    assert "unavailable-note" in host_cycle
+    assert "cycles/cycle-safe.html" not in published[0]["cycle.html"]
+    assert "lan-private-cycle-router" not in published[0]["cycle.html"]
+    assert "cycles/cycle-safe.html" not in published[0]
+
+
+def test_private_cycle_navigation_ignores_unmatched_and_unsafe_names():
+    from scripts.two_sinks import _add_private_cycle_navigation
+
+    host_pages = {"cycle.html": '<html><body>public</body></html>'}
+    _add_private_cycle_navigation(host_pages, {"cycles/safe-id.html": "safe", "cycles/../../escape.html": "unsafe"})
+    assert 'new Set(["safe-id"])' in host_pages["cycle.html"]
+    assert "../../escape" not in host_pages["cycle.html"]
+    assert "safe-id" not in '<html><body>public</body></html>'
+
+
 def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     """ADR-036 §1: host precedes gh-pages and both use one version."""
     order = []

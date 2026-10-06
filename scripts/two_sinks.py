@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime
+import html
 import json
 import math
 import os
@@ -1384,10 +1385,46 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
     return updated
 
 
-def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
-    """D1 boundary seam; private cycle rendering is deliberately deferred to D2."""
-    del private_data, host
-    return {}
+def render_private_pages(
+    private_data: dict, host: str, state_root: Path | None = None,
+) -> dict[str, str]:
+    """Render bounded D2 cycle details for the host snapshot only.
+
+    The private renderer reads the host-authority state tree directly; its
+    output is passed only to ``publish_ordered``'s host snapshot sink.
+    """
+    del host
+    if state_root is None or not isinstance(private_data, dict):
+        return {}
+    ledger = private_data.get("ledger_history")
+    if not isinstance(ledger, list):
+        return {}
+    cycle_ids = {
+        row.get("cycle_id") for row in ledger
+        if isinstance(row, dict) and isinstance(row.get("cycle_id"), str)
+        and row.get("cycle_id")
+    }
+    if not cycle_ids:
+        return {}
+    try:
+        from scripts.cycle_detail import build_cycle_index, render_cycle_page
+    except ImportError:
+        from cycle_detail import build_cycle_index, render_cycle_page
+    index = build_cycle_index(Path(state_root), days=7)
+    pages = {}
+    for cycle_id in sorted(cycle_ids & index.keys()):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", cycle_id):
+            continue
+        page_name = f"cycles/{cycle_id}.html"
+        _validate_page_name(page_name)
+        record = index[cycle_id]
+        details = private_data.get("cycle_details")
+        if isinstance(details, dict) and isinstance(details.get(cycle_id), dict):
+            reflection = details[cycle_id].get("reflection")
+            if isinstance(reflection, dict):
+                record = {**record, "reflection": reflection}
+        pages[page_name] = render_cycle_page(cycle_id, record)
+    return pages
 
 
 class SnapshotActivationError(RuntimeError):
@@ -1595,6 +1632,33 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
     return destination
 
 
+def _add_private_cycle_navigation(host_pages: dict[str, str], private_pages: Mapping[str, str]) -> None:
+    """Route the host cycle-detail query to an indexed LAN-only page."""
+    cycle_ids = sorted(
+        name[len("cycles/"):-len(".html")]
+        for name in private_pages
+        if name.startswith("cycles/") and name.endswith(".html")
+        and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name[len("cycles/"):-len(".html")])
+    )
+    cycle_page = host_pages.get("cycle.html")
+    if not isinstance(cycle_page, str):
+        return
+    allowed_json = json.dumps(cycle_ids, ensure_ascii=True).replace("</", "<\\/")
+    router = f'''<script id="lan-private-cycle-router">
+(function() {{
+  var allowed = new Set({allowed_json});
+  var id = new URLSearchParams(window.location.search).get('id') || '';
+  if (allowed.has(id)) {{
+    window.location.replace('cycles/' + encodeURIComponent(id) + '.html');
+  }} else {{
+    document.body.innerHTML = '<main><h1>Cycle detail unavailable</h1><p class="unavailable-note">No retained LAN-only detail page exists for this cycle.</p></main>';
+  }}
+}})();
+</script>'''
+    marker = "</body>"
+    host_pages["cycle.html"] = cycle_page.replace(marker, router + marker, 1) if marker in cycle_page else cycle_page + router
+
+
 class HostSnapshotError(RuntimeError):
     def __init__(
         self,
@@ -1638,6 +1702,7 @@ def publish_ordered(
         **versioned_public,
         **versioned_private,
     }
+    _add_private_cycle_navigation(host_pages, versioned_private)
     host_error = None
     try:
         os.lstat(site_root)

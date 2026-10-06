@@ -157,5 +157,6 @@ def test_live_gh_pages_findings_preserve_master_and_remain_clean(master_scanner)
         raw = subprocess.run(
             ["git", "show", f"origin/gh-pages:{path}"], capture_output=True, check=True
         ).stdout.decode("utf-8")
+        is_json = path.endswith(".json")
         optimized = _assert_master_findings_preserved(raw, master_scanner)
         assert optimized == {}, path
