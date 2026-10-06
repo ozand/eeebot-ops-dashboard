@@ -3231,9 +3231,70 @@ def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
     }
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'feed-cost' in html_out
-    assert '12 calls' in html_out
+    assert '12 LLM calls' in html_out
     assert '1.23M tok' in html_out
-    assert 'dur 35m10s' in html_out
+    assert 'Σ LLM wait 35m10s' in html_out
+    assert 'not cycle elapsed' in html_out
+
+
+def test_cycle_feed_llm_cost_label_names_provider_duration_and_scope() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-duration-label", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-duration-label", "outcome": "success",
+         "ts": "2026-10-05T23:32:27Z"},
+    ]
+    stats = {"cycle-duration-label": {
+        "calls": 13, "total_tokens": 322400, "duration_ms": 319000,
+        "last_finish_reason": "stop", "any_length": False, "last_ts": "2026-10-05T23:31:00Z",
+    }}
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats=stats, history_mode=True)
+    row = html_out.split('id="cycle-cycle-duration-label"')[1].split('</li>')[0]
+
+    assert "13 LLM calls" in row
+    assert "322.4K tok" in row
+    assert "Σ LLM wait" in row
+    assert "5m19s" in row
+    assert "cycle elapsed" in row
+    assert "32m27s" not in row
+
+
+def test_cycle_feed_missing_llm_stats_is_unknown_not_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-no-llm-stats", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-no-llm-stats", "outcome": "success",
+         "ts": "2026-10-05T23:32:27Z"},
+    ]
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, history_mode=True)
+    row = html_out.split('id="cycle-cycle-no-llm-stats"')[1].split('</li>')[0]
+
+    assert "LLM metrics unavailable" in row
+    assert "0 LLM calls" not in row
+    assert "0s" not in row
+
+
+def test_cycle_feed_preserves_legacy_prefix_stats_alias() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-alias", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-alias", "outcome": "success", "ts": "2026-10-05T23:01:00Z"},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger,
+        llm_stats={"alias": {"calls": 1, "duration_ms": 1000, "last_ts": "2026-10-05T23:00:30Z"}},
+        history_mode=True,
+    )
+    row = html_out.split('id="cycle-cycle-alias"')[1].split('</li>')[0]
+    assert "1 LLM calls" in row
+    assert "Σ LLM wait 1s" in row
+
+
+def test_cycle_feed_missing_llm_stats_is_unavailable_for_running_cycle() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-running-without-stats", "ts": "2026-10-05T23:00:00Z"}]
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, history_mode=True)
+    row = html_out.split('id="cycle-cycle-running-without-stats"')[1].split('</li>')[0]
+    assert "LLM metrics unavailable (not observed)" in row
+    assert "0 LLM calls" not in row
 
 
 def test_issue60_budget_pressure_marker_on_length() -> None:
