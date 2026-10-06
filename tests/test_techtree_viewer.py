@@ -728,6 +728,13 @@ def test_observed_per_cycle_zero_planner_calls_remains_zero() -> None:
     row = html_out.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
     assert "0 planner calls" in row
 
+    incomplete_html = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0}},
+        llm_stats_source_complete=False, history_mode=True,
+    )
+    incomplete_row = incomplete_html.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in incomplete_row
+
 
 def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_path: Path) -> None:
     from scripts import techtree_viewer as viewer
@@ -742,9 +749,13 @@ def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_p
     assert observed_empty["llm_stats_source_complete"] is True
     assert observed_empty["llm_stats"] == {}
 
-    (llm_dir / "2026-09-02.jsonl").write_text('{broken\\n', encoding="utf-8")
+    (llm_dir / "2026-09-02.jsonl").write_text('{broken\n', encoding="utf-8")
     partially_unreadable = viewer.read_local_state(str(tmp_path), str(tmp_path))
     assert partially_unreadable["llm_stats_source_complete"] is False
+
+    (llm_dir / "2026-09-02.jsonl").write_text('{"planner_calls": 2}\n', encoding="utf-8")
+    unattributed = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert unattributed["llm_stats_source_complete"] is False
 
 
 def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:

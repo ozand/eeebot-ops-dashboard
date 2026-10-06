@@ -560,6 +560,7 @@ def read_llm_stats():
                 continue
             cid = row.get("cycle_id")
             if not cid:
+                source_complete = False
                 continue
             cid = str(cid)
             st = stats.setdefault(cid, {
@@ -2288,6 +2289,7 @@ def read_local_state(
                     continue
                 cid = str(row.get('cycle_id') or '')
                 if not cid:
+                    source_complete = False
                     continue
                 st = stats.setdefault(cid, {
                     'calls': 0, 'planner_calls': 0, 'total_tokens': 0, 'duration_ms': 0,
@@ -6554,7 +6556,11 @@ def build_cycle_feed(
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
         planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
-        planner_call_count = st.get('planner_calls') if isinstance(st, dict) else None
+        planner_call_count = (
+            st.get('planner_calls')
+            if llm_stats_source_complete is True and isinstance(st, dict)
+            else None
+        )
         if planning_rows:
             iteration_values = [p.get('iterations_used') for p in planning_rows]
             iterations = (
