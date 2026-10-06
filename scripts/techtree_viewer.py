@@ -555,10 +555,12 @@ def read_llm_stats():
                 continue
             cid = str(cid)
             st = stats.setdefault(cid, {
-                "calls": 0, "total_tokens": 0, "duration_ms": 0.0,
+                "calls": 0, "planner_calls": 0, "total_tokens": 0, "duration_ms": 0.0,
                 "last_finish_reason": None, "any_length": False, "last_ts": "",
             })
             st["calls"] += 1
+            if row.get("component") == "planner":
+                st["planner_calls"] += 1
             tok = row.get("total_tokens")
             if isinstance(tok, (int, float)) and not isinstance(tok, bool):
                 st["total_tokens"] += tok
@@ -2269,10 +2271,13 @@ def read_local_state(
                 if not cid:
                     continue
                 st = stats.setdefault(cid, {
-                    'calls': 0, 'total_tokens': 0, 'duration_ms': 0,
+                    'calls': 0, 'planner_calls': 0, 'planning_predecessor': False, 'total_tokens': 0, 'duration_ms': 0,
                     'last_finish_reason': None, 'any_length': False, 'last_ts': '',
                 })
                 st['calls'] += 1
+                if row.get('component') == 'planner':
+                    st['planner_calls'] += 1
+                    st['planning_predecessor'] = True
                 tok = row.get('total_tokens')
                 if isinstance(tok, (int, float)) and not isinstance(tok, bool):
                     st['total_tokens'] += tok
@@ -6527,6 +6532,24 @@ def build_cycle_feed(
                 bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
+        planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
+        planner_call_count = st.get('planner_calls', 0) if isinstance(st, dict) else 0
+        if planning_rows:
+            iteration_values = [p.get('iterations_used') for p in planning_rows]
+            iterations = (
+                sum(iteration_values)
+                if all(isinstance(value, int) and not isinstance(value, bool) and value >= 0
+                       for value in iteration_values)
+                else None
+            )
+            planning_html = (
+                '<div class="feed-planning-cost">Planning: '
+                f'{esc(str(iterations) if iterations is not None else "unknown")} iterations &middot; '
+                f'{planner_call_count} planner calls &middot; {len(planning_rows)} planning sessions</div>'
+            )
+        else:
+            planning_html = '<div class="feed-planning-cost">Planning: unknown</div>'
+
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
         if history_mode and ts_val:
@@ -6551,6 +6574,7 @@ def build_cycle_feed(
           {files_html}
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
+          {planning_html}
         </li>
         ''')
 

@@ -716,6 +716,7 @@ _LEDGER_ROW = _obj({
     "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
     "ledger_blind": _bool, "doc_budget_exceeded": _bool, "doc_only_deferred": _count,
     "doc_only_integrations_24h": _count, "doc_only_budget_24h": _count, "items_considered": _count,
+    "iterations_used": _nullable(_count),
 })
 
 
@@ -1194,7 +1195,7 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "cycle_titles": _map(_ident, _text(300)),
     "cycle_files": _map(_ident, _list(_relpath, 50)),
     "llm_stats": _map(_ident, _obj({
-        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
+        "calls": _count, "planner_calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,

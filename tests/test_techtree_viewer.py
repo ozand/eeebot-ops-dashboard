@@ -670,6 +670,33 @@ def _ci_run(ts: str, *, conclusion: str = 'success', status: str = 'completed', 
     }
 
 
+def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-planning-cost", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-planning-cost", "iterations_used": 3,
+         "plan": "PRIVATE_PLAN_CANARY", "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-planning-cost", "iterations_used": None,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-planning-cost", "outcome": "success", "ts": "2026-09-01T00:03:00Z"},
+        {"phase": "started", "cycle_id": "cycle-before-planner", "ts": "2020-01-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-before-planner", "outcome": "success", "ts": "2020-01-01T00:01:00Z"},
+    ]
+    llm_stats = {
+        "cycle-planning-cost": {"planner_calls": 4, "planning_cost_known": False},
+        "cycle-before-planner": {"planner_calls": 0, "planning_cost_known": True},
+    }
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats=llm_stats, history_mode=True)
+
+    planning_row = html_out.split('id="cycle-cycle-planning-cost"')[1].split('</li>')[0]
+    old_row = html_out.split('id="cycle-cycle-before-planner"')[1].split('</li>')[0]
+    assert "unknown iterations" in planning_row
+    assert "4 planner calls" in planning_row
+    assert "2 planning sessions" in planning_row
+    assert "Planning: unknown" in old_row
+    assert "PRIVATE_PLAN_CANARY" not in html_out
+
+
 def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:
     observed = '2026-09-14T12:00:00Z'
     no_runs = tv._ci_freshness_state({'workflow_runs': []}, observed)

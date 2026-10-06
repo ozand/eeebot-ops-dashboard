@@ -22,6 +22,30 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def test_planning_cost_ledger_projection_is_counts_only_and_null_safe() -> None:
+    from scripts import techtree_viewer as tv
+
+    canary = "PRIVATE_PLANNING_TEXT_CANARY"
+    data = {
+        "ledger_history": [
+            {"phase": "planning_session", "cycle_id": "cycle-plan", "iterations_used": None,
+             "plan": canary, "ts": "2026-09-01T00:00:00Z"},
+            {"phase": "planning_session", "cycle_id": "cycle-plan", "iterations_used": 4,
+             "plan": canary, "ts": "2026-09-01T00:01:00Z"},
+        ],
+        "llm_stats": {"cycle-plan": {"calls": 4, "planner_calls": 2, "total_tokens": 99}},
+    }
+
+    public, private = split_render_inputs(data)
+
+    assert len(public["ledger_history"]) == 2
+    assert [row.get("iterations_used") for row in public["ledger_history"]] == [None, 4]
+    assert "plan" not in public["ledger_history"][0]
+    assert canary not in json.dumps(public)
+    assert all(canary in row["plan"] for row in private["ledger_history"])
+    assert "planner_calls" in public["llm_stats"]["cycle-plan"]
+
+
 def test_bridge_diagnostics_are_private_only_after_real_projection_and_render(tmp_path: Path):
     from scripts import techtree_viewer as tv
 
