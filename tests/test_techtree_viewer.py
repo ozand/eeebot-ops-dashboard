@@ -3274,20 +3274,27 @@ def test_cycle_feed_missing_llm_stats_is_unknown_not_zero() -> None:
     assert "0s" not in row
 
 
-def test_cycle_feed_llm_metrics_use_exact_per_cycle_row_not_prefix() -> None:
+def test_cycle_feed_preserves_legacy_prefix_stats_alias() -> None:
     ledger = [
-        {"phase": "started", "cycle_id": "cycle-a", "ts": "2026-10-05T23:00:00Z"},
-        {"phase": "outcome", "cycle_id": "cycle-a", "outcome": "success", "ts": "2026-10-05T23:01:00Z"},
-        {"phase": "started", "cycle_id": "a", "ts": "2026-10-05T23:02:00Z"},
-        {"phase": "outcome", "cycle_id": "a", "outcome": "success", "ts": "2026-10-05T23:03:00Z"},
+        {"phase": "started", "cycle_id": "cycle-alias", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-alias", "outcome": "success", "ts": "2026-10-05T23:01:00Z"},
     ]
     html_out = tv.build_cycle_feed(
-        ledger, llm_stats={"a": {"calls": 1, "duration_ms": 1000}}, history_mode=True,
+        ledger,
+        llm_stats={"alias": {"calls": 1, "duration_ms": 1000, "last_ts": "2026-10-05T23:00:30Z"}},
+        history_mode=True,
     )
-    long_id = html_out.split('id="cycle-cycle-a"')[1].split('</li>')[0]
-    exact_id = html_out.split('id="cycle-a"')[1].split('</li>')[0]
-    assert "LLM metrics unavailable" in long_id
-    assert "1 LLM calls" in exact_id
+    row = html_out.split('id="cycle-cycle-alias"')[1].split('</li>')[0]
+    assert "1 LLM calls" in row
+    assert "Σ LLM wait 1s" in row
+
+
+def test_cycle_feed_missing_llm_stats_is_unavailable_for_running_cycle() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-running-without-stats", "ts": "2026-10-05T23:00:00Z"}]
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, history_mode=True)
+    row = html_out.split('id="cycle-cycle-running-without-stats"')[1].split('</li>')[0]
+    assert "LLM metrics unavailable (not observed)" in row
+    assert "0 LLM calls" not in row
 
 
 def test_issue60_budget_pressure_marker_on_length() -> None:
