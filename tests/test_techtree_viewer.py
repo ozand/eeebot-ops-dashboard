@@ -728,12 +728,59 @@ def test_observed_per_cycle_zero_planner_calls_remains_zero() -> None:
     row = html_out.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
     assert "0 planner calls" in row
 
+    malformed_flag_html = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0}},
+        llm_stats_source_complete=1, history_mode=True,
+    )
+    malformed_row = malformed_flag_html.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in malformed_row
+
     incomplete_html = tv.build_cycle_feed(
         ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0}},
         llm_stats_source_complete=False, history_mode=True,
     )
     incomplete_row = incomplete_html.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
     assert "unknown planner calls" in incomplete_row
+
+
+def test_public_render_preserves_observed_zero_and_withholds_unknown_planner_counts() -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    ledger = [
+        {"phase": "planning_session", "cycle_id": "cycle-zero", "iterations_used": 2,
+         "plan": "PRIVATE_PLAN_MARKER", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-zero", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-unknown", "iterations_used": 4,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-unknown", "outcome": "success",
+         "ts": "2026-09-01T00:03:00Z"},
+    ]
+    data = {
+        "ledger_tail": ledger,
+        "ledger_history": ledger,
+        "llm_stats": {
+            "cycle-zero": {"calls": 2, "planner_calls": 0, "_source_complete": True},
+        },
+        "llm_stats_source_complete": True,
+    }
+    public, _private = split_render_inputs(data)
+    pages = viewer.render_public_pages(public, "host", generated_at="2026-09-01T00:05:00Z")
+    feed = pages["cycles.html"]
+    zero_row = feed.split('id="cycle-cycle-zero"')[1].split('</li>')[0]
+    unknown_row = feed.split('id="cycle-cycle-unknown"')[1].split('</li>')[0]
+    assert "0 planner calls" in zero_row
+    assert "unknown planner calls" in unknown_row
+    assert "PRIVATE_PLAN_MARKER" not in "".join(pages.values())
+
+    incomplete_data = {**data, "llm_stats_source_complete": False}
+    incomplete_public, _ = split_render_inputs(incomplete_data)
+    incomplete_page = viewer.render_public_pages(
+        incomplete_public, "host", generated_at="2026-09-01T00:05:00Z",
+    )["cycles.html"]
+    incomplete_zero_row = incomplete_page.split('id="cycle-cycle-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in incomplete_zero_row
 
 
 def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_path: Path) -> None:

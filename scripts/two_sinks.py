@@ -82,7 +82,7 @@ PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
     "ledger_tail", "ledger_history", "demand_rotation", "demand_completed", "skill_reads",
     "skill_evals", "ci_freshness", "cycle_titles", "cycle_files",
-    "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
+    "llm_stats", "llm_stats_source_complete", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
     "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
@@ -1197,6 +1197,7 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "llm_stats": _map(_ident, _obj({
         "calls": _count, "planner_calls": _count, "_source_complete": _bool, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
+    "llm_stats_source_complete": _bool,
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
         "llm_unavailable": _bool, "days": _map(_DAY_KEY, _CALL_STATS)}),

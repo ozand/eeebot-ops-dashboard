@@ -10192,7 +10192,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
-        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         rendered_lesson_ids=rendered_lesson_ids,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
@@ -10567,7 +10570,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         history_mode=True,
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
-        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         archive_out=cycles_archive_rows,
         now=now_dt,
         bridge_runs=data.get('bridge_runs'),
@@ -10610,6 +10616,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         now=now_dt,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),

@@ -54,7 +54,6 @@ INTENTIONALLY_WITHHELD: dict[str, str] = {
     "agents_md": "operator-private AGENTS.md body; only agents_meta (presence, lines, chars) is public",
     "goal_text": "operator-private goal_text.json; only goal_meta (state, presence, priority count) is public",
     "cycle_titles_error": "probe exception text (host paths, stderr); not a public key",
-    "llm_stats_source_complete": "reader-only completeness flag for llm_stats; consumed internally by cycle-feed renderer, never published as data",
     "health_last_integrated_ts": "not produced by any state reader; the renderer derives it from ledger rows",
     "health_recent_outcomes": "not produced by any state reader; the renderer derives it from ledger rows",
     "generalized_insight": "lesson insight text (alias); lesson text is LAN-only, only insight/result sizes are public",
