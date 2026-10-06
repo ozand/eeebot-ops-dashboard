@@ -473,6 +473,7 @@ def test_scanner_refusal_returns_failure_without_saving_fingerprints_but_keeps_h
     _write_state_root(root)
     state_dir = tmp_path / "techtree-state"
     site_root = tmp_path / "site"
+    site_root.mkdir()  # the D4 host step creates the site root
     prior_fingerprints = {"index.html": "prior-fingerprint"}
     ap.save_publish_state(state_dir, "old-digest", 1000.0, page_fingerprints=prior_fingerprints)
     monkeypatch.setenv("GH_TOKEN", "test-token-placeholder")

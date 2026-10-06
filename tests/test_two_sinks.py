@@ -100,6 +100,7 @@ def test_publisher_unit_installation_and_post_install_checks_are_documented() ->
 def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     """ADR-036 §1: host precedes gh-pages and both use one version."""
     order = []
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", lambda pages: order.append(("gh", pages)))
     assert (tmp_path / "site/current").resolve().name == "v1"
     assert 'content="v1"' in (tmp_path / "site/v1/index.html").read_text()
@@ -136,6 +137,7 @@ def test_publish_allowlist_refuses_unlisted_pages(tmp_path: Path):
 def test_private_pages_never_reach_gh_pages(tmp_path: Path):
     """ADR-036 §3: private pages exist only in the host snapshot."""
     sent = []
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", sent.append)
     assert "cycle.html" in {p.name for p in (tmp_path / "site/v1").iterdir()}
     assert len(sent) == 1
@@ -394,6 +396,7 @@ def test_sink_failure_leaves_consistent_snapshot(tmp_path: Path):
     def fail(_pages):
         raise RuntimeError("publisher failed")
     with pytest.raises(RuntimeError):
+        (tmp_path / "site").mkdir(exist_ok=True)  # the D4 host step creates the site root
         publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", fail)
     assert (tmp_path / "site/current/index.html").is_file()
     assert "private calls" in (tmp_path / "site/current/cycle.html").read_text()
@@ -471,6 +474,7 @@ def test_host_snapshot_written_even_without_gh_token(tmp_path: Path, monkeypatch
 
     monkeypatch.delenv("GH_TOKEN", raising=False)
     monkeypatch.setenv("EEEBOT_SITE_ROOT", str(site_root))
+    site_root.mkdir()  # the D4 host step creates the site root
 
     args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
     rc = ap.run(args)
@@ -896,6 +900,7 @@ def test_f12_host_catches_any_exception_and_reports_cleanup_failure(tmp_path: Pa
     """External review F12: host sink must catch Exception (not only OSError), and cleanup failure must not be swallowed."""
     from scripts.two_sinks import HostSnapshotError
     root = tmp_path / "site"
+    root.mkdir()  # the D4 host step creates the site root
 
     # Part 1: non-OSError in host snapshot must still run publisher and raise HostSnapshotError
     publisher_called = []
