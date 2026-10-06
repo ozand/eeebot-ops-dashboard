@@ -6947,6 +6947,52 @@ def test_cycle_detail_projection_consumes_all_preserved_text_lengths() -> None:
     assert "12 chars" in rendered_context
 
 
+def test_issue338_full_render_uses_presaved_legacy_lesson_lengths_after_projection() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    marker = "PRIVATE_LESSON_LENGTH_CANARY"
+    source = {"lessons": [{
+        "id": "legacy-lengths", "date": "2026-09-27", "cycle_id": "cycle-legacy-lengths",
+        "task_id": "safe task", "insight": marker, "result": "private result",
+    }]}
+    public, _ = split_render_inputs(source)
+    assert public["lessons"][0]["insight_chars"] == len(marker)
+    assert public["lessons"][0]["result_chars"] == len("private result")
+    pages = tv.render_pages(public, host="eeepc")
+    assert 'data-text="legacy-lengths' in pages["lessons.html"]
+    assert "insight: text on the LAN site only (" in pages["lessons.html"]
+    assert "result: text on the LAN site only (" in pages["lessons.html"]
+    assert marker not in pages["lessons.html"]
+
+
+def test_issue338_full_render_preserves_pre_redacted_task_size_metadata() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "agent_context": {"prompt_text": "", "task_text": "", "task_text_chars": 58}}
+    public, private = split_render_inputs(source)
+    public_html = tv.render_pages(public, host="eeepc")["agent.html"]
+    private_html = tv.render_pages(private, host="eeepc")["agent.html"]
+    assert "captured size: 58 chars" in public_html
+    assert "captured size: 58 chars" in private_html
+    assert "58 chars" in public_html
+    assert "captured size: 0 chars" not in public_html
+
+
+def test_issue338_full_render_preserves_pre_redacted_skill_content_length() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "agent_context": {"tier2_skills": [{
+        "name": "safe-skill", "size_bytes": 321, "content": "", "content_chars": 77,
+        "desc": "", "desc_chars": 12,
+    }]}}
+    public, private = split_render_inputs(source)
+    public_html = tv.render_pages(public, host="eeepc")["agent.html"]
+    private_html = tv.render_pages(private, host="eeepc")["agent.html"]
+    assert "SKILL.md (77 chars)" in public_html
+    assert "SKILL.md (77 chars)" in private_html
+    assert "321 B" in public_html
+
+
 def test_full_render_uses_saved_lesson_body_lengths_after_public_projection() -> None:
     from scripts.two_sinks import split_render_inputs
 

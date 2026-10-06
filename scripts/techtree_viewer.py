@@ -7479,15 +7479,20 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
             if cid else '<span class="lesson-cycle">n/a</span>'
         )
         result = str(l.get('result') or '')
-        # ADR-036 rule 3: legacy result/insight text is LAN-only.
+        result_chars = l.get('result_chars')
+        result_size = result_chars if isinstance(result_chars, int) and not isinstance(result_chars, bool) and result_chars >= 0 else len(result)
+        # ADR-036 rule 3: legacy result/insight text is LAN-only; retain the
+        # validated projection's saved length when the body was redacted.
         result_html = (
-            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({len(result):,} chars)</div>'
-            if result else ''
+            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({result_size:,} chars)</div>'
+            if result_size > 0 else ''
         )
         insight = str(l.get('insight') or '')
+        insight_chars = l.get('insight_chars')
+        insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({len(insight):,} chars)</div>' if insight else ''
+        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else ''
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             cid,

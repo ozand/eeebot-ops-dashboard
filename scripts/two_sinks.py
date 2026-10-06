@@ -607,8 +607,16 @@ def _obj(
                 out[name] = projected
         for name, blank in (sized_text or {}).items():
             if name in value:
-                if isinstance(value[name], str):
-                    out[f"{name}_chars"] = len(value[name])
+                text = value[name]
+                saved_chars = value.get(f"{name}_chars")
+                if isinstance(text, str) and text:
+                    out[f"{name}_chars"] = len(text)
+                elif _is_count(saved_chars):
+                    # An already-redacted empty string carries no new size
+                    # information; retain only the validated saved counter.
+                    out[f"{name}_chars"] = saved_chars
+                elif isinstance(text, str):
+                    out[f"{name}_chars"] = 0
                 out[name] = copy.deepcopy(blank)  # never shared between records
         for name in sized_list:
             if isinstance(value.get(name), list):
@@ -1019,8 +1027,13 @@ def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> N
     # string's size is published.
     for field in ("prompt_text", "task_text"):
         if field in source:
-            if isinstance(source[field], str):
+            saved_chars = source.get(f"{field}_chars")
+            if isinstance(source[field], str) and source[field]:
                 out[f"{field}_chars"] = len(source[field])
+            elif _is_count(saved_chars):
+                out[f"{field}_chars"] = saved_chars
+            elif isinstance(source[field], str):
+                out[f"{field}_chars"] = 0
             out[field] = None
 
 
