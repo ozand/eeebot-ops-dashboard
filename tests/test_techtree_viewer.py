@@ -6953,18 +6953,19 @@ def test_issue338_full_render_uses_presaved_legacy_lesson_lengths_after_projecti
     marker = "PRIVATE_LESSON_LENGTH_CANARY"
     source = {"lessons": [{
         "id": "legacy-lengths", "date": "2026-09-27", "cycle_id": "cycle-legacy-lengths",
-        "task_id": "safe task", "problem": "", "solution": "",
-        "insight": "", "result": "", "hypothesis": "",
-        "problem_chars": 28, "solution_chars": 31, "insight_chars": 28, "result_chars": 14,
+        "task_id": "safe task", "insight": "", "result": "", "hypothesis": "",
+        "insight_chars": 28, "result_chars": 14,
     }]}
     public, _ = split_render_inputs(source)
     projected = public["lessons"][0]
     assert projected["insight_chars"] == 28
     assert projected["result_chars"] == 14
+    assert "problem_chars" not in projected
+    assert projected["_v2_lesson"] is False
     pages = tv.render_pages(public, host="eeepc")
     assert 'data-text="legacy-lengths' in pages["lessons.html"]
-    assert "Problem:</span> text on the LAN site only (28 chars)" in pages["lessons.html"]
-    assert "Solution:</span> text on the LAN site only (31 chars)" in pages["lessons.html"]
+    assert "insight: text on the LAN site only (28 chars)" in pages["lessons.html"]
+    assert "result: text on the LAN site only (14 chars)" in pages["lessons.html"]
     assert marker not in pages["lessons.html"]
     assert "PRIVATE_LESSON_LENGTH_CANARY" not in pages["lessons.html"]
 
