@@ -35,39 +35,58 @@ def test_digest_ignores_scorecard_but_not_ledger(tmp_path: Path) -> None:
     # INSIDE it (failed cycles must republish).
     root = tmp_path / 'state'
     _write_state_root(root)
-    digest_before = ap.compute_tree_digest(root)
+    digest_before = ap.compute_tree_digest(root, generator_sha='stable')
 
     (root / 'scorecard/latest.json').write_text('{"computed_at_utc": "2026-08-19T00:00:00Z"}', encoding='utf-8')
-    digest_scorecard = ap.compute_tree_digest(root)
+    digest_scorecard = ap.compute_tree_digest(root, generator_sha='stable')
     assert digest_scorecard == digest_before
 
     (root / 'ledger/cycles.jsonl').write_text('{"phase": "tech_tree"}\n', encoding='utf-8')
-    digest_ledger = ap.compute_tree_digest(root)
+    digest_ledger = ap.compute_tree_digest(root, generator_sha='stable')
     assert digest_ledger != digest_before
 
 
 def test_digest_changes_when_evolution_tree_changes(tmp_path: Path) -> None:
     root = tmp_path / 'state'
     _write_state_root(root)
-    digest_before = ap.compute_tree_digest(root)
+    digest_before = ap.compute_tree_digest(root, generator_sha='stable')
 
     (root / 'evolution/tree.json').write_text('{"current_sha": "b", "nodes": {}}', encoding='utf-8')
 
-    digest_after = ap.compute_tree_digest(root)
+    digest_after = ap.compute_tree_digest(root, generator_sha='stable')
     assert digest_after != digest_before
+
+
+def test_generator_sha_change_alone_changes_publish_key_and_triggers_publish(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / 'state'
+    _write_state_root(root)
+    monkeypatch.setattr(ap.tv, '_generator_sha', lambda: 'oldsha1')
+    old_digest = ap.compute_tree_digest(root)
+
+    monkeypatch.setattr(ap.tv, '_generator_sha', lambda: 'newsha2')
+    new_digest = ap.compute_tree_digest(root)
+
+    assert old_digest != new_digest
+    publish, reason = ap.should_publish(
+        new_digest, {'digest': old_digest, 'published_at': 1000.0},
+        staleness_floor_seconds=6 * 3600, now=1100.0,
+    )
+    assert publish is True
+    assert reason == 'tree digest changed'
 
 
 def test_digest_changes_when_portfolio_or_hypotheses_change(tmp_path: Path) -> None:
     root = tmp_path / 'state'
     _write_state_root(root)
-    base = ap.compute_tree_digest(root)
+    base = ap.compute_tree_digest(root, generator_sha='stable')
 
     (root / 'tech_tree/portfolio.json').write_text('{"current": "x", "nodes": {}}', encoding='utf-8')
-    assert ap.compute_tree_digest(root) != base
+    assert ap.compute_tree_digest(root, generator_sha='stable') != base
 
     _write_state_root(root)  # reset portfolio back
     (root / 'hypotheses/lifecycle.json').write_text('{"entries": {"h1": {}}}', encoding='utf-8')
-    assert ap.compute_tree_digest(root) != base
+    assert ap.compute_tree_digest(root, generator_sha='stable') != base
 
 
 # --- should_publish gate (acceptance tests 2, 3) ----------------------------
