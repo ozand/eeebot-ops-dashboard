@@ -699,21 +699,34 @@ def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -
     assert "PRIVATE_PLAN_CANARY" not in html_out
 
 
-def test_cycle_planner_calls_are_unknown_without_complete_llm_source() -> None:
+def test_missing_per_cycle_planner_stats_are_unknown_even_when_window_is_readable() -> None:
     ledger = [
         {"phase": "planning_session", "cycle_id": "cycle-missing-stats", "iterations_used": 5,
          "ts": "2026-09-01T00:00:00Z"},
         {"phase": "outcome", "cycle_id": "cycle-missing-stats", "outcome": "success",
          "ts": "2026-09-01T00:01:00Z"},
     ]
-    complete = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=True, history_mode=True)
-    row = complete.split('id="cycle-cycle-missing-stats"')[1].split('</li>')[0]
-    assert "0 planner calls" in row
-
-    html_out = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=False, history_mode=True)
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats={}, llm_stats_source_complete=True, history_mode=True,
+    )
     row = html_out.split('id="cycle-cycle-missing-stats"')[1].split('</li>')[0]
     assert "5 iterations" in row
     assert "unknown planner calls" in row
+
+
+def test_observed_per_cycle_zero_planner_calls_remains_zero() -> None:
+    ledger = [
+        {"phase": "planning_session", "cycle_id": "cycle-observed-zero", "iterations_used": 0,
+         "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-observed-zero", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0}},
+        llm_stats_source_complete=True, history_mode=True,
+    )
+    row = html_out.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "0 planner calls" in row
 
 
 def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_path: Path) -> None:

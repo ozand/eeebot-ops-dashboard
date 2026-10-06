@@ -6554,8 +6554,7 @@ def build_cycle_feed(
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
         planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
-        stats_available = llm_stats_source_complete is True
-        planner_call_count = st.get('planner_calls', 0) if stats_available and isinstance(st, dict) else (0 if stats_available else None)
+        planner_call_count = st.get('planner_calls') if isinstance(st, dict) else None
         if planning_rows:
             iteration_values = [p.get('iterations_used') for p in planning_rows]
             iterations = (
