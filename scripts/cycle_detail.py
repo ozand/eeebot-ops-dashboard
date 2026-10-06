@@ -742,6 +742,21 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
         cycle_reconstruction_incomplete = cycle_reconstruction_incomplete or any(
             run.get("classification") in {"unit_timeout", "killed"} for run in c_runs
         )
+        prompt_owners: dict[int, list[dict[str, Any]]] = {}
+        for run in c_runs:
+            started = _parse_timestamp(run.get("started_at") or run.get("start_time"))
+            finished = _parse_timestamp(run.get("finished_at") or run.get("end_time"))
+            for prompt in c_prompts:
+                stamp = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
+                if stamp is not None and (started is None or finished is None or started <= stamp <= finished):
+                    prompt_owners.setdefault(id(prompt), []).append(run)
+        ambiguous_prompt_ids = {prompt_id for prompt_id, owners in prompt_owners.items() if len(owners) > 1}
+        ambiguous_owner_run_ids = {
+            id(owner)
+            for prompt_id in ambiguous_prompt_ids
+            for owner in prompt_owners[prompt_id]
+        }
+
         attempts = []
         used_duration_ids: set[int] = set()
         for run in c_runs:
@@ -752,6 +767,7 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
                 prompt for prompt in c_prompts
                 if (stamp := _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))) is not None
                 and (started is None or finished is None or started <= stamp <= finished)
+                and len(prompt_owners.get(id(prompt), [])) == 1
             ]
             role_rows: dict[str, list[dict[str, Any]]] = {}
             for prompt in owned:
@@ -821,19 +837,13 @@ def build_cycle_index(state_root: Path, *, days: int = 7, now: datetime | None =
             complete = (read_state == "ok" and not cycle_broken and not has_compaction
                         and bool(owned) and run_state and all(session["history_complete"] for session in sessions)
                         and not any(id(prompt) in malformed_prompt_ids or id(prompt) in unproven_legacy_prompt_ids
-                                    for prompt in owned))
+                                    or id(prompt) in ambiguous_prompt_ids for prompt in owned)
+                        and id(run) not in ambiguous_owner_run_ids)
             attempts.append({"run_id": run_id, "classification": run.get("classification") or "unknown",
                              "model_call_count": call_count, "sessions": sessions,
                              "history_complete": complete, "outcome": run.get("outcome") or run.get("classification") or "unknown"})
-        owned_prompts = set()
-        for run in c_runs:
-            started = _parse_timestamp(run.get("started_at") or run.get("start_time"))
-            finished = _parse_timestamp(run.get("finished_at") or run.get("end_time"))
-            for prompt in c_prompts:
-                stamp = _parse_timestamp(prompt.get("ts") or prompt.get("timestamp"))
-                if stamp is not None and (started is None or finished is None or started <= stamp <= finished):
-                    owned_prompts.add(id(prompt))
-        unassigned = [prompt for prompt in c_prompts if id(prompt) not in owned_prompts]
+        unassigned = [prompt for prompt in c_prompts if id(prompt) not in prompt_owners
+                      or id(prompt) in ambiguous_prompt_ids]
         if unassigned:
             reconstruction_state = "incomplete"
             cycle_reconstruction_incomplete = True

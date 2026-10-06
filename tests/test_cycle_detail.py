@@ -851,6 +851,102 @@ def test_same_named_idless_calls_with_different_arguments_are_not_reconciled(tmp
     assert len(incomplete) == 1
 
 
+def test_ambiguous_run_ownership_marks_attempts_incomplete_without_duplicate_counts(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    runs = [
+        {"run_id": "r1", "cycle_id": "c-ambiguous", "classification": "completed"},
+        {"run_id": "r2", "cycle_id": "c-ambiguous", "classification": "completed"},
+    ]
+    (root / "bridge" / "runs.jsonl").write_text(
+        "".join(json.dumps(run) + "\n" for run in runs), encoding="utf-8",
+    )
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    canary = "PRIVATE_PROMPT_CANARY_AMBIGUOUS_531"
+    prompt = {
+        "cycle_id": "c-ambiguous", "component": "executor", "seq": 1,
+        "ts": "2026-09-25T10:00:00Z", "finish_reason": "stop",
+        "messages": [{"role": "user", "content": canary}],
+    }
+    (prompts / "2026-09-25.jsonl").write_text(json.dumps(prompt) + "\n", encoding="utf-8")
+
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-ambiguous"]
+
+    assert detail["history_complete"] is False
+    assert detail["total_model_calls"] == 1
+    assert [attempt["model_call_count"] for attempt in detail["attempts"]] == [0, 0, 1]
+    assert [attempt["history_complete"] for attempt in detail["attempts"]] == [False, False, False]
+    assert detail["attempts"][-1]["run_id"] == "unassigned"
+    assert "history incomplete" in render_cycle_page("c-ambiguous", detail)
+    assert canary not in json.dumps(detail)
+
+
+def test_ambiguous_attempt_remains_incomplete_when_other_prompt_is_uniquely_owned(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    runs = [
+        {"run_id": "r1", "cycle_id": "c-mixed", "classification": "completed",
+         "started_at": "2026-09-25T09:00:00Z", "finished_at": "2026-09-25T10:00:00Z"},
+        {"run_id": "r2", "cycle_id": "c-mixed", "classification": "completed",
+         "started_at": "2026-09-25T09:30:00Z", "finished_at": "2026-09-25T11:30:00Z"},
+    ]
+    (root / "bridge" / "runs.jsonl").write_text(
+        "".join(json.dumps(run) + "\n" for run in runs), encoding="utf-8",
+    )
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    rows = [
+        {"cycle_id": "c-mixed", "component": "executor", "seq": 1,
+         "ts": "2026-09-25T09:15:00Z", "finish_reason": "stop", "messages": []},
+        {"cycle_id": "c-mixed", "component": "executor", "seq": 2,
+         "ts": "2026-09-25T09:30:00Z", "finish_reason": "stop", "messages": []},
+        {"cycle_id": "c-mixed", "component": "executor", "seq": 3,
+         "ts": "2026-09-25T11:00:00Z", "finish_reason": "stop", "messages": []},
+    ]
+    (prompts / "2026-09-25.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8",
+    )
+
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-mixed"]
+
+    attempts = {attempt["run_id"]: attempt for attempt in detail["attempts"]}
+    assert detail["total_model_calls"] == 3
+    assert attempts["r1"]["model_call_count"] == 1
+    assert attempts["r1"]["history_complete"] is False
+    assert attempts["r2"]["model_call_count"] == 1
+    assert attempts["r2"]["history_complete"] is False
+    assert attempts["unassigned"]["model_call_count"] == 1
+    assert attempts["unassigned"]["history_complete"] is False
+    assert detail["history_complete"] is False
+
+
+def test_uniquely_owned_run_without_bounds_retains_compatibility(tmp_path: Path) -> None:
+    from scripts.cycle_detail import build_cycle_index
+
+    root = tmp_path
+    (root / "bridge").mkdir()
+    (root / "bridge" / "runs.jsonl").write_text(json.dumps({
+        "run_id": "r-single", "cycle_id": "c-single", "classification": "completed",
+    }) + "\n", encoding="utf-8")
+    prompts = root / "llm_calls" / "prompts"
+    prompts.mkdir(parents=True)
+    (prompts / "2026-09-25.jsonl").write_text(json.dumps({
+        "cycle_id": "c-single", "component": "executor", "seq": 1,
+        "ts": "2026-09-25T10:00:00Z", "finish_reason": "stop", "messages": [],
+    }) + "\n", encoding="utf-8")
+
+    detail = build_cycle_index(root, days=1, now=datetime(2026, 9, 25, 12, tzinfo=timezone.utc))["c-single"]
+
+    assert detail["history_complete"] is True
+    assert detail["attempts"][0]["run_id"] == "r-single"
+    assert detail["attempts"][0]["model_call_count"] == 1
+
+
 def test_idless_response_call_reconciles_with_later_idless_message_call(tmp_path: Path) -> None:
     from scripts.cycle_detail import build_cycle_index
 
