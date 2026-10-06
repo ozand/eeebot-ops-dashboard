@@ -6463,16 +6463,15 @@ def build_cycle_feed(
         st = None
         if isinstance(llm_stats, dict):
             st = llm_stats.get(cid)
-            if st is None:
-                st = llm_stats.get(cid.replace('cycle-', '', 1))
         if isinstance(st, dict) and st.get('calls'):
-            parts_cost = [f'&#9889; {st["calls"]} calls']
+            parts_cost = [f'&#9889; {st["calls"]} LLM calls']
             tok = st.get('total_tokens')
             if isinstance(tok, (int, float)) and not isinstance(tok, bool) and tok > 0:
                 parts_cost.append(f'{fmt_compact(tok)} tok')
             dur = _fmt_duration_ms(st.get('duration_ms'))
             if dur:
-                parts_cost.append(f'dur {dur}')
+                parts_cost.append(f'Σ LLM wait {dur}')
+            parts_cost.append('not cycle elapsed')
             cost_html = '<div class="feed-cost">' + ' &middot; '.join(parts_cost)
             if st.get('any_length'):
                 cost_html += (
@@ -6480,6 +6479,8 @@ def build_cycle_feed(
                     'finish_reason=length (context/budget limit hit)">&#9888; context overflow</span>'
                 )
             cost_html += '</div>'
+        elif any(p.get('phase') == 'outcome' for p in phases):
+            cost_html = '<div class="feed-cost unavailable-note">LLM metrics unavailable (not observed)</div>'
 
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
