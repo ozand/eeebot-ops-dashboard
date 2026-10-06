@@ -539,6 +539,7 @@ def test_d2_connected_end_to_end_from_state_tree_to_host_snapshot(tmp_path: Path
     root = tmp_path / "state"
     state_dir = tmp_path / "state_dir"
     site_root = tmp_path / "site"
+    site_root.mkdir()
 
     for rel, content in {
         "evolution/tree.json": '{"current_sha": "a", "nodes": {}}',

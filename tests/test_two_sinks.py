@@ -100,6 +100,7 @@ def test_publisher_unit_installation_and_post_install_checks_are_documented() ->
 def test_private_cycle_navigation_is_host_only_and_routes_only_indexed_ids(tmp_path: Path):
     public = {"cycle.html": '<html><body><main><h1>Cycle Detail</h1></main></body></html>', "index.html": "<html></html>"}
     private = {"cycles/cycle-safe.html": "<main>private detail</main>"}
+    (tmp_path / "site").mkdir()
     published = []
     publish_ordered(tmp_path / "site", public, private, "nav1", lambda pages: published.append(pages) or (0, {}))
     host_cycle = (tmp_path / "site" / "nav1" / "cycle.html").read_text(encoding="utf-8")
