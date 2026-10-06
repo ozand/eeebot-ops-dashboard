@@ -805,6 +805,42 @@ def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_p
     assert unattributed["llm_stats_source_complete"] is False
 
 
+def test_reader_to_projection_to_public_page_keeps_cycle_knownness(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-01.jsonl").write_text(
+        '{"cycle_id":"cycle-real-zero","component":"executor"}\n'
+        '{"cycle_id":"cycle-real-positive","component":"planner"}\n',
+        encoding="utf-8",
+    )
+    state = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    ledger = [
+        {"phase": "planning_session", "cycle_id": "cycle-real-zero", "iterations_used": 2,
+         "plan": "PRIVATE_PLAN_PIPELINE", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-real-zero", "outcome": "success", "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-real-positive", "iterations_used": 3,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-real-positive", "outcome": "success", "ts": "2026-09-01T00:03:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-missing", "iterations_used": 4,
+         "ts": "2026-09-01T00:04:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-missing", "outcome": "success", "ts": "2026-09-01T00:05:00Z"},
+    ]
+    state.update({"ledger_tail": ledger, "ledger_history": ledger})
+    public, _private = split_render_inputs(state)
+    page = viewer.render_public_pages(public, "host", generated_at="2026-09-01T00:06:00Z")["cycles.html"]
+    rows = {
+        cid: page.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+        for cid in ("cycle-real-zero", "cycle-real-positive", "cycle-missing")
+    }
+    assert "0 planner calls" in rows["cycle-real-zero"]
+    assert "1 planner calls" in rows["cycle-real-positive"]
+    assert "unknown planner calls" in rows["cycle-missing"]
+    assert "PRIVATE_PLAN_PIPELINE" not in page
+
+
 def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:
     observed = '2026-09-14T12:00:00Z'
     no_runs = tv._ci_freshness_state({'workflow_runs': []}, observed)

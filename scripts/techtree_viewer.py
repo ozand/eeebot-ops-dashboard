@@ -584,6 +584,8 @@ def read_llm_stats():
             if fr == "length":
                 st["any_length"] = True
     _llm_stats_source_complete = source_complete
+    for st in stats.values():
+        st["_source_complete"] = source_complete
     return stats
 
 
@@ -2312,6 +2314,8 @@ def read_local_state(
                         st['last_finish_reason'] = str(fr)
                 if row.get('finish_reason') == 'length':
                     st['any_length'] = True
+        for st in stats.values():
+            st['_source_complete'] = source_complete
         return stats, source_complete
 
     def read_executor_stats_local() -> dict[str, Any] | None:
