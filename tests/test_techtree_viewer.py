@@ -686,7 +686,9 @@ def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -
         "cycle-before-planner": {"planner_calls": 0, "planning_cost_known": True},
     }
 
-    html_out = tv.build_cycle_feed(ledger, llm_stats=llm_stats, history_mode=True)
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats=llm_stats, llm_stats_source_complete=True, history_mode=True,
+    )
 
     planning_row = html_out.split('id="cycle-cycle-planning-cost"')[1].split('</li>')[0]
     old_row = html_out.split('id="cycle-cycle-before-planner"')[1].split('</li>')[0]
@@ -695,6 +697,41 @@ def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -
     assert "2 planning sessions" in planning_row
     assert "Planning: unknown" in old_row
     assert "PRIVATE_PLAN_CANARY" not in html_out
+
+
+def test_cycle_planner_calls_are_unknown_without_complete_llm_source() -> None:
+    ledger = [
+        {"phase": "planning_session", "cycle_id": "cycle-missing-stats", "iterations_used": 5,
+         "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-missing-stats", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    complete = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=True, history_mode=True)
+    row = complete.split('id="cycle-cycle-missing-stats"')[1].split('</li>')[0]
+    assert "0 planner calls" in row
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=False, history_mode=True)
+    row = html_out.split('id="cycle-cycle-missing-stats"')[1].split('</li>')[0]
+    assert "5 iterations" in row
+    assert "unknown planner calls" in row
+
+
+def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+
+    absent = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert absent["llm_stats_source_complete"] is False
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-01.jsonl").write_text("", encoding="utf-8")
+    observed_empty = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert observed_empty["llm_stats_source_complete"] is True
+    assert observed_empty["llm_stats"] == {}
+
+    (llm_dir / "2026-09-02.jsonl").write_text('{broken\\n', encoding="utf-8")
+    partially_unreadable = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert partially_unreadable["llm_stats_source_complete"] is False
 
 
 def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:

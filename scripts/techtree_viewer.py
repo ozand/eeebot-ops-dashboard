@@ -485,6 +485,7 @@ LEDGER_SCAN_WINDOW = 20000
 LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
+_llm_stats_source_complete = False
 
 
 def read_json(relpath):
@@ -526,19 +527,24 @@ def read_ledger_tail(relpath):
 def read_llm_stats():
     """Issue #60: aggregate per-cycle LLM call stats from llm_calls/<date>.jsonl.
     Fail-soft per file and per line; recent files only (page shows recent cycles)."""
+    global _llm_stats_source_complete
     ldir = os.path.join(STATE_ROOT, "llm_calls")
     stats = {}
+    _llm_stats_source_complete = False
     try:
         names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
     except Exception:
         return stats
-    for name in names[-7:]:
+    selected_names = names[-7:]
+    source_complete = bool(selected_names)
+    for name in selected_names:
         path = os.path.join(ldir, name)
         try:
             with open(path, "r", encoding="utf-8", errors="replace") as fh:
                 lines = fh.readlines()
             _mtimes.append(os.path.getmtime(path))
         except Exception:
+            source_complete = False
             continue
         for line in lines:
             line = line.strip()
@@ -547,8 +553,10 @@ def read_llm_stats():
             try:
                 row = json.loads(line)
             except Exception:
+                source_complete = False
                 continue
             if not isinstance(row, dict):
+                source_complete = False
                 continue
             cid = row.get("cycle_id")
             if not cid:
@@ -574,6 +582,7 @@ def read_llm_stats():
                 st["last_finish_reason"] = fr
             if fr == "length":
                 st["any_length"] = True
+    _llm_stats_source_complete = source_complete
     return stats
 
 
@@ -1748,6 +1757,7 @@ result = {
     "skill_reads": read_json("skill_fitness/reads.json"),
     "skill_evals": read_jsonl("skill_fitness/evals.jsonl"),
     "llm_stats": read_llm_stats(),
+    "llm_stats_source_complete": _llm_stats_source_complete,
     "proposer_stats": read_proposer_stats(),
     "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
@@ -1812,6 +1822,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_reads': None,
         'skill_evals': [],
         'llm_stats': {},
+        'llm_stats_source_complete': False,
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
@@ -2054,6 +2065,7 @@ def read_local_state(
         'cycle_files': {},
         'cycle_titles_error': None,
         'llm_stats': {},
+        'llm_stats_source_complete': False,
         'proposer_stats': None,
         'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2074,11 +2086,13 @@ def read_local_state(
     root = Path(state_root)
     if not root.is_dir():
         empty['_error'] = f'state root not found or not a directory: {root}'
+        empty['llm_stats_source_complete'] = False
         return empty
     try:
         next(root.iterdir(), None)
     except OSError as exc:
         empty['_error'] = f'state root unreadable: {exc.__class__.__name__}: {exc}'
+        empty['llm_stats_source_complete'] = False
         return empty
 
     mtimes: list[float] = []
@@ -2239,7 +2253,7 @@ def read_local_state(
                     continue
         return runs
 
-    def read_llm_stats_local() -> dict[str, Any]:
+    def read_llm_stats_local() -> tuple[dict[str, Any], bool]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
         Local mirror of the REMOTE_READER_SCRIPT read_llm_stats() -- keep in
         sync. Fail-soft per file/line (issue #29 pattern)."""
@@ -2248,14 +2262,17 @@ def read_local_state(
         try:
             names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
         except OSError:
-            return stats
-        for name in names[-7:]:
+            return stats, False
+        selected_names = names[-7:]
+        source_complete = bool(selected_names)
+        for name in selected_names:
             path = llm_dir / name
             try:
                 with path.open('r', encoding='utf-8', errors='replace') as fh:
                     lines = fh.readlines()
                 mtimes.append(path.stat().st_mtime)
             except Exception:  # noqa: BLE001
+                source_complete = False
                 continue
             for line in lines:
                 line = line.strip()
@@ -2264,20 +2281,21 @@ def read_local_state(
                 try:
                     row = json.loads(line)
                 except Exception:  # noqa: BLE001
+                    source_complete = False
                     continue
                 if not isinstance(row, dict):
+                    source_complete = False
                     continue
                 cid = str(row.get('cycle_id') or '')
                 if not cid:
                     continue
                 st = stats.setdefault(cid, {
-                    'calls': 0, 'planner_calls': 0, 'planning_predecessor': False, 'total_tokens': 0, 'duration_ms': 0,
+                    'calls': 0, 'planner_calls': 0, 'total_tokens': 0, 'duration_ms': 0,
                     'last_finish_reason': None, 'any_length': False, 'last_ts': '',
                 })
                 st['calls'] += 1
                 if row.get('component') == 'planner':
                     st['planner_calls'] += 1
-                    st['planning_predecessor'] = True
                 tok = row.get('total_tokens')
                 if isinstance(tok, (int, float)) and not isinstance(tok, bool):
                     st['total_tokens'] += tok
@@ -2292,7 +2310,7 @@ def read_local_state(
                         st['last_finish_reason'] = str(fr)
                 if row.get('finish_reason') == 'length':
                     st['any_length'] = True
-        return stats
+        return stats, source_complete
 
     def read_executor_stats_local() -> dict[str, Any] | None:
         """Return the newest executor prompt-token observation."""
@@ -2818,6 +2836,7 @@ def read_local_state(
         # duplicates instead of silently changing the history population.
         return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
+    llm_stats_local, llm_stats_source_complete = read_llm_stats_local()
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
@@ -2830,7 +2849,8 @@ def read_local_state(
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
-        'llm_stats': read_llm_stats_local(),
+        'llm_stats': llm_stats_local,
+        'llm_stats_source_complete': llm_stats_source_complete,
         'proposer_stats': read_proposer_stats_local(),
         'local_ci': read_local_ci_status_local(),
         'executor_model_status': read_executor_model_status_local(),
@@ -5945,6 +5965,7 @@ def build_cycle_feed(
     archive_out: list[str] | None = None,
     bridge_runs: list[dict[str, Any]] | None = None,
     bridge_active_run: dict[str, Any] | None = None,
+    llm_stats_source_complete: bool = False,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -6533,7 +6554,8 @@ def build_cycle_feed(
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
         planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
-        planner_call_count = st.get('planner_calls', 0) if isinstance(st, dict) else 0
+        stats_available = llm_stats_source_complete is True
+        planner_call_count = st.get('planner_calls', 0) if stats_available and isinstance(st, dict) else (0 if stats_available else None)
         if planning_rows:
             iteration_values = [p.get('iterations_used') for p in planning_rows]
             iterations = (
@@ -6545,7 +6567,7 @@ def build_cycle_feed(
             planning_html = (
                 '<div class="feed-planning-cost">Planning: '
                 f'{esc(str(iterations) if iterations is not None else "unknown")} iterations &middot; '
-                f'{planner_call_count} planner calls &middot; {len(planning_rows)} planning sessions</div>'
+                f'{planner_call_count if planner_call_count is not None else "unknown"} planner calls &middot; {len(planning_rows)} planning sessions</div>'
             )
         else:
             planning_html = '<div class="feed-planning-cost">Planning: unknown</div>'
@@ -10165,6 +10187,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True),
         rendered_lesson_ids=rendered_lesson_ids,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
@@ -10539,6 +10562,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         history_mode=True,
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True),
         archive_out=cycles_archive_rows,
         now=now_dt,
         bridge_runs=data.get('bridge_runs'),
