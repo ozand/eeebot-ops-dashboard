@@ -1615,11 +1615,19 @@ def publish_ordered(
     publisher: Callable[[dict[str, str]], tuple[int, dict[str, str]]],
     generated_at: str | None = None,
     host_warnings: list[str] | None = None,
+    host_outcome: dict[str, str] | None = None,
 ) -> tuple[int, dict[str, str]]:
     """#356: a host error whose ``activated`` is true (SnapshotCleanupError:
     ``current`` already serves the new snapshot, only pruning older ones
     failed) is NOT a host failure. It is appended to ``host_warnings`` (when
-    given) and the call returns the publisher's result as on success."""
+    given) and the call returns the publisher's result as on success.
+
+    The host sink is NOT CONFIGURED while ``site_root`` itself does not exist
+    (ENOENT on the root -- the D4 tmpfiles step creates it): the snapshot is
+    skipped, never created here, and it is not a host failure. A root that
+    exists but cannot be written, or any other error in the swap, still is.
+    ``host_outcome["status"]`` (when given) is ``host_sink_unconfigured``,
+    ``host_sink_active`` or ``host_snapshot_failed``."""
     versioned_public = add_snapshot_version(public_pages, version, generated_at=generated_at)
     versioned_private = add_snapshot_version(private_pages, version, generated_at=generated_at)
 
@@ -1632,16 +1640,28 @@ def publish_ordered(
     }
     host_error = None
     try:
-        atomic_snapshot_swap(site_root, host_pages, version)
-    except Exception as exc:
-        host_error = exc
-    if host_error is not None and getattr(host_error, "activated", False) is True:
-        warning = f"ADR-036 host snapshot cleanup warning: {host_error}"
-        if host_warnings is not None:
-            host_warnings.append(warning)
-        else:
-            print(f"two_sinks: WARNING: {warning}", file=sys.stderr)
-        host_error = None
+        os.lstat(site_root)
+        configured = True
+    except FileNotFoundError:
+        configured = False
+    except OSError:
+        configured = True  # present but unreadable: the swap reports the failure
+    if configured:
+        try:
+            atomic_snapshot_swap(site_root, host_pages, version)
+        except Exception as exc:
+            host_error = exc
+        if host_error is not None and getattr(host_error, "activated", False) is True:
+            warning = f"ADR-036 host snapshot cleanup warning: {host_error}"
+            if host_warnings is not None:
+                host_warnings.append(warning)
+            else:
+                print(f"two_sinks: WARNING: {warning}", file=sys.stderr)
+            host_error = None
+    if host_outcome is not None:
+        host_outcome["status"] = (
+            "host_sink_unconfigured" if not configured
+            else "host_snapshot_failed" if host_error is not None else "host_sink_active")
 
     try:
         publish_result = publisher(versioned_public)

@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import os
+import stat
 import sys
 import time
 from pathlib import Path
@@ -242,6 +243,8 @@ def load_publish_state(state_dir: Path) -> dict[str, Any]:
                 data.pop('host_snapshot_failed_since', None)
             if not isinstance(data.get('last_host_error'), str):
                 data.pop('last_host_error', None)
+            if not isinstance(data.get('host_sink'), str):
+                data.pop('host_sink', None)
             # Cache validation is owned by publish_scan so its schema and key
             # version cannot drift from the scanner's acceptance rules.
             try:
@@ -280,6 +283,7 @@ def save_publish_state(
     publish_duration_warning: str | None = None,
     published: bool = True,
     ref_updated: bool = False,
+    host_sink: str | None = None,
 ) -> None:
     """Record the digest + publish time atomically: write to a temp file in
     the same directory, then os.replace (issue #27). os.replace is atomic
@@ -321,6 +325,9 @@ def save_publish_state(
             payload['host_snapshot_failed_since'] = host_snapshot_failed_since
         if last_host_error is not None:
             payload['last_host_error'] = last_host_error
+        if host_sink is not None:
+            # host_sink_unconfigured: the site root does not exist yet (D4).
+            payload['host_sink'] = host_sink
         with tmp_path.open('w', encoding='utf-8') as fh:
             json.dump(payload, fh)
             fh.flush()
@@ -374,11 +381,36 @@ def record_publish_duration(
     return warning, updated
 
 
+def _host_snapshot_needs_seed(site_root: Path) -> bool:
+    """True when the site root EXISTS (anything but ENOENT) yet serves no
+    valid current snapshot: not a directory, uninspectable, or no complete
+    `current` target."""
+    try:
+        mode = os.lstat(site_root).st_mode
+    except FileNotFoundError:
+        return False  # host sink not configured (D4 has not created it)
+    except OSError:
+        return True
+    if stat.S_ISLNK(mode):
+        # A configured root may itself be a symlink (e.g. an operator-managed
+        # mount point). Follow a valid link for snapshot checks; a dangling or
+        # inaccessible target is an existing but unusable root, not absent.
+        try:
+            mode = os.stat(site_root).st_mode
+        except OSError:
+            return True
+    try:
+        return not stat.S_ISDIR(mode) or sinks.current_snapshot_target(site_root) is None
+    except OSError:
+        return True
+
+
 def should_publish(
     current_digest: str,
     state: dict[str, Any],
     staleness_floor_seconds: float,
     now: float,
+    site_root: Path | None = None,
 ) -> tuple[bool, str]:
     """The publish gate (issue #27): publish if EITHER the tree digest
     changed, OR the last successful publish is older than the staleness
@@ -391,12 +423,23 @@ def should_publish(
     never depends on any clock). A backward clock jump (NTP correction,
     manual reset) would otherwise make `age` negative and permanently
     smaller than the floor, disabling the floor forever (issue #27 review,
-    blocker B7) -- so a negative age is treated the same as "stale"."""
+    blocker B7) -- so a negative age is treated the same as "stale".
+
+    `site_root` (ADR-036 host sink): when the site root EXISTS but serves no
+    valid current snapshot (the first run after D4 creates an empty root, or
+    a lost/incomplete `current`), publish regardless of the digest so the
+    host snapshot is seeded. Decided by the host's state, never by what an
+    earlier run recorded; an absent root (ENOENT: sink not configured)
+    changes nothing here. A path that exists but is not a usable root (a
+    file, or one that cannot be inspected) also publishes, so
+    publish_ordered reports host_snapshot_failed instead of a silent skip."""
     prev_digest = state.get('digest')
     prev_published_at = state.get('published_at')
 
     if state.get('host_snapshot_failed_since') is not None:
         return True, 'prior host snapshot failed; retrying host sink'
+    if site_root is not None and _host_snapshot_needs_seed(site_root):
+        return True, 'host site root has no valid current snapshot; seeding host sink'
     if prev_digest != current_digest:
         return True, 'tree digest changed'
     if not isinstance(prev_published_at, (int, float)):
@@ -509,6 +552,16 @@ def _refusal_freeze_status(
     return refusing_since, refusal_age, freeze_limit, past_limit
 
 
+def _print_host_sink_unconfigured(host_outcome: dict[str, str], site_root: Path) -> None:
+    """The host sink is not configured until D4 creates the site root: ONE
+    journal line per run, and the run is not a host failure."""
+    if host_outcome.get('status') == 'host_sink_unconfigured':
+        print(
+            f'techtree-autopublish: host sink not configured (site root {site_root} absent); public publish only',
+            file=sys.stderr,
+        )
+
+
 def _print_host_warnings(warnings: list[str]) -> None:
     """#356: an activated host snapshot whose old-version pruning failed is
     a WARNING in the journal, never a host failure in the publish state."""
@@ -528,7 +581,7 @@ def run(args: argparse.Namespace) -> int:
     digest = compute_tree_digest(state_root)
     state = load_publish_state(state_dir)
     now = time.time()
-    publish, reason = should_publish(digest, state, staleness_floor_seconds, now)
+    publish, reason = should_publish(digest, state, staleness_floor_seconds, now, site_root=Path(args.site_root))
 
     source_problem = _unreadable_tree_source(data, state_root)
 
@@ -709,6 +762,7 @@ def run(args: argparse.Namespace) -> int:
         return rc, fps
 
     host_warnings: list[str] = []
+    host_outcome: dict[str, str] = {}
     try:
         rc, fingerprints = sinks.publish_ordered(
             sink_root,
@@ -718,6 +772,7 @@ def run(args: argparse.Namespace) -> int:
             publisher=gh_publisher,
             generated_at=stamp,
             host_warnings=host_warnings,
+            host_outcome=host_outcome,
         )
     except sinks.HostSnapshotError as exc:
         print(f'techtree-autopublish: host snapshot failed: {exc}', file=sys.stderr)
@@ -738,6 +793,7 @@ def run(args: argparse.Namespace) -> int:
         return 1
     except Exception as exc:
         _print_host_warnings(host_warnings)
+        _print_host_sink_unconfigured(host_outcome, sink_root)
         print(f'techtree-autopublish: publish failed ({type(exc).__name__}: {exc})', file=sys.stderr)
         host_error = getattr(exc, 'host_error', None)
         if host_error is not None:
@@ -769,6 +825,7 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     _print_host_warnings(host_warnings)
+    _print_host_sink_unconfigured(host_outcome, sink_root)
     if rc != 0:
         if ref_updated:
             print(
@@ -788,6 +845,7 @@ def run(args: argparse.Namespace) -> int:
         host_snapshot_failed_since=None,
         last_host_error=None,
         clear_host_failure=True,
+        host_sink=host_outcome.get('status'),
         clean_scan_cache=state.get('clean_scan_cache'),
         changed_publish_durations_seconds=duration_state['changed_publish_durations_seconds'],
         publish_duration_warning=duration_warning,
