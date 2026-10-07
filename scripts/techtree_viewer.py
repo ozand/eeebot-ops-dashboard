@@ -548,7 +548,7 @@ def read_planning_activity():
             if invalid_outcome:
                 malformed = True
                 outcome = "unknown"
-            if invalid_outcome or latest is None or parsed > latest["_parsed"]:
+            if latest is None or parsed > latest["_parsed"]:
                 latest = {"ts": ts, "outcome": outcome if isinstance(outcome, str) and outcome in allowed_outcomes else "unknown", "_parsed": parsed}
     if latest is not None:
         parsed_latest = latest.pop("_parsed")
@@ -2766,7 +2766,7 @@ def read_local_state(
                 if invalid_outcome:
                     malformed = True
                     outcome = 'unknown'
-                if invalid_outcome or latest is None or parsed > latest['_parsed']:
+                if latest is None or parsed > latest['_parsed']:
                     latest = {'ts': ts, 'outcome': outcome if isinstance(outcome, str) and outcome in allowed_outcomes else 'unknown', '_parsed': parsed}
         if malformed and status == 'present':
             status = 'partial'

@@ -2002,6 +2002,25 @@ def test_planning_activity_ledger_reader_projection_and_panel_do_not_invent_cycl
     assert remote_mixed_activity['ledger']['status'] == mixed_tz['ledger']['status']
     assert remote_mixed_activity['ledger']['last_observation']['ts'] == mixed_tz['ledger']['last_observation']['ts']
 
+    valid_new = '{"phase":"planning_session","ts":"2026-10-07T06:02:00Z","outcome":"integrated"}'
+    invalid_old = '{"phase":"planning_session","ts":"2026-10-07T06:01:00Z","outcome":[]}'
+    invalid_new = '{"phase":"planning_session","ts":"2026-10-07T06:03:00Z","outcome":[]}'
+    for rows, expected_ts, expected_outcome in (
+        ([valid_new, invalid_old], '2026-10-07T06:02:00Z', 'integrated'),
+        ([invalid_old, valid_new], '2026-10-07T06:02:00Z', 'integrated'),
+        ([valid_new, invalid_new], '2026-10-07T06:03:00Z', 'unknown'),
+    ):
+        ledger_path.write_text('\n'.join(rows) + '\n', encoding='utf-8')
+        local_order = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']['ledger']
+        assert local_order['status'] == 'partial'
+        assert local_order['last_observation']['ts'] == expected_ts
+        assert local_order['last_observation']['outcome'] == expected_outcome
+        remote_order = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+        remote_order_ledger = json.loads(remote_order.stdout)['planning_activity']['ledger']
+        assert remote_order_ledger['status'] == local_order['status']
+        assert remote_order_ledger['last_observation']['ts'] == expected_ts
+        assert remote_order_ledger['last_observation']['outcome'] == expected_outcome
+
     ledger_path.unlink()
     missing = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
     assert missing['ledger']['status'] == 'absent'
