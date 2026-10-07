@@ -1195,9 +1195,12 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "cycle_titles": _map(_ident, _text(300)),
     "cycle_files": _map(_ident, _list(_relpath, 50)),
     "llm_stats": _map(_ident, _obj({
-        "calls": _count, "planner_calls": _count, "_source_complete": _bool, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
+        "calls": _count, "planner_calls": _count, "_source_complete": _bool,
+        "_source_days": _list(_pattern(re.compile(r"^\d{4}-\d{2}-\d{2}$")), 7),
+        "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
     "llm_stats_source_complete": _bool,
+    "llm_stats_source_days": _list(_pattern(re.compile(r"^\d{4}-\d{2}-\d{2}$")), 7),
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
         "llm_unavailable": _bool, "days": _map(_DAY_KEY, _CALL_STATS)}),

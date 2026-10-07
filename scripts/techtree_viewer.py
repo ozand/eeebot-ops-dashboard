@@ -486,6 +486,7 @@ LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 _llm_stats_source_complete = False
+_llm_stats_source_days: list[str] = []
 
 
 def read_json(relpath):
@@ -527,16 +528,19 @@ def read_ledger_tail(relpath):
 def read_llm_stats():
     """Issue #60: aggregate per-cycle LLM call stats from llm_calls/<date>.jsonl.
     Fail-soft per file and per line; recent files only (page shows recent cycles)."""
-    global _llm_stats_source_complete
+    global _llm_stats_source_complete, _llm_stats_source_days
     ldir = os.path.join(STATE_ROOT, "llm_calls")
     stats = {}
     _llm_stats_source_complete = False
+    _llm_stats_source_days = []
     try:
         names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
     except Exception:
         return stats
     selected_names = names[-7:]
-    source_complete = bool(selected_names)
+    _llm_stats_source_days = [name[:-6] for name in selected_names
+                              if re.fullmatch(r"\d{4}-\d{2}-\d{2}\.jsonl", name)]
+    source_complete = bool(selected_names) and len(_llm_stats_source_days) == len(selected_names)
     for name in selected_names:
         path = os.path.join(ldir, name)
         try:
@@ -586,6 +590,7 @@ def read_llm_stats():
     _llm_stats_source_complete = source_complete
     for st in stats.values():
         st["_source_complete"] = source_complete
+        st["_source_days"] = list(_llm_stats_source_days)
     return stats
 
 
@@ -1761,6 +1766,7 @@ result = {
     "skill_evals": read_jsonl("skill_fitness/evals.jsonl"),
     "llm_stats": read_llm_stats(),
     "llm_stats_source_complete": _llm_stats_source_complete,
+    "llm_stats_source_days": _llm_stats_source_days,
     "proposer_stats": read_proposer_stats(),
     "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
@@ -1826,6 +1832,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_evals': [],
         'llm_stats': {},
         'llm_stats_source_complete': False,
+        'llm_stats_source_days': [],
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
@@ -2069,6 +2076,7 @@ def read_local_state(
         'cycle_titles_error': None,
         'llm_stats': {},
         'llm_stats_source_complete': False,
+        'llm_stats_source_days': [],
         'proposer_stats': None,
         'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2256,7 +2264,7 @@ def read_local_state(
                     continue
         return runs
 
-    def read_llm_stats_local() -> tuple[dict[str, Any], bool]:
+    def read_llm_stats_local() -> tuple[dict[str, Any], bool, list[str]]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
         Local mirror of the REMOTE_READER_SCRIPT read_llm_stats() -- keep in
         sync. Fail-soft per file/line (issue #29 pattern)."""
@@ -2265,9 +2273,11 @@ def read_local_state(
         try:
             names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
         except OSError:
-            return stats, False
+            return stats, False, []
         selected_names = names[-7:]
-        source_complete = bool(selected_names)
+        source_days = [name[:-6] for name in selected_names
+                       if re.fullmatch(r'\d{4}-\d{2}-\d{2}\.jsonl', name)]
+        source_complete = bool(selected_names) and len(source_days) == len(selected_names)
         for name in selected_names:
             path = llm_dir / name
             try:
@@ -2316,7 +2326,7 @@ def read_local_state(
                     st['any_length'] = True
         for st in stats.values():
             st['_source_complete'] = source_complete
-        return stats, source_complete
+        return stats, source_complete, source_days
 
     def read_executor_stats_local() -> dict[str, Any] | None:
         """Return the newest executor prompt-token observation."""
@@ -2842,7 +2852,7 @@ def read_local_state(
         # duplicates instead of silently changing the history population.
         return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
-    llm_stats_local, llm_stats_source_complete = read_llm_stats_local()
+    llm_stats_local, llm_stats_source_complete, llm_stats_source_days = read_llm_stats_local()
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
@@ -2857,6 +2867,7 @@ def read_local_state(
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': llm_stats_local,
         'llm_stats_source_complete': llm_stats_source_complete,
+        'llm_stats_source_days': llm_stats_source_days,
         'proposer_stats': read_proposer_stats_local(),
         'local_ci': read_local_ci_status_local(),
         'executor_model_status': read_executor_model_status_local(),
@@ -5972,6 +5983,7 @@ def build_cycle_feed(
     bridge_runs: list[dict[str, Any]] | None = None,
     bridge_active_run: dict[str, Any] | None = None,
     llm_stats_source_complete: bool = False,
+    llm_stats_source_days: list[str] | None = None,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -6497,6 +6509,8 @@ def build_cycle_feed(
             st = llm_stats.get(cid)
             if st is None:
                 st = llm_stats.get(cid.replace('cycle-', '', 1))
+        if isinstance(st, dict) and st.get('_source_days') is None and llm_stats_source_days is not None:
+            st = {**st, '_source_days': llm_stats_source_days}
         if isinstance(st, dict) and st.get('calls'):
             parts_cost = [f'&#9889; {st["calls"]} LLM calls']
             tok = st.get('total_tokens')
@@ -6560,11 +6574,35 @@ def build_cycle_feed(
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
         planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
-        planner_call_count = (
-            st.get('planner_calls')
-            if llm_stats_source_complete is True and isinstance(st, dict)
-            else None
+        cycle_rows = [p for p in phases if p.get('cycle_id') == cid]
+        bound_rows = [p for p in cycle_rows if p.get('phase') in {'started', 'outcome'}]
+        bound_dates = []
+        for bound in bound_rows:
+            parsed_bound = _parse_iso_ts(str(bound.get('ts') or ''))
+            if parsed_bound is None:
+                bound_dates = []
+                break
+            bound_dates.append(parsed_bound.date().isoformat())
+        def _date_range(first: str, last: str) -> list[str]:
+            start_day = datetime.fromisoformat(first).date()
+            end_day = datetime.fromisoformat(last).date()
+            return [(start_day + timedelta(days=offset)).isoformat()
+                    for offset in range((end_day - start_day).days + 1)]
+
+        unique_lifecycle = (
+            sum(p.get('phase') == 'started' for p in cycle_rows) == 1
+            and sum(p.get('phase') == 'outcome' for p in cycle_rows) == 1
+            and len(bound_dates) == 2
+            and bound_dates[0] <= bound_dates[1]
         )
+        source_days = st.get('_source_days', llm_stats_source_days) if isinstance(st, dict) else llm_stats_source_days
+        covered_cycle = (
+            unique_lifecycle and isinstance(source_days, list)
+            and all(day in source_days for day in _date_range(bound_dates[0], bound_dates[1]))
+            and llm_stats_source_complete is True
+            and isinstance(st, dict) and st.get('_source_complete') is True
+        )
+        planner_call_count = st.get('planner_calls') if covered_cycle else None
         if planning_rows:
             iteration_values = [p.get('iterations_used') for p in planning_rows]
             iterations = (
@@ -10203,6 +10241,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
             isinstance(value, dict) and value.get('_source_complete') is True
             for value in (data.get('llm_stats') or {}).values()
         )),
+        llm_stats_source_days=data.get('llm_stats_source_days'),
         rendered_lesson_ids=rendered_lesson_ids,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
@@ -10462,7 +10501,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     now_dt = _parse_iso_ts(str(generated_at)) or datetime.now(timezone.utc)
-
     portfolio = data.get('portfolio')
     scorecard = data.get('scorecard')
     evolution_tree = data.get('evolution_tree')
@@ -10575,6 +10613,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
         history_mode=True,
+        llm_stats_source_days=data.get('llm_stats_source_days'),
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
         llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
@@ -10623,6 +10662,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        llm_stats_source_days=data.get('llm_stats_source_days'),
         llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
             isinstance(value, dict) and value.get('_source_complete') is True
             for value in (data.get('llm_stats') or {}).values()
