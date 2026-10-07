@@ -3223,6 +3223,61 @@ def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-two-hours", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-two-hours", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    data = {
+        "ledger_tail": ledger,
+        "ledger_history": ledger,
+        "llm_stats": {"cycle-two-hours": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000,
+                                              "last_ts": "2026-10-06T11:59:00Z"}},
+        "bridge_runs": [],
+    }
+    public, _private = split_render_inputs(data)
+    pages = viewer.render_public_pages(public, "host", generated_at="2026-10-06T12:05:00Z")
+    row = pages["cycles.html"].split('id="cycle-cycle-two-hours"')[1].split('</li>')[0]
+
+    assert "Cycle elapsed: 2h" in row
+    assert "13 LLM calls" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "not cycle elapsed" in row
+
+
+def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> None:
+    cases = {
+        "cycle-no-start": [{"phase": "outcome", "cycle_id": "cycle-no-start", "outcome": "success",
+                            "ts": "2026-10-06T12:00:00Z"}],
+        "cycle-invalid": [
+            {"phase": "started", "cycle_id": "cycle-invalid", "ts": "not-a-time"},
+            {"phase": "outcome", "cycle_id": "cycle-invalid", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "cycle-retry": [
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T09:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "failed", "ts": "2026-10-06T09:10:00Z"},
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+    }
+    ledger = [row for rows in cases.values() for row in rows]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, 5, tzinfo=timezone.utc))
+    for cycle_id in cases:
+        row = page.split(f'id="cycle-{cycle_id}"')[1].split('</li>')[0]
+        assert "Cycle elapsed: UNKNOWN" in row
+
+
+def test_open_cycle_elapsed_is_labeled_elapsed_so_far() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-open", "ts": "2026-10-06T10:00:00Z"}]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-open"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 2h (elapsed so far)" in row
+
+
 def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
     data = _fixture()
     data['llm_stats'] = {
@@ -3255,8 +3310,10 @@ def test_cycle_feed_llm_cost_label_names_provider_duration_and_scope() -> None:
     assert "322.4K tok" in row
     assert "Σ LLM wait" in row
     assert "5m19s" in row
-    assert "cycle elapsed" in row
-    assert "32m27s" not in row
+    assert 'class="feed-cycle-elapsed">Cycle elapsed: 32m27s</div>' in row
+    cost_line = row.split('<div class="feed-cost">', 1)[1]
+    assert 'Σ LLM wait 5m19s' in cost_line
+    assert '32m27s' not in cost_line
 
 
 def test_cycle_feed_missing_llm_stats_is_unknown_not_zero() -> None:
