@@ -6579,7 +6579,10 @@ def build_cycle_feed(
                 f'{planner_call_count if planner_call_count is not None else "unknown"} planner calls &middot; {len(planning_rows)} planning sessions</div>'
             )
         else:
-            planning_html = '<div class="feed-planning-cost">Planning: unknown</div>'
+            planning_html = (
+                '<div class="feed-planning-cost">Planning: unknown '
+                '(planning data unavailable or not observed)</div>'
+            )
 
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''

@@ -699,6 +699,24 @@ def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -
     assert "PRIVATE_PLAN_CANARY" not in html_out
 
 
+def test_cycle_without_any_planning_evidence_renders_unknown_not_zero_or_legacy_dash() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-planning-unobserved", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-planning-unobserved", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    page = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=False, history_mode=True)
+    row = page.split('id="cycle-cycle-planning-unobserved"')[1].split('</li>')[0]
+    assert "Planning: unknown (planning data unavailable or not observed)" in row
+    assert "unknown iterations" not in row
+    assert "unknown planner calls" not in row
+    assert "planner calls" not in row
+    assert "planning sessions" not in row
+    assert "—" not in row
+    assert "0 iterations" not in row
+    assert "0 planner calls" not in row
+
+
 def test_missing_per_cycle_planner_stats_are_unknown_even_when_window_is_readable() -> None:
     ledger = [
         {"phase": "planning_session", "cycle_id": "cycle-missing-stats", "iterations_used": 5,
