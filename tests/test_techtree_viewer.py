@@ -3237,7 +3237,8 @@ def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
         "ledger_history": ledger,
         "llm_stats": {"cycle-two-hours": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000,
                                               "last_ts": "2026-10-06T11:59:00Z"}},
-        "bridge_runs": [],
+        "bridge_runs": [{"run_id": "safe-internal", "cycle_id": "cycle-two-hours",
+                         "started_at": "2026-10-06T10:05:00Z", "finished_at": "2026-10-06T10:10:00Z"}],
     }
     public, _private = split_render_inputs(data)
     pages = viewer.render_public_pages(public, "host", generated_at="2026-10-06T12:05:00Z")
@@ -3247,6 +3248,9 @@ def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
     assert "13 LLM calls" in row
     assert "Σ LLM wait 5m19s" in row
     assert "not cycle elapsed" in row
+    assert "Bridge span: 5m" in row
+    assert "Tool operations: unavailable (not recorded)" in row
+    assert "safe-internal" not in row
 
 
 def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> None:
@@ -3269,6 +3273,16 @@ def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> N
     for cycle_id in cases:
         row = page.split(f'id="cycle-{cycle_id}"')[1].split('</li>')[0]
         assert "Cycle elapsed: UNKNOWN" in row
+
+
+def test_cycle_elapsed_zero_is_explicit_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-zero-elapsed", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-zero-elapsed", "outcome": "success", "ts": "2026-10-06T10:00:00Z"},
+    ]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-zero-elapsed"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 0s" in row
 
 
 def test_open_cycle_elapsed_is_labeled_elapsed_so_far() -> None:

@@ -6510,6 +6510,20 @@ def build_cycle_feed(
         else:
             cycle_elapsed_html = '<div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div>'
 
+        bridge_span_html = '<span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span>'
+        matching_runs = [
+            run for run in (bridge_runs or [])
+            if isinstance(run, dict)
+            and str(run.get('cycle_id') or '') in {cid, cid.replace('cycle-', '', 1)}
+            and run.get('started_at') and run.get('finished_at')
+        ]
+        if len(matching_runs) == 1:
+            bridge_start = _parse_iso_ts(str(matching_runs[0].get('started_at')))
+            bridge_end = _parse_iso_ts(str(matching_runs[0].get('finished_at')))
+            if bridge_start is not None and bridge_end is not None and bridge_end >= bridge_start:
+                bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
+                bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
+
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
         if history_mode and ts_val:
@@ -6532,7 +6546,7 @@ def build_cycle_feed(
           </div>
           {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
           {files_html}
-          {cycle_elapsed_html}
+          <div class="feed-cycle-timing">{cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
         </li>
         ''')
