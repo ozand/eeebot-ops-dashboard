@@ -6491,6 +6491,42 @@ def build_cycle_feed(
         else:
             cost_html = '<div class="feed-cost unavailable-note">LLM metrics unavailable (not observed)</div>'
 
+        cycle_start_rows = [p for p in phases if p.get('phase') == 'started']
+        cycle_outcome_rows = [p for p in phases if p.get('phase') == 'outcome']
+        cycle_elapsed_html = ''
+        start_dt = None
+        end_dt = None
+        if len(cycle_start_rows) == 1:
+            start_dt = _parse_iso_ts(str(cycle_start_rows[0].get('ts') or ''))
+            end_dt = _parse_iso_ts(str(cycle_outcome_rows[0].get('ts') or '')) if len(cycle_outcome_rows) == 1 else None
+            running = not cycle_outcome_rows
+            if running and start_dt is not None:
+                end_dt = ref_now
+            if start_dt is not None and end_dt is not None and end_dt >= start_dt:
+                elapsed_ms = (end_dt - start_dt).total_seconds() * 1000
+                elapsed_label = _fmt_duration_ms(elapsed_ms) or '0s'
+                suffix = ' (elapsed so far)' if running else ''
+                cycle_elapsed_html = f'<div class="feed-cycle-elapsed">Cycle elapsed: {esc(elapsed_label + suffix)}</div>'
+            else:
+                cycle_elapsed_html = '<div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div>'
+        else:
+            cycle_elapsed_html = '<div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div>'
+
+        bridge_span_html = '<span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span>'
+        matching_runs = [
+            run for run in (bridge_runs or [])
+            if isinstance(run, dict)
+            and str(run.get('cycle_id') or '') in {cid, cid.replace('cycle-', '', 1)}
+        ]
+        if len(matching_runs) == 1:
+            bridge_start = _parse_iso_ts(str(matching_runs[0].get('started_at') or ''))
+            bridge_end = _parse_iso_ts(str(matching_runs[0].get('finished_at') or ''))
+            if (bridge_start is not None and bridge_end is not None and bridge_end >= bridge_start
+                    and start_dt is not None and end_dt is not None
+                    and bridge_start <= start_dt and bridge_end >= end_dt):
+                bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
+                bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
+
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
         if history_mode and ts_val:
@@ -6513,6 +6549,7 @@ def build_cycle_feed(
           </div>
           {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
           {files_html}
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
         </li>
         ''')

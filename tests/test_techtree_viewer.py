@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from scripts import techtree_viewer as tv
+from scripts.two_sinks import split_render_inputs
 
 
 def _fixture() -> dict[str, object]:
@@ -3223,6 +3224,119 @@ def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-two-hours", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-two-hours", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    data = {
+        "ledger_tail": ledger,
+        "ledger_history": ledger,
+        "llm_stats": {"cycle-two-hours": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000,
+                                              "last_ts": "2026-10-06T11:59:00Z"}},
+        "bridge_runs": [{"run_id": "safe-internal", "cycle_id": "cycle-two-hours",
+                         "started_at": "2026-10-06T10:05:00Z", "finished_at": "2026-10-06T10:10:00Z"}],
+    }
+    public, _private = split_render_inputs(data)
+    pages = viewer.render_public_pages(public, "host", generated_at="2026-10-06T12:05:00Z")
+    row = pages["cycles.html"].split('id="cycle-cycle-two-hours"')[1].split('</li>')[0]
+
+    assert "Cycle elapsed: 2h" in row
+    assert "13 LLM calls" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "not cycle elapsed" in row
+    assert "Bridge span: unavailable" in row
+    assert "Tool operations: unavailable (not recorded)" in row
+    assert "safe-internal" not in row
+
+
+def test_public_reader_projection_render_keeps_cycle_bridge_and_llm_intervals_distinct() -> None:
+    source = {
+        "ledger_tail": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "ledger_history": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "llm_stats": {"cycle-public-timing": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000}},
+        "bridge_runs": [{"run_id": "private-run-id", "cycle_id": "cycle-public-timing",
+                         "started_at": "2026-10-06T09:55:00Z", "finished_at": "2026-10-06T12:15:00Z"}],
+    }
+    public, _private = split_render_inputs(source)
+    page = tv.render_public_pages(public, host="test", generated_at="2026-10-06T12:05:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-public-timing"')[1].split("</li>")[0]
+    assert "Cycle elapsed: 2h" in row
+    assert "Bridge span: 2h20m" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "private-run-id" not in row
+    assert "Recorded cycle interval (available history; coverage may be partial)" in row
+
+
+def test_bridge_span_requires_exactly_one_complete_matching_run_enclosing_cycle() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-bridge-bounds", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-bridge-bounds", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    enclosing = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:55:00Z",
+                 "finished_at": "2026-10-06T12:15:00Z"}
+    incomplete = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:58:00Z"}
+    too_short = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T11:00:00Z",
+                 "finished_at": "2026-10-06T11:05:00Z"}
+    for runs in ([enclosing, incomplete], [enclosing, dict(enclosing)], [too_short]):
+        page = tv.build_cycle_feed(ledger, bridge_runs=list(runs), history_mode=True)
+        row = page.split('id="cycle-cycle-bridge-bounds"')[1].split("</li>")[0]
+        assert "Bridge span: unavailable" in row
+        assert "Cycle elapsed: 2h" in row
+
+
+def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> None:
+    cases = {
+        "cycle-no-start": [{"phase": "outcome", "cycle_id": "cycle-no-start", "outcome": "success",
+                            "ts": "2026-10-06T12:00:00Z"}],
+        "cycle-invalid": [
+            {"phase": "started", "cycle_id": "cycle-invalid", "ts": "not-a-time"},
+            {"phase": "outcome", "cycle_id": "cycle-invalid", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "cycle-retry": [
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T09:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "failed", "ts": "2026-10-06T09:10:00Z"},
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+    }
+    ledger = [row for rows in cases.values() for row in rows]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, 5, tzinfo=timezone.utc))
+    for cycle_id in cases:
+        row = page.split(f'id="cycle-{cycle_id}"')[1].split('</li>')[0]
+        assert "Cycle elapsed: UNKNOWN" in row
+
+
+def test_cycle_elapsed_zero_is_explicit_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-zero-elapsed", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-zero-elapsed", "outcome": "success", "ts": "2026-10-06T10:00:00Z"},
+    ]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-zero-elapsed"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 0s" in row
+
+
+def test_open_cycle_elapsed_is_labeled_elapsed_so_far() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-open", "ts": "2026-10-06T10:00:00Z"}]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-open"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 2h (elapsed so far)" in row
+
+
 def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
     data = _fixture()
     data['llm_stats'] = {
@@ -3255,8 +3369,10 @@ def test_cycle_feed_llm_cost_label_names_provider_duration_and_scope() -> None:
     assert "322.4K tok" in row
     assert "Σ LLM wait" in row
     assert "5m19s" in row
-    assert "cycle elapsed" in row
-    assert "32m27s" not in row
+    assert 'class="feed-cycle-elapsed">Cycle elapsed: 32m27s</div>' in row
+    cost_line = row.split('<div class="feed-cost">', 1)[1]
+    assert 'Σ LLM wait 5m19s' in cost_line
+    assert '32m27s' not in cost_line
 
 
 def test_cycle_feed_missing_llm_stats_is_unknown_not_zero() -> None:
