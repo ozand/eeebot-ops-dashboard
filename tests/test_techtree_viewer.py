@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from scripts import techtree_viewer as tv
+from scripts.two_sinks import split_render_inputs
 
 
 def _fixture() -> dict[str, object]:
@@ -3248,9 +3249,53 @@ def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
     assert "13 LLM calls" in row
     assert "Σ LLM wait 5m19s" in row
     assert "not cycle elapsed" in row
-    assert "Bridge span: 5m" in row
+    assert "Bridge span: unavailable" in row
     assert "Tool operations: unavailable (not recorded)" in row
     assert "safe-internal" not in row
+
+
+def test_public_reader_projection_render_keeps_cycle_bridge_and_llm_intervals_distinct() -> None:
+    source = {
+        "ledger_tail": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "ledger_history": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "llm_stats": {"cycle-public-timing": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000}},
+        "bridge_runs": [{"run_id": "private-run-id", "cycle_id": "cycle-public-timing",
+                         "started_at": "2026-10-06T09:55:00Z", "finished_at": "2026-10-06T12:15:00Z"}],
+    }
+    public, _private = split_render_inputs(source)
+    page = tv.render_public_pages(public, host="test", generated_at="2026-10-06T12:05:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-public-timing"')[1].split("</li>")[0]
+    assert "Cycle elapsed: 2h" in row
+    assert "Bridge span: 2h20m" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "private-run-id" not in row
+    assert "Recorded cycle interval (available history; coverage may be partial)" in row
+
+
+def test_bridge_span_requires_exactly_one_complete_matching_run_enclosing_cycle() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-bridge-bounds", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-bridge-bounds", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    enclosing = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:55:00Z",
+                 "finished_at": "2026-10-06T12:15:00Z"}
+    incomplete = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:58:00Z"}
+    too_short = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T11:00:00Z",
+                 "finished_at": "2026-10-06T11:05:00Z"}
+    for runs in ([enclosing, incomplete], [enclosing, dict(enclosing)], [too_short]):
+        page = tv.build_cycle_feed(ledger, bridge_runs=list(runs), history_mode=True)
+        row = page.split('id="cycle-cycle-bridge-bounds"')[1].split("</li>")[0]
+        assert "Bridge span: unavailable" in row
+        assert "Cycle elapsed: 2h" in row
 
 
 def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> None:

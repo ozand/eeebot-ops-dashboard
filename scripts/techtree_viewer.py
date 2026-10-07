@@ -6494,6 +6494,8 @@ def build_cycle_feed(
         cycle_start_rows = [p for p in phases if p.get('phase') == 'started']
         cycle_outcome_rows = [p for p in phases if p.get('phase') == 'outcome']
         cycle_elapsed_html = ''
+        start_dt = None
+        end_dt = None
         if len(cycle_start_rows) == 1:
             start_dt = _parse_iso_ts(str(cycle_start_rows[0].get('ts') or ''))
             end_dt = _parse_iso_ts(str(cycle_outcome_rows[0].get('ts') or '')) if len(cycle_outcome_rows) == 1 else None
@@ -6515,12 +6517,13 @@ def build_cycle_feed(
             run for run in (bridge_runs or [])
             if isinstance(run, dict)
             and str(run.get('cycle_id') or '') in {cid, cid.replace('cycle-', '', 1)}
-            and run.get('started_at') and run.get('finished_at')
         ]
         if len(matching_runs) == 1:
-            bridge_start = _parse_iso_ts(str(matching_runs[0].get('started_at')))
-            bridge_end = _parse_iso_ts(str(matching_runs[0].get('finished_at')))
-            if bridge_start is not None and bridge_end is not None and bridge_end >= bridge_start:
+            bridge_start = _parse_iso_ts(str(matching_runs[0].get('started_at') or ''))
+            bridge_end = _parse_iso_ts(str(matching_runs[0].get('finished_at') or ''))
+            if (bridge_start is not None and bridge_end is not None and bridge_end >= bridge_start
+                    and start_dt is not None and end_dt is not None
+                    and bridge_start <= start_dt and bridge_end >= end_dt):
                 bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
@@ -6546,7 +6549,7 @@ def build_cycle_feed(
           </div>
           {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
           {files_html}
-          <div class="feed-cycle-timing">{cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
         </li>
         ''')
