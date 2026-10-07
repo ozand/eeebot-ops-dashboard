@@ -877,6 +877,54 @@ def test_reader_to_projection_to_public_page_keeps_cycle_knownness(tmp_path: Pat
     assert "PRIVATE_PLAN_PIPELINE" not in page
 
 
+def test_invalid_calendar_day_filename_keeps_planner_count_unknown_in_local_and_remote_readers(
+    tmp_path: Path,
+) -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-07.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"executor"}\n', encoding="utf-8",
+    )
+    (llm_dir / "2026-09-08.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"executor"}\n', encoding="utf-8",
+    )
+    (llm_dir / "2026-99-99.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"planner"}\n', encoding="utf-8",
+    )
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-invalid-day", "ts": "2026-09-07T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-invalid-day", "iterations_used": 7,
+         "ts": "2026-09-07T00:01:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-invalid-day", "outcome": "success",
+         "ts": "2026-09-08T00:01:00Z"},
+    ]
+
+    local = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert local["llm_stats_source_complete"] is False
+    local.update({"ledger_tail": ledger, "ledger_history": ledger})
+    public, _ = split_render_inputs(local)
+    page = viewer.render_public_pages(public, "host", generated_at="2026-09-08T00:02:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-invalid-day"')[1].split("</li>")[0]
+    assert "7 iterations" in row
+    assert "unknown planner calls" in row
+
+    # Execute the embedded reader body with STATE_ROOT replaced for this isolated fixture.
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script = tmp_path / "remote_reader.py"
+    remote_script.write_text(script, encoding="utf-8")
+    remote = subprocess.run(["python", str(remote_script)], text=True, capture_output=True, check=True)
+    remote_state = json.loads(remote.stdout)
+    assert remote_state["llm_stats_source_complete"] is False
+    stats = remote_state["llm_stats"]["cycle-invalid-day"]
+    assert stats["_source_coverage_complete"] is False
+
+
 def test_reader_cycle_straddling_unselected_call_day_keeps_planner_count_unknown(tmp_path: Path) -> None:
     from scripts import techtree_viewer as viewer
     from scripts.two_sinks import split_render_inputs

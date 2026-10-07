@@ -536,13 +536,25 @@ def read_llm_stats():
     except Exception:
         return stats
     selected_names = names[-7:]
-    source_days = [name[:-6] for name in selected_names
-                   if re.fullmatch(r"\d{4}-\d{2}-\d{2}\.jsonl", name)]
-    coverage_complete = bool(source_days) and all(
-        (datetime.fromisoformat(right).date() - datetime.fromisoformat(left).date()).days == 1
+    source_days = []
+    valid_day_names = True
+    for name in selected_names:
+        match = re.fullmatch(r"(\d{4}-\d{2}-\d{2})\.jsonl", name)
+        if not match:
+            valid_day_names = False
+            continue
+        try:
+            datetime.strptime(match.group(1), "%Y-%m-%d")
+        except ValueError:
+            valid_day_names = False
+            continue
+        source_days.append(match.group(1))
+    coverage_complete = valid_day_names and bool(source_days) and all(
+        (datetime.strptime(right, "%Y-%m-%d").date()
+         - datetime.strptime(left, "%Y-%m-%d").date()).days == 1
         for left, right in zip(source_days, source_days[1:])
     )
-    source_complete = bool(selected_names) and len(source_days) == len(selected_names)
+    source_complete = bool(selected_names) and valid_day_names and len(source_days) == len(selected_names)
     for name in selected_names:
         path = os.path.join(ldir, name)
         try:
@@ -2276,11 +2288,23 @@ def read_local_state(
         except OSError:
             return stats, False
         selected_names = names[-7:]
-        source_days = [name[:-6] for name in selected_names
-                       if re.fullmatch(r'\d{4}-\d{2}-\d{2}\.jsonl', name)]
-        source_complete = bool(selected_names) and len(source_days) == len(selected_names)
-        coverage_complete = bool(source_days) and all(
-            (datetime.fromisoformat(right).date() - datetime.fromisoformat(left).date()).days == 1
+        source_days = []
+        valid_day_names = True
+        for name in selected_names:
+            match = re.fullmatch(r'(\d{4}-\d{2}-\d{2})\.jsonl', name)
+            if not match:
+                valid_day_names = False
+                continue
+            try:
+                datetime.strptime(match.group(1), '%Y-%m-%d')
+            except ValueError:
+                valid_day_names = False
+                continue
+            source_days.append(match.group(1))
+        source_complete = bool(selected_names) and valid_day_names and len(source_days) == len(selected_names)
+        coverage_complete = valid_day_names and bool(source_days) and all(
+            (datetime.strptime(right, '%Y-%m-%d').date()
+             - datetime.strptime(left, '%Y-%m-%d').date()).days == 1
             for left, right in zip(source_days, source_days[1:])
         )
         for name in selected_names:
