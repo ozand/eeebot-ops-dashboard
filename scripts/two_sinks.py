@@ -84,7 +84,7 @@ PUBLIC_DATA_KEYS = frozenset({
     "skill_evals", "ci_freshness", "cycle_titles", "cycle_files",
     "llm_stats", "llm_stats_source_complete", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
-    "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
+    "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "planning_activity", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
     "generator_sha", "_newest_source_age_seconds", "_error",
 })
@@ -1216,6 +1216,13 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "bridge_exits": _list(_BRIDGE_EXIT_ROW),
     "bridge_runs": _list(_BRIDGE_RUN_ROW),
     "bridge_active_run": _BRIDGE_ACTIVE_RUN,
+    "planning_activity": _obj({
+        "observed_at_utc": _ts,
+        "ledger": _obj({"status": _enum("present", "absent", "probe_unavailable"),
+                         "source_mtime": _nullable(_num(0)), "source_age_seconds": _nullable(_num(0)),
+                         "last_observation": _nullable(_obj({"ts": _ts, "outcome": _enum(*_EEEBOT_LEDGER_OUTCOMES, fallback="unknown")}))}),
+        "rest_status": _enum("unavailable_pending_read_approval"),
+    }),
     "strategist_decisions": _list(_STRATEGIST_ROW),
     "demand_futility": _project_demand_futility,
     "systemd_drift": _SYSTEMD_DRIFT,
@@ -1231,7 +1238,7 @@ _NULLABLE_SECTIONS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable", "ledger_tail",
     "demand_rotation", "demand_completed", "skill_reads", "proposer_stats", "executor_llm_stats", "compaction",
     "local_ci", "executor_model_status", "token_heatmap", "bridge_exit_streak", "bridge_exits", "bridge_runs",
-    "bridge_active_run", "strategist_decisions", "demand_futility", "systemd_drift", "ci_freshness",
+    "bridge_active_run", "planning_activity", "strategist_decisions", "demand_futility", "systemd_drift", "ci_freshness",
     "cycle_titles", "agent_context", "_newest_source_age_seconds",
 })
 
@@ -1242,6 +1249,7 @@ _PUBLIC_EMPTY: dict[str, object] = {
     **{key: [] for key in ("ledger_tail", "ledger_history", "skill_evals", "lessons", "subagent_records",
                            "reflections", "bridge_exits", "bridge_runs", "strategist_decisions")},
     "bridge_exit_streak": {},
+    "planning_activity": {},
     **{key: {} for key in ("llm_stats", "cycle_files", "derived_view")},
     "generator_sha": "",
 }

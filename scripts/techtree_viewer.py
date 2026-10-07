@@ -499,6 +499,49 @@ def read_json(relpath):
         return None
 
 
+def read_planning_activity():
+    """Summarize approved planning ledger events without inventing cycles."""
+    observed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    allowed_outcomes = {"integrated", "refused", "malformed", "no_plan", "spawn_failed", "commit_failed", "timed_out", "rest", "rest_unchanged"}
+    path = os.path.join(STATE_ROOT, "ledger", "cycles.jsonl")
+    status, source_mtime, latest = "present", None, None
+    try:
+        source_mtime = os.path.getmtime(path)
+        with open(path, "r", encoding="utf-8", errors="replace") as stream:
+            lines = stream.readlines()[-LEDGER_SCAN_WINDOW:]
+    except FileNotFoundError:
+        status, lines = "absent", []
+    except OSError:
+        status, lines = "probe_unavailable", []
+    if status == "present" and source_mtime is None:
+        status, lines = "probe_unavailable", []
+    if status == "present":
+        for line in lines:
+            try:
+                row = json.loads(line)
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(row, dict) or row.get("phase") not in {"planning_session", "planner_rest", "planner_rest_held"}:
+                continue
+            ts = row.get("ts")
+            if not isinstance(ts, str):
+                continue
+            try:
+                parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if latest is None or parsed > latest["_parsed"]:
+                phase = row["phase"]
+                outcome = row.get("outcome") if phase == "planning_session" else ("rest_unchanged" if phase == "planner_rest_held" else "rest")
+                latest = {"ts": ts, "outcome": outcome if outcome in allowed_outcomes else "unknown", "_parsed": parsed}
+    if latest is not None:
+        latest.pop("_parsed")
+    source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
+    return {"observed_at_utc": observed_at,
+            "ledger": {"status": status, "source_mtime": source_mtime, "source_age_seconds": source_age,
+                       "last_observation": latest},
+            "rest_status": "unavailable_pending_read_approval"}
+
 def read_ledger_tail(relpath):
     path = os.path.join(STATE_ROOT, relpath)
     try:
@@ -1776,6 +1819,7 @@ result = {
     "hypotheses": read_json("hypotheses/lifecycle.json"),
     "hypotheses_durable": read_json("hypotheses/durable.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
+    "planning_activity": read_planning_activity(),
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
     "skill_reads": read_json("skill_fitness/reads.json"),
@@ -1847,6 +1891,7 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_evals': [],
         'llm_stats': {},
         'llm_stats_source_complete': False,
+        'planning_activity': None,
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
@@ -2090,6 +2135,7 @@ def read_local_state(
         'cycle_titles_error': None,
         'llm_stats': {},
         'llm_stats_source_complete': False,
+        'planning_activity': None,
         'proposer_stats': None,
         'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2659,6 +2705,45 @@ def read_local_state(
             return {'status': 'probe_unavailable', 'reason': 'not_a_dict'}
         return {'status': 'present', **data}
 
+    def read_planning_activity_local() -> dict[str, Any]:
+        """Local mirror of the approved-ledger-only planning observer."""
+        observed_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        allowed_outcomes = {'integrated', 'refused', 'malformed', 'no_plan', 'spawn_failed', 'commit_failed', 'timed_out', 'rest', 'rest_unchanged'}
+        path = root / 'ledger' / 'cycles.jsonl'
+        status, source_mtime, latest = 'present', None, None
+        try:
+            source_mtime = path.stat().st_mtime
+            lines = path.read_text(encoding='utf-8', errors='replace').splitlines()[-LEDGER_SCAN_WINDOW:]
+        except FileNotFoundError:
+            status, lines = 'absent', []
+        except OSError:
+            status, lines = 'probe_unavailable', []
+        if status == 'present' and source_mtime is None:
+            status, lines = 'probe_unavailable', []
+        if status == 'present':
+            for line in lines:
+                try:
+                    row = json.loads(line)
+                    if not isinstance(row, dict) or row.get('phase') not in {'planning_session', 'planner_rest', 'planner_rest_held'}:
+                        continue
+                    ts = row.get('ts')
+                    if not isinstance(ts, str):
+                        continue
+                    parsed = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                except (TypeError, ValueError):
+                    continue
+                if latest is None or parsed > latest['_parsed']:
+                    phase = row['phase']
+                    outcome = row.get('outcome') if phase == 'planning_session' else ('rest_unchanged' if phase == 'planner_rest_held' else 'rest')
+                    latest = {'ts': ts, 'outcome': outcome if outcome in allowed_outcomes else 'unknown', '_parsed': parsed}
+        if latest is not None:
+            latest.pop('_parsed')
+        source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
+        return {'observed_at_utc': observed_at,
+                'ledger': {'status': status, 'source_mtime': source_mtime, 'source_age_seconds': source_age,
+                           'last_observation': latest},
+                'rest_status': 'unavailable_pending_read_approval'}
+
     def read_systemd_drift_local() -> dict[str, Any]:
         """#298: local mirror of REMOTE_READER_SCRIPT read_systemd_drift()
         -- keep in sync. eeebot#1701/PR#1717: <state_dir>/systemd_drift.json,
@@ -2899,6 +2984,7 @@ def read_local_state(
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
         'llm_stats': llm_stats_local,
         'llm_stats_source_complete': llm_stats_source_complete,
+        'planning_activity': read_planning_activity_local(),
         'proposer_stats': read_proposer_stats_local(),
         'local_ci': read_local_ci_status_local(),
         'executor_model_status': read_executor_model_status_local(),
@@ -5631,6 +5717,7 @@ def build_now_panel(
     health_recent_outcomes: list[str] | None = None,
     bridge_exit_streak: dict[str, Any] | None = None,
     bridge_exits: list[dict[str, Any]] | None = None,
+    planning_activity: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
     strategist_decisions: list[dict[str, Any]] | None = None,
     ci_freshness: dict[str, Any] | None = None,
@@ -5860,6 +5947,23 @@ def build_now_panel(
     # re-derived or re-sorted here.
     next_up_html = _build_next_up_item(derived_view)
     charter_html = _build_charter_item(derived_view)
+    planning_observation = (planning_activity or {}).get('ledger') if isinstance(planning_activity, dict) else None
+    if not isinstance(planning_observation, dict):
+        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval.</div>'
+    else:
+        source_status = planning_observation.get('status')
+        last = planning_observation.get('last_observation')
+        if source_status != 'present':
+            last_text = f'{esc(source_status)}; latest observation unavailable'
+        elif isinstance(last, dict):
+            last_text = f'{fmt_ts(last.get("ts"))} · {esc(last.get("outcome") or "unknown")}'
+        else:
+            last_text = 'no planning observation found in the approved ledger window'
+        source_age = planning_observation.get('source_age_seconds')
+        age_text = 'source age unknown' if not isinstance(source_age, (int, float)) else f'source file {humanize_age(source_age)} old'
+        planning_html = (f'<div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> '
+                         f'{last_text}; {age_text}. Planner rest fields: unavailable pending explicit reader-path approval; '
+                         f'no current-rest or active-work inference.</div>')
 
     # 13. Artifact dependency graph (eeebot#1769, ADR-024) -- published at
     # scorecard.quality.artifact_graph; read as published, never recomputed
@@ -5875,6 +5979,7 @@ def build_now_panel(
         {cycle_html}
         {next_up_html}
         {charter_html}
+        {planning_html}
         {streak_html}
         {feed_ages_html}
         {doc_budget_html}
@@ -10216,6 +10321,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         ledger_tail=ledger_tail,
         age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
         now=generated_at,
+        planning_activity=data.get('planning_activity'),
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
@@ -10580,6 +10686,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_tail=ledger_tail,
         age_seconds=age_seconds,
         now=generated_at,
+        planning_activity=data.get('planning_activity'),
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),

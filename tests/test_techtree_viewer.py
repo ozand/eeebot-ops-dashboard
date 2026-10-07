@@ -1921,6 +1921,57 @@ def test_hypotheses_panel_no_collapse_when_lte_6_stale() -> None:
     assert '<details' not in html
 
 
+def test_planning_activity_ledger_reader_projection_and_panel_do_not_invent_cycles(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger_dir = tmp_path / 'ledger'
+    ledger_dir.mkdir()
+    ledger_path = ledger_dir / 'cycles.jsonl'
+    ledger_path.write_text(
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:00:00Z","outcome":"rest_unchanged"}\n',
+        encoding='utf-8',
+    )
+    result = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    activity = result['planning_activity']
+    assert activity['ledger']['last_observation'] == {
+        'ts': '2026-10-07T06:00:00Z', 'outcome': 'rest_unchanged',
+    }
+    public, _private = split_render_inputs(result)
+    page = viewer.render_public_pages(public, 'host', generated_at='2026-10-07T07:00:00Z')['index.html']
+    assert 'Planning observation (separate from cycles)' in page
+    # The public renderer includes the observation in the overview panel,
+    # distinct from the cycle feed built from cycle-bearing rows.
+    cycle_feed = page.split('id="panel-feed"', 1)[-1]
+    assert 'rest_unchanged' not in cycle_feed
+    assert 'rest_unchanged' in page
+    assert 'no current-rest or active-work inference' in page
+    assert 'Planner rest fields: unavailable pending explicit reader-path approval' in page
+    assert 'rest_state.json' not in page
+    assert 'cycle-invalid' not in page
+    assert 'unavailable_pending_read_approval' == public['planning_activity']['rest_status']
+
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script = tmp_path / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_activity = json.loads(remote.stdout)['planning_activity']
+    assert remote_activity['ledger']['last_observation'] == activity['ledger']['last_observation']
+    assert remote_activity['rest_status'] == 'unavailable_pending_read_approval'
+
+    ledger_path.write_text('{broken\\n', encoding='utf-8')
+    malformed = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert malformed['ledger']['status'] == 'present'
+    assert malformed['ledger']['last_observation'] is None
+
+    ledger_path.unlink()
+    missing = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert missing['ledger']['status'] == 'absent'
+    assert missing['ledger']['last_observation'] is None
+
+
 def test_now_panel_demand_grouping_fallback() -> None:
     demand_rotation = {
         'served': {
