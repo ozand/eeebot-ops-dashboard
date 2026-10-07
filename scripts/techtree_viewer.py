@@ -502,9 +502,15 @@ def read_json(relpath):
 def read_planning_activity():
     """Summarize approved planning ledger events without inventing cycles."""
     observed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    def parse_event_time(value):
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            raise ValueError("timezone required")
+        return parsed
     allowed_outcomes = {"integrated", "refused", "malformed", "no_plan", "spawn_failed", "commit_failed", "timed_out", "rest", "rest_unchanged"}
     path = os.path.join(STATE_ROOT, "ledger", "cycles.jsonl")
     status, source_mtime, latest = "present", None, None
+    malformed = False
     try:
         source_mtime = os.path.getmtime(path)
         with open(path, "r", encoding="utf-8", errors="replace") as stream:
@@ -520,26 +526,39 @@ def read_planning_activity():
             try:
                 row = json.loads(line)
             except (TypeError, ValueError):
+                malformed = True
                 continue
-            if not isinstance(row, dict) or row.get("phase") not in {"planning_session", "planner_rest", "planner_rest_held"}:
+            if not isinstance(row, dict):
+                malformed = True
+                continue
+            phase = row.get("phase")
+            if phase not in {"planning_session", "planner_rest", "planner_rest_held"}:
                 continue
             ts = row.get("ts")
             if not isinstance(ts, str):
+                malformed = True
                 continue
             try:
-                parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                parsed = parse_event_time(ts)
             except ValueError:
+                malformed = True
                 continue
-            if latest is None or parsed > latest["_parsed"]:
-                phase = row["phase"]
-                outcome = row.get("outcome") if phase == "planning_session" else ("rest_unchanged" if phase == "planner_rest_held" else "rest")
-                latest = {"ts": ts, "outcome": outcome if outcome in allowed_outcomes else "unknown", "_parsed": parsed}
+            outcome = row.get("outcome") if phase == "planning_session" else ("rest_unchanged" if phase == "planner_rest_held" else "rest")
+            invalid_outcome = phase == "planning_session" and (not isinstance(outcome, str) or outcome not in allowed_outcomes)
+            if invalid_outcome:
+                malformed = True
+                outcome = "unknown"
+            if invalid_outcome or latest is None or parsed > latest["_parsed"]:
+                latest = {"ts": ts, "outcome": outcome if isinstance(outcome, str) and outcome in allowed_outcomes else "unknown", "_parsed": parsed}
     if latest is not None:
-        latest.pop("_parsed")
+        parsed_latest = latest.pop("_parsed")
+        latest["event_age_seconds"] = max(0.0, (datetime.now(timezone.utc) - parsed_latest.astimezone(timezone.utc)).total_seconds())
     source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
+    if malformed and status == "present":
+        status = "partial"
     return {"observed_at_utc": observed_at,
             "ledger": {"status": status, "source_mtime": source_mtime, "source_age_seconds": source_age,
-                       "last_observation": latest},
+                       "last_observation": latest, "current_status": "unknown"},
             "rest_status": "unavailable_pending_read_approval"}
 
 def read_ledger_tail(relpath):
@@ -2707,10 +2726,12 @@ def read_local_state(
 
     def read_planning_activity_local() -> dict[str, Any]:
         """Local mirror of the approved-ledger-only planning observer."""
-        observed_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        observed_at_dt = datetime.now(timezone.utc)
+        observed_at = observed_at_dt.isoformat().replace('+00:00', 'Z')
         allowed_outcomes = {'integrated', 'refused', 'malformed', 'no_plan', 'spawn_failed', 'commit_failed', 'timed_out', 'rest', 'rest_unchanged'}
         path = root / 'ledger' / 'cycles.jsonl'
         status, source_mtime, latest = 'present', None, None
+        malformed = False
         try:
             source_mtime = path.stat().st_mtime
             lines = path.read_text(encoding='utf-8', errors='replace').splitlines()[-LEDGER_SCAN_WINDOW:]
@@ -2724,24 +2745,38 @@ def read_local_state(
             for line in lines:
                 try:
                     row = json.loads(line)
-                    if not isinstance(row, dict) or row.get('phase') not in {'planning_session', 'planner_rest', 'planner_rest_held'}:
+                    if not isinstance(row, dict):
+                        malformed = True
+                        continue
+                    phase = row.get('phase')
+                    if phase not in {'planning_session', 'planner_rest', 'planner_rest_held'}:
                         continue
                     ts = row.get('ts')
                     if not isinstance(ts, str):
+                        malformed = True
                         continue
                     parsed = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                    if parsed.tzinfo is None:
+                        raise ValueError('timezone required')
                 except (TypeError, ValueError):
+                    malformed = True
                     continue
-                if latest is None or parsed > latest['_parsed']:
-                    phase = row['phase']
-                    outcome = row.get('outcome') if phase == 'planning_session' else ('rest_unchanged' if phase == 'planner_rest_held' else 'rest')
-                    latest = {'ts': ts, 'outcome': outcome if outcome in allowed_outcomes else 'unknown', '_parsed': parsed}
+                outcome = row.get('outcome') if phase == 'planning_session' else ('rest_unchanged' if phase == 'planner_rest_held' else 'rest')
+                invalid_outcome = phase == 'planning_session' and (not isinstance(outcome, str) or outcome not in allowed_outcomes)
+                if invalid_outcome:
+                    malformed = True
+                    outcome = 'unknown'
+                if invalid_outcome or latest is None or parsed > latest['_parsed']:
+                    latest = {'ts': ts, 'outcome': outcome if isinstance(outcome, str) and outcome in allowed_outcomes else 'unknown', '_parsed': parsed}
+        if malformed and status == 'present':
+            status = 'partial'
         if latest is not None:
-            latest.pop('_parsed')
+            parsed_latest = latest.pop('_parsed')
+            latest['event_age_seconds'] = max(0.0, (observed_at_dt - parsed_latest.astimezone(timezone.utc)).total_seconds())
         source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
         return {'observed_at_utc': observed_at,
                 'ledger': {'status': status, 'source_mtime': source_mtime, 'source_age_seconds': source_age,
-                           'last_observation': latest},
+                           'last_observation': latest, 'current_status': 'unknown'},
                 'rest_status': 'unavailable_pending_read_approval'}
 
     def read_systemd_drift_local() -> dict[str, Any]:
@@ -5953,12 +5988,18 @@ def build_now_panel(
     else:
         source_status = planning_observation.get('status')
         last = planning_observation.get('last_observation')
-        if source_status != 'present':
+        if source_status == 'partial':
+            last_text = 'partial ledger; recorded latest observation shown as last-recorded evidence' if isinstance(last, dict) else 'partial ledger; latest planning observation unavailable'
+        elif source_status != 'present':
             last_text = f'{esc(source_status)}; latest observation unavailable'
         elif isinstance(last, dict):
             last_text = f'{fmt_ts(last.get("ts"))} · {esc(last.get("outcome") or "unknown")}'
         else:
             last_text = 'no planning observation found in the approved ledger window'
+        if isinstance(last, dict):
+            event_age = last.get('event_age_seconds')
+            event_age_text = 'event age unknown' if not isinstance(event_age, (int, float)) else f'event recorded {humanize_age(event_age)} ago'
+            last_text = f'{last_text}; {event_age_text}; current planning status unknown'
         source_age = planning_observation.get('source_age_seconds')
         age_text = 'source age unknown' if not isinstance(source_age, (int, float)) else f'source file {humanize_age(source_age)} old'
         planning_html = (f'<div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> '

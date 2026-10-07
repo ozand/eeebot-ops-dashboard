@@ -1218,9 +1218,11 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "bridge_active_run": _BRIDGE_ACTIVE_RUN,
     "planning_activity": _obj({
         "observed_at_utc": _ts,
-        "ledger": _obj({"status": _enum("present", "absent", "probe_unavailable"),
+        "ledger": _obj({"status": _enum("present", "absent", "probe_unavailable", "partial"),
                          "source_mtime": _nullable(_num(0)), "source_age_seconds": _nullable(_num(0)),
-                         "last_observation": _nullable(_obj({"ts": _ts, "outcome": _enum(*_EEEBOT_LEDGER_OUTCOMES, fallback="unknown")}))}),
+                         "last_observation": _nullable(_obj({"ts": _ts, "outcome": _enum(*_EEEBOT_LEDGER_OUTCOMES, fallback="unknown"),
+                                                               "event_age_seconds": _nullable(_num(0))})),
+                         "current_status": _enum("unknown")}),
         "rest_status": _enum("unavailable_pending_read_approval"),
     }),
     "strategist_decisions": _list(_STRATEGIST_ROW),
