@@ -1921,6 +1921,112 @@ def test_hypotheses_panel_no_collapse_when_lte_6_stale() -> None:
     assert '<details' not in html
 
 
+def test_planning_activity_ledger_reader_projection_and_panel_do_not_invent_cycles(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger_dir = tmp_path / 'ledger'
+    ledger_dir.mkdir()
+    ledger_path = ledger_dir / 'cycles.jsonl'
+    ledger_path.write_text(
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:00:00Z","outcome":"rest_unchanged"}\n',
+        encoding='utf-8',
+    )
+    result = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    activity = result['planning_activity']
+    assert activity['ledger']['last_observation']['ts'] == '2026-10-07T06:00:00Z'
+    assert activity['ledger']['last_observation']['outcome'] == 'rest_unchanged'
+    assert activity['ledger']['current_status'] == 'unknown'
+    assert activity['ledger']['last_observation']['event_age_seconds'] > 0
+    public, _private = split_render_inputs(result)
+    page = viewer.render_public_pages(public, 'host', generated_at='2026-10-07T07:00:00Z')['index.html']
+    assert 'Planning observation (separate from cycles)' in page
+    # The public renderer includes the observation in the overview panel,
+    # distinct from the cycle feed built from cycle-bearing rows.
+    cycle_feed = page.split('id="panel-feed"', 1)[-1]
+    assert 'rest_unchanged' not in cycle_feed
+    assert 'rest_unchanged' in page
+    assert 'no current-rest or active-work inference' in page
+    assert 'Planner rest fields: unavailable pending explicit reader-path approval' in page
+    assert 'rest_state.json' not in page
+    assert 'cycle-invalid' not in page
+    assert 'unavailable_pending_read_approval' == public['planning_activity']['rest_status']
+
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script = tmp_path / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_activity = json.loads(remote.stdout)['planning_activity']
+    assert remote_activity['ledger']['last_observation']['ts'] == activity['ledger']['last_observation']['ts']
+    assert remote_activity['ledger']['last_observation']['outcome'] == activity['ledger']['last_observation']['outcome']
+    assert remote_activity['rest_status'] == 'unavailable_pending_read_approval'
+
+    ledger_path.write_text('{broken\\n', encoding='utf-8')
+    malformed = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert malformed['ledger']['status'] == 'partial'
+    assert malformed['ledger']['last_observation'] is None
+    assert malformed['ledger']['current_status'] == 'unknown'
+    remote_script.write_text(script, encoding='utf-8')
+    remote_malformed = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    assert json.loads(remote_malformed.stdout)['planning_activity']['ledger']['status'] == 'partial'
+
+    ledger_path.write_text(
+        '{"phase":"planning_session","ts":"2026-10-07T06:00:00Z","outcome":[]}\n', encoding='utf-8',
+    )
+    invalid_outcome = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert invalid_outcome['ledger']['status'] == 'partial'
+    assert invalid_outcome['ledger']['last_observation']['outcome'] == 'unknown'
+    assert invalid_outcome['ledger']['current_status'] == 'unknown'
+    remote_invalid = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_invalid_ledger = json.loads(remote_invalid.stdout)['planning_activity']['ledger']
+    assert remote_invalid_ledger['status'] == 'partial'
+    assert remote_invalid_ledger['last_observation']['outcome'] == 'unknown'
+
+    ledger_path.write_text(
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:00:00","outcome":"rest_unchanged"}\n'
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:01:00+00:00","outcome":"rest_unchanged"}\n',
+        encoding='utf-8',
+    )
+    mixed_tz = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert mixed_tz['ledger']['status'] == 'partial'
+    assert mixed_tz['ledger']['last_observation']['ts'] == '2026-10-07T06:01:00+00:00'
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script.write_text(script, encoding='utf-8')
+    remote_mixed = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_mixed_activity = json.loads(remote_mixed.stdout)['planning_activity']
+    assert remote_mixed_activity['ledger']['status'] == mixed_tz['ledger']['status']
+    assert remote_mixed_activity['ledger']['last_observation']['ts'] == mixed_tz['ledger']['last_observation']['ts']
+
+    valid_new = '{"phase":"planning_session","ts":"2026-10-07T06:02:00Z","outcome":"integrated"}'
+    invalid_old = '{"phase":"planning_session","ts":"2026-10-07T06:01:00Z","outcome":[]}'
+    invalid_new = '{"phase":"planning_session","ts":"2026-10-07T06:03:00Z","outcome":[]}'
+    for rows, expected_ts, expected_outcome in (
+        ([valid_new, invalid_old], '2026-10-07T06:02:00Z', 'integrated'),
+        ([invalid_old, valid_new], '2026-10-07T06:02:00Z', 'integrated'),
+        ([valid_new, invalid_new], '2026-10-07T06:03:00Z', 'unknown'),
+    ):
+        ledger_path.write_text('\n'.join(rows) + '\n', encoding='utf-8')
+        local_order = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']['ledger']
+        assert local_order['status'] == 'partial'
+        assert local_order['last_observation']['ts'] == expected_ts
+        assert local_order['last_observation']['outcome'] == expected_outcome
+        remote_order = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+        remote_order_ledger = json.loads(remote_order.stdout)['planning_activity']['ledger']
+        assert remote_order_ledger['status'] == local_order['status']
+        assert remote_order_ledger['last_observation']['ts'] == expected_ts
+        assert remote_order_ledger['last_observation']['outcome'] == expected_outcome
+
+    ledger_path.unlink()
+    missing = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert missing['ledger']['status'] == 'absent'
+    assert missing['ledger']['last_observation'] is None
+
+
 def test_now_panel_demand_grouping_fallback() -> None:
     demand_rotation = {
         'served': {
