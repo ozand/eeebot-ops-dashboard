@@ -82,7 +82,7 @@ PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
     "ledger_tail", "ledger_history", "demand_rotation", "demand_completed", "skill_reads",
     "skill_evals", "ci_freshness", "cycle_titles", "cycle_files",
-    "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
+    "llm_stats", "llm_stats_source_complete", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
     "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
@@ -716,6 +716,7 @@ _LEDGER_ROW = _obj({
     "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
     "ledger_blind": _bool, "doc_budget_exceeded": _bool, "doc_only_deferred": _count,
     "doc_only_integrations_24h": _count, "doc_only_budget_24h": _count, "items_considered": _count,
+    "iterations_used": _nullable(_count),
 })
 
 
@@ -1194,8 +1195,11 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "cycle_titles": _map(_ident, _text(300)),
     "cycle_files": _map(_ident, _list(_relpath, 50)),
     "llm_stats": _map(_ident, _obj({
-        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
+        "calls": _count, "planner_calls": _count, "_source_complete": _bool,
+        "_source_coverage_complete": _bool, "_source_first_day": _text(10), "_source_last_day": _text(10),
+        "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
+    "llm_stats_source_complete": _bool,
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
         "llm_unavailable": _bool, "days": _map(_DAY_KEY, _CALL_STATS)}),
