@@ -1864,6 +1864,8 @@ def test_413_planning_session_does_not_create_execution_card(tmp_path: Path) -> 
         {'phase': 'started', 'cycle_id': 'cycle-archive', 'ts': '2026-10-06T00:00:00Z'},
         {'phase': 'planning_session', 'cycle_id': 'cycle-archive', 'iterations_used': 4,
          'outcome': 'malformed', 'ts': '2026-10-06T00:01:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-archive-only', 'iterations_used': 8,
+         'outcome': 'no_plan', 'ts': '2026-10-06T00:02:00Z'},
     ]
     with gzip.open(ledger_dir / 'cycles-2026-10-06.jsonl.gz', 'wt', encoding='utf-8') as stream:
         stream.write(''.join(json.dumps(row) + '\n' for row in archive_rows))
@@ -1887,12 +1889,16 @@ def test_413_planning_session_does_not_create_execution_card(tmp_path: Path) -> 
     for html in (recent, history, remote_recent, remote_history):
         for cycle_id in ('cycle-planning-only', 'cycle-rest-only', 'cycle-archive-only'):
             assert f'id="cycle-{cycle_id}"' not in html
+        assert 'id="cycle-cycle-archive"' in html
+        archive = html.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+        assert '4 iterations' in archive
         assert 'id="cycle-cycle-running"' in html
         assert 'running' in html
         assert 'id="cycle-cycle-proposed"' in html
         assert 'PROPOSED' in html
         assert 'id="cycle-cycle-finished"' in html
         assert 'FAILED' in html
+        assert 'PRIVATE_REASON_413' not in html
         running = html.split('id="cycle-cycle-running"')[1].split('</li>')[0]
         assert '3 iterations' in running and '1 planning sessions' in running
 
@@ -4084,6 +4090,25 @@ def test_issue70_no_nav_link_404s() -> None:
         for fname, _label in tv.SITE_PAGES:
             assert f'href="{fname}"' in pages[name]
             assert fname in pages  # every nav target exists as a produced file
+
+
+def test_413_index_teaser_skips_planning_only_ids_before_three_cycle_limit() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-older', 'outcome': 'success',
+         'ts': '2026-10-07T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-plan-1', 'iterations_used': 1,
+         'outcome': 'timed_out', 'ts': '2026-10-07T00:01:00Z'},
+        {'phase': 'planner_rest_held', 'cycle_id': 'cycle-rest-1', 'ts': '2026-10-07T00:02:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-plan-2', 'iterations_used': 2,
+         'outcome': 'no_plan', 'ts': '2026-10-07T00:03:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-valid-new', 'ts': '2026-10-07T00:04:00Z'},
+    ]
+    subset = tv._last_cycles_subset(rows, 3)
+    feed = tv.build_cycle_feed(subset, history_mode=True)
+    assert 'id="cycle-cycle-older"' in feed
+    assert 'id="cycle-cycle-valid-new"' in feed
+    for planning_id in ('cycle-plan-1', 'cycle-plan-2', 'cycle-rest-1'):
+        assert f'id="cycle-{planning_id}"' not in feed
 
 
 def test_issue70_index_teasers_link_to_pages() -> None:

@@ -10656,13 +10656,19 @@ def _last_cycles_subset(ledger_tail: list[Any] | None, want: int = 3) -> list[An
     together so build_cycle_feed still groups them correctly)."""
     if not isinstance(ledger_tail, list):
         return []
+    execution_phases = {'started', 'proposed', 'outcome'}
+    eligible_ids = {
+        str(row.get('cycle_id'))
+        for row in ledger_tail
+        if isinstance(row, dict) and row.get('cycle_id') and row.get('phase') in execution_phases
+    }
     seen: set[str] = set()
     keep: set[str] = set()
     for row in reversed(ledger_tail):
         if not isinstance(row, dict):
             continue
         cid = str(row.get('cycle_id') or '')
-        if not cid:
+        if not cid or cid not in eligible_ids:
             continue
         if cid not in seen and len(seen) >= want:
             continue
