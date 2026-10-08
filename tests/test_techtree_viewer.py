@@ -1829,9 +1829,78 @@ def test_issue169_remote_reader_script_compiles_and_imports() -> None:
 def test_issue169_ledger_phases_pinned_at_module_level() -> None:
     expected = {
         'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-        'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
+        'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget', 'planning_session',
     }
     assert tv.LEDGER_PHASES == expected
+    assert '"planning_session"' in tv.REMOTE_READER_SCRIPT
+
+
+def test_413_planning_session_local_and_remote_readers_project_only_to_its_cycle(tmp_path: Path) -> None:
+    import contextlib
+    import gzip
+    import io
+
+    from scripts.two_sinks import split_render_inputs
+
+    state = tmp_path / 'state'
+    live_rows = [
+        {'phase': 'started', 'cycle_id': 'cycle-a', 'ts': '2026-10-07T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-a', 'iterations_used': 7,
+         'outcome': 'integrated', 'reason': 'PRIVATE_REASON_413', 'target_path': 'PRIVATE_PATH_413',
+         'sha': 'PRIVATE_SHA_413', 'ts': '2026-10-07T00:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-a', 'outcome': 'success', 'ts': '2026-10-07T00:02:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-b', 'ts': '2026-10-07T00:03:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-b', 'outcome': 'success', 'ts': '2026-10-07T00:04:00Z'},
+        {'phase': 'planning_session', 'cycle_id': '', 'iterations_used': 99, 'outcome': 'rest',
+         'ts': '2026-10-07T00:05:00Z'},
+        {'phase': 'planner_rest_held', 'cycle_id': 'cycle-rest-only', 'ts': '2026-10-07T00:06:00Z'},
+        {'phase': 'future_private_phase', 'cycle_id': 'cycle-a', 'reason': 'PRIVATE_UNKNOWN_413',
+         'ts': '2026-10-07T00:07:00Z'},
+    ]
+    ledger_dir = state / 'ledger'
+    ledger_dir.mkdir(parents=True)
+    (ledger_dir / 'cycles.jsonl').write_text(
+        ''.join(json.dumps(row) + '\n' for row in live_rows), encoding='utf-8'
+    )
+    archive_row = {'phase': 'planning_session', 'cycle_id': 'cycle-archive', 'iterations_used': 4,
+                   'outcome': 'malformed', 'ts': '2026-10-06T00:01:00Z'}
+    with gzip.open(ledger_dir / 'cycles-2026-10-06.jsonl.gz', 'wt', encoding='utf-8') as stream:
+        stream.write(json.dumps(archive_row) + '\n')
+
+    local = tv.read_local_state(str(state))
+    assert any(row.get('phase') == 'planning_session' for row in local['ledger_tail'])
+    assert any(row.get('phase') == 'planning_session' for row in local['ledger_history'])
+    public, _private = split_render_inputs(local)
+    html = tv.render_public_pages(public, host='test')['cycles.html']
+    row_a = html.split('id="cycle-cycle-a"')[1].split('</li>')[0]
+    row_b = html.split('id="cycle-cycle-b"')[1].split('</li>')[0]
+    assert '7 iterations' in row_a and '1 planning sessions' in row_a
+    assert 'Planning: unknown' in row_b
+    assert 'cycle-rest-only' not in html
+    history = tv.render_pages({**public, 'ledger_history': public['ledger_history']}, host='test')['cycles.html']
+    assert 'id="cycle-cycle-archive"' in history
+    assert '4 iterations' in history.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+    for marker in ('PRIVATE_REASON_413', 'PRIVATE_PATH_413', 'PRIVATE_SHA_413', 'PRIVATE_UNKNOWN_413'):
+        assert marker not in html
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}'
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)  # noqa: S102 - execute the generated remote reader against the temp fixture
+    remote_rows = namespace['result']['ledger_tail']
+    assert any(row.get('phase') == 'planning_session' for row in remote_rows)
+    assert any(row.get('phase') == 'planning_session' for row in namespace['result']['ledger_history'])
+    remote_public, _ = split_render_inputs(namespace['result'])
+    remote_html = tv.render_public_pages(remote_public, host='test')['cycles.html']
+    assert '7 iterations' in remote_html.split('id="cycle-cycle-a"')[1].split('</li>')[0]
+    assert 'Planning: unknown' in remote_html.split('id="cycle-cycle-b"')[1].split('</li>')[0]
+    remote_history = tv.render_pages({**remote_public, 'ledger_history': remote_public['ledger_history']}, host='test')['cycles.html']
+    assert 'id="cycle-cycle-archive"' in remote_history
+    assert '4 iterations' in remote_history.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+    for marker in ('PRIVATE_REASON_413', 'PRIVATE_PATH_413', 'PRIVATE_SHA_413', 'PRIVATE_UNKNOWN_413'):
+        assert marker not in remote_html
 
 
 def test_issue169_health_verdict_investigates_when_no_cycle_history() -> None:
