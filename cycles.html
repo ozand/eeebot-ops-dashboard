@@ -1365,14 +1365,14 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1791492383-17e269b2f7b3"></head>
+<meta name="snapshot-version" content="1791493905-308490352403"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">6</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-08 23:43:25 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">9 events · 0 tasks · 7.1%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">7.1% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">10.2M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791492378.274" data-render-age-seconds="19">data: 18s old &middot; generated 20:46 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791493876.739" data-render-age-seconds="43">data: 43s old &middot; generated 21:12 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1415,20 +1415,20 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-10-08 MSK</li>
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-b56b25d6204b">
+        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-b56b25d6204b">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <span class="badge badge-failed">FAILED: withheld (&lt;=64)</span>
+            <strong class="feed-title">failed: withheld (&lt;=64)</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b56b25d6204b)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-b56b25d6204b">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T20:45:06.468952Z">23:45 MSK</span>
+            <span class="feed-ts" title="2026-10-08T20:45:06.468952Z">Oct 8 MSK</span>
           </div>
           
-          <div class="feed-files">&#128193; scripts/validate_timezone_aware_datetime.py, diary/2026-10-08.md, memory/repeat_failures.json</div>
+          <div class="feed-files">&#128193; diary/2026-10-08.md, memory/repeat_failures.json, scripts/validate_timezone_aware_datetime.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 60 LLM calls &middot; 3.12M tok &middot; Σ LLM wait 74m7s &middot; recorded through 23:32 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 78 LLM calls &middot; 4.08M tok &middot; Σ LLM wait 1h36m54s &middot; recorded through 00:10 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 8 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1440,12 +1440,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-6d0ba450e2d5">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T20:33:59.508969Z">23:33 MSK</span>
+            <span class="feed-ts" title="2026-10-08T20:33:59.508969Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1d33a94d6e8f</span> &middot; <a class="lesson-link" href="lessons.html#q-copy_exact_artifact_paths">lesson:lessons/copy_exact_artifact_paths.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.46K tok &middot; Σ LLM wait 46s &middot; recorded through 23:33 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.46K tok &middot; Σ LLM wait 46s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1457,12 +1457,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-9849ad527fba">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T20:13:41.984453Z">23:13 MSK</span>
+            <span class="feed-ts" title="2026-10-08T20:13:41.984453Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-6b8e918d5077</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260902-5774fcfc">error:ERR-20260902-5774fcfc</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-51147d6c3412-c4ff (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.29K tok &middot; Σ LLM wait 41s &middot; recorded through 23:13 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.29K tok &middot; Σ LLM wait 41s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1474,12 +1474,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-de32bcf76ea7">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T19:27:51.892809Z">22:27 MSK</span>
+            <span class="feed-ts" title="2026-10-08T19:27:51.892809Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-d8415e2bde6d</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.40K tok &middot; Σ LLM wait 24s &middot; recorded through 22:27 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.40K tok &middot; Σ LLM wait 24s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1491,12 +1491,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-eab67351427f">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T18:40:22.716354Z">21:40 MSK</span>
+            <span class="feed-ts" title="2026-10-08T18:40:22.716354Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6e58cf3027c0</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-f0bd8333acbe-1d2e (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.59K tok &middot; Σ LLM wait 21s &middot; recorded through 21:40 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.59K tok &middot; Σ LLM wait 21s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1508,12 +1508,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-407629f669ef">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T18:20:47.832190Z">21:20 MSK</span>
+            <span class="feed-ts" title="2026-10-08T18:20:47.832190Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-1482cb97a7e9</span> &middot; <a class="lesson-link" href="lessons.html#q-copy_exact_artifact_paths">lesson:lessons/copy_exact_artifact_paths.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.87K tok &middot; Σ LLM wait 35s &middot; recorded through 21:20 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.87K tok &middot; Σ LLM wait 35s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1525,12 +1525,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-8d9de1fbf65a">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T17:38:01.874221Z">20:38 MSK</span>
+            <span class="feed-ts" title="2026-10-08T17:38:01.874221Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">skill-candidate-d5f63a047eb5</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-markdown_code_block_validation_protocol">lesson:lessons/markdown_code_block_validation_protocol.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.02K tok &middot; Σ LLM wait 32s &middot; recorded through 20:37 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.02K tok &middot; Σ LLM wait 32s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1542,12 +1542,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c8b590602b01">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T16:53:15.884827Z">19:53 MSK</span>
+            <span class="feed-ts" title="2026-10-08T16:53:15.884827Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-3455f61d8dc8</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.22K tok &middot; Σ LLM wait 11s &middot; recorded through 19:52 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.22K tok &middot; Σ LLM wait 11s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1559,12 +1559,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2978b710ba70">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T16:20:38.866593Z">19:20 MSK</span>
+            <span class="feed-ts" title="2026-10-08T16:20:38.866593Z">Oct 8 MSK</span>
           </div>
           
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 20m57s</div> &middot; <span class="feed-bridge-span">Bridge span: 41m30s</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 12 LLM calls &middot; 685.1K tok &middot; Σ LLM wait 16m53s &middot; recorded through 20:02 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 12 LLM calls &middot; 685.1K tok &middot; Σ LLM wait 16m53s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 15 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1576,12 +1576,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-026e9c3c7b89">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T16:08:52.345030Z">19:08 MSK</span>
+            <span class="feed-ts" title="2026-10-08T16:08:52.345030Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-6a74898f33b0</span> &middot; <a class="lesson-link" href="lessons.html#q-posix_shell_pipeline_exit">lesson:lessons/posix_shell_pipeline_exit.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.36K tok &middot; Σ LLM wait 36s &middot; recorded through 19:08 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.36K tok &middot; Σ LLM wait 36s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1593,12 +1593,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a5cb940c61f5">details</a>
             
             <a href="lineage.html#node-8e235b5" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-08T15:34:07.398372Z">18:34 MSK</span>
+            <span class="feed-ts" title="2026-10-08T15:34:07.398372Z">Oct 8 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-08.md, scripts/validate_sys_path_modification.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 36 LLM calls &middot; 1.77M tok &middot; Σ LLM wait 42m59s &middot; recorded through 20:01 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 36 LLM calls &middot; 1.77M tok &middot; Σ LLM wait 42m59s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1610,12 +1610,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-d01e78dbd5a1">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T15:25:07.895220Z">18:25 MSK</span>
+            <span class="feed-ts" title="2026-10-08T15:25:07.895220Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">goal-gap-c09521b7459a</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.49K tok &middot; Σ LLM wait 36s &middot; recorded through 18:24 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.49K tok &middot; Σ LLM wait 36s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1627,12 +1627,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2f6ffe00c818">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T14:40:16.416560Z">17:40 MSK</span>
+            <span class="feed-ts" title="2026-10-08T14:40:16.416560Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-75a783ca35d1</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.00K tok &middot; Σ LLM wait 20s &middot; recorded through 17:40 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.00K tok &middot; Σ LLM wait 20s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1644,12 +1644,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ca86434cf29d">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T14:21:55.639161Z">17:21 MSK</span>
+            <span class="feed-ts" title="2026-10-08T14:21:55.639161Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-29dc3ec3ab6b</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.47K tok &middot; Σ LLM wait 19s &middot; recorded through 17:21 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.47K tok &middot; Σ LLM wait 19s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1661,12 +1661,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-30e6466e1cf3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T13:36:15.725316Z">16:36 MSK</span>
+            <span class="feed-ts" title="2026-10-08T13:36:15.725316Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-772dd3e2e853</span> &middot; <a class="lesson-link" href="lessons.html#q-skip_redundant_state_searches">lesson:lessons/skip_redundant_state_searches.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 11.92K tok &middot; Σ LLM wait 60s &middot; recorded through 16:35 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 11.92K tok &middot; Σ LLM wait 60s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1678,12 +1678,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f14d23609b13">details</a>
             
             <a href="lineage.html#node-f306c95" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-08T12:41:31.212274Z">15:41 MSK</span>
+            <span class="feed-ts" title="2026-10-08T12:41:31.212274Z">Oct 8 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-08.md, scripts/validate_unused_imports.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 19m46s</div> &middot; <span class="feed-bridge-span">Bridge span: 40m41s</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 14 LLM calls &middot; 764.5K tok &middot; Σ LLM wait 16m38s &middot; recorded through 16:32 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 14 LLM calls &middot; 764.5K tok &middot; Σ LLM wait 16m38s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 13 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1695,12 +1695,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-fb7ded2be7f0">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T12:29:19.334832Z">15:29 MSK</span>
+            <span class="feed-ts" title="2026-10-08T12:29:19.334832Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-a37000636e4d</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-51147d6c3412-c4ff (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.50K tok &middot; Σ LLM wait 13s &middot; recorded through 15:29 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.50K tok &middot; Σ LLM wait 13s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1712,12 +1712,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-865ca0164f65">details</a>
             
             <a href="lineage.html#node-ec3a932" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-08T11:54:21.817898Z">14:54 MSK</span>
+            <span class="feed-ts" title="2026-10-08T11:54:21.817898Z">Oct 8 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-08.md, scripts/validate_mutable_defaults.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 23m9s</div> &middot; <span class="feed-bridge-span">Bridge span: 38m49s</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 15 LLM calls &middot; 767.8K tok &middot; Σ LLM wait 17m36s &middot; recorded through 15:32 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 15 LLM calls &middot; 767.8K tok &middot; Σ LLM wait 17m36s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 11 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1729,12 +1729,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-59119e4468a3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T11:46:47.784582Z">14:46 MSK</span>
+            <span class="feed-ts" title="2026-10-08T11:46:47.784582Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">decay-f7bdde4fa027</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.09K tok &middot; Σ LLM wait 20s &middot; recorded through 14:46 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.09K tok &middot; Σ LLM wait 20s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1746,12 +1746,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a25989307a32">details</a>
             
             <a href="lineage.html#node-236f8ae" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-08T11:10:25.600376Z">14:10 MSK</span>
+            <span class="feed-ts" title="2026-10-08T11:10:25.600376Z">Oct 8 MSK</span>
           </div>
           
           <div class="feed-files">&#128193; diary/2026-10-08.md, scripts/validate_no_shell_true.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 25 LLM calls &middot; 1.12M tok &middot; Σ LLM wait 32m10s &middot; recorded through 15:31 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 25 LLM calls &middot; 1.12M tok &middot; Σ LLM wait 32m10s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: 19 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1763,12 +1763,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-1753a331e832">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T10:14:00.564929Z">13:14 MSK</span>
+            <span class="feed-ts" title="2026-10-08T10:14:00.564929Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5b335ea292c9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.43K tok &middot; Σ LLM wait 13s &middot; recorded through 13:13 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.43K tok &middot; Σ LLM wait 13s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1780,7 +1780,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ba2ef30433d1">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T10:05:25.826652Z">13:05 MSK</span>
+            <span class="feed-ts" title="2026-10-08T10:05:25.826652Z">Oct 8 MSK</span>
           </div>
           
           
@@ -1797,12 +1797,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ab93f7204ae6">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T09:30:28.371789Z">12:30 MSK</span>
+            <span class="feed-ts" title="2026-10-08T09:30:28.371789Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-dd0a8dcde812</span> &middot; <a class="lesson-link" href="lessons.html#q-optional_positional_args_with_standalone_flags">lesson:lessons/optional_positional_args_with_standalone_flags.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 17.43K tok &middot; Σ LLM wait 1m31s &middot; recorded through 12:30 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 17.43K tok &middot; Σ LLM wait 1m31s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1814,7 +1814,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-690e17753fc2">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T09:19:26.919722Z">12:19 MSK</span>
+            <span class="feed-ts" title="2026-10-08T09:19:26.919722Z">Oct 8 MSK</span>
           </div>
           
           
@@ -1831,12 +1831,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f80bc1d9ea84">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T08:23:10.755712Z">11:23 MSK</span>
+            <span class="feed-ts" title="2026-10-08T08:23:10.755712Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-ddbc74364d82</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.71K tok &middot; Σ LLM wait 15s &middot; recorded through 11:22 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.71K tok &middot; Σ LLM wait 15s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1848,7 +1848,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-3d964f399df8">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T08:11:11.449264Z">11:11 MSK</span>
+            <span class="feed-ts" title="2026-10-08T08:11:11.449264Z">Oct 8 MSK</span>
           </div>
           
           
@@ -1865,12 +1865,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-9f5610b74ae4">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T07:56:42.370142Z">10:56 MSK</span>
+            <span class="feed-ts" title="2026-10-08T07:56:42.370142Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-d87d5772d127</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.28K tok &middot; Σ LLM wait 12s &middot; recorded through 10:56 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.28K tok &middot; Σ LLM wait 12s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1882,12 +1882,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-7858804a3cc4">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T07:36:06.972017Z">10:36 MSK</span>
+            <span class="feed-ts" title="2026-10-08T07:36:06.972017Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-46e59b7c0486</span> &middot; <a class="lesson-link" href="lessons.html#q-posix_shell_pipeline_exit">lesson:lessons/posix_shell_pipeline_exit.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.23K tok &middot; Σ LLM wait 25s &middot; recorded through 10:35 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.23K tok &middot; Σ LLM wait 25s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1899,12 +1899,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-e44793bc4bd6">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T07:12:10.978098Z">10:12 MSK</span>
+            <span class="feed-ts" title="2026-10-08T07:12:10.978098Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f2623e780dcc</span> &middot; <a class="lesson-link" href="lessons.html#q-inspect_cli_signatures_before_invocation">lesson:lessons/inspect_cli_signatures_before_invocation.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.70K tok &middot; Σ LLM wait 28s &middot; recorded through 10:11 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.70K tok &middot; Σ LLM wait 28s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1916,12 +1916,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-3d25eb9fbd3c">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T06:52:26.347727Z">09:52 MSK</span>
+            <span class="feed-ts" title="2026-10-08T06:52:26.347727Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-168e0637929c</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.22K tok &middot; Σ LLM wait 13s &middot; recorded through 09:51 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.22K tok &middot; Σ LLM wait 13s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1933,12 +1933,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-2d3a9d645563">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T06:29:45.493100Z">09:29 MSK</span>
+            <span class="feed-ts" title="2026-10-08T06:29:45.493100Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-d37bc26ceccf</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.34K tok &middot; Σ LLM wait 20s &middot; recorded through 09:29 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.34K tok &middot; Σ LLM wait 20s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1950,12 +1950,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-a8c375b3e891">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T06:10:40.638999Z">09:10 MSK</span>
+            <span class="feed-ts" title="2026-10-08T06:10:40.638999Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-39c1b4cebe03</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.59K tok &middot; Σ LLM wait 13s &middot; recorded through 09:10 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.59K tok &middot; Σ LLM wait 13s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1967,12 +1967,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-00598d5436c1">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T05:47:25.702115Z">08:47 MSK</span>
+            <span class="feed-ts" title="2026-10-08T05:47:25.702115Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-36bee2e80a65</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260831-6554c7fc">error:ERR-20260831-6554c7fc</a> &middot; <a class="lesson-link" href="lessons.html#q-exact_token_overlap_assertions">lesson:lessons/exact_token_overlap_assertions.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.17K tok &middot; Σ LLM wait 53s &middot; recorded through 08:47 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.17K tok &middot; Σ LLM wait 53s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1984,12 +1984,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-662578109230">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T05:27:47.728552Z">08:27 MSK</span>
+            <span class="feed-ts" title="2026-10-08T05:27:47.728552Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-c680650675f0</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.26K tok &middot; Σ LLM wait 14s &middot; recorded through 08:27 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.26K tok &middot; Σ LLM wait 14s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2001,12 +2001,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-cd3a735dbdf3">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T05:05:14.682822Z">08:05 MSK</span>
+            <span class="feed-ts" title="2026-10-08T05:05:14.682822Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-e47bc21a873a</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.46K tok &middot; Σ LLM wait 12s &middot; recorded through 08:04 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.46K tok &middot; Σ LLM wait 12s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2018,12 +2018,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-b971597dd74e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T04:44:13.009251Z">07:44 MSK</span>
+            <span class="feed-ts" title="2026-10-08T04:44:13.009251Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-7204ce7f6cae</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2782e96c24a8 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.61K tok &middot; Σ LLM wait 52s &middot; recorded through 07:43 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.61K tok &middot; Σ LLM wait 52s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2035,12 +2035,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-ee86b29c9c52">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T04:23:32.703100Z">07:23 MSK</span>
+            <span class="feed-ts" title="2026-10-08T04:23:32.703100Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-6a7e2156af5c</span> &middot; <a class="lesson-link" href="lessons.html#q-inspect_script_cli_flags">lesson:lessons/inspect_script_cli_flags.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.65K tok &middot; Σ LLM wait 14s &middot; recorded through 07:22 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.65K tok &middot; Σ LLM wait 14s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2052,12 +2052,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f0053831121e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T04:01:34.138709Z">07:01 MSK</span>
+            <span class="feed-ts" title="2026-10-08T04:01:34.138709Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-f7c66d05bf34</span> &middot; <a class="lesson-link" href="lessons.html#q-copy_exact_artifact_paths">lesson:lessons/copy_exact_artifact_paths.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 8.77K tok &middot; Σ LLM wait 33s &middot; recorded through 07:01 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 8.77K tok &middot; Σ LLM wait 33s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2069,12 +2069,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-56db928d6dec">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T03:40:27.636933Z">06:40 MSK</span>
+            <span class="feed-ts" title="2026-10-08T03:40:27.636933Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-60707d4df6ed</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 13.48K tok &middot; Σ LLM wait 69s &middot; recorded through 06:40 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 13.48K tok &middot; Σ LLM wait 69s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2086,12 +2086,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-323f61f7a19e">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T03:18:21.446957Z">06:18 MSK</span>
+            <span class="feed-ts" title="2026-10-08T03:18:21.446957Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-398413f513ce</span> &middot; <a class="lesson-link" href="lessons.html#q-posix_shell_pipeline_exit">lesson:lessons/posix_shell_pipeline_exit.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 11.00K tok &middot; Σ LLM wait 60s &middot; recorded through 06:17 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 11.00K tok &middot; Σ LLM wait 60s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2103,12 +2103,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-0388d9194c2f">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T02:35:08.558255Z">05:35 MSK</span>
+            <span class="feed-ts" title="2026-10-08T02:35:08.558255Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-7980f91f680b</span> &middot; <a class="lesson-link" href="lessons.html#q-bounded_script_reads">lesson:lessons/bounded_script_reads.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.81K tok &middot; Σ LLM wait 33s &middot; recorded through 05:34 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.81K tok &middot; Σ LLM wait 33s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2120,7 +2120,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-dfa522a80646">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T02:05:49.935050Z">05:05 MSK</span>
+            <span class="feed-ts" title="2026-10-08T02:05:49.935050Z">Oct 8 MSK</span>
           </div>
           
           
@@ -2137,12 +2137,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-7c9afcebfe49">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T01:51:49.773025Z">04:51 MSK</span>
+            <span class="feed-ts" title="2026-10-08T01:51:49.773025Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-2b0783caa09e</span> &middot; <a class="lesson-link" href="lessons.html#q-avoid_module_constants_in_default_args">lesson:lessons/avoid_module_constants_in_default_args.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.58K tok &middot; Σ LLM wait 19s &middot; recorded through 04:51 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.58K tok &middot; Σ LLM wait 19s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2154,12 +2154,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-f6b404e0b74b">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T01:30:29.115344Z">04:30 MSK</span>
+            <span class="feed-ts" title="2026-10-08T01:30:29.115344Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">reflection-488ee4b733f2</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.98K tok &middot; Σ LLM wait 24s &middot; recorded through 04:29 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.98K tok &middot; Σ LLM wait 24s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2171,12 +2171,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-c217acdfd1f2">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T01:09:43.475445Z">04:09 MSK</span>
+            <span class="feed-ts" title="2026-10-08T01:09:43.475445Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">defect-5b6fceecfea2</span> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.23K tok &middot; Σ LLM wait 33s &middot; recorded through 04:09 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.23K tok &middot; Σ LLM wait 33s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2188,7 +2188,7 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-beb0d6a1bb15">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T00:59:31.762013Z">03:59 MSK</span>
+            <span class="feed-ts" title="2026-10-08T00:59:31.762013Z">Oct 8 MSK</span>
           </div>
           
           
@@ -2205,12 +2205,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-92d9fbe975fc">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T00:47:14.818712Z">03:47 MSK</span>
+            <span class="feed-ts" title="2026-10-08T00:47:14.818712Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-caa22c9afab6</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.21K tok &middot; Σ LLM wait 13s &middot; recorded through 03:46 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.21K tok &middot; Σ LLM wait 13s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2222,12 +2222,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-979128e80175">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T00:26:42.527998Z">03:26 MSK</span>
+            <span class="feed-ts" title="2026-10-08T00:26:42.527998Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-f4a541b6e306</span> &middot; <a class="lesson-link" href="lessons.html#q-companion_test_direct_lookup">lesson:lessons/companion_test_direct_lookup.md</a></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.87K tok &middot; Σ LLM wait 17s &middot; recorded through 03:26 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.87K tok &middot; Σ LLM wait 17s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2239,12 +2239,12 @@
             <a class="cycle-detail-link" href="cycle.html?id=cycle-b6e91934191a">details</a>
             
             
-            <span class="feed-ts" title="2026-10-08T00:06:59.284252Z">03:06 MSK</span>
+            <span class="feed-ts" title="2026-10-08T00:06:59.284252Z">Oct 8 MSK</span>
           </div>
           <div class="entity-links"><span class="entity-chip">priority-1a5a4fa7aa26</span></div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 2 LLM calls &middot; 18.87K tok &middot; Σ LLM wait 65s &middot; recorded through 03:06 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cost">&#9889; 2 LLM calls &middot; 18.87K tok &middot; Σ LLM wait 65s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -2270,7 +2270,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator 2be4e2b · generated 2026-10-08 20:46:37 UTC &middot; host eeepc &middot; newest source 18s old &middot; <span class="footer-computed">scorecard computed 2026-10-08 23:43:25 MSK</span></footer>
+<footer class="page-footer">generator 2be4e2b · generated 2026-10-08 21:12:00 UTC &middot; host eeepc &middot; newest source 43s old &middot; <span class="footer-computed">scorecard computed 2026-10-08 23:43:25 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2301,5 +2301,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1791492383-17e269b2f7b3 · generated 2026-10-08T20:46:23.453964+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1791493905-308490352403 · generated 2026-10-08T21:11:45.766202+00:00</footer></body>
 </html>
