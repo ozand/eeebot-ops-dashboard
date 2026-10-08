@@ -6169,16 +6169,29 @@ def build_cycle_feed(
 
     # Group ledger phases by cycle_id
     cycles_dict: dict[str, list[dict[str, Any]]] = {}
+    planning_entries: list[dict[str, Any]] = []
     for entry in ledger_tail:
         if not isinstance(entry, dict):
             continue
+        phase = entry.get('phase')
         cid = entry.get('cycle_id')
         if not cid:
+            continue
+        if phase == 'planning_session':
+            planning_entries.append(entry)
+            continue
+        if phase in {'planner_rest', 'planner_rest_held'}:
             continue
         cid = str(cid)
         if cid not in cycles_dict:
             cycles_dict[cid] = []
         cycles_dict[cid].append(entry)
+    # Planning observations enrich a cycle only after another ledger phase
+    # established that the cycle itself exists.
+    for entry in planning_entries:
+        cid = str(entry['cycle_id'])
+        if cid in cycles_dict:
+            cycles_dict[cid].append(entry)
 
     if not cycles_dict:
         return f'''
