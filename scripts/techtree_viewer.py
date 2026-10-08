@@ -448,7 +448,7 @@ INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 # these constants.
 LEDGER_PHASES: set[str] = {
     'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-    'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
+    'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget', 'planning_session',
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
@@ -478,7 +478,7 @@ STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
 LEDGER_PHASES = {
     "started", "proposed", "outcome", "gate", "proposer_reject", "dedup", "idle",
-    "evolution_tree", "tech_tree", "hypothesis", "doc_only_budget",
+    "evolution_tree", "tech_tree", "hypothesis", "doc_only_budget", "planning_session",
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
@@ -6747,7 +6747,10 @@ def build_cycle_feed(
                 bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
                 bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
 
-        planning_rows = [p for p in phases if p.get('phase') == 'planning_session']
+        planning_rows = [
+            p for p in phases
+            if p.get('phase') == 'planning_session' and str(p.get('cycle_id') or '') == cid
+        ]
         cycle_rows = [p for p in phases if p.get('cycle_id') == cid]
         bound_rows = [p for p in cycle_rows if p.get('phase') in {'started', 'outcome'}]
         bound_dates = []
