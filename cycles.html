@@ -1365,22 +1365,22 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1791565921-d2349bc896d7"></head>
+<meta name="snapshot-version" content="1791567072-9cbbdee06276"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">6</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-09 20:09:49 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">1.5%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">1.5%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">27 events · 0 tasks · 20.4%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">22.0% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">11.9M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791565901.155" data-render-age-seconds="34">data: 33s old &middot; generated 17:12 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791567080.963" data-render-age-seconds="9">data: 9s old &middot; generated 17:31 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html" class="nav-current">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (4041 cycles)</h2>
-      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button><button class="filter-btn" data-filter="proposed">proposed</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3991 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <h2 class="panel-title">Cycle History (4042 cycles)</h2>
+      <div class="filter-bar"><button class="filter-btn" data-filter="all">all</button><button class="filter-btn" data-filter="integrated">integrated</button><button class="filter-btn" data-filter="failed">failed</button><button class="filter-btn" data-filter="partial">partial</button><button class="filter-btn" data-filter="skipped">skipped</button><button class="filter-btn" data-filter="push_pending">push_pending</button><button class="filter-btn" data-filter="superseded">superseded</button><button class="filter-btn" data-filter="abandoned">abandoned</button><button class="filter-btn" data-filter="incomplete">incomplete</button><button class="filter-btn" data-filter="running">running</button><button class="filter-btn" data-filter="proposed">proposed</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3992 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
             (function(){
               var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
               if (!btn) return;
@@ -1415,6 +1415,23 @@
         <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
         
         <li class="feed-day-header">2026-10-09 MSK</li>
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-a59d82cc4a16">
+          <div class="feed-header">
+            <span class="badge badge-available">PROPOSED · execution not observed</span>
+            <strong class="feed-title">Implement build_test_cmd helper in scripts/build_test_cmd.py</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-a59d82cc4a16)</span>
+            <a class="cycle-detail-link" href="cycle.html?id=cycle-a59d82cc4a16">details</a>
+            
+            
+            <span class="feed-ts" title="2026-10-09T17:20:47.692572Z">20:20 MSK</span>
+          </div>
+          <div class="entity-links"><span class="entity-chip">priority-817f56503706</span></div>
+          
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
+          <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.46K tok &middot; Σ LLM wait 13s &middot; recorded through 20:20 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+        </li>
+        
         <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-a5d96b267ad1">
           <div class="feed-header">
             <span class="badge badge-skipped">SKIPPED: skipped_recent_failure</span>
@@ -2249,28 +2266,11 @@
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-a5cb940c61f5">
-          <div class="feed-header">
-            <span class="badge badge-integrated">INTEGRATED</span>
-            <strong class="feed-title">selfevo: Make scripts/validate_sys_path_modification.py read and parse each file exactly once so the full scan finishes</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-a5cb940c61f5)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-a5cb940c61f5">details</a>
-            
-            <a href="lineage.html#node-8e235b5" class="feed-tree-link">tree &#8599;</a>
-            <span class="feed-ts" title="2026-10-08T15:34:07.398372Z">Oct 8 MSK</span>
-          </div>
-          
-          <div class="feed-files">&#128193; diary/2026-10-08.md, scripts/validate_sys_path_modification.py</div>
-          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 36 LLM calls &middot; 1.77M tok &middot; Σ LLM wait 42m59s &middot; recorded through Oct 8 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
-        </li>
-        
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator 2be4e2b · generated 2026-10-09 17:12:15 UTC &middot; host eeepc &middot; newest source 33s old &middot; <span class="footer-computed">scorecard computed 2026-10-09 20:09:49 MSK</span></footer>
+<footer class="page-footer">generator 2be4e2b · generated 2026-10-09 17:31:30 UTC &middot; host eeepc &middot; newest source 9s old &middot; <span class="footer-computed">scorecard computed 2026-10-09 20:09:49 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2301,5 +2301,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1791565921-d2349bc896d7 · generated 2026-10-09T17:12:01.915377+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1791567072-9cbbdee06276 · generated 2026-10-09T17:31:12.014297+00:00</footer></body>
 </html>
