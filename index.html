@@ -1365,14 +1365,14 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1791572454-3a30b8b2a97a"></head>
+<meta name="snapshot-version" content="1791573867-af9352cdc079"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">6</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-10-09 21:21:07 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">2.2%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">2.2%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">27 events · 0 tasks · 20.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">22.4% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">12.4M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">3/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791572432.819" data-render-age-seconds="34">data: 34s old &middot; generated 19:01 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1791573839.117" data-render-age-seconds="45">data: 44s old &middot; generated 19:24 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
@@ -1422,15 +1422,15 @@ interfaces to track and steer work. On this host terminal rendering is usually
 the most efficient medium (pixel-art output such as images/eeebot.png); a
 speed-optimized local page is also valid. An interface counts only if the
 operator can use it and that use can be observed; abandoned one</blockquote></div><div class="charter-self-derived" data-derived-status="present"><h4>Self-Derived Priorities</h4><ul><li><span class="badge" translate="no">79</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">80</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">81</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">82</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">83</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">84</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">85</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">86</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">87</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">88</span>  <span class="now-sub">vector V1 &middot; </span></li></ul></div></div></div>
-        <div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> 2026-10-09 21:54:05 MSK · integrated; event recorded 6m ago; current planning status unknown; source file 5m old. Planner rest fields: unavailable pending explicit reader-path approval; no current-rest or active-work inference.</div>
+        <div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> 2026-10-09 21:54:05 MSK · integrated; event recorded 29m ago; current planning status unknown; source file 28s old. Planner rest fields: unavailable pending explicit reader-path approval; no current-rest or active-work inference.</div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (crash_record)</span> <span class="now-sub" title="ozand/eeebot#1683: this counter does not observe signal kills of the bridge unit">does not see SIGTERM kills (eeebot#1683)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 3.4h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 5m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 1m/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 4.9h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-22T00:00:10 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
-        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-10-09T19:00:54.746395Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-10-09 10:42:10 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-10-09 21:54:15 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-10-09 21:54:22 MSK</li></ul></div>
+        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-10-09T19:24:27.375510Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, recent, success, last 2026-10-09 10:42:10 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-10-09 21:54:15 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-10-09 22:08:24 MSK</li></ul></div>
         <div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">12 defect(s), scanned 2026-10-09 02:00:03 MSK</span><ul class="systemd-drift-findings"><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li>installed, not in release: <code></code> (owner: dashboard)</li><li>installed, not in release: <code></code> (owner: preset)</li></ul></div>
         <div class="now-item"><span class="now-label">Local CI:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">pass: passed</span></div>
-        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 414 recent calls checked</span></div>
+        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 427 recent calls checked</span></div>
         <div class="now-item"><span class="now-label">Artifact Graph:</span> <span class="badge badge-available">249 artifacts</span> <span class="badge badge-available">58 ready</span> <span class="badge badge-available">191 leaves</span><div class="now-sub">oldest leaves: <code>scripts/analyze_cycle_duration.py</code>, <code>scripts/analyze_pass_streak.py</code>, <code>scripts/backlog_health.py</code>, <code>scripts/benchmark_api_latency.py</code>, <code>scripts/benchmark_cpu.py</code></div></div>
         
         <details class="failed-exits-details" open>
@@ -1462,10 +1462,10 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
       <ul class="feed-list">
         
         
-        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" id="cycle-cycle-8cc6e3a637b6">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-8cc6e3a637b6">
           <div class="feed-header">
-            <span class="badge badge-available">running</span>
-            <strong class="feed-title">in progress</strong>
+            <span class="badge badge-partial">PARTIAL</span>
+            <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8cc6e3a637b6)</span>
             <a class="cycle-detail-link" href="cycle.html?id=cycle-8cc6e3a637b6">details</a>
             
@@ -1474,8 +1474,8 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
           </div>
           
           
-          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 7m1s (elapsed so far)</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 4 LLM calls &middot; 148.3K tok &middot; Σ LLM wait 4m19s &middot; recorded through 22:00 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 29m22s</div> &middot; <span class="feed-bridge-span">Bridge span: 42m36s</span> &middot; Tool operations: unavailable (not recorded)</div>
+          <div class="feed-cost">&#9889; 17 LLM calls &middot; 896.9K tok &middot; Σ LLM wait 25m47s &middot; recorded through 22:23 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
           <div class="feed-planning-cost">Planning: 7 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
         </li>
         
@@ -1517,7 +1517,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
     </section>
     
 </main>
-<footer class="page-footer">generator 2be4e2b · generated 2026-10-09 19:01:07 UTC &middot; host eeepc &middot; newest source 34s old &middot; <span class="footer-computed">scorecard computed 2026-10-09 21:21:07 MSK</span></footer>
+<footer class="page-footer">generator 2be4e2b · generated 2026-10-09 19:24:44 UTC &middot; host eeepc &middot; newest source 44s old &middot; <span class="footer-computed">scorecard computed 2026-10-09 21:21:07 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1548,5 +1548,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1791572454-3a30b8b2a97a · generated 2026-10-09T19:00:54.746127+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1791573867-af9352cdc079 · generated 2026-10-09T19:24:27.375174+00:00</footer></body>
 </html>
