@@ -240,6 +240,83 @@ sudo systemctl enable --now eeebot-dashboard-server.service
 sudo systemctl status eeebot-dashboard-server.service
 ```
 
+7. After the cutover, confirm that the host sink is really ACTIVE, not quietly
+   degraded to "not configured". Before D4, a missing site root made the
+   publisher skip the host sink and record `host_sink_unconfigured`. After the
+   cutover, inspect the verified seed invocation `$I1` from step 5, not a
+   time window that can include an expected pre-reload run. Require an
+   explicit active state and the currently served local snapshot version:
+
+```bash
+[ -n "$I1" ] || { echo "STOP: no verified seed invocation"; exit 1; }
+sudo journalctl _SYSTEMD_INVOCATION_ID="$I1" --no-pager > /tmp/eeebot-seed-journal.txt || exit 1
+if grep -q "host sink not configured" /tmp/eeebot-seed-journal.txt; then
+  echo "STOP: seed invocation skipped the host sink"; exit 1
+fi
+sudo -u eeebot-publish python3 - <<'PY'
+import json
+import subprocess
+import time
+from pathlib import Path
+
+
+def service_sample():
+    result = subprocess.run(
+        ['systemctl', 'show', 'eeebot-techtree-publish.service',
+         '-p', 'ActiveState', '-p', 'InvocationID'],
+        check=True, capture_output=True, text=True, timeout=10,
+    )
+    return dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
+
+
+def stable_snapshot(state_path, current_path):
+    before = service_sample()
+    if before.get('ActiveState') != 'inactive':
+        return None
+    raw = state_path.read_bytes()
+    state = json.loads(raw)
+    current = current_path.resolve(strict=True)
+    expected = f"{int(state['published_at'])}-{state['digest'][:12]}"
+    # The host swap precedes public publication and saving publish_state.
+    # A running invocation or changing state/current is transient, not failure.
+    after = service_sample()
+    if before != after or after.get('ActiveState') != 'inactive':
+        return None
+    if raw != state_path.read_bytes() or current != current_path.resolve(strict=True):
+        return None
+    if state.get('host_sink') != 'host_sink_active' or expected != current.name:
+        return None
+    return current.name if (current / 'index.html').is_file() else None
+
+
+state_path = Path('/var/lib/eeebot-techtree/publish_state.json')
+current_path = Path('/var/lib/eeebot-site/current')
+deadline = time.monotonic() + 1020  # 15-minute publisher budget plus margin
+while time.monotonic() < deadline:
+    try:
+        version = stable_snapshot(state_path, current_path)
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+        version = None
+    if version:
+        print('host sink active; stable snapshot', version)
+        break
+    time.sleep(min(10, max(0, deadline - time.monotonic())))
+else:
+    raise SystemExit('STOP: no stable active host snapshot within 17 minutes')
+PY
+```
+
+A missing site root after D4 does not degrade quietly. The unit's
+`ReadWritePaths=/var/lib/eeebot-site` has no `-`, so the unit fails loudly at
+namespace setup. The timer and bridge may start another publisher while this check runs. The
+check therefore retries through in-flight or changing observations, requires an
+inactive service with the same invocation identity around the read, and rereads
+both state and current. A transient mismatch is not a failed cutover. A journal
+skip in the verified seed or failure to obtain a matching active pair within
+17 minutes means stop and investigate. Missing or unknown `host_sink` values
+cannot pass; neither can an old generator that omits the field. This is a local
+snapshot check, not proof of private-page authentication or public convergence.
+
 ### Rollback
 
 Use the `$TS` printed in step 2.
