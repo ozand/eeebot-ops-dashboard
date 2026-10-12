@@ -191,8 +191,10 @@ def test_projection_survives_real_render_publish_in_every_public_file(tmp_path: 
     }
     public, private = split_render_inputs(source)
     pages = tv.render_public_pages(public, "test")
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     publish_ordered(tmp_path / "site", pages, {}, "vprojection", lambda _: (0, {}))
     files = list((tmp_path / "site" / "vprojection").rglob("*"))
+    assert files, "the snapshot was written (a vacuous scan proves nothing)"
     rendered = json.dumps({p.name: p.read_text(encoding="utf-8") for p in files if p.is_file()})
     for canary in (
         "PRIVATE_GOAL_BODY", "PRIVATE_AGENTS_BODY", "PRIVATE_PROMPT_BODY", "PRIVATE_TASK_BODY",

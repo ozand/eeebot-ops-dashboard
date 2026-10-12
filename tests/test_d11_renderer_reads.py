@@ -76,12 +76,14 @@ RENDERER_LOCAL: dict[str, str] = {
         "cadence", "definition", "holds", "identifiers", "page", "produces", "role", "stage", "term", "unit",
         "why")},
     "GENERATOR_SHA_FILE": "module constant lookup in _generator_sha, not data",
+    "cycle_details": "private D2 details supplied by local host state; never passed to public pages",
+    "reflection": "sanitized summary counts projected for host-private cycle detail pages",
 }
 
 
 def _index(sources: dict[str, str]) -> dict[str, list[ast.AST]]:
     funcs: dict[str, list[ast.AST]] = defaultdict(list)
-    for rel, text in sources.items():
+    for text in sources.values():
         for node in ast.walk(ast.parse(text)):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 funcs[node.name].append(node)

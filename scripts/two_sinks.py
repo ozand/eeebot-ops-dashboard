@@ -4,12 +4,14 @@ from __future__ import annotations
 import argparse
 import copy
 import datetime
+import html
 import json
 import math
 import os
 import re
 import shutil
 import stat
+import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
 from pathlib import Path
@@ -23,7 +25,9 @@ try:
         is_allowed_publish_path,
         scan_pages as _publish_scan_pages,
     )
-except ImportError:
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.publish_scan"}:
+        raise
     from publish_scan import (
         PUBLIC_PAGE_PATHS as PUBLIC_PAGES,
         PublicationScanError,
@@ -38,7 +42,9 @@ try:
         CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
         COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,
     )
-except ImportError:
+except ModuleNotFoundError as exc:
+    if exc.name not in {"scripts", "scripts.techtree_viewer"}:
+        raise
     from techtree_viewer import (  # type: ignore
         CI_ACTIONS_ENABLED_UNKNOWN, CI_ACTIONS_STATES, CI_FRESHNESS_STATES, CI_LATEST_CONCLUSIONS,
         COMPACTION_STATES, LESSON_SOURCES, MODEL_CLASSES, PROBE_STATES, VIEW_STATES,
@@ -76,9 +82,9 @@ PUBLIC_DATA_KEYS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable",
     "ledger_tail", "ledger_history", "demand_rotation", "demand_completed", "skill_reads",
     "skill_evals", "ci_freshness", "cycle_titles", "cycle_files",
-    "llm_stats", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
+    "llm_stats", "llm_stats_source_complete", "proposer_stats", "local_ci", "executor_model_status", "executor_llm_stats",
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
-    "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "strategist_decisions",
+    "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "planning_activity", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
     "generator_sha", "_newest_source_age_seconds", "_error",
 })
@@ -601,8 +607,16 @@ def _obj(
                 out[name] = projected
         for name, blank in (sized_text or {}).items():
             if name in value:
-                if isinstance(value[name], str):
-                    out[f"{name}_chars"] = len(value[name])
+                text = value[name]
+                saved_chars = value.get(f"{name}_chars")
+                if isinstance(text, str) and text:
+                    out[f"{name}_chars"] = len(text)
+                elif _is_count(saved_chars):
+                    # An already-redacted empty string carries no new size
+                    # information; retain only the validated saved counter.
+                    out[f"{name}_chars"] = saved_chars
+                elif isinstance(text, str):
+                    out[f"{name}_chars"] = 0
                 out[name] = copy.deepcopy(blank)  # never shared between records
         for name in sized_list:
             if isinstance(value.get(name), list):
@@ -702,6 +716,7 @@ _LEDGER_ROW = _obj({
     "_ledger_source": _pattern(re.compile(r"^(?:live|archive:\d{4}-\d{2}-\d{2})$")),
     "ledger_blind": _bool, "doc_budget_exceeded": _bool, "doc_only_deferred": _count,
     "doc_only_integrations_24h": _count, "doc_only_budget_24h": _count, "items_considered": _count,
+    "iterations_used": _nullable(_count),
 })
 
 
@@ -1013,8 +1028,13 @@ def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> N
     # string's size is published.
     for field in ("prompt_text", "task_text"):
         if field in source:
-            if isinstance(source[field], str):
+            saved_chars = source.get(f"{field}_chars")
+            if isinstance(source[field], str) and source[field]:
                 out[f"{field}_chars"] = len(source[field])
+            elif _is_count(saved_chars):
+                out[f"{field}_chars"] = saved_chars
+            elif isinstance(source[field], str):
+                out[f"{field}_chars"] = 0
             out[field] = None
 
 
@@ -1175,8 +1195,11 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "cycle_titles": _map(_ident, _text(300)),
     "cycle_files": _map(_ident, _list(_relpath, 50)),
     "llm_stats": _map(_ident, _obj({
-        "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
+        "calls": _count, "planner_calls": _count, "_source_complete": _bool,
+        "_source_coverage_complete": _bool, "_source_first_day": _text(10), "_source_last_day": _text(10),
+        "total_tokens": _num(0), "duration_ms": _num(0), "last_finish_reason": _nullable(_token),
         "any_length": _bool, "last_ts": _ts})),
+    "llm_stats_source_complete": _bool,
     "proposer_stats": _obj({
         "calls": _count, "total_tokens": _num(0), "duration_ms": _num(0), "last_model": _ident, "last_ts": _ts,
         "llm_unavailable": _bool, "days": _map(_DAY_KEY, _CALL_STATS)}),
@@ -1193,6 +1216,15 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "bridge_exits": _list(_BRIDGE_EXIT_ROW),
     "bridge_runs": _list(_BRIDGE_RUN_ROW),
     "bridge_active_run": _BRIDGE_ACTIVE_RUN,
+    "planning_activity": _obj({
+        "observed_at_utc": _ts,
+        "ledger": _obj({"status": _enum("present", "absent", "probe_unavailable", "partial"),
+                         "source_mtime": _nullable(_num(0)), "source_age_seconds": _nullable(_num(0)),
+                         "last_observation": _nullable(_obj({"ts": _ts, "outcome": _enum(*_EEEBOT_LEDGER_OUTCOMES, fallback="unknown"),
+                                                               "event_age_seconds": _nullable(_num(0))})),
+                         "current_status": _enum("unknown")}),
+        "rest_status": _enum("unavailable_pending_read_approval"),
+    }),
     "strategist_decisions": _list(_STRATEGIST_ROW),
     "demand_futility": _project_demand_futility,
     "systemd_drift": _SYSTEMD_DRIFT,
@@ -1208,7 +1240,7 @@ _NULLABLE_SECTIONS = frozenset({
     "portfolio", "scorecard", "evolution_tree", "hypotheses", "hypotheses_durable", "ledger_tail",
     "demand_rotation", "demand_completed", "skill_reads", "proposer_stats", "executor_llm_stats", "compaction",
     "local_ci", "executor_model_status", "token_heatmap", "bridge_exit_streak", "bridge_exits", "bridge_runs",
-    "bridge_active_run", "strategist_decisions", "demand_futility", "systemd_drift", "ci_freshness",
+    "bridge_active_run", "planning_activity", "strategist_decisions", "demand_futility", "systemd_drift", "ci_freshness",
     "cycle_titles", "agent_context", "_newest_source_age_seconds",
 })
 
@@ -1219,6 +1251,7 @@ _PUBLIC_EMPTY: dict[str, object] = {
     **{key: [] for key in ("ledger_tail", "ledger_history", "skill_evals", "lessons", "subagent_records",
                            "reflections", "bridge_exits", "bridge_runs", "strategist_decisions")},
     "bridge_exit_streak": {},
+    "planning_activity": {},
     **{key: {} for key in ("llm_stats", "cycle_files", "derived_view")},
     "generator_sha": "",
 }
@@ -1383,10 +1416,46 @@ def add_snapshot_version(pages: dict[str, str], version: str, generated_at: str 
     return updated
 
 
-def render_private_pages(private_data: dict, host: str) -> dict[str, str]:
-    """D1 boundary seam; private cycle rendering is deliberately deferred to D2."""
-    del private_data, host
-    return {}
+def render_private_pages(
+    private_data: dict, host: str, state_root: Path | None = None,
+) -> dict[str, str]:
+    """Render bounded D2 cycle details for the host snapshot only.
+
+    The private renderer reads the host-authority state tree directly; its
+    output is passed only to ``publish_ordered``'s host snapshot sink.
+    """
+    del host
+    if state_root is None or not isinstance(private_data, dict):
+        return {}
+    ledger = private_data.get("ledger_history")
+    if not isinstance(ledger, list):
+        return {}
+    cycle_ids = {
+        row.get("cycle_id") for row in ledger
+        if isinstance(row, dict) and isinstance(row.get("cycle_id"), str)
+        and row.get("cycle_id")
+    }
+    if not cycle_ids:
+        return {}
+    try:
+        from scripts.cycle_detail import build_cycle_index, render_cycle_page
+    except ImportError:
+        from cycle_detail import build_cycle_index, render_cycle_page
+    index = build_cycle_index(Path(state_root), days=7)
+    pages = {}
+    for cycle_id in sorted(cycle_ids & index.keys()):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", cycle_id):
+            continue
+        page_name = f"cycles/{cycle_id}.html"
+        _validate_page_name(page_name)
+        record = index[cycle_id]
+        details = private_data.get("cycle_details")
+        if isinstance(details, dict) and isinstance(details.get(cycle_id), dict):
+            reflection = details[cycle_id].get("reflection")
+            if isinstance(reflection, dict):
+                record = {**record, "reflection": reflection}
+        pages[page_name] = render_cycle_page(cycle_id, record)
+    return pages
 
 
 class SnapshotActivationError(RuntimeError):
@@ -1594,6 +1663,33 @@ def _swap_locked(site_root: Path, pages: dict[str, str], version: str) -> Path:
     return destination
 
 
+def _add_private_cycle_navigation(host_pages: dict[str, str], private_pages: Mapping[str, str]) -> None:
+    """Route the host cycle-detail query to an indexed LAN-only page."""
+    cycle_ids = sorted(
+        name[len("cycles/"):-len(".html")]
+        for name in private_pages
+        if name.startswith("cycles/") and name.endswith(".html")
+        and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name[len("cycles/"):-len(".html")])
+    )
+    cycle_page = host_pages.get("cycle.html")
+    if not isinstance(cycle_page, str):
+        return
+    allowed_json = json.dumps(cycle_ids, ensure_ascii=True).replace("</", "<\\/")
+    router = f'''<script id="lan-private-cycle-router">
+(function() {{
+  var allowed = new Set({allowed_json});
+  var id = new URLSearchParams(window.location.search).get('id') || '';
+  if (allowed.has(id)) {{
+    window.location.replace('cycles/' + encodeURIComponent(id) + '.html');
+  }} else {{
+    document.body.innerHTML = '<main><h1>Cycle detail unavailable</h1><p class="unavailable-note">No retained LAN-only detail page exists for this cycle.</p></main>';
+  }}
+}})();
+</script>'''
+    marker = "</body>"
+    host_pages["cycle.html"] = cycle_page.replace(marker, router + marker, 1) if marker in cycle_page else cycle_page + router
+
+
 class HostSnapshotError(RuntimeError):
     def __init__(
         self,
@@ -1614,11 +1710,19 @@ def publish_ordered(
     publisher: Callable[[dict[str, str]], tuple[int, dict[str, str]]],
     generated_at: str | None = None,
     host_warnings: list[str] | None = None,
+    host_outcome: dict[str, str] | None = None,
 ) -> tuple[int, dict[str, str]]:
     """#356: a host error whose ``activated`` is true (SnapshotCleanupError:
     ``current`` already serves the new snapshot, only pruning older ones
     failed) is NOT a host failure. It is appended to ``host_warnings`` (when
-    given) and the call returns the publisher's result as on success."""
+    given) and the call returns the publisher's result as on success.
+
+    The host sink is NOT CONFIGURED while ``site_root`` itself does not exist
+    (ENOENT on the root -- the D4 tmpfiles step creates it): the snapshot is
+    skipped, never created here, and it is not a host failure. A root that
+    exists but cannot be written, or any other error in the swap, still is.
+    ``host_outcome["status"]`` (when given) is ``host_sink_unconfigured``,
+    ``host_sink_active`` or ``host_snapshot_failed``."""
     versioned_public = add_snapshot_version(public_pages, version, generated_at=generated_at)
     versioned_private = add_snapshot_version(private_pages, version, generated_at=generated_at)
 
@@ -1629,15 +1733,31 @@ def publish_ordered(
         **versioned_public,
         **versioned_private,
     }
+    _add_private_cycle_navigation(host_pages, versioned_private)
     host_error = None
     try:
-        atomic_snapshot_swap(site_root, host_pages, version)
-    except Exception as exc:
-        host_error = exc
-    if host_error is not None and getattr(host_error, "activated", False) is True:
-        if host_warnings is not None:
-            host_warnings.append(f"ADR-036 host snapshot cleanup warning: {host_error}")
-        host_error = None
+        os.lstat(site_root)
+        configured = True
+    except FileNotFoundError:
+        configured = False
+    except OSError:
+        configured = True  # present but unreadable: the swap reports the failure
+    if configured:
+        try:
+            atomic_snapshot_swap(site_root, host_pages, version)
+        except Exception as exc:
+            host_error = exc
+        if host_error is not None and getattr(host_error, "activated", False) is True:
+            warning = f"ADR-036 host snapshot cleanup warning: {host_error}"
+            if host_warnings is not None:
+                host_warnings.append(warning)
+            else:
+                print(f"two_sinks: WARNING: {warning}", file=sys.stderr)
+            host_error = None
+    if host_outcome is not None:
+        host_outcome["status"] = (
+            "host_sink_unconfigured" if not configured
+            else "host_snapshot_failed" if host_error is not None else "host_sink_active")
 
     try:
         publish_result = publisher(versioned_public)

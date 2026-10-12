@@ -29,7 +29,12 @@ def now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
-def run_json(args: list[str], timeout: int) -> object:
+def run_json(args: list[str], timeout: int, deadline: float | None = None) -> object:
+    if deadline is not None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("monitor deadline reached")
+        timeout = min(timeout, max(0.001, remaining))
     result = subprocess.run(args, capture_output=True, text=True, timeout=timeout,
                             encoding="utf-8", errors="replace", check=False)
     if result.returncode:
@@ -37,10 +42,10 @@ def run_json(args: list[str], timeout: int) -> object:
     return json.loads(result.stdout)
 
 
-def snapshot() -> dict:
+def snapshot(deadline: float | None = None) -> dict:
     pane_error = False
     try:
-        panes = run_json(["herdr", "pane", "list", "--workspace", "w17"], 20)
+        panes = run_json(["herdr", "pane", "list", "--workspace", "w17"], 20, deadline)
         rows = panes.get("result", {}).get("panes", []) if isinstance(panes, dict) else []
     except Exception:
         rows = []
@@ -66,8 +71,10 @@ def snapshot() -> dict:
     for repo, numbers in ISSUES.items():
         for number in numbers:
             try:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise TimeoutError("monitor deadline reached")
                 data = run_json(["gh", "issue", "view", str(number), "--repo", repo,
-                                 "--json", "state,title"], 20)
+                                 "--json", "state,title"], 20, deadline)
                 issues[f"{repo}#{number}"] = {"state": data.get("state", "unknown")}
             except Exception:
                 issues[f"{repo}#{number}"] = {"state": "unknown"}
@@ -124,8 +131,8 @@ def main(argv: list[str] | None = None) -> int:
                                 "eeebot-dev-monitor" / "status.json")
     parser.add_argument("--max-runtime", type=int, default=MAX_RUNTIME)
     args = parser.parse_args(argv)
-    if not 1 <= args.interval <= 900 or not 1 <= args.max_runtime <= 86400:
-        parser.error("interval must be 1..900 seconds and max-runtime 1..86400 seconds")
+    if args.interval != INTERVAL or not 1 <= args.max_runtime <= MAX_RUNTIME:
+        parser.error("interval is fixed at 900 seconds; max-runtime must be 1..86400 seconds")
     lock = acquire_lock(args.state.with_suffix(".lock"))
     if lock is None:
         emit("WATCH_ERROR", {"timestamp": now(), "error": "already_running"})
@@ -137,11 +144,9 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, ValueError):
             pass
         deadline = time.monotonic() + args.max_runtime
-        while True:
-            if previous is not None and time.monotonic() >= deadline:
-                break
+        while time.monotonic() < deadline:
             try:
-                current = snapshot()
+                current = snapshot(deadline)
                 persist(args.state, current)
                 if current.get("errors"):
                     emit("WATCH_ERROR", {"timestamp": current["timestamp"], "errors": current["errors"]})

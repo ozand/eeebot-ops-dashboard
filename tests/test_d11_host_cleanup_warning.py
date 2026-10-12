@@ -64,6 +64,23 @@ def test_cleanup_failure_after_activation_is_a_warning_not_a_host_failure(
     assert len(warnings) == 1 and "cleanup" in warnings[0] and "v1" in warnings[0]
 
 
+def test_cleanup_failure_without_warning_collector_writes_stderr_and_keeps_activation(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    root = tmp_path / "site"
+    _two_old_snapshots(root)
+    _refuse_prune_of(monkeypatch, "v1")
+    published = []
+
+    result = publish_ordered(root, {"index.html": "THREE"}, {}, "v3",
+                             lambda pages: published.append(pages) or (0, {"index.html": "fp"}))
+
+    assert result == (0, {"index.html": "fp"})
+    assert published, "the public sink ran"
+    assert (root / "current").resolve().name == "v3"
+    warning = capsys.readouterr().err
+    assert "WARNING" in warning and "cleanup" in warning and "v1" in warning
+
+
 def test_failed_activation_is_still_a_host_failure(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     root = tmp_path / "site"

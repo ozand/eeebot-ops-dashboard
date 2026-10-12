@@ -1497,7 +1497,11 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
         s_name = s.get("name", "")
         s_bytes = s.get("size_bytes", 0)
         s_content = s.get("content", "")
-        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><details class="skill-card-details"><summary>View SKILL.md ({s_bytes:,} bytes)</summary>{_lan_only(s_content)}</details></div>')
+        content_chars = s.get("content_chars")
+        safe_content_chars = content_chars if isinstance(content_chars, int) and not isinstance(content_chars, bool) and content_chars >= 0 else None
+        content_size = len(s_content) if s_content else safe_content_chars
+        content_label = f"{content_size:,} chars" if content_size is not None else f"{s_bytes:,} bytes"
+        out.append(f'        <div class="skill-asset-card"><div class="skill-card-head"><span class="skill-card-name">{esc(s_name)}</span><span class="skill-card-size">{s_bytes:,} B</span></div><details class="skill-card-details"><summary>View SKILL.md ({content_label})</summary>{_lan_only(s_content)}</details></div>')
     out.append('      </div>')
     out.append('    </div>')
 

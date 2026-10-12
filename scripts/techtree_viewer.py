@@ -448,7 +448,7 @@ INSTANCE_REPO = '/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving'
 # these constants.
 LEDGER_PHASES: set[str] = {
     'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-    'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
+    'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget', 'planning_session',
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
@@ -478,13 +478,14 @@ STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
 LEDGER_PHASES = {
     "started", "proposed", "outcome", "gate", "proposer_reject", "dedup", "idle",
-    "evolution_tree", "tech_tree", "hypothesis", "doc_only_budget",
+    "evolution_tree", "tech_tree", "hypothesis", "doc_only_budget", "planning_session",
 }
 LEDGER_TAIL_LIMIT = 5000
 LEDGER_SCAN_WINDOW = 20000
 LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
+_llm_stats_source_complete = False
 
 
 def read_json(relpath):
@@ -497,6 +498,68 @@ def read_json(relpath):
     except Exception:
         return None
 
+
+def read_planning_activity():
+    """Summarize approved planning ledger events without inventing cycles."""
+    observed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    def parse_event_time(value):
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            raise ValueError("timezone required")
+        return parsed
+    allowed_outcomes = {"integrated", "refused", "malformed", "no_plan", "spawn_failed", "commit_failed", "timed_out", "rest", "rest_unchanged"}
+    path = os.path.join(STATE_ROOT, "ledger", "cycles.jsonl")
+    status, source_mtime, latest = "present", None, None
+    malformed = False
+    try:
+        source_mtime = os.path.getmtime(path)
+        with open(path, "r", encoding="utf-8", errors="replace") as stream:
+            lines = stream.readlines()[-LEDGER_SCAN_WINDOW:]
+    except FileNotFoundError:
+        status, lines = "absent", []
+    except OSError:
+        status, lines = "probe_unavailable", []
+    if status == "present" and source_mtime is None:
+        status, lines = "probe_unavailable", []
+    if status == "present":
+        for line in lines:
+            try:
+                row = json.loads(line)
+            except (TypeError, ValueError):
+                malformed = True
+                continue
+            if not isinstance(row, dict):
+                malformed = True
+                continue
+            phase = row.get("phase")
+            if phase not in {"planning_session", "planner_rest", "planner_rest_held"}:
+                continue
+            ts = row.get("ts")
+            if not isinstance(ts, str):
+                malformed = True
+                continue
+            try:
+                parsed = parse_event_time(ts)
+            except ValueError:
+                malformed = True
+                continue
+            outcome = row.get("outcome") if phase == "planning_session" else ("rest_unchanged" if phase == "planner_rest_held" else "rest")
+            invalid_outcome = phase == "planning_session" and (not isinstance(outcome, str) or outcome not in allowed_outcomes)
+            if invalid_outcome:
+                malformed = True
+                outcome = "unknown"
+            if latest is None or parsed > latest["_parsed"]:
+                latest = {"ts": ts, "outcome": outcome if isinstance(outcome, str) and outcome in allowed_outcomes else "unknown", "_parsed": parsed}
+    if latest is not None:
+        parsed_latest = latest.pop("_parsed")
+        latest["event_age_seconds"] = max(0.0, (datetime.now(timezone.utc) - parsed_latest.astimezone(timezone.utc)).total_seconds())
+    source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
+    if malformed and status == "present":
+        status = "partial"
+    return {"observed_at_utc": observed_at,
+            "ledger": {"status": status, "source_mtime": source_mtime, "source_age_seconds": source_age,
+                       "last_observation": latest, "current_status": "unknown"},
+            "rest_status": "unavailable_pending_read_approval"}
 
 def read_ledger_tail(relpath):
     path = os.path.join(STATE_ROOT, relpath)
@@ -526,19 +589,42 @@ def read_ledger_tail(relpath):
 def read_llm_stats():
     """Issue #60: aggregate per-cycle LLM call stats from llm_calls/<date>.jsonl.
     Fail-soft per file and per line; recent files only (page shows recent cycles)."""
+    global _llm_stats_source_complete
     ldir = os.path.join(STATE_ROOT, "llm_calls")
     stats = {}
+    _llm_stats_source_complete = False
     try:
         names = sorted(f for f in os.listdir(ldir) if f.endswith(".jsonl"))
     except Exception:
         return stats
-    for name in names[-7:]:
+    selected_names = names[-7:]
+    source_days = []
+    valid_day_names = True
+    for name in selected_names:
+        match = re.fullmatch(r"(\d{4}-\d{2}-\d{2})\.jsonl", name)
+        if not match:
+            valid_day_names = False
+            continue
+        try:
+            datetime.strptime(match.group(1), "%Y-%m-%d")
+        except ValueError:
+            valid_day_names = False
+            continue
+        source_days.append(match.group(1))
+    coverage_complete = valid_day_names and bool(source_days) and all(
+        (datetime.strptime(right, "%Y-%m-%d").date()
+         - datetime.strptime(left, "%Y-%m-%d").date()).days == 1
+        for left, right in zip(source_days, source_days[1:])
+    )
+    source_complete = bool(selected_names) and valid_day_names and len(source_days) == len(selected_names)
+    for name in selected_names:
         path = os.path.join(ldir, name)
         try:
             with open(path, "r", encoding="utf-8", errors="replace") as fh:
                 lines = fh.readlines()
             _mtimes.append(os.path.getmtime(path))
         except Exception:
+            source_complete = False
             continue
         for line in lines:
             line = line.strip()
@@ -547,18 +633,23 @@ def read_llm_stats():
             try:
                 row = json.loads(line)
             except Exception:
+                source_complete = False
                 continue
             if not isinstance(row, dict):
+                source_complete = False
                 continue
             cid = row.get("cycle_id")
             if not cid:
+                source_complete = False
                 continue
             cid = str(cid)
             st = stats.setdefault(cid, {
-                "calls": 0, "total_tokens": 0, "duration_ms": 0.0,
+                "calls": 0, "planner_calls": 0, "total_tokens": 0, "duration_ms": 0.0,
                 "last_finish_reason": None, "any_length": False, "last_ts": "",
             })
             st["calls"] += 1
+            if row.get("component") == "planner":
+                st["planner_calls"] += 1
             tok = row.get("total_tokens")
             if isinstance(tok, (int, float)) and not isinstance(tok, bool):
                 st["total_tokens"] += tok
@@ -572,6 +663,12 @@ def read_llm_stats():
                 st["last_finish_reason"] = fr
             if fr == "length":
                 st["any_length"] = True
+    _llm_stats_source_complete = source_complete
+    for st in stats.values():
+        st["_source_complete"] = source_complete
+        st["_source_coverage_complete"] = coverage_complete
+        st["_source_first_day"] = source_days[0] if source_days else ""
+        st["_source_last_day"] = source_days[-1] if source_days else ""
     return stats
 
 
@@ -1741,11 +1838,13 @@ result = {
     "hypotheses": read_json("hypotheses/lifecycle.json"),
     "hypotheses_durable": read_json("hypotheses/durable.json"),
     "ledger_tail": read_ledger_tail("ledger/cycles.jsonl"),
+    "planning_activity": read_planning_activity(),
     "demand_rotation": read_json("demand/rotation.json"),
     "demand_completed": read_json("demand/completed.json"),
     "skill_reads": read_json("skill_fitness/reads.json"),
     "skill_evals": read_jsonl("skill_fitness/evals.jsonl"),
     "llm_stats": read_llm_stats(),
+    "llm_stats_source_complete": _llm_stats_source_complete,
     "proposer_stats": read_proposer_stats(),
     "token_heatmap": read_token_heatmap(),
     "lessons": read_lessons(),
@@ -1810,6 +1909,8 @@ def fetch_remote_state(host: str) -> dict[str, Any]:
         'skill_reads': None,
         'skill_evals': [],
         'llm_stats': {},
+        'llm_stats_source_complete': False,
+        'planning_activity': None,
         'proposer_stats': None,
         'executor_llm_stats': None,
         'compaction': None,
@@ -2052,6 +2153,8 @@ def read_local_state(
         'cycle_files': {},
         'cycle_titles_error': None,
         'llm_stats': {},
+        'llm_stats_source_complete': False,
+        'planning_activity': None,
         'proposer_stats': None,
         'local_ci': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
         'executor_model_status': {'probe': 'probe_unavailable', 'reason': 'state_root_unreadable'},
@@ -2072,11 +2175,13 @@ def read_local_state(
     root = Path(state_root)
     if not root.is_dir():
         empty['_error'] = f'state root not found or not a directory: {root}'
+        empty['llm_stats_source_complete'] = False
         return empty
     try:
         next(root.iterdir(), None)
     except OSError as exc:
         empty['_error'] = f'state root unreadable: {exc.__class__.__name__}: {exc}'
+        empty['llm_stats_source_complete'] = False
         return empty
 
     mtimes: list[float] = []
@@ -2237,7 +2342,7 @@ def read_local_state(
                     continue
         return runs
 
-    def read_llm_stats_local() -> dict[str, Any]:
+    def read_llm_stats_local() -> tuple[dict[str, Any], bool]:
         """Issue #60: per-cycle LLM cost aggregation from llm_calls/*.jsonl.
         Local mirror of the REMOTE_READER_SCRIPT read_llm_stats() -- keep in
         sync. Fail-soft per file/line (issue #29 pattern)."""
@@ -2246,14 +2351,35 @@ def read_local_state(
         try:
             names = sorted(p.name for p in llm_dir.iterdir() if p.name.endswith('.jsonl'))
         except OSError:
-            return stats
-        for name in names[-7:]:
+            return stats, False
+        selected_names = names[-7:]
+        source_days = []
+        valid_day_names = True
+        for name in selected_names:
+            match = re.fullmatch(r'(\d{4}-\d{2}-\d{2})\.jsonl', name)
+            if not match:
+                valid_day_names = False
+                continue
+            try:
+                datetime.strptime(match.group(1), '%Y-%m-%d')
+            except ValueError:
+                valid_day_names = False
+                continue
+            source_days.append(match.group(1))
+        source_complete = bool(selected_names) and valid_day_names and len(source_days) == len(selected_names)
+        coverage_complete = valid_day_names and bool(source_days) and all(
+            (datetime.strptime(right, '%Y-%m-%d').date()
+             - datetime.strptime(left, '%Y-%m-%d').date()).days == 1
+            for left, right in zip(source_days, source_days[1:])
+        )
+        for name in selected_names:
             path = llm_dir / name
             try:
                 with path.open('r', encoding='utf-8', errors='replace') as fh:
                     lines = fh.readlines()
                 mtimes.append(path.stat().st_mtime)
             except Exception:  # noqa: BLE001
+                source_complete = False
                 continue
             for line in lines:
                 line = line.strip()
@@ -2262,17 +2388,22 @@ def read_local_state(
                 try:
                     row = json.loads(line)
                 except Exception:  # noqa: BLE001
+                    source_complete = False
                     continue
                 if not isinstance(row, dict):
+                    source_complete = False
                     continue
                 cid = str(row.get('cycle_id') or '')
                 if not cid:
+                    source_complete = False
                     continue
                 st = stats.setdefault(cid, {
-                    'calls': 0, 'total_tokens': 0, 'duration_ms': 0,
+                    'calls': 0, 'planner_calls': 0, 'total_tokens': 0, 'duration_ms': 0,
                     'last_finish_reason': None, 'any_length': False, 'last_ts': '',
                 })
                 st['calls'] += 1
+                if row.get('component') == 'planner':
+                    st['planner_calls'] += 1
                 tok = row.get('total_tokens')
                 if isinstance(tok, (int, float)) and not isinstance(tok, bool):
                     st['total_tokens'] += tok
@@ -2287,7 +2418,12 @@ def read_local_state(
                         st['last_finish_reason'] = str(fr)
                 if row.get('finish_reason') == 'length':
                     st['any_length'] = True
-        return stats
+        for st in stats.values():
+            st['_source_complete'] = source_complete
+            st['_source_coverage_complete'] = coverage_complete
+            st['_source_first_day'] = source_days[0] if source_days else ''
+            st['_source_last_day'] = source_days[-1] if source_days else ''
+        return stats, source_complete
 
     def read_executor_stats_local() -> dict[str, Any] | None:
         """Return the newest executor prompt-token observation."""
@@ -2588,6 +2724,61 @@ def read_local_state(
             return {'status': 'probe_unavailable', 'reason': 'not_a_dict'}
         return {'status': 'present', **data}
 
+    def read_planning_activity_local() -> dict[str, Any]:
+        """Local mirror of the approved-ledger-only planning observer."""
+        observed_at_dt = datetime.now(timezone.utc)
+        observed_at = observed_at_dt.isoformat().replace('+00:00', 'Z')
+        allowed_outcomes = {'integrated', 'refused', 'malformed', 'no_plan', 'spawn_failed', 'commit_failed', 'timed_out', 'rest', 'rest_unchanged'}
+        path = root / 'ledger' / 'cycles.jsonl'
+        status, source_mtime, latest = 'present', None, None
+        malformed = False
+        try:
+            source_mtime = path.stat().st_mtime
+            lines = path.read_text(encoding='utf-8', errors='replace').splitlines()[-LEDGER_SCAN_WINDOW:]
+        except FileNotFoundError:
+            status, lines = 'absent', []
+        except OSError:
+            status, lines = 'probe_unavailable', []
+        if status == 'present' and source_mtime is None:
+            status, lines = 'probe_unavailable', []
+        if status == 'present':
+            for line in lines:
+                try:
+                    row = json.loads(line)
+                    if not isinstance(row, dict):
+                        malformed = True
+                        continue
+                    phase = row.get('phase')
+                    if phase not in {'planning_session', 'planner_rest', 'planner_rest_held'}:
+                        continue
+                    ts = row.get('ts')
+                    if not isinstance(ts, str):
+                        malformed = True
+                        continue
+                    parsed = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                    if parsed.tzinfo is None:
+                        raise ValueError('timezone required')
+                except (TypeError, ValueError):
+                    malformed = True
+                    continue
+                outcome = row.get('outcome') if phase == 'planning_session' else ('rest_unchanged' if phase == 'planner_rest_held' else 'rest')
+                invalid_outcome = phase == 'planning_session' and (not isinstance(outcome, str) or outcome not in allowed_outcomes)
+                if invalid_outcome:
+                    malformed = True
+                    outcome = 'unknown'
+                if latest is None or parsed > latest['_parsed']:
+                    latest = {'ts': ts, 'outcome': outcome if isinstance(outcome, str) and outcome in allowed_outcomes else 'unknown', '_parsed': parsed}
+        if malformed and status == 'present':
+            status = 'partial'
+        if latest is not None:
+            parsed_latest = latest.pop('_parsed')
+            latest['event_age_seconds'] = max(0.0, (observed_at_dt - parsed_latest.astimezone(timezone.utc)).total_seconds())
+        source_age = max(0.0, time.time() - source_mtime) if source_mtime is not None else None
+        return {'observed_at_utc': observed_at,
+                'ledger': {'status': status, 'source_mtime': source_mtime, 'source_age_seconds': source_age,
+                           'last_observation': latest, 'current_status': 'unknown'},
+                'rest_status': 'unavailable_pending_read_approval'}
+
     def read_systemd_drift_local() -> dict[str, Any]:
         """#298: local mirror of REMOTE_READER_SCRIPT read_systemd_drift()
         -- keep in sync. eeebot#1701/PR#1717: <state_dir>/systemd_drift.json,
@@ -2813,6 +3004,7 @@ def read_local_state(
         # duplicates instead of silently changing the history population.
         return sorted(entries, key=lambda e: (e.get('date') or '', e.get('id') or ''), reverse=True)
 
+    llm_stats_local, llm_stats_source_complete = read_llm_stats_local()
     data: dict[str, Any] = {
         'portfolio': read_json('tech_tree/portfolio.json'),
         'scorecard': read_json('scorecard/latest.json'),
@@ -2825,7 +3017,9 @@ def read_local_state(
         'demand_completed': read_json('demand/completed.json'),
         'skill_reads': read_json('skill_fitness/reads.json'),
         'skill_evals': read_jsonl('skill_fitness/evals.jsonl'),
-        'llm_stats': read_llm_stats_local(),
+        'llm_stats': llm_stats_local,
+        'llm_stats_source_complete': llm_stats_source_complete,
+        'planning_activity': read_planning_activity_local(),
         'proposer_stats': read_proposer_stats_local(),
         'local_ci': read_local_ci_status_local(),
         'executor_model_status': read_executor_model_status_local(),
@@ -5558,6 +5752,7 @@ def build_now_panel(
     health_recent_outcomes: list[str] | None = None,
     bridge_exit_streak: dict[str, Any] | None = None,
     bridge_exits: list[dict[str, Any]] | None = None,
+    planning_activity: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
     strategist_decisions: list[dict[str, Any]] | None = None,
     ci_freshness: dict[str, Any] | None = None,
@@ -5787,6 +5982,29 @@ def build_now_panel(
     # re-derived or re-sorted here.
     next_up_html = _build_next_up_item(derived_view)
     charter_html = _build_charter_item(derived_view)
+    planning_observation = (planning_activity or {}).get('ledger') if isinstance(planning_activity, dict) else None
+    if not isinstance(planning_observation, dict):
+        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval.</div>'
+    else:
+        source_status = planning_observation.get('status')
+        last = planning_observation.get('last_observation')
+        if source_status == 'partial':
+            last_text = 'partial ledger; recorded latest observation shown as last-recorded evidence' if isinstance(last, dict) else 'partial ledger; latest planning observation unavailable'
+        elif source_status != 'present':
+            last_text = f'{esc(source_status)}; latest observation unavailable'
+        elif isinstance(last, dict):
+            last_text = f'{fmt_ts(last.get("ts"))} · {esc(last.get("outcome") or "unknown")}'
+        else:
+            last_text = 'no planning observation found in the approved ledger window'
+        if isinstance(last, dict):
+            event_age = last.get('event_age_seconds')
+            event_age_text = 'event age unknown' if not isinstance(event_age, (int, float)) else f'event recorded {humanize_age(event_age)} ago'
+            last_text = f'{last_text}; {event_age_text}; current planning status unknown'
+        source_age = planning_observation.get('source_age_seconds')
+        age_text = 'source age unknown' if not isinstance(source_age, (int, float)) else f'source file {humanize_age(source_age)} old'
+        planning_html = (f'<div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> '
+                         f'{last_text}; {age_text}. Planner rest fields: unavailable pending explicit reader-path approval; '
+                         f'no current-rest or active-work inference.</div>')
 
     # 13. Artifact dependency graph (eeebot#1769, ADR-024) -- published at
     # scorecard.quality.artifact_graph; read as published, never recomputed
@@ -5802,6 +6020,7 @@ def build_now_panel(
         {cycle_html}
         {next_up_html}
         {charter_html}
+        {planning_html}
         {streak_html}
         {feed_ages_html}
         {doc_budget_html}
@@ -5940,6 +6159,7 @@ def build_cycle_feed(
     archive_out: list[str] | None = None,
     bridge_runs: list[dict[str, Any]] | None = None,
     bridge_active_run: dict[str, Any] | None = None,
+    llm_stats_source_complete: bool = False,
 ) -> str:
     if not isinstance(ledger_tail, list):
         return unavailable_panel('Cycle Feed', 'ledger unavailable')
@@ -5949,16 +6169,29 @@ def build_cycle_feed(
 
     # Group ledger phases by cycle_id
     cycles_dict: dict[str, list[dict[str, Any]]] = {}
+    planning_entries: list[dict[str, Any]] = []
     for entry in ledger_tail:
         if not isinstance(entry, dict):
             continue
+        phase = entry.get('phase')
         cid = entry.get('cycle_id')
         if not cid:
+            continue
+        if phase == 'planning_session':
+            planning_entries.append(entry)
+            continue
+        if phase in {'planner_rest', 'planner_rest_held'}:
             continue
         cid = str(cid)
         if cid not in cycles_dict:
             cycles_dict[cid] = []
         cycles_dict[cid].append(entry)
+    # Planning observations enrich a cycle only after another ledger phase
+    # established that the cycle itself exists.
+    for entry in planning_entries:
+        cid = str(entry['cycle_id'])
+        if cid in cycles_dict:
+            cycles_dict[cid].append(entry)
 
     if not cycles_dict:
         return f'''
@@ -6466,13 +6699,21 @@ def build_cycle_feed(
             if st is None:
                 st = llm_stats.get(cid.replace('cycle-', '', 1))
         if isinstance(st, dict) and st.get('calls'):
-            parts_cost = [f'&#9889; {st["calls"]} calls']
+            parts_cost = [f'&#9889; {st["calls"]} LLM calls']
             tok = st.get('total_tokens')
             if isinstance(tok, (int, float)) and not isinstance(tok, bool) and tok > 0:
                 parts_cost.append(f'{fmt_compact(tok)} tok')
             dur = _fmt_duration_ms(st.get('duration_ms'))
             if dur:
-                parts_cost.append(f'dur {dur}')
+                parts_cost.append(f'Σ LLM wait {dur}')
+            recorded_ts = _parse_iso_ts(st.get('last_ts'))
+            recorded_label = (
+                f'recorded through {esc(fmt_ts_short(recorded_ts.isoformat(), now=ref_now))} '
+                '(selected telemetry window; may be incomplete)'
+                if recorded_ts is not None else 'recorded time unknown; coverage unknown'
+            )
+            parts_cost.append(recorded_label)
+            parts_cost.append('not cycle elapsed')
             cost_html = '<div class="feed-cost">' + ' &middot; '.join(parts_cost)
             if st.get('any_length'):
                 cost_html += (
@@ -6480,6 +6721,90 @@ def build_cycle_feed(
                     'finish_reason=length (context/budget limit hit)">&#9888; context overflow</span>'
                 )
             cost_html += '</div>'
+        else:
+            cost_html = '<div class="feed-cost unavailable-note">LLM metrics unavailable (not observed)</div>'
+
+        cycle_start_rows = [p for p in phases if p.get('phase') == 'started']
+        cycle_outcome_rows = [p for p in phases if p.get('phase') == 'outcome']
+        cycle_elapsed_html = ''
+        start_dt = None
+        end_dt = None
+        if len(cycle_start_rows) == 1:
+            start_dt = _parse_iso_ts(str(cycle_start_rows[0].get('ts') or ''))
+            end_dt = _parse_iso_ts(str(cycle_outcome_rows[0].get('ts') or '')) if len(cycle_outcome_rows) == 1 else None
+            running = not cycle_outcome_rows
+            if running and start_dt is not None:
+                end_dt = ref_now
+            if start_dt is not None and end_dt is not None and end_dt >= start_dt:
+                elapsed_ms = (end_dt - start_dt).total_seconds() * 1000
+                elapsed_label = _fmt_duration_ms(elapsed_ms) or '0s'
+                suffix = ' (elapsed so far)' if running else ''
+                cycle_elapsed_html = f'<div class="feed-cycle-elapsed">Cycle elapsed: {esc(elapsed_label + suffix)}</div>'
+            else:
+                cycle_elapsed_html = '<div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div>'
+        else:
+            cycle_elapsed_html = '<div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div>'
+
+        bridge_span_html = '<span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span>'
+        matching_runs = [
+            run for run in (bridge_runs or [])
+            if isinstance(run, dict)
+            and str(run.get('cycle_id') or '') in {cid, cid.replace('cycle-', '', 1)}
+        ]
+        if len(matching_runs) == 1:
+            bridge_start = _parse_iso_ts(str(matching_runs[0].get('started_at') or ''))
+            bridge_end = _parse_iso_ts(str(matching_runs[0].get('finished_at') or ''))
+            if (bridge_start is not None and bridge_end is not None and bridge_end >= bridge_start
+                    and start_dt is not None and end_dt is not None
+                    and bridge_start <= start_dt and bridge_end >= end_dt):
+                bridge_ms = (bridge_end - bridge_start).total_seconds() * 1000
+                bridge_span_html = f'<span class="feed-bridge-span">Bridge span: {esc(_fmt_duration_ms(bridge_ms) or "0s")}</span>'
+
+        planning_rows = [
+            p for p in phases
+            if p.get('phase') == 'planning_session' and str(p.get('cycle_id') or '') == cid
+        ]
+        cycle_rows = [p for p in phases if p.get('cycle_id') == cid]
+        bound_rows = [p for p in cycle_rows if p.get('phase') in {'started', 'outcome'}]
+        bound_dates = []
+        for bound in bound_rows:
+            parsed_bound = _parse_iso_ts(str(bound.get('ts') or ''))
+            if parsed_bound is None:
+                bound_dates = []
+                break
+            bound_dates.append(parsed_bound.date().isoformat())
+        unique_lifecycle = (
+            sum(p.get('phase') == 'started' for p in cycle_rows) == 1
+            and sum(p.get('phase') == 'outcome' for p in cycle_rows) == 1
+            and len(bound_dates) == 2
+            and bound_dates[0] <= bound_dates[1]
+        )
+        covered_cycle = (
+            unique_lifecycle and llm_stats_source_complete is True
+            and isinstance(st, dict) and st.get('_source_complete') is True
+            and bool(st.get('_source_coverage_complete'))
+            and bound_dates[0] >= str(st.get('_source_first_day') or '')
+            and bound_dates[1] <= str(st.get('_source_last_day') or '')
+        )
+        planner_call_count = st.get('planner_calls') if covered_cycle else None
+        if planning_rows:
+            iteration_values = [p.get('iterations_used') for p in planning_rows]
+            iterations = (
+                sum(iteration_values)
+                if all(isinstance(value, int) and not isinstance(value, bool) and value >= 0
+                       for value in iteration_values)
+                else None
+            )
+            planning_html = (
+                '<div class="feed-planning-cost">Planning: '
+                f'{esc(str(iterations) if iterations is not None else "unknown")} iterations &middot; '
+                f'{planner_call_count if planner_call_count is not None else "unknown"} planner calls &middot; {len(planning_rows)} planning sessions</div>'
+            )
+        else:
+            planning_html = (
+                '<div class="feed-planning-cost">Planning: unknown '
+                '(planning data unavailable or not observed)</div>'
+            )
 
         # Issue #72, #225: day grouping in MSK (newest-first) + outcome filter attribute.
         day_html = ''
@@ -6503,7 +6828,9 @@ def build_cycle_feed(
           </div>
           {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
           {files_html}
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
+          {planning_html}
         </li>
         ''')
 
@@ -7479,15 +7806,20 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
             if cid else '<span class="lesson-cycle">n/a</span>'
         )
         result = str(l.get('result') or '')
-        # ADR-036 rule 3: legacy result/insight text is LAN-only.
+        result_chars = l.get('result_chars')
+        result_size = result_chars if isinstance(result_chars, int) and not isinstance(result_chars, bool) and result_chars >= 0 else len(result)
+        # ADR-036 rule 3: legacy result/insight text is LAN-only; retain the
+        # validated projection's saved length when the body was redacted.
         result_html = (
-            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({len(result):,} chars)</div>'
-            if result else ''
+            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({result_size:,} chars)</div>'
+            if result_size > 0 else ''
         )
         insight = str(l.get('insight') or '')
+        insight_chars = l.get('insight_chars')
+        insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({len(insight):,} chars)</div>' if insight else ''
+        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else ''
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             cid,
@@ -10046,6 +10378,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         ledger_tail=ledger_tail,
         age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
         now=generated_at,
+        planning_activity=data.get('planning_activity'),
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
@@ -10089,6 +10422,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         rendered_lesson_ids=rendered_lesson_ids,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
@@ -10319,13 +10656,19 @@ def _last_cycles_subset(ledger_tail: list[Any] | None, want: int = 3) -> list[An
     together so build_cycle_feed still groups them correctly)."""
     if not isinstance(ledger_tail, list):
         return []
+    execution_phases = {'started', 'proposed', 'outcome'}
+    eligible_ids = {
+        str(row.get('cycle_id'))
+        for row in ledger_tail
+        if isinstance(row, dict) and row.get('cycle_id') and row.get('phase') in execution_phases
+    }
     seen: set[str] = set()
     keep: set[str] = set()
     for row in reversed(ledger_tail):
         if not isinstance(row, dict):
             continue
         cid = str(row.get('cycle_id') or '')
-        if not cid:
+        if not cid or cid not in eligible_ids:
             continue
         if cid not in seen and len(seen) >= want:
             continue
@@ -10348,7 +10691,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     now_dt = _parse_iso_ts(str(generated_at)) or datetime.now(timezone.utc)
-
     portfolio = data.get('portfolio')
     scorecard = data.get('scorecard')
     evolution_tree = data.get('evolution_tree')
@@ -10407,6 +10749,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_tail=ledger_tail,
         age_seconds=age_seconds,
         now=generated_at,
+        planning_activity=data.get('planning_activity'),
         proposer_llm_unavailable=bool(isinstance(data.get('proposer_stats'), dict) and data['proposer_stats'].get('llm_unavailable')),
         health_last_integrated_ts=data.get('health_last_integrated_ts'),
         health_recent_outcomes=data.get('health_recent_outcomes'),
@@ -10463,6 +10806,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         history_mode=True,
         rendered_lesson_ids=rendered_lesson_ids,
         ledger_history=history_rows if isinstance(history_rows, list) and history_rows else None,
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         archive_out=cycles_archive_rows,
         now=now_dt,
         bridge_runs=data.get('bridge_runs'),
@@ -10505,6 +10852,10 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         evolution_tree=evolution_tree,
         cycle_files=data.get('cycle_files'),
         llm_stats=data.get('llm_stats'),
+        llm_stats_source_complete=bool(data.get('llm_stats_source_complete') is True and all(
+            isinstance(value, dict) and value.get('_source_complete') is True
+            for value in (data.get('llm_stats') or {}).values()
+        )),
         now=now_dt,
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
@@ -11238,7 +11589,7 @@ def main(argv: list[str] | None = None) -> int:
         public_data, private_data = split_render_inputs(data)
         public_data["ci_freshness"] = _sanitize_public_value("ci_freshness", data.get("ci_freshness"))
         public_pages = render_public_pages(public_data, args.host)
-        private_pages = render_private_pages(private_data, args.host)
+        private_pages = render_private_pages(private_data, args.host, state_root=Path(args.state_root))
         now_ts = time.time()
         version = f"{int(now_ts)}-manual"
         stamp = datetime.fromtimestamp(now_ts, timezone.utc).isoformat()

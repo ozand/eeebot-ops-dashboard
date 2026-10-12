@@ -20,6 +20,12 @@ from scripts import techtree_viewer as tv
 from test_techtree_viewer import _fixture
 
 
+def test_truncated_openssh_private_key_header_is_refused() -> None:
+    payload = "-----BEGIN OPENSSH PRIVATE KEY-----\\nSYNTHETIC_KEY_MATERIAL\\n"
+    with pytest.raises(ps.PublicationScanError):
+        ps.scan_pages({"index.html": payload})
+
+
 def test_adr036_pattern_eeepc_agent_path_triggers_rejection() -> None:
     """ADR-036: /etc/eeepc-agent path must never be published."""
     with pytest.raises(ps.PublicationScanError) as exc_info:

@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from scripts import techtree_viewer as tv
+from scripts.two_sinks import split_render_inputs
 
 
 def _fixture() -> dict[str, object]:
@@ -667,6 +668,289 @@ def _ci_run(ts: str, *, conclusion: str = 'success', status: str = 'completed', 
         'html_url': f'https://github.com/example/actions/runs/{run_id}',
         'name': 'Test Suite',
     }
+
+
+def test_cycle_feed_shows_public_planning_costs_and_preserves_unknown_values() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-planning-cost", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-planning-cost", "iterations_used": 3,
+         "plan": "PRIVATE_PLAN_CANARY", "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-planning-cost", "iterations_used": None,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-planning-cost", "outcome": "success", "ts": "2026-09-01T00:03:00Z"},
+        {"phase": "started", "cycle_id": "cycle-before-planner", "ts": "2020-01-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-before-planner", "outcome": "success", "ts": "2020-01-01T00:01:00Z"},
+    ]
+    llm_stats = {
+        "cycle-planning-cost": {"planner_calls": 4, "planning_cost_known": False, "_source_complete": True,
+                                 "_source_coverage_complete": True, "_source_first_day": "2026-09-01",
+                                 "_source_last_day": "2026-09-01"},
+        "cycle-before-planner": {"planner_calls": 0, "planning_cost_known": True, "_source_complete": True,
+                                  "_source_coverage_complete": True, "_source_first_day": "2020-01-01",
+                                  "_source_last_day": "2020-01-01"},
+    }
+
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats=llm_stats, llm_stats_source_complete=True, history_mode=True,
+    )
+
+    planning_row = html_out.split('id="cycle-cycle-planning-cost"')[1].split('</li>')[0]
+    old_row = html_out.split('id="cycle-cycle-before-planner"')[1].split('</li>')[0]
+    assert "unknown iterations" in planning_row
+    assert "4 planner calls" in planning_row
+    assert "2 planning sessions" in planning_row
+    assert "Planning: unknown" in old_row
+    assert "PRIVATE_PLAN_CANARY" not in html_out
+
+
+def test_cycle_without_any_planning_evidence_renders_unknown_not_zero_or_legacy_dash() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-planning-unobserved", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-planning-unobserved", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    page = tv.build_cycle_feed(ledger, llm_stats={}, llm_stats_source_complete=False, history_mode=True)
+    row = page.split('id="cycle-cycle-planning-unobserved"')[1].split('</li>')[0]
+    assert "Planning: unknown (planning data unavailable or not observed)" in row
+    assert "unknown iterations" not in row
+    assert "unknown planner calls" not in row
+    assert "planner calls" not in row
+    assert "planning sessions" not in row
+    assert "—" not in row
+    assert "0 iterations" not in row
+    assert "0 planner calls" not in row
+
+
+def test_missing_per_cycle_planner_stats_are_unknown_even_when_window_is_readable() -> None:
+    ledger = [
+        {"phase": "planning_session", "cycle_id": "cycle-missing-stats", "iterations_used": 5,
+         "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-missing-stats", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats={}, llm_stats_source_complete=True, history_mode=True,
+    )
+    row = html_out.split('id="cycle-cycle-missing-stats"')[1].split('</li>')[0]
+    assert "5 iterations" in row
+    assert "unknown planner calls" in row
+
+
+def test_observed_per_cycle_zero_planner_calls_remains_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-observed-zero", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-observed-zero", "iterations_used": 0,
+         "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-observed-zero", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0, "_source_complete": True,
+                                                   "_source_coverage_complete": True, "_source_first_day": "2026-09-01",
+                                                   "_source_last_day": "2026-09-01"}},
+        llm_stats_source_complete=True, history_mode=True,
+    )
+    row = html_out.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "0 planner calls" in row
+
+    malformed_flag_html = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0, "_source_complete": True,
+                                                   "_source_coverage_complete": True, "_source_first_day": "2026-09-01",
+                                                   "_source_last_day": "2026-09-01"}},
+        llm_stats_source_complete=1, history_mode=True,
+    )
+    malformed_row = malformed_flag_html.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in malformed_row
+
+    incomplete_html = tv.build_cycle_feed(
+        ledger, llm_stats={"cycle-observed-zero": {"planner_calls": 0, "_source_complete": True,
+                                                   "_source_coverage_complete": True, "_source_first_day": "2026-09-01",
+                                                   "_source_last_day": "2026-09-01"}},
+        llm_stats_source_complete=False, history_mode=True,
+    )
+    incomplete_row = incomplete_html.split('id="cycle-cycle-observed-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in incomplete_row
+
+
+def test_public_render_preserves_observed_zero_and_withholds_unknown_planner_counts() -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-zero", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-zero", "iterations_used": 2,
+         "plan": "PRIVATE_PLAN_MARKER", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-zero", "outcome": "success",
+         "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "started", "cycle_id": "cycle-unknown", "ts": "2026-09-01T00:01:30Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-unknown", "iterations_used": 4,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-unknown", "outcome": "success",
+         "ts": "2026-09-01T00:03:00Z"},
+    ]
+    data = {
+        "ledger_tail": ledger,
+        "ledger_history": ledger,
+        "llm_stats": {
+            "cycle-zero": {"calls": 2, "planner_calls": 0, "_source_complete": True,
+                      "_source_coverage_complete": True, "_source_first_day": "2026-09-01",
+                      "_source_last_day": "2026-09-01"},
+        },
+        "llm_stats_source_complete": True,
+    }
+    public, _private = split_render_inputs(data)
+    pages = viewer.render_public_pages(public, "host", generated_at="2026-09-01T00:05:00Z")
+    feed = pages["cycles.html"]
+    zero_row = feed.split('id="cycle-cycle-zero"')[1].split('</li>')[0]
+    unknown_row = feed.split('id="cycle-cycle-unknown"')[1].split('</li>')[0]
+    assert "0 planner calls" in zero_row
+    assert "unknown planner calls" in unknown_row
+    assert "PRIVATE_PLAN_MARKER" not in "".join(pages.values())
+
+    incomplete_data = {**data, "llm_stats_source_complete": False}
+    incomplete_public, _ = split_render_inputs(incomplete_data)
+    incomplete_page = viewer.render_public_pages(
+        incomplete_public, "host", generated_at="2026-09-01T00:05:00Z",
+    )["cycles.html"]
+    incomplete_zero_row = incomplete_page.split('id="cycle-cycle-zero"')[1].split('</li>')[0]
+    assert "unknown planner calls" in incomplete_zero_row
+
+
+def test_llm_stats_source_completeness_distinguishes_empty_and_bad_sources(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+
+    absent = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert absent["llm_stats_source_complete"] is False
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-01.jsonl").write_text("", encoding="utf-8")
+    observed_empty = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert observed_empty["llm_stats_source_complete"] is True
+    assert observed_empty["llm_stats"] == {}
+
+    (llm_dir / "2026-09-02.jsonl").write_text('{broken\n', encoding="utf-8")
+    partially_unreadable = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert partially_unreadable["llm_stats_source_complete"] is False
+
+    (llm_dir / "2026-09-02.jsonl").write_text('{"planner_calls": 2}\n', encoding="utf-8")
+    unattributed = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert unattributed["llm_stats_source_complete"] is False
+
+
+def test_reader_to_projection_to_public_page_keeps_cycle_knownness(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-01.jsonl").write_text(
+        '{"cycle_id":"cycle-real-zero","component":"executor"}\n'
+        '{"cycle_id":"cycle-real-positive","component":"planner"}\n',
+        encoding="utf-8",
+    )
+    state = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-real-zero", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-real-zero", "iterations_used": 2,
+         "plan": "PRIVATE_PLAN_PIPELINE", "ts": "2026-09-01T00:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-real-zero", "outcome": "success", "ts": "2026-09-01T00:01:00Z"},
+        {"phase": "started", "cycle_id": "cycle-real-positive", "ts": "2026-09-01T00:01:30Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-real-positive", "iterations_used": 3,
+         "ts": "2026-09-01T00:02:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-real-positive", "outcome": "success", "ts": "2026-09-01T00:03:00Z"},
+        {"phase": "started", "cycle_id": "cycle-missing", "ts": "2026-09-01T00:03:30Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-missing", "iterations_used": 4,
+         "ts": "2026-09-01T00:04:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-missing", "outcome": "success", "ts": "2026-09-01T00:05:00Z"},
+    ]
+    state.update({"ledger_tail": ledger, "ledger_history": ledger})
+    public, _private = split_render_inputs(state)
+    page = viewer.render_public_pages(public, "host", generated_at="2026-09-01T00:06:00Z")["cycles.html"]
+    rows = {
+        cid: page.split(f'id="cycle-{cid}"')[1].split('</li>')[0]
+        for cid in ("cycle-real-zero", "cycle-real-positive", "cycle-missing")
+    }
+    assert "0 planner calls" in rows["cycle-real-zero"]
+    assert "1 planner calls" in rows["cycle-real-positive"]
+    assert "unknown planner calls" in rows["cycle-missing"]
+    assert "PRIVATE_PLAN_PIPELINE" not in page
+
+
+def test_invalid_calendar_day_filename_keeps_planner_count_unknown_in_local_and_remote_readers(
+    tmp_path: Path,
+) -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    (llm_dir / "2026-09-07.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"executor"}\n', encoding="utf-8",
+    )
+    (llm_dir / "2026-09-08.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"executor"}\n', encoding="utf-8",
+    )
+    (llm_dir / "2026-99-99.jsonl").write_text(
+        '{"cycle_id":"cycle-invalid-day","component":"planner"}\n', encoding="utf-8",
+    )
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-invalid-day", "ts": "2026-09-07T00:00:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-invalid-day", "iterations_used": 7,
+         "ts": "2026-09-07T00:01:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-invalid-day", "outcome": "success",
+         "ts": "2026-09-08T00:01:00Z"},
+    ]
+
+    local = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    assert local["llm_stats_source_complete"] is False
+    local.update({"ledger_tail": ledger, "ledger_history": ledger})
+    public, _ = split_render_inputs(local)
+    page = viewer.render_public_pages(public, "host", generated_at="2026-09-08T00:02:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-invalid-day"')[1].split("</li>")[0]
+    assert "7 iterations" in row
+    assert "unknown planner calls" in row
+
+    # Execute the embedded reader body with STATE_ROOT replaced for this isolated fixture.
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script = tmp_path / "remote_reader.py"
+    remote_script.write_text(script, encoding="utf-8")
+    remote = subprocess.run(["python", str(remote_script)], text=True, capture_output=True, check=True)
+    remote_state = json.loads(remote.stdout)
+    assert remote_state["llm_stats_source_complete"] is False
+    stats = remote_state["llm_stats"]["cycle-invalid-day"]
+    assert stats["_source_coverage_complete"] is False
+
+
+def test_reader_cycle_straddling_unselected_call_day_keeps_planner_count_unknown(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / "llm_calls"
+    llm_dir.mkdir()
+    for day in range(1, 9):
+        rows = '{"cycle_id":"cycle-cutoff","component":"executor"}\n' if day == 8 else ""
+        (llm_dir / f"2026-09-{day:02d}.jsonl").write_text(rows, encoding="utf-8")
+    (llm_dir / "2026-09-01.jsonl").write_text(
+        '{"cycle_id":"cycle-cutoff","component":"planner"}\n', encoding="utf-8",
+    )
+    state = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-cutoff", "ts": "2026-09-01T23:59:00Z"},
+        {"phase": "planning_session", "cycle_id": "cycle-cutoff", "iterations_used": 7,
+         "ts": "2026-09-02T00:01:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-cutoff", "outcome": "success", "ts": "2026-09-08T00:01:00Z"},
+    ]
+    state.update({"ledger_tail": ledger, "ledger_history": ledger})
+    public, _ = split_render_inputs(state)
+    page = viewer.render_public_pages(public, "host", generated_at="2026-09-08T00:02:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-cutoff"')[1].split("</li>")[0]
+    assert "7 iterations" in row
+    assert "unknown planner calls" in row
+    assert "0 planner calls" not in row
 
 
 def test_ci_freshness_states_keep_zero_pending_old_recent_and_conclusion_separate() -> None:
@@ -1545,9 +1829,149 @@ def test_issue169_remote_reader_script_compiles_and_imports() -> None:
 def test_issue169_ledger_phases_pinned_at_module_level() -> None:
     expected = {
         'started', 'proposed', 'outcome', 'gate', 'proposer_reject', 'dedup', 'idle',
-        'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget',
+        'evolution_tree', 'tech_tree', 'hypothesis', 'doc_only_budget', 'planning_session',
     }
     assert tv.LEDGER_PHASES == expected
+    assert '"planning_session"' in tv.REMOTE_READER_SCRIPT
+
+
+def test_413_planning_session_does_not_create_execution_card(tmp_path: Path) -> None:
+    import contextlib
+    import gzip
+    import io
+
+    from scripts.two_sinks import split_render_inputs
+
+    rows = [
+        {'phase': 'planning_session', 'cycle_id': 'cycle-planning-only', 'iterations_used': 2,
+         'outcome': 'timed_out', 'ts': '2026-10-07T00:00:00Z'},
+        {'phase': 'planner_rest_held', 'cycle_id': 'cycle-rest-only', 'ts': '2026-10-07T00:01:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-running', 'ts': '2026-10-07T00:02:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-running', 'iterations_used': 3,
+         'outcome': 'integrated', 'ts': '2026-10-07T00:03:00Z'},
+        {'phase': 'proposed', 'cycle_id': 'cycle-proposed', 'task_title': 'Proposal',
+         'ts': '2026-10-07T00:04:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-finished', 'outcome': 'failed',
+         'ts': '2026-10-07T00:05:00Z'},
+    ]
+    state = tmp_path / 'state'
+    ledger_dir = state / 'ledger'
+    ledger_dir.mkdir(parents=True)
+    (ledger_dir / 'cycles.jsonl').write_text(
+        ''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8'
+    )
+    archive_rows = [
+        {'phase': 'started', 'cycle_id': 'cycle-archive', 'ts': '2026-10-06T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-archive', 'iterations_used': 4,
+         'outcome': 'malformed', 'ts': '2026-10-06T00:01:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-archive-only', 'iterations_used': 8,
+         'outcome': 'no_plan', 'ts': '2026-10-06T00:02:00Z'},
+    ]
+    with gzip.open(ledger_dir / 'cycles-2026-10-06.jsonl.gz', 'wt', encoding='utf-8') as stream:
+        stream.write(''.join(json.dumps(row) + '\n' for row in archive_rows))
+
+    local = tv.read_local_state(str(state))
+    public, _ = split_render_inputs(local)
+    recent = tv.render_public_pages(public, host='test')['cycles.html']
+    history = tv.render_pages({**public, 'ledger_history': public['ledger_history']}, host='test')['cycles.html']
+    remote_script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}'
+    )
+    remote_namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(remote_script, remote_namespace)  # noqa: S102 - generated reader against isolated fixture
+    remote_public, _ = split_render_inputs(remote_namespace['result'])
+    remote_recent = tv.render_public_pages(remote_public, host='test')['cycles.html']
+    remote_history = tv.render_pages(
+        {**remote_public, 'ledger_history': remote_public['ledger_history']}, host='test'
+    )['cycles.html']
+
+    for html in (recent, history, remote_recent, remote_history):
+        for cycle_id in ('cycle-planning-only', 'cycle-rest-only', 'cycle-archive-only'):
+            assert f'id="cycle-{cycle_id}"' not in html
+        assert 'id="cycle-cycle-archive"' in html
+        archive = html.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+        assert '4 iterations' in archive
+        assert 'id="cycle-cycle-running"' in html
+        assert 'running' in html
+        assert 'id="cycle-cycle-proposed"' in html
+        assert 'PROPOSED' in html
+        assert 'id="cycle-cycle-finished"' in html
+        assert 'FAILED' in html
+        assert 'PRIVATE_REASON_413' not in html
+        running = html.split('id="cycle-cycle-running"')[1].split('</li>')[0]
+        assert '3 iterations' in running and '1 planning sessions' in running
+
+
+def test_413_planning_session_local_and_remote_readers_project_only_to_its_cycle(tmp_path: Path) -> None:
+    import contextlib
+    import gzip
+    import io
+
+    from scripts.two_sinks import split_render_inputs
+
+    state = tmp_path / 'state'
+    live_rows = [
+        {'phase': 'started', 'cycle_id': 'cycle-a', 'ts': '2026-10-07T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-a', 'iterations_used': 7,
+         'outcome': 'integrated', 'reason': 'PRIVATE_REASON_413', 'target_path': 'PRIVATE_PATH_413',
+         'sha': 'PRIVATE_SHA_413', 'ts': '2026-10-07T00:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-a', 'outcome': 'success', 'ts': '2026-10-07T00:02:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-b', 'ts': '2026-10-07T00:03:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-b', 'outcome': 'success', 'ts': '2026-10-07T00:04:00Z'},
+        {'phase': 'planning_session', 'cycle_id': '', 'iterations_used': 99, 'outcome': 'rest',
+         'ts': '2026-10-07T00:05:00Z'},
+        {'phase': 'planner_rest_held', 'cycle_id': 'cycle-rest-only', 'ts': '2026-10-07T00:06:00Z'},
+        {'phase': 'future_private_phase', 'cycle_id': 'cycle-a', 'reason': 'PRIVATE_UNKNOWN_413',
+         'ts': '2026-10-07T00:07:00Z'},
+    ]
+    ledger_dir = state / 'ledger'
+    ledger_dir.mkdir(parents=True)
+    (ledger_dir / 'cycles.jsonl').write_text(
+        ''.join(json.dumps(row) + '\n' for row in live_rows), encoding='utf-8'
+    )
+    archive_rows = [
+        {'phase': 'started', 'cycle_id': 'cycle-archive', 'ts': '2026-10-06T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-archive', 'iterations_used': 4,
+         'outcome': 'malformed', 'ts': '2026-10-06T00:01:00Z'},
+    ]
+    with gzip.open(ledger_dir / 'cycles-2026-10-06.jsonl.gz', 'wt', encoding='utf-8') as stream:
+        stream.write(''.join(json.dumps(row) + '\n' for row in archive_rows))
+
+    local = tv.read_local_state(str(state))
+    assert any(row.get('phase') == 'planning_session' for row in local['ledger_tail'])
+    assert any(row.get('phase') == 'planning_session' for row in local['ledger_history'])
+    public, _private = split_render_inputs(local)
+    html = tv.render_public_pages(public, host='test')['cycles.html']
+    row_a = html.split('id="cycle-cycle-a"')[1].split('</li>')[0]
+    row_b = html.split('id="cycle-cycle-b"')[1].split('</li>')[0]
+    assert '7 iterations' in row_a and '1 planning sessions' in row_a
+    assert 'Planning: unknown' in row_b
+    assert 'cycle-rest-only' not in html
+    history = tv.render_pages({**public, 'ledger_history': public['ledger_history']}, host='test')['cycles.html']
+    assert 'id="cycle-cycle-archive"' in history
+    assert '4 iterations' in history.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+    for marker in ('PRIVATE_REASON_413', 'PRIVATE_PATH_413', 'PRIVATE_SHA_413', 'PRIVATE_UNKNOWN_413'):
+        assert marker not in html
+
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}'
+    )
+    namespace: dict[str, object] = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(script, namespace)  # noqa: S102 - execute the generated remote reader against the temp fixture
+    remote_rows = namespace['result']['ledger_tail']
+    assert any(row.get('phase') == 'planning_session' for row in remote_rows)
+    assert any(row.get('phase') == 'planning_session' for row in namespace['result']['ledger_history'])
+    remote_public, _ = split_render_inputs(namespace['result'])
+    remote_html = tv.render_public_pages(remote_public, host='test')['cycles.html']
+    assert '7 iterations' in remote_html.split('id="cycle-cycle-a"')[1].split('</li>')[0]
+    assert 'Planning: unknown' in remote_html.split('id="cycle-cycle-b"')[1].split('</li>')[0]
+    remote_history = tv.render_pages({**remote_public, 'ledger_history': remote_public['ledger_history']}, host='test')['cycles.html']
+    assert 'id="cycle-cycle-archive"' in remote_history
+    assert '4 iterations' in remote_history.split('id="cycle-cycle-archive"')[1].split('</li>')[0]
+    for marker in ('PRIVATE_REASON_413', 'PRIVATE_PATH_413', 'PRIVATE_SHA_413', 'PRIVATE_UNKNOWN_413'):
+        assert marker not in remote_html
 
 
 def test_issue169_health_verdict_investigates_when_no_cycle_history() -> None:
@@ -1635,6 +2059,112 @@ def test_hypotheses_panel_no_collapse_when_lte_6_stale() -> None:
     data = {'entries': entries}
     html = tv.build_hypotheses_panel(data)
     assert '<details' not in html
+
+
+def test_planning_activity_ledger_reader_projection_and_panel_do_not_invent_cycles(tmp_path: Path) -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger_dir = tmp_path / 'ledger'
+    ledger_dir.mkdir()
+    ledger_path = ledger_dir / 'cycles.jsonl'
+    ledger_path.write_text(
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:00:00Z","outcome":"rest_unchanged"}\n',
+        encoding='utf-8',
+    )
+    result = viewer.read_local_state(str(tmp_path), str(tmp_path))
+    activity = result['planning_activity']
+    assert activity['ledger']['last_observation']['ts'] == '2026-10-07T06:00:00Z'
+    assert activity['ledger']['last_observation']['outcome'] == 'rest_unchanged'
+    assert activity['ledger']['current_status'] == 'unknown'
+    assert activity['ledger']['last_observation']['event_age_seconds'] > 0
+    public, _private = split_render_inputs(result)
+    page = viewer.render_public_pages(public, 'host', generated_at='2026-10-07T07:00:00Z')['index.html']
+    assert 'Planning observation (separate from cycles)' in page
+    # The public renderer includes the observation in the overview panel,
+    # distinct from the cycle feed built from cycle-bearing rows.
+    cycle_feed = page.split('id="panel-feed"', 1)[-1]
+    assert 'rest_unchanged' not in cycle_feed
+    assert 'rest_unchanged' in page
+    assert 'no current-rest or active-work inference' in page
+    assert 'Planner rest fields: unavailable pending explicit reader-path approval' in page
+    assert 'rest_state.json' not in page
+    assert 'cycle-invalid' not in page
+    assert 'unavailable_pending_read_approval' == public['planning_activity']['rest_status']
+
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script = tmp_path / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_activity = json.loads(remote.stdout)['planning_activity']
+    assert remote_activity['ledger']['last_observation']['ts'] == activity['ledger']['last_observation']['ts']
+    assert remote_activity['ledger']['last_observation']['outcome'] == activity['ledger']['last_observation']['outcome']
+    assert remote_activity['rest_status'] == 'unavailable_pending_read_approval'
+
+    ledger_path.write_text('{broken\\n', encoding='utf-8')
+    malformed = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert malformed['ledger']['status'] == 'partial'
+    assert malformed['ledger']['last_observation'] is None
+    assert malformed['ledger']['current_status'] == 'unknown'
+    remote_script.write_text(script, encoding='utf-8')
+    remote_malformed = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    assert json.loads(remote_malformed.stdout)['planning_activity']['ledger']['status'] == 'partial'
+
+    ledger_path.write_text(
+        '{"phase":"planning_session","ts":"2026-10-07T06:00:00Z","outcome":[]}\n', encoding='utf-8',
+    )
+    invalid_outcome = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert invalid_outcome['ledger']['status'] == 'partial'
+    assert invalid_outcome['ledger']['last_observation']['outcome'] == 'unknown'
+    assert invalid_outcome['ledger']['current_status'] == 'unknown'
+    remote_invalid = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_invalid_ledger = json.loads(remote_invalid.stdout)['planning_activity']['ledger']
+    assert remote_invalid_ledger['status'] == 'partial'
+    assert remote_invalid_ledger['last_observation']['outcome'] == 'unknown'
+
+    ledger_path.write_text(
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:00:00","outcome":"rest_unchanged"}\n'
+        '{"phase":"planner_rest_held","ts":"2026-10-07T06:01:00+00:00","outcome":"rest_unchanged"}\n',
+        encoding='utf-8',
+    )
+    mixed_tz = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert mixed_tz['ledger']['status'] == 'partial'
+    assert mixed_tz['ledger']['last_observation']['ts'] == '2026-10-07T06:01:00+00:00'
+    script = viewer.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"',
+        f'STATE_ROOT = {str(tmp_path)!r}',
+    )
+    remote_script.write_text(script, encoding='utf-8')
+    remote_mixed = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+    remote_mixed_activity = json.loads(remote_mixed.stdout)['planning_activity']
+    assert remote_mixed_activity['ledger']['status'] == mixed_tz['ledger']['status']
+    assert remote_mixed_activity['ledger']['last_observation']['ts'] == mixed_tz['ledger']['last_observation']['ts']
+
+    valid_new = '{"phase":"planning_session","ts":"2026-10-07T06:02:00Z","outcome":"integrated"}'
+    invalid_old = '{"phase":"planning_session","ts":"2026-10-07T06:01:00Z","outcome":[]}'
+    invalid_new = '{"phase":"planning_session","ts":"2026-10-07T06:03:00Z","outcome":[]}'
+    for rows, expected_ts, expected_outcome in (
+        ([valid_new, invalid_old], '2026-10-07T06:02:00Z', 'integrated'),
+        ([invalid_old, valid_new], '2026-10-07T06:02:00Z', 'integrated'),
+        ([valid_new, invalid_new], '2026-10-07T06:03:00Z', 'unknown'),
+    ):
+        ledger_path.write_text('\n'.join(rows) + '\n', encoding='utf-8')
+        local_order = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']['ledger']
+        assert local_order['status'] == 'partial'
+        assert local_order['last_observation']['ts'] == expected_ts
+        assert local_order['last_observation']['outcome'] == expected_outcome
+        remote_order = subprocess.run(['python', str(remote_script)], text=True, capture_output=True, check=True)
+        remote_order_ledger = json.loads(remote_order.stdout)['planning_activity']['ledger']
+        assert remote_order_ledger['status'] == local_order['status']
+        assert remote_order_ledger['last_observation']['ts'] == expected_ts
+        assert remote_order_ledger['last_observation']['outcome'] == expected_outcome
+
+    ledger_path.unlink()
+    missing = viewer.read_local_state(str(tmp_path), str(tmp_path))['planning_activity']
+    assert missing['ledger']['status'] == 'absent'
+    assert missing['ledger']['last_observation'] is None
 
 
 def test_now_panel_demand_grouping_fallback() -> None:
@@ -3223,6 +3753,119 @@ def test_issue62_host_identity_real_middle_dots_not_entity_text() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_cycle_elapsed_uses_unique_public_start_and_outcome_pair() -> None:
+    from scripts import techtree_viewer as viewer
+    from scripts.two_sinks import split_render_inputs
+
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-two-hours", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-two-hours", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    data = {
+        "ledger_tail": ledger,
+        "ledger_history": ledger,
+        "llm_stats": {"cycle-two-hours": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000,
+                                              "last_ts": "2026-10-06T11:59:00Z"}},
+        "bridge_runs": [{"run_id": "safe-internal", "cycle_id": "cycle-two-hours",
+                         "started_at": "2026-10-06T10:05:00Z", "finished_at": "2026-10-06T10:10:00Z"}],
+    }
+    public, _private = split_render_inputs(data)
+    pages = viewer.render_public_pages(public, "host", generated_at="2026-10-06T12:05:00Z")
+    row = pages["cycles.html"].split('id="cycle-cycle-two-hours"')[1].split('</li>')[0]
+
+    assert "Cycle elapsed: 2h" in row
+    assert "13 LLM calls" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "not cycle elapsed" in row
+    assert "Bridge span: unavailable" in row
+    assert "Tool operations: unavailable (not recorded)" in row
+    assert "safe-internal" not in row
+
+
+def test_public_reader_projection_render_keeps_cycle_bridge_and_llm_intervals_distinct() -> None:
+    source = {
+        "ledger_tail": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "ledger_history": [
+            {"phase": "started", "cycle_id": "cycle-public-timing", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-public-timing", "outcome": "success",
+             "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "llm_stats": {"cycle-public-timing": {"calls": 13, "total_tokens": 322400, "duration_ms": 319000}},
+        "bridge_runs": [{"run_id": "private-run-id", "cycle_id": "cycle-public-timing",
+                         "started_at": "2026-10-06T09:55:00Z", "finished_at": "2026-10-06T12:15:00Z"}],
+    }
+    public, _private = split_render_inputs(source)
+    page = tv.render_public_pages(public, host="test", generated_at="2026-10-06T12:05:00Z")["cycles.html"]
+    row = page.split('id="cycle-cycle-public-timing"')[1].split("</li>")[0]
+    assert "Cycle elapsed: 2h" in row
+    assert "Bridge span: 2h20m" in row
+    assert "Σ LLM wait 5m19s" in row
+    assert "private-run-id" not in row
+    assert "Recorded cycle interval (available history; coverage may be partial)" in row
+
+
+def test_bridge_span_requires_exactly_one_complete_matching_run_enclosing_cycle() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-bridge-bounds", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-bridge-bounds", "outcome": "success",
+         "ts": "2026-10-06T12:00:00Z"},
+    ]
+    enclosing = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:55:00Z",
+                 "finished_at": "2026-10-06T12:15:00Z"}
+    incomplete = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T09:58:00Z"}
+    too_short = {"cycle_id": "cycle-bridge-bounds", "started_at": "2026-10-06T11:00:00Z",
+                 "finished_at": "2026-10-06T11:05:00Z"}
+    for runs in ([enclosing, incomplete], [enclosing, dict(enclosing)], [too_short]):
+        page = tv.build_cycle_feed(ledger, bridge_runs=list(runs), history_mode=True)
+        row = page.split('id="cycle-cycle-bridge-bounds"')[1].split("</li>")[0]
+        assert "Bridge span: unavailable" in row
+        assert "Cycle elapsed: 2h" in row
+
+
+def test_cycle_elapsed_is_unknown_for_missing_invalid_or_ambiguous_bounds() -> None:
+    cases = {
+        "cycle-no-start": [{"phase": "outcome", "cycle_id": "cycle-no-start", "outcome": "success",
+                            "ts": "2026-10-06T12:00:00Z"}],
+        "cycle-invalid": [
+            {"phase": "started", "cycle_id": "cycle-invalid", "ts": "not-a-time"},
+            {"phase": "outcome", "cycle_id": "cycle-invalid", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+        "cycle-retry": [
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T09:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "failed", "ts": "2026-10-06T09:10:00Z"},
+            {"phase": "started", "cycle_id": "cycle-retry", "ts": "2026-10-06T10:00:00Z"},
+            {"phase": "outcome", "cycle_id": "cycle-retry", "outcome": "success", "ts": "2026-10-06T12:00:00Z"},
+        ],
+    }
+    ledger = [row for rows in cases.values() for row in rows]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, 5, tzinfo=timezone.utc))
+    for cycle_id in cases:
+        row = page.split(f'id="cycle-{cycle_id}"')[1].split('</li>')[0]
+        assert "Cycle elapsed: UNKNOWN" in row
+
+
+def test_cycle_elapsed_zero_is_explicit_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-zero-elapsed", "ts": "2026-10-06T10:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-zero-elapsed", "outcome": "success", "ts": "2026-10-06T10:00:00Z"},
+    ]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-zero-elapsed"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 0s" in row
+
+
+def test_open_cycle_elapsed_is_labeled_elapsed_so_far() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-open", "ts": "2026-10-06T10:00:00Z"}]
+    page = tv.build_cycle_feed(ledger, history_mode=True, now=datetime(2026, 10, 6, 12, tzinfo=timezone.utc))
+    row = page.split('id="cycle-cycle-open"')[1].split('</li>')[0]
+    assert "Cycle elapsed: 2h (elapsed so far)" in row
+
+
 def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
     data = _fixture()
     data['llm_stats'] = {
@@ -3231,9 +3874,72 @@ def test_issue60_cost_line_renders_calls_tokens_duration() -> None:
     }
     html_out = tv.render_page(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     assert 'feed-cost' in html_out
-    assert '12 calls' in html_out
+    assert '12 LLM calls' in html_out
     assert '1.23M tok' in html_out
-    assert 'dur 35m10s' in html_out
+    assert 'Σ LLM wait 35m10s' in html_out
+    assert 'not cycle elapsed' in html_out
+
+
+def test_cycle_feed_llm_cost_label_names_provider_duration_and_scope() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-duration-label", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-duration-label", "outcome": "success",
+         "ts": "2026-10-05T23:32:27Z"},
+    ]
+    stats = {"cycle-duration-label": {
+        "calls": 13, "total_tokens": 322400, "duration_ms": 319000,
+        "last_finish_reason": "stop", "any_length": False, "last_ts": "2026-10-05T23:31:00Z",
+    }}
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats=stats, history_mode=True)
+    row = html_out.split('id="cycle-cycle-duration-label"')[1].split('</li>')[0]
+
+    assert "13 LLM calls" in row
+    assert "322.4K tok" in row
+    assert "Σ LLM wait" in row
+    assert "5m19s" in row
+    assert 'class="feed-cycle-elapsed">Cycle elapsed: 32m27s</div>' in row
+    cost_line = row.split('<div class="feed-cost">', 1)[1]
+    assert 'Σ LLM wait 5m19s' in cost_line
+    assert '32m27s' not in cost_line
+
+
+def test_cycle_feed_missing_llm_stats_is_unknown_not_zero() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-no-llm-stats", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-no-llm-stats", "outcome": "success",
+         "ts": "2026-10-05T23:32:27Z"},
+    ]
+
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, history_mode=True)
+    row = html_out.split('id="cycle-cycle-no-llm-stats"')[1].split('</li>')[0]
+
+    assert "LLM metrics unavailable" in row
+    assert "0 LLM calls" not in row
+    assert "0s" not in row
+
+
+def test_cycle_feed_preserves_legacy_prefix_stats_alias() -> None:
+    ledger = [
+        {"phase": "started", "cycle_id": "cycle-alias", "ts": "2026-10-05T23:00:00Z"},
+        {"phase": "outcome", "cycle_id": "cycle-alias", "outcome": "success", "ts": "2026-10-05T23:01:00Z"},
+    ]
+    html_out = tv.build_cycle_feed(
+        ledger,
+        llm_stats={"alias": {"calls": 1, "duration_ms": 1000, "last_ts": "2026-10-05T23:00:30Z"}},
+        history_mode=True,
+    )
+    row = html_out.split('id="cycle-cycle-alias"')[1].split('</li>')[0]
+    assert "1 LLM calls" in row
+    assert "Σ LLM wait 1s" in row
+
+
+def test_cycle_feed_missing_llm_stats_is_unavailable_for_running_cycle() -> None:
+    ledger = [{"phase": "started", "cycle_id": "cycle-running-without-stats", "ts": "2026-10-05T23:00:00Z"}]
+    html_out = tv.build_cycle_feed(ledger, llm_stats={}, history_mode=True)
+    row = html_out.split('id="cycle-cycle-running-without-stats"')[1].split('</li>')[0]
+    assert "LLM metrics unavailable (not observed)" in row
+    assert "0 LLM calls" not in row
 
 
 def test_issue60_budget_pressure_marker_on_length() -> None:
@@ -3384,6 +4090,25 @@ def test_issue70_no_nav_link_404s() -> None:
         for fname, _label in tv.SITE_PAGES:
             assert f'href="{fname}"' in pages[name]
             assert fname in pages  # every nav target exists as a produced file
+
+
+def test_413_index_teaser_skips_planning_only_ids_before_three_cycle_limit() -> None:
+    rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-older', 'outcome': 'success',
+         'ts': '2026-10-07T00:00:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-plan-1', 'iterations_used': 1,
+         'outcome': 'timed_out', 'ts': '2026-10-07T00:01:00Z'},
+        {'phase': 'planner_rest_held', 'cycle_id': 'cycle-rest-1', 'ts': '2026-10-07T00:02:00Z'},
+        {'phase': 'planning_session', 'cycle_id': 'cycle-plan-2', 'iterations_used': 2,
+         'outcome': 'no_plan', 'ts': '2026-10-07T00:03:00Z'},
+        {'phase': 'started', 'cycle_id': 'cycle-valid-new', 'ts': '2026-10-07T00:04:00Z'},
+    ]
+    subset = tv._last_cycles_subset(rows, 3)
+    feed = tv.build_cycle_feed(subset, history_mode=True)
+    assert 'id="cycle-cycle-older"' in feed
+    assert 'id="cycle-cycle-valid-new"' in feed
+    for planning_id in ('cycle-plan-1', 'cycle-plan-2', 'cycle-rest-1'):
+        assert f'id="cycle-{planning_id}"' not in feed
 
 
 def test_issue70_index_teasers_link_to_pages() -> None:
@@ -6945,6 +7670,57 @@ def test_cycle_detail_projection_consumes_all_preserved_text_lengths() -> None:
     rendered_context = tv.build_two_tier_context_html(agents)
     assert "14 chars received by model" in rendered_context
     assert "12 chars" in rendered_context
+
+
+def test_issue338_full_render_uses_presaved_legacy_lesson_lengths_after_projection() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    marker = "PRIVATE_LESSON_LENGTH_CANARY"
+    source = {"lessons": [{
+        "id": "legacy-lengths", "date": "2026-09-27", "cycle_id": "cycle-legacy-lengths",
+        "task_id": "safe task", "insight": "", "result": "", "hypothesis": "",
+        "insight_chars": 28, "result_chars": 14,
+    }]}
+    public, _ = split_render_inputs(source)
+    projected = public["lessons"][0]
+    assert projected["insight_chars"] == 28
+    assert projected["result_chars"] == 14
+    assert "problem_chars" not in projected
+    assert projected["_v2_lesson"] is False
+    pages = tv.render_pages(public, host="eeepc")
+    assert 'data-text="legacy-lengths' in pages["lessons.html"]
+    assert "insight: text on the LAN site only (28 chars)" in pages["lessons.html"]
+    assert "result: text on the LAN site only (14 chars)" in pages["lessons.html"]
+    assert marker not in pages["lessons.html"]
+    assert "PRIVATE_LESSON_LENGTH_CANARY" not in pages["lessons.html"]
+
+
+def test_issue338_full_render_preserves_pre_redacted_task_size_metadata() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "agent_context": {"prompt_text": "", "task_text": "", "task_text_chars": 58}}
+    public, private = split_render_inputs(source)
+    public_html = tv.render_pages(public, host="eeepc")["agent.html"]
+    private_html = tv.render_pages(private, host="eeepc")["agent.html"]
+    assert "captured size: 58 chars" in public_html
+    assert "captured size: 58 chars" in private_html
+    assert "58 chars" in public_html
+    assert "captured size: 0 chars" not in public_html
+
+
+def test_issue338_full_render_preserves_pre_redacted_skill_content_length() -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    source = {**_fixture(), "agent_context": {"tier2_skills": [{
+        "name": "safe-skill", "size_bytes": 321, "content": "", "content_chars": 77,
+        "desc": "", "desc_chars": 12,
+    }]}}
+    public, private = split_render_inputs(source)
+    public_html = tv.render_pages(public, host="eeepc")["agent.html"]
+    private_html = tv.render_pages(private, host="eeepc")["agent.html"]
+    assert "SKILL.md (77 chars)" in public_html
+    assert "SKILL.md (77 chars)" in private_html
+    assert "321 B" in public_html
 
 
 def test_full_render_uses_saved_lesson_body_lengths_after_public_projection() -> None:

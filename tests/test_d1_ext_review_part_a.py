@@ -311,6 +311,7 @@ def test_f3_publisher_exception_carries_host_success(tmp_path: Path) -> None:
     def failing_publisher(_pages):
         raise RuntimeError("gh-pages down")
 
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     with pytest.raises(RuntimeError) as info:
         publish_ordered(tmp_path / "site", {"index.html": "ROOT"}, {}, "v1", failing_publisher)
     assert info.value.host_error is None  # host snapshot installed and activated

@@ -22,6 +22,30 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def test_planning_cost_ledger_projection_is_counts_only_and_null_safe() -> None:
+    from scripts import techtree_viewer as tv
+
+    canary = "PRIVATE_PLANNING_TEXT_CANARY"
+    data = {
+        "ledger_history": [
+            {"phase": "planning_session", "cycle_id": "cycle-plan", "iterations_used": None,
+             "plan": canary, "ts": "2026-09-01T00:00:00Z"},
+            {"phase": "planning_session", "cycle_id": "cycle-plan", "iterations_used": 4,
+             "plan": canary, "ts": "2026-09-01T00:01:00Z"},
+        ],
+        "llm_stats": {"cycle-plan": {"calls": 4, "planner_calls": 2, "total_tokens": 99}},
+    }
+
+    public, private = split_render_inputs(data)
+
+    assert len(public["ledger_history"]) == 2
+    assert [row.get("iterations_used") for row in public["ledger_history"]] == [None, 4]
+    assert "plan" not in public["ledger_history"][0]
+    assert canary not in json.dumps(public)
+    assert all(canary in row["plan"] for row in private["ledger_history"])
+    assert "planner_calls" in public["llm_stats"]["cycle-plan"]
+
+
 def test_bridge_diagnostics_are_private_only_after_real_projection_and_render(tmp_path: Path):
     from scripts import techtree_viewer as tv
 
@@ -97,9 +121,35 @@ def test_publisher_unit_installation_and_post_install_checks_are_documented() ->
     assert "owner: ozand" in text
 
 
+def test_private_cycle_navigation_is_host_only_and_routes_only_indexed_ids(tmp_path: Path):
+    public = {"cycle.html": '<html><body><main><h1>Cycle Detail</h1></main></body></html>', "index.html": "<html></html>"}
+    private = {"cycles/cycle-safe.html": "<main>private detail</main>"}
+    (tmp_path / "site").mkdir()
+    published = []
+    publish_ordered(tmp_path / "site", public, private, "nav1", lambda pages: published.append(pages) or (0, {}))
+    host_cycle = (tmp_path / "site" / "nav1" / "cycle.html").read_text(encoding="utf-8")
+    assert 'new Set(["cycle-safe"])' in host_cycle
+    assert "window.location.replace('cycles/' + encodeURIComponent(id) + '.html')" in host_cycle
+    assert "unavailable-note" in host_cycle
+    assert "cycles/cycle-safe.html" not in published[0]["cycle.html"]
+    assert "lan-private-cycle-router" not in published[0]["cycle.html"]
+    assert "cycles/cycle-safe.html" not in published[0]
+
+
+def test_private_cycle_navigation_ignores_unmatched_and_unsafe_names():
+    from scripts.two_sinks import _add_private_cycle_navigation
+
+    host_pages = {"cycle.html": '<html><body>public</body></html>'}
+    _add_private_cycle_navigation(host_pages, {"cycles/safe-id.html": "safe", "cycles/../../escape.html": "unsafe"})
+    assert 'new Set(["safe-id"])' in host_pages["cycle.html"]
+    assert "../../escape" not in host_pages["cycle.html"]
+    assert "safe-id" not in '<html><body>public</body></html>'
+
+
 def test_public_pages_same_snapshot_in_both_sinks(tmp_path: Path):
     """ADR-036 §1: host precedes gh-pages and both use one version."""
     order = []
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", lambda pages: order.append(("gh", pages)))
     assert (tmp_path / "site/current").resolve().name == "v1"
     assert 'content="v1"' in (tmp_path / "site/v1/index.html").read_text()
@@ -136,6 +186,7 @@ def test_publish_allowlist_refuses_unlisted_pages(tmp_path: Path):
 def test_private_pages_never_reach_gh_pages(tmp_path: Path):
     """ADR-036 §3: private pages exist only in the host snapshot."""
     sent = []
+    (tmp_path / "site").mkdir()  # the D4 host step creates the site root
     publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", sent.append)
     assert "cycle.html" in {p.name for p in (tmp_path / "site/v1").iterdir()}
     assert len(sent) == 1
@@ -394,6 +445,7 @@ def test_sink_failure_leaves_consistent_snapshot(tmp_path: Path):
     def fail(_pages):
         raise RuntimeError("publisher failed")
     with pytest.raises(RuntimeError):
+        (tmp_path / "site").mkdir(exist_ok=True)  # the D4 host step creates the site root
         publish_ordered(tmp_path / "site", PUBLIC, PRIVATE, "v1", fail)
     assert (tmp_path / "site/current/index.html").is_file()
     assert "private calls" in (tmp_path / "site/current/cycle.html").read_text()
@@ -471,6 +523,7 @@ def test_host_snapshot_written_even_without_gh_token(tmp_path: Path, monkeypatch
 
     monkeypatch.delenv("GH_TOKEN", raising=False)
     monkeypatch.setenv("EEEBOT_SITE_ROOT", str(site_root))
+    site_root.mkdir()  # the D4 host step creates the site root
 
     args = ap.parse_args(["--state-root", str(root), "--state-dir", str(state_dir), "--site-root", str(site_root)])
     rc = ap.run(args)
@@ -896,6 +949,7 @@ def test_f12_host_catches_any_exception_and_reports_cleanup_failure(tmp_path: Pa
     """External review F12: host sink must catch Exception (not only OSError), and cleanup failure must not be swallowed."""
     from scripts.two_sinks import HostSnapshotError
     root = tmp_path / "site"
+    root.mkdir()  # the D4 host step creates the site root
 
     # Part 1: non-OSError in host snapshot must still run publisher and raise HostSnapshotError
     publisher_called = []
