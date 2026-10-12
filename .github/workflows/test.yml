@@ -29,9 +29,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest jinja2
-          pip install git+https://github.com/ozand/eeebot.git
+          # Revision resolved by successful master CI run 37776470448.
+          pip install git+https://github.com/ozand/eeebot.git@d468dc6a873962c668a200a52147865fb37abb3b
           pip install -e .
           pip install "ruff==0.16.7"
+          pip install "playwright==1.63.0"
+
+      - name: Install Chromium for browser tests
+        run: python -m playwright install --with-deps chromium
 
       # #315-follow-up: a merge glued two copies of tests/test_techtree_viewer.py
       # together and Python silently kept the second definition of 253 test_
@@ -40,6 +45,9 @@ jobs:
       # happen again, silently, a second time.
       - name: Check for redefined names (F811)
         run: ruff check --select F811 tests/ scripts/
+
+      - name: Check for repeated dictionary keys (F601)
+        run: ruff check --select F601 src/
 
       - name: Run pytest
         run: |
