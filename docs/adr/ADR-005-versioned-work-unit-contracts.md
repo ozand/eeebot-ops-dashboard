@@ -165,3 +165,18 @@ Implementation/test links are pinned because the docs branch does not contain th
 - [O: Observation test definitions](https://github.com/ozand/eeebot-ops-dashboard/blob/45e36eb925f601446328cbc4052f6bd6be0e5410/tests/test_work_unit_observations.py).
 - [P: Preview test definitions](https://github.com/ozand/eeebot-ops-dashboard/blob/45e36eb925f601446328cbc4052f6bd6be0e5410/tests/test_work_unit_preview.py).
 - [Original ADR index](https://github.com/ozand/eeebot-ops-dashboard/blob/2cd2928229cd370613c83855f949f71e123dd447/docs/adr/INDEX.md), [unnumbered draft](https://github.com/ozand/eeebot-ops-dashboard/issues/421#issuecomment-6134245389), [registration scope/reservation](https://github.com/ozand/eeebot-ops-dashboard/issues/428), [independent acceptance and routing](https://github.com/ozand/eeebot-ops-dashboard/issues/427).
+
+## Author revision 2026-10-13: C09 protocol-history coverage delta
+
+The implementation reference and C01-C15 table above remain the original `45e36eb925f601446328cbc4052f6bd6be0e5410` baseline. They must not be read as results for a later build. Following the operator's bounded author-fix handoff, #424 now includes commit `ada615a28fdce48cf7dfa84b87ac12a48b67af65`; the unchanged #426 preview diff was replayed onto it at aggregate `c3fb18aeb4ae7e5a06d8dc6d64096ace4211aef5`. No catalog/snapshot/index schema, field, enum, source, cache decision or permission changes in this revision.
+
+The code change restores the existing C09 obligation by handling `http.client.HTTPException` alongside the existing transport failures. A partial response body or exception diagnostic is never persisted. No blanket `Exception` handler is introduced. `RemoteDisconnected` was already caught via its `OSError` ancestry; it is a compatibility control, not a newly failing baseline case.
+
+| Claim delta | New exact definition at revised #424 / aggregate | Scope and limitation |
+|---|---|---|
+| C09a: HTTP read failure retains history and records unavailable | `test_protocol_read_failure_preserves_previous_snapshot` in [revised observation tests](https://github.com/ozand/eeebot-ops-dashboard/blob/ada615a28fdce48cf7dfa84b87ac12a48b67af65/tests/test_work_unit_observations.py) | IncompleteRead, RemoteDisconnected, BadStatusLine and LineTooLong raised at the real github_get response.read boundary via injected transport; previous snapshot, old observed_at, new checked_at, continued collection, serialized replay and no body/diagnostic canaries. Not a live network or full privacy audit. |
+| C09b: unrelated exceptions are not swallowed | `test_protocol_handling_does_not_swallow_unrelated_exceptions` in the same pinned file | RuntimeError and ValueError controls; not exhaustive proof for every possible exception. |
+
+The [author receipt in #424](https://github.com/ozand/eeebot-ops-dashboard/pull/424#issuecomment-6140542001) binds the focused red/green results to exact source/test blobs and reports its limitations. It is not independent acceptance. The operator-relayed pF 85-pass/zero-skip result belongs only to the old aggregate; p16 source review and pF's full-suite work remain separate. No review checkout was mutated, and no old-SHA result is transferred to these new heads.
+
+This appendix updates documentation of the existing contract and replaces only the prior text revision for review purposes. The original post-implementation chronology is retained. ADR-005 and its index remain Proposed; no numbered ADR is superseded and no architectural acceptance, merge, deployment or issue closure is implied. Other gaps/findings in the baseline table are not silently resolved by this protocol fix.
