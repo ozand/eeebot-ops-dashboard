@@ -153,7 +153,9 @@ def load_json(path: Path) -> dict:
         require(len(raw) <= MAX_BYTES, 'input_too_large')
         return json.loads(raw.decode('utf-8'), object_pairs_hook=_unique_pairs,
                           parse_constant=lambda _: require(False, 'nonfinite_json'))
-    except (UnicodeError, RecursionError, json.JSONDecodeError) as exc:
+    except CatalogError:
+        raise  # Preserve bounded-input and object-pair/constant validation codes.
+    except (ValueError, RecursionError) as exc:
         raise CatalogError('invalid_json') from exc
 
 
