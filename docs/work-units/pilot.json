@@ -1,0 +1,226 @@
+{
+  "schema": "work-units/v1",
+  "units": [
+    {
+      "id": "github:ozand/eeebot-ops-dashboard:issue:418",
+      "kind": "project",
+      "title": "Ledger digest: bounded memory",
+      "goal": "Hash the retained ledger tail without buffering discarded history; preserve byte semantics.",
+      "boundaries": [
+        "Code and tests only; no host operation or deployment.",
+        "A linked report is not independent acceptance or production evidence."
+      ],
+      "acceptance": [
+        "Stable-input digests match the previous implementation.",
+        "Memory is bounded by the read block even for a very long row.",
+        "Partial I/O failures preserve unavailable-sentinel behavior."
+      ],
+      "visibility": "public",
+      "related_units": [
+        "eeebot:area:publishing-reliability"
+      ],
+      "links": [
+        {
+          "role": "context",
+          "label": "Problem and acceptance criteria",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "issue",
+            "number": 418
+          }
+        },
+        {
+          "role": "context",
+          "label": "Baseline autopublisher",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "2cd2928229cd370613c83855f949f71e123dd447",
+            "path": "scripts/techtree_autopublish.py"
+          }
+        },
+        {
+          "role": "work",
+          "label": "Implementation PR",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "pr",
+            "number": 419
+          }
+        },
+        {
+          "role": "result",
+          "label": "Candidate revision (not a deployment)",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "commit",
+            "sha": "b1e6bb6ed49538be8ba05c03bc4b1a24e683eabc"
+          }
+        },
+        {
+          "role": "result",
+          "label": "Pinned verification attempt (not full acceptance)",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "run",
+            "number": 38265435034,
+            "attempt": 1,
+            "expected_sha": "b1e6bb6ed49538be8ba05c03bc4b1a24e683eabc"
+          }
+        }
+      ]
+    },
+    {
+      "id": "github:ozand/eeebot-ops-dashboard:issue:395",
+      "kind": "project",
+      "title": "Planning observations, separate from execution",
+      "goal": "Make recorded planning observations understandable without inventing execution or current rest state.",
+      "boundaries": [
+        "The pilot reads no planner/rest_state.json or other host source.",
+        "Approval, implementation, current observation and deployment are separate facts."
+      ],
+      "acceptance": [
+        "Planning observations do not create execution cycles.",
+        "Absent, stale and unreadable evidence is not rendered as inactive.",
+        "New rest-source access needs separate explicit approval."
+      ],
+      "visibility": "public",
+      "related_units": [
+        "eeebot:area:publishing-reliability"
+      ],
+      "links": [
+        {
+          "role": "context",
+          "label": "Original scope and acceptance criteria",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "issue",
+            "number": 395
+          }
+        },
+        {
+          "role": "context",
+          "label": "Pinned ADR-004 proposal",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "2cd2928229cd370613c83855f949f71e123dd447",
+            "path": "docs/adr/ADR-004-publish-safe-planning-rest-observations.md"
+          }
+        },
+        {
+          "role": "work",
+          "label": "Ledger-only implementation PR",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "pr",
+            "number": 412
+          }
+        },
+        {
+          "role": "work",
+          "label": "Remaining-contract review PR",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "pr",
+            "number": 420
+          }
+        },
+        {
+          "role": "result",
+          "label": "Review document at a pinned revision",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "71e755255e1afc247426c85f548ab97bb62cbb5e",
+            "path": "docs/reviews/2026-10-12-adr004-review.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "eeebot:area:publishing-reliability",
+      "kind": "area",
+      "title": "Publishing reliability",
+      "goal": "Maintain observable, safe and verifiable dashboard publication as a continuing responsibility.",
+      "boundaries": [
+        "This area is not a finite task or a second backlog.",
+        "A successful test or public artifact does not establish private serving or host health."
+      ],
+      "acceptance": [
+        "Publication evidence names its source and revision.",
+        "Code review, acceptance and rollout remain distinguishable."
+      ],
+      "visibility": "public",
+      "related_units": [
+        "github:ozand/eeebot-ops-dashboard:issue:418",
+        "github:ozand/eeebot-ops-dashboard:issue:395"
+      ],
+      "links": [
+        {
+          "role": "context",
+          "label": "Documented publishing pipeline",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "2cd2928229cd370613c83855f949f71e123dd447",
+            "path": "README.md"
+          }
+        },
+        {
+          "role": "context",
+          "label": "Installed-file inventory",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "2cd2928229cd370613c83855f949f71e123dd447",
+            "path": "deploy/sync-manifest.txt"
+          }
+        },
+        {
+          "role": "work",
+          "label": "Digest work item",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "issue",
+            "number": 418
+          }
+        },
+        {
+          "role": "work",
+          "label": "Planning-observation work item",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "issue",
+            "number": 395
+          }
+        },
+        {
+          "role": "result",
+          "label": "Historical acceptance register, not live status",
+          "visibility": "public",
+          "target": {
+            "repo": "ozand/eeebot-ops-dashboard",
+            "kind": "file",
+            "sha": "2cd2928229cd370613c83855f949f71e123dd447",
+            "path": "docs/operations/2026-10-12-acceptance-register.md"
+          }
+        }
+      ]
+    }
+  ]
+}
