@@ -5047,7 +5047,11 @@ def test_369_cached_publication_pages_are_not_scanned_again_after_allowlist(monk
     original_scan_text = publish_scan.scan_text
     scan_calls = []
     text_scans = []
-    from scripts import two_sinks
+    import importlib
+    try:
+        two_sinks = importlib.import_module('two_sinks')
+    except ModuleNotFoundError:
+        two_sinks = importlib.import_module('scripts.two_sinks')
     original_allowlist = two_sinks.validate_publish_allowlist
 
     def observe_allowlist(page_set):
