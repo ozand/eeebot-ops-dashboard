@@ -78,6 +78,8 @@ TREE_DIGEST_SOURCES = tuple(_TREE_SOURCE_FILES.values())
 # the last 50 cycles, so the tail is sufficient and bounded).
 LEDGER_DIGEST_PATH = 'ledger/cycles.jsonl'
 LEDGER_DIGEST_TAIL_LINES = 50
+# #418: bound each buffer even when an individual retained row is huge.
+LEDGER_DIGEST_READ_BYTES = 64 * 1024
 
 DEFAULT_STALENESS_FLOOR_HOURS = 6.0
 PUBLISH_SINGLE_RUN_WARNING_SECONDS = 10 * 60
@@ -167,6 +169,57 @@ def _unreadable_tree_source(data: dict[str, Any], state_root: Path) -> str | Non
     return None
 
 
+def _hash_ledger_tail(hasher: Any, ledger_path: Path) -> Any:
+    """Hash the last ledger lines without materializing the entire file.
+
+    Match binary readlines() exactly: only LF separates lines, a trailing
+    LF belongs to its line, and CR/invalid UTF-8/partial rows stay unchanged.
+    Read backwards to find the start, then stream to a captured EOF using
+    fixed-size blocks. Memory is O(block size), even for a very long line;
+    I/O is proportional to the retained tail, not the discarded history.
+
+    Hash a copy so a seek/read/truncation failure cannot leave a partial
+    ledger prefix in the caller's digest before its unavailable sentinel.
+    A captured EOF excludes concurrent appends; this is not an atomic
+    snapshot against in-place edits of the existing bytes.
+    """
+    candidate = hasher.copy()
+    with open(ledger_path, 'rb') as fh:
+        end = fh.seek(0, os.SEEK_END)
+        cursor = end
+        remaining_lines = LEDGER_DIGEST_TAIL_LINES
+        start = 0
+        while cursor > 0:
+            size = min(cursor, LEDGER_DIGEST_READ_BYTES)
+            cursor -= size
+            fh.seek(cursor)
+            block = fh.read(size)
+            if len(block) != size:
+                raise OSError('ledger shortened during tail scan')
+            stop = len(block)
+            if cursor + size == end and block.endswith(b'\n'):
+                stop -= 1
+            while remaining_lines > 0:
+                separator = block.rfind(b'\n', 0, stop)
+                if separator < 0:
+                    break
+                remaining_lines -= 1
+                stop = separator
+            if remaining_lines == 0:
+                start = cursor + separator + 1
+                break
+
+        fh.seek(start)
+        remaining_bytes = end - start
+        while remaining_bytes > 0:
+            block = fh.read(min(remaining_bytes, LEDGER_DIGEST_READ_BYTES))
+            if not block:
+                raise OSError('ledger shortened during tail hashing')
+            candidate.update(block)
+            remaining_bytes -= len(block)
+    return candidate
+
+
 def compute_tree_digest(state_root: Path, *, generator_sha: str | None = None) -> str:
     """SHA-256 over the raw bytes of TREE_DIGEST_SOURCES only, in a fixed
     order, each length-delimited by a NUL so an absent file cannot be
@@ -190,9 +243,7 @@ def compute_tree_digest(state_root: Path, *, generator_sha: str | None = None) -
         hasher.update(b'\x00')
     ledger_path = state_root / LEDGER_DIGEST_PATH
     try:
-        with open(ledger_path, 'rb') as fh:
-            tail = fh.readlines()[-LEDGER_DIGEST_TAIL_LINES:]
-        hasher.update(b''.join(tail))
+        hasher = _hash_ledger_tail(hasher, ledger_path)
     except OSError:
         hasher.update(b'<ledger-missing>')
     hasher.update(b'\x00')
