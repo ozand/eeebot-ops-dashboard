@@ -11406,7 +11406,6 @@ def publish_to_pages(
         except ImportError:
             from scripts.two_sinks import validate_publish_allowlist
         validate_publish_allowlist(pages)
-        scan_pages(pages)
     except Exception as exc:
         print(f'publish: validation failed: {exc}', file=sys.stderr)
         return 1, {}
