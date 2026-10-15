@@ -5029,6 +5029,83 @@ def test_278_publish_to_pages_skips_unchanged_pages(monkeypatch) -> None:
     assert fingerprints['cycles.html'] != previous_fp['cycles.html']
 
 
+def test_369_cached_publication_pages_are_not_scanned_again_after_allowlist(monkeypatch) -> None:
+    from scripts import publish_scan
+
+    pages = {'index.html': '<!doctype html><p>safe public page</p>'}
+    names = publish_scan.rule_names()
+    cache: dict[str, bool] = {}
+    # Establish approvals through the real scanner so the test exercises the
+    # same cache entries the publisher persists between runs.
+    publish_scan.scan_pages(pages, clean_cache=cache)
+    assert len(cache) == len(names)
+    gh_calls: list = []
+    events: list[str] = []
+    monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(gh_calls))
+
+    original_scan_pages = publish_scan.scan_pages
+    original_scan_text = publish_scan.scan_text
+    scan_calls = []
+    text_scans = []
+    from scripts import two_sinks
+    original_allowlist = two_sinks.validate_publish_allowlist
+
+    def observe_allowlist(page_set):
+        events.append('allowlist')
+        return original_allowlist(page_set)
+
+    def observe_scan(page_set, **kwargs):
+        scan_calls.append(dict(kwargs))
+        events.append('scan_pages')
+        return original_scan_pages(page_set, **kwargs)
+
+    def observe_text(text, **kwargs):
+        text_scans.append((text, kwargs.get('rules')))
+        events.append('scan_text')
+        return original_scan_text(text, **kwargs)
+
+    monkeypatch.setattr(two_sinks, 'validate_publish_allowlist', observe_allowlist)
+    monkeypatch.setattr(publish_scan, 'scan_pages', observe_scan)
+    monkeypatch.setattr(publish_scan, 'scan_text', observe_text)
+    rc, _, _ = tv.publish_to_pages(pages, scan_cache=cache)
+
+    assert rc == 0
+    # The cache-aware scan hits all approvals. Allowlist still validates names,
+    # while content is not needlessly scanned again.
+    assert scan_calls[0].get('clean_cache') is cache
+    assert 'allowlist' in events
+    assert events.count('scan_pages') == 1  # inherited scans use the decoder path separately
+    outgoing_scans = [entry for entry in text_scans if entry[0] == pages['index.html']]
+    assert not outgoing_scans
+    assert cache and len(gh_calls) > 0
+
+
+def test_369_changed_publication_content_bypasses_old_cache_and_fails_closed(monkeypatch) -> None:
+    import hashlib
+
+    from scripts import publish_scan
+
+    old_page = {'index.html': '<!doctype html><p>previous clean page</p>'}
+    cache: dict[str, bool] = {}
+    publish_scan.scan_pages(old_page, clean_cache=cache)
+    assert cache
+    changed_page = {'index.html': '<!doctype html><p>/etc/eeepc-agent/private</p>'}
+    old_key_sha = hashlib.sha256(old_page['index.html'].encode()).hexdigest()
+    new_key_sha = hashlib.sha256(changed_page['index.html'].encode()).hexdigest()
+    assert old_key_sha != new_key_sha
+    mutations: list = []
+
+    def fake_gh(args, **kwargs):
+        mutations.append(args)
+        return subprocess.CompletedProcess(args=args, returncode=1, stdout='', stderr='')
+    monkeypatch.setattr(tv, '_gh', fake_gh)
+
+    with pytest.raises(publish_scan.PublicationScanError, match='eeepc_agent_path'):
+        tv.publish_to_pages(changed_page, scan_cache=cache)
+
+    assert mutations == []
+
+
 def test_278_publish_to_pages_all_unchanged_skips_tree_commit_ref(monkeypatch) -> None:
     calls: list = []
     monkeypatch.setattr(tv, '_gh', _fake_gh_publish_factory(calls))
