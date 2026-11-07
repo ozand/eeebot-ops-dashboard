@@ -6757,6 +6757,29 @@ def test_read_token_heatmap_utc_boundary_lands_in_next_msk_day(tmp_path: Path) -
     assert res['summary']['timezone'] == 'MSK'
 
 
+def test_read_token_heatmap_uses_explicit_bucket_schema_and_rejects_malformed_tokens(tmp_path: Path) -> None:
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    (llm_dir / '2026-09-04.jsonl').write_text('\n'.join([
+        json.dumps({'ts': '2026-09-04T10:00:00Z', 'model': 'un/qwen', 'total_tokens': 20}),
+        json.dumps({'ts': '2026-09-04T10:05:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 30}),
+        json.dumps({'ts': '2026-09-04T10:10:00Z', 'model': 'un/qwen', 'total_tokens': 0}),
+        json.dumps({'ts': '2026-09-04T10:15:00Z', 'model': 'un/qwen', 'total_tokens': 'bad'}),
+    ]) + '\n', encoding='utf-8')
+
+    result = tv.read_token_heatmap(tmp_path)
+    assert result is not None
+    assert result['summary']['total_tokens'] == 50
+    assert result['summary']['total_calls'] == 3
+    assert result['summary']['local_tokens'] + result['summary']['gateway_tokens'] + result['summary']['other_tokens'] == 50
+    assert result['summary']['invalid_days'] == ['2026-09-04']
+    local_row = result['five_min']['2026-09-04']['156']
+    gateway_row = result['five_min']['2026-09-04']['157']
+    assert local_row[:5] == [20, 0, 0, 20, 1]
+    assert gateway_row[:5] == [0, 30, 0, 30, 1]
+    assert result['hourly']['2026-09-04'][13][3:5] == [50, 3]
+
+
 def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -> None:
     """Issue #223: fail-soft on missing or empty llm_calls directory."""
     assert tv.read_token_heatmap(tmp_path / 'nonexistent') is None
@@ -6764,6 +6787,34 @@ def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -
     empty_dir = tmp_path / 'empty'
     (empty_dir / 'llm_calls').mkdir(parents=True)
     assert tv.read_token_heatmap(empty_dir) is None
+
+
+def test_rendered_tokens_summary_matches_category_totals_and_call_count(tmp_path: Path) -> None:
+    import re
+    from playwright.sync_api import sync_playwright
+
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    (llm_dir / '2026-09-04.jsonl').write_text('\n'.join([
+        json.dumps({'ts': '2026-09-04T10:00:00Z', 'model': 'un/qwen', 'total_tokens': 20000}),
+        json.dumps({'ts': '2026-09-04T10:05:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 30000}),
+        json.dumps({'ts': '2026-09-04T10:10:00Z', 'model': 'un/qwen', 'total_tokens': 'bad'}),
+    ]) + '\n', encoding='utf-8')
+    heatmap = tv.read_token_heatmap(tmp_path)
+    assert heatmap is not None
+    assert heatmap['summary']['total_tokens'] == heatmap['summary']['local_tokens'] + heatmap['summary']['gateway_tokens'] + heatmap['summary']['other_tokens']
+    page = tv.build_tokens_panel({'token_heatmap': heatmap})
+    html_path = tmp_path / 'tokens.html'
+    html_path.write_text(page, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        rendered = page.goto(html_path.as_uri())
+        assert rendered is not None and rendered.status == 200
+        summary = page.locator('#tkn-detail-info').inner_text()
+        page.locator('#tkn-detail-info').screenshot(path=str(tmp_path / 'tokens-day-summary.png'))
+        browser.close()
+    assert re.fullmatch(r'2026-09-04 Summary: 50\.0K total tokens \(30\.0K gateway, 20\.0K local, 0 other\) across 2 calls\. · incomplete \(malformed token rows excluded\)', summary)
 
 
 def test_tokens_page_generated_and_weight_under_300kb() -> None:

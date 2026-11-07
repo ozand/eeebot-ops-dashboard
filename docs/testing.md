@@ -1,5 +1,8 @@
 # Testing Guide & Operational Baselines
 
+## Token heatmap day-summary regression (#433)
+`tests/test_techtree_viewer.py::test_rendered_tokens_summary_matches_category_totals_and_call_count` uses synthetic `llm_calls` rows, runs the producer, and opens the rendered `tokens.html` with local Playwright Chromium to verify the visible day summary and real call count. It does not read or certify host/publication data. `test_read_token_heatmap_uses_explicit_bucket_schema_and_rejects_malformed_tokens` asserts the explicit hourly/5-minute row schema and that malformed token rows are excluded and disclosed in summary metadata. Existing tests cover zero vs missing days and the 20:59 UTC / 22:00 UTC MSK day transition.
+
 ## Continuous Integration (GitHub Actions)
 - **Workflow**: `.github/workflows/test.yml`
 - **Environment**: Ubuntu (Python 3.12)

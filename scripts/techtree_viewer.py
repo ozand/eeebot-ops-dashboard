@@ -3308,6 +3308,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
     msk_raw_hourly: dict[str, list[list[Any]]] = {}
     msk_raw_5min: dict[str, dict[int, list[Any]]] = {}
     msk_records_dates: set[str] = set()
+    msk_invalid_dates: set[str] = set()
 
     for file_path in active_files:
         try:
@@ -3334,9 +3335,19 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
                     b_idx = h_msk * 12 + (m_msk // 5)
 
                     tok = row.get('total_tokens')
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get('prompt_tokens') or 0) + (row.get('completion_tokens') or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    if tok is None:
+                        prompt = row.get('prompt_tokens')
+                        completion = row.get('completion_tokens')
+                        valid_prompt = isinstance(prompt, int) and not isinstance(prompt, bool) and prompt >= 0
+                        valid_completion = isinstance(completion, int) and not isinstance(completion, bool) and completion >= 0
+                        if valid_prompt and valid_completion:
+                            tok = prompt + completion
+                        else:
+                            msk_invalid_dates.add(d_msk)
+                            continue
+                    if not isinstance(tok, int) or isinstance(tok, bool) or tok < 0:
+                        msk_invalid_dates.add(d_msk)
+                        continue
 
                     cat = classify_model(str(row.get('model') or ''))
                     comp = str(row.get('component') or 'unknown').strip().lower()
@@ -3474,6 +3485,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
             'days_span': len(calendar_dates),
             'days_present': days_present_count,
             'days_missing': len(calendar_dates) - days_present_count,
+            'invalid_days': sorted(msk_invalid_dates),
             'timezone': 'MSK',
             'timezone_offset_hours': 3,
             'source_timezone': 'UTC',
@@ -9059,7 +9071,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       const isMissing = (buckets === null || buckets === undefined);
       const q = q5m.gateway || [500, 2000, 8000, 50000];
 
-      let dayTotal = 0, dayGw = 0, dayLoc = 0, dayCalls = 0;
+      let dayTotal = 0, dayGw = 0, dayLoc = 0, dayOther = 0, dayCalls = 0;
 
       for (let b = 0; b < 288; b++) {{
         const cell = document.createElement('div');
@@ -9082,8 +9094,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               showTooltip(e, '<div class="tkn-tt-title">' + dateStr + ' ' + timeStr + '</div><div>0 tokens (quiet 5m)</div>');
             }});
           }} else {{
-            const loc = bRow[0], gw = bRow[1], tot = bRow[2], calls = bRow[3], top = bRow[4];
-            dayTotal += tot; dayGw += gw; dayLoc += loc; dayCalls += calls;
+            const loc = bRow[0], gw = bRow[1], other = bRow[2], tot = bRow[3], calls = bRow[4], top = bRow[5];
+            dayTotal += tot; dayGw += gw; dayLoc += loc; dayOther += other; dayCalls += calls;
             const lvl = getLevel(gw > 0 ? gw : loc, q);
             cell.classList.add(gw > 0 ? ('gw-lvl-' + lvl) : ('loc-lvl-' + lvl));
             cell.addEventListener('mouseenter', (e) => {{
@@ -9106,7 +9118,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         if (isMissing) {{
           info.textContent = 'Date ' + dateStr + ' has no recorded LLM calls data (unobserved gap).';
         }} else {{
-          info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local) across ' + dayCalls + ' calls.';
+          const invalidDays = (data.summary && data.summary.invalid_days) || [];
+          const integrity = invalidDays.includes(dateStr) ? ' · incomplete (malformed token rows excluded)' : '';
+          info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local, ' + fmtTok(dayOther) + ' other) across ' + dayCalls + ' calls.' + integrity;
         }}
       }}
     }}
