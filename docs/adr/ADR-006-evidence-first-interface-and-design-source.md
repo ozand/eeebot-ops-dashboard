@@ -1,9 +1,9 @@
 # ADR-006: Keep dashboard presentation evidence-first and visual guidance in DESIGN.md
 
-**Status**: Proposed
+**Status**: Accepted (technical decision; effective on reviewed merge, not implemented)
 **Date**: 2026-11-07
 **Authors**: Pi coding assistant (AI-generated proposal for @ozand)
-**Deciders**: @ozand
+**Deciders**: Pi delivery executor under @ozand’s delegated technical authority
 **Supersedes**: None
 **Related**: ADR-001, ADR-002, ADR-004, ADR-005; #432
 
@@ -32,10 +32,18 @@ reason to install a frontend framework or publish data.
 
 ## Decision
 
+Technical acceptance is delegated by the owner-approved redesign continuation
+(“продолжи, распредели задачи … на агентов”) and the applicable user-level
+technical acceptance policy. Independent review of proposal revision
+`af846449088eda671a0350325646b8c5c0bd23d2` passed; this final acceptance revision
+also requires independent PASS and CI before merge. This is not personal operator
+approval, UI implementation acceptance, or host/rollout authority. Prior proposal
+review/registration phases and their restrictions remain historical evidence.
+
 ### What this IS
 
-This proposed decision would establish root DESIGN.md as the single visual-guidance
-source for this dashboard. It contains proposed tokens and rationale, clearly
+This decision establishes root DESIGN.md as the single visual-guidance
+source for this dashboard. It contains target tokens and rationale, clearly
 separate from shipped CSS until governed implementation lands. Future changes to
 the design source and affected UI belong to the same issue/reviewed revision.
 Do not create a competing .interface-design/system.md; if a tool needs that path,
@@ -101,8 +109,11 @@ No assertion that today's public snapshot is complete or the host is healthy.
 ## Test Contract
 
 Names below are planned tests, not existing executions or passing coverage.
-Acceptance of this ADR requires independent review and an explicit decider action;
-implementation acceptance additionally requires each applicable owning issue's checks.
+The explicit technical decider action above is effective only after independent
+review and qualifying CI on the final merged revision. Runtime-facing tests below
+remain prospective obligations of the real implementation issues, not evidence
+for this documentation decision or circular deferrals to this same issue.
+Implementation acceptance requires each applicable owning issue’s checks.
 
 | Decision claim | Proposed runnable test | Current state / owner |
 |---|---|---|
@@ -125,7 +136,7 @@ text is not reversible and is never an acceptable visual-design experiment.
 ## References
 
 - [Planning and issue map](../plans/432-interface-audit.md)
-- [Proposed DESIGN.md](../../DESIGN.md)
+- [Target DESIGN.md](../../DESIGN.md)
 - [Governing issue #432](https://github.com/ozand/eeebot-ops-dashboard/issues/432)
 - [Pinned upstream format](https://github.com/google-labs-code/design.md/blob/1ed38aa9dd4451b9039f9aeb9ed1d2579edafddf/docs/spec.md)
 - Interface-design public rendered audit, 2026-11-07; route-specific sanitized

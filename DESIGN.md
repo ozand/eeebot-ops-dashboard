@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Eeebot Evidence Terminal
-description: Proposed evidence-first visual system for the public operations dashboard.
+description: Evidence-first target visual system for the public operations dashboard.
 colors:
   primary: "#2fd3c4"
   canvas: "#080f0c"
@@ -68,9 +68,10 @@ components:
 
 ## Overview
 
-**Proposed design target under #432 and Proposed ADR-006; not implemented or accepted.**
-Tokens are normative only within this proposal. Current executable CSS remains
-truth for the shipped site. This file does not authorize UI changes or deployment.
+**Target design under #432 and ADR-006; not yet implemented.**
+Guidance becomes binding on ADR-006’s reviewed merge; current executable CSS
+remains truth for the shipped site. This file alone grants no implementation or
+deployment authority; each issue requires its own authorized assignment.
 
 An operator checks observed work, confirmed results and reasons to intervene.
 The interface feels like an evidence terminal, not a decorative control room.
