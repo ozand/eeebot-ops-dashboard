@@ -50,7 +50,6 @@ components:
   action:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.primary}"
-    height: 44px
     rounded: "{rounded.sm}"
   success:
     backgroundColor: "{colors.surface}"
@@ -121,7 +120,9 @@ additional age condition, not a replacement for measured/missing value semantics
 Do not change stored enum/schema contracts to obtain these presentation labels.
 
 Controls use native links/buttons/inputs first. Provide persistent names, visible
-focus, current-page/pressed semantics, and non-overlapping 44px touch targets.
+focus, current-page/pressed semantics, and non-overlapping touch targets with
+min-height: 44px. Actions grow for wrapping labels; never fix height at 44px.
+Minimum height is prose because the pinned format has no minHeight token.
 Support loading, empty, unavailable and retry states where relevant. Selected
 chart values must be readable without hover; avoid thousands of tab stops.
 
