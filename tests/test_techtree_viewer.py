@@ -2380,15 +2380,16 @@ def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     data['health_last_integrated_ts'] = '2026-09-01T01:50:00Z'
     data['health_recent_outcomes'] = ['integrated']
     html = tv.render_pages(data, host='eeepc', generated_at='2026-09-01 02:00:00')['index.html']
-    strip = tv.build_empire_stats_strip(data['scorecard'], age_seconds=120, generated_at='2026-09-01 02:00:00')
+    strip_header, strip_context = tv.build_empire_stats_strip(data['scorecard'], age_seconds=120, generated_at='2026-09-01 02:00:00', separate_context=True)
 
     assert '<section class="health-verdict health-' in html
     assert '<strong>FEEDS OK</strong>' in html  # #276: narrowed from HEALTHY, badge scope is 4 feeds
     assert 'all signals within thresholds across 1 monitored feeds (usage)' in html
-    assert strip in html
+    assert strip_header in html
+    assert strip_context in html
     # Anchor on the banner markup, not the bare class name: the class also
     # appears earlier in the <head> stylesheet.
-    assert html.index('<section class="health-verdict') > html.index(strip)
+    assert html.index('<section class="health-verdict') < html.index(strip_context)
 
 
 def test_issue182_health_verdict_bridge_exit_streak() -> None:
@@ -4081,7 +4082,20 @@ def test_issue70_every_page_has_shared_chrome_and_nav_current() -> None:
     assert 'href="tokens.html" class="nav-current"' in pages['tokens.html']
     assert 'href="lessons.html" class="nav-current"' in pages['lessons.html']
     assert 'href="agent.html" class="nav-current"' in pages['agent.html']
-    assert 'href="hypotheses.html" class="nav-current"' in pages['hypotheses.html']
+    assert 'href="hypotheses.html" class="nav-current" aria-current="page"' in pages['hypotheses.html']
+    assert all('aria-current="page"' in pages[name] for name, _label in tv.SITE_PAGES)
+    assert 'empire-stats-context' in pages['index.html']
+    assert 'class="empire-stats"' not in pages['index.html'].split('</header>', 1)[0]
+
+
+def test_issue434_current_navigation_is_semantic_and_snapshot_stays_in_header() -> None:
+    pages = _site()
+    for filename, _label in tv.SITE_PAGES:
+        page = pages[filename]
+        current = page.split('<nav class="panel-nav site-nav"', 1)[1].split('</nav>', 1)[0]
+        assert current.count('aria-current="page"') == 1, filename
+        assert 'class="empire-fresh"' in page.split('</header>', 1)[0], filename
+        assert 'class="empire-stats"' not in page.split('</header>', 1)[0], filename
 
 
 def test_issue70_no_nav_link_404s() -> None:

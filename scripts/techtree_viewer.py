@@ -6861,7 +6861,7 @@ def build_cycle_feed(
                 ]
         # Issue #89/#72: client-side outcome filter, state in URL hash (#f-<kind>).
         filter_buttons = ''.join(
-            f'<button class="filter-btn" data-filter="{k}">{k}</button>'
+            f'<button type="button" class="filter-btn" data-filter="{k}" aria-pressed="false">{k}</button>'
             for k in (
                 'all', 'integrated', 'failed', 'partial', 'skipped', 'push_pending',
                 # #297: pushed_late folds into 'integrated' above (a delayed
@@ -6925,7 +6925,7 @@ def build_cycle_feed(
             'function apply(k){var rows=getRows(),shown=0;'
             'rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});'
             'var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}'
-            'bar.querySelectorAll(".filter-btn").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-filter")===k);});}'
+            'bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.getAttribute("data-filter")===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}'
             'var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";'
             'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
             'bar.addEventListener("click",function(e){'
@@ -8360,9 +8360,12 @@ def build_empire_stats_strip(
     scorecard: dict[str, Any] | None,
     age_seconds: float | None = None,
     generated_at: str | None = None,
-) -> str:
+    *,
+    separate_context: bool = False,
+) -> str | tuple[str, str]:
     if not isinstance(scorecard, dict):
-        return unavailable_panel('Empire Stats', 'scorecard unavailable')
+        unavailable = unavailable_panel('Empire Stats', 'scorecard unavailable')
+        return ('', unavailable) if separate_context else unavailable
 
     loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
     cost = scorecard.get('cost') if isinstance(scorecard.get('cost'), dict) else {}
@@ -8471,14 +8474,15 @@ def build_empire_stats_strip(
 
     prov_html = _build_provenance_badge(scorecard)
 
-    return f'''
+    header = f'''
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats">{stat_html}</div>
       {prov_html}
       <div class="empire-fresh">{freshness_html}</div>
     </header>
     '''
+    stats = f'<details class="empire-stats-context"><summary>Scorecard metrics</summary><div class="empire-stats" aria-label="Scorecard metrics">{stat_html}</div></details>'
+    return (header, stats) if separate_context else header + stats
 
 
 # ---------------------------------------------------------------------------
@@ -8547,10 +8551,10 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
   <div class="tkn-controls">
     <span class="tkn-ctrl-label">View:</span>
-    <button type="button" class="tkn-btn active" data-view="split">Split View (Self-hosted vs Vendor)</button>
-    <button type="button" class="tkn-btn" data-view="gateway">Vendor API (Gemini / Claude)</button>
-    <button type="button" class="tkn-btn" data-view="local">Self-hosted GPU (Qwen)</button>
-    <button type="button" class="tkn-btn" data-view="total">Combined Total</button>
+    <button type="button" class="tkn-btn active" data-view="split" aria-pressed="true">Split View (Self-hosted vs Vendor)</button>
+    <button type="button" class="tkn-btn" data-view="gateway" aria-pressed="false">Vendor API (Gemini / Claude)</button>
+    <button type="button" class="tkn-btn" data-view="local" aria-pressed="false">Self-hosted GPU (Qwen)</button>
+    <button type="button" class="tkn-btn" data-view="total" aria-pressed="false">Combined Total</button>
   </div>
 
   <div class="tkn-grid-container" id="tkn-grid-container">
@@ -9130,8 +9134,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     document.querySelectorAll('.tkn-btn').forEach(btn => {{
       btn.addEventListener('click', () => {{
-        document.querySelectorAll('.tkn-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tkn-btn').forEach(b => {{ b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); }});
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         const view = btn.getAttribute('data-view');
         const cardGw = document.getElementById('tkn-card-gw');
         const cardLoc = document.getElementById('tkn-card-loc');
@@ -9167,10 +9172,7 @@ CSS = '''
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    html, body {
-      overflow-x: hidden;
-      max-width: 100vw;
-    }
+    html, body { max-width: 100%; }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
@@ -9189,11 +9191,14 @@ CSS = '''
       border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 18px;
+      gap: 8px 18px;
     }
+    .empire-stats-context { max-width: 1280px; margin: 0 auto; padding: 8px 20px; border-bottom: 1px solid #182a20; }
+    .empire-stats-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #8aa695; }
+    .empire-stats-context .empire-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; padding-top: 8px; }
+    .empire-stats-context .empire-stat { min-width: 0; }
     .empire-title {
       color: #56d364;
       font-size: 1.05em;
@@ -9203,12 +9208,8 @@ CSS = '''
       margin: 0;
       font-weight: 700;
     }
-    .empire-stats {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 18px;
-    }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-stat { display: flex; flex-direction: column; align-items: flex-start; min-width: 78px; max-width: 100%; overflow-wrap: anywhere; }
+    .empire-stat .stat-value { overflow-wrap: anywhere; }
 
     /* --- freshness badge (issue #48) --- */
     .empire-fresh { margin-left: auto; white-space: nowrap; }
@@ -9554,12 +9555,16 @@ CSS = '''
 
     /* --- panel nav + copyable ids (issue #47) --- */
     .panel-nav {
-      padding: 6px 20px;
+      padding: 4px 16px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
       border-bottom: 1px solid #182a20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 8px;
     }
-    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
     .panel-nav a:hover { text-decoration: underline; }
     /* Issue #70: multi-page site nav -- current page highlighted. */
     .site-nav a.nav-current {
@@ -9567,6 +9572,13 @@ CSS = '''
       font-weight: 700;
       text-decoration: underline;
     }
+    a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid #2fd3c4;
+      outline-offset: 2px;
+    }
+    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-height: 44px; padding: 8px 12px; }
+    .filter-btn.active, .tkn-btn.active, .lineage-day-controls button.active { color: #56d364; border-color: #56d364; }
+    button[aria-pressed="true"] { color: #56d364; border-color: #56d364; }
     /* Issue #70: index teasers. */
     .teaser-list {
       list-style: none;
@@ -9964,7 +9976,7 @@ CSS = '''
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
     .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
-    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
@@ -10003,7 +10015,7 @@ CSS = '''
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
-    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
     .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
     .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
     .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
@@ -10558,9 +10570,9 @@ TECHTREE_REDIRECT = '''<!doctype html>
 def _site_nav(current: str) -> str:
     parts = []
     for fname, label in SITE_PAGES:
-        cls = ' class="nav-current"' if fname == current else ''
-        parts.append(f'<a href="{fname}"{cls}>{label}</a>')
-    return '<nav class="panel-nav site-nav" aria-label="Sections">' + ' &middot; '.join(parts) + '</nav>'
+        attrs = ' class="nav-current" aria-current="page"' if fname == current else ''
+        parts.append(f'<a href="{fname}"{attrs}>{label}</a>')
+    return '<nav class="panel-nav site-nav" aria-label="Sections">' + ''.join(parts) + '</nav>'
 
 
 # Issue #250: lineage.html is the one application-shaped page -- the graph owns
@@ -10735,11 +10747,13 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     else:
         source_age = 'age unknown'
 
-    empire_strip = build_empire_stats_strip(
+    empire_strip_result = build_empire_stats_strip(
         scorecard,
         age_seconds=age_seconds if isinstance(age_seconds, (int, float)) else None,
         generated_at=generated_at,
+        separate_context=True,
     )
+    empire_strip, empire_stats = empire_strip_result
     now_panel = build_now_panel(
         portfolio=portfolio,
         evolution_tree=evolution_tree,
@@ -10840,6 +10854,12 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     )
 
     def _page(title: str, current: str, page_main: str) -> str:
+        if current == 'cycle.html':
+            current = 'cycles.html'
+        if current == 'index.html':
+            page_main = page_main.replace('</section>', '</section>' + empire_stats, 1)
+        else:
+            page_main = empire_stats + page_main
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
                           computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
