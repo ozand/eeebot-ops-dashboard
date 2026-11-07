@@ -6865,6 +6865,47 @@ def test_rendered_tokens_legacy_payload_reports_completeness_unknown() -> None:
     assert summary.endswith(' · completeness unknown')
 
 
+def test_token_heatmap_readers_filter_invalid_dates_to_retained_window(tmp_path: Path) -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    state = tmp_path / 'state'
+    llm_dir = state / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    rows = [
+        {'ts': '2020-01-01T12:00:00Z', 'model': 'un/qwen', 'total_tokens': 'outside-canary'},
+        {'ts': '2026-11-08T12:00:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 'inside-canary'},
+    ]
+    (llm_dir / '2026-11-08.jsonl').write_text('\n'.join(map(json.dumps, rows)) + '\n', encoding='utf-8')
+    local = tv.read_token_heatmap(state)
+    assert local is not None
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}')
+    remote_script = state.parent / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run([tv.sys.executable, str(remote_script)], text=True, capture_output=True, check=True)
+    remote_heatmap = json.loads(remote.stdout)['token_heatmap']
+    assert local == remote_heatmap
+    assert len(local['dates']) == 62
+    assert local['dates'][-1] == '2026-11-08'
+    assert local['summary']['invalid_days'] == ['2026-11-08']
+    projected, _ = split_render_inputs({'token_heatmap': local})
+    assert projected['token_heatmap']['summary']['invalid_days'] == ['2026-11-08']
+
+    only_outside = [rows[0]]
+    (llm_dir / '2026-11-08.jsonl').write_text(json.dumps(only_outside[0]) + '\n', encoding='utf-8')
+    local_outside = tv.read_token_heatmap(state)
+    assert local_outside is not None
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}')
+    remote_script.write_text(script, encoding='utf-8')
+    remote_outside = subprocess.run([tv.sys.executable, str(remote_script)], text=True, capture_output=True, check=True)
+    embedded_outside = json.loads(remote_outside.stdout)['token_heatmap']
+    assert local_outside == embedded_outside
+    assert local_outside['summary']['invalid_days'] == []
+    projected_outside, _ = split_render_inputs({'token_heatmap': local_outside})
+    assert projected_outside['token_heatmap']['summary']['invalid_days'] == []
+
+
 def test_token_heatmap_local_and_embedded_reader_parity(tmp_path: Path) -> None:
     state = tmp_path / 'state'
     llm_dir = state / 'llm_calls'

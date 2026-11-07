@@ -3495,7 +3495,7 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
             'days_span': len(calendar_dates),
             'days_present': days_present_count,
             'days_missing': len(calendar_dates) - days_present_count,
-            'invalid_days': sorted(msk_invalid_dates),
+            'invalid_days': sorted(msk_invalid_dates.intersection(calendar_dates)),
             'timezone': 'MSK',
             'timezone_offset_hours': 3,
             'source_timezone': 'UTC',
