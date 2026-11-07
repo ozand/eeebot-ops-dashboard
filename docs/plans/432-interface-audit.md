@@ -20,7 +20,7 @@ Not a full WCAG certification, source audit, host-health check or performance te
 | Day total/categories/call arithmetic | [#433](https://github.com/ozand/eeebot-ops-dashboard/issues/433) | P0 regression; no diagnosed producer cause |
 | Shared header/navigation/type/controls | [#434](https://github.com/ozand/eeebot-ops-dashboard/issues/434) | Proposed DESIGN.md; preserve #38 identity |
 | index.html: work/result/attention hierarchy | [#435](https://github.com/ozand/eeebot-ops-dashboard/issues/435) | Preserve #395/#390, no new rest reader |
-| lineage.html: orientation/mobile list | [#436](https://github.com/ozand/eeebot-ops-dashboard/issues/436) | Preserve existing #213/#218 behavior and Proposed ADR-001 |
+| lineage.html: orientation/mobile list | [#436](https://github.com/ozand/eeebot-ops-dashboard/issues/436) | Preserve existing #213/#218 behavior and Accepted ADR-001 |
 | cycles.html: compact feed/filter coverage | [#437](https://github.com/ozand/eeebot-ops-dashboard/issues/437) | #406/#408 retain duration semantics |
 | tokens.html: scale/period/selection | [#438](https://github.com/ozand/eeebot-ops-dashboard/issues/438) | After #433; no monetary cost inference |
 | lessons.html: titles/corpus/archive/search | [#439](https://github.com/ozand/eeebot-ops-dashboard/issues/439) | Preserve #246/#274 privacy/corpus distinction |

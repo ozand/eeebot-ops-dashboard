@@ -18,7 +18,9 @@ of runtime health, reader permissions, arithmetic cause or a WCAG certification.
 
 The existing retro-terminal identity is intentional (#38). Replacing it with a
 new framework/theme would add cost without addressing interpretation. Existing
-ADRs 001/002/004/005 are Proposed; this record does not accept or rewrite them.
+ADR-001 is Accepted (Design Gate Approved with Invariant Constraints, #218),
+per its own header; its index row was stale. ADRs 002/004/005 are Proposed.
+This record preserves ADR-001 invariants and does not accept or rewrite any ADR.
 #386 owns current-source versus historical-observation authority; #406/#408 own
 cycle timing semantics. Work-unit pilot #421/#423/#425/#427 is separate.
 
