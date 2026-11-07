@@ -864,6 +864,7 @@ def read_token_heatmap(max_days=62):
     msk_raw_hourly = {}
     msk_raw_5min = {}
     msk_records_dates = set()
+    msk_invalid_dates = set()
 
     for n in active_names:
         fpath = os.path.join(ldir, n)
@@ -898,15 +899,24 @@ def read_token_heatmap(max_days=62):
                     h_msk = dt_msk.hour
                     m_msk = dt_msk.minute
                     b_idx = h_msk * 12 + (m_msk // 5)
+                    msk_records_dates.add(d_msk)
 
                     tok = row.get("total_tokens")
-                    if not isinstance(tok, (int, float)) or isinstance(tok, bool) or tok < 0:
-                        tok = (row.get("prompt_tokens") or 0) + (row.get("completion_tokens") or 0)
-                    tok = int(tok) if isinstance(tok, (int, float)) and not isinstance(tok, bool) else 0
+                    if "total_tokens" not in row:
+                        prompt = row.get("prompt_tokens")
+                        completion = row.get("completion_tokens")
+                        valid_prompt = isinstance(prompt, int) and not isinstance(prompt, bool) and prompt >= 0
+                        valid_completion = isinstance(completion, int) and not isinstance(completion, bool) and completion >= 0
+                        if valid_prompt and valid_completion:
+                            tok = prompt + completion
+                        else:
+                            msk_invalid_dates.add(d_msk)
+                            continue
+                    if not isinstance(tok, int) or isinstance(tok, bool) or tok < 0:
+                        msk_invalid_dates.add(d_msk)
+                        continue
                     cat = classify_model(row.get("model"))
                     comp = str(row.get("component") or "unknown").strip().lower()
-
-                    msk_records_dates.add(d_msk)
 
                     if d_msk not in msk_raw_hourly:
                         msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
@@ -1034,6 +1044,7 @@ def read_token_heatmap(max_days=62):
             "days_span": len(calendar_dates),
             "days_present": days_present_count,
             "days_missing": len(calendar_dates) - days_present_count,
+            "invalid_days": sorted(msk_invalid_dates.intersection(calendar_dates)),
             "timezone": "MSK",
             "timezone_offset_hours": 3,
             "source_timezone": "UTC",
@@ -3333,9 +3344,10 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
                     h_msk = dt_msk.hour
                     m_msk = dt_msk.minute
                     b_idx = h_msk * 12 + (m_msk // 5)
+                    msk_records_dates.add(d_msk)
 
                     tok = row.get('total_tokens')
-                    if tok is None:
+                    if 'total_tokens' not in row:
                         prompt = row.get('prompt_tokens')
                         completion = row.get('completion_tokens')
                         valid_prompt = isinstance(prompt, int) and not isinstance(prompt, bool) and prompt >= 0
@@ -3351,8 +3363,6 @@ def read_token_heatmap(root: Path | str, max_days: int = 62) -> dict[str, Any] |
 
                     cat = classify_model(str(row.get('model') or ''))
                     comp = str(row.get('component') or 'unknown').strip().lower()
-
-                    msk_records_dates.add(d_msk)
 
                     if d_msk not in msk_raw_hourly:
                         msk_raw_hourly[d_msk] = [[0, 0, 0, 0, 0, {}] for _ in range(24)]
@@ -9118,8 +9128,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         if (isMissing) {{
           info.textContent = 'Date ' + dateStr + ' has no recorded LLM calls data (unobserved gap).';
         }} else {{
-          const invalidDays = (data.summary && data.summary.invalid_days) || [];
-          const integrity = invalidDays.includes(dateStr) ? ' · incomplete (malformed token rows excluded)' : '';
+          const hasIntegrity = data.summary && Array.isArray(data.summary.invalid_days);
+          const invalidDays = hasIntegrity ? data.summary.invalid_days : [];
+          const integrity = invalidDays.includes(dateStr) ? ' · incomplete (malformed token rows excluded)' : (hasIntegrity ? '' : ' · completeness unknown');
           info.textContent = dateStr + ' Summary: ' + fmtTok(dayTotal) + ' total tokens (' + fmtTok(dayGw) + ' gateway, ' + fmtTok(dayLoc) + ' local, ' + fmtTok(dayOther) + ' other) across ' + dayCalls + ' calls.' + integrity;
         }}
       }}
