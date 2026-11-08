@@ -400,7 +400,7 @@ _ABOUT_STYLE = '''<style>
 .about-table th { font-weight: 600; }
 .about-note { font-size: 0.9em; opacity: 0.85; margin: 0.5em 0; }
 .about-glossary dt { font-weight: 600; margin-top: 0.6em; }
-.about-glossary dd { margin: 0.15em 0 0.4em 1em; }
+.about-glossary dd { min-width: 0; overflow-wrap: anywhere; margin: 0.15em 0 0.4em 1em; }
 .about-source { opacity: 0.7; font-size: 0.85em; }
 </style>'''
 
