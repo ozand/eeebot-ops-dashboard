@@ -6098,7 +6098,8 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     lessons = tv.build_lessons_panel([{'id': 'LESS-1', 'date': '2026-09-01', 'problem': 'needle', 'solution': 'fix'}])
 
     assert 'data-filter-empty' in cycles
-    assert '0 cycles with status' in cycles
+    assert 'data-filter-empty hidden>No matches in the loaded cycle window.' in cycles
+    assert 'matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)' in cycles
     assert '0 results for' in lessons
     assert 'data-filter-empty' in lessons
     assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only
