@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -7287,6 +7287,8 @@ def test_tokens_page_generated_and_weight_under_300kb() -> None:
             'total_calls': 24,
             'local_tokens': 24000,
             'gateway_tokens': 48000,
+            'other_tokens': 0,
+            'invalid_days': [],
             'days_span': 2,
             'days_present': 1,
             'days_missing': 1,
@@ -7314,6 +7316,7 @@ def test_tokens_page_generated_and_weight_under_300kb() -> None:
     assert '192.168.1.35' in tokens_html  # infrastructure routing notice
     assert 'tkn-infra-notice' in tokens_html
     assert 'tkn-strip-wrap' in tokens_html
+    assert '<div class="tkn-matrix-wrap" id="matrix-gw"></div>' in tokens_html
     assert 'cell-nodata' in tokens_html
     assert 'cell-zero' in tokens_html
     assert 'token-heatmap-data' in tokens_html
@@ -7327,6 +7330,82 @@ def test_index_page_contains_tokens_teaser() -> None:
     """Issue #223: index.html teaser list must link to tokens.html."""
     idx = _site()['index.html']
     assert 'href="tokens.html">tokens</a>' in idx
+
+
+def test_issue438_token_controls_period_selection_and_scale_provenance() -> None:
+    fixture = _fixture()
+    dates = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09']
+    fixture['token_heatmap'] = {
+        'dates': dates,
+        'hourly': {day: (None if day == '2026-09-02' else [[10, 20, 30, 1, 0, 'tool'] for _ in range(24)]) for day in dates},
+        'five_min': {day: {} for day in dates},
+        'summary': {'total_tokens': 5760, 'total_calls': 192, 'local_tokens': 1920,
+                    'gateway_tokens': 960, 'other_tokens': 2880, 'days_span': 9,
+                    'days_present': 8, 'days_missing': 1, 'invalid_days': ['2026-09-08'],
+                    'quantiles_hourly': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [5, 10, 20, 40]},
+                    'quantiles_5min': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [5, 10, 20, 40]}},
+    }
+    html = tv.render_pages(fixture, host='eeepc', generated_at='2026-09-10 12:00:00')['tokens.html']
+    assert 'id="tkn-period"' in html and 'value="24h"' in html and 'value="7d"' in html and 'value="30d"' in html
+    assert 'id="tkn-range-from"' in html and 'id="tkn-range-to"' in html
+    assert 'Selected MSK day' in html and 'Selected MSK hour' in html
+    assert 'independent quantile scales; equal color does not mean equal tokens' in html
+    assert "const count = period === '24h' ? 1" in html
+    assert "visibleDates().forEach(d =>" in html
+    assert 'hourly[dates[i]] !== null' in html
+    assert 'tkn-hour-detail' in html and 'unavailable or unobserved' in html
+
+
+def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    fixture = _fixture()
+    dates = [(date(2026, 9, 1) + timedelta(days=i)).isoformat() for i in range(35)]
+    hourly = {d: (None if i == 33 else ([[0, 0, 0, 0, 0, ''] for _ in range(24)] if i == 32 else [[10, 20, 30, 1, 0, 'tool'] for _ in range(24)])) for i, d in enumerate(dates)}
+    fixture['token_heatmap'] = {
+        'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else {}) for i, d in enumerate(dates)},
+        'summary': {'total_tokens': 24480, 'total_calls': 816, 'local_tokens': 8160,
+                    'gateway_tokens': 16320, 'other_tokens': 0, 'days_span': 35,
+                    'days_present': 34, 'days_missing': 1, 'invalid_days': [dates[-2]],
+                    'quantiles_hourly': {'gateway': [10, 20, 40, 80], 'local': [5, 10, 20, 40], 'total': [20, 40, 80, 160]},
+                    'quantiles_5min': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [10, 20, 40, 80]}},
+    }
+    html = tv.render_pages(fixture, 'synthetic')['tokens.html']
+    assert 'independent quantile scales; equal color does not mean equal tokens' in html
+    path = tmp_path / 'tokens-438.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
+        assert page.goto(path.as_uri()).status == 200
+        period = page.locator('#tkn-period')
+        period.select_option('24h')
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 1
+        assert page.locator('#tkn-total-tokens').inner_text() == '720'
+        period.select_option('7d')
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 7
+        assert page.locator('#tkn-total-tokens').inner_text() == '3.6K'
+        assert page.locator('#tkn-vendor-tokens').inner_text().startswith('2.4K')
+        assert page.locator('#tkn-local-tokens').inner_text().startswith('1.2K')
+        assert page.locator('#tkn-total-calls').inner_text() == '120'
+        assert page.locator('#tkn-period-label').inner_text().startswith('Showing 7d')
+        page.locator('#tkn-selected-day').select_option(dates[-2])
+        assert 'unobserved gap' in page.locator('#tkn-detail-info').inner_text()
+        page.locator('#tkn-selected-day').select_option(dates[-1])
+        hour_control = page.locator('#tkn-selected-hour')
+        hour_control.focus()
+        page.keyboard.press('ArrowDown')
+        assert hour_control.input_value() == '1'
+        assert '01:00 MSK' in page.locator('#tkn-hour-detail').inner_text()
+        assert '30' in page.locator('#tkn-hour-detail').inner_text()
+        page.locator('#tkn-selected-day').select_option(dates[-3])
+        page.locator('#tkn-selected-hour').select_option('13')
+        assert 'total 0' in page.locator('#tkn-hour-detail').inner_text() and '0 calls' in page.locator('#tkn-hour-detail').inner_text()
+        period.select_option('range')
+        page.locator('#tkn-range-from').fill(dates[-3])
+        page.locator('#tkn-range-to').fill(dates[-1])
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 3
+        browser.close()
 
 
 def test_tokens_page_has_explicit_msk_and_utc_notice() -> None:

@@ -8720,26 +8720,38 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
   <div class="tkn-kpi-strip">
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(total_tokens)}</div>
-      <div class="tkn-kpi-lbl">Total Tokens</div>
+      <div class="tkn-kpi-val" id="tkn-total-tokens">{fmt_tokens(total_tokens)}</div>
+      <div class="tkn-kpi-lbl">Total Tokens · selected period</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-val" id="tkn-vendor-tokens">{fmt_tokens(vendor_tokens)} <span class="tkn-kpi-pct">({gw_pct:.1f}%)</span></div>
       <div class="tkn-kpi-lbl">Vendor API (cl/*, an/*)</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-val" id="tkn-local-tokens">{fmt_tokens(self_hosted_tokens)} <span class="tkn-kpi-pct">({loc_pct:.1f}%)</span></div>
       <div class="tkn-kpi-lbl">Self-hosted GPU (un/qwen)</div>
     </div>
-{other_kpi_card}
+    <div class="tkn-kpi-card" id="tkn-other-card"{'' if other_tokens > 0 else ' hidden'}>
+      <div class="tkn-kpi-val" id="tkn-other-tokens">{fmt_tokens(other_tokens)} <span class="tkn-kpi-pct">({oth_pct:.1f}%)</span></div>
+      <div class="tkn-kpi-lbl">Unclassified models</div>
+    </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{total_calls:,}</div>
+      <div class="tkn-kpi-val" id="tkn-total-calls">{total_calls:,}</div>
       <div class="tkn-kpi-lbl">LLM Calls</div>
     </div>
     <div class="tkn-kpi-card">
-      <div class="tkn-kpi-val">{days_span}d <span class="tkn-kpi-pct">({days_present} active, {days_missing} unobserved)</span></div>
+      <div class="tkn-kpi-val" id="tkn-period-days">{days_span}d <span class="tkn-kpi-pct">({days_present} active, {days_missing} unobserved)</span></div>
       <div class="tkn-kpi-lbl">Calendar Window</div>
     </div>
+  </div>
+
+  <div class="tkn-period-controls" role="group" aria-label="Token heatmap period and selection">
+    <label>Period <select id="tkn-period" aria-label="Token heatmap period"><option value="24h">24 hours (latest MSK day)</option><option value="7d" selected>7 days</option><option value="30d">30 days</option><option value="range">Date range</option></select></label>
+    <label>From <input type="date" id="tkn-range-from" aria-label="Range start"></label>
+    <label>To <input type="date" id="tkn-range-to" aria-label="Range end"></label>
+    <label>Selected day <select id="tkn-selected-day" aria-label="Selected MSK day"></select></label>
+    <label>Selected hour <select id="tkn-selected-hour" aria-label="Selected MSK hour"></select></label>
+    <span id="tkn-period-label" role="status" aria-live="polite"></span>
   </div>
 
   <div class="tkn-controls">
@@ -8754,8 +8766,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-card" id="tkn-card-gw">
       <div class="tkn-card-header">
         <h3>Vendor API (cl/*, an/* — Cloud Providers)</h3>
-        <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Quantile scale</span>
+        <span class="tkn-card-sub">Proposer, Reflector, Strategist, Curator &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within each chart to inspect retained days. Color quantiles are independent per chart.</p>
       <div class="tkn-matrix-wrap" id="matrix-gw"></div>
       <div class="tkn-legend" id="legend-gw"></div>
     </div>
@@ -8763,8 +8776,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-card" id="tkn-card-loc">
       <div class="tkn-card-header">
         <h3>Self-hosted GPU (un/* — Qwen на 3090Ti)</h3>
-        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Quantile scale</span>
+        <span class="tkn-card-sub">Bridge Executor (без потокенной оплаты) &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within each chart to inspect retained days. Color quantiles are independent per chart.</p>
       <div class="tkn-matrix-wrap" id="matrix-loc"></div>
       <div class="tkn-legend" id="legend-loc"></div>
     </div>
@@ -8772,8 +8786,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-card" id="tkn-card-tot" style="display: none;">
       <div class="tkn-card-header">
         <h3>Combined Total LLM Calls</h3>
-        <span class="tkn-card-sub">All models aggregated &bull; Quantile scale</span>
+        <span class="tkn-card-sub">All models aggregated &bull; Independent quantile scale</span>
       </div>
+      <p class="tkn-scroll-cue">Scroll within this chart to inspect retained days. Color quantiles are independent.</p>
       <div class="tkn-matrix-wrap" id="matrix-tot"></div>
       <div class="tkn-legend" id="legend-tot"></div>
     </div>
@@ -8799,7 +8814,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-strip-hours">
       <span>00h</span><span>03h</span><span>06h</span><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>21h</span><span>24h</span>
     </div>
-    <div class="tkn-detail-info" id="tkn-detail-info">Hover over any 5-minute block to inspect tokens and top component.</div>
+    <div class="tkn-detail-info" id="tkn-detail-info" role="status" aria-live="polite">Select a day and hour above for the recorded hour summary.</div>
+    <div class="tkn-detail-info" id="tkn-hour-detail" aria-live="polite"></div>
   </div>
 
   <div id="tkn-tooltip" class="tkn-tooltip" style="display: none;"></div>
@@ -8849,6 +8865,14 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       color: #8b949e;
       font-weight: 600;
     }}
+    .tkn-period-controls {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0; padding:8px; border:1px solid #30363d; border-radius:6px; }}
+    .tkn-period-controls label {{ display:flex; flex-direction:column; gap:4px; color:#8b949e; font-size:.78rem; }}
+    .tkn-period-controls select, .tkn-period-controls input {{ min-height:44px; min-width:100px; padding:8px; color:#dcebe1; background:#161b22; border:1px solid #3d6b52; border-radius:4px; }}
+    .tkn-period-controls [type=date] {{ min-width:150px; }}
+    .tkn-period-controls [role=status] {{ flex:1 1 100%; color:#8b949e; }}
+    .tkn-scroll-cue {{ margin:4px 0 10px; color:#8b949e; font-size:.78rem; }}
+    .tkn-day-col {{ min-width:20px; min-height:308px; }}
+    .tkn-day-col:focus-visible, .tkn-cell:focus-visible {{ outline:3px solid #f0883e; outline-offset:2px; }}
     .tkn-btn {{
       background: #21262d;
       color: #c9d1d9;
@@ -8930,6 +8954,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     }}
     .tkn-matrix-wrap {{
       display: flex;
+      max-width: 100%;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
       gap: 2px;
       user-select: none;
       padding-bottom: 4px;
@@ -9103,10 +9130,68 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     const dates = data.dates;
     const hourly = data.hourly || {{}};
+    const periodControl = document.getElementById('tkn-period');
+    const selectedDay = document.getElementById('tkn-selected-day');
+    const selectedHour = document.getElementById('tkn-selected-hour');
+    let period = '7d';
+    function visibleDates() {{
+      const from = document.getElementById('tkn-range-from').value;
+      const to = document.getElementById('tkn-range-to').value;
+      if (period === 'range') return dates.filter(d => (!from || d >= from) && (!to || d <= to));
+      const count = period === '24h' ? 1 : (period === '30d' ? 30 : 7);
+      return dates.slice(-count);
+    }}
     const fiveMin = data.five_min || {{}};
     const summary = data.summary || {{}};
     const qHourly = summary.quantiles_hourly || {{}};
     const q5m = summary.quantiles_5min || {{}};
+    function updatePeriodLabel() {{
+      const label = document.getElementById('tkn-period-label');
+      if (!label) return;
+      const shown = visibleDates();
+      const from = shown[0] || 'no recorded dates';
+      const to = shown[shown.length - 1] || 'no recorded dates';
+      const periodName = period === '24h' ? '24h MSK calendar day (latest available date)' : period;
+      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens.';
+    }}
+    function updatePeriodSummary() {{
+      const shown = visibleDates();
+      let total = 0, gateway = 0, local = 0, other = 0, calls = 0, observed = 0;
+      shown.forEach(d => {{
+        const day = hourly[d];
+        if (day === null || day === undefined) return;
+        observed++;
+        day.forEach(row => {{
+          if (!row) return;
+          const rowLocal = Number(row[0]) || 0, rowGateway = Number(row[1]) || 0;
+          const rowTotal = Number(row[2]) || 0;
+          local += rowLocal; gateway += rowGateway; total += rowTotal;
+          calls += Number(row[3]) || 0;
+          other += Math.max(0, rowTotal - rowLocal - rowGateway);
+        }});
+      }});
+      document.getElementById('tkn-total-tokens').textContent = fmtTok(total);
+      document.getElementById('tkn-vendor-tokens').innerHTML = fmtTok(gateway) + ' <span class="tkn-kpi-pct">(' + (total ? (gateway / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      document.getElementById('tkn-local-tokens').innerHTML = fmtTok(local) + ' <span class="tkn-kpi-pct">(' + (total ? (local / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      const otherCard = document.getElementById('tkn-other-card');
+      if (otherCard) otherCard.hidden = other === 0;
+      const otherValue = document.getElementById('tkn-other-tokens');
+      if (otherValue) otherValue.innerHTML = fmtTok(other) + ' <span class="tkn-kpi-pct">(' + (total ? (other / total * 100).toFixed(1) : '0.0') + '%)</span>';
+      document.getElementById('tkn-total-calls').textContent = calls.toLocaleString();
+      document.getElementById('tkn-period-days').textContent = shown.length + 'd (' + observed + ' observed, ' + (shown.length - observed) + ' unobserved)';
+      const integrity = Array.isArray(summary.invalid_days);
+      const invalid = integrity ? summary.invalid_days.filter(d => shown.includes(d)).length : null;
+      document.getElementById('tkn-period-label').dataset.integrity = integrity ? (invalid ? invalid + ' incomplete day(s)' : 'integrity reported complete') : 'completeness unknown';
+      document.getElementById('tkn-period-label').textContent += ' · ' + document.getElementById('tkn-period-label').dataset.integrity;
+    }}
+    function fillPeriodControls() {{
+      selectedDay.replaceChildren();
+      visibleDates().forEach(d => {{ const o=document.createElement('option'); o.value=d; o.textContent=d + (hourly[d] == null ? ' · unobserved' : ''); selectedDay.appendChild(o); }});
+      selectedHour.replaceChildren();
+      for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
+      if (visibleDates().includes(activeDate)) selectedDay.value=activeDate;
+      else if (selectedDay.options.length) activeDate=selectedDay.value;
+    }}
 
     let activeDate = dates[dates.length - 1];
     for (let i = dates.length - 1; i >= 0; i--) {{
@@ -9171,7 +9256,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
       const q = qHourly[qKey] || [1000, 5000, 20000, 100000];
 
-      dates.forEach(d => {{
+      visibleDates().forEach(d => {{
         const col = document.createElement('div');
         col.className = 'tkn-day-col' + (d === activeDate ? ' active-col' : '');
         col.setAttribute('data-date', d);
@@ -9313,6 +9398,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     function selectDate(d) {{
       activeDate = d;
+      if (selectedDay) selectedDay.value = d;
+      if (selectedDay) selectedDay.value = d;
       document.querySelectorAll('.tkn-day-col').forEach(col => {{
         if (col.getAttribute('data-date') === d) {{
           col.classList.add('active-col');
@@ -9321,7 +9408,32 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         }}
       }});
       renderDayDetail(d);
+      updateHourDetail();
     }}
+
+    function updateHourDetail() {{
+      const dateStr = selectedDay.value, hour = Number(selectedHour.value);
+      const row = (hourly[dateStr] || [])[hour];
+      const panel = document.getElementById('tkn-hour-detail');
+      if (!row) {{ panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — time unavailable or unobserved.'; return; }}
+      panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — total ' + fmtTok(row[2]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', ' + row[3] + ' calls' + (row[5] ? ', top: ' + row[5] : ', component unavailable') + '.';
+    }}
+    function changePeriod() {{
+      period = periodControl.value;
+      const shown = visibleDates();
+      fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel();
+      if (shown.length) selectDate(selectedDay.value);
+      renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
+      renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
+      renderMatrix('matrix-tot', 'legend-tot', 2, 'total', 'tot-lvl');
+    }}
+    periodControl.addEventListener('change', changePeriod);
+    document.getElementById('tkn-range-from').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
+    document.getElementById('tkn-range-to').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
+    selectedDay.addEventListener('change', () => {{ selectDate(selectedDay.value); updateHourDetail(); }});
+    selectedHour.addEventListener('change', updateHourDetail);
+    for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
+    fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel(); updateHourDetail();
 
     renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
     renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
