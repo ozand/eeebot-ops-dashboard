@@ -8751,9 +8751,11 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <label>To <input type="date" id="tkn-range-to" aria-label="Range end"></label>
     <label>Selected day <select id="tkn-selected-day" aria-label="Selected MSK day"></select></label>
     <label>Selected hour <select id="tkn-selected-hour" aria-label="Selected MSK hour"></select></label>
+    <label>5-minute interval <select id="tkn-selected-interval" aria-label="Selected 5-minute MSK interval"></select></label>
     <span id="tkn-period-label" role="status" aria-live="polite"></span>
     <div class="tkn-detail-info" id="tkn-detail-info" role="status" aria-live="polite">Select a day and hour above for the recorded hour summary.</div>
     <div class="tkn-detail-info" id="tkn-hour-detail" aria-live="polite"></div>
+    <div class="tkn-detail-info" id="tkn-interval-detail" role="status" aria-live="polite"></div>
   </div>
 
   <div class="tkn-controls">
@@ -8868,6 +8870,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     .tkn-period-controls {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0; padding:8px; border:1px solid #30363d; border-radius:6px; }}
     .tkn-period-controls label {{ display:flex; flex-direction:column; gap:4px; color:#8b949e; font-size:.78rem; }}
     .tkn-period-controls select, .tkn-period-controls input {{ min-height:44px; min-width:100px; padding:8px; color:#dcebe1; background:#161b22; border:1px solid #3d6b52; border-radius:4px; }}
+    #tkn-selected-interval {{ min-width:150px; }}
     .tkn-period-controls [type=date] {{ min-width:150px; }}
     .tkn-period-controls [role=status] {{ flex:1 1 100%; color:#8b949e; }}
     .tkn-scroll-cue {{ margin:4px 0 10px; color:#8b949e; font-size:.78rem; }}
@@ -9133,6 +9136,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     const periodControl = document.getElementById('tkn-period');
     const selectedDay = document.getElementById('tkn-selected-day');
     const selectedHour = document.getElementById('tkn-selected-hour');
+    const selectedInterval = document.getElementById('tkn-selected-interval');
     let period = '7d';
     function visibleDates() {{
       const from = document.getElementById('tkn-range-from').value;
@@ -9192,8 +9196,10 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
       selectedDay.disabled = selectedDay.options.length === 0;
       selectedHour.disabled = selectedDay.options.length === 0;
+      selectedInterval.disabled = selectedDay.options.length === 0;
       if (visibleDates().includes(activeDate)) selectedDay.value=activeDate;
       else if (selectedDay.options.length) activeDate=selectedDay.value;
+      fillIntervalOptions();
     }}
 
     let activeDate = dates[dates.length - 1];
@@ -9333,6 +9339,36 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       }}
     }}
 
+    function fillIntervalOptions() {{
+      const previous = selectedInterval.value;
+      const hour = Number(selectedHour.value) || 0;
+      selectedInterval.replaceChildren();
+      for (let minute = 0; minute < 60; minute += 5) {{
+        const bucket = hour * 12 + minute / 5;
+        const option = document.createElement('option');
+        option.value = String(bucket);
+        option.textContent = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') + ' MSK';
+        selectedInterval.appendChild(option);
+      }}
+      selectedInterval.value = [...selectedInterval.options].some(option => option.value === previous)
+        ? previous : selectedInterval.options[0].value;
+      updateIntervalDetail();
+    }}
+
+    function updateIntervalDetail() {{
+      const panel = document.getElementById('tkn-interval-detail');
+      const dateStr = selectedDay.value;
+      if (!dateStr || selectedDay.disabled) {{ panel.textContent = 'No five-minute detail: select a recorded day.'; return; }}
+      const bucket = Number(selectedInterval.value);
+      const hour = Math.floor(bucket / 12), minute = (bucket % 12) * 5;
+      const time = dateStr + ' ' + String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') + ' MSK';
+      const buckets = fiveMin[dateStr];
+      if (buckets === null || buckets === undefined) {{ panel.textContent = time + ' — day unobserved; interval data unavailable.'; return; }}
+      const row = buckets[String(bucket)];
+      if (!row) {{ panel.textContent = time + ' — no five-minute bucket recorded; quiet versus absent interval is not distinguished by this projection.'; return; }}
+      panel.textContent = time + ' — total ' + fmtTok(row[3]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', other ' + fmtTok(row[2]) + ', ' + row[4] + ' calls, top: ' + (row[5] || 'component unavailable') + '.';
+    }}
+
     function renderDayDetail(dateStr) {{
       const lbl = document.getElementById('tkn-active-date-label');
       if (lbl) lbl.textContent = dateStr;
@@ -9350,6 +9386,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       for (let b = 0; b < 288; b++) {{
         const cell = document.createElement('div');
         cell.className = 'tkn-strip-cell';
+        cell.setAttribute('data-bucket', String(b));
         const h = Math.floor(b / 12);
         const m = (b % 12) * 5;
         const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' MSK';
@@ -9377,6 +9414,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(tot) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(gw) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(loc) + '</span></div>';
+              html += '<div class="tkn-tt-row"><span>Other:</span><span>' + fmtTok(other) + '</span></div>';
               html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + calls + '</span></div>';
               if (top) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + top + '</span></div>';
               showTooltip(e, html);
@@ -9385,6 +9423,12 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         }}
         cell.addEventListener('mousemove', moveTooltip);
         cell.addEventListener('mouseleave', hideTooltip);
+        cell.addEventListener('click', () => {{
+          selectedHour.value = String(h);
+          selectedInterval.value = String(b);
+          updateHourDetail();
+          updateIntervalDetail();
+        }});
         wrap.appendChild(cell);
       }}
 
@@ -9413,6 +9457,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       }});
       renderDayDetail(d);
       updateHourDetail();
+      fillIntervalOptions();
     }}
 
     function updateHourDetail() {{
@@ -9435,6 +9480,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         document.getElementById('tkn-strip-wrap').replaceChildren();
         document.getElementById('tkn-detail-info').textContent = 'No day details: the selected period contains no recorded dates.';
         document.getElementById('tkn-hour-detail').textContent = 'No hour detail: select a period containing a recorded date.';
+        document.getElementById('tkn-interval-detail').textContent = 'No five-minute detail: select a recorded day.';
         document.getElementById('tkn-day-detail').hidden = true;
       }}
       renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
@@ -9445,7 +9491,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     document.getElementById('tkn-range-from').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
     document.getElementById('tkn-range-to').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
     selectedDay.addEventListener('change', () => {{ selectDate(selectedDay.value); updateHourDetail(); }});
-    selectedHour.addEventListener('change', updateHourDetail);
+    selectedHour.addEventListener('change', () => {{ updateHourDetail(); fillIntervalOptions(); }});
+    selectedInterval.addEventListener('change', updateIntervalDetail);
     for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
     fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel(); updateHourDetail();
 

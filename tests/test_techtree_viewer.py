@@ -7364,7 +7364,7 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
     dates = [(date(2026, 9, 1) + timedelta(days=i)).isoformat() for i in range(35)]
     hourly = {d: (None if i == 33 else ([[0, 0, 0, 0, 0, ''] for _ in range(24)] if i == 32 else [[10, 20, 7, 37, 1, 'fixture'] for _ in range(24)])) for i, d in enumerate(dates)}
     fixture['token_heatmap'] = {
-        'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else {}) for i, d in enumerate(dates)},
+        'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else ({'13': [3, 5, 2, 10, 2, 'interval-fixture'], '14': [0, 0, 0, 0, 0, '']} if i == 34 else {})) for i, d in enumerate(dates)},
         'summary': {'total_tokens': 29304, 'total_calls': 792, 'local_tokens': 7920,
                     'gateway_tokens': 15840, 'other_tokens': 5544, 'days_span': 35,
                     'days_present': 34, 'days_missing': 1, 'invalid_days': [dates[-2]],
@@ -7394,8 +7394,7 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert page.locator('#tkn-period-label').inner_text().startswith('Showing 7d')
         page.locator('#tkn-selected-day').select_option(dates[-2])
         assert 'unobserved gap' in page.locator('#tkn-detail-info').inner_text()
-        target_day = page.locator(f'.tkn-day-col[data-date="{dates[-1]}"]').first
-        target_day.click()
+        page.locator('#tkn-selected-day').select_option(dates[-1])
         assert page.locator('#tkn-selected-day').input_value() == dates[-1]
         hour_control = page.locator('#tkn-selected-hour')
         hour_control.focus()
@@ -7404,6 +7403,27 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert '01:00 MSK' in page.locator('#tkn-hour-detail').inner_text()
         assert 'total 37' in page.locator('#tkn-hour-detail').inner_text()
         assert 'other 7' in page.locator('#tkn-hour-detail').inner_text()
+        interval_control = page.locator('#tkn-selected-interval')
+        interval_control.focus()
+        page.keyboard.press('ArrowDown')
+        assert interval_control.input_value() == '13'
+        interval_detail = page.locator('#tkn-interval-detail').inner_text()
+        assert '2026-10-05 01:05 MSK' in interval_detail
+        assert 'total 10' in interval_detail and 'vendor 5' in interval_detail
+        assert 'local 3' in interval_detail and 'other 2' in interval_detail
+        assert '2 calls' in interval_detail and 'interval-fixture' in interval_detail
+        interval_control.select_option('14')
+        assert '2026-10-05 01:10 MSK' in page.locator('#tkn-interval-detail').inner_text()
+        assert 'total 0' in page.locator('#tkn-interval-detail').inner_text() and '0 calls' in page.locator('#tkn-interval-detail').inner_text()
+        interval_control.select_option('12')
+        assert 'no five-minute bucket recorded' in page.locator('#tkn-interval-detail').inner_text()
+        interval_control.tap()
+        assert interval_control.evaluate('(el) => document.activeElement === el')
+        interval_cell = page.locator('#tkn-strip-wrap .tkn-strip-cell').nth(13)
+        interval_cell.tap()
+        assert page.locator('#tkn-selected-hour').input_value() == '1'
+        assert interval_control.input_value() == '13'
+        assert 'interval-fixture' in page.locator('#tkn-interval-detail').inner_text()
         page.locator('#tkn-selected-day').select_option(dates[-3])
         page.locator('#tkn-selected-hour').select_option('13')
         assert 'total 0' in page.locator('#tkn-hour-detail').inner_text() and '0 calls' in page.locator('#tkn-hour-detail').inner_text()
@@ -7420,6 +7440,8 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert 'No recorded dates in this range' in page.locator('#tkn-period-label').inner_text()
         assert page.locator('#tkn-selected-day').is_disabled()
         assert page.locator('#tkn-selected-hour').is_disabled()
+        assert page.locator('#tkn-selected-interval').is_disabled()
+        assert 'No five-minute detail' in page.locator('#tkn-interval-detail').inner_text()
         assert page.locator('#tkn-detail-info').inner_text() == 'No day details: the selected period contains no recorded dates.'
         assert page.locator('#tkn-hour-detail').inner_text() == 'No hour detail: select a period containing a recorded date.'
         assert page.locator('#tkn-day-detail').is_hidden()
@@ -7432,6 +7454,7 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         period.select_option('30d')
         assert page.locator('#tkn-day-detail').is_visible()
         assert page.locator('#tkn-selected-day').input_value() in dates[-30:]
+        assert page.locator('#tkn-selected-interval').is_enabled()
         assert page.locator('#tkn-selected-day').input_value() in page.locator('#tkn-hour-detail').inner_text()
         assert page.locator('#matrix-gw .tkn-day-col').count() == 30
         assert page.locator('#tkn-total-tokens').inner_text() == '24.9K'
