@@ -598,7 +598,7 @@
       button.type = 'button';
       button.setAttribute('data-lineage-list-node', node.node_id);
       button.setAttribute('aria-pressed', 'false');
-      button.textContent = (node.title || node.cycle_id || node.node_id) + ' — ' + (node.outcome || 'unknown') + ' — ' + (node.ts || 'time unavailable') + (node.ts && !visible[node.node_id] ? ' — outside selected date filter' : '');
+      button.textContent = (node.title || node.cycle_id || node.node_id) + ' — ' + (node.outcome || 'unknown') + ' — ' + (node.ts || 'time unavailable') + (!visible[node.node_id] ? ' — outside selected date filter' : '');
       item.appendChild(button);
       list.appendChild(item);
     });

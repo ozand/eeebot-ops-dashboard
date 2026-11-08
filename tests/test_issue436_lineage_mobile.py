@@ -115,6 +115,51 @@ def test_issue436_current_locator_reveals_offscreen_node_without_page_scroll():
         close()
 
 
+@pytest.mark.parametrize('viewport', [(320, 568), (390, 844), (1440, 1000)])
+def test_issue436_current_locator_does_not_occlude_shallow_node(viewport):
+    data = _fixture()
+    data['evolution_tree'] = {'nodes': {}, 'current_sha': 'sha-current'}
+    data['ledger_tail'] = [{'phase': 'evolution_tree', 'cycle_id': 'current', 'sha': 'sha-current', 'parent_sha': '', 'ts': '2026-01-02T00:30:00Z'}]
+    data['ledger_history'] = data['ledger_tail']
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00')
+    page, close = _open(pages, *viewport)
+    try:
+        node = page.locator('#lineage-svg .lineage-node[data-sha="sha-current"]')
+        page.locator('[data-lineage-current]').click()
+        page.wait_for_function("document.querySelector('#cycle-details-panel .cycle-details-body h3')")
+        assert node.evaluate('''node => {
+            const graph = document.querySelector('[data-lineage-graph-scroll]').getBoundingClientRect();
+            const panel = document.querySelector('#cycle-details-panel').getBoundingClientRect();
+            const box = node.getBoundingClientRect();
+            const inside = box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+            const clear = panel.bottom <= box.top || panel.top >= box.bottom || panel.right <= box.left || panel.left >= box.right;
+            const hit = document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+            return inside && clear && (hit === node || node.contains(hit));
+        }''')
+    finally:
+        close()
+
+
+def test_issue436_invalid_timestamp_list_node_explains_date_filter_exclusion():
+    timestamp = 'not-a-timestamp'
+    data = _fixture()
+    data['evolution_tree'] = {'nodes': {}, 'current_sha': 'sha-untimed'}
+    row = {'phase': 'evolution_tree', 'cycle_id': 'untimed', 'sha': 'sha-untimed', 'parent_sha': '', 'ts': timestamp}
+    data['ledger_tail'] = [row]
+    data['ledger_history'] = [row]
+    page, close = _open(tv.render_pages(data, host='eeepc', generated_at='2026-01-02 01:00:00'), 390, 844)
+    try:
+        item = page.locator('[data-lineage-list-node="c:sha-untimed"]')
+        assert 'time unavailable' in item.inner_text()
+        assert 'outside selected date filter' in item.inner_text()
+        page.locator('[data-lineage-filter="all"]').click()
+        assert 'outside selected date filter' not in item.inner_text()
+        page.locator('[data-lineage-filter="today"]').click()
+        assert 'outside selected date filter' in item.inner_text()
+    finally:
+        close()
+
+
 def test_issue436_missing_current_is_explicit_and_does_not_select_newest(tmp_path):
     pages = _pages(current='')
     page, close = _open(pages, 390, 844)
