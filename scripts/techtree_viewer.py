@@ -338,7 +338,6 @@ def read_ci_freshness(
             'actions_enabled': actions['enabled'],
             'freshness_state': freshness['state'],
             'latest_conclusion': freshness['latest_conclusion'],
-            'latest_run_url': freshness.get('latest_run_url'),
             'observed_at_utc': observed_at_utc,
             'actions': actions,
             'freshness': freshness,
@@ -5456,7 +5455,6 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
             actions_text = 'enabled=cannot_ask'
         state = str(record.get('freshness_state') or freshness.get('state') or 'cannot_ask')
         conclusion = str(record.get('latest_conclusion') or freshness.get('latest_conclusion') or 'cannot_ask')
-        latest_run_url = record.get('latest_run_url') or freshness.get('latest_run_url')
         if state == 'cannot_ask':
             status = f'{actions_text}, cannot_ask'
         else:
@@ -5464,11 +5462,7 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
             latest = freshness.get('latest_completed_at_utc')
             if latest:
                 status += f', last {fmt_ts(latest)}'
-        evidence = ''
-        if isinstance(latest_run_url, str) and re.fullmatch(r'https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/actions/runs/[0-9]+', latest_run_url):
-            evidence = f' <a href="{esc(latest_run_url)}">run evidence</a>'
-        else:
-            evidence = ' <span class="unavailable-note">run evidence unavailable</span>'
+        evidence = ' <span class="unavailable-note">run evidence unavailable in public snapshot</span>'
         items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}{evidence}</li>')
     return (
         '<div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> '

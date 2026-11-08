@@ -2383,8 +2383,7 @@ def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() 
         'last_observation': {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}},
         'rest_status': 'unavailable_pending_read_approval'}
     data['ci_freshness'] = {'observed_at_utc': '2026-08-16T02:00:00Z', 'repositories': {
-        'ozand/example': {'actions_enabled': True, 'freshness_state': 'recent', 'latest_conclusion': 'failure',
-                          'latest_run_url': 'https://github.com/ozand/example/actions/runs/123'}}}
+        'ozand/example': {'actions_enabled': True, 'freshness_state': 'recent', 'latest_conclusion': 'failure'}}}
     html = viewer.render_pages(data, host='fixture', generated_at='2026-08-16 02:00:00')['index.html']
 
     assert html.index('data-now-evidence="execution"') < html.index('data-now-evidence="result"')
@@ -2392,7 +2391,8 @@ def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() 
     assert html.index('data-now-evidence="attention"') < html.index('Planning observation (separate from cycles)')
     assert html.index('data-now-evidence="attention"') < html.index('Ranked demand candidates')
     assert 'timed_out' in html and 'Attention:' in html
-    assert 'run evidence' in html and 'href="https://github.com/ozand/example/actions/runs/123"' in html
+    assert 'run evidence unavailable in public snapshot' in html
+    assert 'href="https://github.com/ozand/example/actions/runs/123"' not in html
     assert html.index('data-now-evidence="attention"') < html.index('Charter and priorities')
     assert 'unknown; no current execution state is established by this view' in html
     assert 'Last confirmed result:' in html and 'Last confirmed integration:' in html
