@@ -28,7 +28,7 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
     from scripts import techtree_viewer as viewer
     css = viewer.CSS
     assert css.count('grid-template-columns: repeat(2, minmax(0, 1fr))') == 1
-    site_root = Path(r'C:/Temp/434-evidence/site')
+    site_root = (tmp_path / 'site').resolve()
     site_root.mkdir(parents=True, exist_ok=True)
     for name in route_names:
         (site_root / name).write_text(pages[name], encoding='utf-8')
@@ -44,7 +44,7 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    evidence = Path(r'C:\Temp\434-evidence')
+    evidence = (tmp_path / 'evidence').resolve()
     evidence.mkdir(parents=True, exist_ok=True)
     try:
         with sync_playwright() as p:
@@ -88,6 +88,9 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                             for button in buttons.all():
                                 box = button.bounding_box()
                                 assert box and box['height'] >= 44, (name, width, box)
+                        if name == 'lineage.html' and width == 390:
+                            graph = page.locator('.lineage-graph-scroll')
+                            assert graph.evaluate('(e) => e.clientHeight >= 40'), (name, width)
                         if name == 'cycles.html':
                             selected = page.locator('.filter-btn[data-filter="failed"]')
                             selected.focus()

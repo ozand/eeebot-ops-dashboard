@@ -10051,6 +10051,10 @@ CSS = '''
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
     @media (max-width: 720px) {
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .lineage-zoom-label { display: none; }
+      body.page-lineage .lineage-zoom-controls button { padding-right: 4px; padding-left: 4px; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 50%; }
+      body.page-lineage .cycle-details-panel:not([hidden]) { position: static; flex: 0 1 auto; margin: 0 12px 12px; width: auto; max-width: none; max-height: 32vh; }
     }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
