@@ -571,6 +571,7 @@
     var win = windowForMode(state.mode, payload);
     var projection = projectUnifiedGraph(payload, { window: win });
     showNote(projection.note || win.note || '');
+    renderCycleList(payload, projection);
     var coverage = payload.coverage || {};
     var coverageEl = document.querySelector('.lineage-coverage-note');
     if (coverageEl && !coverageEl.getAttribute('data-default-text')) coverageEl.setAttribute('data-default-text', coverageEl.textContent);
@@ -578,6 +579,29 @@
     // receipt instead of replacing it with a lossy fallback string.
     renderUnified(svg, payload, projection);
     if (state.zoomMode === 'fit') fitToWindow();
+  }
+  function renderCycleList(payload, projection) {
+    var list = document.querySelector('[data-lineage-cycle-list]');
+    if (!list) return;
+    var visible = projection.visible || {};
+    var nodes = (payload.nodes || []).slice().sort(function (a, b) {
+      var at = parseTs(a), bt = parseTs(b);
+      if (at == null && bt == null) return String(a.node_id).localeCompare(String(b.node_id));
+      if (at == null) return 1;
+      if (bt == null) return -1;
+      return (bt - at) || String(b.node_id).localeCompare(String(a.node_id));
+    });
+    list.replaceChildren();
+    nodes.forEach(function (node) {
+      var item = document.createElement('li');
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('data-lineage-list-node', node.node_id);
+      button.setAttribute('aria-pressed', 'false');
+      button.textContent = (node.title || node.cycle_id || node.node_id) + ' — ' + (node.outcome || 'unknown') + ' — ' + (node.ts || 'time unavailable') + (node.ts && !visible[node.node_id] ? ' — outside selected date filter' : '');
+      item.appendChild(button);
+      list.appendChild(item);
+    });
   }
   function selectNode(token) {
     var payload = state.payload;
@@ -667,6 +691,41 @@
       window.addEventListener('blur', function () { pan.spaceHeld = false; refreshPanCursor(); });
       window.addEventListener('resize', function () { if (state.zoomMode === 'fit') fitToWindow(); });
     }
+    var currentButton = document.querySelector('[data-lineage-current]');
+    var currentId = state.payload.current_node_id;
+    var currentExists = !!(currentId && byNodeId(state.payload)[currentId]);
+    if (currentButton) {
+      currentButton.disabled = !currentExists;
+      currentButton.setAttribute('aria-label', currentExists ? 'Locate current node' : (currentId ? 'Current node is not retained' : 'Current node unavailable'));
+      currentButton.title = currentExists ? 'Locate current node' : (currentId ? 'Current node is not retained; no substitute selected.' : 'Current node unavailable.');
+    }
+    if (currentButton) {
+      currentButton.disabled = !currentExists;
+      currentButton.addEventListener('click', function () { selectNode(currentId); });
+    }
+    var cycleList = document.querySelector('[data-lineage-cycle-list]');
+    var cycleDialog = document.querySelector('.lineage-list-dialog');
+    var listOpener = document.querySelector('[data-lineage-list-open]');
+    var listCloser = document.querySelector('[data-lineage-list-close]');
+    if (listOpener && cycleDialog) listOpener.addEventListener('click', function () { cycleDialog.showModal(); });
+    if (listCloser && cycleDialog) listCloser.addEventListener('click', function () { cycleDialog.close(); });
+    function markListSelection(nodeId) {
+      if (!cycleList) return;
+      cycleList.querySelectorAll('[data-lineage-list-node]').forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.getAttribute('data-lineage-list-node') === nodeId));
+      });
+    }
+    if (cycleList) cycleList.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-lineage-list-node]');
+      if (!button) return;
+      markListSelection(button.getAttribute('data-lineage-list-node'));
+      if (cycleDialog && cycleDialog.open) cycleDialog.close();
+      selectNode(button.getAttribute('data-lineage-list-node'));
+    });
+    document.addEventListener('click', function (event) {
+      var selected = event.target.closest('.lineage-node');
+      if (selected) markListSelection(selected.getAttribute('data-node-id'));
+    });
     setPanMode(pan.mode);
     applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
     revealInitialGraph();
