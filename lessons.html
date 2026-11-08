@@ -855,9 +855,23 @@
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
     .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
+    .lineage-controls-wrap { min-width: 0; flex: 0 0 auto; }
     .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
+    body.page-lineage .lineage-coverage-note { min-width: 0; max-width: 100%; }
+    body.page-lineage .lineage-legend { min-width: 0; max-width: 100%; }
+    .lineage-day-controls button[data-lineage-current] { min-height: 44px; }
+    .lineage-cycle-list button { min-height: 44px; padding: 8px 12px; color: #2fd3c4; background: #080f0c; border: 1px solid #2f5c46; font: inherit; cursor: pointer; }
+    .lineage-day-controls button:focus-visible, .lineage-cycle-list button:focus-visible, .lineage-list-dialog button:focus-visible { outline: 3px solid #2fd3c4; outline-offset: 2px; }
+    .lineage-list-dialog { width: min(560px, calc(100vw - 24px)); max-height: min(80dvh, 720px); padding: 12px; overflow: auto; border: 1px solid #2f5c46; background: #0d1a15; color: #dcebe1; }
+    .lineage-list-dialog::backdrop { background: rgba(0, 0, 0, .68); }
+    .lineage-list-dialog h2 { margin: 0 0 8px; }
+    .lineage-list-dialog [data-lineage-list-close] { min-height: 44px; padding: 8px 12px; color: #2fd3c4; background: #080f0c; border: 1px solid #2f5c46; font: inherit; cursor: pointer; }
+    .lineage-cycle-list { margin: 0; padding-left: 28px; }
+    .lineage-cycle-list li { padding: 4px 0; }
+    .lineage-cycle-list button { display: block; width: 100%; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .lineage-cycle-list button[aria-pressed="true"] { border-color: #56d364; color: #56d364; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
     .lineage-filter-note { color: #d19a66; font-size: .8rem; }
     .lineage-coverage-note { margin: 2px 12px 8px; color: #8aa695; font-size: .72rem; line-height: 1.35; overflow-wrap: anywhere; }
@@ -928,13 +942,16 @@
     /* The details panel would otherwise consume the column the graph needs,
        so on this page it floats over the graph with its own scrollbar. */
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 280px); }
     @media (max-width: 720px) {
+      body.page-lineage .lineage-cycle-list button { font-size: .78rem; }
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 240px); }
       body.page-lineage .lineage-zoom-label { display: none; }
       body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
       body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }
       body.page-lineage .lineage-day-controls label { font-size: .7rem; }
-      body.page-lineage .lineage-coverage-note { margin: 0 6px 4px; }
+      body.page-lineage .lineage-coverage-note { margin: 0 6px 2px; }
       body.page-lineage .lineage-legend { margin: 2px 6px 4px; padding: 4px; gap: 6px; }
       body.page-lineage .lineage-legend-group { max-width: 100%; }
       body.page-lineage .lineage-zoom-controls { padding: 0 6px 4px; gap: 4px; }
@@ -950,7 +967,14 @@
       body.page-lineage #panel-lineage { overflow-y: auto; overscroll-behavior-y: contain; }
       body.page-lineage .lineage-day-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
       body.page-lineage .lineage-day-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
       body.page-lineage .lineage-coverage-note { max-height: 2.7em; overflow-y: auto; }
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
+    }
+    @media (max-width: 720px) and (min-height: 701px) {
       body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
       body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
       body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
@@ -1439,13 +1463,13 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794167168-fb2ec35b736a"></head>
+<meta name="snapshot-version" content="1794168047-38c6e35b342f"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794167112.946" data-render-age-seconds="68">data: 1m old &middot; generated 19:46 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794168033.036" data-render-age-seconds="25">data: 24s old &middot; generated 20:00 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html" class="nav-current" aria-current="page">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
@@ -1501,7 +1525,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator 9f7f29f · generated 2026-11-08 19:46:21 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 22:20:35 MSK</span></footer>
+<footer class="page-footer">generator 1ba4c59 · generated 2026-11-08 20:00:58 UTC &middot; host eeepc &middot; newest source 24s old &middot; <span class="footer-computed">scorecard computed 2026-11-08 22:20:35 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1532,5 +1556,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794167168-fb2ec35b736a · generated 2026-11-08T19:46:08.559775+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794168047-38c6e35b342f · generated 2026-11-08T20:00:47.191832+00:00</footer></body>
 </html>
