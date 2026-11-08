@@ -6771,6 +6771,47 @@ def test_read_token_heatmap_utc_boundary_lands_in_next_msk_day(tmp_path: Path) -
     assert res['summary']['timezone'] == 'MSK'
 
 
+def test_read_token_heatmap_uses_explicit_bucket_schema_and_rejects_malformed_tokens(tmp_path: Path) -> None:
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    (llm_dir / '2026-09-04.jsonl').write_text('\n'.join([
+        json.dumps({'ts': '2026-09-04T10:00:00Z', 'model': 'un/qwen', 'total_tokens': 20}),
+        json.dumps({'ts': '2026-09-04T10:05:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 30}),
+        json.dumps({'ts': '2026-09-04T10:10:00Z', 'model': 'un/qwen', 'total_tokens': 0}),
+        json.dumps({'ts': '2026-09-04T10:15:00Z', 'model': 'un/qwen', 'total_tokens': 'bad'}),
+    ]) + '\n', encoding='utf-8')
+
+    result = tv.read_token_heatmap(tmp_path)
+    assert result is not None
+    assert result['summary']['total_tokens'] == 50
+    assert result['summary']['total_calls'] == 3
+    assert result['summary']['local_tokens'] + result['summary']['gateway_tokens'] + result['summary']['other_tokens'] == 50
+    assert result['summary']['invalid_days'] == ['2026-09-04']
+    local_row = result['five_min']['2026-09-04']['156']
+    gateway_row = result['five_min']['2026-09-04']['157']
+    assert local_row[:5] == [20, 0, 0, 20, 1]
+    assert gateway_row[:5] == [0, 30, 0, 30, 1]
+    assert result['hourly']['2026-09-04'][13][3:5] == [50, 3]
+
+
+def test_token_heatmap_invalid_rows_excluded_and_day_marked_incomplete(tmp_path: Path) -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir()
+    (llm_dir / '2026-09-04.jsonl').write_text(json.dumps({
+        'ts': '2026-09-04T12:00:00Z', 'total_tokens': 'PRIVATE_TOKEN_CANARY',
+    }) + '\n', encoding='utf-8')
+    heatmap = tv.read_token_heatmap(tmp_path)
+    assert heatmap is not None
+    assert heatmap['summary']['total_calls'] == 0
+    projected, _ = split_render_inputs({'token_heatmap': heatmap})
+    public = projected['token_heatmap']
+    assert public['hourly']['2026-09-04'] is not None
+    assert public['summary']['invalid_days'] == ['2026-09-04']
+    assert 'PRIVATE_TOKEN_CANARY' not in json.dumps(public)
+
+
 def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -> None:
     """Issue #223: fail-soft on missing or empty llm_calls directory."""
     assert tv.read_token_heatmap(tmp_path / 'nonexistent') is None
@@ -6778,6 +6819,158 @@ def test_read_token_heatmap_handles_empty_or_missing_directory(tmp_path: Path) -
     empty_dir = tmp_path / 'empty'
     (empty_dir / 'llm_calls').mkdir(parents=True)
     assert tv.read_token_heatmap(empty_dir) is None
+
+
+def test_tokens_day_summary_renders_incomplete_only_for_validated_invalid_date(tmp_path: Path) -> None:
+    import re
+    from playwright.sync_api import sync_playwright
+    from scripts.two_sinks import split_render_inputs
+
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    (llm_dir / '2026-09-04.jsonl').write_text('\n'.join([
+        json.dumps({'ts': '2026-09-04T10:00:00Z', 'model': 'un/qwen', 'total_tokens': 20000}),
+        json.dumps({'ts': '2026-09-04T10:05:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 30000}),
+        json.dumps({'ts': '2026-09-04T10:10:00Z', 'model': 'un/qwen', 'total_tokens': 'PRIVATE_TOKEN_CANARY'}),
+    ]) + '\n', encoding='utf-8')
+    heatmap = tv.read_token_heatmap(tmp_path)
+    assert heatmap is not None
+    assert heatmap['summary']['total_tokens'] == heatmap['summary']['local_tokens'] + heatmap['summary']['gateway_tokens'] + heatmap['summary']['other_tokens']
+    projected, _ = split_render_inputs({'token_heatmap': heatmap})
+    render_data = _fixture()
+    render_data['token_heatmap'] = projected['token_heatmap']
+    page = tv.render_pages(render_data, host='synthetic', generated_at='2026-09-04T12:00:00Z')['tokens.html']
+    assert 'PRIVATE_TOKEN_CANARY' not in page
+    html_path = tmp_path / 'tokens.html'
+    html_path.write_text(page, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        rendered = page.goto(html_path.as_uri())
+        assert rendered is not None and rendered.status == 200
+        summary = page.locator('#tkn-detail-info').inner_text()
+        page.locator('#tkn-detail-info').screenshot(path=str(tmp_path / 'tokens-day-summary.png'))
+        browser.close()
+    assert re.fullmatch(r'2026-09-04 Summary: 50\.0K total tokens \(30\.0K gateway, 20\.0K local, 0 other\) across 2 calls\. · incomplete \(malformed token rows excluded\)', summary)
+    assert (tmp_path / 'tokens-day-summary.png').is_file()
+
+
+def test_rendered_tokens_legacy_payload_reports_completeness_unknown(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    fixture = _fixture()
+    fixture['token_heatmap'] = {
+        'dates': ['2026-09-04'],
+        'hourly': {'2026-09-04': [[0, 0, 0, 0, 0, ''] for _ in range(24)]},
+        'five_min': {'2026-09-04': {}},
+        'summary': {'total_tokens': 0, 'total_calls': 0, 'local_tokens': 0,
+                    'gateway_tokens': 0, 'days_span': 1, 'days_present': 1,
+                    'days_missing': 0, 'quantiles_hourly': {}, 'quantiles_5min': {}},
+    }
+    html_path = tmp_path / 'tokens-legacy-unknown.html'
+    html_path.write_text(tv.render_pages(fixture, 'synthetic')['tokens.html'], encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        assert page.goto(html_path.as_uri()).status == 200
+        summary = page.locator('#tkn-detail-info').inner_text()
+        page.locator('#tkn-detail-info').screenshot(path=str(tmp_path / 'tokens-legacy-unknown.png'))
+        browser.close()
+    assert summary.endswith(' · completeness unknown')
+
+
+def test_token_heatmap_readers_filter_invalid_dates_to_retained_window(tmp_path: Path) -> None:
+    from scripts.two_sinks import split_render_inputs
+
+    state = tmp_path / 'state'
+    llm_dir = state / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    rows = [
+        {'ts': '2020-01-01T12:00:00Z', 'model': 'un/qwen', 'total_tokens': 'outside-canary'},
+        {'ts': '2026-11-08T12:00:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': 'inside-canary'},
+    ]
+    (llm_dir / '2026-11-08.jsonl').write_text('\n'.join(map(json.dumps, rows)) + '\n', encoding='utf-8')
+    local = tv.read_token_heatmap(state)
+    assert local is not None
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}')
+    remote_script = state.parent / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run([tv.sys.executable, str(remote_script)], text=True, capture_output=True, check=True)
+    remote_heatmap = json.loads(remote.stdout)['token_heatmap']
+    assert local == remote_heatmap
+    assert len(local['dates']) == 62
+    assert local['dates'][-1] == '2026-11-08'
+    assert local['summary']['invalid_days'] == ['2026-11-08']
+    projected, _ = split_render_inputs({'token_heatmap': local})
+    assert projected['token_heatmap']['summary']['invalid_days'] == ['2026-11-08']
+
+    only_outside = [rows[0]]
+    (llm_dir / '2026-11-08.jsonl').write_text(json.dumps(only_outside[0]) + '\n', encoding='utf-8')
+    local_outside = tv.read_token_heatmap(state)
+    assert local_outside is not None
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}')
+    remote_script.write_text(script, encoding='utf-8')
+    remote_outside = subprocess.run([tv.sys.executable, str(remote_script)], text=True, capture_output=True, check=True)
+    embedded_outside = json.loads(remote_outside.stdout)['token_heatmap']
+    assert local_outside == embedded_outside
+    assert local_outside['summary']['invalid_days'] == []
+    projected_outside, _ = split_render_inputs({'token_heatmap': local_outside})
+    assert projected_outside['token_heatmap']['summary']['invalid_days'] == []
+
+
+def test_token_heatmap_local_and_embedded_reader_parity(tmp_path: Path) -> None:
+    state = tmp_path / 'state'
+    llm_dir = state / 'llm_calls'
+    llm_dir.mkdir(parents=True)
+    rows = [
+        {'ts': '2026-09-04T20:59:00Z', 'model': 'un/qwen', 'total_tokens': 20},
+        {'ts': '2026-09-04T21:00:00Z', 'model': 'cl/gpt-5.6-luna', 'prompt_tokens': 10, 'completion_tokens': 5},
+        {'ts': '2026-09-04T21:02:00Z', 'model': 'cl/gpt-5.6-luna', 'total_tokens': None, 'prompt_tokens': 100, 'completion_tokens': 100},
+        {'ts': '2026-09-04T21:05:00Z', 'model': 'un/qwen', 'total_tokens': 0},
+        {'ts': '2026-09-04T21:10:00Z', 'model': 'an/gemini', 'total_tokens': -1, 'prompt_tokens': 100, 'completion_tokens': 100},
+        {'ts': '2026-09-04T21:15:00Z', 'model': 'un/qwen', 'total_tokens': 'private-canary'},
+    ]
+    (llm_dir / '2026-09-04.jsonl').write_text('\n'.join(map(json.dumps, rows)) + '\n', encoding='utf-8')
+    local = tv.read_token_heatmap(state)
+    assert local is not None
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}')
+    remote_script = state.parent / 'remote_reader.py'
+    remote_script.write_text(script, encoding='utf-8')
+    remote = subprocess.run([tv.sys.executable, str(remote_script)], text=True, capture_output=True, check=True)
+    remote_heatmap = json.loads(remote.stdout)['token_heatmap']
+    assert remote_heatmap == local
+    assert local['summary']['total_tokens'] == 35
+    assert local['summary']['total_calls'] == 3
+    assert local['summary']['invalid_days'] == ['2026-09-05']
+    assert local['five_min']['2026-09-05']['0'][:5] == [0, 15, 0, 15, 1]
+    assert local['hourly']['2026-09-04'][23][3:5] == [20, 1]
+    assert local['hourly']['2026-09-05'][0][3:5] == [15, 2]
+
+
+def test_token_heatmap_malformed_timestamp_does_not_emit_invalid_day(tmp_path: Path) -> None:
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir()
+    (llm_dir / '2026-09-04.jsonl').write_text(json.dumps({
+        'ts': 'not-a-date', 'total_tokens': 'bad',
+    }) + '\n', encoding='utf-8')
+    heatmap = tv.read_token_heatmap(tmp_path)
+    assert heatmap is not None
+    assert heatmap['summary']['invalid_days'] == []
+    assert heatmap['summary']['total_calls'] == 0
+
+
+def test_token_heatmap_invalid_only_day_is_observed_and_incomplete(tmp_path: Path) -> None:
+    llm_dir = tmp_path / 'llm_calls'
+    llm_dir.mkdir()
+    (llm_dir / '2026-09-04.jsonl').write_text(json.dumps({'ts': '2026-09-04T12:00:00Z', 'total_tokens': None}) + '\n', encoding='utf-8')
+    heatmap = tv.read_token_heatmap(tmp_path)
+    assert heatmap is not None
+    assert heatmap['summary']['invalid_days'] == ['2026-09-04']
+    assert heatmap['five_min']['2026-09-04'] == {}
+    assert heatmap['summary']['total_calls'] == 0
 
 
 def test_tokens_page_generated_and_weight_under_300kb() -> None:

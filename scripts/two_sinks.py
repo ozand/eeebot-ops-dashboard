@@ -372,7 +372,7 @@ _UNIT_PATH_RE = re.compile(
 #: Bumped whenever the projection's output domain changes; part of the
 #: publish digest (techtree_autopublish.compute_tree_digest), so a deployed
 #: projection change republishes even when the source tree is quiet.
-PROJECTION_VERSION = "d1.1-typed-2"
+PROJECTION_VERSION = "d1.1-typed-3"
 
 
 def _count_withheld(withheld: dict[str, int] | None, category: str) -> None:
@@ -1092,21 +1092,72 @@ _ARTIFACT_COUNTS = _obj({"artifacts": _count, "components": _count, "leaves": _c
 _QUANTILES = _obj({name: _one_of(_number, _list(_number, 64)) for name in ("gateway", "local", "total")})
 
 _DAY_KEY = _pattern(re.compile(r"^\d{4}-\d{2}-\d{2}$"))
+
+
+def _valid_token_day(value: object) -> datetime.date | None:
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return None
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _token_heatmap_dates(value: object, withheld: dict[str, int] | None) -> object:
+    """Validate a bounded contiguous calendar window before trusting day metadata."""
+    if not isinstance(value, list) or not 1 <= len(value) <= 62:
+        return _DROP
+    days = [_valid_token_day(item) for item in value]
+    if any(day is None for day in days):
+        return _DROP
+    if any((right - left).days != 1 for left, right in zip(days, days[1:])):
+        return _DROP
+    return list(value)
+
+
+def _invalid_token_days(value: object, withheld: dict[str, int] | None) -> object:
+    if not isinstance(value, list) or len(value) > 62:
+        return _DROP
+    days = [_valid_token_day(item) for item in value]
+    if any(day is None for day in days):
+        return _DROP
+    if days != sorted(set(days)):
+        return _DROP
+    return list(value)
+
+
 _CALL_STATS = _obj({"calls": _count, "total_tokens": _num(0), "duration_ms": _num(0)})
 _HEATMAP_CELL = _list(_one_of(_number, _token), 8)
 
+def _validate_token_heatmap_days(source: dict, projected: dict, _withheld: dict[str, int] | None) -> None:
+    source_dates = source.get("dates")
+    dates = projected.get("dates")
+    summary = projected.get("summary")
+    invalid_days = summary.get("invalid_days") if isinstance(summary, dict) else None
+    if not isinstance(source_dates, list) or len(source_dates) > 62 or dates is None:
+        projected.pop("dates", None)
+        projected.pop("hourly", None)
+        projected.pop("five_min", None)
+        if isinstance(summary, dict):
+            summary.pop("invalid_days", None)
+        return
+    if invalid_days is not None and not set(invalid_days).issubset(dates):
+        summary.pop("invalid_days", None)
+
+
 _TOKEN_HEATMAP = _obj({
-    "dates": _list(_DAY_KEY),
+    "dates": _token_heatmap_dates,
     "hourly": _map(_DAY_KEY, _nullable(_list(_HEATMAP_CELL, 24))),  # null: no data that day
     "five_min": _map(_DAY_KEY, _nullable(_map(_pattern(re.compile(r"^\d{1,3}$")), _HEATMAP_CELL))),
     "summary": _obj({
         **{name: _num(0) for name in (
             "total_tokens", "total_calls", "self_hosted_tokens", "vendor_tokens", "other_tokens",
             "local_tokens", "gateway_tokens", "days_span", "days_present", "days_missing")},
+        "invalid_days": _invalid_token_days,
         "timezone": _ident, "source_timezone": _ident, "timezone_offset_hours": _number,
         "quantiles_hourly": _QUANTILES, "quantiles_5min": _QUANTILES,
     }),
-})
+}, post=_validate_token_heatmap_days)
 
 _FEED_ROW = _obj({"status": _token, "age_seconds": _num(0), "max_age_seconds": _num(0)})
 

@@ -22,6 +22,44 @@ PUBLIC = {"index.html": "<html><head></head><body>public</body></html>"}
 PRIVATE = {"cycle.html": "private calls"}
 
 
+def _heatmap(dates, invalid_days=None):
+    summary = {
+        "total_tokens": 10, "total_calls": 1, "self_hosted_tokens": 10,
+        "vendor_tokens": 0, "other_tokens": 0, "local_tokens": 10,
+        "gateway_tokens": 0, "days_span": len(dates), "days_present": len(dates),
+        "days_missing": 0, "timezone": "MSK", "source_timezone": "UTC",
+        "timezone_offset_hours": 3,
+        "quantiles_hourly": {k: [1, 2, 3, 4] for k in ("gateway", "local", "total")},
+        "quantiles_5min": {k: [1, 2, 3, 4] for k in ("gateway", "local", "total")},
+    }
+    if invalid_days is not None:
+        summary["invalid_days"] = invalid_days
+    return {"dates": dates, "hourly": {d: [[0, 0, 0, 0, 0, ""] for _ in range(24)] for d in dates},
+            "five_min": {d: {} for d in dates}, "summary": summary}
+
+def test_token_heatmap_invalid_days_projection_accepts_retained_sorted_dates() -> None:
+    dates = ["2026-09-04", "2026-09-05", "2026-09-06"]
+    public, _ = split_render_inputs({"token_heatmap": _heatmap(dates, ["2026-09-05"])})
+    assert public["token_heatmap"]["summary"]["invalid_days"] == ["2026-09-05"]
+
+
+def test_token_heatmap_invalid_days_projection_rejects_bad_shape_and_out_of_window_values() -> None:
+    dates = ["2026-09-04", "2026-09-05", "2026-09-06"]
+    for invalid in (None, "2026-09-05", ["2026-02-30"], ["2026-09-06", "2026-09-05"],
+                    ["2026-09-05", "2026-09-05"], ["2026-09-07"], ["PRIVATE_CANARY"]):
+        heatmap = _heatmap(dates, invalid)
+        public, _ = split_render_inputs({"token_heatmap": heatmap})
+        assert "invalid_days" not in public["token_heatmap"]["summary"]
+    public, _ = split_render_inputs({"token_heatmap": _heatmap(["2026-09-04", "2026-09-06"], ["2026-09-04"])})
+    assert "invalid_days" not in public["token_heatmap"]["summary"]
+    assert "dates" not in public["token_heatmap"]
+    public, _ = split_render_inputs({"token_heatmap": _heatmap(["2026-09-04"] * 63, [])})
+    assert "dates" not in public["token_heatmap"]
+    assert "invalid_days" not in public["token_heatmap"]["summary"]
+    public, _ = split_render_inputs({"token_heatmap": _heatmap(["2026-09-04"], None)})
+    assert "invalid_days" not in public["token_heatmap"]["summary"]
+
+
 def test_planning_cost_ledger_projection_is_counts_only_and_null_safe() -> None:
     from scripts import techtree_viewer as tv
 
