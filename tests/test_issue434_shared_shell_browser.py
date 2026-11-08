@@ -94,6 +94,7 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                                     font: style.fontFamily, fontSize: style.fontSize,
                                     beforeContent: getComputedStyle(element, '::before').content,
                                     afterContent: getComputedStyle(element, '::after').content,
+                                    children: [...element.children].map((child) => ({tag: child.tagName, className: typeof child.className === 'string' ? child.className : '', scrollWidth: child.scrollWidth, clientWidth: child.clientWidth, text: (child.innerText || '').trim().slice(0, 60)})),
                                 };
                             };
                             const overflowing = [...document.querySelectorAll('body *')].filter((element) => {
