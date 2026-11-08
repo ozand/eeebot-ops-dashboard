@@ -10087,8 +10087,31 @@ CSS = '''
     @media (max-width: 720px) {
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
       body.page-lineage .lineage-zoom-label { display: none; }
-      body.page-lineage .lineage-zoom-controls button { padding-right: 4px; padding-left: 4px; }
+      body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
+      body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }
+      body.page-lineage .lineage-day-controls label { font-size: .7rem; }
+      body.page-lineage .lineage-coverage-note { margin: 0 6px 4px; }
+      body.page-lineage .lineage-legend { margin: 2px 6px 4px; padding: 4px; gap: 6px; }
+      body.page-lineage .lineage-legend-group { max-width: 100%; }
+      body.page-lineage .lineage-zoom-controls { padding: 0 6px 4px; gap: 4px; }
+      body.page-lineage .lineage-zoom-controls button { min-width: 44px; padding: 0 4px; font-size: .7rem; }
+      body.page-lineage .lineage-zoom-label:last-child { display: none; }
       body.page-lineage .cycle-details-panel:not([hidden]) { position: fixed; left: 12px; right: 12px; bottom: 12px; margin: 0; width: auto; max-width: none; max-height: 32vh; overflow: auto; }
+    }
+    @media (max-width: 720px) and (max-height: 700px) {
+      body.page-lineage .empire-strip { padding: 2px 8px; gap: 4px; }
+      body.page-lineage .empire-title { font-size: .9em; letter-spacing: 1px; }
+      body.page-lineage .site-nav { padding: 2px 6px; gap: 0 4px; }
+      body.page-lineage .site-nav a { min-height: 44px; padding: 0 2px; font-size: .9em; }
+      body.page-lineage #panel-lineage { overflow-y: auto; overscroll-behavior-y: contain; }
+      body.page-lineage .lineage-day-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-day-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-coverage-note { max-height: 2.7em; overflow-y: auto; }
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
     }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }

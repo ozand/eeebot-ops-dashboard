@@ -1491,6 +1491,7 @@ def test_issue434_short_phone_lineage_details_remain_reachable(tmp_path: Path, v
             page.wait_for_selector('.cycle-details-body h3', timeout=5000)
             panel = page.locator('#cycle-details-panel')
             assert panel.is_visible() and 'Short viewport card' in panel.inner_text(), viewport
+            assert page.locator('.lineage-graph-scroll').evaluate('(e) => e.clientHeight >= 100'), viewport
             close = page.locator('#cycle-details-close')
             assert close.is_visible() and close.evaluate('(e) => e.getBoundingClientRect().height >= 44'), viewport
             box = panel.bounding_box()
