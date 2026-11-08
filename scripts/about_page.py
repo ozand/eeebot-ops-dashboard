@@ -338,7 +338,8 @@ def _repos_table() -> str:
         for r in REPOS
     )
     return (
-        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Repository reference table; scroll horizontally to reach all columns">'
+        '<p class="about-scroll-cue" id="about-scroll-repos">Scroll horizontally to see all columns.</p>'
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Repository reference table" aria-describedby="about-scroll-repos">'
         '<table class="about-table"><thead><tr>'
         "<th>repository</th><th>role</th><th>holds</th><th>identifiers on this site</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
@@ -351,7 +352,8 @@ def _cycle_table() -> str:
         for s in CYCLE_STAGES
     )
     return (
-        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Cycle stages reference table; scroll horizontally to reach all columns">'
+        '<p class="about-scroll-cue" id="about-scroll-cycle">Scroll horizontally to see all columns.</p>'
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Cycle stages reference table" aria-describedby="about-scroll-cycle">'
         '<table class="about-table"><thead><tr>'
         "<th>stage</th><th>what happens</th><th>where the output appears</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
@@ -372,7 +374,8 @@ def _units_table() -> str:
         if exceptions else ""
     )
     return (
-        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Schedule reference table; scroll horizontally to reach all columns">'
+        '<p class="about-scroll-cue" id="about-scroll-schedule">Scroll horizontally to see all columns.</p>'
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Schedule reference table" aria-describedby="about-scroll-schedule">'
         '<table class="about-table"><thead><tr>'
         "<th>unit</th><th>cadence</th><th>produces</th><th>appears on</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
@@ -386,7 +389,8 @@ def _models_table() -> str:
         for r in MODEL_ROUTING
     )
     return (
-        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Model reference table; scroll horizontally to reach all columns">'
+        '<p class="about-scroll-cue" id="about-scroll-models">Scroll horizontally to see all columns.</p>'
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Model reference table" aria-describedby="about-scroll-models">'
         '<table class="about-table"><thead><tr>'
         "<th>role</th><th>model</th><th>why</th>"
         f"</tr></thead><tbody>{rows}</tbody></table></div>"
@@ -418,6 +422,13 @@ _ABOUT_STYLE = '''<style>
 .about-glossary dt { font-weight: 600; margin-top: 0.6em; scroll-margin-top: 1rem; }
 .about-glossary dd { min-width: 0; overflow-wrap: anywhere; margin: 0.15em 0 0.4em 1em; }
 .about-source { opacity: 0.7; font-size: 0.85em; }
+.about-scroll-cue { margin: 0.65rem 0 -0.5rem; color: var(--muted, #8aa695); font-size: 0.875em; }
+.about-scroll-cue::after { content: ' ↔'; color: var(--accent, #2fd3c4); }
+.lineage-glossary-links { margin: 0.5rem 0; }
+.lineage-glossary-links a { display: inline-flex; min-height: 44px; align-items: center; margin-inline-end: 0.5rem; }
+.cycle-glossary-link { font-size: 0.85em; }
+.empire-stat a { color: var(--accent, #2fd3c4); }
+.lineage-legend-item a { color: inherit; }
 .about-toc ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; }
 .about-toc a, .about-term-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.6rem; }
 .about-system-map { border-inline-start: 3px solid var(--accent, #2fd3c4); padding-inline-start: 1rem; }

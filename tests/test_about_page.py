@@ -155,8 +155,10 @@ def test_about_contents_and_core_terms_link_to_preserved_anchors() -> None:
 def test_about_tables_are_named_keyboard_scroll_regions() -> None:
     html = about_page.build_about_panel()
     assert html.count('class="about-table-scroll" role="region" tabindex="0" aria-label=') == 4
+    assert html.count('class="about-scroll-cue" id=') == 4
+    assert html.count('aria-describedby="about-scroll-') == 4
+    assert "Scroll horizontally to see all columns." in html
     assert "overflow-x: auto" in html
-    assert "scroll horizontally to reach all columns" in html
 
 
 # ─── acceptance criterion: repository list states identifier ownership ──────

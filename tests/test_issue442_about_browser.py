@@ -18,7 +18,8 @@ def test_issue442_about_tables_anchors_and_mobile_reachability(tmp_path: Path) -
     )
     site = tmp_path / 'site'
     site.mkdir()
-    (site / 'about.html').write_text(pages['about.html'], encoding='utf-8')
+    for name in ('about.html', 'cycles.html', 'lineage.html', 'index.html'):
+        (site / name).write_text(pages[name], encoding='utf-8')
 
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
@@ -40,13 +41,24 @@ def test_issue442_about_tables_anchors_and_mobile_reachability(tmp_path: Path) -
                     assert page.locator('.about-system-map li').count() == 4
                     assert page.locator('.about-toc').get_by_role('link', name='Repositories').is_visible()
                     assert page.locator('.about-term-links a').count() == 4
+                    assert page.locator('.about-scroll-cue:visible').count() == 4
+                    for cue in page.locator('.about-scroll-cue:visible').all():
+                        assert cue.inner_text() == 'Scroll horizontally to see all columns.'
+                        assert cue.evaluate('(e) => getComputedStyle(e).display !== "none"')
+                    assert page.locator('.about-table-scroll[aria-describedby]').count() == 4
                     assert page.evaluate('document.documentElement.scrollWidth === innerWidth')
+                    if width == 390:
+                        page.screenshot(path=str(tmp_path / 'about-mobile-tables.png'), full_page=False)
                     regions = page.locator('.about-table-scroll')
                     assert regions.count() == 4
                     for i in range(regions.count()):
                         region = regions.nth(i)
                         assert region.is_visible()
-                        assert region.get_attribute('aria-label').endswith('scroll horizontally to reach all columns')
+                        assert region.get_attribute('aria-label') in {
+                            'Repository reference table', 'Cycle stages reference table',
+                            'Schedule reference table', 'Model reference table',
+                        }
+                        assert page.locator('#' + region.get_attribute('aria-describedby')).is_visible()
                         assert region.evaluate('(e) => e.scrollWidth > e.clientWidth') == (width == 390)
                         region.focus()
                         assert region.evaluate('(e) => document.activeElement === e') is True
@@ -59,6 +71,28 @@ def test_issue442_about_tables_anchors_and_mobile_reachability(tmp_path: Path) -
                                 page.keyboard.press('ArrowRight')
                             assert region.evaluate('(e) => e.scrollLeft + e.clientWidth >= e.scrollWidth')
                             assert region.locator('thead th').last.evaluate('(e) => e.getBoundingClientRect().right <= e.closest(".about-table-scroll").getBoundingClientRect().right')
+                    page.goto(f'http://127.0.0.1:{server.server_port}/cycles.html', wait_until='networkidle')
+                    integration_link = page.locator('.cycle-glossary-link[href="about.html#term-integration"]')
+                    assert integration_link.is_visible()
+                    integration_link.click()
+                    assert page.url.endswith('/about.html#term-integration')
+                    assert page.locator('#term-integration').is_visible()
+                    page.goto(f'http://127.0.0.1:{server.server_port}/lineage.html', wait_until='networkidle')
+                    inferred_link = page.locator('.lineage-legend-item a[href="about.html#term-inferred"]')
+                    incomplete_link = page.locator('.lineage-legend-item a[href="about.html#term-incomplete"]')
+                    assert inferred_link.is_visible() and incomplete_link.count() == 2
+                    assert all(incomplete_link.nth(i).is_visible() for i in range(incomplete_link.count()))
+                    inferred_link.click()
+                    assert page.url.endswith('/about.html#term-inferred')
+                    assert page.locator('#term-inferred').is_visible()
+                    page.goto(f'http://127.0.0.1:{server.server_port}/index.html', wait_until='networkidle')
+                    page.locator('.empire-stats-context summary').click()
+                    heldout_link = page.locator('.empire-stat a[href="about.html#term-held-out"]')
+                    assert heldout_link.count() == 1 and heldout_link.is_visible()
+                    heldout_link.click()
+                    assert page.url.endswith('/about.html#term-held-out')
+                    assert page.locator('#term-held-out').is_visible()
+                    page.goto(f'http://127.0.0.1:{server.server_port}/about.html', wait_until='networkidle')
                     page.get_by_role('link', name='integration', exact=True).click()
                     assert page.url.endswith('#term-integration')
                     assert page.locator('#term-integration').is_visible()
