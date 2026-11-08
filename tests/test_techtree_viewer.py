@@ -2420,6 +2420,43 @@ def test_issue435_planning_source_states_remain_explicit(status, last, expected)
         assert 'active work' not in html
 
 
+@pytest.mark.parametrize('row', [
+    {'phase': 'outcome', 'outcome': 'failed'},
+    {'phase': 'outcome', 'status': 'fail', 'ts': 'not-a-timestamp'},
+    {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00'},
+])
+def test_issue435_outcome_without_orderable_timestamp_is_not_reported_absent(row) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=[row])
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'no confirmed result recorded' not in result
+    assert 'result recorded' in result
+    assert 'timestamp/order unknown' in result
+
+
+def test_issue435_mixed_orderable_and_unorderable_results_disclose_incomplete_chronology() -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger = [
+        {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00Z'},
+        {'phase': 'outcome', 'status': 'fail'},
+    ]
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert '<strong>success</strong>' in result
+    assert 'chronology incomplete; a later untimestamped result may exist' in result
+    assert 'no confirmed result recorded' not in result
+
+
+def test_issue435_empty_ledger_reports_no_confirmed_result() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=[])
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'no confirmed result recorded' in result
+
+
 def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> None:
     from scripts import techtree_viewer as viewer
 

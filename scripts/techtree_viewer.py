@@ -5789,6 +5789,8 @@ def build_now_panel(
     ledger_integrated_ts: str | None = None
     latest_result_html = '<span class="unavailable-note">no confirmed result recorded</span>'
     latest_result_time: datetime | None = None
+    outcome_rows_seen = 0
+    outcome_rows_without_orderable_ts = 0
     if isinstance(ledger_tail, list):
         # read_ledger_tail returns rows oldest-first over a 5000-row window, so
         # the newest integration is the LAST evolution_tree row, not the first.
@@ -5799,15 +5801,20 @@ def build_now_panel(
             if entry.get('phase') == 'outcome' and outcome:
                 normalized_outcome = 'failed' if outcome == 'fail' else outcome
                 outcomes.append(normalized_outcome)
+                outcome_rows_seen += 1
                 timestamp = entry.get('ts')
+                parsed_result_time = None
                 if isinstance(timestamp, str):
                     try:
                         parsed_result_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                        if parsed_result_time.tzinfo is not None and (latest_result_time is None or parsed_result_time > latest_result_time):
-                            latest_result_time = parsed_result_time
-                            latest_result_html = f'<strong>{esc(normalized_outcome)}</strong> <span class="now-sub">recorded {fmt_ts(timestamp)}</span>'
                     except ValueError:
                         pass
+                if parsed_result_time is None or parsed_result_time.tzinfo is None:
+                    outcome_rows_without_orderable_ts += 1
+                elif latest_result_time is None or parsed_result_time > latest_result_time:
+                    latest_result_time = parsed_result_time
+                    latest_result_html = f'<strong>{esc(normalized_outcome)}</strong> <span class="now-sub">recorded {fmt_ts(timestamp)}</span>'
+
             if entry.get('phase') == 'evolution_tree' and entry.get('ts'):
                 ledger_integrated_ts = str(entry['ts'])
     # Precedence: caller override, then the current tree node (authoritative
@@ -6046,6 +6053,10 @@ def build_now_panel(
         '<div class="now-item" data-now-evidence="execution"><span class="now-label">Execution observation:</span> '
         '<span class="unavailable-note">unknown; no current execution state is established by this view</span></div>'
     )
+    if outcome_rows_seen and latest_result_time is None:
+        latest_result_html = '<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown</span>'
+    elif outcome_rows_without_orderable_ts:
+        latest_result_html += ' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist</span>'
     result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Last confirmed result:</span> {latest_result_html}</div>'
     integration_html = (
         f'<div class="now-item" data-now-evidence="integration"><span class="now-label">Last confirmed integration:</span> '
