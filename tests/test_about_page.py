@@ -122,6 +122,18 @@ def test_every_glossary_term_has_a_nonempty_definition_and_source() -> None:
         assert entry["source"].strip()
 
 
+def test_about_glossary_definitions_wrap_in_narrow_container() -> None:
+    html = about_page.build_about_panel()
+    assert ".about-glossary dd { min-width: 0; overflow-wrap: anywhere;" in html
+    assert "origin/main never advances on a red gate." in html
+
+
+def test_about_notes_wrap_on_narrow_viewports() -> None:
+    html = about_page.build_about_panel()
+    assert ".about-note { overflow-wrap: anywhere;" in html
+    assert "demo_category_determination.md" in html
+
+
 def test_terms_of_art_are_unique() -> None:
     terms = [g["term"] for g in about_page.GLOSSARY]
     assert len(terms) == len(set(terms)), "duplicate glossary term"

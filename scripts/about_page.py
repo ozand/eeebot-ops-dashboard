@@ -394,12 +394,13 @@ def _glossary_list() -> str:
 # techtree_viewer.py's shared CSS constant, so the registration hunk in
 # that file stays code-only (import + two dict/list entries).
 _ABOUT_STYLE = '''<style>
-.about-table { border-collapse: collapse; width: 100%; margin: 0.75em 0; }
+.about-table { border-collapse: collapse; width: 100%; min-width: 0; max-width: 100%; margin: 0.75em 0; table-layout: fixed; }
+.about-table th, .about-table td { overflow-wrap: anywhere; }
 .about-table th, .about-table td { border: 1px solid var(--border, #444); padding: 0.4em 0.6em; text-align: left; vertical-align: top; }
 .about-table th { font-weight: 600; }
-.about-note { font-size: 0.9em; opacity: 0.85; margin: 0.5em 0; }
+.about-note { overflow-wrap: anywhere; font-size: 0.9em; opacity: 0.85; margin: 0.5em 0; }
 .about-glossary dt { font-weight: 600; margin-top: 0.6em; }
-.about-glossary dd { margin: 0.15em 0 0.4em 1em; }
+.about-glossary dd { min-width: 0; overflow-wrap: anywhere; margin: 0.15em 0 0.4em 1em; }
 .about-source { opacity: 0.7; font-size: 0.85em; }
 </style>'''
 

@@ -1467,6 +1467,44 @@ def test_issue218_cold_focus_user_date_input_survives_delayed_fetch() -> None:
         release.set(); srv.shutdown()
 
 
+@pytest.mark.parametrize('viewport', [(320, 568), (390, 667)])
+def test_issue434_short_phone_lineage_details_remain_reachable(tmp_path: Path, viewport: tuple[int, int]) -> None:
+    pytest.importorskip('playwright')
+    from playwright.sync_api import sync_playwright
+    rows = [
+        {'phase': 'evolution_tree', 'cycle_id': 'cycle-short', 'sha': 'short', 'parent_sha': '', 'task_title': 'Short viewport card', 'ts': '2026-01-01T00:00:00Z'},
+    ]
+    from test_techtree_viewer import _fixture
+    data = _fixture(); data['evolution_tree'] = {'nodes': {}, 'current_sha': 'short'}; data['ledger_tail'] = rows; data['ledger_history'] = rows; data['cycle_titles'] = {'cycle-short': 'Short viewport card'}
+    pages = tv.render_pages(data, host='eeepc', generated_at='2026-01-01 01:00:00')
+    srv, base_url = _serve_lineage(pages['lineage.html'], json.loads(pages['lineage-cycle-details.json']))
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(); page = browser.new_page(viewport={'width': viewport[0], 'height': viewport[1]})
+            page.clock.install(time='2026-01-01T01:00:00Z')
+            page.goto(base_url + '/lineage.html'); page.wait_for_load_state('networkidle')
+            node = page.locator('.lineage-node[data-node-id="c:short"]')
+            assert node.is_visible(), viewport
+            page.locator('[data-lineage-zoom="fit"]').click()
+            node.focus()
+            page.keyboard.press('Enter')
+            page.wait_for_selector('.cycle-details-body h3', timeout=5000)
+            panel = page.locator('#cycle-details-panel')
+            assert panel.is_visible() and 'Short viewport card' in panel.inner_text(), viewport
+            assert page.locator('.lineage-graph-scroll').evaluate('(e) => e.clientHeight >= 100'), viewport
+            close = page.locator('#cycle-details-close')
+            assert close.is_visible() and close.evaluate('(e) => e.getBoundingClientRect().height >= 44'), viewport
+            box = panel.bounding_box()
+            assert box and box['height'] <= viewport[1] * 0.32 + 1 and box['y'] >= 0 and box['y'] + box['height'] <= viewport[1], (viewport, box)
+            assert panel.evaluate('(e) => getComputedStyle(e).position') == 'fixed', viewport
+            assert close.evaluate('(e) => { const r=e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }'), viewport
+            assert page.evaluate('document.activeElement === document.getElementById("cycle-details-close")'), viewport
+            page.screenshot(path=str(tmp_path / f'lineage-details-{viewport[0]}x{viewport[1]}.png'), full_page=True)
+            browser.close()
+    finally:
+        srv.shutdown()
+
+
 def test_issue218_rapid_node_selection_only_latest_card_and_focus_survives() -> None:
     pytest.importorskip('playwright')
     from threading import Event
