@@ -7,3 +7,4 @@
 | [ADR-004](ADR-004-publish-safe-planning-rest-observations.md) | Publish planning/rest observations as a separate typed status | Proposed | #395 |
 | [ADR-005](ADR-005-versioned-work-unit-contracts.md) | Versioned work-unit catalog and observation contracts | Proposed | #428; governs #421, #423, #425; independent acceptance #427 |
 | [ADR-006](ADR-006-evidence-first-interface-and-design-source.md) | Keep presentation evidence-first and visual guidance in DESIGN.md | Accepted (technical; effective on reviewed merge; not implemented) | #432; implementation backlog #433–#443 |
+| [ADR-007](ADR-007-publish-bounded-token-incompleteness.md) | Publish bounded token-data incompleteness | Accepted technical contract (effective after coordinator records exact-revision independent PASS) | #433 |
