@@ -36,12 +36,19 @@ def _deep_chain_pages(depth: int = 40) -> dict[str, str]:
     """A chain deeper than any viewport: height grows 54px per generation."""
     rows = []
     for i in range(depth):
+        ts = f'2026-01-02T00:{i % 60:02d}:{i % 60:02d}Z'
         rows.append({
             'phase': 'evolution_tree',
             'cycle_id': f'cycle-{i}',
             'sha': f'sha-{i}',
             'parent_sha': f'sha-{i - 1}' if i else '',
-            'ts': f'2026-01-02T00:{i % 60:02d}:{i % 60:02d}Z',
+            'ts': ts,
+        })
+        rows.append({
+            'phase': 'outcome',
+            'cycle_id': f'cycle-{i}',
+            'outcome': 'integrated',
+            'ts': ts,
         })
     data = _fixture()
     data['evolution_tree'] = {'nodes': {}, 'current_sha': f'sha-{depth - 1}'}
