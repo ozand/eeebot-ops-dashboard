@@ -4594,6 +4594,7 @@ def _lineage_coverage_text(coverage: dict[str, Any]) -> str:
     if span_from or span_to:
         parts.append(f'emitted timestamp span {span_from or "?"} to {span_to or "?"}')
     parts.append('older or missing ancestry may be unavailable')
+    parts.append('Date filters change visibility, not retained history')
     return '; '.join(parts) + '.'
 
 

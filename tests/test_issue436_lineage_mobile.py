@@ -59,6 +59,12 @@ def test_issue436_current_and_list_select_same_emitted_node(viewport):
         page.keyboard.press('Escape')
         assert not dialog.evaluate('(d) => d.open')
         assert page.evaluate('document.activeElement === document.querySelector("[data-lineage-list-open]")')
+        coverage = page.locator('.lineage-coverage-note')
+        assert 'Date filters change visibility, not retained history.' in coverage.inner_text()
+        page.locator('[data-lineage-filter="all"]').click()
+        assert 'Date filters change visibility, not retained history.' in coverage.inner_text()
+        page.locator('[data-lineage-filter="today"]').click()
+        assert 'Date filters change visibility, not retained history.' in coverage.inner_text()
         page.locator('[data-lineage-current]').click()
         page.wait_for_selector('.cycle-details-body h3')
         assert page.locator('#lineage-svg .lineage-node.cycle-node-selected').get_attribute('data-sha') == 'sha-current'
