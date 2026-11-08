@@ -7394,7 +7394,9 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert page.locator('#tkn-period-label').inner_text().startswith('Showing 7d')
         page.locator('#tkn-selected-day').select_option(dates[-2])
         assert 'unobserved gap' in page.locator('#tkn-detail-info').inner_text()
-        page.locator('#tkn-selected-day').select_option(dates[-1])
+        target_day = page.locator(f'.tkn-day-col[data-date="{dates[-1]}"]').first
+        target_day.click()
+        assert page.locator('#tkn-selected-day').input_value() == dates[-1]
         hour_control = page.locator('#tkn-selected-hour')
         hour_control.focus()
         page.keyboard.press('ArrowDown')
@@ -7412,7 +7414,25 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert page.locator('#tkn-total-tokens').inner_text() == '888'
         label = page.locator('#tkn-period-label').inner_text()
         assert label.count('incomplete day(s)') == 1
+        page.locator('#tkn-range-from').fill('2026-11-01')
+        page.locator('#tkn-range-to').fill('2026-11-02')
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 0
+        assert 'No recorded dates in this range' in page.locator('#tkn-period-label').inner_text()
+        assert page.locator('#tkn-selected-day').is_disabled()
+        assert page.locator('#tkn-selected-hour').is_disabled()
+        assert page.locator('#tkn-detail-info').inner_text() == 'No day details: the selected period contains no recorded dates.'
+        assert page.locator('#tkn-hour-detail').inner_text() == 'No hour detail: select a period containing a recorded date.'
+        assert page.locator('#tkn-day-detail').is_hidden()
+        assert '2026-09-09' not in page.locator('#tkn-hour-detail').inner_text()
+        page.locator('#tkn-range-from').fill(dates[-1])
+        page.locator('#tkn-range-to').fill(dates[-3])
+        assert 'Start date is after end date' in page.locator('#tkn-period-label').inner_text()
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 0
+        assert 'No hour detail' in page.locator('#tkn-hour-detail').inner_text()
         period.select_option('30d')
+        assert page.locator('#tkn-day-detail').is_visible()
+        assert page.locator('#tkn-selected-day').input_value() in dates[-30:]
+        assert page.locator('#tkn-selected-day').input_value() in page.locator('#tkn-hour-detail').inner_text()
         assert page.locator('#matrix-gw .tkn-day-col').count() == 30
         assert page.locator('#tkn-total-tokens').inner_text() == '24.9K'
         assert page.locator('#tkn-total-calls').inner_text() == '672'

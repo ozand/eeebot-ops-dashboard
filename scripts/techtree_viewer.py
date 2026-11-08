@@ -8752,6 +8752,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <label>Selected day <select id="tkn-selected-day" aria-label="Selected MSK day"></select></label>
     <label>Selected hour <select id="tkn-selected-hour" aria-label="Selected MSK hour"></select></label>
     <span id="tkn-period-label" role="status" aria-live="polite"></span>
+    <div class="tkn-detail-info" id="tkn-detail-info" role="status" aria-live="polite">Select a day and hour above for the recorded hour summary.</div>
+    <div class="tkn-detail-info" id="tkn-hour-detail" aria-live="polite"></div>
   </div>
 
   <div class="tkn-controls">
@@ -8814,8 +8816,6 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
     <div class="tkn-strip-hours">
       <span>00h</span><span>03h</span><span>06h</span><span>09h</span><span>12h</span><span>15h</span><span>18h</span><span>21h</span><span>24h</span>
     </div>
-    <div class="tkn-detail-info" id="tkn-detail-info" role="status" aria-live="polite">Select a day and hour above for the recorded hour summary.</div>
-    <div class="tkn-detail-info" id="tkn-hour-detail" aria-live="polite"></div>
   </div>
 
   <div id="tkn-tooltip" class="tkn-tooltip" style="display: none;"></div>
@@ -9151,11 +9151,14 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       const shown = visibleDates();
       const from = shown[0] || 'no recorded dates';
       const to = shown[shown.length - 1] || 'no recorded dates';
+      const rangeState = period === 'range' && !shown.length
+        ? (document.getElementById('tkn-range-from').value && document.getElementById('tkn-range-to').value && document.getElementById('tkn-range-from').value > document.getElementById('tkn-range-to').value ? ' · Start date is after end date.' : ' · No recorded dates in this range.')
+        : '';
       const periodName = period === '24h' ? '24h MSK calendar day (latest available date)' : period;
       const integrity = Array.isArray(summary.invalid_days);
       const invalid = integrity ? summary.invalid_days.filter(d => shown.includes(d)).length : null;
       const integrityText = integrity ? (invalid ? invalid + ' incomplete day(s)' : 'integrity reported complete') : 'completeness unknown';
-      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens. · ' + integrityText;
+      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens. · ' + integrityText + rangeState;
     }}
     function updatePeriodSummary() {{
       const shown = visibleDates();
@@ -9187,6 +9190,8 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       visibleDates().forEach(d => {{ const o=document.createElement('option'); o.value=d; o.textContent=d + (hourly[d] == null ? ' · unobserved' : ''); selectedDay.appendChild(o); }});
       selectedHour.replaceChildren();
       for (let h=0; h<24; h++) {{ const o=document.createElement('option'); o.value=String(h); o.textContent=String(h).padStart(2,'0')+':00 MSK'; selectedHour.appendChild(o); }}
+      selectedDay.disabled = selectedDay.options.length === 0;
+      selectedHour.disabled = selectedDay.options.length === 0;
       if (visibleDates().includes(activeDate)) selectedDay.value=activeDate;
       else if (selectedDay.options.length) activeDate=selectedDay.value;
     }}
@@ -9421,7 +9426,17 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       period = periodControl.value;
       const shown = visibleDates();
       fillPeriodControls(); updatePeriodSummary(); updatePeriodLabel();
-      if (shown.length) selectDate(selectedDay.value);
+      if (shown.length) {{
+        document.getElementById('tkn-day-detail').hidden = false;
+        selectDate(selectedDay.value);
+      }} else {{
+        activeDate = null;
+        document.getElementById('tkn-active-date-label').textContent = 'No date selected';
+        document.getElementById('tkn-strip-wrap').replaceChildren();
+        document.getElementById('tkn-detail-info').textContent = 'No day details: the selected period contains no recorded dates.';
+        document.getElementById('tkn-hour-detail').textContent = 'No hour detail: select a period containing a recorded date.';
+        document.getElementById('tkn-day-detail').hidden = true;
+      }}
       renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
       renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
       renderMatrix('matrix-tot', 'legend-tot', 3, 'total', 'tot-lvl');
