@@ -62,22 +62,22 @@ REPOS: tuple[dict[str, str], ...] = (
     {
         "name": "ozand/eeebot",
         "role": "harness / product",
-        "holds": "the runtime code (nanobot/), specs, host deploy tooling, and the fitness function (scorecard, targets, held-out checkers)",
-        "identifiers": "issue numbers (#NNNN); commit shas for the harness's own history",
+        "holds": "the product/runtime code, specifications, deployment tooling and fitness function; product changes are tracked as product-repository commits",
+        "identifiers": "issue numbers (#NNNN) and commits in the product repository; neither is an instance cycle id",
         "source": "docs/CURRENT_ARCHITECTURE.md",
     },
     {
         "name": "ozand/eeebot-self-evolving",
         "role": "instance",
-        "holds": "the mutable workspace the loop edits (scripts/, surfaces/, tests/, memory/, docs/); checked out on the host beside the state root",
-        "identifiers": "cycle ids (cycle-&lt;hex&gt;) mark commits the bridge integrates onto this repo's main; commit shas here are cycle integrations",
+        "holds": "the mutable workspace the loop edits (scripts/, surfaces/, tests/, memory/, docs/) as described by the public architecture source",
+        "identifiers": "cycle ids (cycle-&lt;hex&gt;) identify instance-cycle records and integrations into this repository's main; these are distinct from product-repository commits",
         "source": "docs/CURRENT_ARCHITECTURE.md",
     },
     {
         "name": "ozand/eeebot-ops-dashboard",
         "role": "dashboard (this repo)",
-        "holds": "the WSGI observability app (dormant, not deployed) and the standalone techtree_viewer.py static-site generator that produces the page you are reading",
-        "identifiers": "issue numbers (#NNNN) for dashboard-only work; no cycle ids or shas of its own appear on the published site",
+        "holds": "the WSGI app (README describes it as dormant/not deployed) and the standalone techtree_viewer.py static-site generator for this page",
+        "identifiers": "issue numbers (#NNNN) govern dashboard changes; this page is generated output, not a product commit or instance-cycle record",
         "source": "README.md",
     },
     {
@@ -253,8 +253,18 @@ GLOSSARY: tuple[dict[str, str], ...] = (
     },
     {
         "term": "integration",
-        "definition": "the bridge merging a green, script-tier cycle onto the instance repo's main (--no-ff). origin/main never advances on a red gate.",
-        "source": "docs/CURRENT_ARCHITECTURE.md",
+        "definition": "the bridge integrating a green, script-tier cycle onto the instance repository's main branch. The cycle record distinguishes integration from a successful gate; see the cycle and lineage evidence pages.",
+        "source": "scripts/techtree_viewer.py cycle and lineage renderers",
+    },
+    {
+        "term": "incomplete",
+        "definition": "An explicit outcome or evidence limitation; it does not mean a successful cycle or a complete history.",
+        "source": "scripts/techtree_viewer.py cycle outcome and chronology labels",
+    },
+    {
+        "term": "inferred",
+        "definition": "A relationship derived when recorded parent evidence is unavailable; it is labeled inferred, not recorded.",
+        "source": "scripts/techtree_viewer.py lineage graph",
     },
     {
         "term": "night contour",
@@ -283,8 +293,8 @@ GLOSSARY: tuple[dict[str, str], ...] = (
     },
     {
         "term": "held-out",
-        "definition": "sandboxed behavioral checkers run against instance artifacts on the scorecard recompute path; a failure becomes defect demand carrying the checker's evidence, without the instance ever seeing the checker itself.",
-        "source": "docs/CURRENT_ARCHITECTURE.md",
+        "definition": "Validation on tasks withheld from the agent's own task set; the dashboard reports the published scorecard observation, not an independent live check.",
+        "source": "scripts/techtree_viewer.py scorecard labels",
     },
     {
         "term": "scorecard feed",
@@ -328,9 +338,10 @@ def _repos_table() -> str:
         for r in REPOS
     )
     return (
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Repository reference table; scroll horizontally to reach all columns">'
         '<table class="about-table"><thead><tr>'
         "<th>repository</th><th>role</th><th>holds</th><th>identifiers on this site</th>"
-        f"</tr></thead><tbody>{rows}</tbody></table>"
+        f"</tr></thead><tbody>{rows}</tbody></table></div>"
     )
 
 
@@ -340,9 +351,10 @@ def _cycle_table() -> str:
         for s in CYCLE_STAGES
     )
     return (
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Cycle stages reference table; scroll horizontally to reach all columns">'
         '<table class="about-table"><thead><tr>'
         "<th>stage</th><th>what happens</th><th>where the output appears</th>"
-        f"</tr></thead><tbody>{rows}</tbody></table>"
+        f"</tr></thead><tbody>{rows}</tbody></table></div>"
     )
 
 
@@ -360,9 +372,10 @@ def _units_table() -> str:
         if exceptions else ""
     )
     return (
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Schedule reference table; scroll horizontally to reach all columns">'
         '<table class="about-table"><thead><tr>'
         "<th>unit</th><th>cadence</th><th>produces</th><th>appears on</th>"
-        f"</tr></thead><tbody>{rows}</tbody></table>"
+        f"</tr></thead><tbody>{rows}</tbody></table></div>"
         f"<p class=\"about-note\">{PUBLISH_PIPELINE_NOTE}</p>{exceptions_html}"
     )
 
@@ -373,9 +386,10 @@ def _models_table() -> str:
         for r in MODEL_ROUTING
     )
     return (
+        '<div class="about-table-scroll" role="region" tabindex="0" aria-label="Model reference table; scroll horizontally to reach all columns">'
         '<table class="about-table"><thead><tr>'
         "<th>role</th><th>model</th><th>why</th>"
-        f"</tr></thead><tbody>{rows}</tbody></table>"
+        f"</tr></thead><tbody>{rows}</tbody></table></div>"
         f'<p class="about-note">{GATEWAY_UNAVAILABLE_NOTE}</p>'
         f'<p class="about-note">{HOST_SPEC_NOTE}</p>'
     )
@@ -383,7 +397,7 @@ def _models_table() -> str:
 
 def _glossary_list() -> str:
     items = "".join(
-        f"<dt>{esc(g['term'])}</dt><dd>{g['definition']} "
+        f"<dt id=\"term-{g['term'].replace(' ', '-') }\">{esc(g['term'])}</dt><dd>{g['definition']} "
         f'<span class="about-source">({esc(g["source"])})</span></dd>'
         for g in GLOSSARY
     )
@@ -394,14 +408,20 @@ def _glossary_list() -> str:
 # techtree_viewer.py's shared CSS constant, so the registration hunk in
 # that file stays code-only (import + two dict/list entries).
 _ABOUT_STYLE = '''<style>
-.about-table { border-collapse: collapse; width: 100%; min-width: 0; max-width: 100%; margin: 0.75em 0; table-layout: fixed; }
+.about-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin: 0.75em 0; border: 1px solid var(--border, #444); }
+.about-table-scroll:focus-visible { outline: 2px solid var(--accent, #2fd3c4); outline-offset: 2px; }
+.about-table { border-collapse: collapse; width: 100%; min-width: 680px; margin: 0; table-layout: fixed; }
 .about-table th, .about-table td { overflow-wrap: anywhere; }
 .about-table th, .about-table td { border: 1px solid var(--border, #444); padding: 0.4em 0.6em; text-align: left; vertical-align: top; }
 .about-table th { font-weight: 600; }
 .about-note { overflow-wrap: anywhere; font-size: 0.9em; opacity: 0.85; margin: 0.5em 0; }
-.about-glossary dt { font-weight: 600; margin-top: 0.6em; }
+.about-glossary dt { font-weight: 600; margin-top: 0.6em; scroll-margin-top: 1rem; }
 .about-glossary dd { min-width: 0; overflow-wrap: anywhere; margin: 0.15em 0 0.4em 1em; }
 .about-source { opacity: 0.7; font-size: 0.85em; }
+.about-toc ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; }
+.about-toc a, .about-term-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.6rem; }
+.about-system-map { border-inline-start: 3px solid var(--accent, #2fd3c4); padding-inline-start: 1rem; }
+@media (min-width: 700px) { .about-table-scroll { scrollbar-gutter: stable; } }
 </style>'''
 
 
@@ -412,33 +432,41 @@ def build_about_panel(data: dict[str, Any] | None = None, host: str = "", genera
 {_ABOUT_STYLE}
 <section class="panel about-intro">
   <h2>What this is</h2>
-  <p>eeebot is an autonomous improvement loop that runs bounded cycles on a
-  constrained host (eeepc), editing its own instance repository under a gate.
-  Every change the loop makes to its own capabilities goes through the same
-  bounded gate described below; nothing here bypasses it.</p>
+  <p>This is a generated, published snapshot of public dashboard evidence, not a live console. It describes the product and the instance that produces cycle evidence; it does not prove current host health or that every source is present.</p>
+  <ol class="about-system-map">
+    <li><strong>Product</strong> — <code>ozand/eeebot</code> owns the harness and runtime contracts.</li>
+    <li><strong>Instance</strong> — <code>ozand/eeebot-self-evolving</code> is the workspace where bounded cycles may produce changes.</li>
+    <li><strong>Published snapshot</strong> — the generator renders an allowlisted public projection; unavailable, withheld and absent inputs remain distinct where observed.</li>
+    <li><strong>Dashboard</strong> — this repository renders the generated pages; the static page can be older than its sources and is not a host-status probe.</li>
+  </ol>
+  <p class="about-note">Freshness in the shared page footer is the age of this generated artifact; source freshness labels are limited to the published evidence available on each page. This page does not assert complete history, live state, or absence of data merely because a value is not shown. Private pages, endpoints and payloads are not described here.</p>
+  <nav class="about-toc" aria-label="About page contents"><h3>On this page</h3><ul>
+    <li><a href="#about-repos">Repositories</a></li><li><a href="#about-cycle">Cycle</a></li><li><a href="#about-schedule">Schedule</a></li><li><a href="#about-models">Models</a></li><li><a href="#about-vocabulary">Vocabulary</a></li>
+  </ul></nav>
+  <p class="about-term-links">Terms: <a href="#term-integration">integration</a><a href="#term-incomplete">incomplete</a><a href="#term-inferred">inferred</a><a href="#term-held-out">held-out</a></p>
 </section>
 
-<section class="panel about-repos">
+<section class="panel about-repos" id="about-repos">
   <h2>The machine: four repositories</h2>
   {_repos_table()}
 </section>
 
-<section class="panel about-cycle">
+<section class="panel about-cycle" id="about-cycle">
   <h2>The cycle</h2>
   {_cycle_table()}
 </section>
 
-<section class="panel about-schedule">
+<section class="panel about-schedule" id="about-schedule">
   <h2>The schedule</h2>
   {_units_table()}
 </section>
 
-<section class="panel about-models">
+<section class="panel about-models" id="about-models">
   <h2>The models</h2>
   {_models_table()}
 </section>
 
-<section class="panel about-vocabulary">
+<section class="panel about-vocabulary" id="about-vocabulary">
   <h2>The vocabulary</h2>
   {_glossary_list()}
 </section>
