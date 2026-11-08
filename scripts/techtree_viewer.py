@@ -9599,7 +9599,7 @@ CSS = '''
       align-items: center;
       gap: 2px 8px;
     }
-    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; }
     .panel-nav a:hover { text-decoration: underline; }
     /* Issue #70: multi-page site nav -- current page highlighted. */
     .site-nav a.nav-current {

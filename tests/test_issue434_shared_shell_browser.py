@@ -108,9 +108,15 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                             };
                         }''')
                         assert overflow is None, (name, width, f'route content overflows viewport: {overflow!r}')
+                        link_boxes = []
                         for link in nav.locator('a').all():
                             box = link.bounding_box()
-                            assert box and box['height'] >= 44, (name, width, box)
+                            assert box and box['width'] >= 44 and box['height'] >= 44, (name, width, box)
+                            link_boxes.append(box)
+                        for index, box in enumerate(link_boxes):
+                            for other in link_boxes[index + 1:]:
+                                overlaps = box['x'] < other['x'] + other['width'] and other['x'] < box['x'] + box['width'] and box['y'] < other['y'] + other['height'] and other['y'] < box['y'] + box['height']
+                                assert not overlaps, (name, width, box, other)
                         page.locator('nav.site-nav a').first.focus()
                         assert page.evaluate('getComputedStyle(document.activeElement).outlineStyle') != 'none', (name, width)
                         page.keyboard.press('Tab')
