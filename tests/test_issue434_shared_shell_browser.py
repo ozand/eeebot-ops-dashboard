@@ -50,14 +50,21 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             try:
-                for width in (390, 1440):
+                for width, height in ((390, 844), (1440, 1000)):
                     for name in route_names:
-                        page = browser.new_page(viewport={'width': width, 'height': 900}, device_scale_factor=1)
+                        page = browser.new_page(viewport={'width': width, 'height': height}, device_scale_factor=1)
                         page.goto(f'http://127.0.0.1:{server.server_port}/{name}', wait_until='networkidle')
                         nav = page.locator('nav.site-nav')
                         assert nav.locator('[aria-current="page"]').count() == 1, (name, width)
                         assert page.locator('.empire-fresh').is_visible(), (name, width)
                         if name == 'index.html':
+                            now = page.locator('#panel-now')
+                            assert now.locator('[data-now-evidence="execution"]').is_visible(), (name, width)
+                            assert now.locator('[data-now-evidence="result"]').is_visible(), (name, width)
+                            assert now.locator('[data-now-evidence="integration"]').is_visible(), (name, width)
+                            assert now.locator('[data-now-evidence="attention"]').is_visible(), (name, width)
+                            assert now.locator('.now-evidence-summary').evaluate('(e) => e.getBoundingClientRect().bottom <= innerHeight'), (name, width)
+                            assert now.locator('.now-detail-disclosure summary').evaluate_all('els => els.every(e => e.getBoundingClientRect().height >= 44)'), (name, width)
                             assert page.locator('.empire-stats-context').count() == 1, (name, width)
                             summary = page.locator('.empire-stats-context summary')
                             assert summary.is_visible() and summary.evaluate('(e) => e.getBoundingClientRect().height >= 44'), (name, width)

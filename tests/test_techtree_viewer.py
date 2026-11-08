@@ -2373,6 +2373,64 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
 
 
+def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() -> None:
+    from scripts import techtree_viewer as viewer
+
+    data = _fixture()
+    data['health_last_integrated_ts'] = '2026-08-16T00:01:00Z'
+    data['health_recent_outcomes'] = ['integrated']
+    data['planning_activity'] = {'ledger': {'status': 'partial', 'source_age_seconds': 180,
+        'last_observation': {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}},
+        'rest_status': 'unavailable_pending_read_approval'}
+    data['ci_freshness'] = {'observed_at_utc': '2026-08-16T02:00:00Z', 'repositories': {
+        'ozand/example': {'actions_enabled': True, 'freshness_state': 'recent', 'latest_conclusion': 'failure',
+                          'latest_run_url': 'https://github.com/ozand/example/actions/runs/123'}}}
+    html = viewer.render_pages(data, host='fixture', generated_at='2026-08-16 02:00:00')['index.html']
+
+    assert html.index('data-now-evidence="execution"') < html.index('data-now-evidence="result"')
+    assert html.index('data-now-evidence="integration"') < html.index('data-now-evidence="attention"')
+    assert html.index('data-now-evidence="attention"') < html.index('Planning observation (separate from cycles)')
+    assert html.index('data-now-evidence="attention"') < html.index('Ranked demand candidates')
+    assert 'timed_out' in html and 'Attention:' in html
+    assert 'run evidence' in html and 'href="https://github.com/ozand/example/actions/runs/123"' in html
+    assert html.index('data-now-evidence="attention"') < html.index('Charter and priorities')
+    assert 'unknown; no current execution state is established by this view' in html
+    assert 'Last confirmed result:' in html and 'Last confirmed integration:' in html
+    assert 'Ranked demand candidates (not a promise of next selection)' in html
+    assert 'Candidates are not a prediction of the next actual selection.' in html
+    assert 'rest_unchanged' not in html
+    assert 'no current-rest or active-work inference' in html
+
+
+@pytest.mark.parametrize(('status', 'last', 'expected'), [
+    ('present', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'rest_unchanged', 'event_age_seconds': 120}, 'current planning status unknown'),
+    ('partial', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}, 'timed_out'),
+    ('absent', None, 'absent; latest observation unavailable'),
+    ('probe_unavailable', None, 'probe_unavailable; latest observation unavailable'),
+])
+def test_issue435_planning_source_states_remain_explicit(status, last, expected) -> None:
+    from scripts import techtree_viewer as viewer
+
+    activity = {'ledger': {'status': status, 'source_age_seconds': None, 'last_observation': last}}
+    html = viewer.build_now_panel(None, None, None, None, planning_activity=activity)
+    assert expected in html
+    assert 'no current-rest or active-work inference' in html
+    if last and last.get('outcome') == 'rest_unchanged':
+        assert 'rest_unchanged' in html
+        assert 'active work' not in html
+
+
+def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, planning_activity=None, ci_freshness=None)
+    assert 'Execution observation:' in html and 'unknown' in html
+    assert 'Last confirmed result:' in html and 'no confirmed result recorded' in html
+    assert 'Last confirmed integration:' in html and 'none recorded' in html
+    assert 'Planning observation:' in html and 'unavailable or unknown' in html
+    assert 'run evidence unavailable' in html
+
+
 def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     data = _fixture()
     data['scorecard']['reader_status'] = {'feeds': {'usage': {'status': 'fresh'}}}
