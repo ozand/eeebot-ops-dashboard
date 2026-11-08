@@ -2373,6 +2373,20 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
 
 
+def test_issue435_attention_surfaces_malformed_planning_outcome() -> None:
+    html = tv.build_now_panel(None, None, None, None,
+        planning_activity={'ledger': {'status': 'present', 'last_observation': {'outcome': 'malformed'}}})
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert 'planning: malformed' in summary
+
+
+def test_issue435_attention_surfaces_local_ci_failure_detail() -> None:
+    html = tv.build_now_panel(None, None, None, None,
+        local_ci={'probe': 'present', 'exit_code': 7, 'summary': '2 failures'})
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert 'local CI failed (exit=7; 2 failures)' in summary
+
+
 @pytest.mark.parametrize(('verdict_inputs', 'expected'), [
     ({'age_seconds': 120, 'health_recent_outcomes': ['integrated'], 'proposer_llm_unavailable': True},
      'scoped health investigate: proposer LLM is unavailable'),

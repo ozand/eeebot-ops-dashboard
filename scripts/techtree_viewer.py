@@ -6086,7 +6086,7 @@ def build_now_panel(
     if isinstance(planning_observation, dict):
         planning_status = planning_observation.get('status')
         planning_last = planning_observation.get('last_observation')
-        if planning_status != 'present' or not isinstance(planning_last, dict) or planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed'}:
+        if planning_status != 'present' or not isinstance(planning_last, dict) or planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed', 'malformed'}:
             planning_detail = planning_last.get('outcome') if isinstance(planning_last, dict) else planning_status if planning_status != 'present' else 'no observation'
             attention_items.append(f'planning: {esc(str(planning_detail or "unknown"))}')
     else:
@@ -6114,8 +6114,15 @@ def build_now_panel(
         elif not isinstance(defect_count, int):
             attention_items.append('drift: defect count unknown')
     local_state = local_ci.get('probe') if isinstance(local_ci, dict) else 'unavailable'
-    if local_state not in {'present'} or isinstance(local_ci, dict) and local_ci.get('exit_code') != 0:
+    if local_state != 'present':
         attention_items.append(f'local CI: {esc(str(local_state or "unknown"))}')
+    elif isinstance(local_ci, dict) and local_ci.get('exit_code') != 0:
+        local_detail = local_ci.get('exit_code')
+        local_summary = local_ci.get('summary')
+        detail_text = f'exit={esc(str(local_detail))}' if local_detail is not None else 'exit unknown'
+        if local_summary:
+            detail_text += f'; {esc(str(local_summary))}'
+        attention_items.append(f'local CI failed ({detail_text})')
     attention_text = '; '.join(attention_items) if attention_items else 'No attention signal reported by these sources; review each source status below.'
     attention_html = (
         '<div class="now-item" data-now-evidence="attention"><span class="now-label">Attention:</span> '
