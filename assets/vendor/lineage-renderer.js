@@ -603,6 +603,20 @@
       list.appendChild(item);
     });
   }
+  function revealNodeInGraph(node) {
+    var scroller = document.querySelector('[data-lineage-graph-scroll]');
+    if (!scroller || !node) return;
+    var viewport = scroller.getBoundingClientRect();
+    var target = node.getBoundingClientRect();
+    var left = scroller.scrollLeft;
+    var top = scroller.scrollTop;
+    if (target.left < viewport.left) left -= viewport.left - target.left;
+    else if (target.right > viewport.right) left += target.right - viewport.right;
+    if (target.top < viewport.top) top -= viewport.top - target.top;
+    else if (target.bottom > viewport.bottom) top += target.bottom - viewport.bottom;
+    scroller.scrollLeft = Math.max(0, Math.min(scroller.scrollWidth - scroller.clientWidth, left));
+    scroller.scrollTop = Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight, top));
+  }
   function selectNode(token) {
     var payload = state.payload;
     if (!payload) return null;
@@ -701,7 +715,7 @@
     }
     if (currentButton) {
       currentButton.disabled = !currentExists;
-      currentButton.addEventListener('click', function () { selectNode(currentId); });
+      currentButton.addEventListener('click', function () { revealNodeInGraph(selectNode(currentId)); });
     }
     var cycleList = document.querySelector('[data-lineage-cycle-list]');
     var cycleDialog = document.querySelector('.lineage-list-dialog');

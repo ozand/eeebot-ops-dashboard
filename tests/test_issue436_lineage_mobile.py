@@ -65,17 +65,48 @@ def test_issue436_current_and_list_select_same_emitted_node(viewport):
         assert 'Date filters change visibility, not retained history.' in coverage.inner_text()
         page.locator('[data-lineage-filter="today"]').click()
         assert 'Date filters change visibility, not retained history.' in coverage.inner_text()
+        page.locator('[data-lineage-filter="all"]').click()
         page.locator('[data-lineage-current]').click()
         page.wait_for_selector('.cycle-details-body h3')
         assert page.locator('#lineage-svg .lineage-node.cycle-node-selected').get_attribute('data-sha') == 'sha-current'
         assert page.locator('[data-lineage-cycle-list] [aria-pressed="true"]').get_attribute('data-lineage-list-node') == 'c:sha-current'
         assert 'Current useful result' in page.locator('.cycle-details-body').inner_text()
+        graph = page.locator('[data-lineage-graph-scroll]')
+        assert page.locator('#lineage-svg .cycle-node-selected').evaluate('''node => {
+            const graph = document.querySelector('[data-lineage-graph-scroll]').getBoundingClientRect();
+            const box = node.getBoundingClientRect();
+            return box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+        }''')
         page.locator('#cycle-details-close').click()
         page.locator('[data-lineage-list-open]').click()
         page.locator('[data-lineage-list-node="c:sha-old"]').click()
         assert not page.locator('.lineage-list-dialog').evaluate('(d) => d.open')
         assert page.locator('#lineage-svg .lineage-node.cycle-node-selected').get_attribute('data-sha') == 'sha-old'
         assert page.locator('[data-lineage-cycle-list] [aria-pressed="true"]').get_attribute('data-lineage-list-node') == 'c:sha-old'
+    finally:
+        close()
+
+
+def test_issue436_current_locator_reveals_offscreen_node_without_page_scroll():
+    page, close = _open(__import__('test_issue250_lineage_viewport')._deep_chain_pages(), 390, 844)
+    try:
+        graph = page.locator('[data-lineage-graph-scroll]')
+        node = page.locator('#lineage-svg .lineage-node[data-sha="sha-39"]')
+        initial_page_y = page.evaluate('window.scrollY')
+        assert not node.evaluate('''node => {
+            const graph = document.querySelector('[data-lineage-graph-scroll]').getBoundingClientRect();
+            const box = node.getBoundingClientRect();
+            return box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+        }''')
+        page.locator('[data-lineage-current]').click()
+        assert node.evaluate('''node => {
+            const graph = document.querySelector('[data-lineage-graph-scroll]').getBoundingClientRect();
+            const box = node.getBoundingClientRect();
+            return box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+        }''')
+        assert page.evaluate('window.scrollY') == initial_page_y
+        assert graph.evaluate('(e) => e.clientHeight') >= 100
+        assert page.locator('.cycle-details-body').is_visible()
     finally:
         close()
 
