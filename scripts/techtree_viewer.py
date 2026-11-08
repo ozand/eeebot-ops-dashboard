@@ -5428,14 +5428,14 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
     if not isinstance(ci_freshness, dict):
         return (
             '<div class="now-item"><span class="now-label">GitHub CI:</span> '
-            '<span class="unavailable-note">cannot ask</span></div>'
+            '<span class="unavailable-note">cannot ask; run evidence unavailable</span></div>'
         )
     observed = esc(ci_freshness.get('observed_at_utc') or 'unknown read time')
     repositories = ci_freshness.get('repositories')
     if not isinstance(repositories, dict) or not repositories:
         return (
             '<div class="now-item"><span class="now-label">GitHub CI:</span> '
-            f'<span class="unavailable-note">cannot ask (read {observed})</span></div>'
+            f'<span class="unavailable-note">cannot ask (read {observed}); run evidence unavailable</span></div>'
         )
     items = []
     for repository, record in repositories.items():
@@ -5462,7 +5462,8 @@ def _build_ci_freshness_item(ci_freshness: dict[str, Any] | None) -> str:
             latest = freshness.get('latest_completed_at_utc')
             if latest:
                 status += f', last {fmt_ts(latest)}'
-        items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}</li>')
+        evidence = ' <span class="unavailable-note">run evidence unavailable in public snapshot</span>'
+        items.append(f'<li><code>{esc(repository)}</code>: {esc(status)}{evidence}</li>')
     return (
         '<div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> '
         f'<span class="now-sub">read {observed}</span>'
@@ -5572,7 +5573,7 @@ def _build_systemd_drift_item(systemd_drift: dict[str, Any] | None) -> str:
     return (
         '<div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> '
         f'<span class="badge probe-{esc(probe)}">{symbol} {esc(probe)}</span> '
-        f'<span class="now-sub">{detail}</span>'
+        f'<span class="now-sub">{detail}; evidence link unavailable in the published drift summary</span>'
         f'{finding_rows}</div>'
     )
 
@@ -5786,7 +5787,18 @@ def build_now_panel(
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
     ledger_integrated_ts: str | None = None
-    if isinstance(ledger_tail, list):
+    ledger_available = isinstance(ledger_tail, list)
+    ledger_state_note = (
+        'available tail may be empty or unreadable; history outside this tail is unknown'
+        if ledger_available else 'ledger not readable; outcome state unknown'
+    )
+    latest_result_html = (f'<span class="unavailable-note">outcome unavailable; {ledger_state_note}</span>'
+                          if not ledger_available else
+                          f'<span class="unavailable-note">no outcome evidence in available tail; {ledger_state_note}</span>')
+    latest_result_time: datetime | None = None
+    outcome_rows_seen = 0
+    outcome_rows_without_orderable_ts = 0
+    if ledger_available:
         # read_ledger_tail returns rows oldest-first over a 5000-row window, so
         # the newest integration is the LAST evolution_tree row, not the first.
         for entry in ledger_tail:
@@ -5794,7 +5806,22 @@ def build_now_panel(
                 continue
             outcome = str(entry.get('outcome') or entry.get('status') or '')
             if entry.get('phase') == 'outcome' and outcome:
-                outcomes.append('failed' if outcome == 'fail' else outcome)
+                normalized_outcome = 'failed' if outcome == 'fail' else outcome
+                outcomes.append(normalized_outcome)
+                outcome_rows_seen += 1
+                timestamp = entry.get('ts')
+                parsed_result_time = None
+                if isinstance(timestamp, str):
+                    try:
+                        parsed_result_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    except ValueError:
+                        pass
+                if parsed_result_time is None or parsed_result_time.tzinfo is None:
+                    outcome_rows_without_orderable_ts += 1
+                elif latest_result_time is None or parsed_result_time >= latest_result_time:
+                    latest_result_time = parsed_result_time
+                    latest_result_html = f'<strong>{esc(normalized_outcome)}</strong> <span class="now-sub">recorded {fmt_ts(timestamp)}</span>'
+
             if entry.get('phase') == 'evolution_tree' and entry.get('ts'):
                 ledger_integrated_ts = str(entry['ts'])
     # Precedence: caller override, then the current tree node (authoritative
@@ -6006,7 +6033,7 @@ def build_now_panel(
     charter_html = _build_charter_item(derived_view)
     planning_observation = (planning_activity or {}).get('ledger') if isinstance(planning_activity, dict) else None
     if not isinstance(planning_observation, dict):
-        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval.</div>'
+        planning_html = '<div class="now-item"><span class="now-label">Planning observation:</span> <span class="unavailable-note">unavailable or unknown</span>; rest source unavailable pending explicit reader-path approval; ledger evidence link unavailable.</div>'
     else:
         source_status = planning_observation.get('status')
         last = planning_observation.get('last_observation')
@@ -6026,7 +6053,127 @@ def build_now_panel(
         age_text = 'source age unknown' if not isinstance(source_age, (int, float)) else f'source file {humanize_age(source_age)} old'
         planning_html = (f'<div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> '
                          f'{last_text}; {age_text}. Planner rest fields: unavailable pending explicit reader-path approval; '
-                         f'no current-rest or active-work inference.</div>')
+                         f'no current-rest or active-work inference; ledger evidence link unavailable.</div>')
+
+    # #435: lead with observations while keeping source authority and unknowns explicit.
+    execution_observation_html = (
+        '<div class="now-item" data-now-evidence="execution"><span class="now-label">Execution observation:</span> '
+        '<span class="unavailable-note">unknown; no current execution state is established by this view</span></div>'
+    )
+    if outcome_rows_seen and latest_result_time is None:
+        latest_result_html = f'<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown; {ledger_state_note}</span>'
+    elif outcome_rows_without_orderable_ts:
+        latest_result_html += f' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist; {ledger_state_note}</span>'
+    elif outcome_rows_seen:
+        latest_result_html += f' <span class="now-sub">latest timestamped outcome in available tail; {ledger_state_note}</span>'
+    result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Latest outcome:</span> {latest_result_html}</div>'
+    integration_value = None
+    if last_integrated_ts:
+        integration_value = f'{fmt_ts(last_integrated_ts)} <span class="now-sub">integration timestamp from available source</span>'
+    elif not ledger_available and not tree_integrated_ts:
+        integration_value = '<span class="unavailable-note">integration status unknown; ledger unavailable and no current-tree timestamp</span>'
+    elif not ledger_available:
+        integration_value = '<span class="unavailable-note">integration status unknown; no current-tree timestamp and ledger unavailable</span>'
+    else:
+        integration_value = '<span class="unavailable-note">no integration evidence in available tail; tail may be empty or unreadable and older history is unknown</span>'
+    integration_html = (
+        '<div class="now-item" data-now-evidence="integration"><span class="now-label">Integration evidence:</span> '
+        f'{integration_value}</div>'
+    )
+    attention_items = []
+    if verdict != 'healthy':
+        attention_items.append(f'scoped health {esc(verdict)}: {esc(verdict_reason)}')
+    if isinstance(planning_observation, dict):
+        planning_status = planning_observation.get('status')
+        planning_last = planning_observation.get('last_observation')
+        if planning_status != 'present':
+            attention_items.append(f'planning: {esc(str(planning_status or "unknown"))}')
+        if not isinstance(planning_last, dict):
+            if planning_status == 'present':
+                attention_items.append('planning: no observation')
+        elif planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed', 'malformed'}:
+            outcome_label = 'planning latest outcome' if planning_status != 'present' else 'planning'
+            attention_items.append(f'{outcome_label}: {esc(str(planning_last.get("outcome")))}')
+    else:
+        attention_items.append('planning: unavailable')
+    ci_repositories = ci_freshness.get('repositories') if isinstance(ci_freshness, dict) else None
+    if isinstance(ci_repositories, dict):
+        for repository, record in ci_repositories.items():
+            record = record if isinstance(record, dict) else {}
+            state = record.get('freshness_state') or 'unknown'
+            conclusion = record.get('latest_conclusion') or 'unknown'
+            enabled = record.get('actions_enabled')
+            if enabled is False:
+                attention_items.append(f'CI {esc(str(repository))}: Actions disabled')
+            elif enabled in {'unanswerable', 'cannot_ask'}:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement {esc(str(enabled))}')
+            elif enabled is None:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement unknown')
+            elif state not in {'recent'} or conclusion not in {'success', 'none'}:
+                attention_items.append(f'CI {esc(str(repository))}: {esc(str(state))}/{esc(str(conclusion))}')
+    else:
+        attention_items.append('CI: unavailable')
+    drift_status = systemd_drift.get('status') if isinstance(systemd_drift, dict) else 'unavailable'
+    drift_host_state = systemd_drift.get('state') if isinstance(systemd_drift, dict) else None
+    if drift_status != 'present':
+        attention_items.append(f'drift: {esc(str(drift_status or "unknown"))}')
+    elif drift_host_state != 'present':
+        attention_items.append(f'drift probe: {esc(str(drift_host_state or "unknown"))}')
+    elif isinstance(systemd_drift, dict):
+        defect_count = systemd_drift.get('defect_count')
+        if isinstance(defect_count, int) and defect_count > 0:
+            attention_items.append(f'drift defects: {esc(str(defect_count))}')
+        elif not isinstance(defect_count, int):
+            attention_items.append('drift: defect count unknown')
+    local_state = local_ci.get('probe') if isinstance(local_ci, dict) else 'unavailable'
+    if local_state != 'present':
+        attention_items.append(f'local CI: {esc(str(local_state or "unknown"))}')
+    elif isinstance(local_ci, dict):
+        exit_code = local_ci.get('exit_code')
+        if isinstance(exit_code, int) and not isinstance(exit_code, bool):
+            if exit_code != 0:
+                local_summary = local_ci.get('summary')
+                detail_text = f'exit={exit_code}'
+                if local_summary:
+                    detail_text += f'; {esc(str(local_summary))}'
+                attention_items.append(f'local CI failed ({detail_text})')
+        else:
+            attention_items.append('local CI result unavailable (exit code unknown)')
+    strategist_failure = False
+    if isinstance(strategist_decisions, list):
+        latest_strategist = next((row for row in reversed(strategist_decisions) if isinstance(row, dict)), None)
+        if isinstance(latest_strategist, dict):
+            strategist_refused = (
+                latest_strategist.get('refused') is True
+                or latest_strategist.get('decision') in {'refused', 'declined'}
+                or isinstance(latest_strategist.get('reason'), str)
+                and latest_strategist['reason'] in {'refused', 'declined'}
+            )
+            if strategist_refused:
+                attention_items.append('strategist: refused')
+                strategist_failure = True
+            elif latest_strategist.get('success') is False:
+                attention_items.append('strategist: run failed')
+                strategist_failure = True
+    latest_doc_budget = next((row for row in reversed(ledger_tail or [])
+                              if isinstance(row, dict) and row.get('phase') == 'doc_only_budget'), None) if isinstance(ledger_tail, list) else None
+    if isinstance(latest_doc_budget, dict):
+        if latest_doc_budget.get('ledger_blind') is True:
+            attention_items.append('doc budget: ledger unreadable (fail-open)')
+        elif isinstance(latest_doc_budget.get('doc_only_deferred'), int) and latest_doc_budget['doc_only_deferred'] > 0:
+            attention_items.append(f'doc budget: deferred {latest_doc_budget["doc_only_deferred"]}')
+        elif latest_doc_budget.get('doc_budget_exceeded') is True:
+            attention_items.append('doc budget: cap reached')
+    bridge_failures = (bridge_exit_streak or {}).get('consecutive_failures') if isinstance(bridge_exit_streak, dict) else None
+    if isinstance(bridge_failures, int) and not isinstance(bridge_failures, bool) and 0 < bridge_failures < HEALTH_FAILURE_STREAK_LENGTH:
+        attention_items.append(f'bridge exit streak: {bridge_failures} consecutive failure(s)')
+    attention_text = '; '.join(attention_items) if attention_items else 'No attention signal reported by these sources; review each source status below.'
+    attention_html = (
+        '<div class="now-item" data-now-evidence="attention"><span class="now-label">Attention:</span> '
+        f'<span>{attention_text}</span> <span class="now-sub">Unknown or unavailable is not a healthy result.</span></div>'
+    )
+    next_up_details = f'<details class="now-detail-disclosure"><summary>Ranked demand candidates (not a promise of next selection)</summary><p class="now-sub">Candidates are not a prediction of the next actual selection.</p>{next_up_html}</details>'
+    charter_details = f'<details class="now-detail-disclosure"><summary>Charter and priorities</summary>{charter_html}</details>'
 
     # 13. Artifact dependency graph (eeebot#1769, ADR-024) -- published at
     # scorecard.quality.artifact_graph; read as published, never recomputed
@@ -6037,23 +6184,32 @@ def build_now_panel(
     <section class="panel panel-now" id="panel-now">
       <h2 class="panel-title">Now / Active Focus</h2>
       <div class="now-content">
-        {health_banner}
-        {dir_html}
-        {cycle_html}
-        {next_up_html}
-        {charter_html}
+        <div class="now-evidence-summary" aria-label="Current evidence">
+          <h3>Observed work and evidence</h3>
+          <p class="now-sub">Snapshot age is shown in the shared header. Feed freshness is separate from execution or outcome.</p>
+          {execution_observation_html}
+          {result_html}
+          {integration_html}
+          {attention_html}
+        </div>
         {planning_html}
-        {streak_html}
-        {feed_ages_html}
-        {doc_budget_html}
-        {strategist_html}
-        {ci_freshness_html}
-        {systemd_drift_html}
-        {local_ci_html}
+        <details class="now-detail-disclosure"><summary>Source freshness and health indicators</summary>
+          {health_banner}
+          {feed_ages_html}
+          {ci_freshness_html}
+          {systemd_drift_html}
+          {local_ci_html}
+          {streak_html}
+          {doc_budget_html}
+          {strategist_html}
+        </details>
+        {next_up_details}
+        {charter_details}
         {executor_model_html}
         {artifact_graph_html}
         {_render_failed_bridge_exits(bridge_exits)}
         {demand_history_html}
+        <details class="now-detail-disclosure"><summary>Direction and latest cycle context</summary>{dir_html}{cycle_html}</details>
       </div>
     </section>
     '''
@@ -9354,6 +9510,12 @@ CSS = '''
       border-color: #8c2a2a;
       color: #ff9999;
       background: #2b1111;
+    }
+    .now-detail-disclosure > summary {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
     }
     .now-item {
       display: flex;

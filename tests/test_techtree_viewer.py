@@ -2373,6 +2373,232 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
 
 
+def test_issue435_attention_surfaces_malformed_planning_outcome() -> None:
+    html = tv.build_now_panel(None, None, None, None,
+        planning_activity={'ledger': {'status': 'present', 'last_observation': {'outcome': 'malformed'}}})
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert 'planning: malformed' in summary
+
+
+@pytest.mark.parametrize(('strategist', 'ledger', 'streak', 'expected'), [
+    ([{'success': True}], [], {'consecutive_failures': 0}, None),
+    ([{'success': False, 'reason': 'failed'}], [], {'consecutive_failures': 0}, 'strategist: run failed'),
+    ([{'success': False, 'refused': True}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{'success': False, 'decision': 'declined'}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{'success': False, 'reason': 'refused'}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{}], [], {'consecutive_failures': 0}, None),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_only_deferred': 2}], {'consecutive_failures': 0}, 'doc budget: deferred 2'),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'ledger_blind': True}], {'consecutive_failures': 0}, 'doc budget: ledger unreadable (fail-open)'),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_budget_exceeded': True}], {'consecutive_failures': 0}, 'doc budget: cap reached'),
+    ([{'success': True}], [], {'consecutive_failures': 1}, 'bridge exit streak: 1 consecutive failure(s)'),
+])
+def test_issue435_attention_surfaces_existing_operational_alerts(strategist, ledger, streak, expected) -> None:
+    html = tv.build_now_panel(None, None, None, None,
+        strategist_decisions=strategist, ledger_tail=ledger, bridge_exit_streak=streak)
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is None:
+        assert 'strategist: run failed' not in summary
+        assert 'strategist: refused' not in summary
+    else:
+        assert expected in summary
+
+
+@pytest.mark.parametrize(('record', 'expected'), [
+    ({'probe': 'present', 'state': 'ran', 'exit_code': 0}, None),
+    ({'probe': 'present', 'state': 'ran', 'exit_code': 7, 'summary': '2 failures'}, 'local CI failed (exit=7; 2 failures)'),
+    ({'probe': 'present', 'state': 'ran', 'exit_code': None, 'summary': 'result unavailable'}, 'local CI result unavailable (exit code unknown)'),
+    ({'probe': 'present', 'state': 'ran', 'summary': 'result unavailable'}, 'local CI result unavailable (exit code unknown)'),
+    ({'probe': 'absent'}, 'local CI: absent'),
+    ({'probe': 'probe_unavailable'}, 'local CI: probe_unavailable'),
+])
+def test_issue435_attention_maps_local_ci_states(record, expected) -> None:
+    html = tv.build_now_panel(None, None, None, None, local_ci=record)
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is None:
+        assert 'local CI failed' not in summary
+        assert 'local CI result unavailable' not in summary
+        assert 'local CI:' not in summary
+    else:
+        assert expected in summary
+        if record.get('probe') == 'present' and record.get('exit_code') is None:
+            assert 'local CI failed' not in summary
+
+
+@pytest.mark.parametrize(('verdict_inputs', 'expected'), [
+    ({'age_seconds': 120, 'health_recent_outcomes': ['integrated'], 'proposer_llm_unavailable': True},
+     'scoped health investigate: proposer LLM is unavailable'),
+    ({'age_seconds': 7200, 'health_recent_outcomes': ['integrated'], 'proposer_llm_unavailable': False},
+     'scoped health degraded: data is 2.0h old'),
+])
+def test_issue435_attention_surfaces_nonhealthy_scoped_health(verdict_inputs, expected) -> None:
+    html = tv.build_now_panel(
+        None, None, None, None,
+        age_seconds=verdict_inputs['age_seconds'],
+        health_last_integrated_ts='2026-09-01T01:50:00Z',
+        health_recent_outcomes=verdict_inputs['health_recent_outcomes'],
+        proposer_llm_unavailable=verdict_inputs['proposer_llm_unavailable'],
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
+        now='2026-09-01T02:00:00Z',
+    )
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert expected in summary
+
+
+def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() -> None:
+    from scripts import techtree_viewer as viewer
+
+    data = _fixture()
+    data['health_last_integrated_ts'] = '2026-08-16T00:01:00Z'
+    data['health_recent_outcomes'] = ['integrated']
+    data['planning_activity'] = {'ledger': {'status': 'partial', 'source_age_seconds': 180,
+        'last_observation': {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}},
+        'rest_status': 'unavailable_pending_read_approval'}
+    data['ci_freshness'] = {'observed_at_utc': '2026-08-16T02:00:00Z', 'repositories': {
+        'ozand/example': {'actions_enabled': True, 'freshness_state': 'recent', 'latest_conclusion': 'failure'}}}
+    html = viewer.render_pages(data, host='fixture', generated_at='2026-08-16 02:00:00')['index.html']
+
+    assert html.index('data-now-evidence="execution"') < html.index('data-now-evidence="result"')
+    assert html.index('data-now-evidence="integration"') < html.index('data-now-evidence="attention"')
+    assert html.index('data-now-evidence="attention"') < html.index('Planning observation (separate from cycles)')
+    assert html.index('data-now-evidence="attention"') < html.index('Ranked demand candidates')
+    assert 'planning: partial' in html and 'planning latest outcome: timed_out' in html and 'Attention:' in html
+    assert 'run evidence unavailable in public snapshot' in html
+    assert 'href="https://github.com/ozand/example/actions/runs/123"' not in html
+    assert html.index('data-now-evidence="attention"') < html.index('Charter and priorities')
+    assert 'unknown; no current execution state is established by this view' in html
+    assert 'Latest outcome:' in html and 'Integration evidence:' in html
+    assert 'Ranked demand candidates (not a promise of next selection)' in html
+    assert 'Candidates are not a prediction of the next actual selection.' in html
+    assert 'rest_unchanged' not in html
+    assert 'no current-rest or active-work inference' in html
+
+
+@pytest.mark.parametrize(('status', 'last', 'expected'), [
+    ('present', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'rest_unchanged', 'event_age_seconds': 120}, 'current planning status unknown'),
+    ('partial', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}, 'partial ledger; recorded latest observation shown as last-recorded evidence'),
+    ('absent', None, 'absent; latest observation unavailable'),
+    ('probe_unavailable', None, 'probe_unavailable; latest observation unavailable'),
+])
+def test_issue435_planning_source_states_remain_explicit(status, last, expected) -> None:
+    from scripts import techtree_viewer as viewer
+
+    activity = {'ledger': {'status': status, 'source_age_seconds': None, 'last_observation': last}}
+    html = viewer.build_now_panel(None, None, None, None, planning_activity=activity)
+    assert expected in html
+    assert 'no current-rest or active-work inference' in html
+    if last and last.get('outcome') == 'rest_unchanged':
+        assert 'rest_unchanged' in html
+        assert 'active work' not in html
+
+
+@pytest.mark.parametrize('row', [
+    {'phase': 'outcome', 'outcome': 'failed'},
+    {'phase': 'outcome', 'status': 'fail', 'ts': 'not-a-timestamp'},
+    {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00'},
+])
+def test_issue435_outcome_without_orderable_timestamp_is_not_reported_absent(row) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=[row])
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'no confirmed result recorded' not in result
+    assert 'result recorded' in result
+    assert 'timestamp/order unknown' in result
+
+
+def test_issue435_equal_timestamp_outcome_uses_later_ledger_row() -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger = [
+        {'phase': 'outcome', 'status': 'fail', 'ts': '2026-08-16T01:00:00Z'},
+        {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00+00:00'},
+    ]
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert '<strong>success</strong>' in result
+    assert '<strong>failed</strong>' not in result
+
+
+def test_issue435_mixed_orderable_and_unorderable_results_disclose_incomplete_chronology() -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger = [
+        {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00Z'},
+        {'phase': 'outcome', 'status': 'fail'},
+    ]
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert '<strong>success</strong>' in result
+    assert 'chronology incomplete; a later untimestamped result may exist' in result
+    assert 'no confirmed result recorded' not in result
+
+
+@pytest.mark.parametrize('ledger_tail', [None, 'unreadable'])
+def test_issue435_unavailable_ledger_does_not_claim_no_result(ledger_tail) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger_tail)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'outcome unavailable; ledger not readable' in result
+    assert 'no outcome evidence in available tail' not in result
+    integration = html.split('data-now-evidence="integration"', 1)[1].split('</div>', 1)[0]
+    assert 'integration status unknown' in integration
+
+
+def test_issue435_empty_ledger_reports_no_result_in_available_tail() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=[])
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'no outcome evidence in available tail' in result
+    assert 'available tail may be empty or unreadable' in result
+    assert 'history outside this tail is unknown' in result
+    assert 'no confirmed result recorded' not in result
+
+
+def test_issue435_partial_planning_status_wins_attention_label_over_last_event() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, planning_activity={
+        'ledger': {'status': 'partial', 'last_observation': {'ts': '2026-08-16T01:00:00Z', 'outcome': 'integrated'}},
+    })
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert 'planning: partial' in summary
+    assert 'planning: integrated' not in summary
+    assert 'planning latest outcome: integrated' not in summary
+
+
+@pytest.mark.parametrize(('enabled', 'expected'), [
+    (True, None),
+    (False, 'CI ozand/example: Actions disabled'),
+    ('unanswerable', 'CI ozand/example: Actions enablement unanswerable'),
+    ('cannot_ask', 'CI ozand/example: Actions enablement cannot_ask'),
+    (None, 'CI ozand/example: Actions enablement unknown'),
+])
+def test_issue435_attention_includes_ci_actions_enablement(enabled, expected) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ci_freshness={
+        'repositories': {'ozand/example': {'actions_enabled': enabled, 'freshness_state': 'recent', 'latest_conclusion': 'success'}},
+    })
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is None:
+        assert 'CI ozand/example:' not in summary
+    else:
+        assert expected in summary
+
+
+def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, planning_activity=None, ci_freshness=None)
+    assert 'Execution observation:' in html and 'unknown' in html
+    assert 'Latest outcome:' in html and 'outcome unavailable; ledger not readable' in html
+    assert 'Integration evidence:' in html and 'integration status unknown' in html
+    assert 'Planning observation:' in html and 'unavailable or unknown' in html
+    assert 'run evidence unavailable' in html
+
+
 def test_render_page_places_health_banner_before_unchanged_metrics() -> None:
     data = _fixture()
     data['scorecard']['reader_status'] = {'feeds': {'usage': {'status': 'fresh'}}}
@@ -2754,6 +2980,27 @@ def test_1769_artifact_graph_item_states() -> None:
         },
     })
     assert 'systemd units: unavailable' in unit_unscanned
+
+
+@pytest.mark.parametrize(('host_state', 'defect_count', 'expected'), [
+    ('probe_unavailable', 0, 'drift probe: probe_unavailable'),
+    ('probe_unavailable', 4, 'drift probe: probe_unavailable'),
+    (None, 0, 'drift probe: unknown'),
+    ('present', 3, 'drift defects: 3'),
+    ('present', 0, None),
+])
+def test_issue435_attention_uses_drift_host_probe_state(host_state, defect_count, expected) -> None:
+    drift = {'status': 'present', 'defect_count': defect_count}
+    if host_state is not None:
+        drift['state'] = host_state
+    html = tv.build_now_panel(None, None, None, None, systemd_drift=drift)
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is not None:
+        assert expected in summary
+    if host_state == 'probe_unavailable':
+        assert f'drift defects: {defect_count}' not in summary
+    if host_state == 'present' and defect_count == 0:
+        assert 'drift:' not in summary
 
 
 def test_298_systemd_drift_item_states() -> None:
