@@ -64,6 +64,9 @@ def test_issue442_about_tables_anchors_and_mobile_reachability(tmp_path: Path) -
                         assert region.evaluate('(e) => document.activeElement === e') is True
                         if width == 390:
                             page.keyboard.press('ArrowRight')
+                            page.wait_for_function(
+                                '(e) => e && e.scrollLeft > 0', arg=region.element_handle()
+                            )
                             assert region.evaluate('(e) => e.scrollLeft > 0')
                             for _ in range(100):
                                 if region.evaluate('(e) => e.scrollLeft + e.clientWidth >= e.scrollWidth'):
