@@ -9611,7 +9611,7 @@ CSS = '''
       outline: 2px solid #2fd3c4;
       outline-offset: 2px;
     }
-    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-height: 44px; padding: 8px 12px; }
+    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-width: 44px; min-height: 44px; padding: 8px 12px; }
     .filter-btn.active, .tkn-btn.active, .lineage-day-controls button.active { color: #56d364; border-color: #56d364; }
     button[aria-pressed="true"] { color: #56d364; border-color: #56d364; }
     /* Issue #70: index teasers. */

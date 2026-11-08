@@ -120,7 +120,7 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                             buttons = page.locator('.filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button')
                             for button in buttons.all():
                                 box = button.bounding_box()
-                                assert box and box['height'] >= 44, (name, width, box)
+                                assert box and box['width'] >= 44 and box['height'] >= 44, (name, width, box)
                         if name == 'lineage.html' and width == 390:
                             graph = page.locator('.lineage-graph-scroll')
                             assert graph.evaluate('(e) => e.clientHeight >= 40'), (name, width)

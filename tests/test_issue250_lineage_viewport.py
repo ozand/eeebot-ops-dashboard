@@ -102,6 +102,14 @@ def test_mobile_lineage_graph_and_zoom_targets_have_usable_geometry(viewport) ->
     try:
         graph = page.locator('[data-lineage-graph-scroll]')
         toolbar = page.locator('.lineage-zoom-controls')
+        day_controls = page.locator('.lineage-day-controls button')
+        for index in range(day_controls.count()):
+            box = day_controls.nth(index).bounding_box()
+            assert box and box['width'] >= 44 and box['height'] >= 44, (viewport, 'day filter', index, box)
+        page.locator('[data-lineage-filter="all"]').click(timeout=1500)
+        assert page.locator('[data-lineage-filter="all"].active').count() == 1
+        page.locator('[data-lineage-filter="today"]').click(timeout=1500)
+        assert page.locator('[data-lineage-filter="today"].active').count() == 1
         fit = page.locator('[data-lineage-zoom="fit"]')
         fit.click()
         assert graph.evaluate('(e) => e.clientHeight >= 100'), (viewport, graph.bounding_box())
