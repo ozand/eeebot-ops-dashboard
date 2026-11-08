@@ -9425,6 +9425,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         cell.addEventListener('mouseleave', hideTooltip);
         cell.addEventListener('click', () => {{
           selectedHour.value = String(h);
+          fillIntervalOptions();
           selectedInterval.value = String(b);
           updateHourDetail();
           updateIntervalDetail();

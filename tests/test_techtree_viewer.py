@@ -7364,7 +7364,7 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
     dates = [(date(2026, 9, 1) + timedelta(days=i)).isoformat() for i in range(35)]
     hourly = {d: (None if i == 33 else ([[0, 0, 0, 0, 0, ''] for _ in range(24)] if i == 32 else [[10, 20, 7, 37, 1, 'fixture'] for _ in range(24)])) for i, d in enumerate(dates)}
     fixture['token_heatmap'] = {
-        'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else ({'13': [3, 5, 2, 10, 2, 'interval-fixture'], '14': [0, 0, 0, 0, 0, '']} if i == 34 else {})) for i, d in enumerate(dates)},
+        'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else ({'13': [3, 5, 2, 10, 2, 'interval-fixture'], '14': [0, 0, 0, 0, 0, ''], '25': [4, 6, 1, 11, 3, 'tap-fixture']} if i == 34 else {})) for i, d in enumerate(dates)},
         'summary': {'total_tokens': 29304, 'total_calls': 792, 'local_tokens': 7920,
                     'gateway_tokens': 15840, 'other_tokens': 5544, 'days_span': 35,
                     'days_present': 34, 'days_missing': 1, 'invalid_days': [dates[-2]],
@@ -7419,11 +7419,12 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         assert 'no five-minute bucket recorded' in page.locator('#tkn-interval-detail').inner_text()
         interval_control.tap()
         assert interval_control.evaluate('(el) => document.activeElement === el')
-        interval_cell = page.locator('#tkn-strip-wrap .tkn-strip-cell').nth(13)
+        interval_cell = page.locator('#tkn-strip-wrap .tkn-strip-cell').nth(25)
         interval_cell.tap()
-        assert page.locator('#tkn-selected-hour').input_value() == '1'
-        assert interval_control.input_value() == '13'
-        assert 'interval-fixture' in page.locator('#tkn-interval-detail').inner_text()
+        assert page.locator('#tkn-selected-hour').input_value() == '2'
+        assert interval_control.input_value() == '25'
+        assert '2026-10-05 02:05 MSK' in page.locator('#tkn-interval-detail').inner_text()
+        assert 'tap-fixture' in page.locator('#tkn-interval-detail').inner_text()
         page.locator('#tkn-selected-day').select_option(dates[-3])
         page.locator('#tkn-selected-hour').select_option('13')
         assert 'total 0' in page.locator('#tkn-hour-detail').inner_text() and '0 calls' in page.locator('#tkn-hour-detail').inner_text()
