@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -43,6 +44,8 @@ def test_issue436_current_control_list_and_retention_copy_are_emitted():
     assert '<dialog class="lineage-list-dialog"' in html
     assert 'older or missing ancestry may be unavailable' in html
     assert 'data-lineage-default-mode="today"' in html
+    graph = re.search(r'<svg id="lineage-svg"[^>]+>', html)
+    assert graph and '{width}' not in graph.group() and '{height}' not in graph.group()
 
 
 @pytest.mark.parametrize('viewport', [(390, 844), (1440, 1000)])
