@@ -5818,7 +5818,7 @@ def build_now_panel(
                         pass
                 if parsed_result_time is None or parsed_result_time.tzinfo is None:
                     outcome_rows_without_orderable_ts += 1
-                elif latest_result_time is None or parsed_result_time > latest_result_time:
+                elif latest_result_time is None or parsed_result_time >= latest_result_time:
                     latest_result_time = parsed_result_time
                     latest_result_html = f'<strong>{esc(normalized_outcome)}</strong> <span class="now-sub">recorded {fmt_ts(timestamp)}</span>'
 
@@ -6086,9 +6086,14 @@ def build_now_panel(
     if isinstance(planning_observation, dict):
         planning_status = planning_observation.get('status')
         planning_last = planning_observation.get('last_observation')
-        if planning_status != 'present' or not isinstance(planning_last, dict) or planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed', 'malformed'}:
-            planning_detail = planning_last.get('outcome') if isinstance(planning_last, dict) else planning_status if planning_status != 'present' else 'no observation'
-            attention_items.append(f'planning: {esc(str(planning_detail or "unknown"))}')
+        if planning_status != 'present':
+            attention_items.append(f'planning: {esc(str(planning_status or "unknown"))}')
+        if not isinstance(planning_last, dict):
+            if planning_status == 'present':
+                attention_items.append('planning: no observation')
+        elif planning_last.get('outcome') in {'timed_out', 'spawn_failed', 'commit_failed', 'malformed'}:
+            outcome_label = 'planning latest outcome' if planning_status != 'present' else 'planning'
+            attention_items.append(f'{outcome_label}: {esc(str(planning_last.get("outcome")))}')
     else:
         attention_items.append('planning: unavailable')
     ci_repositories = ci_freshness.get('repositories') if isinstance(ci_freshness, dict) else None
@@ -6097,7 +6102,14 @@ def build_now_panel(
             record = record if isinstance(record, dict) else {}
             state = record.get('freshness_state') or 'unknown'
             conclusion = record.get('latest_conclusion') or 'unknown'
-            if state not in {'recent'} or conclusion not in {'success', 'none'}:
+            enabled = record.get('actions_enabled')
+            if enabled is False:
+                attention_items.append(f'CI {esc(str(repository))}: Actions disabled')
+            elif enabled in {'unanswerable', 'cannot_ask'}:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement {esc(str(enabled))}')
+            elif enabled is None:
+                attention_items.append(f'CI {esc(str(repository))}: Actions enablement unknown')
+            elif state not in {'recent'} or conclusion not in {'success', 'none'}:
                 attention_items.append(f'CI {esc(str(repository))}: {esc(str(state))}/{esc(str(conclusion))}')
     else:
         attention_items.append('CI: unavailable')

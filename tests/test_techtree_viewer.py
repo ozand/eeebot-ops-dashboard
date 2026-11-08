@@ -2461,7 +2461,7 @@ def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() 
     assert html.index('data-now-evidence="integration"') < html.index('data-now-evidence="attention"')
     assert html.index('data-now-evidence="attention"') < html.index('Planning observation (separate from cycles)')
     assert html.index('data-now-evidence="attention"') < html.index('Ranked demand candidates')
-    assert 'timed_out' in html and 'Attention:' in html
+    assert 'planning: partial' in html and 'planning latest outcome: timed_out' in html and 'Attention:' in html
     assert 'run evidence unavailable in public snapshot' in html
     assert 'href="https://github.com/ozand/example/actions/runs/123"' not in html
     assert html.index('data-now-evidence="attention"') < html.index('Charter and priorities')
@@ -2475,7 +2475,7 @@ def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() 
 
 @pytest.mark.parametrize(('status', 'last', 'expected'), [
     ('present', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'rest_unchanged', 'event_age_seconds': 120}, 'current planning status unknown'),
-    ('partial', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}, 'timed_out'),
+    ('partial', {'ts': '2026-08-16T01:00:00Z', 'outcome': 'timed_out', 'event_age_seconds': 120}, 'partial ledger; recorded latest observation shown as last-recorded evidence'),
     ('absent', None, 'absent; latest observation unavailable'),
     ('probe_unavailable', None, 'probe_unavailable; latest observation unavailable'),
 ])
@@ -2504,6 +2504,19 @@ def test_issue435_outcome_without_orderable_timestamp_is_not_reported_absent(row
     assert 'no confirmed result recorded' not in result
     assert 'result recorded' in result
     assert 'timestamp/order unknown' in result
+
+
+def test_issue435_equal_timestamp_outcome_uses_later_ledger_row() -> None:
+    from scripts import techtree_viewer as viewer
+
+    ledger = [
+        {'phase': 'outcome', 'status': 'fail', 'ts': '2026-08-16T01:00:00Z'},
+        {'phase': 'outcome', 'outcome': 'success', 'ts': '2026-08-16T01:00:00+00:00'},
+    ]
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert '<strong>success</strong>' in result
+    assert '<strong>failed</strong>' not in result
 
 
 def test_issue435_mixed_orderable_and_unorderable_results_disclose_incomplete_chronology() -> None:
@@ -2541,6 +2554,38 @@ def test_issue435_empty_ledger_reports_no_result_in_available_tail() -> None:
     assert 'available tail may be empty or unreadable' in result
     assert 'history outside this tail is unknown' in result
     assert 'no confirmed result recorded' not in result
+
+
+def test_issue435_partial_planning_status_wins_attention_label_over_last_event() -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, planning_activity={
+        'ledger': {'status': 'partial', 'last_observation': {'ts': '2026-08-16T01:00:00Z', 'outcome': 'integrated'}},
+    })
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert 'planning: partial' in summary
+    assert 'planning: integrated' not in summary
+    assert 'planning latest outcome: integrated' not in summary
+
+
+@pytest.mark.parametrize(('enabled', 'expected'), [
+    (True, None),
+    (False, 'CI ozand/example: Actions disabled'),
+    ('unanswerable', 'CI ozand/example: Actions enablement unanswerable'),
+    ('cannot_ask', 'CI ozand/example: Actions enablement cannot_ask'),
+    (None, 'CI ozand/example: Actions enablement unknown'),
+])
+def test_issue435_attention_includes_ci_actions_enablement(enabled, expected) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ci_freshness={
+        'repositories': {'ozand/example': {'actions_enabled': enabled, 'freshness_state': 'recent', 'latest_conclusion': 'success'}},
+    })
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is None:
+        assert 'CI ozand/example:' not in summary
+    else:
+        assert expected in summary
 
 
 def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> None:
