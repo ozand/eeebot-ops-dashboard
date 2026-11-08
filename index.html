@@ -10,10 +10,7 @@
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    html, body {
-      overflow-x: hidden;
-      max-width: 100vw;
-    }
+    html, body { max-width: 100%; }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
@@ -32,11 +29,14 @@
       border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 18px;
+      gap: 8px 18px;
     }
+    .empire-stats-context { max-width: 1280px; margin: 0 auto; padding: 8px 20px; border-bottom: 1px solid #182a20; }
+    .empire-stats-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #8aa695; }
+    .empire-stats-context .empire-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; padding-top: 8px; }
+    .empire-stats-context .empire-stat { min-width: 0; }
     .empire-title {
       color: #56d364;
       font-size: 1.05em;
@@ -46,12 +46,8 @@
       margin: 0;
       font-weight: 700;
     }
-    .empire-stats {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 18px;
-    }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-stat { display: flex; flex-direction: column; align-items: flex-start; min-width: 78px; max-width: 100%; overflow-wrap: anywhere; }
+    .empire-stat .stat-value { overflow-wrap: anywhere; }
 
     /* --- freshness badge (issue #48) --- */
     .empire-fresh { margin-left: auto; white-space: nowrap; }
@@ -397,12 +393,16 @@
 
     /* --- panel nav + copyable ids (issue #47) --- */
     .panel-nav {
-      padding: 6px 20px;
+      padding: 4px 16px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
       border-bottom: 1px solid #182a20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 8px;
     }
-    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; }
     .panel-nav a:hover { text-decoration: underline; }
     /* Issue #70: multi-page site nav -- current page highlighted. */
     .site-nav a.nav-current {
@@ -410,6 +410,13 @@
       font-weight: 700;
       text-decoration: underline;
     }
+    a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid #2fd3c4;
+      outline-offset: 2px;
+    }
+    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-width: 44px; min-height: 44px; padding: 8px 12px; }
+    .filter-btn.active, .tkn-btn.active, .lineage-day-controls button.active { color: #56d364; border-color: #56d364; }
+    button[aria-pressed="true"] { color: #56d364; border-color: #56d364; }
     /* Issue #70: index teasers. */
     .teaser-list {
       list-style: none;
@@ -807,7 +814,7 @@
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
     .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
-    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
@@ -846,7 +853,7 @@
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
-    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
     .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
     .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
     .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
@@ -882,11 +889,37 @@
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
     @media (max-width: 720px) {
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .lineage-zoom-label { display: none; }
+      body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
+      body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }
+      body.page-lineage .lineage-day-controls label { font-size: .7rem; }
+      body.page-lineage .lineage-coverage-note { margin: 0 6px 4px; }
+      body.page-lineage .lineage-legend { margin: 2px 6px 4px; padding: 4px; gap: 6px; }
+      body.page-lineage .lineage-legend-group { max-width: 100%; }
+      body.page-lineage .lineage-zoom-controls { padding: 0 6px 4px; gap: 4px; }
+      body.page-lineage .lineage-zoom-controls button { min-width: 44px; padding: 0 4px; font-size: .7rem; }
+      body.page-lineage .lineage-zoom-label:last-child { display: none; }
+      body.page-lineage .cycle-details-panel:not([hidden]) { position: fixed; left: 12px; right: 12px; bottom: 12px; margin: 0; width: auto; max-width: none; max-height: 32vh; overflow: auto; }
+    }
+    @media (max-width: 720px) and (max-height: 700px) {
+      body.page-lineage .empire-strip { padding: 2px 8px; gap: 4px; }
+      body.page-lineage .empire-title { font-size: .9em; letter-spacing: 1px; }
+      body.page-lineage .site-nav { padding: 2px 6px; gap: 0 4px; }
+      body.page-lineage .site-nav a { min-height: 44px; padding: 0 2px; font-size: .9em; }
+      body.page-lineage #panel-lineage { overflow-y: auto; overscroll-behavior-y: contain; }
+      body.page-lineage .lineage-day-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-day-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-coverage-note { max-height: 2.7em; overflow-y: auto; }
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
     }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
-    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-close { float: right; min-width: 44px; min-height: 44px; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
     .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
     .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
     .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
@@ -1365,17 +1398,16 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794123942-afdbc6df4936"></head>
+<meta name="snapshot-version" content="1794124844-9115bfe9351a"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">15</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-11-08 10:21:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">28 events · 0 tasks · 11.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">11.2% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">9.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794123853.525" data-render-age-seconds="99">data: 1m old &middot; generated 07:45 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794124792.340" data-render-age-seconds="64">data: 1m old &middot; generated 08:00 UTC</span></div>
     </header>
     
-<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html" class="nav-current" aria-current="page">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-now" id="panel-now">
@@ -1422,15 +1454,15 @@ interfaces to track and steer work. On this host terminal rendering is usually
 the most efficient medium (pixel-art output such as images/eeebot.png); a
 speed-optimized local page is also valid. An interface counts only if the
 operator can use it and that use can be observed; abandoned one</blockquote></div><div class="charter-self-derived" data-derived-status="present"><h4>Self-Derived Priorities</h4><ul><li><span class="badge" translate="no">106</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">107</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">108</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">109</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">110</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">111</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">112</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">113</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">114</span>  <span class="now-sub">vector V1 &middot; </span></li><li><span class="badge" translate="no">115</span>  <span class="now-sub">vector V1 &middot; </span></li></ul></div></div></div>
-        <div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> 2026-11-08 10:33:32 MSK · integrated; event recorded 11m ago; current planning status unknown; source file 8m old. Planner rest fields: unavailable pending explicit reader-path approval; no current-rest or active-work inference.</div>
+        <div class="now-item"><span class="now-label">Planning observation (separate from cycles):</span> 2026-11-08 10:33:32 MSK · integrated; event recorded 26m ago; current planning status unknown; source file 23m old. Planner rest fields: unavailable pending explicit reader-path approval; no current-rest or active-work inference.</div>
         <div class="now-item"><span class="now-label">Bridge Exit Streak:</span> <span class="badge badge-available">0 failures (crash_record)</span> <span class="now-sub" title="ozand/eeebot#1683: this counter does not observe signal kills of the bridge unit">does not see SIGTERM kills (eeebot#1683)</span></div>
         <div class="now-item"><span class="now-label">Feed Freshness:</span> <span class="feed-age-badge feed-badge-ok" title="heldout: fresh">heldout: 0s/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="host_metrics: fresh">host_metrics: 1.3h/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="llm_calls: fresh">llm_calls: 4m/24.0h</span> <span class="feed-age-badge feed-badge-ok" title="usage: fresh">usage: 33m/12.0h</span> <span class="feed-age-badge feed-badge-ok" title="validator_harness_parent: fresh">validator_harness_parent: 1.1h/12.0h</span></div>
         <div class="now-item"><span class="now-label">Doc Budget Guard:</span> <span class="unavailable-note">unavailable</span></div>
         <div class="now-item"><span class="now-label">Strategist:</span> <span class="badge badge-available">ran 2026-09-22T00:00:10 — inputs 5/5, 1 hypotheses, 2 advisories</span></div>
-        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-11-08T07:45:42.146965Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, runs_old, success, last 2026-11-07 07:54:51 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-11-08 10:33:38 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-11-08 10:41:34 MSK</li></ul></div>
+        <div class="now-item ci-freshness-item"><span class="now-label">GitHub CI:</span> <span class="now-sub">read 2026-11-08T08:00:44.859612Z</span><ul class="ci-freshness-list"><li><code>ozand/eeebot</code>: enabled=unanswerable, runs_old, success, last 2026-11-07 07:54:51 MSK</li><li><code>ozand/eeebot-self-evolving</code>: enabled=unanswerable, recent, failure, last 2026-11-08 10:33:38 MSK</li><li><code>ozand/eeebot-ops-dashboard</code>: enabled=unanswerable, recent, success, last 2026-11-08 10:57:19 MSK</li></ul></div>
         <div class="now-item systemd-drift-item"><span class="now-label">Systemd drift:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">12 defect(s), scanned 2026-11-08 02:00:01 MSK</span><ul class="systemd-drift-findings"><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li class="systemd-drift-defect">installed, not in release: <code></code> (owner: unknown)</li><li>installed, not in release: <code></code> (owner: dashboard)</li><li>installed, not in release: <code></code> (owner: preset)</li></ul></div>
         <div class="now-item"><span class="now-label">Local CI:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">pass: passed</span></div>
-        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 572 recent calls checked</span></div>
+        <div class="now-item"><span class="now-label">Executor Model:</span> <span class="badge probe-present">✓ present</span> <span class="now-sub">openai/un/qwen3.8-27b-gguf (self_hosted), 581 recent calls checked</span></div>
         <div class="now-item"><span class="now-label">Artifact Graph:</span> <span class="badge badge-available">250 artifacts</span> <span class="badge badge-available">59 ready</span> <span class="badge badge-available">191 leaves</span><div class="now-sub">oldest leaves: <code>scripts/analyze_cycle_duration.py</code>, <code>scripts/analyze_pass_streak.py</code>, <code>scripts/backlog_health.py</code>, <code>scripts/benchmark_api_latency.py</code>, <code>scripts/benchmark_cpu.py</code></div></div>
         
         <details class="failed-exits-details" open>
@@ -1443,7 +1475,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
         <details class="now-demand-history"><summary>Served / completed history</summary><div class="now-demand-history-body"><div class="now-demand-grid"><div class="demand-subgroup"><span class="demand-sublabel">Served:</span> <span class="demand-chip served demand-group" translate="no" title="defect-1947af1f0112 (served 2026-11-08T05:09:00.372519+00:00); defect-1532ea68c186 (served 2026-11-07T16:51:18.703519+00:00); defect-752870387ede (served 2026-11-07T22:35:31.385270+00:00); defect-c680650675f0 (served 2026-11-08T07:26:22.683530+00:00); defect-5b335ea292c9 (served 2026-11-07T13:04:20.813466+00:00); defect-3bdf04da06f3 (served 2026-11-08T01:51:31.007570+00:00); defect-c507ca1b3e81 (served 2026-11-08T04:54:53.406181+00:00); defect-44bd17468510 (served 2026-11-08T06:40:05.851991+00:00)">defect &times;8</span> <span class="demand-chip served demand-group" translate="no" title="priority-4ad669565a4c (served 2026-11-07T23:20:44.983842+00:00); priority-93ead0b434a4 (served 2026-11-07T18:16:41.294832+00:00); priority-e514d415dd63 (served 2026-11-07T19:24:07.080143+00:00); priority-87754091f3a9 (served 2026-11-07T22:19:03.260117+00:00); priority-ad3a9c636278 (served 2026-11-07T14:46:56.759148+00:00); priority-d2904392ce4b (served 2026-11-07T15:33:08.228965+00:00); priority-6ab32355b48a (served 2026-11-07T16:11:11.053735+00:00); priority-5e9b1b369ccd (served 2026-11-07T20:09:16.324756+00:00); +2 more">priority &times;10</span> <span class="demand-chip served demand-group" translate="no" title="decay-f7bdde4fa027 (served 2026-11-07T17:10:41.422341+00:00); decay-1ec13dc529d2 (served 2026-11-07T14:04:26.400091+00:00); decay-692b32781228 (served 2026-11-07T16:30:24.239314+00:00); decay-adb79e89d9f2 (served 2026-11-08T05:54:54.373124+00:00); decay-d8415e2bde6d (served 2026-11-07T17:29:21.822375+00:00); reflection-5acb368275c6 (served 2026-11-08T00:05:57.997678+00:00); reflection-577413d609ec (served 2026-11-08T01:06:11.452973+00:00); reflection-a63811495a15 (served 2026-11-08T02:38:22.922245+00:00); +2 more">other &times;10</span></div><div class="demand-subgroup"><span class="demand-sublabel">Completed:</span> <em>none</em></div></div></div></details>
       </div>
     </section>
-    
+    <details class="empire-stats-context"><summary>Scorecard metrics</summary><div class="empire-stats" aria-label="Scorecard metrics"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">15</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-11-08 10:21:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">28 events · 0 tasks · 11.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">11.2% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">9.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div></details>
     <section class="panel panel-teasers">
       <h2 class="panel-title">Explore</h2>
       <ul class="teaser-list">
@@ -1475,7 +1507,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
           
           <div class="feed-files">&#128193; scripts/verify_imports.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 362 LLM calls &middot; 14.78M tok &middot; Σ LLM wait 5h29m28s &middot; recorded through 10:43 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-cost">&#9889; 371 LLM calls &middot; 15.36M tok &middot; Σ LLM wait 5h41m14s &middot; recorded through 10:59 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
           <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
         </li>
         
@@ -1517,7 +1549,7 @@ operator can use it and that use can be observed; abandoned one</blockquote></di
     </section>
     
 </main>
-<footer class="page-footer">generator 75b83fe · generated 2026-11-08 07:45:53 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 10:21:54 MSK</span></footer>
+<footer class="page-footer">generator 094b10d · generated 2026-11-08 08:00:56 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 10:21:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1548,5 +1580,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794123942-afdbc6df4936 · generated 2026-11-08T07:45:42.146697+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794124844-9115bfe9351a · generated 2026-11-08T08:00:44.859242+00:00</footer></body>
 </html>

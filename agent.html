@@ -10,10 +10,7 @@
       color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    html, body {
-      overflow-x: hidden;
-      max-width: 100vw;
-    }
+    html, body { max-width: 100%; }
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #0c1512 0%, #080f0c 60%, #050a08 100%);
@@ -32,11 +29,14 @@
       border-bottom: 2px solid #56d364;
       padding: 8px 20px;
       display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 18px;
+      gap: 8px 18px;
     }
+    .empire-stats-context { max-width: 1280px; margin: 0 auto; padding: 8px 20px; border-bottom: 1px solid #182a20; }
+    .empire-stats-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #8aa695; }
+    .empire-stats-context .empire-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; padding-top: 8px; }
+    .empire-stats-context .empire-stat { min-width: 0; }
     .empire-title {
       color: #56d364;
       font-size: 1.05em;
@@ -46,12 +46,8 @@
       margin: 0;
       font-weight: 700;
     }
-    .empire-stats {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 18px;
-    }
-    .empire-stat { display: flex; flex-direction: column; align-items: center; min-width: 78px; white-space: nowrap; }
+    .empire-stat { display: flex; flex-direction: column; align-items: flex-start; min-width: 78px; max-width: 100%; overflow-wrap: anywhere; }
+    .empire-stat .stat-value { overflow-wrap: anywhere; }
 
     /* --- freshness badge (issue #48) --- */
     .empire-fresh { margin-left: auto; white-space: nowrap; }
@@ -397,12 +393,16 @@
 
     /* --- panel nav + copyable ids (issue #47) --- */
     .panel-nav {
-      padding: 6px 20px;
+      padding: 4px 16px;
       font-family: 'Consolas', monospace;
       font-size: 0.82em;
       border-bottom: 1px solid #182a20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 8px;
     }
-    .panel-nav a { color: #2fd3c4; text-decoration: none; }
+    .panel-nav a { color: #2fd3c4; text-decoration: none; display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; padding: 0 4px; }
     .panel-nav a:hover { text-decoration: underline; }
     /* Issue #70: multi-page site nav -- current page highlighted. */
     .site-nav a.nav-current {
@@ -410,6 +410,13 @@
       font-weight: 700;
       text-decoration: underline;
     }
+    a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid #2fd3c4;
+      outline-offset: 2px;
+    }
+    .filter-btn, .tkn-btn, .lineage-day-controls button, .lineage-zoom-controls button { min-width: 44px; min-height: 44px; padding: 8px 12px; }
+    .filter-btn.active, .tkn-btn.active, .lineage-day-controls button.active { color: #56d364; border-color: #56d364; }
+    button[aria-pressed="true"] { color: #56d364; border-color: #56d364; }
     /* Issue #70: index teasers. */
     .teaser-list {
       list-style: none;
@@ -807,7 +814,7 @@
     .arch-edge-best { stroke: #e2f0e6; stroke-width: 3.2; }
     .arch-node { cursor: pointer; }
     .lineage-day-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; }
-    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .lineage-day-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; }
     .lineage-day-controls button.active { border-color: #56d364; color: #56d364; }
     .lineage-day-controls input { background: #08110c; color: #dcebe1; border: 1px solid #2f5c46; padding: 3px; }
     .lineage-day-group { padding: 4px 12px 10px; overflow-x: auto; }
@@ -846,7 +853,7 @@
     .lineage-collapsed-label { fill: #d19a66; font-size: 10px; pointer-events: none; }
     .lineage-day-truncated { color: #d19a66; font-size: .75rem; }
     .lineage-zoom-controls { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap; }
-    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 4px 9px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
+    .lineage-zoom-controls button { background: #10271a; color: #b8d0c2; border: 1px solid #2f5c46; padding: 8px 12px; min-height: 44px; cursor: pointer; font-family: inherit; font-size: .78rem; line-height: 1; }
     .lineage-zoom-controls button:hover { border-color: #56d364; color: #56d364; }
     .lineage-zoom-controls button[aria-pressed="true"] { background: #16341f; border-color: #56d364; color: #56d364; }
     .lineage-zoom-label { color: #5a7a68; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.5px; }
@@ -882,11 +889,37 @@
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
     @media (max-width: 720px) {
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .lineage-zoom-label { display: none; }
+      body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
+      body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }
+      body.page-lineage .lineage-day-controls label { font-size: .7rem; }
+      body.page-lineage .lineage-coverage-note { margin: 0 6px 4px; }
+      body.page-lineage .lineage-legend { margin: 2px 6px 4px; padding: 4px; gap: 6px; }
+      body.page-lineage .lineage-legend-group { max-width: 100%; }
+      body.page-lineage .lineage-zoom-controls { padding: 0 6px 4px; gap: 4px; }
+      body.page-lineage .lineage-zoom-controls button { min-width: 44px; padding: 0 4px; font-size: .7rem; }
+      body.page-lineage .lineage-zoom-label:last-child { display: none; }
+      body.page-lineage .cycle-details-panel:not([hidden]) { position: fixed; left: 12px; right: 12px; bottom: 12px; margin: 0; width: auto; max-width: none; max-height: 32vh; overflow: auto; }
+    }
+    @media (max-width: 720px) and (max-height: 700px) {
+      body.page-lineage .empire-strip { padding: 2px 8px; gap: 4px; }
+      body.page-lineage .empire-title { font-size: .9em; letter-spacing: 1px; }
+      body.page-lineage .site-nav { padding: 2px 6px; gap: 0 4px; }
+      body.page-lineage .site-nav a { min-height: 44px; padding: 0 2px; font-size: .9em; }
+      body.page-lineage #panel-lineage { overflow-y: auto; overscroll-behavior-y: contain; }
+      body.page-lineage .lineage-day-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-day-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-coverage-note { max-height: 2.7em; overflow-y: auto; }
+      body.page-lineage .lineage-legend { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-legend-group { flex: 0 0 auto; }
+      body.page-lineage .lineage-zoom-controls { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+      body.page-lineage .lineage-zoom-controls > * { flex: 0 0 auto; }
+      body.page-lineage .lineage-graph-scroll { flex: 0 0 110px; min-height: 110px; }
     }
     .arch-node.cycle-node-selected { stroke: #ffffff; stroke-width: 6; }
     .cycle-details-panel { max-width: 760px; margin: 14px 12px; padding: 14px 16px; border: 1px solid #2f5c46; border-left: 4px solid #56d364; background: #0c1912; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
     .cycle-details-panel[hidden] { display: none; }
-    .cycle-details-close { float: right; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
+    .cycle-details-close { float: right; min-width: 44px; min-height: 44px; background: transparent; color: #8aa695; border: 1px solid #2f5c46; padding: 4px 8px; cursor: pointer; }
     .cycle-details-title { margin: 0 0 12px; color: #e2f0e6; font-size: 1rem; }
     .cycle-details-body { color: #b8d0c2; font-size: .82rem; line-height: 1.5; }
     .cycle-details-body h3 { color: #56d364; font-size: .78rem; margin: 12px 0 4px; }
@@ -1365,17 +1398,16 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794123942-afdbc6df4936"></head>
+<meta name="snapshot-version" content="1794124844-9115bfe9351a"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
-      <div class="empire-stats"><div class="empire-stat" title="total cycles whose changes were merged into the evolution lineage"><span class="stat-label">integrations</span><span class="stat-value">15</span></div><div class="empire-stat" title="scorecard key: loop.confirmed_integration_ratio; share of confirmable integrations later confirmed working"><span class="stat-label">confirmed integration ratio</span><span class="stat-value">n/a</span></div><div class="empire-stat" title="share of cycles repeating a previously seen failure; source: scorecard snapshot (computed 2026-11-08 10:21:54 MSK) over all recorded cycles; the Now-panel lever shows the last cycle measurement and may differ"><span class="stat-label">repeat failure rate · scorecard</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">old repeat failure rate · keep 7d</span><span class="stat-value">0.0%</span></div><div class="empire-stat"><span class="stat-label">execution failures</span><span class="stat-value">28 events · 0 tasks · 11.2%</span></div><div class="empire-stat"><span class="stat-label">model unavailable (known)</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">model call incomplete</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">failure cause unknown</span><span class="stat-value">no data</span></div><div class="empire-stat"><span class="stat-label">self_dedup rejections</span><span class="stat-value">0 events · 0 tasks · 0.0%</span></div><div class="empire-stat"><span class="stat-label">repeat failure rate · new</span><span class="stat-value">11.2% · новая формула без self_dedup (#1765); не улучшение работы</span></div><div class="empire-stat" title="average LLM tokens spent per integrated cycle"><span class="stat-label">tokens / integration</span><span class="stat-value">9.3M</span></div><div class="empire-stat" title="held-out validation: pass rate on tasks excluded from the agent&#x27;s own selection and training; X/Y = passed/checked"><span class="stat-label">held-out</span><span class="stat-value">4/4</span></div><div class="empire-stat" title="issue #1765: cycles where the LLM gateway/model provider could not serve us (outage), excluded from repeat failure rate and wasted attempts; source: scorecard loop.paused_supplier_outcomes / loop.paused_supplier_seconds"><span class="stat-label">supplier-paused</span><span class="stat-value">0 cycle(s) / 0s</span></div></div>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794123853.525" data-render-age-seconds="99">data: 1m old &middot; generated 07:45 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794124792.340" data-render-age-seconds="64">data: 1m old &middot; generated 08:00 UTC</span></div>
     </header>
     
-<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a> &middot; <a href="lineage.html">lineage</a> &middot; <a href="cycles.html">cycles</a> &middot; <a href="tokens.html">tokens</a> &middot; <a href="lessons.html">lessons</a> &middot; <a href="agent.html" class="nav-current">agent</a> &middot; <a href="hypotheses.html">hypotheses</a> &middot; <a href="about.html">about</a></nav>
+<nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html" class="nav-current" aria-current="page">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-agent" id="panel-agent">
@@ -1426,7 +1458,7 @@
     </div>
   </div>
   <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 14 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 14/14 consecutive cycles: AGENTS.md</span></div></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.5%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 998 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 999 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.6%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 992 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 993 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-11-08T06:52:03.241672Z · source: published</p>
@@ -1440,7 +1472,7 @@
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Dropped section names</strong><span>none</span></div>
       <div class="prompt-fit-event-item prompt-fit-event-wide"><strong>Trimmed section names</strong><span>none</span></div>
     </div>
-<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> model window 98,304 tokens (executor llm_calls.context_window) · compaction reserve unknown (not published by runtime) · usable budget unknown · occupancy: 52,811 prompt tokens (executor) · present</div>
+<div class="context-telemetry-box dialogue-window-summary"><strong>Dialogue Window:</strong> model window 98,304 tokens (executor llm_calls.context_window) · compaction reserve unknown (not published by runtime) · usable budget unknown · occupancy: 69,007 prompt tokens (executor) · present</div>
   </div>
   <div class="context-subject-group context-assembly-group">
     <h3 class="context-subject-heading">Prompt Assembly &amp; Context Architecture</h3>
@@ -1465,7 +1497,7 @@
 ---
 
 " Separators</span><span class="t1-sz">70c</span></div>
-        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">model window 98,304 tokens (executor llm_calls.context_window) · compaction reserve unknown (not published by runtime) · usable budget unknown · occupancy 52,811 prompt tokens (executor)</span></div>
+        <div class="t1-block-item t1-msg"><span class="t1-seq">msg</span><span class="t1-name">history + tool results</span><span class="t1-desc">model window 98,304 tokens (executor llm_calls.context_window) · compaction reserve unknown (not published by runtime) · usable budget unknown · occupancy 69,007 prompt tokens (executor)</span></div>
         <div class="t1-block-item t1-msg"><span class="t1-seq">user</span><span class="t1-name">runtime_context + task</span><span class="t1-sz">2,610c</span></div>
       </div>
     </div>
@@ -1913,7 +1945,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator 75b83fe · generated 2026-11-08 07:45:53 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 10:21:54 MSK</span></footer>
+<footer class="page-footer">generator 094b10d · generated 2026-11-08 08:00:56 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 10:21:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1944,5 +1976,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794123942-afdbc6df4936 · generated 2026-11-08T07:45:42.146697+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794124844-9115bfe9351a · generated 2026-11-08T08:00:44.859242+00:00</footer></body>
 </html>
