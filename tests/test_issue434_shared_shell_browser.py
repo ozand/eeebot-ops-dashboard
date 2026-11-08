@@ -78,11 +78,10 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                         assert page.locator('.empire-strip').evaluate('(e) => e.scrollWidth <= e.clientWidth'), (name, width)
                         assert nav.evaluate('(e) => e.scrollWidth <= e.clientWidth'), (name, width)
                         overflow = page.evaluate('''() => {
-                            if (document.documentElement.scrollWidth <= window.innerWidth) return null;
-                            const viewport = window.innerWidth;
-                            return [...document.querySelectorAll('body *')].map((element) => {
+                            const root = document.documentElement;
+                            if (root.scrollWidth <= window.innerWidth) return null;
+                            const describe = (element) => {
                                 const rect = element.getBoundingClientRect();
-                                if (rect.right <= viewport + 1) return null;
                                 const style = getComputedStyle(element);
                                 return {
                                     tag: element.tagName,
@@ -93,8 +92,19 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                                     minWidth: style.minWidth, widthStyle: style.width,
                                     whiteSpace: style.whiteSpace, overflowWrap: style.overflowWrap,
                                     font: style.fontFamily, fontSize: style.fontSize,
+                                    beforeContent: getComputedStyle(element, '::before').content,
+                                    afterContent: getComputedStyle(element, '::after').content,
                                 };
-                            }).filter(Boolean).slice(0, 20);
+                            };
+                            const overflowing = [...document.querySelectorAll('body *')].filter((element) => {
+                                const rect = element.getBoundingClientRect();
+                                return rect.right > window.innerWidth + 1 || element.scrollWidth > element.clientWidth + 1;
+                            }).map(describe).slice(0, 20);
+                            return {
+                                viewport: window.innerWidth,
+                                document: {scrollWidth: root.scrollWidth, clientWidth: root.clientWidth, bodyScrollWidth: document.body.scrollWidth, bodyClientWidth: document.body.clientWidth},
+                                elements: overflowing,
+                            };
                         }''')
                         assert overflow is None, (name, width, f'route content overflows viewport: {overflow!r}')
                         for link in nav.locator('a').all():
