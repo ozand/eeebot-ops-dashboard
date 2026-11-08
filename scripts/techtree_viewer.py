@@ -6081,6 +6081,8 @@ def build_now_panel(
         f'{integration_value}</div>'
     )
     attention_items = []
+    if verdict != 'healthy':
+        attention_items.append(f'scoped health {esc(verdict)}: {esc(verdict_reason)}')
     if isinstance(planning_observation, dict):
         planning_status = planning_observation.get('status')
         planning_last = planning_observation.get('last_observation')

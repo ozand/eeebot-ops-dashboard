@@ -2373,6 +2373,26 @@ def test_health_verdict_investigate_by_proposer_unavailable() -> None:
     assert tv.health_verdict(120, '2026-09-01T01:50:00Z', ['integrated'], True, '2026-09-01T02:00:00Z') == ('investigate', 'proposer LLM is unavailable')
 
 
+@pytest.mark.parametrize(('verdict_inputs', 'expected'), [
+    ({'age_seconds': 120, 'health_recent_outcomes': ['integrated'], 'proposer_llm_unavailable': True},
+     'scoped health investigate: proposer LLM is unavailable'),
+    ({'age_seconds': 7200, 'health_recent_outcomes': ['integrated'], 'proposer_llm_unavailable': False},
+     'scoped health degraded: data is 2.0h old'),
+])
+def test_issue435_attention_surfaces_nonhealthy_scoped_health(verdict_inputs, expected) -> None:
+    html = tv.build_now_panel(
+        None, None, None, None,
+        age_seconds=verdict_inputs['age_seconds'],
+        health_last_integrated_ts='2026-09-01T01:50:00Z',
+        health_recent_outcomes=verdict_inputs['health_recent_outcomes'],
+        proposer_llm_unavailable=verdict_inputs['proposer_llm_unavailable'],
+        scorecard={'reader_status': {'feeds': {'usage': {'status': 'fresh'}}}},
+        now='2026-09-01T02:00:00Z',
+    )
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert expected in summary
+
+
 def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() -> None:
     from scripts import techtree_viewer as viewer
 
