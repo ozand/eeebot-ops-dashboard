@@ -10300,9 +10300,11 @@ CSS = '''
     /* The details panel would otherwise consume the column the graph needs,
        so on this page it floats over the graph with its own scrollbar. */
     body.page-lineage .cycle-details-panel { position: fixed; right: 12px; bottom: 12px; margin: 0; width: min(430px, calc(100vw - 24px)); max-height: min(62vh, 640px); overflow: auto; z-index: 40; }
+    body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 280px); }
     @media (max-width: 720px) {
       body.page-lineage .lineage-cycle-list button { font-size: .78rem; }
       body.page-lineage .cycle-details-panel { left: 12px; right: 12px; width: auto; max-height: 50vh; }
+      body.page-lineage .cycle-details-panel.current-locator-details { top: 96px; bottom: auto; max-height: min(32vh, 240px); }
       body.page-lineage .lineage-zoom-label { display: none; }
       body.page-lineage .lineage-day-controls { gap: 4px; padding: 2px 6px; }
       body.page-lineage .lineage-day-controls button { min-height: 44px; padding: 2px 4px; font-size: .72rem; }

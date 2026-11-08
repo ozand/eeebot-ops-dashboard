@@ -101,8 +101,12 @@ def test_issue436_current_locator_reveals_offscreen_node_without_page_scroll():
         page.locator('[data-lineage-current]').click()
         assert node.evaluate('''node => {
             const graph = document.querySelector('[data-lineage-graph-scroll]').getBoundingClientRect();
+            const panel = document.querySelector('#cycle-details-panel').getBoundingClientRect();
             const box = node.getBoundingClientRect();
-            return box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+            const contained = box.left >= graph.left && box.right <= graph.right && box.top >= graph.top && box.bottom <= graph.bottom;
+            const unobscured = panel.bottom <= box.top || panel.top >= box.bottom || panel.right <= box.left || panel.left >= box.right;
+            const hit = document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+            return contained && unobscured && (hit === node || node.contains(hit));
         }''')
         assert page.evaluate('window.scrollY') == initial_page_y
         assert graph.evaluate('(e) => e.clientHeight') >= 100

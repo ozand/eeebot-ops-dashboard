@@ -715,7 +715,12 @@
     }
     if (currentButton) {
       currentButton.disabled = !currentExists;
-      currentButton.addEventListener('click', function () { revealNodeInGraph(selectNode(currentId)); });
+      currentButton.addEventListener('click', function () {
+        var node = selectNode(currentId);
+        var details = document.getElementById('cycle-details-panel');
+        if (details) details.classList.add('current-locator-details');
+        revealNodeInGraph(node);
+      });
     }
     var cycleList = document.querySelector('[data-lineage-cycle-list]');
     var cycleDialog = document.querySelector('.lineage-list-dialog');
@@ -738,7 +743,11 @@
     });
     document.addEventListener('click', function (event) {
       var selected = event.target.closest('.lineage-node');
-      if (selected) markListSelection(selected.getAttribute('data-node-id'));
+      if (selected) {
+        markListSelection(selected.getAttribute('data-node-id'));
+        var details = document.getElementById('cycle-details-panel');
+        if (details) details.classList.remove('current-locator-details');
+      }
     });
     setPanMode(pan.mode);
     applyFilter((document.querySelector('.lineage-unified-graph') || svg).getAttribute('data-lineage-default-mode') || 'today');
