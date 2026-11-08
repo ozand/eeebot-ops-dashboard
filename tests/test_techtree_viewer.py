@@ -6835,13 +6835,13 @@ def test_tokens_day_summary_renders_incomplete_only_for_validated_invalid_date(t
         rendered = page.goto(html_path.as_uri())
         assert rendered is not None and rendered.status == 200
         summary = page.locator('#tkn-detail-info').inner_text()
-        page.locator('#tkn-detail-info').screenshot(path=r'C:\Temp\433-evidence\tokens-day-summary.png')
+        page.locator('#tkn-detail-info').screenshot(path=str(tmp_path / 'tokens-day-summary.png'))
         browser.close()
     assert re.fullmatch(r'2026-09-04 Summary: 50\.0K total tokens \(30\.0K gateway, 20\.0K local, 0 other\) across 2 calls\. · incomplete \(malformed token rows excluded\)', summary)
-    assert (Path(r'C:\Temp\433-evidence\tokens-day-summary.png')).is_file()
+    assert (tmp_path / 'tokens-day-summary.png').is_file()
 
 
-def test_rendered_tokens_legacy_payload_reports_completeness_unknown() -> None:
+def test_rendered_tokens_legacy_payload_reports_completeness_unknown(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
 
     fixture = _fixture()
@@ -6853,14 +6853,14 @@ def test_rendered_tokens_legacy_payload_reports_completeness_unknown() -> None:
                     'gateway_tokens': 0, 'days_span': 1, 'days_present': 1,
                     'days_missing': 0, 'quantiles_hourly': {}, 'quantiles_5min': {}},
     }
-    html_path = Path('C:/Temp/433-evidence/tokens-legacy-unknown.html')
+    html_path = tmp_path / 'tokens-legacy-unknown.html'
     html_path.write_text(tv.render_pages(fixture, 'synthetic')['tokens.html'], encoding='utf-8')
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
         assert page.goto(html_path.as_uri()).status == 200
         summary = page.locator('#tkn-detail-info').inner_text()
-        page.locator('#tkn-detail-info').screenshot(path=r'C:\Temp\433-evidence\tokens-legacy-unknown.png')
+        page.locator('#tkn-detail-info').screenshot(path=str(tmp_path / 'tokens-legacy-unknown.png'))
         browser.close()
     assert summary.endswith(' · completeness unknown')
 
