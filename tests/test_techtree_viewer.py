@@ -2380,11 +2380,25 @@ def test_issue435_attention_surfaces_malformed_planning_outcome() -> None:
     assert 'planning: malformed' in summary
 
 
-def test_issue435_attention_surfaces_local_ci_failure_detail() -> None:
-    html = tv.build_now_panel(None, None, None, None,
-        local_ci={'probe': 'present', 'exit_code': 7, 'summary': '2 failures'})
+@pytest.mark.parametrize(('record', 'expected'), [
+    ({'probe': 'present', 'state': 'ran', 'exit_code': 0}, None),
+    ({'probe': 'present', 'state': 'ran', 'exit_code': 7, 'summary': '2 failures'}, 'local CI failed (exit=7; 2 failures)'),
+    ({'probe': 'present', 'state': 'ran', 'exit_code': None, 'summary': 'result unavailable'}, 'local CI result unavailable (exit code unknown)'),
+    ({'probe': 'present', 'state': 'ran', 'summary': 'result unavailable'}, 'local CI result unavailable (exit code unknown)'),
+    ({'probe': 'absent'}, 'local CI: absent'),
+    ({'probe': 'probe_unavailable'}, 'local CI: probe_unavailable'),
+])
+def test_issue435_attention_maps_local_ci_states(record, expected) -> None:
+    html = tv.build_now_panel(None, None, None, None, local_ci=record)
     summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
-    assert 'local CI failed (exit=7; 2 failures)' in summary
+    if expected is None:
+        assert 'local CI failed' not in summary
+        assert 'local CI result unavailable' not in summary
+        assert 'local CI:' not in summary
+    else:
+        assert expected in summary
+        if record.get('probe') == 'present' and record.get('exit_code') is None:
+            assert 'local CI failed' not in summary
 
 
 @pytest.mark.parametrize(('verdict_inputs', 'expected'), [

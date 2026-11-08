@@ -6116,13 +6116,17 @@ def build_now_panel(
     local_state = local_ci.get('probe') if isinstance(local_ci, dict) else 'unavailable'
     if local_state != 'present':
         attention_items.append(f'local CI: {esc(str(local_state or "unknown"))}')
-    elif isinstance(local_ci, dict) and local_ci.get('exit_code') != 0:
-        local_detail = local_ci.get('exit_code')
-        local_summary = local_ci.get('summary')
-        detail_text = f'exit={esc(str(local_detail))}' if local_detail is not None else 'exit unknown'
-        if local_summary:
-            detail_text += f'; {esc(str(local_summary))}'
-        attention_items.append(f'local CI failed ({detail_text})')
+    elif isinstance(local_ci, dict):
+        exit_code = local_ci.get('exit_code')
+        if isinstance(exit_code, int) and not isinstance(exit_code, bool):
+            if exit_code != 0:
+                local_summary = local_ci.get('summary')
+                detail_text = f'exit={exit_code}'
+                if local_summary:
+                    detail_text += f'; {esc(str(local_summary))}'
+                attention_items.append(f'local CI failed ({detail_text})')
+        else:
+            attention_items.append('local CI result unavailable (exit code unknown)')
     attention_text = '; '.join(attention_items) if attention_items else 'No attention signal reported by these sources; review each source status below.'
     attention_html = (
         '<div class="now-item" data-now-evidence="attention"><span class="now-label">Attention:</span> '
