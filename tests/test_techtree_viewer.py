@@ -2456,7 +2456,7 @@ def test_issue435_unavailable_ledger_does_not_claim_no_result(ledger_tail) -> No
     html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger_tail)
     result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
     assert 'outcome unavailable; ledger not readable' in result
-    assert 'no outcome in available ledger tail' not in result
+    assert 'no outcome evidence in available tail' not in result
     integration = html.split('data-now-evidence="integration"', 1)[1].split('</div>', 1)[0]
     assert 'integration status unknown' in integration
 
@@ -2466,7 +2466,9 @@ def test_issue435_empty_ledger_reports_no_result_in_available_tail() -> None:
 
     html = viewer.build_now_panel(None, None, None, None, ledger_tail=[])
     result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
-    assert 'no outcome in available ledger tail' in result
+    assert 'no outcome evidence in available tail' in result
+    assert 'available tail may be empty or unreadable' in result
+    assert 'history outside this tail is unknown' in result
     assert 'no confirmed result recorded' not in result
 
 
@@ -2862,6 +2864,27 @@ def test_1769_artifact_graph_item_states() -> None:
         },
     })
     assert 'systemd units: unavailable' in unit_unscanned
+
+
+@pytest.mark.parametrize(('host_state', 'defect_count', 'expected'), [
+    ('probe_unavailable', 0, 'drift probe: probe_unavailable'),
+    ('probe_unavailable', 4, 'drift probe: probe_unavailable'),
+    (None, 0, 'drift probe: unknown'),
+    ('present', 3, 'drift defects: 3'),
+    ('present', 0, None),
+])
+def test_issue435_attention_uses_drift_host_probe_state(host_state, defect_count, expected) -> None:
+    drift = {'status': 'present', 'defect_count': defect_count}
+    if host_state is not None:
+        drift['state'] = host_state
+    html = tv.build_now_panel(None, None, None, None, systemd_drift=drift)
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    if expected is not None:
+        assert expected in summary
+    if host_state == 'probe_unavailable':
+        assert f'drift defects: {defect_count}' not in summary
+    if host_state == 'present' and defect_count == 0:
+        assert 'drift:' not in summary
 
 
 def test_298_systemd_drift_item_states() -> None:

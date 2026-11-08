@@ -5788,9 +5788,13 @@ def build_now_panel(
     outcomes: list[str] = []
     ledger_integrated_ts: str | None = None
     ledger_available = isinstance(ledger_tail, list)
-    latest_result_html = ('<span class="unavailable-note">outcome unavailable; ledger not readable</span>'
+    ledger_state_note = (
+        'available tail may be empty or unreadable; history outside this tail is unknown'
+        if ledger_available else 'ledger not readable; outcome state unknown'
+    )
+    latest_result_html = (f'<span class="unavailable-note">outcome unavailable; {ledger_state_note}</span>'
                           if not ledger_available else
-                          '<span class="unavailable-note">no outcome in available ledger tail</span>')
+                          f'<span class="unavailable-note">no outcome evidence in available tail; {ledger_state_note}</span>')
     latest_result_time: datetime | None = None
     outcome_rows_seen = 0
     outcome_rows_without_orderable_ts = 0
@@ -6057,19 +6061,21 @@ def build_now_panel(
         '<span class="unavailable-note">unknown; no current execution state is established by this view</span></div>'
     )
     if outcome_rows_seen and latest_result_time is None:
-        latest_result_html = '<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown in available ledger tail</span>'
+        latest_result_html = f'<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown; {ledger_state_note}</span>'
     elif outcome_rows_without_orderable_ts:
-        latest_result_html += ' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist in the available ledger tail</span>'
+        latest_result_html += f' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist; {ledger_state_note}</span>'
     elif outcome_rows_seen:
-        latest_result_html += ' <span class="now-sub">latest timestamped outcome in available ledger tail</span>'
+        latest_result_html += f' <span class="now-sub">latest timestamped outcome in available tail; {ledger_state_note}</span>'
     result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Latest outcome:</span> {latest_result_html}</div>'
     integration_value = None
     if last_integrated_ts:
         integration_value = f'{fmt_ts(last_integrated_ts)} <span class="now-sub">integration timestamp from available source</span>'
     elif not ledger_available and not tree_integrated_ts:
         integration_value = '<span class="unavailable-note">integration status unknown; ledger unavailable and no current-tree timestamp</span>'
+    elif not ledger_available:
+        integration_value = '<span class="unavailable-note">integration status unknown; no current-tree timestamp and ledger unavailable</span>'
     else:
-        integration_value = '<span class="unavailable-note">no integration in available sources</span>'
+        integration_value = '<span class="unavailable-note">no integration evidence in available tail; tail may be empty or unreadable and older history is unknown</span>'
     integration_html = (
         '<div class="now-item" data-now-evidence="integration"><span class="now-label">Integration evidence:</span> '
         f'{integration_value}</div>'
@@ -6093,9 +6099,12 @@ def build_now_panel(
                 attention_items.append(f'CI {esc(str(repository))}: {esc(str(state))}/{esc(str(conclusion))}')
     else:
         attention_items.append('CI: unavailable')
-    drift_state = systemd_drift.get('status') if isinstance(systemd_drift, dict) else 'unavailable'
-    if drift_state != 'present':
-        attention_items.append(f'drift: {esc(str(drift_state or "unknown"))}')
+    drift_status = systemd_drift.get('status') if isinstance(systemd_drift, dict) else 'unavailable'
+    drift_host_state = systemd_drift.get('state') if isinstance(systemd_drift, dict) else None
+    if drift_status != 'present':
+        attention_items.append(f'drift: {esc(str(drift_status or "unknown"))}')
+    elif drift_host_state != 'present':
+        attention_items.append(f'drift probe: {esc(str(drift_host_state or "unknown"))}')
     elif isinstance(systemd_drift, dict):
         defect_count = systemd_drift.get('defect_count')
         if isinstance(defect_count, int) and defect_count > 0:
