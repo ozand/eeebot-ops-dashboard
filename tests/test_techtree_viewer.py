@@ -7337,10 +7337,11 @@ def test_issue438_token_controls_period_selection_and_scale_provenance() -> None
     dates = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07', '2026-09-08', '2026-09-09']
     fixture['token_heatmap'] = {
         'dates': dates,
-        'hourly': {day: (None if day == '2026-09-02' else [[10, 20, 30, 1, 0, 'tool'] for _ in range(24)]) for day in dates},
+        'hourly': {day: (None if day == '2026-09-02' else [[10, 20, 7, 37, 1, 'fixture'] for _ in range(24)]) for day in dates},
+        'five_min': {day: (None if day == '2026-09-02' else {}) for day in dates},
         'five_min': {day: {} for day in dates},
-        'summary': {'total_tokens': 5760, 'total_calls': 192, 'local_tokens': 1920,
-                    'gateway_tokens': 960, 'other_tokens': 2880, 'days_span': 9,
+        'summary': {'total_tokens': 10656, 'total_calls': 288, 'local_tokens': 2880,
+                    'gateway_tokens': 5760, 'other_tokens': 2016, 'days_span': 9,
                     'days_present': 8, 'days_missing': 1, 'invalid_days': ['2026-09-08'],
                     'quantiles_hourly': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [5, 10, 20, 40]},
                     'quantiles_5min': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [5, 10, 20, 40]}},
@@ -7361,11 +7362,11 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
 
     fixture = _fixture()
     dates = [(date(2026, 9, 1) + timedelta(days=i)).isoformat() for i in range(35)]
-    hourly = {d: (None if i == 33 else ([[0, 0, 0, 0, 0, ''] for _ in range(24)] if i == 32 else [[10, 20, 30, 1, 0, 'tool'] for _ in range(24)])) for i, d in enumerate(dates)}
+    hourly = {d: (None if i == 33 else ([[0, 0, 0, 0, 0, ''] for _ in range(24)] if i == 32 else [[10, 20, 7, 37, 1, 'fixture'] for _ in range(24)])) for i, d in enumerate(dates)}
     fixture['token_heatmap'] = {
         'dates': dates, 'hourly': hourly, 'five_min': {d: (None if i == 33 else {}) for i, d in enumerate(dates)},
-        'summary': {'total_tokens': 24480, 'total_calls': 816, 'local_tokens': 8160,
-                    'gateway_tokens': 16320, 'other_tokens': 0, 'days_span': 35,
+        'summary': {'total_tokens': 29304, 'total_calls': 792, 'local_tokens': 7920,
+                    'gateway_tokens': 15840, 'other_tokens': 5544, 'days_span': 35,
                     'days_present': 34, 'days_missing': 1, 'invalid_days': [dates[-2]],
                     'quantiles_hourly': {'gateway': [10, 20, 40, 80], 'local': [5, 10, 20, 40], 'total': [20, 40, 80, 160]},
                     'quantiles_5min': {'gateway': [5, 10, 20, 40], 'local': [5, 10, 20, 40], 'total': [10, 20, 40, 80]}},
@@ -7381,12 +7382,14 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         period = page.locator('#tkn-period')
         period.select_option('24h')
         assert page.locator('#matrix-gw .tkn-day-col').count() == 1
-        assert page.locator('#tkn-total-tokens').inner_text() == '720'
+        assert page.locator('#tkn-total-tokens').inner_text() == '888'
+        assert page.locator('#matrix-tot .tkn-day-col .tkn-cell:not(.cell-zero):not(.cell-nodata)').count() == 24
         period.select_option('7d')
         assert page.locator('#matrix-gw .tkn-day-col').count() == 7
-        assert page.locator('#tkn-total-tokens').inner_text() == '3.6K'
+        assert page.locator('#tkn-total-tokens').inner_text() == '4.4K'
         assert page.locator('#tkn-vendor-tokens').inner_text().startswith('2.4K')
         assert page.locator('#tkn-local-tokens').inner_text().startswith('1.2K')
+        assert page.locator('#tkn-other-tokens').inner_text().startswith('840')
         assert page.locator('#tkn-total-calls').inner_text() == '120'
         assert page.locator('#tkn-period-label').inner_text().startswith('Showing 7d')
         page.locator('#tkn-selected-day').select_option(dates[-2])
@@ -7397,7 +7400,8 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         page.keyboard.press('ArrowDown')
         assert hour_control.input_value() == '1'
         assert '01:00 MSK' in page.locator('#tkn-hour-detail').inner_text()
-        assert '30' in page.locator('#tkn-hour-detail').inner_text()
+        assert 'total 37' in page.locator('#tkn-hour-detail').inner_text()
+        assert 'other 7' in page.locator('#tkn-hour-detail').inner_text()
         page.locator('#tkn-selected-day').select_option(dates[-3])
         page.locator('#tkn-selected-hour').select_option('13')
         assert 'total 0' in page.locator('#tkn-hour-detail').inner_text() and '0 calls' in page.locator('#tkn-hour-detail').inner_text()
@@ -7405,6 +7409,14 @@ def test_issue438_token_period_and_day_hour_controls_reconcile_observations(tmp_
         page.locator('#tkn-range-from').fill(dates[-3])
         page.locator('#tkn-range-to').fill(dates[-1])
         assert page.locator('#matrix-gw .tkn-day-col').count() == 3
+        assert page.locator('#tkn-total-tokens').inner_text() == '888'
+        label = page.locator('#tkn-period-label').inner_text()
+        assert label.count('incomplete day(s)') == 1
+        period.select_option('30d')
+        assert page.locator('#matrix-gw .tkn-day-col').count() == 30
+        assert page.locator('#tkn-total-tokens').inner_text() == '24.9K'
+        assert page.locator('#tkn-total-calls').inner_text() == '672'
+        assert page.locator('#tkn-period-label').inner_text().count('incomplete day(s)') == 1
         browser.close()
 
 

@@ -9152,7 +9152,10 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       const from = shown[0] || 'no recorded dates';
       const to = shown[shown.length - 1] || 'no recorded dates';
       const periodName = period === '24h' ? '24h MSK calendar day (latest available date)' : period;
-      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens.';
+      const integrity = Array.isArray(summary.invalid_days);
+      const invalid = integrity ? summary.invalid_days.filter(d => shown.includes(d)).length : null;
+      const integrityText = integrity ? (invalid ? invalid + ' incomplete day(s)' : 'integrity reported complete') : 'completeness unknown';
+      label.textContent = 'Showing ' + periodName + ' · ' + from + ' to ' + to + ' · MSK (UTC+3) · independent quantile scales; equal color does not mean equal tokens. · ' + integrityText;
     }}
     function updatePeriodSummary() {{
       const shown = visibleDates();
@@ -9164,10 +9167,9 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
         day.forEach(row => {{
           if (!row) return;
           const rowLocal = Number(row[0]) || 0, rowGateway = Number(row[1]) || 0;
-          const rowTotal = Number(row[2]) || 0;
-          local += rowLocal; gateway += rowGateway; total += rowTotal;
-          calls += Number(row[3]) || 0;
-          other += Math.max(0, rowTotal - rowLocal - rowGateway);
+          const rowOther = Number(row[2]) || 0, rowTotal = Number(row[3]) || 0;
+          local += rowLocal; gateway += rowGateway; other += rowOther;
+          total += rowTotal; calls += Number(row[4]) || 0;
         }});
       }});
       document.getElementById('tkn-total-tokens').textContent = fmtTok(total);
@@ -9179,10 +9181,6 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       if (otherValue) otherValue.innerHTML = fmtTok(other) + ' <span class="tkn-kpi-pct">(' + (total ? (other / total * 100).toFixed(1) : '0.0') + '%)</span>';
       document.getElementById('tkn-total-calls').textContent = calls.toLocaleString();
       document.getElementById('tkn-period-days').textContent = shown.length + 'd (' + observed + ' observed, ' + (shown.length - observed) + ' unobserved)';
-      const integrity = Array.isArray(summary.invalid_days);
-      const invalid = integrity ? summary.invalid_days.filter(d => shown.includes(d)).length : null;
-      document.getElementById('tkn-period-label').dataset.integrity = integrity ? (invalid ? invalid + ' incomplete day(s)' : 'integrity reported complete') : 'completeness unknown';
-      document.getElementById('tkn-period-label').textContent += ' · ' + document.getElementById('tkn-period-label').dataset.integrity;
     }}
     function fillPeriodControls() {{
       selectedDay.replaceChildren();
@@ -9277,7 +9275,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               showTooltip(e, '<div class="tkn-tt-title">' + d + ' (Unobserved)</div><div>No tracking record for this calendar day.</div>');
             }});
           }} else {{
-            const row = dayData[h] || [0, 0, 0, 0, ''];
+            const row = dayData[h] || [0, 0, 0, 0, 0, ''];
             const tok = row[fieldIdx] || 0;
             const lvl = getLevel(tok, q);
             if (lvl === 0) {{
@@ -9289,14 +9287,15 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
               const hStr = String(h).padStart(2, '0') + ':00 MSK';
           const utcH = String((h - 3 + 24) % 24).padStart(2, '0');
               let html = '<div class="tkn-tt-title">' + d + ' ' + hStr + ' <span style="font-size:11px;color:#8b949e">(' + utcH + ':00 UTC)</span></div>';
-              if (row[2] === 0) {{
+              if (row[3] === 0) {{
                 html += '<div>0 tokens (Quiet hour, 0 calls)</div>';
               }} else {{
-                html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(row[2]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Total:</span><span>' + fmtTok(row[3]) + '</span></div>';
                 html += '<div class="tkn-tt-row"><span>Gateway:</span><span>' + fmtTok(row[1]) + '</span></div>';
                 html += '<div class="tkn-tt-row"><span>Local (Qwen):</span><span>' + fmtTok(row[0]) + '</span></div>';
-                html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + row[3] + '</span></div>';
-                if (row[4]) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + row[4] + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Other:</span><span>' + fmtTok(row[2]) + '</span></div>';
+                html += '<div class="tkn-tt-row"><span>Calls:</span><span>' + row[4] + '</span></div>';
+                if (row[5]) html += '<div class="tkn-tt-row"><span>Top:</span><span>' + row[5] + '</span></div>';
               }}
               showTooltip(e, html);
             }});
@@ -9416,7 +9415,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       const row = (hourly[dateStr] || [])[hour];
       const panel = document.getElementById('tkn-hour-detail');
       if (!row) {{ panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — time unavailable or unobserved.'; return; }}
-      panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — total ' + fmtTok(row[2]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', ' + row[3] + ' calls' + (row[5] ? ', top: ' + row[5] : ', component unavailable') + '.';
+      panel.textContent = dateStr + ' ' + String(hour).padStart(2,'0') + ':00 MSK — total ' + fmtTok(row[3]) + ', vendor ' + fmtTok(row[1]) + ', local ' + fmtTok(row[0]) + ', other ' + fmtTok(row[2]) + ', ' + row[4] + ' calls' + (row[5] ? ', top: ' + row[5] : ', component unavailable') + '.';
     }}
     function changePeriod() {{
       period = periodControl.value;
@@ -9425,7 +9424,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
       if (shown.length) selectDate(selectedDay.value);
       renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
       renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
-      renderMatrix('matrix-tot', 'legend-tot', 2, 'total', 'tot-lvl');
+      renderMatrix('matrix-tot', 'legend-tot', 3, 'total', 'tot-lvl');
     }}
     periodControl.addEventListener('change', changePeriod);
     document.getElementById('tkn-range-from').addEventListener('change', () => {{ if (period === 'range') changePeriod(); }});
@@ -9437,7 +9436,7 @@ def build_tokens_panel(data: dict[str, Any], host: str = '', generated_at: str |
 
     renderMatrix('matrix-gw', 'legend-gw', 1, 'gateway', 'gw-lvl');
     renderMatrix('matrix-loc', 'legend-loc', 0, 'local', 'loc-lvl');
-    renderMatrix('matrix-tot', 'legend-tot', 2, 'total', 'tot-lvl');
+    renderMatrix('matrix-tot', 'legend-tot', 3, 'total', 'tot-lvl');
     renderDayDetail(activeDate);
 
     document.querySelectorAll('.tkn-btn').forEach(btn => {{
