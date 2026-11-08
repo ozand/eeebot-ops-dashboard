@@ -10858,8 +10858,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
             current = 'cycles.html'
         if current == 'index.html':
             page_main = page_main.replace('</section>', '</section>' + empire_stats, 1)
-        else:
-            page_main = empire_stats + page_main
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
                           computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
