@@ -2395,7 +2395,7 @@ def test_issue435_now_evidence_precedes_collapsed_charter_and_candidate_queue() 
     assert 'href="https://github.com/ozand/example/actions/runs/123"' not in html
     assert html.index('data-now-evidence="attention"') < html.index('Charter and priorities')
     assert 'unknown; no current execution state is established by this view' in html
-    assert 'Last confirmed result:' in html and 'Last confirmed integration:' in html
+    assert 'Latest outcome:' in html and 'Integration evidence:' in html
     assert 'Ranked demand candidates (not a promise of next selection)' in html
     assert 'Candidates are not a prediction of the next actual selection.' in html
     assert 'rest_unchanged' not in html
@@ -2449,12 +2449,25 @@ def test_issue435_mixed_orderable_and_unorderable_results_disclose_incomplete_ch
     assert 'no confirmed result recorded' not in result
 
 
-def test_issue435_empty_ledger_reports_no_confirmed_result() -> None:
+@pytest.mark.parametrize('ledger_tail', [None, 'unreadable'])
+def test_issue435_unavailable_ledger_does_not_claim_no_result(ledger_tail) -> None:
+    from scripts import techtree_viewer as viewer
+
+    html = viewer.build_now_panel(None, None, None, None, ledger_tail=ledger_tail)
+    result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
+    assert 'outcome unavailable; ledger not readable' in result
+    assert 'no outcome in available ledger tail' not in result
+    integration = html.split('data-now-evidence="integration"', 1)[1].split('</div>', 1)[0]
+    assert 'integration status unknown' in integration
+
+
+def test_issue435_empty_ledger_reports_no_result_in_available_tail() -> None:
     from scripts import techtree_viewer as viewer
 
     html = viewer.build_now_panel(None, None, None, None, ledger_tail=[])
     result = html.split('data-now-evidence="result"', 1)[1].split('</div>', 1)[0]
-    assert 'no confirmed result recorded' in result
+    assert 'no outcome in available ledger tail' in result
+    assert 'no confirmed result recorded' not in result
 
 
 def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> None:
@@ -2462,8 +2475,8 @@ def test_issue435_unknown_planning_and_missing_evidence_render_explicitly() -> N
 
     html = viewer.build_now_panel(None, None, None, None, planning_activity=None, ci_freshness=None)
     assert 'Execution observation:' in html and 'unknown' in html
-    assert 'Last confirmed result:' in html and 'no confirmed result recorded' in html
-    assert 'Last confirmed integration:' in html and 'none recorded' in html
+    assert 'Latest outcome:' in html and 'outcome unavailable; ledger not readable' in html
+    assert 'Integration evidence:' in html and 'integration status unknown' in html
     assert 'Planning observation:' in html and 'unavailable or unknown' in html
     assert 'run evidence unavailable' in html
 

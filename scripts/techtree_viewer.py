@@ -5787,11 +5787,14 @@ def build_now_panel(
     now = now or datetime.now(timezone.utc).isoformat()
     outcomes: list[str] = []
     ledger_integrated_ts: str | None = None
-    latest_result_html = '<span class="unavailable-note">no confirmed result recorded</span>'
+    ledger_available = isinstance(ledger_tail, list)
+    latest_result_html = ('<span class="unavailable-note">outcome unavailable; ledger not readable</span>'
+                          if not ledger_available else
+                          '<span class="unavailable-note">no outcome in available ledger tail</span>')
     latest_result_time: datetime | None = None
     outcome_rows_seen = 0
     outcome_rows_without_orderable_ts = 0
-    if isinstance(ledger_tail, list):
+    if ledger_available:
         # read_ledger_tail returns rows oldest-first over a 5000-row window, so
         # the newest integration is the LAST evolution_tree row, not the first.
         for entry in ledger_tail:
@@ -6054,15 +6057,22 @@ def build_now_panel(
         '<span class="unavailable-note">unknown; no current execution state is established by this view</span></div>'
     )
     if outcome_rows_seen and latest_result_time is None:
-        latest_result_html = '<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown</span>'
+        latest_result_html = '<strong>result recorded</strong> <span class="unavailable-note">timestamp/order unknown in available ledger tail</span>'
     elif outcome_rows_without_orderable_ts:
-        latest_result_html += ' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist</span>'
-    result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Last confirmed result:</span> {latest_result_html}</div>'
+        latest_result_html += ' <span class="unavailable-note">chronology incomplete; a later untimestamped result may exist in the available ledger tail</span>'
+    elif outcome_rows_seen:
+        latest_result_html += ' <span class="now-sub">latest timestamped outcome in available ledger tail</span>'
+    result_html = f'<div class="now-item" data-now-evidence="result"><span class="now-label">Latest outcome:</span> {latest_result_html}</div>'
+    integration_value = None
+    if last_integrated_ts:
+        integration_value = f'{fmt_ts(last_integrated_ts)} <span class="now-sub">integration timestamp from available source</span>'
+    elif not ledger_available and not tree_integrated_ts:
+        integration_value = '<span class="unavailable-note">integration status unknown; ledger unavailable and no current-tree timestamp</span>'
+    else:
+        integration_value = '<span class="unavailable-note">no integration in available sources</span>'
     integration_html = (
-        f'<div class="now-item" data-now-evidence="integration"><span class="now-label">Last confirmed integration:</span> '
-        f'<span>{fmt_ts(last_integrated_ts)}</span></div>' if last_integrated_ts else
-        '<div class="now-item" data-now-evidence="integration"><span class="now-label">Last confirmed integration:</span> '
-        '<span class="unavailable-note">none recorded</span></div>'
+        '<div class="now-item" data-now-evidence="integration"><span class="now-label">Integration evidence:</span> '
+        f'{integration_value}</div>'
     )
     attention_items = []
     if isinstance(planning_observation, dict):
