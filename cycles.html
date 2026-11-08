@@ -286,6 +286,41 @@
       border-color: #2f5c46;
       background: rgba(15, 32, 24, 0.8);
     }
+    .feed-card { min-width: 0; }
+    .feed-card-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .feed-card-summary::-webkit-details-marker { display: none; }
+    .feed-card-chevron { flex: 0 0 auto; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #8aa695; transition: transform 120ms ease; }
+    .feed-card[open] > .feed-card-summary .feed-card-chevron { transform: rotate(90deg); }
+    .feed-card-hint, .feed-coverage, .feed-archive-status {
+      color: #8aa695;
+      font-size: 0.78em;
+    }
+    .feed-card-evidence { padding: 8px 4px 2px; }
+    .feed-controls { display: grid; gap: 6px; margin-bottom: 10px; }
+    .feed-controls button, .feed-show-all { display: inline-flex; align-items: center; justify-content: center; }
+    .feed-controls label { color: #9db4a6; font-size: 0.8em; }
+    .feed-controls input[type="search"], .feed-controls input[type="date"] {
+      width: min(100%, 28rem); min-height: 44px; padding: 8px 10px;
+      color: #e2f0e6; background: rgba(8, 15, 11, 0.8); border: 1px solid #28503c; border-radius: 4px;
+    }
+    .feed-controls input[type="date"] { color-scheme: dark; }
+    .feed-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    .feed-coverage { margin: 0; }
+    .feed-clear-search, .feed-show-all {
+      justify-self: start; min-height: 44px; padding: 8px 12px;
+      appearance: none; -webkit-appearance: none;
+      color: #b8d0c2; background: #10271a; border: 1px solid #2f5c46;
+      border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; cursor: pointer;
+    }
+    .feed-clear-search:hover, .feed-show-all:hover { border-color: #56d364; color: #56d364; }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
@@ -1404,911 +1439,954 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794146754-70d2e0be811b"></head>
+<meta name="snapshot-version" content="1794148247-d5fd1681b6a6"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794146727.422" data-render-age-seconds="39">data: 38s old &middot; generated 14:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794148156.570" data-render-age-seconds="102">data: 1m old &middot; generated 14:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html" class="nav-current" aria-current="page">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
 <main class="dashboard-main">
 
     <section class="panel panel-feed" id="panel-feed">
-      <h2 class="panel-title">Cycle History (3688 cycles)</h2>
-      <div class="filter-bar"><button type="button" class="filter-btn" data-filter="all" aria-pressed="false">all</button><button type="button" class="filter-btn" data-filter="integrated" aria-pressed="false">integrated</button><button type="button" class="filter-btn" data-filter="failed" aria-pressed="false">failed</button><button type="button" class="filter-btn" data-filter="partial" aria-pressed="false">partial</button><button type="button" class="filter-btn" data-filter="skipped" aria-pressed="false">skipped</button><button type="button" class="filter-btn" data-filter="push_pending" aria-pressed="false">push_pending</button><button type="button" class="filter-btn" data-filter="superseded" aria-pressed="false">superseded</button><button type="button" class="filter-btn" data-filter="abandoned" aria-pressed="false">abandoned</button><button type="button" class="filter-btn" data-filter="incomplete" aria-pressed="false">incomplete</button><button type="button" class="filter-btn" data-filter="running" aria-pressed="false">running</button><button type="button" class="filter-btn" data-filter="proposed" aria-pressed="false">proposed</button></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">show 3638 older cycles</button><script>(function(){var bar=document.querySelector(".filter-bar");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(k){var rows=getRows(),shown=0;rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.getAttribute("data-filter")===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";apply(bar.querySelector("[data-filter='"+init+"']")?init:"all");bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.getAttribute("data-filter");if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+k;}apply(k);});window.addEventListener("hashchange",function(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";if(bar.querySelector("[data-filter='"+k+"']")){apply(k);}});})();</script><script>
+      <h2 class="panel-title">Cycle History (3689 cycles)</h2>
+      <div class="feed-controls"><label for="cycle-search">Search task or cycle ID</label><input id="cycle-search" type="search" autocomplete="off" placeholder="Search loaded cycles"><button type="button" class="feed-clear-search">Clear search</button><label for="cycle-from">From (recorded day)</label><input id="cycle-from" type="date"><label for="cycle-to">To (recorded day)</label><input id="cycle-to" type="date"><div class="filter-bar" role="group" aria-label="Filter cycles by outcome"><button type="button" class="filter-btn" data-filter="all" aria-pressed="false">all</button><button type="button" class="filter-btn" data-filter="integrated" aria-pressed="false">integrated</button><button type="button" class="filter-btn" data-filter="failed" aria-pressed="false">failed</button><button type="button" class="filter-btn" data-filter="partial" aria-pressed="false">partial</button><button type="button" class="filter-btn" data-filter="skipped" aria-pressed="false">skipped</button><button type="button" class="filter-btn" data-filter="push_pending" aria-pressed="false">push_pending</button><button type="button" class="filter-btn" data-filter="superseded" aria-pressed="false">superseded</button><button type="button" class="filter-btn" data-filter="abandoned" aria-pressed="false">abandoned</button><button type="button" class="filter-btn" data-filter="incomplete" aria-pressed="false">incomplete</button><button type="button" class="filter-btn" data-filter="running" aria-pressed="false">running</button><button type="button" class="filter-btn" data-filter="proposed" aria-pressed="false">proposed</button></div><p class="feed-coverage" role="status" aria-live="polite" data-feed-coverage></p></div><button class="feed-show-all" type="button" data-cycle-archive-index-src="cycles-archive-index.json">Load older cycles</button><span class="feed-archive-status" role="status" aria-live="polite"></span><script>(function(){var bar=document.querySelector(".filter-bar"),search=document.querySelector("#cycle-search"),clear=document.querySelector(".feed-clear-search"),from=document.querySelector("#cycle-from"),to=document.querySelector("#cycle-to"),coverage=document.querySelector("[data-feed-coverage]");if(!bar)return;function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}function apply(){var rows=getRows(),shown=0,k=bar.dataset.activeFilter||"all",q=(search.value||"").trim().toLocaleLowerCase(),start=from.value,end=to.value;rows.forEach(function(r){var day=r.dataset.day||"",match=(k==="all"||r.dataset.outcome===k)&&(!q||(r.dataset.search||"").toLocaleLowerCase().includes(q))&&(!start||day&&day>=start)&&(!end||day&&day<=end);r.classList.toggle("filtered-out",!match);r.setAttribute("aria-hidden",String(!match));if(match)shown++;});var headers=document.querySelectorAll("#panel-feed .feed-day-header");headers.forEach(function(h){h.hidden=true;});rows.forEach(function(r){if(!r.classList.contains("filtered-out")){var prev=r.previousElementSibling;while(prev&&!prev.classList.contains("feed-day-header"))prev=prev.previousElementSibling;if(prev)prev.hidden=false;}});var loaded=rows.length,empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=shown>0;empty.textContent="No matches in the loaded cycle window.";}coverage.textContent=shown+" matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)+"; search covers loaded cycles only."+(start||end?" Dates use recorded timestamp day; bounds may differ from the displayed local day label.":"")+(document.querySelector(".feed-show-all[data-cycle-archive-index-src]")?" Older archive chunks remain unsearched.":" No older archive chunks are available.");bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.dataset.filter===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}function readUrl(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"",params=new URLSearchParams(location.search);bar.dataset.activeFilter=Array.prototype.some.call(bar.querySelectorAll(".filter-btn"),function(b){return b.dataset.filter===k;})?k:"all";if(search)search.value=params.get("q")||"";if(from)from.value=params.get("from")||"";if(to)to.value=params.get("to")||"";apply();}function writeSearch(){var u=new URL(location.href);if(search.value)u.searchParams.set("q",search.value);else u.searchParams.delete("q");if(from.value)u.searchParams.set("from",from.value);else u.searchParams.delete("from");if(to.value)u.searchParams.set("to",to.value);else u.searchParams.delete("to");history.replaceState(null,"",u.pathname+u.search+u.hash);apply();}readUrl();bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.dataset.filter;bar.dataset.activeFilter=k;if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+encodeURIComponent(k);}apply();});if(search)search.addEventListener("input",writeSearch);if(from)from.addEventListener("change",writeSearch);if(to)to.addEventListener("change",writeSearch);if(clear)clear.addEventListener("click",function(){search.value="";from.value="";to.value="";writeSearch();search.focus();});window.addEventListener("hashchange",readUrl);window.addEventListener("cycle-feed-update",apply);})();</script><script>
             (function(){
-              var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
-              if (!btn) return;
-              btn.addEventListener('click', function () {
-                var indexSrc = btn.getAttribute('data-cycle-archive-index-src');
-                btn.disabled = true;
-                var original = btn.textContent;
-                btn.textContent = 'loading…';
-                function getJson(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); }); }
-                getJson(indexSrc).then(function (idx) {
-                  var count = Number(idx && idx.chunk_count || 0);
-                  var urls = [];
-                  for (var i = 0; i < count; i++) { urls.push(indexSrc.replace(/cycles-archive-index\.json$/, 'cycles-archive-' + i + '.json')); }
-                  return Promise.all(urls.map(getJson));
-                }).then(function (chunks) {
-                  var list = document.querySelector('#panel-feed .feed-list');
-                  // Chunks are numbered oldest-first; render newest-archived-first
-                  // (chunk with the highest index) to match the page's own order.
-                  for (var i = chunks.length - 1; i >= 0; i--) {
-                    (chunks[i] || []).forEach(function (html) { list.insertAdjacentHTML('beforeend', html); });
-                  }
-                  btn.remove();
-                  window.dispatchEvent(new Event('hashchange'));
-                }).catch(function (err) {
-                  btn.disabled = false;
-                  btn.textContent = original + ' -- unavailable (' + (err && err.message || err) + ')';
-                });
+              var btn=document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
+              if(!btn)return;
+              var status=document.querySelector('.feed-archive-status'),indexSrc=btn.dataset.cycleArchiveIndexSrc,nextIndex=null,totalRows=null;
+              function getJson(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
+              btn.addEventListener('click',function(){
+                btn.disabled=true;btn.textContent='Loading older cycles…';status.textContent='';
+                function loadIndex(){return getJson(indexSrc).then(function(idx){totalRows=Number(idx.total_rows)||0;nextIndex=nextIndex===null?Number(idx.chunk_count)-1:nextIndex;return idx;});}
+                (nextIndex===null?loadIndex():Promise.resolve()).then(function(){
+                  if(nextIndex<0){btn.remove();status.textContent='No more archived cycles.';return;}
+                  var chunkIndex=nextIndex,url=indexSrc.slice(0,indexSrc.length-'cycles-archive-index.json'.length)+'cycles-archive-'+chunkIndex+'.json';
+                  return getJson(url).then(function(rows){
+                    var list=document.querySelector('#panel-feed .feed-list');
+                    (rows||[]).forEach(function(row){list.insertAdjacentHTML('beforeend',row);});
+                    nextIndex=chunkIndex-1;window.dispatchEvent(new Event('cycle-feed-update'));
+                    var loaded=list.querySelectorAll('li[data-outcome]').length;
+                    status.textContent='Loaded '+loaded+' cycles; '+(totalRows===null?'archive total unavailable':totalRows+' archived cycles indexed')+'. Search covers loaded cycles only.';
+                    if(nextIndex<0){btn.remove();}else{btn.disabled=false;btn.textContent='Load next older chunk';}
+                  });
+                }).catch(function(err){btn.disabled=false;btn.textContent='Retry loading older cycles';status.textContent='Archive chunk unavailable ('+(err&&err.message||err)+'). Loaded results remain limited to the current window. Retry this chunk.';});
               });
             })();
             </script>
       <ul class="feed-list">
-        <li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>
+        <li class="filter-empty" data-filter-empty hidden>No matches in the loaded cycle window.</li>
         
         <li class="feed-day-header">2026-11-08 MSK</li>
-        <li class="feed-row feed-outcome-failed" data-outcome="failed" id="cycle-cycle-f1b9633b247d">
-          <div class="feed-header">
-            <span class="badge badge-failed">FAILED: withheld (&lt;=64)</span>
-            <strong class="feed-title">failed: withheld (&lt;=64)</strong>
+        <li class="feed-row feed-outcome-in_progress" data-outcome="in_progress" data-search="in progress cycle-f1b9633b247d" data-day="2026-11-08" id="cycle-cycle-f1b9633b247d">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
+            <span class="badge badge-available">running</span>
+            <strong class="feed-title">in progress</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f1b9633b247d)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-f1b9633b247d">details</a>
             
-            
-            <span class="feed-ts" title="2026-11-08T13:33:17.868260Z">16:33 MSK</span>
-          </div>
-          
+            <span class="feed-ts" title="2026-11-08T14:23:15.933180Z">17:23 MSK</span>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-f1b9633b247d">details</a> </div>
           <div class="feed-files">&#128193; scripts/verify_imports.py, diary/2026-11-07.md, diary/2026-11-08.md</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 545 LLM calls &middot; 22.14M tok &middot; Σ LLM wait 8h18m48s &middot; recorded through 16:58 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: 14 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-cost">&#9889; 554 LLM calls &middot; 22.40M tok &middot; Σ LLM wait 8h24m &middot; recorded through 17:28 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-planning-cost">Planning: 14 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-60cfb89bba06">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-d7d153742326" data-day="2026-11-08" id="cycle-cycle-d7d153742326">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
+            <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
+            <strong class="feed-title">rejected: sizing_rejected</strong>
+            <span class="feed-cid copyable" translate="no">(cycle-d7d153742326)</span>
+            
+            <span class="feed-ts" title="2026-11-08T14:15:26.151214Z">17:15 MSK</span>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-d7d153742326">details</a> </div>
+          
+          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
+          <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.21K tok &middot; Σ LLM wait 18s &middot; recorded through 17:15 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
+        </li>
+        
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-60cfb89bba06" data-day="2026-11-08" id="cycle-cycle-60cfb89bba06">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-60cfb89bba06)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-60cfb89bba06">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T13:24:31.414748Z">16:24 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-60cfb89bba06">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.43K tok &middot; Σ LLM wait 21s &middot; recorded through 16:24 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-b04e2ae3a155">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-b04e2ae3a155" data-day="2026-11-08" id="cycle-cycle-b04e2ae3a155">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-b04e2ae3a155)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-b04e2ae3a155">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T12:38:28.325094Z">15:38 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-b04e2ae3a155">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.18K tok &middot; Σ LLM wait 15s &middot; recorded through 15:38 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-1b90dcf0933d">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-1b90dcf0933d" data-day="2026-11-08" id="cycle-cycle-1b90dcf0933d">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1b90dcf0933d)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-1b90dcf0933d">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T11:52:07.353357Z">14:52 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-1b90dcf0933d">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.39K tok &middot; Σ LLM wait 15s &middot; recorded through 14:52 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-6edb6a2f4d51">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-6edb6a2f4d51" data-day="2026-11-08" id="cycle-cycle-6edb6a2f4d51">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6edb6a2f4d51)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-6edb6a2f4d51">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T11:04:37.046528Z">14:04 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-6edb6a2f4d51">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.31K tok &middot; Σ LLM wait 14s &middot; recorded through 14:04 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-6a4cd800aaa4">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-6a4cd800aaa4" data-day="2026-11-08" id="cycle-cycle-6a4cd800aaa4">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6a4cd800aaa4)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-6a4cd800aaa4">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T10:16:00.125840Z">13:16 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-6a4cd800aaa4">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.44K tok &middot; Σ LLM wait 15s &middot; recorded through 13:16 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-324089a6f035">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-324089a6f035" data-day="2026-11-08" id="cycle-cycle-324089a6f035">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-324089a6f035)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-324089a6f035">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T09:41:15.127605Z">12:41 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-324089a6f035">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.34K tok &middot; Σ LLM wait 14s &middot; recorded through 12:41 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-91a44bdb3730">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-91a44bdb3730" data-day="2026-11-08" id="cycle-cycle-91a44bdb3730">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-91a44bdb3730)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-91a44bdb3730">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T08:56:37.965704Z">11:56 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-91a44bdb3730">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.39K tok &middot; Σ LLM wait 14s &middot; recorded through 11:56 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-9c922ff78aa7">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-9c922ff78aa7" data-day="2026-11-08" id="cycle-cycle-9c922ff78aa7">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-9c922ff78aa7)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-9c922ff78aa7">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T08:12:13.456162Z">11:12 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-9c922ff78aa7">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.36K tok &middot; Σ LLM wait 16s &middot; recorded through 11:12 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-989d5e09f3ed">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-989d5e09f3ed" data-day="2026-11-08" id="cycle-cycle-989d5e09f3ed">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-989d5e09f3ed)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-989d5e09f3ed">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T07:28:00.300245Z">10:28 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-989d5e09f3ed">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 3 LLM calls &middot; 17.01K tok &middot; Σ LLM wait 21s &middot; recorded through 10:28 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-3dab057e3090">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-3dab057e3090" data-day="2026-11-08" id="cycle-cycle-3dab057e3090">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-3dab057e3090)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-3dab057e3090">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T06:41:42.372625Z">09:41 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-3dab057e3090">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.35K tok &middot; Σ LLM wait 13s &middot; recorded through 09:41 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-33719b733551">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-33719b733551" data-day="2026-11-08" id="cycle-cycle-33719b733551">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-33719b733551)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-33719b733551">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T05:56:27.202898Z">08:56 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-33719b733551">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.37K tok &middot; Σ LLM wait 13s &middot; recorded through 08:56 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-f3ff49f5a8f0">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-f3ff49f5a8f0" data-day="2026-11-08" id="cycle-cycle-f3ff49f5a8f0">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f3ff49f5a8f0)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-f3ff49f5a8f0">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T05:10:20.737508Z">08:10 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-f3ff49f5a8f0">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.37K tok &middot; Σ LLM wait 12s &middot; recorded through 08:10 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-e7ce04e38802">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-e7ce04e38802" data-day="2026-11-08" id="cycle-cycle-e7ce04e38802">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-e7ce04e38802)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-e7ce04e38802">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T04:56:24.515653Z">07:56 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-e7ce04e38802">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.27K tok &middot; Σ LLM wait 14s &middot; recorded through 07:56 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-2faf84e014ee">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-2faf84e014ee" data-day="2026-11-08" id="cycle-cycle-2faf84e014ee">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-2faf84e014ee)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-2faf84e014ee">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T04:12:38.981979Z">07:12 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-2faf84e014ee">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.41K tok &middot; Σ LLM wait 12s &middot; recorded through 07:12 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-786fd7a1079c">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-786fd7a1079c" data-day="2026-11-08" id="cycle-cycle-786fd7a1079c">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-786fd7a1079c)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-786fd7a1079c">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T03:25:33.475527Z">06:25 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-786fd7a1079c">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.47K tok &middot; Σ LLM wait 16s &middot; recorded through 06:25 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-e182316738ac">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-e182316738ac" data-day="2026-11-08" id="cycle-cycle-e182316738ac">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-e182316738ac)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-e182316738ac">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T02:40:01.760502Z">05:40 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-e182316738ac">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.52K tok &middot; Σ LLM wait 18s &middot; recorded through 05:40 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-697f2d576490">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-697f2d576490" data-day="2026-11-08" id="cycle-cycle-697f2d576490">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-697f2d576490)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-697f2d576490">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T01:53:05.277765Z">04:53 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-697f2d576490">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.37K tok &middot; Σ LLM wait 15s &middot; recorded through 04:53 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-48e45224fe35">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-48e45224fe35" data-day="2026-11-08" id="cycle-cycle-48e45224fe35">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-48e45224fe35)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-48e45224fe35">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T01:07:58.770699Z">04:07 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-48e45224fe35">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.57K tok &middot; Σ LLM wait 18s &middot; recorded through 04:07 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-d6eac0aec0ca">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-d6eac0aec0ca" data-day="2026-11-08" id="cycle-cycle-d6eac0aec0ca">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d6eac0aec0ca)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-d6eac0aec0ca">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T00:52:08.594335Z">03:52 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-d6eac0aec0ca">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.62K tok &middot; Σ LLM wait 15s &middot; recorded through 03:52 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-2eff684a4593">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-2eff684a4593" data-day="2026-11-08" id="cycle-cycle-2eff684a4593">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-2eff684a4593)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-2eff684a4593">details</a>
-            
             
             <span class="feed-ts" title="2026-11-08T00:07:41.755530Z">03:07 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-2eff684a4593">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.56K tok &middot; Σ LLM wait 15s &middot; recorded through 03:07 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-0aaa4338371b">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="rejected: sizing_rejected cycle-0aaa4338371b" data-day="2026-11-07" id="cycle-cycle-0aaa4338371b">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: sizing_rejected</span>
             <strong class="feed-title">rejected: sizing_rejected</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0aaa4338371b)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-0aaa4338371b">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T23:21:59.784329Z">02:21 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-0aaa4338371b">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 2 LLM calls &middot; 11.61K tok &middot; Σ LLM wait 17s &middot; recorded through 02:21 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-f619b490c240">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="Optimize file discovery and checks in scripts/check_style.py to complete within 60s timeout cycle-f619b490c240" data-day="2026-11-07" id="cycle-cycle-f619b490c240">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: withheld (&lt;=64)</span>
             <strong class="feed-title">Optimize file discovery and checks in scripts/check_style.py to complete within 60s timeout</strong>
             <span class="feed-cid copyable" translate="no">(cycle-f619b490c240)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-f619b490c240">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T22:36:58.949998Z">01:36 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-752870387ede</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-752870387ede</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <a class="lesson-link" href="lessons.html#q-smoke_check_timeout">lesson:lessons/smoke_check_timeout.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-f619b490c240">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.05K tok &middot; Σ LLM wait 19s &middot; recorded through 01:36 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-8750bca8432c">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement has_process_substitution helper in scripts/detect_process_sub_bashism.py cycle-8750bca8432c" data-day="2026-11-07" id="cycle-cycle-8750bca8432c">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement has_process_substitution helper in scripts/detect_process_sub_bashism.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8750bca8432c)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-8750bca8432c">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T22:20:44.396237Z">01:20 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-87754091f3a9</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-87754091f3a9</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-8750bca8432c">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.51K tok &middot; Σ LLM wait 14s &middot; recorded through 01:20 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-018a6109123b">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement parse_pytest_collect_count helper in scripts/parse_pytest_collect_count.py cycle-018a6109123b" data-day="2026-11-07" id="cycle-cycle-018a6109123b">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement parse_pytest_collect_count helper in scripts/parse_pytest_collect_count.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-018a6109123b)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-018a6109123b">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T21:35:15.538886Z">00:35 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-1b5c5ca42667</span> &middot; <a class="lesson-link" href="lessons.html#q-avoid_full_repo_pytest_collection">lesson:lessons/avoid_full_repo_pytest_collection.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-1b5c5ca42667</span> &middot; <a class="lesson-link" href="lessons.html#q-avoid_full_repo_pytest_collection">lesson:lessons/avoid_full_repo_pytest_collection.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-018a6109123b">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.54K tok &middot; Σ LLM wait 16s &middot; recorded through 00:34 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
         <li class="feed-day-header">2026-11-07 MSK</li>
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-20b7a92564ef">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement calculate_demand_backoff function in scripts/calculate_demand_backoff.py cycle-20b7a92564ef" data-day="2026-11-07" id="cycle-cycle-20b7a92564ef">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement calculate_demand_backoff function in scripts/calculate_demand_backoff.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-20b7a92564ef)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-20b7a92564ef">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T20:56:11.572207Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-d98ec53ae5e5</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-d98ec53ae5e5</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-20b7a92564ef">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 15.30K tok &middot; Σ LLM wait 76s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-693d12444d50">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement has_double_bracket_bashism helper in scripts/detect_double_bracket_bashism.py cycle-693d12444d50" data-day="2026-11-07" id="cycle-cycle-693d12444d50">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement has_double_bracket_bashism helper in scripts/detect_double_bracket_bashism.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-693d12444d50)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-693d12444d50">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T20:11:37.161187Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-5e9b1b369ccd</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-5e9b1b369ccd</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-693d12444d50">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.97K tok &middot; Σ LLM wait 22s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-ffcc451d8734">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement is_working_tree_clean function in scripts/is_working_tree_clean.py cycle-ffcc451d8734" data-day="2026-11-07" id="cycle-cycle-ffcc451d8734">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement is_working_tree_clean function in scripts/is_working_tree_clean.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-ffcc451d8734)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-ffcc451d8734">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T19:26:02.988768Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-e514d415dd63</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-e514d415dd63</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-16436c7d5b3a-4c67 (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-ffcc451d8734">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.49K tok &middot; Σ LLM wait 19s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-eebec7f08028">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Add self-test execution mode to scripts/validate_curator_facts.py cycle-eebec7f08028" data-day="2026-11-07" id="cycle-cycle-eebec7f08028">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Add self-test execution mode to scripts/validate_curator_facts.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-eebec7f08028)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-eebec7f08028">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T18:40:08.355410Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-83ce567cb186</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-83ce567cb186</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260903-2e844aab">error:ERR-20260903-2e844aab</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-e13f1cd0f155 (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-eebec7f08028">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 14.24K tok &middot; Σ LLM wait 76s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-c2e693a1ff82">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement find_latest_diary_entry helper in scripts/find_latest_diary_entry.py cycle-c2e693a1ff82" data-day="2026-11-07" id="cycle-cycle-c2e693a1ff82">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement find_latest_diary_entry helper in scripts/find_latest_diary_entry.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c2e693a1ff82)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-c2e693a1ff82">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T18:19:45.791913Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-93ead0b434a4</span> &middot; <a class="lesson-link" href="lessons.html#q-skip_check_diary_precedence">lesson:lessons/skip_check_diary_precedence.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-93ead0b434a4</span> &middot; <a class="lesson-link" href="lessons.html#q-skip_check_diary_precedence">lesson:lessons/skip_check_diary_precedence.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-c2e693a1ff82">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.79K tok &middot; Σ LLM wait 19s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-bab4f5799d07">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" data-search="partial: no artifact recorded cycle-bab4f5799d07" data-day="2026-11-07" id="cycle-cycle-bab4f5799d07">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
             <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-bab4f5799d07)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-bab4f5799d07">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T17:41:42.340187Z">Nov 7 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-bab4f5799d07">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 25m51s</div> &middot; <span class="feed-bridge-span">Bridge span: 41m29s</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 14 LLM calls &middot; 613.1K tok &middot; Σ LLM wait 13m34s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: 5 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: 5 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-099ef79e2ac5">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Deprecate and archive unused script scripts/smoke_test_loop.py cycle-099ef79e2ac5" data-day="2026-11-07" id="cycle-cycle-099ef79e2ac5">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused script scripts/smoke_test_loop.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-099ef79e2ac5)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-099ef79e2ac5">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T17:30:55.117653Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">decay-d8415e2bde6d</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">decay-d8415e2bde6d</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-099ef79e2ac5">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.30K tok &middot; Σ LLM wait 22s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-15507af60a02">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Deprecate and archive unused script scripts/preflight_failure_check.py cycle-15507af60a02" data-day="2026-11-07" id="cycle-cycle-15507af60a02">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused script scripts/preflight_failure_check.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-15507af60a02)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-15507af60a02">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T17:11:59.911258Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">decay-f7bdde4fa027</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-bounded_script_reads">lesson:lessons/bounded_script_reads.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">decay-f7bdde4fa027</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <a class="lesson-link" href="lessons.html#q-bounded_script_reads">lesson:lessons/bounded_script_reads.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-15507af60a02">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.68K tok &middot; Σ LLM wait 15s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-0ecf47de94bc">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Enhance token normalization and keyword overlap matching in scripts/validate_curator_facts.py cycle-0ecf47de94bc" data-day="2026-11-07" id="cycle-cycle-0ecf47de94bc">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Enhance token normalization and keyword overlap matching in scripts/validate_curator_facts.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0ecf47de94bc)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-0ecf47de94bc">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T16:53:30.337895Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-1532ea68c186</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260831-6554c7fc">error:ERR-20260831-6554c7fc</a> &middot; <a class="lesson-link" href="lessons.html#q-exact_token_overlap_assertions">lesson:lessons/exact_token_overlap_assertions.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-1532ea68c186</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260831-6554c7fc">error:ERR-20260831-6554c7fc</a> &middot; <a class="lesson-link" href="lessons.html#q-exact_token_overlap_assertions">lesson:lessons/exact_token_overlap_assertions.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-0ecf47de94bc">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.15K tok &middot; Σ LLM wait 44s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-0848cf1840dd">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Deprecate and archive unused script scripts/control_plane_summary.py cycle-0848cf1840dd" data-day="2026-11-07" id="cycle-cycle-0848cf1840dd">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused script scripts/control_plane_summary.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-0848cf1840dd)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-0848cf1840dd">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T16:32:12.958000Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">decay-692b32781228</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">decay-692b32781228</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-0848cf1840dd">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.88K tok &middot; Σ LLM wait 19s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-505af7ca2f2b">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement extract_diary_date function in scripts/extract_diary_date.py cycle-505af7ca2f2b" data-day="2026-11-07" id="cycle-cycle-505af7ca2f2b">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement extract_diary_date function in scripts/extract_diary_date.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-505af7ca2f2b)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-505af7ca2f2b">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T16:12:58.079469Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-6ab32355b48a</span> &middot; <a class="lesson-link" href="lessons.html#q-direct_diary_read">lesson:lessons/direct_diary_read.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-6ab32355b48a</span> &middot; <a class="lesson-link" href="lessons.html#q-direct_diary_read">lesson:lessons/direct_diary_read.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-505af7ca2f2b">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.80K tok &middot; Σ LLM wait 17s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" id="cycle-cycle-41164390da8c">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-integrated" data-outcome="integrated" data-search="selfevo: Optimize scripts/validate_open_encoding.py so its default full-repo run finishes within the harness&#x27;s 60s per-s cycle-41164390da8c" data-day="2026-11-07" id="cycle-cycle-41164390da8c">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-integrated">INTEGRATED</span>
             <strong class="feed-title">selfevo: Optimize scripts/validate_open_encoding.py so its default full-repo run finishes within the harness&#x27;s 60s per-s</strong>
             <span class="feed-cid copyable" translate="no">(cycle-41164390da8c)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-41164390da8c">details</a>
             
-            <a href="lineage.html#node-8a64cd6" class="feed-tree-link">tree &#8599;</a>
             <span class="feed-ts" title="2026-11-07T15:43:17.604720Z">Nov 7 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-41164390da8c">details</a> <a href="lineage.html#node-8a64cd6" class="feed-tree-link">tree &#8599;</a></div>
           <div class="feed-files">&#128193; diary/2026-11-07.md, scripts/validate_open_encoding.py</div>
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 18m55s</div> &middot; <span class="feed-bridge-span">Bridge span: 34m28s</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 15 LLM calls &middot; 619.3K tok &middot; Σ LLM wait 16m55s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-fa2b5d605bca">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement record_demand_attempt function in scripts/record_demand_attempt.py cycle-fa2b5d605bca" data-day="2026-11-07" id="cycle-cycle-fa2b5d605bca">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement record_demand_attempt function in scripts/record_demand_attempt.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-fa2b5d605bca)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-fa2b5d605bca">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T15:35:00.892510Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-d2904392ce4b</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-d2904392ce4b</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-fa2b5d605bca">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.59K tok &middot; Σ LLM wait 16s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-992f1cc54083">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" data-search="partial: no artifact recorded cycle-992f1cc54083" data-day="2026-11-07" id="cycle-cycle-992f1cc54083">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
             <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-992f1cc54083)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-992f1cc54083">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T15:02:13.430885Z">Nov 7 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-992f1cc54083">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 22m27s</div> &middot; <span class="feed-bridge-span">Bridge span: 41m39s</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 15 LLM calls &middot; 441.5K tok &middot; Σ LLM wait 12m54s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed <span class="cost-pressure" title="a call in this cycle ended with finish_reason=length (context/budget limit hit)">&#9888; context overflow</span></div>
-          <div class="feed-planning-cost">Planning: 19 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: 19 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-d5243f972347">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Implement select_test_runner function in scripts/select_test_runner.py cycle-d5243f972347" data-day="2026-11-07" id="cycle-cycle-d5243f972347">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Implement select_test_runner function in scripts/select_test_runner.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-d5243f972347)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-d5243f972347">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T14:48:43.505599Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">priority-ad3a9c636278</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">priority-ad3a9c636278</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-d5243f972347">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 8.07K tok &middot; Σ LLM wait 27s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" id="cycle-cycle-50c7ba97f823">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-skipped" data-outcome="skipped" data-search="skipped-duplicate cycle-50c7ba97f823" data-day="2026-11-07" id="cycle-cycle-50c7ba97f823">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-skipped">SKIPPED: skipped_duplicate</span>
             <strong class="feed-title">skipped-duplicate</strong>
             <span class="feed-cid copyable" translate="no">(cycle-50c7ba97f823)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-50c7ba97f823">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T14:39:29.969500Z">Nov 7 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-50c7ba97f823">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 31s</div> &middot; <span class="feed-bridge-span">Bridge span: 19m34s</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost unavailable-note">LLM metrics unavailable (not observed)</div>
-          <div class="feed-planning-cost">Planning: 18 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: 18 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-6921a0dfaeb4">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Resolve unused import findings reported by validate_unused_imports.py cycle-6921a0dfaeb4" data-day="2026-11-07" id="cycle-cycle-6921a0dfaeb4">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Resolve unused import findings reported by validate_unused_imports.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-6921a0dfaeb4)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-6921a0dfaeb4">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T14:25:02.531563Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-6b8e918d5077</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260902-5774fcfc">error:ERR-20260902-5774fcfc</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-51147d6c3412-c4ff (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-6b8e918d5077</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260902-5774fcfc">error:ERR-20260902-5774fcfc</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-51147d6c3412-c4ff (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-6921a0dfaeb4">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 9.64K tok &middot; Σ LLM wait 35s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-c489316a25cc">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Deprecate and archive unused script scripts/model_fallback_routing.py cycle-c489316a25cc" data-day="2026-11-07" id="cycle-cycle-c489316a25cc">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive unused script scripts/model_fallback_routing.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-c489316a25cc)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-c489316a25cc">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T14:06:03.707989Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">decay-1ec13dc529d2</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">decay-1ec13dc529d2</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-REF-2d11715787ba-b525 (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-c489316a25cc">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.08K tok &middot; Σ LLM wait 22s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-1eefe4bdcc38">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Extend scripts/validate_lessons.py to support structured JSON output for lesson validation results cycle-1eefe4bdcc38" data-day="2026-11-07" id="cycle-cycle-1eefe4bdcc38">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Extend scripts/validate_lessons.py to support structured JSON output for lesson validation results</strong>
             <span class="feed-cid copyable" translate="no">(cycle-1eefe4bdcc38)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-1eefe4bdcc38">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T13:44:55.188356Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-a1b0b04248c0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-a1b0b04248c0</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-1eefe4bdcc38">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.53K tok &middot; Σ LLM wait 20s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-a1820f4345a1">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Extend check_runner_compat.py with batch target evaluation and JSON compatibility reporting cycle-a1820f4345a1" data-day="2026-11-07" id="cycle-cycle-a1820f4345a1">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Extend check_runner_compat.py with batch target evaluation and JSON compatibility reporting</strong>
             <span class="feed-cid copyable" translate="no">(cycle-a1820f4345a1)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-a1820f4345a1">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T13:26:33.373938Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-6d705b421538</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <a class="lesson-link" href="lessons.html#q-batch_companion_file_edits">lesson:lessons/batch_companion_file_edits.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-6d705b421538</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260829-c871bf9a">error:ERR-20260829-c871bf9a</a> &middot; <a class="lesson-link" href="lessons.html#q-batch_companion_file_edits">lesson:lessons/batch_companion_file_edits.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-a1820f4345a1">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 10.01K tok &middot; Σ LLM wait 34s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-001f75754a76">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="Optimize validate_sys_path_modification.py traversal and directory pruning to finish within timeout cycle-001f75754a76" data-day="2026-11-07" id="cycle-cycle-001f75754a76">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: withheld (&lt;=64)</span>
             <strong class="feed-title">Optimize validate_sys_path_modification.py traversal and directory pruning to finish within timeout</strong>
             <span class="feed-cid copyable" translate="no">(cycle-001f75754a76)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-001f75754a76">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T13:06:03.170839Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-5b335ea292c9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-5b335ea292c9</span> &middot; <span class="lesson-link lesson-link-unavailable" title="not on the rendered lessons.html corpus">lesson:LESS-20260904-90931e43 (unavailable)</span></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-001f75754a76">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.69K tok &middot; Σ LLM wait 33s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" id="cycle-cycle-218450aa60c7">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-rejected" data-outcome="rejected" data-search="Optimize scripts/validate_open_encoding.py directory traversal to finish within timeout cycle-218450aa60c7" data-day="2026-11-07" id="cycle-cycle-218450aa60c7">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-rejected">REJECTED: withheld (&lt;=64)</span>
             <strong class="feed-title">Optimize scripts/validate_open_encoding.py directory traversal to finish within timeout</strong>
             <span class="feed-cid copyable" translate="no">(cycle-218450aa60c7)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-218450aa60c7">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T12:46:44.642821Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">defect-c680650675f0</span> &middot; <a class="lesson-link" href="lessons.html#q-direct_diary_read">lesson:lessons/direct_diary_read.md</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">defect-c680650675f0</span> &middot; <a class="lesson-link" href="lessons.html#q-direct_diary_read">lesson:lessons/direct_diary_read.md</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-218450aa60c7">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 6.62K tok &middot; Σ LLM wait 16s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-8443a93e4405">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-partial" data-outcome="partial" data-search="partial: no artifact recorded cycle-8443a93e4405" data-day="2026-11-07" id="cycle-cycle-8443a93e4405">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-partial">PARTIAL</span>
             <strong class="feed-title">partial: no artifact recorded</strong>
             <span class="feed-cid copyable" translate="no">(cycle-8443a93e4405)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-8443a93e4405">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T12:11:18.534143Z">Nov 7 MSK</span>
-          </div>
-          
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-8443a93e4405">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 25m4s</div> &middot; <span class="feed-bridge-span">Bridge span: 41m55s</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 16 LLM calls &middot; 653.2K tok &middot; Σ LLM wait 15m43s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: 15 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: 15 iterations &middot; unknown planner calls &middot; 1 planning sessions</div></div>
+          </details>
         </li>
         
-        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" id="cycle-cycle-cbd4b94cd8f4">
-          <div class="feed-header">
+        <li class="feed-row feed-outcome-proposed" data-outcome="proposed" data-search="Deprecate and archive scaffold_script_entrypoint.py cycle-cbd4b94cd8f4" data-day="2026-11-07" id="cycle-cycle-cbd4b94cd8f4">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span><div class="feed-header">
             <span class="badge badge-available">PROPOSED · execution not observed</span>
             <strong class="feed-title">Deprecate and archive scaffold_script_entrypoint.py</strong>
             <span class="feed-cid copyable" translate="no">(cycle-cbd4b94cd8f4)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-cbd4b94cd8f4">details</a>
-            
             
             <span class="feed-ts" title="2026-11-07T12:01:09.667262Z">Nov 7 MSK</span>
-          </div>
-          <div class="entity-links"><span class="entity-chip">decay-adb79e89d9f2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a></div>
+          </div><span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence"><div class="entity-links"><span class="entity-chip">decay-adb79e89d9f2</span> &middot; <a class="lesson-link" href="lessons.html#q-ERR-20260830-448fcd73">error:ERR-20260830-448fcd73</a></div>
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id=cycle-cbd4b94cd8f4">details</a> </div>
           
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed unavailable-note">Cycle elapsed: UNKNOWN</div> &middot; <span class="feed-bridge-span unavailable-note">Bridge span: unavailable</span> &middot; Tool operations: unavailable (not recorded)</div>
           <div class="feed-cost">&#9889; 1 LLM calls &middot; 7.15K tok &middot; Σ LLM wait 18s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div>
-        </li>
-        
-        <li class="feed-row feed-outcome-partial" data-outcome="partial" id="cycle-cycle-b858280b51d5">
-          <div class="feed-header">
-            <span class="badge badge-partial">PARTIAL</span>
-            <strong class="feed-title">partial: no artifact recorded</strong>
-            <span class="feed-cid copyable" translate="no">(cycle-b858280b51d5)</span>
-            <a class="cycle-detail-link" href="cycle.html?id=cycle-b858280b51d5">details</a>
-            
-            
-            <span class="feed-ts" title="2026-11-07T11:24:13.278160Z">Nov 7 MSK</span>
-          </div>
-          
-          
-          <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): <div class="feed-cycle-elapsed">Cycle elapsed: 27m10s</div> &middot; <span class="feed-bridge-span">Bridge span: 41m53s</span> &middot; Tool operations: unavailable (not recorded)</div>
-          <div class="feed-cost">&#9889; 18 LLM calls &middot; 969.2K tok &middot; Σ LLM wait 22m46s &middot; recorded through Nov 7 MSK (selected telemetry window; may be incomplete) &middot; not cycle elapsed</div>
-          <div class="feed-planning-cost">Planning: 10 iterations &middot; unknown planner calls &middot; 1 planning sessions</div>
+          <div class="feed-planning-cost">Planning: unknown (planning data unavailable or not observed)</div></div>
+          </details>
         </li>
         
       </ul>
     </section>
     
 </main>
-<footer class="page-footer">generator 8ef5368 · generated 2026-11-08 14:06:06 UTC &middot; host eeepc &middot; newest source 38s old &middot; <span class="footer-computed">scorecard computed 2026-11-08 16:19:16 MSK</span></footer>
+<footer class="page-footer">generator d549756 · generated 2026-11-08 14:30:59 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 17:09:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2339,5 +2417,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794146754-70d2e0be811b · generated 2026-11-08T14:05:54.875560+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794148247-d5fd1681b6a6 · generated 2026-11-08T14:30:47.242886+00:00</footer></body>
 </html>

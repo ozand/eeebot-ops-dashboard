@@ -286,6 +286,41 @@
       border-color: #2f5c46;
       background: rgba(15, 32, 24, 0.8);
     }
+    .feed-card { min-width: 0; }
+    .feed-card-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .feed-card-summary::-webkit-details-marker { display: none; }
+    .feed-card-chevron { flex: 0 0 auto; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #8aa695; transition: transform 120ms ease; }
+    .feed-card[open] > .feed-card-summary .feed-card-chevron { transform: rotate(90deg); }
+    .feed-card-hint, .feed-coverage, .feed-archive-status {
+      color: #8aa695;
+      font-size: 0.78em;
+    }
+    .feed-card-evidence { padding: 8px 4px 2px; }
+    .feed-controls { display: grid; gap: 6px; margin-bottom: 10px; }
+    .feed-controls button, .feed-show-all { display: inline-flex; align-items: center; justify-content: center; }
+    .feed-controls label { color: #9db4a6; font-size: 0.8em; }
+    .feed-controls input[type="search"], .feed-controls input[type="date"] {
+      width: min(100%, 28rem); min-height: 44px; padding: 8px 10px;
+      color: #e2f0e6; background: rgba(8, 15, 11, 0.8); border: 1px solid #28503c; border-radius: 4px;
+    }
+    .feed-controls input[type="date"] { color-scheme: dark; }
+    .feed-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    .feed-coverage { margin: 0; }
+    .feed-clear-search, .feed-show-all {
+      justify-self: start; min-height: 44px; padding: 8px 12px;
+      appearance: none; -webkit-appearance: none;
+      color: #b8d0c2; background: #10271a; border: 1px solid #2f5c46;
+      border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; cursor: pointer;
+    }
+    .feed-clear-search:hover, .feed-show-all:hover { border-color: #56d364; color: #56d364; }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
@@ -1404,13 +1439,13 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794146754-70d2e0be811b"></head>
+<meta name="snapshot-version" content="1794148247-d5fd1681b6a6"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794146727.422" data-render-age-seconds="39">data: 38s old &middot; generated 14:06 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794148156.570" data-render-age-seconds="102">data: 1m old &middot; generated 14:30 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html" class="nav-current" aria-current="page">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
@@ -1515,7 +1550,7 @@
     </script>
     
 </main>
-<footer class="page-footer">generator 8ef5368 · generated 2026-11-08 14:06:06 UTC &middot; host eeepc &middot; newest source 38s old &middot; <span class="footer-computed">scorecard computed 2026-11-08 16:19:16 MSK</span></footer>
+<footer class="page-footer">generator d549756 · generated 2026-11-08 14:30:59 UTC &middot; host eeepc &middot; newest source 1m old &middot; <span class="footer-computed">scorecard computed 2026-11-08 17:09:54 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -1546,5 +1581,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794146754-70d2e0be811b · generated 2026-11-08T14:05:54.875560+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794148247-d5fd1681b6a6 · generated 2026-11-08T14:30:47.242886+00:00</footer></body>
 </html>
