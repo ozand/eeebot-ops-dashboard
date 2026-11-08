@@ -5332,8 +5332,12 @@ def test_278_cycles_html_windows_overflow_to_archive_and_publishes_sibling() -> 
     archive_out: list = []
     html = tv.build_cycle_feed(ledger, history_mode=True, archive_out=archive_out)
     assert len(archive_out) == 30  # 80 - 50 visible window
-    assert 'show 30 older cycles' in html
+    assert 'Load older cycles' in html
     assert 'data-cycle-archive-index-src' in html
+    assert 'Search task or cycle ID' in html
+    assert 'matching of' in html
+    assert 'Search covers loaded cycles only.' in html
+    assert '<details class="feed-card">' in html
     assert tv.CYCLES_ARCHIVE_INDEX_FILE in html
     # None of the archived rows' ids are inlined in the returned HTML.
     for row_html in archive_out:
@@ -5376,6 +5380,8 @@ def test_278_cycles_html_archive_sibling_published_in_render_pages() -> None:
     archive_rows = _read_archived_rows(pages)
     assert len(archive_rows) == 30
     assert 'data-cycle-archive-index-src' in pages['cycles.html']
+    assert 'Search task or cycle ID' in pages['cycles.html']
+    assert 'data-feed-coverage' in pages['cycles.html']
 
 
 def test_278_chunk_archive_rows_seals_full_chunks_stably() -> None:
@@ -6092,7 +6098,8 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     lessons = tv.build_lessons_panel([{'id': 'LESS-1', 'date': '2026-09-01', 'problem': 'needle', 'solution': 'fix'}])
 
     assert 'data-filter-empty' in cycles
-    assert '0 cycles with status' in cycles
+    assert 'data-filter-empty hidden>No matches in the loaded cycle window.' in cycles
+    assert 'matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)' in cycles
     assert '0 results for' in lessons
     assert 'data-filter-empty' in lessons
     assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only

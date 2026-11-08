@@ -6993,22 +6993,27 @@ def build_cycle_feed(
                 last_day = day
                 day_html = f'<li class="feed-day-header">{esc(day)} MSK</li>\n        '
 
-        rows.append(f'''
-        {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" id="cycle-{esc(cid)}">
-          <div class="feed-header">
+        searchable_title = esc(title).replace('"', '&quot;')
+        searchable_day = esc(str(ts_val)[:10]) if isinstance(ts_val, str) and len(ts_val) >= 10 else ''
+        header_html = f'''<div class="feed-header">
             <span class="badge {badge_class}">{esc(outcome_label)}</span>
             <strong class="feed-title">{esc(title)}</strong>
             <span class="feed-cid copyable" translate="no">({esc(cid)})</span>
-            <a class="cycle-detail-link" href="cycle.html?id={quote(str(cid), safe='')}">details</a>
             {delta_html}
-            {node_link_html}
             {ts_html}
-          </div>
-          {('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
+          </div>'''
+        evidence_html = f'''{('<div class="entity-links">' + ' &middot; '.join(dict.fromkeys(entity_links)) + '</div>') if entity_links else ''}
+          <div class="feed-links"><a class="cycle-detail-link" href="cycle.html?id={quote(str(cid), safe='')}">details</a> {node_link_html}</div>
           {files_html}
           <div class="feed-cycle-timing">Recorded cycle interval (available history; coverage may be partial): {cycle_elapsed_html} &middot; {bridge_span_html} &middot; Tool operations: unavailable (not recorded)</div>
           {cost_html}
-          {planning_html}
+          {planning_html}'''
+        rows.append(f'''
+        {day_html}<li class="feed-row feed-outcome-{outcome_kind}" data-outcome="{esc(outcome_kind)}" data-search="{searchable_title} {esc(cid)}" data-day="{searchable_day}" id="cycle-{esc(cid)}">
+          <details class="feed-card">
+            <summary class="feed-card-summary"><span class="feed-card-chevron" aria-hidden="true"></span>{header_html}<span class="feed-card-hint">evidence</span></summary>
+            <div class="feed-card-evidence">{evidence_html}</div>
+          </details>
         </li>
         ''')
 
@@ -7048,40 +7053,34 @@ def build_cycle_feed(
                 'superseded', 'abandoned', 'incomplete', 'running', 'proposed',
             )
         )
-        filter_empty = '<li class="filter-empty" data-filter-empty hidden>0 cycles with status <span class="filter-empty-value"></span></li>'
+        filter_empty = '<li class="filter-empty" data-filter-empty hidden>No matches in the loaded cycle window.</li>'
         if archive_out is not None:
             show_all_btn = (
-                f'<button class="feed-show-all" type="button" data-cycle-archive-index-src="{esc(CYCLES_ARCHIVE_INDEX_FILE)}">show {archived_count} older cycles</button>'
-                if archived_count else ''
+                '<button class="feed-show-all" type="button" data-cycle-archive-index-src="' + esc(CYCLES_ARCHIVE_INDEX_FILE) + '">Load older cycles</button>'
+                '<span class="feed-archive-status" role="status" aria-live="polite"></span>'
+                if archived_count else '<p class="feed-archive-status" role="status">No older archive chunks are available.</p>'
             )
             archive_script = '''<script>
             (function(){
-              var btn = document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
-              if (!btn) return;
-              btn.addEventListener('click', function () {
-                var indexSrc = btn.getAttribute('data-cycle-archive-index-src');
-                btn.disabled = true;
-                var original = btn.textContent;
-                btn.textContent = 'loading…';
-                function getJson(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); }); }
-                getJson(indexSrc).then(function (idx) {
-                  var count = Number(idx && idx.chunk_count || 0);
-                  var urls = [];
-                  for (var i = 0; i < count; i++) { urls.push(indexSrc.replace(/cycles-archive-index\\.json$/, 'cycles-archive-' + i + '.json')); }
-                  return Promise.all(urls.map(getJson));
-                }).then(function (chunks) {
-                  var list = document.querySelector('#panel-feed .feed-list');
-                  // Chunks are numbered oldest-first; render newest-archived-first
-                  // (chunk with the highest index) to match the page's own order.
-                  for (var i = chunks.length - 1; i >= 0; i--) {
-                    (chunks[i] || []).forEach(function (html) { list.insertAdjacentHTML('beforeend', html); });
-                  }
-                  btn.remove();
-                  window.dispatchEvent(new Event('hashchange'));
-                }).catch(function (err) {
-                  btn.disabled = false;
-                  btn.textContent = original + ' -- unavailable (' + (err && err.message || err) + ')';
-                });
+              var btn=document.querySelector('.feed-show-all[data-cycle-archive-index-src]');
+              if(!btn)return;
+              var status=document.querySelector('.feed-archive-status'),indexSrc=btn.dataset.cycleArchiveIndexSrc,nextIndex=null,totalRows=null;
+              function getJson(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
+              btn.addEventListener('click',function(){
+                btn.disabled=true;btn.textContent='Loading older cycles…';status.textContent='';
+                function loadIndex(){return getJson(indexSrc).then(function(idx){totalRows=Number(idx.total_rows)||0;nextIndex=nextIndex===null?Number(idx.chunk_count)-1:nextIndex;return idx;});}
+                (nextIndex===null?loadIndex():Promise.resolve()).then(function(){
+                  if(nextIndex<0){btn.remove();status.textContent='No more archived cycles.';return;}
+                  var chunkIndex=nextIndex,url=indexSrc.slice(0,indexSrc.length-'cycles-archive-index.json'.length)+'cycles-archive-'+chunkIndex+'.json';
+                  return getJson(url).then(function(rows){
+                    var list=document.querySelector('#panel-feed .feed-list');
+                    (rows||[]).forEach(function(row){list.insertAdjacentHTML('beforeend',row);});
+                    nextIndex=chunkIndex-1;window.dispatchEvent(new Event('cycle-feed-update'));
+                    var loaded=list.querySelectorAll('li[data-outcome]').length;
+                    status.textContent='Loaded '+loaded+' cycles; '+(totalRows===null?'archive total unavailable':totalRows+' archived cycles indexed')+'. Search covers loaded cycles only.';
+                    if(nextIndex<0){btn.remove();}else{btn.disabled=false;btn.textContent='Load next older chunk';}
+                  });
+                }).catch(function(err){btn.disabled=false;btn.textContent='Retry loading older cycles';status.textContent='Archive chunk unavailable ('+(err&&err.message||err)+'). Loaded results remain limited to the current window. Retry this chunk.';});
               });
             })();
             </script>'''
@@ -7094,27 +7093,29 @@ def build_cycle_feed(
             )
             archive_script = ''
         filter_html = (
-            f'<div class="filter-bar">{filter_buttons}</div>'
+            '<div class="feed-controls"><label for="cycle-search">Search task or cycle ID</label>'
+            '<input id="cycle-search" type="search" autocomplete="off" placeholder="Search loaded cycles">'
+            '<button type="button" class="feed-clear-search">Clear search</button>'
+            '<label for="cycle-from">From (recorded day)</label><input id="cycle-from" type="date">'
+            '<label for="cycle-to">To (recorded day)</label><input id="cycle-to" type="date">'
+            f'<div class="filter-bar" role="group" aria-label="Filter cycles by outcome">{filter_buttons}</div>'
+            '<p class="feed-coverage" role="status" aria-live="polite" data-feed-coverage></p></div>'
             f'{show_all_btn}'
             '<script>'
             '(function(){'
-            'var bar=document.querySelector(".filter-bar");if(!bar)return;'
+            'var bar=document.querySelector(".filter-bar"),search=document.querySelector("#cycle-search"),clear=document.querySelector(".feed-clear-search"),from=document.querySelector("#cycle-from"),to=document.querySelector("#cycle-to"),coverage=document.querySelector("[data-feed-coverage]");if(!bar)return;'
             'function getRows(){return document.querySelectorAll("#panel-feed li[data-outcome]");}'
-            'function apply(k){var rows=getRows(),shown=0;'
-            'rows.forEach(function(r){var hidden=k!=="all"&&r.getAttribute("data-outcome")!==k;r.classList.toggle("filtered-out",hidden);if(!hidden)shown++;});'
-            'var empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=k==="all"||shown>0;empty.querySelector(".filter-empty-value").textContent=k;}'
-            'bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.getAttribute("data-filter")===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}'
-            'var h=location.hash||"",init=h.indexOf("#f-")===0?h.slice(3):"";'
-            'apply(bar.querySelector("[data-filter=\'"+init+"\']")?init:"all");'
-            'bar.addEventListener("click",function(e){'
-            'var b=e.target.closest(".filter-btn");if(!b)return;'
-            'var k=b.getAttribute("data-filter");'
-            'if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}'
-            'else{location.hash="f-"+k;}'
-            'apply(k);});'
-            'window.addEventListener("hashchange",function(){'
-            'var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"";'
-            'if(bar.querySelector("[data-filter=\'"+k+"\']")){apply(k);}});'
+            'function apply(){var rows=getRows(),shown=0,k=bar.dataset.activeFilter||"all",q=(search.value||"").trim().toLocaleLowerCase(),start=from.value,end=to.value;'
+            'rows.forEach(function(r){var day=r.dataset.day||"",match=(k==="all"||r.dataset.outcome===k)&&(!q||(r.dataset.search||"").toLocaleLowerCase().includes(q))&&(!start||day&&day>=start)&&(!end||day&&day<=end);r.classList.toggle("filtered-out",!match);r.setAttribute("aria-hidden",String(!match));if(match)shown++;});'
+            'var headers=document.querySelectorAll("#panel-feed .feed-day-header");headers.forEach(function(h){h.hidden=true;});rows.forEach(function(r){if(!r.classList.contains("filtered-out")){var prev=r.previousElementSibling;while(prev&&!prev.classList.contains("feed-day-header"))prev=prev.previousElementSibling;if(prev)prev.hidden=false;}});'
+            'var loaded=rows.length,empty=document.querySelector("[data-filter-empty]");if(empty){empty.hidden=shown>0;empty.textContent="No matches in the loaded cycle window.";}'
+            'coverage.textContent=shown+" matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)+"; search covers loaded cycles only."+(start||end?" Dates use recorded timestamp day; bounds may differ from the displayed local day label.":"")+(document.querySelector(".feed-show-all[data-cycle-archive-index-src]")?" Older archive chunks remain unsearched.":" No older archive chunks are available.");'
+            'bar.querySelectorAll(".filter-btn").forEach(function(b){var selected=b.dataset.filter===k;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected));});}'
+            'function readUrl(){var h=location.hash||"",k=h.indexOf("#f-")===0?h.slice(3):"",params=new URLSearchParams(location.search);bar.dataset.activeFilter=Array.prototype.some.call(bar.querySelectorAll(".filter-btn"),function(b){return b.dataset.filter===k;})?k:"all";if(search)search.value=params.get("q")||"";if(from)from.value=params.get("from")||"";if(to)to.value=params.get("to")||"";apply();}'
+            'function writeSearch(){var u=new URL(location.href);if(search.value)u.searchParams.set("q",search.value);else u.searchParams.delete("q");if(from.value)u.searchParams.set("from",from.value);else u.searchParams.delete("from");if(to.value)u.searchParams.set("to",to.value);else u.searchParams.delete("to");history.replaceState(null,"",u.pathname+u.search+u.hash);apply();}'
+            'readUrl();'
+            'bar.addEventListener("click",function(e){var b=e.target.closest(".filter-btn");if(!b)return;var k=b.dataset.filter;bar.dataset.activeFilter=k;if(k==="all"){history.replaceState(null,"",location.pathname+location.search);}else{location.hash="f-"+encodeURIComponent(k);}apply();});'
+            'if(search)search.addEventListener("input",writeSearch);if(from)from.addEventListener("change",writeSearch);if(to)to.addEventListener("change",writeSearch);if(clear)clear.addEventListener("click",function(){search.value="";from.value="";to.value="";writeSearch();search.focus();});window.addEventListener("hashchange",readUrl);window.addEventListener("cycle-feed-update",apply);'
             '})();'
             '</script>'
             f'{archive_script}'
@@ -9639,6 +9640,41 @@ CSS = '''
       border-color: #2f5c46;
       background: rgba(15, 32, 24, 0.8);
     }
+    .feed-card { min-width: 0; }
+    .feed-card-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .feed-card-summary::-webkit-details-marker { display: none; }
+    .feed-card-chevron { flex: 0 0 auto; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #8aa695; transition: transform 120ms ease; }
+    .feed-card[open] > .feed-card-summary .feed-card-chevron { transform: rotate(90deg); }
+    .feed-card-hint, .feed-coverage, .feed-archive-status {
+      color: #8aa695;
+      font-size: 0.78em;
+    }
+    .feed-card-evidence { padding: 8px 4px 2px; }
+    .feed-controls { display: grid; gap: 6px; margin-bottom: 10px; }
+    .feed-controls button, .feed-show-all { display: inline-flex; align-items: center; justify-content: center; }
+    .feed-controls label { color: #9db4a6; font-size: 0.8em; }
+    .feed-controls input[type="search"], .feed-controls input[type="date"] {
+      width: min(100%, 28rem); min-height: 44px; padding: 8px 10px;
+      color: #e2f0e6; background: rgba(8, 15, 11, 0.8); border: 1px solid #28503c; border-radius: 4px;
+    }
+    .feed-controls input[type="date"] { color-scheme: dark; }
+    .feed-controls input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.75); }
+    .feed-coverage { margin: 0; }
+    .feed-clear-search, .feed-show-all {
+      justify-self: start; min-height: 44px; padding: 8px 12px;
+      appearance: none; -webkit-appearance: none;
+      color: #b8d0c2; background: #10271a; border: 1px solid #2f5c46;
+      border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; cursor: pointer;
+    }
+    .feed-clear-search:hover, .feed-show-all:hover { border-color: #56d364; color: #56d364; }
     .feed-outcome-integrated { border-left: 4px solid #2fd3c4; }
     .feed-outcome-failed { border-left: 4px solid #b23a3a; }
     .feed-outcome-gate_blocked { border-left: 4px solid #e06c75; }
