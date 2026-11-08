@@ -106,7 +106,7 @@ def test_glossary_terms_grounded_in_site_or_named_exception() -> None:
     not literal strings this dashboard renders. Both exceptions are
     listed here, by name, with why -- satisfying the acceptance
     criterion's 'or the PR lists the exceptions and why'."""
-    exceptions = {"vector", "demand kind", "scorecard feed", "night contour", "provenance", "harness", "instance", "cycle", "gate", "integration"}
+    exceptions = {"vector", "demand kind", "scorecard feed", "night contour", "provenance", "harness", "instance", "cycle", "gate", "integration", "incomplete", "inferred"}
     for term in about_page.TERMS_OF_ART:
         if term in exceptions:
             continue
@@ -125,7 +125,7 @@ def test_every_glossary_term_has_a_nonempty_definition_and_source() -> None:
 def test_about_glossary_definitions_wrap_in_narrow_container() -> None:
     html = about_page.build_about_panel()
     assert ".about-glossary dd { min-width: 0; overflow-wrap: anywhere;" in html
-    assert "origin/main never advances on a red gate." in html
+    assert "cycle record distinguishes integration from a successful gate" in html
 
 
 def test_about_notes_wrap_on_narrow_viewports() -> None:
@@ -137,6 +137,28 @@ def test_about_notes_wrap_on_narrow_viewports() -> None:
 def test_terms_of_art_are_unique() -> None:
     terms = [g["term"] for g in about_page.GLOSSARY]
     assert len(terms) == len(set(terms)), "duplicate glossary term"
+
+
+def test_about_contents_and_core_terms_link_to_preserved_anchors() -> None:
+    html = about_page.build_about_panel()
+    for section in ("repos", "cycle", "schedule", "models", "vocabulary"):
+        assert f'id="about-{section}"' in html
+        assert f'href="#about-{section}"' in html
+    for term in ("integration", "incomplete", "inferred", "held-out"):
+        assert f'id="term-{term}"' in html
+        assert f'href="#term-{term}"' in html
+    assert "generated, published snapshot" in html
+    assert "does not prove current host health" in html
+    assert "Private pages, endpoints and payloads" in html
+
+
+def test_about_tables_are_named_keyboard_scroll_regions() -> None:
+    html = about_page.build_about_panel()
+    assert html.count('class="about-table-scroll" role="region" tabindex="0" aria-label=') == 4
+    assert html.count('class="about-scroll-cue" id=') == 4
+    assert html.count('aria-describedby="about-scroll-') == 4
+    assert "Scroll horizontally to see all columns." in html
+    assert "overflow-x: auto" in html
 
 
 # ─── acceptance criterion: repository list states identifier ownership ──────

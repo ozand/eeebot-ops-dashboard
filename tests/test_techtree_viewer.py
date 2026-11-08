@@ -1627,6 +1627,28 @@ def test_issue129_filters_lesson_links_to_rendered_lesson_ids() -> None:
     assert 'lessons.html#q-LESS-retired' not in html
 
 
+def test_about_term_links_are_contextual_in_existing_cycle_lineage_and_scorecard_evidence() -> None:
+    rows = [
+        {'phase': 'started', 'cycle_id': 'cycle-about-integrated', 'task_title': 'Integrated fixture', 'ts': '2026-08-16T00:00:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-about-integrated', 'outcome': 'integrated', 'ts': '2026-08-16T00:01:00Z'},
+        {'phase': 'outcome', 'cycle_id': 'cycle-about-incomplete', 'outcome': 'model_call_incomplete', 'ts': '2026-08-16T00:02:00Z'},
+    ]
+    cycle_html = tv.build_cycle_feed(rows, history_mode=True)
+    assert 'href="about.html#term-integration"' in cycle_html
+    assert 'href="about.html#term-incomplete"' in cycle_html
+    assert 'data-outcome="model_call_incomplete"' in cycle_html
+
+    lineage = tv._build_unified_lineage(
+        [{'phase': 'evolution_tree', 'sha': 'node-a', 'parent_sha': '', 'cycle_id': 'cycle-lineage-about', 'ts': '2026-08-16T00:00:00Z'}],
+        {'current_sha': 'node-a'}, {}, '2026-08-16T00:01:00Z',
+    )
+    assert 'href="about.html#term-inferred"' in lineage
+    assert 'href="about.html#term-incomplete"' in lineage
+
+    strip = tv.build_empire_stats_strip({'computed_at_utc': '2026-08-16T00:00:00Z', 'heldout': {'passed': 1, 'checked': 2}})
+    assert 'href="about.html#term-held-out"' in strip
+
+
 def test_lineage_resolves_parent_across_hidden_day_with_stub() -> None:
     tree = {'current_sha': 'sha-child', 'nodes': {}}
     ledger = [
