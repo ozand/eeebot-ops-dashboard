@@ -2380,6 +2380,21 @@ def test_issue435_attention_surfaces_malformed_planning_outcome() -> None:
     assert 'planning: malformed' in summary
 
 
+@pytest.mark.parametrize(('strategist', 'ledger', 'streak', 'expected'), [
+    ([{'success': False, 'reason': 'failed'}], [], {'consecutive_failures': 0}, 'strategist: run failed'),
+    ([{'success': False, 'refused': True}], [], {'consecutive_failures': 0}, 'strategist: run failed'),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_only_deferred': 2}], {'consecutive_failures': 0}, 'doc budget: deferred 2'),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'ledger_blind': True}], {'consecutive_failures': 0}, 'doc budget: ledger unreadable (fail-open)'),
+    ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_budget_exceeded': True}], {'consecutive_failures': 0}, 'doc budget: cap reached'),
+    ([{'success': True}], [], {'consecutive_failures': 1}, 'bridge exit streak: 1 consecutive failure(s)'),
+])
+def test_issue435_attention_surfaces_existing_operational_alerts(strategist, ledger, streak, expected) -> None:
+    html = tv.build_now_panel(None, None, None, None,
+        strategist_decisions=strategist, ledger_tail=ledger, bridge_exit_streak=streak)
+    summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
+    assert expected in summary
+
+
 @pytest.mark.parametrize(('record', 'expected'), [
     ({'probe': 'present', 'state': 'ran', 'exit_code': 0}, None),
     ({'probe': 'present', 'state': 'ran', 'exit_code': 7, 'summary': '2 failures'}, 'local CI failed (exit=7; 2 failures)'),

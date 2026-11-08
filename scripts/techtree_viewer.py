@@ -6127,6 +6127,28 @@ def build_now_panel(
                 attention_items.append(f'local CI failed ({detail_text})')
         else:
             attention_items.append('local CI result unavailable (exit code unknown)')
+    strategist_failure = False
+    if isinstance(strategist_decisions, list):
+        latest_strategist = next((row for row in reversed(strategist_decisions) if isinstance(row, dict)), None)
+        if isinstance(latest_strategist, dict):
+            if latest_strategist.get('success') is False:
+                attention_items.append('strategist: run failed')
+                strategist_failure = True
+            elif latest_strategist.get('refused') is True or latest_strategist.get('decision') in {'refused', 'declined'}:
+                attention_items.append('strategist: refused')
+                strategist_failure = True
+    latest_doc_budget = next((row for row in reversed(ledger_tail or [])
+                              if isinstance(row, dict) and row.get('phase') == 'doc_only_budget'), None) if isinstance(ledger_tail, list) else None
+    if isinstance(latest_doc_budget, dict):
+        if latest_doc_budget.get('ledger_blind') is True:
+            attention_items.append('doc budget: ledger unreadable (fail-open)')
+        elif isinstance(latest_doc_budget.get('doc_only_deferred'), int) and latest_doc_budget['doc_only_deferred'] > 0:
+            attention_items.append(f'doc budget: deferred {latest_doc_budget["doc_only_deferred"]}')
+        elif latest_doc_budget.get('doc_budget_exceeded') is True:
+            attention_items.append('doc budget: cap reached')
+    bridge_failures = (bridge_exit_streak or {}).get('consecutive_failures') if isinstance(bridge_exit_streak, dict) else None
+    if isinstance(bridge_failures, int) and not isinstance(bridge_failures, bool) and 0 < bridge_failures < HEALTH_FAILURE_STREAK_LENGTH:
+        attention_items.append(f'bridge exit streak: {bridge_failures} consecutive failure(s)')
     attention_text = '; '.join(attention_items) if attention_items else 'No attention signal reported by these sources; review each source status below.'
     attention_html = (
         '<div class="now-item" data-now-evidence="attention"><span class="now-label">Attention:</span> '
