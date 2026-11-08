@@ -2381,8 +2381,12 @@ def test_issue435_attention_surfaces_malformed_planning_outcome() -> None:
 
 
 @pytest.mark.parametrize(('strategist', 'ledger', 'streak', 'expected'), [
+    ([{'success': True}], [], {'consecutive_failures': 0}, None),
     ([{'success': False, 'reason': 'failed'}], [], {'consecutive_failures': 0}, 'strategist: run failed'),
-    ([{'success': False, 'refused': True}], [], {'consecutive_failures': 0}, 'strategist: run failed'),
+    ([{'success': False, 'refused': True}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{'success': False, 'decision': 'declined'}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{'success': False, 'reason': 'refused'}], [], {'consecutive_failures': 0}, 'strategist: refused'),
+    ([{}], [], {'consecutive_failures': 0}, None),
     ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_only_deferred': 2}], {'consecutive_failures': 0}, 'doc budget: deferred 2'),
     ([{'success': True}], [{'phase': 'doc_only_budget', 'ledger_blind': True}], {'consecutive_failures': 0}, 'doc budget: ledger unreadable (fail-open)'),
     ([{'success': True}], [{'phase': 'doc_only_budget', 'doc_budget_exceeded': True}], {'consecutive_failures': 0}, 'doc budget: cap reached'),
@@ -2392,7 +2396,11 @@ def test_issue435_attention_surfaces_existing_operational_alerts(strategist, led
     html = tv.build_now_panel(None, None, None, None,
         strategist_decisions=strategist, ledger_tail=ledger, bridge_exit_streak=streak)
     summary = html.split('data-now-evidence="attention"', 1)[1].split('</div>', 1)[0]
-    assert expected in summary
+    if expected is None:
+        assert 'strategist: run failed' not in summary
+        assert 'strategist: refused' not in summary
+    else:
+        assert expected in summary
 
 
 @pytest.mark.parametrize(('record', 'expected'), [

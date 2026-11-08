@@ -6131,11 +6131,17 @@ def build_now_panel(
     if isinstance(strategist_decisions, list):
         latest_strategist = next((row for row in reversed(strategist_decisions) if isinstance(row, dict)), None)
         if isinstance(latest_strategist, dict):
-            if latest_strategist.get('success') is False:
-                attention_items.append('strategist: run failed')
-                strategist_failure = True
-            elif latest_strategist.get('refused') is True or latest_strategist.get('decision') in {'refused', 'declined'}:
+            strategist_refused = (
+                latest_strategist.get('refused') is True
+                or latest_strategist.get('decision') in {'refused', 'declined'}
+                or isinstance(latest_strategist.get('reason'), str)
+                and latest_strategist['reason'] in {'refused', 'declined'}
+            )
+            if strategist_refused:
                 attention_items.append('strategist: refused')
+                strategist_failure = True
+            elif latest_strategist.get('success') is False:
+                attention_items.append('strategist: run failed')
                 strategist_failure = True
     latest_doc_budget = next((row for row in reversed(ledger_tail or [])
                               if isinstance(row, dict) and row.get('phase') == 'doc_only_budget'), None) if isinstance(ledger_tail, list) else None
