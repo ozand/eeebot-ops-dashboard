@@ -62,7 +62,10 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                             summary = page.locator('.empire-stats-context summary')
                             assert summary.is_visible() and summary.evaluate('(e) => e.getBoundingClientRect().height >= 44'), (name, width)
                             assert page.locator('.empire-stats-context[open]').count() == 0, (name, width)
-                            assert page.locator('#panel-now').evaluate('(e) => e.getBoundingClientRect().top <= e.querySelector(".empire-stats-context").getBoundingClientRect().top'), (name, width)
+                            assert page.locator('.empire-stats-context').evaluate('(e) => e.previousElementSibling?.id === "panel-now"'), (name, width, 'scorecard disclosure must follow the outer Now panel')
+                            now_box = page.locator('#panel-now').bounding_box()
+                            metrics_box = page.locator('.empire-stats-context').bounding_box()
+                            assert now_box and metrics_box and metrics_box['y'] >= now_box['y'] + now_box['height'], (name, width, now_box, metrics_box)
                             summary.focus()
                             page.keyboard.press('Enter')
                             metrics = page.locator('.empire-stats-context .empire-stat')
@@ -74,7 +77,26 @@ def test_issue434_shared_shell_routes_responsive_controls_and_evidence(tmp_path:
                             page.keyboard.press('Enter')
                         assert page.locator('.empire-strip').evaluate('(e) => e.scrollWidth <= e.clientWidth'), (name, width)
                         assert nav.evaluate('(e) => e.scrollWidth <= e.clientWidth'), (name, width)
-                        assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), (name, width, 'route content overflows viewport')
+                        overflow = page.evaluate('''() => {
+                            if (document.documentElement.scrollWidth <= window.innerWidth) return null;
+                            const viewport = window.innerWidth;
+                            return [...document.querySelectorAll('body *')].map((element) => {
+                                const rect = element.getBoundingClientRect();
+                                if (rect.right <= viewport + 1) return null;
+                                const style = getComputedStyle(element);
+                                return {
+                                    tag: element.tagName,
+                                    className: typeof element.className === 'string' ? element.className : '',
+                                    text: (element.innerText || '').trim().slice(0, 80),
+                                    x: Math.round(rect.x), right: Math.round(rect.right), width: Math.round(rect.width),
+                                    scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
+                                    minWidth: style.minWidth, widthStyle: style.width,
+                                    whiteSpace: style.whiteSpace, overflowWrap: style.overflowWrap,
+                                    font: style.fontFamily, fontSize: style.fontSize,
+                                };
+                            }).filter(Boolean).slice(0, 20);
+                        }''')
+                        assert overflow is None, (name, width, f'route content overflows viewport: {overflow!r}')
                         for link in nav.locator('a').all():
                             box = link.bounding_box()
                             assert box and box['height'] >= 44, (name, width, box)

@@ -8387,7 +8387,17 @@ def build_empire_stats_strip(
 ) -> str | tuple[str, str]:
     if not isinstance(scorecard, dict):
         unavailable = unavailable_panel('Empire Stats', 'scorecard unavailable')
-        return ('', unavailable) if separate_context else unavailable
+        if separate_context:
+            header = '''
+    <header class="empire-strip">
+      <h1 class="empire-title"># eeebot / tech-tree</h1>
+      <span class="provenance-badge provenance-unavailable">data inputs: unavailable</span>
+      <div class="empire-fresh"><span class="freshness freshness-unknown">data: age unknown</span></div>
+    </header>
+    '''
+            stats = f'<section class="empire-stats-context" aria-label="Scorecard metrics">{unavailable}</section>'
+            return header, stats
+        return unavailable
 
     loop = scorecard.get('loop') if isinstance(scorecard.get('loop'), dict) else {}
     cost = scorecard.get('cost') if isinstance(scorecard.get('cost'), dict) else {}
@@ -10885,8 +10895,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     def _page(title: str, current: str, page_main: str) -> str:
         if current == 'cycle.html':
             current = 'cycles.html'
-        if current == 'index.html':
-            page_main = page_main.replace('</section>', '</section>' + empire_stats, 1)
         return _site_page(title, current, empire_strip, page_main,
                           generated_at, host, source_age,
                           computed_note, error_note, titles_note, esc(str(generator_sha or 'unknown')[:7]))
@@ -10909,7 +10917,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     )
 
     pages: dict[str, str] = {
-        'index.html': _page('eeebot / now', 'index.html', now_panel + teaser_html + teaser_feed),
+        'index.html': _page('eeebot / now', 'index.html', now_panel + empire_stats + teaser_html + teaser_feed),
         'lineage.html': _page('eeebot / lineage', 'lineage.html', canvas_html),
         'cycle.html': _page('eeebot / cycle', 'cycle.html', build_cycle_detail_page()),
         # #208 step 8: the cycle-details records travel as a sibling static JSON

@@ -4096,6 +4096,25 @@ def test_issue434_current_navigation_is_semantic_and_snapshot_stays_in_header() 
         assert current.count('aria-current="page"') == 1, filename
         assert 'class="empire-fresh"' in page.split('</header>', 1)[0], filename
         assert 'class="empire-stats"' not in page.split('</header>', 1)[0], filename
+    index = pages['index.html']
+    now_start = index.index('<section class="panel panel-now"')
+    now_end = index.index('</section>', now_start)
+    metrics = index.index('<details class="empire-stats-context">')
+    assert metrics > now_end
+
+
+def test_issue434_missing_scorecard_keeps_shared_identity_and_unknown_age() -> None:
+    data = _fixture()
+    data['scorecard'] = None
+    pages = tv.render_pages(data, host='fixture', generated_at='2026-08-18 12:00:00')
+    for filename, _label in tv.SITE_PAGES:
+        header = pages[filename].split('</header>', 1)[0]
+        assert '# eeebot / tech-tree' in header, filename
+        assert 'data inputs: unavailable' in header, filename
+        assert 'data: age unknown' in header, filename
+    index = pages['index.html']
+    assert 'Scorecard metrics' in index
+    assert 'scorecard unavailable' in index
 
 
 def test_issue70_no_nav_link_404s() -> None:
