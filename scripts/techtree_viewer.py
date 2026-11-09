@@ -7476,6 +7476,8 @@ def build_hypotheses_panel(
                 ev_html = f'<span class="hypo-ev">evidence: <a href="{href}">{esc(ev_str)}</a></span>'
             elif not standalone and matched_cid in (cycle_detail_ids or set()):
                 ev_html = f'<span class="hypo-ev">evidence: <a href="cycle.html?id={quote(matched_cid, safe="")}">{esc(ev_str)}</a> (older cycle details)</span>'
+            elif standalone and matched_cid in (cycle_detail_ids or set()):
+                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)} (verification cycle unavailable in this document)</span>'
             elif matched_cid is None:
                 ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 

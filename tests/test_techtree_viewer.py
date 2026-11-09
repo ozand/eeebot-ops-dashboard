@@ -516,9 +516,14 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
             'collision': {'title': 'Exact unprefixed evidence', 'status': 'answered', 'answered_evidence': 'foo'},
             'missing': {'title': 'Missing evidence', 'status': 'answered', 'answered_evidence': 'not-published'},
             'older': {'title': 'Older detail unavailable here', 'status': 'answered', 'answered_evidence': 'older-id'},
+            'history-only': {'title': 'History only unavailable here', 'status': 'answered', 'answered_evidence': 'history-only'},
         }},
         'ledger_tail': standalone_rows,
-        'ledger_history': standalone_rows,
+        'ledger_history': standalone_rows + [
+            {'phase': 'outcome', 'cycle_id': 'foo', 'outcome': 'success', 'ts': '2026-08-17T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': 'older-id', 'outcome': 'success', 'ts': '2026-08-17T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': 'history-only', 'outcome': 'success', 'ts': '2026-08-17T00:00:00Z'},
+        ],
     }, host='synthetic', generated_at='2026-08-18 00:02:00')
     for title, anchor_id in (
         ('Prefixed evidence', 'cycle-cycle-a'),
@@ -534,6 +539,23 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
     assert 'Older detail unavailable here' in standalone
     older_row = standalone.split('Older detail unavailable here', 1)[1].split('</li>', 1)[0]
     assert 'cycle.html?id=' not in older_row
+    assert 'older-id' in older_row
+    assert 'verification cycle unavailable in this document' in older_row
+    history_only_row = standalone.split('History only unavailable here', 1)[1].split('</li>', 1)[0]
+    assert 'history-only' in history_only_row
+    assert 'verification cycle unavailable in this document' in history_only_row
+    assert 'href=' not in history_only_row
+
+    collision_document = tv.render_page({
+        'hypotheses': {'entries': {'collision': {
+            'title': 'Exact details-only identity', 'status': 'answered', 'answered_evidence': 'foo',
+        }}},
+        'ledger_tail': [{'phase': 'outcome', 'cycle_id': 'cycle-foo', 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'}],
+        'ledger_history': [{'phase': 'outcome', 'cycle_id': 'foo', 'outcome': 'success', 'ts': '2026-08-18T00:00:00Z'}],
+    }, host='synthetic', generated_at='2026-08-18 00:02:00')
+    collision_row = collision_document.split('Exact details-only identity', 1)[1].split('</li>', 1)[0]
+    assert 'evidence: foo (verification cycle unavailable in this document)' in collision_row
+    assert 'href="#cycle-cycle-foo"' not in collision_row
 
     from playwright.sync_api import sync_playwright
     from tempfile import TemporaryDirectory
