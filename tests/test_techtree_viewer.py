@@ -421,7 +421,10 @@ def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() ->
         'reader_status': {'ledger': {'status': 'complete'}},
     }
     html = tv.build_scorecard_hypothesis_metrics(scorecard)
-    assert '3.0%' in html and 'served cycles: <strong>12</strong>' in html
+    assert '3.0%' in html and 'hypothesis-served cycles: <strong>12</strong>' in html
+    assert 'denominator: terminal cycle population (count not published by dashboard projection)' in html
+    assert 'selection-rate ledger window: 7d' in html
+    assert 'Verdict population: scorecard lifecycle snapshot' in html
     assert 'supported <strong>5</strong>' in html and 'refuted <strong>0</strong>' in html
     assert 'total <strong>9</strong>' in html
     assert 'computed_at_utc' in html and '2026-09-13T13:18:17.184300Z' in html
@@ -439,14 +442,240 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
     # Active group
-    assert 'Active titles (1)' in html_out
-    assert 'unique titles; lifecycle rows may be higher' in html_out
+    assert 'Lifecycle registry — active or stale unique titles (1)' in html_out
+    assert 'Active: 0 · stale: 1' in html_out
+    assert 'Eligibility is not reported' in html_out
+    assert 'Titles are deduplicated separately by lifecycle status; source rows may be higher.' in html_out
     assert 'Dynamic prompt injection improves dedup' in html_out
+    assert 'last touched date unavailable' in html_out
 
     # Answered group with evidence anchor
-    assert 'Answered (1)' in html_out
+    assert 'Lifecycle registry — answered titles (1)' in html_out
     assert 'Lower temperature increases smoke pass rate' in html_out
-    assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out or 'href="#cycle-cycle-a"' in html_out or 'href="#cycle-a"' in html_out
+    assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out
+
+
+def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
+    from html.parser import HTMLParser
+
+    class CycleAnchors(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.ids: set[str] = set()
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            attr_map = dict(attrs)
+            if tag == 'li' and (attr_map.get('id') or '').startswith('cycle-'):
+                self.ids.add(str(attr_map['id']))
+
+    rows = []
+    for cycle_id in ('cycle-a', 'foo', 'cycle-foo'):
+        rows.extend([
+            {'phase': 'started', 'cycle_id': cycle_id, 'ts': '2026-08-18T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'},
+        ])
+    rendered = tv.render_pages({
+        'hypotheses': {'entries': {
+            'prefixed': {'title': 'Prefixed evidence', 'status': 'answered',
+                         'answered_evidence': 'cycle-a', 'answered_at': '2026-08-18T00:00:00Z'},
+            'unprefixed': {'title': 'Unprefixed evidence', 'status': 'answered',
+                           'answered_evidence': 'foo', 'answered_at': '2026-08-18T00:00:00Z'},
+            'prefixed-collision': {'title': 'Exact prefixed evidence', 'status': 'answered',
+                                   'answered_evidence': 'cycle-foo', 'answered_at': '2026-08-18T00:00:00Z'},
+            'missing': {'title': 'Missing evidence', 'status': 'answered',
+                        'answered_evidence': 'not-published', 'answered_at': '2026-08-18T00:00:00Z'},
+        }},
+        'ledger_tail': rows,
+    }, host='eeepc', generated_at='2026-08-18 00:02:00')
+    hypotheses_html = rendered['hypotheses.html']
+    anchors = CycleAnchors()
+    anchors.feed(rendered['cycles.html'])
+    expected_links = {
+        'Prefixed evidence': 'cycles.html#cycle-cycle-a',
+        'Unprefixed evidence': 'cycles.html#cycle-foo',
+        'Exact prefixed evidence': 'cycles.html#cycle-cycle-foo',
+    }
+    for title, target in expected_links.items():
+        row = hypotheses_html.split(title, 1)[1].split('</li>', 1)[0]
+        assert f'href="{target}"' in row
+        anchor_id = target.split('#', 1)[1]
+        assert f'id="{anchor_id}"' in rendered['cycles.html']
+    assert {'cycle-cycle-a', 'cycle-foo', 'cycle-cycle-foo'} <= anchors.ids
+    assert 'verification cycle unavailable in published feed' in hypotheses_html
+
+    standalone_rows = []
+    for cycle_id in ('cycle-a', 'foo', 'cycle-foo'):
+        standalone_rows.extend([
+            {'phase': 'started', 'cycle_id': cycle_id, 'ts': '2026-08-18T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'},
+        ])
+    standalone = tv.render_page({
+        'hypotheses': {'entries': {
+            'prefixed': {'title': 'Prefixed evidence', 'status': 'answered', 'answered_evidence': 'cycle-a'},
+            'unprefixed': {'title': 'Unprefixed evidence', 'status': 'answered', 'answered_evidence': 'foo'},
+            'collision': {'title': 'Exact unprefixed evidence', 'status': 'answered', 'answered_evidence': 'foo'},
+            'missing': {'title': 'Missing evidence', 'status': 'answered', 'answered_evidence': 'not-published'},
+            'older': {'title': 'Older detail unavailable here', 'status': 'answered', 'answered_evidence': 'older-id'},
+        }},
+        'ledger_tail': standalone_rows,
+        'ledger_history': standalone_rows,
+    }, host='synthetic', generated_at='2026-08-18 00:02:00')
+    for title, anchor_id in (
+        ('Prefixed evidence', 'cycle-cycle-a'),
+        ('Unprefixed evidence', 'cycle-foo'),
+        ('Exact unprefixed evidence', 'cycle-foo'),
+    ):
+        row = standalone.split(title, 1)[1].split('</li>', 1)[0]
+        assert f'href="#{anchor_id}"' in row
+        assert 'cycles.html#cycle-' not in row
+        assert 'cycle.html?id=' not in row
+        assert f'id="{anchor_id}"' in standalone
+    assert 'href="#cycle-foo">foo</a>' in standalone
+    assert 'Older detail unavailable here' in standalone
+    older_row = standalone.split('Older detail unavailable here', 1)[1].split('</li>', 1)[0]
+    assert 'cycle.html?id=' not in older_row
+
+    from playwright.sync_api import sync_playwright
+    from tempfile import TemporaryDirectory
+    from pathlib import Path
+    with TemporaryDirectory() as directory:
+        page_path = Path(directory) / 'standalone.html'
+        page_path.write_text(standalone, encoding='utf-8')
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(page_path.as_uri())
+            page.locator('#q-prefixed').scroll_into_view_if_needed()
+            page.locator('#panel-hypotheses details summary').click()
+            page.locator('#q-prefixed a').click()
+            assert page.url.endswith('#cycle-cycle-a')
+            assert page.locator('#cycle-cycle-a').count() == 1
+            assert '(cycle-a)' in page.locator('#cycle-cycle-a').inner_text()
+            browser.close()
+
+    # Feed membership follows actual emitted markup, not every tail cycle ID.
+    overflow_rows = [
+        {'phase': 'outcome', 'cycle_id': f'overflow-{i:02d}', 'outcome': 'success',
+         'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+        for i in range(55)
+    ]
+    outside_initial_window = tv.render_pages({
+        'hypotheses': {'entries': {'h': {
+            'title': 'Not initially visible', 'status': 'answered',
+            'answered_evidence': 'overflow-28',
+        }}},
+        'ledger_tail': overflow_rows,
+    }, host='eeepc', generated_at='2026-09-17T12:00:00Z')
+    overflow_html = outside_initial_window['hypotheses.html']
+    assert 'href="cycles.html#cycle-overflow-28"' not in overflow_html
+    assert 'href="cycle.html?id=overflow-28"' in overflow_html
+    assert 'older cycle details' in overflow_html
+
+
+@pytest.mark.parametrize('empty_history', [False, True], ids=['history-present', 'history-empty-tail-fallback'])
+def test_hypothesis_evidence_uses_public_cycle_details_for_archived_history(tmp_path: Path, empty_history: bool) -> None:
+    import json
+    from functools import partial
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+
+    from playwright.sync_api import sync_playwright
+
+    old_cycle = 'foo'
+    old_row = {'phase': 'outcome', 'cycle_id': old_cycle, 'outcome': 'success', 'ts': '2026-08-01T00:00:00Z'}
+    recent_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-foo', 'outcome': 'success', 'ts': '2026-09-01T00:00:00Z'},
+        *[
+            {'phase': 'outcome', 'cycle_id': f'recent-{i:02d}', 'outcome': 'success',
+             'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+            for i in range(55)
+        ],
+    ]
+    rendered = tv.render_pages({
+        'hypotheses': {'entries': {'answered': {
+            'title': 'Archived evidence', 'status': 'answered', 'answered_evidence': old_cycle,
+        }, 'prefixed': {
+            'title': 'Exact prefixed evidence', 'status': 'answered', 'answered_evidence': 'cycle-foo',
+        }}},
+        'ledger_tail': ([old_row, *recent_rows] if empty_history else recent_rows),
+        'ledger_history': ([] if empty_history else [old_row, *recent_rows]),
+    }, host='eeepc', generated_at='2026-09-17T12:00:00Z')
+
+    hypotheses_html = rendered['hypotheses.html']
+    assert f'href="cycle.html?id={old_cycle}"' in hypotheses_html
+    assert 'older cycle details' in hypotheses_html
+    assert 'verification cycle unavailable in published feed' not in hypotheses_html
+    assert f'id="cycle-{old_cycle}"' not in rendered['cycles.html']
+    archived = [
+        row for name, content in rendered.items() if name.startswith('cycles-archive-')
+        for row in json.loads(content)
+    ]
+    assert any(f'id="cycle-{old_cycle}"' in row for row in archived)
+    detail_data = json.loads(rendered[tv.LINEAGE_DETAILS_FILE])
+    assert old_cycle in detail_data
+    for name, content in rendered.items():
+        (tmp_path / name).write_text(content, encoding='utf-8')
+
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=str(tmp_path)))
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(f'http://127.0.0.1:{server.server_port}/hypotheses.html')
+            page.locator('summary.hypo-summary').filter(has_text='answered titles').click()
+            page.locator(f'a[href="cycle.html?id={old_cycle}"]').click()
+            page.wait_for_selector('[data-cycle-detail-state="no-subagents"]', timeout=5000)
+            assert page.url.endswith(f'/cycle.html?id={old_cycle}')
+            assert 'Cycle: foo' in page.locator('#cycle-detail-body').inner_text()
+            browser.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
+
+def test_public_hypothesis_render_withholds_durable_hadi_text() -> None:
+    """Exercise the existing private-text projection with synthetic sentinels."""
+    from scripts.two_sinks import split_render_inputs
+
+    sentinel = "SYNTHETIC_PRIVATE_HADI_SENTINEL"
+    source = {
+        "hypotheses_durable": {
+            "model": "synthetic-model",
+            "entries": [{
+                "hypothesis_id": "durable-synthetic",
+                "title": "Synthetic public title",
+                "selection_status": "candidate",
+                "hadi": {"hypothesis": sentinel, "action": "SYNTHETIC_PRIVATE_ACTION"},
+                "insight_criterion": "SYNTHETIC_PRIVATE_CRITERION",
+            }],
+        },
+        "hypotheses": {"entries": {"visible-synthetic": {
+            "title": "Synthetic lifecycle label", "status": "active",
+        }}},
+    }
+    public, private = split_render_inputs(source)
+    projected_entry = public["hypotheses_durable"]["entries"][0]
+    assert projected_entry["selection_status"] == "candidate"
+    assert projected_entry["title"] == "Synthetic public title"
+    assert projected_entry["hadi"]["hypothesis"] == ""
+    assert projected_entry["hadi"]["hypothesis_chars"] == len(sentinel)
+    assert projected_entry["insight_criterion_chars"] == len("SYNTHETIC_PRIVATE_CRITERION")
+    assert sentinel in str(private)
+
+    pages = tv.render_public_pages(public, "host", generated_at="2026-09-01T00:00:00Z")
+    published = "".join(pages.values())
+    assert "Synthetic public title" in pages["hypotheses.html"]
+    assert "CANDIDATE" in pages["hypotheses.html"]
+    assert sentinel not in published
+    assert "SYNTHETIC_PRIVATE_ACTION" not in published
+    assert "SYNTHETIC_PRIVATE_CRITERION" not in published
 
 
 def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
@@ -1478,11 +1707,11 @@ def test_task3_issue37_hypothesis_evidence_anchors() -> None:
     html_out = tv.build_hypotheses_panel(hypotheses_lifecycle, feed_cycles=feed_cycles)
 
     # Present cycle gets a real link
-    assert '<a href="#cycle-cycle-present">cycle-present</a>' in html_out
+    assert '<a href="cycles.html#cycle-cycle-present">cycle-present</a>' in html_out
     # Absent cycle renders plain text, no <a> link
     assert 'cycle-absent' in html_out
-    assert 'href="#cycle-cycle-absent"' not in html_out
-    assert '<a href="#cycle-absent">' not in html_out
+    assert 'href="cycles.html#cycle-cycle-absent"' not in html_out
+    assert '<a href="cycles.html#cycle-absent">' not in html_out
 
 
 # ====================================================================# Batch 2 Data UX Tests (Issues #40, #41, #42)
@@ -3401,7 +3630,7 @@ def test_issue45_answered_hypotheses_in_details_element() -> None:
     html = tv.build_hypotheses_panel(hypotheses_lifecycle=hl, feed_cycles={'cycle-100'})
     assert '<details' in html
     assert '<summary' in html
-    assert 'Answered (1)' in html
+    assert 'Lifecycle registry — answered titles (1)' in html
     assert 'Active Hypo' in html
     assert 'Accepted Hypo' in html
 

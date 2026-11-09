@@ -7316,12 +7316,20 @@ def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
     state = f'split: {split_status}; reader: {reader_value}' if split_status is not None and reader_value is not None else None
     return f'''<section class="scorecard-hypothesis-metrics" id="scorecard-hypothesis-metrics">
       <h3>Hypothesis loop metrics <small>(published scorecard)</small></h3>
-      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong></p>
-      <p class="scorecard-metric">verdict yield: supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
+      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · hypothesis-served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong> / denominator: terminal cycle population (count not published by dashboard projection)</p>
+      <p class="scorecard-metric">Verdict population: scorecard lifecycle snapshot (visibility-only; not additive to registry titles). supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
       <p class="scorecard-metric">inconclusive window: within <strong>{_scorecard_value(hypothesis.get('inconclusive_within_window'))}</strong> · aged <strong>{_scorecard_value(hypothesis.get('inconclusive_aged'))}</strong></p>
       <p class="scorecard-metric">undatable: <strong>{_scorecard_value(hypothesis.get('inconclusive_undatable'))}</strong> (no artifact {_scorecard_value(hypothesis.get('inconclusive_undatable_no_qualifying_artifact'))}, no completion {_scorecard_value(hypothesis.get('inconclusive_undatable_no_completion'))}, invalid timestamp {_scorecard_value(hypothesis.get('inconclusive_undatable_invalid_timestamp'))})</p>
-      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · window {_scorecard_value(scorecard.get('window_days'))}d · computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
+      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · selection-rate ledger window: {_scorecard_value(scorecard.get('window_days'))}d; lifecycle snapshot as published at computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
     </section>'''
+
+
+def _initial_cycle_feed_ids(feed_html: str) -> set[str]:
+    """Return cycle IDs from rows actually emitted in the initial feed HTML."""
+    return {
+        html.unescape(value)[len('cycle-'):]
+        for value in re.findall(r'<li\b(?=[^>]*\bclass="feed-row\b)[^>]*\bid="(cycle-[^"]+)"', feed_html)
+    }
 
 
 def build_hypotheses_panel(
@@ -7332,6 +7340,8 @@ def build_hypotheses_panel(
     hypotheses_durable: dict[str, Any] | None = None,
     demand_futility: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
+    cycle_detail_ids: set[str] | None = None,
+    standalone: bool = False,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -7438,8 +7448,8 @@ def build_hypotheses_panel(
               <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
-                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else ""}
-                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else ""}
+                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else '<span class="hypo-ts">first seen date unavailable</span>'}
+                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else '<span class="hypo-ts">last touched date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7458,10 +7468,16 @@ def build_hypotheses_panel(
             ev_str = str(answered_ev)
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
-            if target_cid in valid_feed_cycles or clean_cid in valid_feed_cycles or ev_str in valid_feed_cycles:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(ev_str)}">{esc(ev_str)}</a></span>'
-            else:
-                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)}</span>'
+            exact_in_details = ev_str in (cycle_detail_ids or set())
+            exact_in_feed = ev_str in valid_feed_cycles
+            matched_cid = ev_str if exact_in_details or exact_in_feed else next((cid for cid in (target_cid, clean_cid) if cid in valid_feed_cycles or cid in (cycle_detail_ids or set())), None)
+            if matched_cid in valid_feed_cycles:
+                href = f'#cycle-{esc(matched_cid)}' if standalone else f'cycles.html#cycle-{esc(matched_cid)}'
+                ev_html = f'<span class="hypo-ev">evidence: <a href="{href}">{esc(ev_str)}</a></span>'
+            elif not standalone and matched_cid in (cycle_detail_ids or set()):
+                ev_html = f'<span class="hypo-ev">evidence: <a href="cycle.html?id={quote(matched_cid, safe="")}">{esc(ev_str)}</a> (older cycle details)</span>'
+            elif matched_cid is None:
+                ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 
         v_label = str(verdict or status).upper()
         badge_class = {
@@ -7476,7 +7492,7 @@ def build_hypotheses_panel(
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
                 {ev_html}
-                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else ""}
+                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else '<span class="hypo-ts">answered date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7503,19 +7519,19 @@ def build_hypotheses_panel(
     else:
         active_body = "".join(fresh_rendered + stale_rendered)
 
-    active_html = f'<div class="hypo-group"><h3>Active titles ({total_active_count})</h3><p class="hypo-count-note">unique titles; lifecycle rows may be higher</p><ul class="hypo-list">{active_body}</ul></div>'
+    active_html = f'<div class="hypo-group"><h3>Lifecycle registry — active or stale unique titles ({total_active_count})</h3><p class="hypo-count-note">Active: {len(fresh_active)} · stale: {len(stale_active)}. Titles are deduplicated separately by lifecycle status; source rows may be higher. Eligibility is not reported by this projection. Staleness uses recorded last_touched, falling back to first_seen, older than 14 days; missing or invalid dates are not aged by inference.</p><ul class="hypo-list">{active_body}</ul></div>'
 
     if answered_rendered:
         ans_count = len(answered_rendered)
         answered_list_html = f'<ul class="hypo-list">{"".join(answered_rendered)}</ul>'
         answered_html = f'''<div class="hypo-group">
           <details class="hypo-details">
-            <summary class="hypo-summary"><h3>Answered ({ans_count}) &mdash; show</h3></summary>
+            <summary class="hypo-summary"><h3>Lifecycle registry — answered titles ({ans_count}) &mdash; show</h3></summary>
             {answered_list_html}
           </details>
         </div>'''
     else:
-        answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
+        answered_html = '<div class="hypo-group"><h3>Lifecycle registry — answered titles (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
     scorecard_metrics_html = build_scorecard_hypothesis_metrics(scorecard)
 
@@ -10777,9 +10793,9 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     goal_text = data.get('goal_meta') or data.get('goal_text')
     agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
@@ -10871,14 +10887,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         task_titles=cycle_titles,
     )
-    # Determine which cycle IDs are rendered in the feed (for evidence linking)
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
+    feed_cycles = {
+        str(row.get('cycle_id') or '') for row in (ledger_tail or [])
+        if isinstance(row, dict) and row.get('cycle_id')
+    }
 
     rendered_lesson_ids = {
         str(lesson.get('id')) for lesson in (data.get('lessons') or [])
@@ -10903,6 +10915,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     daily_digest = build_daily_digest(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -10914,6 +10927,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
+        standalone=True,
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -11178,9 +11193,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     goal_text = data.get('goal_meta') or data.get('goal_text')
     agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
@@ -11248,13 +11263,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_history=data.get('ledger_history'),
         now=generated_at,
     )
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
     # Issue #72: cycles.html renders FULL history (live ledger + .gz
     # archives) with day grouping and the outcome filter; index teaser
     # keeps the recent-tail feed.
@@ -11290,12 +11298,14 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
         feed_cycles=feed_cycles,
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
