@@ -5908,6 +5908,32 @@ def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Pat
         browser.close()
 
 
+def test_issue439_control_params_with_record_hash_preserve_sort_and_empty_search(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-ONE', 'title': 'Alpha title', 'date': '2026-09-01', 'source': 'live'},
+        {'id': 'LESS-TWO', 'title': 'Beta title', 'date': '2026-09-02', 'source': 'live'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'record-hash-with-sort.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '?lesson_sort=title-asc#q-LESS-ONE')
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.input_value() == ''
+        assert page.locator('.lessons-sort').input_value() == 'title-asc'
+        assert page.locator('.lesson-row:visible').count() == 2
+        assert page.locator('#q-LESS-ONE').is_visible()
+        page.goto(path.as_uri() + '?lesson_q=Beta&lesson_sort=title-asc#q-LESS-ONE')
+        assert search.input_value() == 'Beta'
+        assert page.locator('.lessons-sort').input_value() == 'title-asc'
+        assert page.locator('.lesson-row:visible .lesson-id').all_text_contents() == ['LESS-TWO']
+        browser.close()
+
+
 def test_issue439_legacy_search_hash_clear_stays_clear_on_reload(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
 

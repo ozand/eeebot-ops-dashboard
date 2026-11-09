@@ -8133,7 +8133,8 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         function stateFromUrl() {{
           var params = new URLSearchParams(location.search);
           var hash = location.hash.slice(1);
-          var query = params.get('lesson_q') || (hash.indexOf('q-') === 0 && !root.querySelector('#'+CSS.escape(decodeURIComponent(hash.slice(2)))) ? decodeURIComponent(hash.slice(2)) : '');
+          var hashId = hash.indexOf('q-') === 0 ? decodeURIComponent(hash.slice(2)) : '';
+          var query = params.get('lesson_q') || (hashId && !root.querySelector('#q-'+CSS.escape(hashId)) ? hashId : '');
           return {{q: query, source: params.get('lesson_source') || 'all', sort: params.get('lesson_sort') || 'date-desc', page: Math.max(0, Number(params.get('lesson_page') || 0))}};
         }}
         function writeUrl() {{
