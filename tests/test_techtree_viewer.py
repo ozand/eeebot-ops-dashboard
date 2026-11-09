@@ -5820,7 +5820,8 @@ def test_issue73_missing_file_graceful_note() -> None:
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     # Deliberate #246 contract change: this page is a retained-history
     # population, not the full executor retrieval corpus.
-    assert 'no lessons history data recorded' in pages['lessons.html']
+    assert 'No lessons history data recorded in this published view' in pages['lessons.html']
+    assert 'retained-history source completeness unavailable' in pages['lessons.html']
 
 
 def test_issue73_filter_and_hash_markers() -> None:
@@ -5832,6 +5833,70 @@ def test_issue73_filter_and_hash_markers() -> None:
     assert 'lessons-filter' in les
     assert 'location.hash' in les
     assert '#q-' in les
+    assert 'Search lesson IDs, titles and public metadata' in les
+    assert 'legacy (pre-v2, frozen)' in les
+    assert 'aria-live="polite"' in les
+    assert 'bounded' not in les.lower() or 'pageSize = 50' in les
+    assert 'lesson_q' in les and 'lesson_source' in les and 'lesson_sort' in les and 'lesson_page' in les
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1440])
+def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Path, viewport_width: int) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = []
+    for i in range(120):
+        rows.append({
+            'id': f'LESS-{i:03d}',
+            'title': f'Lesson title {i:03d}',
+            'date': '2026-09-01',
+            'source': 'live' if i % 2 == 0 else None,
+            **({'problem': 'private body sentinel' if i % 3 == 0 else '',
+                'problem_chars': 14 if i % 3 == 0 else 0,
+                'solution': '', 'solution_chars': 15 if i % 3 == 0 else 0}
+               if i % 2 == 0 else {'task_id': f'legacy task {i:03d}', 'hypothesis': 'private hypothesis sentinel', 'result': '', 'result_chars': 14}),
+        })
+    from scripts.two_sinks import _sanitize_public_value
+    public_rows = _sanitize_public_value('lessons', rows)
+    html = tv.render_pages({'lessons': public_rows}, host='synthetic')['lessons.html']
+    path = tmp_path / f'lessons-{viewport_width}.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+        page.goto(path.as_uri())
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.count() == 1
+        assert page.locator('.lesson-row:visible').count() == 50
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 1 of 3')
+        page.locator('.lessons-next').click()
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 3')
+        assert page.locator('#q-LESS-100').count() == 1
+        assert page.locator('#q-LESS-100').is_visible()
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert 'lesson_sort=title-asc' in page.url
+        page.locator('.lessons-source-filter').select_option('archive')
+        assert 'lesson_source=archive' in page.url
+        assert page.locator('.lesson-row:visible').count() == 50
+        page.locator('.lessons-filter').fill('LESS-111')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert 'lesson_q=LESS-111' in page.url
+        page.go_back()
+        assert page.locator('.lessons-filter').input_value() == ''
+        page.go_back()
+        assert page.locator('.lessons-source-filter').input_value() == 'all'
+        deep = page.locator('#q-LESS-111')
+        page.evaluate("location.hash='#q-LESS-111'")
+        assert deep.is_visible()
+        page.locator('.lessons-filter').fill('')
+        page.locator('.lessons-filter').focus()
+        page.keyboard.type('LESS-111')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert page.locator('.lessons-match-count').inner_text() == '1 matching published rows'
+        assert 'private body sentinel' not in page.content()
+        assert 'private hypothesis sentinel' not in page.content()
+        assert page.locator('.lessons-controls').evaluate('(e) => e.getBoundingClientRect().width <= window.innerWidth')
+        browser.close()
 
 
 def test_issue73_entries_render_with_cycle_links() -> None:
@@ -5913,7 +5978,7 @@ def test_274_lessons_html_reads_live_corpus_matches_agent_html_count(tmp_path: P
 
     pages = tv.render_pages(state, host='eeepc', generated_at='2026-09-16 12:00:00')
     assert 'Corpus title A' in pages['lessons.html']
-    assert 'Live corpus (lessons/*.md): 2 files' in pages['lessons.html']
+    assert 'Live corpus (lessons/*.md): 2 files in this view (2 v2 cards)' in pages['lessons.html']
 
 
 def test_274_missing_index_falls_back_to_filename_no_silent_drop(tmp_path: Path) -> None:
@@ -5959,9 +6024,9 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
         [{'id': 'LESS-ARCHIVE-1', 'date': '2026-08-01', 'task_id': 't', 'hypothesis': 'h', 'result': 'r'}],
         corpus_status='present',
     )
-    assert 'directory missing on host' in missing
-    assert 'present but unreadable' in unavailable
-    assert 'Live corpus (lessons/*.md): 0 files' in present_empty
+    assert 'directory missing.' in missing
+    assert 'read unavailable' in unavailable
+    assert 'Live corpus (lessons/*.md): 0 files in this view' in present_empty
     assert missing != unavailable != present_empty
 
 
@@ -6374,6 +6439,9 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     assert 'data-filter-empty hidden>No matches in the loaded cycle window.' in cycles
     assert 'matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)' in cycles
     assert '0 results for' in lessons
+    assert 'lessons-match-count' in lessons
+    assert 'lessons-source-filter' in lessons
+    assert 'lessons-sort' in lessons
     assert 'data-filter-empty' in lessons
     assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only
 
@@ -7842,7 +7910,7 @@ def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
 
 def test_issue277_defect5_legacy_details_auto_open_script_present() -> None:
     html = tv.build_lessons_panel([_LEGACY_LESSON])
-    assert 'legacyDetails.open = legacyMatch;' in html
+    assert 'legacy.open = legacyMatch;' in html
 
 
 # ---------------------------------------------------------------------------

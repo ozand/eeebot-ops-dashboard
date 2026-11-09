@@ -7880,13 +7880,26 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     not one collapsed "no data" note (#274)."""
     entries = [l for l in (lessons or []) if isinstance(l, dict)]
     corpus_note = ''
+    live_entries = [l for l in entries if l.get('source') == 'live']
+    archive_entries = [l for l in entries if 'source' not in l]
+    unknown_source_entries = [l for l in entries if 'source' in l and l.get('source') != 'live']
+    corpus_note = ''
     if corpus_status == 'missing':
-        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): directory missing on host.</p>'
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): directory missing.</p>'
     elif corpus_status == 'unavailable':
-        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): present but unreadable.</p>'
+        corpus_note = '<p class="unavailable-note">Live corpus (lessons/*.md): read unavailable.</p>'
     elif corpus_status == 'present':
-        live_count = sum(1 for l in entries if isinstance(l, dict) and l.get('source') == 'live')
-        corpus_note = f'<p class="lessons-corpus-note">Live corpus (lessons/*.md): {live_count} files &mdash; same count agent.html reports.</p>'
+        corpus_note = f'<p class="lessons-corpus-note">Live corpus (lessons/*.md): {len(live_entries)} files in this view ({sum(1 for l in live_entries if _is_v2_lesson(l))} v2 cards); the executor retrieval corpus is a separate population.</p>'
+    source_counts = (
+        f'<span>Published rows: {len(entries)}</span> · '
+        f'<span>live: {len(live_entries)}</span> · '
+        f'<span>retained archive rows: {len(archive_entries)}</span>'
+        + (f' · <span>source unknown: {len(unknown_source_entries)}</span>' if unknown_source_entries else '')
+    )
+    unknown_source_option = (
+        f'<option value="unknown">Unknown source ({len(unknown_source_entries)})</option>'
+        if unknown_source_entries else ''
+    )
     id_counts: dict[str, int] = {}
     for entry in entries:
         lesson_id = str(entry.get('id') or '')
@@ -7909,11 +7922,12 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
 
     rendered_lesson_ids = {str(l.get('id')) for l in entries if l.get('id')}
     if not entries:
+        empty_note = 'No lessons history data recorded in this published view; retained-history source completeness unavailable.'
         return (
             '<section class="panel panel-lessons" id="panel-lessons">'
             '<h2 class="panel-title">Lessons History</h2>'
             f'{corpus_note}'
-            '<p class="unavailable-note">no lessons history data recorded</p>'
+            f'<p class="unavailable-note">{empty_note}</p>'
             '</section>'
         )
 
@@ -7932,6 +7946,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     last_date: str | None = None
     for l in v2_entries:
         date = str(l.get('date') or 'unknown')
+        source_group = 'live' if l.get('source') == 'live' else 'unknown' if 'source' in l else 'archive'
         if date != last_date:
             last_date = date
             v2_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
@@ -7972,19 +7987,23 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
         problem_chars = int(l.get('problem_chars') if l.get('problem_chars') is not None else len(problem))
         solution_chars = int(l.get('solution_chars') if l.get('solution_chars') is not None else len(solution))
-        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else ''
-        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else ''
+        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
+        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
 
-        title = str(l.get('title') or '')
-        title_html = f'<h3 class="lesson-title">{esc(title)}</h3>' if title else ''
+        title = str(l.get('title') or '').strip()
+        title_is_descriptive = bool(title and title != str(l.get('id') or ''))
+        title_html = (
+            f'<h3 class="lesson-title">{esc(title)}</h3>'
+            if title_is_descriptive else '<h3 class="lesson-title unavailable-note">Descriptive title unavailable; reason not published.</h3>'
+        )
         search_text = esc((' '.join([
             l.get('id') or '', title, str(l.get('task_id') or ''),
             kind, severity, ' '.join(str(t) for t in tags_list), cid,
         ])).lower())
         v2_rows.append(
-            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}"{item_anchor}>'
+            f'<li class="lesson-row lesson-row-v2" data-text="{search_text}" data-source="{source_group}" data-date="{esc(date)}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>'
-            f' {cycle_link}</div>'
+            f' {cycle_link} · <span class="lesson-recorded-date">{esc(date)}</span></div>'
             f'{meta_chips_html}'
             f'{title_html}'
             f'{problem_html}'
@@ -7997,6 +8016,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     last_date = None
     for l in legacy_entries:
         date = str(l.get('date') or 'unknown')
+        source_group = 'live' if l.get('source') == 'live' else 'unknown' if 'source' in l else 'archive'
         if date != last_date:
             last_date = date
             legacy_rows.append(f'<li class="lesson-day-header">{esc(date)}</li>')
@@ -8019,24 +8039,34 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else ''
+        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
+        hypothesis_chars = l.get('hypothesis_chars')
+        hypothesis_size = hypothesis_chars if isinstance(hypothesis_chars, int) and not isinstance(hypothesis_chars, bool) and hypothesis_chars >= 0 else len(str(l.get('hypothesis') or ''))
+        hypothesis_html = f'<div class="lesson-hypothesis lan-only-note">Hypothesis: text on the LAN site only ({hypothesis_size:,} chars)</div>' if hypothesis_size > 0 else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
+        result_html = result_html if result_size > 0 else '<div class="lesson-result unavailable-note">Result: no text recorded.</div>'
         search_text = esc((' '.join([
             l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             cid,
         ])).lower())
+        legacy_title = str(l.get('title') or '').strip()
+        legacy_title_html = (
+            f'<h3 class="lesson-title">{esc(legacy_title)}</h3>'
+            if legacy_title and legacy_title != str(l.get('id') or '') else '<h3 class="lesson-title unavailable-note">Descriptive title unavailable; reason not published.</h3>'
+        )
         legacy_rows.append(
-            f'<li class="lesson-row" data-text="{search_text}"{item_anchor}>'
+            f'<li class="lesson-row" data-text="{search_text}" data-source="{source_group}" data-date="{esc(date)}"{item_anchor}>'
             f'<div class="lesson-meta"><span class="lesson-id" translate="no">{esc(l.get("id") or "")}</span>{duplicate_html}'
-            f' {cycle_link}</div>'
-            f'<div class="lesson-title">{esc(str(l.get("task_id") or "n/a"))}</div>'
-            f'<div class="lesson-hypothesis">{esc(str(l.get("hypothesis") or ""))}</div>'
-            f'{result_html}{insight_html}</li>'
+            f' {cycle_link} · <span class="lesson-recorded-date">{esc(date)}</span></div>'
+            f'{legacy_title_html}'
+            f'<div class="lesson-task-id">Task: {esc(str(l.get("task_id") or "unavailable"))}</div>'
+            f'{hypothesis_html}{result_html}{insight_html}</li>'
         )
 
     # --- assemble page ---
     v2_count = len(v2_entries)
     legacy_count = len(legacy_entries)
     total = len(entries)
+    missing_date_count = sum(1 for lesson in entries if not _parse_iso_ts(lesson.get('date')))
 
     title_parts = [f'{v2_count} v2' if v2_count else 'no v2 entries']
     if legacy_count:
@@ -8060,49 +8090,100 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     return f'''
     <section class="panel panel-lessons" id="panel-lessons">
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
-      <p class="lessons-count-note">History only: {v2_count} active v2 cards plus retained archive rows; archive rows are not on the executor retrieval path. The executor retrieval corpus includes active v2 cards and active error cards from errors.yaml.</p>
+      <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path.</p>
+      <p class="lessons-source-counts" aria-label="Published lesson row populations">{source_counts} · <span>date unavailable: {missing_date_count}</span></p>
+      <p class="lessons-body-policy">Lesson problem, solution, result, insight and hypothesis text are withheld from this public page. Per-record character counts below indicate whether those bodies were recorded; they do not expose their contents.</p>
       {corpus_note}
-      <input class="lessons-filter" type="text" placeholder="filter lessons...">
-      <ul class="lessons-list">
-        <li class="filter-empty" data-filter-empty hidden>0 results for <span class="filter-empty-value"></span></li>
+      <div class="lessons-controls">
+        <label for="lessons-filter">Search lesson IDs, titles and public metadata
+          <input class="lessons-filter" id="lessons-filter" type="search" autocomplete="off">
+        </label>
+        <label for="lessons-source">Source
+          <select id="lessons-source" class="lessons-source-filter">
+            <option value="all">All sources ({total})</option><option value="live">Live ({len(live_entries)})</option><option value="archive">Retained archive ({len(archive_entries)})</option>{unknown_source_option}
+          </select>
+        </label>
+        <label for="lessons-sort">Sort
+          <select id="lessons-sort" class="lessons-sort"><option value="date-desc">Date, newest first</option><option value="date-asc">Date, oldest first</option><option value="title-asc">Title, A–Z</option></select>
+        </label>
+        <p class="lessons-match-count" role="status" aria-live="polite"></p>
+        <span class="lessons-page-status" aria-live="polite"></span>
+        <button type="button" class="lessons-prev" aria-label="Previous lesson results">Previous</button>
+        <button type="button" class="lessons-next" aria-label="Next lesson results">Next</button>
+      </div>
+      <ul class="lessons-list" aria-label="Published retained lessons">
+        <li class="filter-empty" data-filter-empty hidden><span class="filter-empty-count">0 results for</span> <span class="filter-empty-value"></span></li>
         {v2_section}
         {legacy_section_html}
       </ul>
       <script>
       (function(){{
-        var input = document.querySelector('.lessons-filter');
-        if (!input) return;
-        var rowsL = document.querySelectorAll('#panel-lessons .lesson-row');
-        function apply(q) {{
-          var t = (q || '').toLowerCase();
-           var shown = 0;
-           var legacyMatch = false;
-           rowsL.forEach(function (r) {{
-             var visible = !t || r.getAttribute('data-text').indexOf(t) !== -1;
-             r.style.display = visible ? '' : 'none';
-             if (visible) {{
-               shown += 1;
-               if (t && r.closest('.lesson-legacy-details')) legacyMatch = true;
-             }}
-           }});
-           var legacyDetails = document.querySelector('.lesson-legacy-details');
-           if (legacyDetails && t) {{
-             legacyDetails.open = legacyMatch;
-           }}
-           var empty = document.querySelector('#panel-lessons [data-filter-empty]');
-           if (empty) {{ empty.hidden = !t || shown > 0; empty.querySelector('.filter-empty-value').textContent = t ? '"' + t + '"' : ''; }}
-          input.value = t;
+        var root = document.getElementById('panel-lessons');
+        var input = root.querySelector('.lessons-filter');
+        var source = root.querySelector('.lessons-source-filter');
+        var sort = root.querySelector('.lessons-sort');
+        var rows = Array.prototype.slice.call(root.querySelectorAll('.lesson-row'));
+        var pageSize = 50, page = 0, matches = [];
+        var emptyView = rows.length === 0;
+        if(emptyView) {{
+          root.querySelector('.lessons-list').innerHTML = '<li class="unavailable-note">No published lesson rows in this view; retained-history source completeness unavailable.</li>';
+          root.querySelector('.lessons-controls').hidden = true;
+          return;
         }}
-        var init = decodeURIComponent((location.hash || '').replace('#q-', ''));
-        apply(init);
-        input.addEventListener('input', function () {{
-          var q = input.value.trim();
-          if (q) {{ location.hash = 'q-' + encodeURIComponent(q); }} else {{ history.replaceState(null, '', location.pathname + location.search); }}
-          apply(q);
-        }});
-        window.addEventListener('hashchange', function () {{
-          apply(decodeURIComponent((location.hash || '').replace('#q-', '')));
-        }});
+        function stateFromUrl() {{
+          var params = new URLSearchParams(location.search);
+          var hash = location.hash.slice(1);
+          var query = params.get('lesson_q') || (hash.indexOf('q-') === 0 && !root.querySelector('#'+CSS.escape(decodeURIComponent(hash.slice(2)))) ? decodeURIComponent(hash.slice(2)) : '');
+          return {{q: query, source: params.get('lesson_source') || 'all', sort: params.get('lesson_sort') || 'date-desc', page: Math.max(0, Number(params.get('lesson_page') || 0))}};
+        }}
+        function writeUrl() {{
+          var params = new URLSearchParams();
+          if (input.value) params.set('lesson_q', input.value);
+          if (source.value !== 'all') params.set('lesson_source', source.value);
+          if (sort.value !== 'date-desc') params.set('lesson_sort', sort.value);
+          if (page) params.set('lesson_page', String(page));
+          history.pushState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash);
+        }}
+        function apply(restore) {{
+          if (restore) {{ var st=stateFromUrl(); input.value=st.q; source.value=st.source; sort.value=st.sort; page=st.page; }}
+          var q=input.value.trim().toLowerCase(), wanted=source.value;
+          matches=rows.filter(function(r){{return (!q || (r.getAttribute('data-text')||'').indexOf(q)!==-1) && (wanted==='all'||r.getAttribute('data-source')===wanted);}});
+          matches.sort(function(a,b){{
+            var av=(a.getAttribute('data-date')||'unknown'), bv=(b.getAttribute('data-date')||'unknown');
+            if(sort.value==='title-asc') return (a.querySelector('.lesson-title').textContent||'').localeCompare(b.querySelector('.lesson-title').textContent||'');
+            if(av==='unknown') return bv==='unknown'?0:1; if(bv==='unknown') return -1;
+            return sort.value==='date-asc'?av.localeCompare(bv):bv.localeCompare(av);
+          }});
+          var pages=Math.max(1,Math.ceil(matches.length/pageSize)); page=Math.min(page,pages-1);
+          var visible=matches.slice(page*pageSize,(page+1)*pageSize);
+          rows.forEach(function(r){{r.style.display=visible.indexOf(r)>=0?'':'none';}});
+          root.querySelectorAll('.lesson-day-header').forEach(function(n){{n.style.display='none';}});
+          root.querySelectorAll('.lesson-legacy-fold').forEach(function(n){{n.style.display='none';}});
+          var legacy=root.querySelector('.lesson-legacy-details'),legacyMatches=matches.filter(function(r){{return r.closest('.lesson-legacy-details');}});
+          if(legacy){{var legacyMatch=legacyMatches.length>0;legacy.open = legacyMatch;legacy.parentElement.style.display=legacyMatch?'':'none';
+            var legacyList=legacy.querySelector('.lessons-list-legacy');
+            if(legacyList){{legacyMatches.forEach(function(r){{legacyList.appendChild(r);}});}}
+          }}
+          root.querySelector('[data-filter-empty]').hidden=matches.length>0;
+          root.querySelector('.filter-empty-value').textContent=q?'“'+q+'”':'';
+          root.querySelector('.lessons-match-count').textContent=matches.length+' matching published rows';
+          root.querySelector('.lessons-page-status').textContent='Page '+(page+1)+' of '+pages+' · '+matches.length+' results';
+          root.querySelector('.lessons-prev').disabled=page===0; root.querySelector('.lessons-next').disabled=page>=pages-1;
+          if(!restore) writeUrl();
+        }}
+        input.addEventListener('input',function(){{page=0;apply(false);}});
+        source.addEventListener('change',function(){{page=0;apply(false);}});
+        sort.addEventListener('change',function(){{page=0;apply(false);}});
+        root.querySelector('.lessons-prev').addEventListener('click',function(){{page=Math.max(0,page-1);apply(false);}});
+        root.querySelector('.lessons-next').addEventListener('click',function(){{page++;apply(false);}});
+        window.addEventListener('popstate',function(){{apply(true);}});
+        window.addEventListener('hashchange',function(){{var before=input.value;apply(true);if(input.value===before && location.hash.indexOf('#q-')===0){{input.value='';apply(false);}}}});
+        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link)return;var id=decodeURIComponent(link.hash.slice(3));var target=root.querySelector('#q-'+CSS.escape(id));if(!target)return;source.value=target.getAttribute('data-source')==='live'?'live':'archive';input.value='';sort.value='date-desc';var ix=matches.indexOf(target);if(ix<0){{page=Math.floor(rows.indexOf(target)/pageSize);}}else{{page=Math.floor(ix/pageSize);}}apply(false);target.scrollIntoView();}});
+        apply(true);
+        var hashId=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';
+        function revealHash(){{var current=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';if(!current)return;var deep=root.querySelector('#q-'+CSS.escape(current));if(deep){{source.value=deep.getAttribute('data-source')==='live'?'live':'archive';input.value='';sort.value='date-desc';var ix=rows.indexOf(deep);page=Math.floor(ix/pageSize);apply(false);deep.scrollIntoView();}}}}
+        if(hashId)revealHash();
+        window.addEventListener('hashchange',revealHash);
       }})();
       </script>
     </section>
@@ -10143,7 +10224,19 @@ CSS = '''
       padding: 4px 8px;
       margin: 0 0 10px 0;
       width: min(420px, 100%);
+      min-height: 44px;
     }
+    .lessons-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .lessons-controls label { color: #8aa695; display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px; min-width: 0; }
+    .lessons-controls label input, .lessons-controls label select { min-height: 44px; width: 100%; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls button { min-height: 44px; width: auto; flex: 0 1 150px; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls .lessons-match-count, .lessons-controls .lessons-page-status { flex: 1 1 100%; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
     .lessons-list { list-style: none; margin: 0; padding: 0; }
     .lesson-day-header {
       font-size: 0.72em;
