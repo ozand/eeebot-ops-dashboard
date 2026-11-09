@@ -408,8 +408,7 @@ def test_cycle_feed_renders_outcomes_files_and_failed_cycles() -> None:
 def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() -> None:
     scorecard = {
         'computed_at_utc': '2026-09-13T13:18:17.184300Z', 'window_days': 7,
-        'window_start_utc': '2026-09-06T00:00:00Z', 'window_end_utc': '2026-09-13T00:00:00Z',
-        'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12, 'terminal_cycles': 397},
+        'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12},
         'control_plane': {'hypothesis_loop': {
             'supported': 5, 'refuted': 0, 'inconclusive': 4, 'total': 9,
             'inconclusive_within_window': 3, 'inconclusive_aged': 0,
@@ -422,9 +421,9 @@ def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() ->
         'reader_status': {'ledger': {'status': 'complete'}},
     }
     html = tv.build_scorecard_hypothesis_metrics(scorecard)
-    assert '3.0%' in html and '12 distinct hypothesis-served / 397 distinct terminal cycle IDs' in html
-    assert '12/397' not in html
-    assert 'window: 7d (2026-09-06T00:00:00Z to 2026-09-13T00:00:00Z)' in html
+    assert '3.0%' in html and 'hypothesis-served cycles: <strong>12</strong>' in html
+    assert 'denominator: terminal cycle population (count not published by dashboard projection)' in html
+    assert 'selection-rate ledger window: 7d' in html
     assert 'Verdict population: scorecard lifecycle snapshot' in html
     assert 'supported <strong>5</strong>' in html and 'refuted <strong>0</strong>' in html
     assert 'total <strong>9</strong>' in html
