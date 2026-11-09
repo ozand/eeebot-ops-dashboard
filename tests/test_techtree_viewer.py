@@ -408,7 +408,8 @@ def test_cycle_feed_renders_outcomes_files_and_failed_cycles() -> None:
 def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() -> None:
     scorecard = {
         'computed_at_utc': '2026-09-13T13:18:17.184300Z', 'window_days': 7,
-        'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12},
+        'window_start_utc': '2026-09-06T00:00:00Z', 'window_end_utc': '2026-09-13T00:00:00Z',
+        'loop': {'hypothesis_selection_rate': 0.0302, 'hypothesis_served_cycles': 12, 'terminal_cycles': 397},
         'control_plane': {'hypothesis_loop': {
             'supported': 5, 'refuted': 0, 'inconclusive': 4, 'total': 9,
             'inconclusive_within_window': 3, 'inconclusive_aged': 0,
@@ -421,7 +422,10 @@ def test_scorecard_hypothesis_metrics_use_published_values_and_denominators() ->
         'reader_status': {'ledger': {'status': 'complete'}},
     }
     html = tv.build_scorecard_hypothesis_metrics(scorecard)
-    assert '3.0%' in html and 'served cycles: <strong>12</strong>' in html
+    assert '3.0%' in html and '12 distinct hypothesis-served / 397 distinct terminal cycle IDs' in html
+    assert '12/397' not in html
+    assert 'window: 7d (2026-09-06T00:00:00Z to 2026-09-13T00:00:00Z)' in html
+    assert 'Verdict population: scorecard lifecycle snapshot' in html
     assert 'supported <strong>5</strong>' in html and 'refuted <strong>0</strong>' in html
     assert 'total <strong>9</strong>' in html
     assert 'computed_at_utc' in html and '2026-09-13T13:18:17.184300Z' in html
@@ -439,12 +443,15 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     html_out = tv.render_page(fixture, host='eeepc', generated_at='2026-08-18 12:00:00')
 
     # Active group
-    assert 'Active titles (1)' in html_out
-    assert 'unique titles; lifecycle rows may be higher' in html_out
+    assert 'Lifecycle registry — active or stale unique titles (1)' in html_out
+    assert 'Active: 0 · stale: 1' in html_out
+    assert 'Eligibility is not reported' in html_out
+    assert 'Titles are deduplicated separately by lifecycle status; source rows may be higher.' in html_out
     assert 'Dynamic prompt injection improves dedup' in html_out
+    assert 'last touched date unavailable' in html_out
 
     # Answered group with evidence anchor
-    assert 'Answered (1)' in html_out
+    assert 'Lifecycle registry — answered titles (1)' in html_out
     assert 'Lower temperature increases smoke pass rate' in html_out
     assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out or 'href="#cycle-cycle-a"' in html_out or 'href="#cycle-a"' in html_out
 
@@ -3401,7 +3408,7 @@ def test_issue45_answered_hypotheses_in_details_element() -> None:
     html = tv.build_hypotheses_panel(hypotheses_lifecycle=hl, feed_cycles={'cycle-100'})
     assert '<details' in html
     assert '<summary' in html
-    assert 'Answered (1)' in html
+    assert 'Lifecycle registry — answered titles (1)' in html
     assert 'Active Hypo' in html
     assert 'Accepted Hypo' in html
 

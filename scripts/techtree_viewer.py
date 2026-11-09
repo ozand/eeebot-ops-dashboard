@@ -7316,11 +7316,11 @@ def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
     state = f'split: {split_status}; reader: {reader_value}' if split_status is not None and reader_value is not None else None
     return f'''<section class="scorecard-hypothesis-metrics" id="scorecard-hypothesis-metrics">
       <h3>Hypothesis loop metrics <small>(published scorecard)</small></h3>
-      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · served cycles: <strong>{_scorecard_value(loop.get('hypothesis_served_cycles'))}</strong></p>
-      <p class="scorecard-metric">verdict yield: supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
+      <p class="scorecard-metric">selection rate: <strong>{humanize_ratio(loop.get('hypothesis_selection_rate'))}</strong> · {_scorecard_value(loop.get('hypothesis_served_cycles'))} distinct hypothesis-served / {_scorecard_value(loop.get('terminal_cycles'))} distinct terminal cycle IDs</p>
+      <p class="scorecard-metric">Verdict population: scorecard lifecycle snapshot (visibility-only; not additive to registry titles). supported <strong>{_scorecard_value(hypothesis.get('supported'))}</strong> / refuted <strong>{_scorecard_value(hypothesis.get('refuted'))}</strong> / inconclusive <strong>{_scorecard_value(hypothesis.get('inconclusive'))}</strong> · total <strong>{_scorecard_value(total_value)}</strong></p>
       <p class="scorecard-metric">inconclusive window: within <strong>{_scorecard_value(hypothesis.get('inconclusive_within_window'))}</strong> · aged <strong>{_scorecard_value(hypothesis.get('inconclusive_aged'))}</strong></p>
       <p class="scorecard-metric">undatable: <strong>{_scorecard_value(hypothesis.get('inconclusive_undatable'))}</strong> (no artifact {_scorecard_value(hypothesis.get('inconclusive_undatable_no_qualifying_artifact'))}, no completion {_scorecard_value(hypothesis.get('inconclusive_undatable_no_completion'))}, invalid timestamp {_scorecard_value(hypothesis.get('inconclusive_undatable_invalid_timestamp'))})</p>
-      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · window {_scorecard_value(scorecard.get('window_days'))}d · computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
+      <p class="scorecard-metric">{esc(state) if state else '<span class="unavailable-note">unavailable</span>'} · cycle selection window: {_scorecard_value(scorecard.get('window_days'))}d ({_scorecard_value(scorecard.get('window_start_utc'))} to {_scorecard_value(scorecard.get('window_end_utc'))}); lifecycle snapshot as published at computed_at_utc <strong>{_scorecard_value(scorecard.get('computed_at_utc'))}</strong></p>
     </section>'''
 
 
@@ -7438,8 +7438,8 @@ def build_hypotheses_panel(
               <span class="badge {badge_cls}">{esc(badge_lbl)}</span>
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
-                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else ""}
-                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else ""}
+                {f'<span class="hypo-ts" title="{esc(first_seen)}">seen {fmt_ts_short(first_seen, now=ref_now)}</span>' if first_seen else '<span class="hypo-ts">first seen date unavailable</span>'}
+                {f'<span class="hypo-ts" title="{esc(last_touched)}">touched {fmt_ts_short(last_touched, now=ref_now)}</span>' if last_touched else '<span class="hypo-ts">last touched date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7459,9 +7459,9 @@ def build_hypotheses_panel(
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
             if target_cid in valid_feed_cycles or clean_cid in valid_feed_cycles or ev_str in valid_feed_cycles:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(ev_str)}">{esc(ev_str)}</a></span>'
+                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(target_cid)}">{esc(ev_str)}</a></span>'
             else:
-                ev_html = f'<span class="hypo-ev">evidence: {esc(ev_str)}</span>'
+                ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 
         v_label = str(verdict or status).upper()
         badge_class = {
@@ -7476,7 +7476,7 @@ def build_hypotheses_panel(
               <strong class="hypo-title">{esc(title)}</strong>
               <div class="hypo-meta">
                 {ev_html}
-                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else ""}
+                {f'<span class="hypo-ts" title="{esc(answered_at)}">answered {fmt_ts_short(answered_at, now=ref_now)}</span>' if answered_at else '<span class="hypo-ts">answered date unavailable</span>'}
               </div>
             </li>
         '''
@@ -7503,19 +7503,19 @@ def build_hypotheses_panel(
     else:
         active_body = "".join(fresh_rendered + stale_rendered)
 
-    active_html = f'<div class="hypo-group"><h3>Active titles ({total_active_count})</h3><p class="hypo-count-note">unique titles; lifecycle rows may be higher</p><ul class="hypo-list">{active_body}</ul></div>'
+    active_html = f'<div class="hypo-group"><h3>Lifecycle registry — active or stale unique titles ({total_active_count})</h3><p class="hypo-count-note">Active: {len(fresh_active)} · stale: {len(stale_active)}. Titles are deduplicated separately by lifecycle status; source rows may be higher. Eligibility is not reported by this projection. Staleness uses recorded last_touched, falling back to first_seen, older than 14 days; missing or invalid dates are not aged by inference.</p><ul class="hypo-list">{active_body}</ul></div>'
 
     if answered_rendered:
         ans_count = len(answered_rendered)
         answered_list_html = f'<ul class="hypo-list">{"".join(answered_rendered)}</ul>'
         answered_html = f'''<div class="hypo-group">
           <details class="hypo-details">
-            <summary class="hypo-summary"><h3>Answered ({ans_count}) &mdash; show</h3></summary>
+            <summary class="hypo-summary"><h3>Lifecycle registry — answered titles ({ans_count}) &mdash; show</h3></summary>
             {answered_list_html}
           </details>
         </div>'''
     else:
-        answered_html = '<div class="hypo-group"><h3>Answered (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
+        answered_html = '<div class="hypo-group"><h3>Lifecycle registry — answered titles (0)</h3><ul class="hypo-list"><li class="unavailable-note">none answered</li></ul></div>'
 
     scorecard_metrics_html = build_scorecard_hypothesis_metrics(scorecard)
 
