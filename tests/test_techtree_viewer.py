@@ -5908,6 +5908,99 @@ def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Pat
         browser.close()
 
 
+def test_issue439_legacy_search_hash_clear_stays_clear_on_reload(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-ONE', 'title': 'Unrelated lesson', 'date': '2026-09-01', 'source': 'live'},
+        {'id': 'LESS-TWO', 'title': 'Another lesson', 'date': '2026-09-02', 'source': 'live'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-search-hash.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '#q-CYCLE-ONLY')
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.input_value() == 'CYCLE-ONLY'
+        search.fill('')
+        assert search.input_value() == ''
+        assert page.locator('.lesson-row:visible').count() == 2
+        assert 'lesson_q' not in page.url
+        assert 'q-CYCLE-ONLY' not in page.url
+        page.reload()
+        assert search.input_value() == ''
+        assert page.locator('.lesson-row:visible').count() == 2
+        page.go_back()
+        assert page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata').input_value() == 'CYCLE-ONLY'
+        browser.close()
+
+
+def test_issue439_sorted_lessons_follow_visible_order_across_sources(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-Z', 'title': 'Zulu title', 'date': '2026-09-04', 'source': 'live', 'problem_chars': 0},
+        {'id': 'LESS-A', 'title': 'Alpha title', 'date': '2026-09-01', 'source': 'live', 'problem_chars': 0},
+        {'id': 'LEG-Z', 'title': 'Zulu legacy', 'date': '2026-09-03', 'task_id': 'legacy z'},
+        {'id': 'LEG-A', 'title': 'Alpha legacy', 'date': '2026-09-02', 'task_id': 'legacy a'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'sorted-order.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        v2rows = page.locator('.lesson-row-v2')
+        legacyrows = page.locator('.lesson-legacy-details .lesson-row')
+        assert v2rows.count() == 2
+        assert legacyrows.count() == 2
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Zulu title', 'Alpha title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Zulu legacy', 'Alpha legacy']
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Alpha title', 'Zulu title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Alpha legacy', 'Zulu legacy']
+        page.locator('.lessons-sort').select_option('date-asc')
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Alpha title', 'Zulu title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Alpha legacy', 'Zulu legacy']
+        assert page.locator('.lesson-row:visible').count() == 4
+        browser.close()
+
+
+def test_issue439_sorted_pages_keep_all_records_and_hash_target(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': f'LESS-{i:02d}', 'title': f'Lesson {51-i:02d}', 'date': f'2026-09-{i % 28 + 1:02d}',
+         'source': 'live', 'problem_chars': 0}
+        for i in range(52)
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'sorted-pages.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        page.locator('.lessons-sort').select_option('title-asc')
+        page_one = page.locator('.lesson-row:visible .lesson-id').all_text_contents()
+        assert len(page_one) == 50
+        assert page_one == sorted(page_one, key=lambda lesson_id: int(lesson_id[-2:]), reverse=True)
+        page.locator('.lessons-next').click()
+        page_two = page.locator('.lesson-row:visible .lesson-id').all_text_contents()
+        assert len(page_two) == 2
+        assert len(set(page_one + page_two)) == 52
+        assert set(page_one + page_two) == {row['id'] for row in rows}
+        target = page.locator('#q-LESS-00')
+        page.evaluate("""() => { const link=document.createElement('a');link.href='#q-LESS-00';link.textContent='jump to lesson';document.querySelector('#panel-lessons').prepend(link); }""")
+        page.get_by_role('link', name='jump to lesson').click()
+        assert target.is_visible()
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 2')
+        browser.close()
+
+
 def test_issue439_legacy_title_word_is_searchable(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
 
@@ -5928,6 +6021,42 @@ def test_issue439_legacy_title_word_is_searchable(tmp_path: Path) -> None:
         assert page.locator('#q-LEG-42').is_visible()
         assert page.locator('.lessons-match-count').inner_text() == '1 matching published rows'
         assert 'lesson_q=explanatory' in page.url
+        browser.close()
+
+
+def test_issue439_legacy_only_counts_records_and_title_sort_updates_url(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    row = {'id': 'LEG-ONLY', 'title': 'Legacy title', 'date': '2026-09-01', 'task_id': 'legacy task'}
+    html = tv.render_pages({'lessons': [row]}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-only.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert '1 matching published rows' in page.locator('.lessons-match-count').inner_text()
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert 'lesson_sort=title-asc' in page.url
+        browser.close()
+
+
+def test_issue439_no_records_placeholder_is_not_search_result(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    html = tv.render_pages({'lessons': []}, host='synthetic')['lessons.html']
+    path = tmp_path / 'no-lessons.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        assert page.locator('.lesson-row').count() == 0
+        assert page.locator('.lessons-controls').is_hidden()
+        assert 'No lessons history data recorded' in page.locator('.unavailable-note').inner_text()
+        assert 'retained-history source completeness unavailable' in page.locator('.unavailable-note').inner_text()
         browser.close()
 
 

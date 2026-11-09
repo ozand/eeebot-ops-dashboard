@@ -8075,7 +8075,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         title_parts.append(f'{recent} recent')
     heading_detail = ' &middot; '.join(title_parts)
 
-    v2_section = ''.join(v2_rows) if v2_rows else '<li class="lesson-row"><p class="unavailable-note">no v2 lessons recorded yet</p></li>'
+    v2_section = ''.join(v2_rows) if v2_rows else '<li class="unavailable-note">no v2 lessons recorded yet</li>'
 
     legacy_section_html = ''
     if legacy_rows:
@@ -8090,7 +8090,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
     return f'''
     <section class="panel panel-lessons" id="panel-lessons">
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
-      <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path.</p>
+      <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path. Sorting applies within the current-format and legacy groups; legacy records remain in their disclosure.</p>
       <p class="lessons-source-counts" aria-label="Published lesson row populations">{source_counts} · <span>date unavailable: {missing_date_count}</span></p>
       <p class="lessons-body-policy">Lesson problem, solution, result, insight and hypothesis text are withheld from this public page. Per-record character counts below indicate whether those bodies were recorded; they do not expose their contents.</p>
       {corpus_note}
@@ -8144,7 +8144,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
           if (sort.value !== 'date-desc') params.set('lesson_sort', sort.value);
           if (page) params.set('lesson_page', String(page));
           var hash=location.hash;
-          if(hash.indexOf('#q-')===0){{var id=decodeURIComponent(hash.slice(3));if(root.querySelector('#q-'+CSS.escape(id)))hash='';}}
+          if(hash.indexOf('#q-')===0)hash='';
           history.pushState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : '') + hash);
         }}
         function apply(restore, skipUrlWrite) {{
@@ -8160,6 +8160,8 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
           var pages=Math.max(1,Math.ceil(matches.length/pageSize)); page=Math.min(page,pages-1);
           var visible=matches.slice(page*pageSize,(page+1)*pageSize);
           rows.forEach(function(r){{r.style.display=visible.indexOf(r)>=0?'':'none';}});
+          var v2List=root.querySelector('.lessons-list');
+          if(v2List){{visible.filter(function(r){{return r.classList.contains('lesson-row-v2');}}).forEach(function(r){{v2List.appendChild(r);}});}}
           root.querySelectorAll('.lesson-day-header').forEach(function(n){{n.style.display='none';}});
           root.querySelectorAll('.lesson-legacy-fold').forEach(function(n){{n.style.display='none';}});
           var legacy=root.querySelector('.lesson-legacy-details'),legacyMatches=matches.filter(function(r){{return r.closest('.lesson-legacy-details');}});
