@@ -593,7 +593,19 @@
       padding: 4px 8px;
       margin: 0 0 10px 0;
       width: min(420px, 100%);
+      min-height: 44px;
     }
+    .lessons-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .lessons-controls label { color: #8aa695; display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px; min-width: 0; }
+    .lessons-controls label input, .lessons-controls label select { min-height: 44px; width: 100%; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls button { min-height: 44px; width: auto; flex: 0 1 150px; box-sizing: border-box; background: #101913; color: #e2f0e6; border: 1px solid #2f5c46; padding: 8px; }
+    .lessons-controls .lessons-match-count, .lessons-controls .lessons-page-status { flex: 1 1 100%; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
+    .lessons-controls :focus-visible { outline: 2px solid #56d364; outline-offset: 2px; }
+    .lessons-match-count, .lessons-page-status { color: #8aa695; margin: 0; }
+    .lessons-source-counts, .lessons-count-note, .lessons-body-policy { line-height: 1.5; overflow-wrap: anywhere; }
     .lessons-list { list-style: none; margin: 0; padding: 0; }
     .lesson-day-header {
       font-size: 0.72em;
@@ -1463,13 +1475,13 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794207265-248dd3e16c47"></head>
+<meta name="snapshot-version" content="1794208255-a03d4ef741a1"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794207245.232" data-render-age-seconds="32">data: 31s old &middot; generated 06:54 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794208234.369" data-render-age-seconds="33">data: 32s old &middot; generated 07:11 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html" class="nav-current" aria-current="page">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
@@ -1523,7 +1535,7 @@
     </div>
   </div>
   <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 3 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 3/3 consecutive cycles: AGENTS.md</span></div></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.2%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 910 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 911 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.3%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 886 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 887 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-11-09T03:59:08.525589Z · source: published</p>
@@ -2010,7 +2022,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator 424c3ab · generated 2026-11-09 06:54:37 UTC &middot; host eeepc &middot; newest source 31s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 09:36:25 MSK</span></footer>
+<footer class="page-footer">generator ea25ac7 · generated 2026-11-09 07:11:07 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 10:08:44 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2041,5 +2053,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794207265-248dd3e16c47 · generated 2026-11-09T06:54:25.766173+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794208255-a03d4ef741a1 · generated 2026-11-09T07:10:55.126709+00:00</footer></body>
 </html>
