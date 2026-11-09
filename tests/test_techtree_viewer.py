@@ -522,7 +522,8 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
     assert 'older cycle details' in overflow_html
 
 
-def test_hypothesis_evidence_uses_public_cycle_details_for_archived_history(tmp_path: Path) -> None:
+@pytest.mark.parametrize('empty_history', [False, True], ids=['history-present', 'history-empty-tail-fallback'])
+def test_hypothesis_evidence_uses_public_cycle_details_for_archived_history(tmp_path: Path, empty_history: bool) -> None:
     import json
     from functools import partial
     from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -546,8 +547,8 @@ def test_hypothesis_evidence_uses_public_cycle_details_for_archived_history(tmp_
         }, 'prefixed': {
             'title': 'Exact prefixed evidence', 'status': 'answered', 'answered_evidence': 'cycle-foo',
         }}},
-        'ledger_tail': recent_rows,
-        'ledger_history': [old_row, *recent_rows],
+        'ledger_tail': ([old_row, *recent_rows] if empty_history else recent_rows),
+        'ledger_history': ([] if empty_history else [old_row, *recent_rows]),
     }, host='eeepc', generated_at='2026-09-17T12:00:00Z')
 
     hypotheses_html = rendered['hypotheses.html']

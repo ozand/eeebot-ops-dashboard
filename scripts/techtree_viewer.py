@@ -10791,9 +10791,9 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     goal_text = data.get('goal_meta') or data.get('goal_text')
     agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
@@ -11190,9 +11190,9 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     goal_text = data.get('goal_meta') or data.get('goal_text')
     agents_md = data.get('agents_meta') or data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
-    # Issue #172: build cycle_details from ledger_history (full history) rather than ledger_tail
+    # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
-        ledger_history if ledger_history is not None else ledger_tail,
+        ledger_history or ledger_tail,
         evolution_tree,
         data.get('lessons'),
         data.get('reflections'),
