@@ -1124,7 +1124,15 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('  </div>')
 
-    out.append('  <div class="context-subject-group context-overview-group">')
+    out.append('  <nav class="context-section-nav" aria-label="Agent context sections">')
+    out.append('    <a href="#context-overview">Context</a>')
+    out.append('    <a href="#context-instructions">Instructions</a>')
+    out.append('    <a href="#context-knowledge">Knowledge</a>')
+    out.append('    <a href="#tier2-skills-section">Skills</a>')
+    out.append('    <a href="#agent-proposer">Proposer</a>')
+    out.append('  </nav>')
+    out.append('  <p class="context-observation-note">Budget fit and source-instruction load are separate recorded observations; each badge is scoped to the cycle shown. Static ownership notes below describe the interface map, not a historical payload.</p>')
+    out.append('  <div class="context-subject-group context-overview-group" id="context-overview">')
     out.append('    <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>')
     out.append('  <div class="context-meter-box">')
     if bar_pct is not None and cap_valid:
@@ -1218,7 +1226,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('    </div>')
     out.append('  </div>')
 
-    out.append('  <div class="context-detail-section">')
+    out.append('  <div class="context-detail-section" id="context-instructions">')
     format_badge = (
         '<span class="status-badge status-present">format: post-ADR-022 ontology</span>' if is_post_migration_row
         else '<span class="status-badge status-missing">format: pre-ADR-022 legacy</span>' if sections_are_valid and sections
@@ -1452,7 +1460,7 @@ def build_two_tier_context_html(agent_context: dict[str, Any] | None) -> str:
     out.append('  </div>')
     out.append('  </div>')
 
-    out.append('  <div class="context-subject-group context-knowledge-group">')
+    out.append('  <div class="context-subject-group context-knowledge-group" id="context-knowledge">')
     out.append('    <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>')
     out.append('  <div class="tier2-deep-section">')
     out.append('    <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>')
@@ -1561,9 +1569,15 @@ AGENT_CONTEXT_CSS = """
 }
 .context-header-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
+.context-section-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.context-section-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 10px; color: #58a6ff; border: 1px solid #30363d; border-radius: 5px; text-decoration: none; }
+.context-section-nav a:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }
+.context-observation-note { color: #8b949e; font-size: 12px; margin: 8px 0; overflow-wrap: anywhere; }
 .context-badge {
   font-size: 11px;
   font-weight: 600;
