@@ -8342,7 +8342,7 @@ def build_agent_panel(
           {skills_html}
         </div>
       </div>
-      <div class="proposer-block">
+      <div class="proposer-block" id="agent-proposer">
         <h3>Proposer</h3>
         {_build_proposer_block(proposer_stats, ledger_tail)}
       </div>

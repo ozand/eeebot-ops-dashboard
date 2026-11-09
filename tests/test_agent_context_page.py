@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
 
 from scripts import techtree_viewer as tv
 from scripts.agent_context import SEPARATOR
@@ -66,7 +67,102 @@ def _telemetry_fixture(**overrides: Any) -> dict[str, Any]:
     return fixture
 
 
+def test_issue440_mixed_budget_and_instruction_statuses_stay_independent_and_safe():
+    from scripts.two_sinks import split_render_inputs
+
+    fixture = _telemetry_fixture()
+    row = fixture['agent_context']['system_prompt']
+    row.update({
+        'cycle_id': 'mixed-status-cycle', 'chars': 22000, 'cap': 24000,
+        'rung': 'full', 'truncated': ['AGENTS.md'], 'missing': [],
+        'ts': '2026-11-08T12:00:00Z',
+    })
+    row['sections'] = {'identity': 100, 'skills_catalogue': 21900}
+    prompt_fit = fixture['agent_context'].setdefault('prompt_fit', {})
+    prompt_fit.update({'latest': {'rung': 'full'}, 'source_status': 'valid'})
+    public, private = split_render_inputs(fixture)
+    rendered = [tv.render_pages(value, host='eeepc', generated_at='now')['agent.html'] for value in (public, private)]
+    for html in rendered:
+        assert 'WITHIN BUDGET (+2,000 chars spare)' in html
+        assert 'Source instructions: 1 truncated (AGENTS.md)' in html
+        assert 'mixed-status-cycle' in html
+        assert '2026-11-08T12:00:00Z' in html
+        assert 'healthy' not in html.lower() or 'truncation/drop streak' in html.lower()
+        assert 'PRIVATE PROMPT TEXT' not in html
+
+
+def test_issue440_missing_telemetry_keeps_navigation_and_no_fake_budget():
+    fixture = _base_fixture()
+    fixture['agent_context'] = _ctx_base()
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    assert 'system_prompt telemetry unavailable' in html
+    assert 'context-section-nav' in html
+    assert 'WITHIN BUDGET' not in html
+    assert 'Source instructions: unavailable' in html
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1440])
+def test_issue440_navigation_and_badges_are_reachable_without_overflow(tmp_path, viewport_width):
+    from playwright.sync_api import sync_playwright
+    from scripts.two_sinks import split_render_inputs
+
+    mixed = _telemetry_fixture()
+    mixed['agent_context']['system_prompt'].update({
+        'cycle_id': 'mixed-layout-cycle', 'chars': 22000, 'cap': 24000,
+        'rung': 'full', 'truncated': ['AGENTS.md'], 'ts': '2026-11-08T12:00:00Z',
+    })
+    missing = _base_fixture()
+    missing['agent_context'] = _ctx_base()
+    missing_public, _ = split_render_inputs(missing)
+    missing_html = tv.render_pages(missing_public, host='eeepc', generated_at='now')['agent.html']
+    assert 'system_prompt telemetry unavailable' in missing_html
+    assert 'Source instructions: unavailable' in missing_html
+    assert 'WITHIN BUDGET' not in missing_html
+    assert 'PRIVATE PROMPT TEXT' not in missing_html
+    rendered = []
+    for fixture in (mixed, missing):
+        public, _ = split_render_inputs(fixture)
+        rendered.append(tv.render_pages(public, host='eeepc', generated_at='now')['agent.html'])
+    target = tmp_path / f'agent-context-{viewport_width}.html'
+    target.write_text(rendered[0], encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+        page.goto(target.as_uri())
+        for href in ('#context-overview', '#context-instructions', '#context-knowledge',
+                     '#tier2-skills-section', '#agent-proposer'):
+            link = page.locator(f'.context-section-nav a[href="{href}"]')
+            assert link.is_visible()
+            box = link.bounding_box()
+            assert box and box['width'] >= 44 and box['height'] >= 44
+            assert box['x'] >= 0 and box['x'] + box['width'] <= viewport_width
+        badges = page.locator('.context-header-badges')
+        assert badges.evaluate('(e) => e.scrollWidth <= e.clientWidth')
+        links = page.locator('.context-section-nav a')
+        links.first.focus()
+        assert page.evaluate('document.activeElement.closest(".context-section-nav") !== null')
+        assert page.evaluate('getComputedStyle(document.activeElement).outlineStyle') != 'none'
+        page.keyboard.press('Enter')
+        assert page.url.endswith('#context-overview')
+        page.get_by_role('link', name='Instructions').click()
+        assert page.locator('#context-instructions').is_visible()
+        assert page.url.endswith('#context-instructions')
+        browser.close()
+
+
+def test_issue440_context_navigation_targets_are_unique_and_reachable():
+    fixture = _telemetry_fixture()
+    html = tv.render_pages(fixture, host='eeepc', generated_at='now')['agent.html']
+    for target in ('context-overview', 'context-instructions', 'context-knowledge',
+                   'tier2-skills-section', 'agent-proposer'):
+        assert html.count(f'id="{target}"') == 1
+        assert f'href="#{target}"' in html
+    for existing_detail in ('skill-card-details', 'context-block-details', 'AGENTS.md charter'):
+        assert existing_detail in html
+
+
 def test_issue261_catalogue_truncation_and_omissions_are_visible():
+
     html = tv.render_pages(_telemetry_fixture(), host='eeepc', generated_at='now')['agent.html']
     assert 'budget 100c' in html and 'retained 1/3' in html and 'truncated' in html
     assert 'lost-skill' in html and 'second-lost' in html
