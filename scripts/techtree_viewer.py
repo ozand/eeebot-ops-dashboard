@@ -7324,6 +7324,14 @@ def build_scorecard_hypothesis_metrics(scorecard: dict[str, Any] | None) -> str:
     </section>'''
 
 
+def _initial_cycle_feed_ids(feed_html: str) -> set[str]:
+    """Return cycle IDs from rows actually emitted in the initial feed HTML."""
+    return {
+        html.unescape(value)[len('cycle-'):]
+        for value in re.findall(r'<li\b(?=[^>]*\bclass="feed-row\b)[^>]*\bid="(cycle-[^"]+)"', feed_html)
+    }
+
+
 def build_hypotheses_panel(
     hypotheses_lifecycle: dict[str, Any] | None,
     hypotheses: dict[str, Any] | None = None,
@@ -7332,6 +7340,7 @@ def build_hypotheses_panel(
     hypotheses_durable: dict[str, Any] | None = None,
     demand_futility: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
+    cycle_detail_ids: set[str] | None = None,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -7458,10 +7467,14 @@ def build_hypotheses_panel(
             ev_str = str(answered_ev)
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
-            feed_cid = next((cid for cid in (ev_str, target_cid, clean_cid) if cid in valid_feed_cycles), None)
-            if feed_cid is not None:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="cycles.html#cycle-{esc(feed_cid)}">{esc(ev_str)}</a></span>'
-            else:
+            exact_in_details = ev_str in (cycle_detail_ids or set())
+            exact_in_feed = ev_str in valid_feed_cycles
+            matched_cid = ev_str if exact_in_details or exact_in_feed else next((cid for cid in (target_cid, clean_cid) if cid in valid_feed_cycles or cid in (cycle_detail_ids or set())), None)
+            if matched_cid in valid_feed_cycles:
+                ev_html = f'<span class="hypo-ev">evidence: <a href="cycles.html#cycle-{esc(matched_cid)}">{esc(ev_str)}</a></span>'
+            elif matched_cid in (cycle_detail_ids or set()):
+                ev_html = f'<span class="hypo-ev">evidence: <a href="cycle.html?id={quote(matched_cid, safe="")}">{esc(ev_str)}</a> (older cycle details)</span>'
+            elif matched_cid is None:
                 ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 
         v_label = str(verdict or status).upper()
@@ -10872,14 +10885,10 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         evolution_tree=evolution_tree,
         task_titles=cycle_titles,
     )
-    # Determine which cycle IDs are rendered in the feed (for evidence linking)
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
+    feed_cycles = {
+        str(row.get('cycle_id') or '') for row in (ledger_tail or [])
+        if isinstance(row, dict) and row.get('cycle_id')
+    }
 
     rendered_lesson_ids = {
         str(lesson.get('id')) for lesson in (data.get('lessons') or [])
@@ -10904,6 +10913,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     daily_digest = build_daily_digest(
         ledger_tail=ledger_tail,
         demand_completed=demand_completed,
@@ -10915,6 +10925,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,
@@ -11249,13 +11260,6 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         ledger_history=data.get('ledger_history'),
         now=generated_at,
     )
-    feed_cycles = set()
-    if isinstance(ledger_tail, list):
-        feed_cycles = {
-            str(r.get('cycle_id') or '')
-            for r in ledger_tail
-            if isinstance(r, dict) and r.get('cycle_id')
-        }
     # Issue #72: cycles.html renders FULL history (live ledger + .gz
     # archives) with day grouping and the outcome filter; index teaser
     # keeps the recent-tail feed.
@@ -11291,12 +11295,14 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         bridge_runs=data.get('bridge_runs'),
         bridge_active_run=data.get('bridge_active_run'),
     )
+    feed_cycles = _initial_cycle_feed_ids(cycle_feed)
     hypotheses_panel = build_hypotheses_panel(
         hypotheses,
         feed_cycles=feed_cycles,
         hypotheses_durable=hypotheses_durable,
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
+        cycle_detail_ids=set(cycle_details or {}),
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,

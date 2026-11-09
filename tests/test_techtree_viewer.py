@@ -503,6 +503,91 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
     assert {'cycle-cycle-a', 'cycle-foo', 'cycle-cycle-foo'} <= anchors.ids
     assert 'verification cycle unavailable in published feed' in hypotheses_html
 
+    # Feed membership follows actual emitted markup, not every tail cycle ID.
+    overflow_rows = [
+        {'phase': 'outcome', 'cycle_id': f'overflow-{i:02d}', 'outcome': 'success',
+         'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+        for i in range(55)
+    ]
+    outside_initial_window = tv.render_pages({
+        'hypotheses': {'entries': {'h': {
+            'title': 'Not initially visible', 'status': 'answered',
+            'answered_evidence': 'overflow-28',
+        }}},
+        'ledger_tail': overflow_rows,
+    }, host='eeepc', generated_at='2026-09-17T12:00:00Z')
+    overflow_html = outside_initial_window['hypotheses.html']
+    assert 'href="cycles.html#cycle-overflow-28"' not in overflow_html
+    assert 'href="cycle.html?id=overflow-28"' in overflow_html
+    assert 'older cycle details' in overflow_html
+
+
+def test_hypothesis_evidence_uses_public_cycle_details_for_archived_history(tmp_path: Path) -> None:
+    import json
+    from functools import partial
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+
+    from playwright.sync_api import sync_playwright
+
+    old_cycle = 'foo'
+    old_row = {'phase': 'outcome', 'cycle_id': old_cycle, 'outcome': 'success', 'ts': '2026-08-01T00:00:00Z'}
+    recent_rows = [
+        {'phase': 'outcome', 'cycle_id': 'cycle-foo', 'outcome': 'success', 'ts': '2026-09-01T00:00:00Z'},
+        *[
+            {'phase': 'outcome', 'cycle_id': f'recent-{i:02d}', 'outcome': 'success',
+             'ts': f'2026-09-{(i % 28) + 1:02d}T00:00:00Z'}
+            for i in range(55)
+        ],
+    ]
+    rendered = tv.render_pages({
+        'hypotheses': {'entries': {'answered': {
+            'title': 'Archived evidence', 'status': 'answered', 'answered_evidence': old_cycle,
+        }, 'prefixed': {
+            'title': 'Exact prefixed evidence', 'status': 'answered', 'answered_evidence': 'cycle-foo',
+        }}},
+        'ledger_tail': recent_rows,
+        'ledger_history': [old_row, *recent_rows],
+    }, host='eeepc', generated_at='2026-09-17T12:00:00Z')
+
+    hypotheses_html = rendered['hypotheses.html']
+    assert f'href="cycle.html?id={old_cycle}"' in hypotheses_html
+    assert 'older cycle details' in hypotheses_html
+    assert 'verification cycle unavailable in published feed' not in hypotheses_html
+    assert f'id="cycle-{old_cycle}"' not in rendered['cycles.html']
+    archived = [
+        row for name, content in rendered.items() if name.startswith('cycles-archive-')
+        for row in json.loads(content)
+    ]
+    assert any(f'id="cycle-{old_cycle}"' in row for row in archived)
+    detail_data = json.loads(rendered[tv.LINEAGE_DETAILS_FILE])
+    assert old_cycle in detail_data
+    for name, content in rendered.items():
+        (tmp_path / name).write_text(content, encoding='utf-8')
+
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=str(tmp_path)))
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(f'http://127.0.0.1:{server.server_port}/hypotheses.html')
+            page.locator('summary.hypo-summary').filter(has_text='answered titles').click()
+            page.locator(f'a[href="cycle.html?id={old_cycle}"]').click()
+            page.wait_for_selector('[data-cycle-detail-state="no-subagents"]', timeout=5000)
+            assert page.url.endswith(f'/cycle.html?id={old_cycle}')
+            assert 'Cycle: foo' in page.locator('#cycle-detail-body').inner_text()
+            browser.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
 
 def test_public_hypothesis_render_withholds_durable_hadi_text() -> None:
     """Exercise the existing private-text projection with synthetic sentinels."""
