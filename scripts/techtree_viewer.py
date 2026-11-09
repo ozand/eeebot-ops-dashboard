@@ -7458,8 +7458,9 @@ def build_hypotheses_panel(
             ev_str = str(answered_ev)
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
-            if target_cid in valid_feed_cycles or clean_cid in valid_feed_cycles or ev_str in valid_feed_cycles:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="#cycle-{esc(target_cid)}">{esc(ev_str)}</a></span>'
+            feed_cid = next((cid for cid in (target_cid, clean_cid, ev_str) if cid in valid_feed_cycles), None)
+            if feed_cid is not None:
+                ev_html = f'<span class="hypo-ev">evidence: <a href="cycles.html#cycle-{esc(feed_cid)}">{esc(ev_str)}</a></span>'
             else:
                 ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
 

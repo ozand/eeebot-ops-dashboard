@@ -452,7 +452,48 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     # Answered group with evidence anchor
     assert 'Lifecycle registry — answered titles (1)' in html_out
     assert 'Lower temperature increases smoke pass rate' in html_out
-    assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out or 'href="#cycle-cycle-a"' in html_out or 'href="#cycle-a"' in html_out
+    assert '<a href="cycles.html#cycle-cycle-a">cycle-a</a>' in html_out
+
+
+def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
+    from html.parser import HTMLParser
+
+    class CycleAnchors(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.ids: set[str] = set()
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            attr_map = dict(attrs)
+            if tag == 'li' and (attr_map.get('id') or '').startswith('cycle-'):
+                self.ids.add(str(attr_map['id']))
+
+    rows = []
+    for cycle_id in ('cycle-a', 'foo'):
+        rows.extend([
+            {'phase': 'started', 'cycle_id': cycle_id, 'ts': '2026-08-18T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'},
+        ])
+    rendered = tv.render_pages({
+        'hypotheses': {'entries': {
+            'prefixed': {'title': 'Prefixed evidence', 'status': 'answered',
+                         'answered_evidence': 'cycle-a', 'answered_at': '2026-08-18T00:00:00Z'},
+            'unprefixed': {'title': 'Unprefixed evidence', 'status': 'answered',
+                           'answered_evidence': 'foo', 'answered_at': '2026-08-18T00:00:00Z'},
+            'missing': {'title': 'Missing evidence', 'status': 'answered',
+                        'answered_evidence': 'not-published', 'answered_at': '2026-08-18T00:00:00Z'},
+        }},
+        'ledger_tail': rows,
+    }, host='eeepc', generated_at='2026-08-18 00:02:00')
+    hypotheses_html = rendered['hypotheses.html']
+    anchors = CycleAnchors()
+    anchors.feed(rendered['cycles.html'])
+    for cycle_id in ('cycle-a', 'foo'):
+        target = f'cycles.html#cycle-{cycle_id}'
+        assert f'href="{target}"' in hypotheses_html
+        assert f'id="cycle-{cycle_id}"' in rendered['cycles.html']
+    assert {'cycle-cycle-a', 'cycle-foo'} <= anchors.ids
+    assert 'verification cycle unavailable in published feed' in hypotheses_html
 
 
 def test_public_hypothesis_render_withholds_durable_hadi_text() -> None:
