@@ -1151,9 +1151,15 @@
 }
 .context-header-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
+.context-section-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.context-section-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 10px; color: #58a6ff; border: 1px solid #30363d; border-radius: 5px; text-decoration: none; }
+.context-section-nav a:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }
+.context-observation-note { color: #8b949e; font-size: 12px; margin: 8px 0; overflow-wrap: anywhere; }
 .context-badge {
   font-size: 11px;
   font-weight: 600;
@@ -1475,13 +1481,13 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794212003-bf630cdd4481"></head>
+<meta name="snapshot-version" content="1794212884-85b8b306649e"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794211980.208" data-render-age-seconds="36">data: 35s old &middot; generated 08:13 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794212863.610" data-render-age-seconds="32">data: 32s old &middot; generated 08:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html">agent</a><a href="hypotheses.html" class="nav-current" aria-current="page">hypotheses</a><a href="about.html">about</a></nav>
@@ -3006,7 +3012,7 @@
     </section>
     
 </main>
-<footer class="page-footer">generator ea25ac7 · generated 2026-11-09 08:13:36 UTC &middot; host eeepc &middot; newest source 35s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 11:11:09 MSK</span></footer>
+<footer class="page-footer">generator 2bb7814 · generated 2026-11-09 08:28:16 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 11:11:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -3037,5 +3043,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794212003-bf630cdd4481 · generated 2026-11-09T08:13:23.037037+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794212884-85b8b306649e · generated 2026-11-09T08:28:04.316773+00:00</footer></body>
 </html>

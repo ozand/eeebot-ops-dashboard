@@ -1151,9 +1151,15 @@
 }
 .context-header-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
+.context-section-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.context-section-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 10px; color: #58a6ff; border: 1px solid #30363d; border-radius: 5px; text-decoration: none; }
+.context-section-nav a:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }
+.context-observation-note { color: #8b949e; font-size: 12px; margin: 8px 0; overflow-wrap: anywhere; }
 .context-badge {
   font-size: 11px;
   font-weight: 600;
@@ -1475,13 +1481,13 @@
 .indicator-alarm { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.4); }
 .indicator-window-pressure { background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.25); }
 </style>
-<meta name="snapshot-version" content="1794212003-bf630cdd4481"></head>
+<meta name="snapshot-version" content="1794212884-85b8b306649e"></head>
 <body>
 
     <header class="empire-strip">
       <h1 class="empire-title"># eeebot / tech-tree</h1>
       <span class="provenance-badge provenance-complete">Window: 7d (complete)</span>
-      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794211980.208" data-render-age-seconds="36">data: 35s old &middot; generated 08:13 UTC</span></div>
+      <div class="empire-fresh"><span class="freshness freshness-fresh" data-data-epoch="1794212863.610" data-render-age-seconds="32">data: 32s old &middot; generated 08:28 UTC</span></div>
     </header>
     
 <nav class="panel-nav site-nav" aria-label="Sections"><a href="index.html">now</a><a href="lineage.html">lineage</a><a href="cycles.html">cycles</a><a href="tokens.html">tokens</a><a href="lessons.html">lessons</a><a href="agent.html" class="nav-current" aria-current="page">agent</a><a href="hypotheses.html">hypotheses</a><a href="about.html">about</a></nav>
@@ -1526,7 +1532,15 @@
       <span class="kpi-sub">246 files reachable via read_file</span>
     </div>
   </div>
-  <div class="context-subject-group context-overview-group">
+  <nav class="context-section-nav" aria-label="Agent context sections">
+    <a href="#context-overview">Context</a>
+    <a href="#context-instructions">Instructions</a>
+    <a href="#context-knowledge">Knowledge</a>
+    <a href="#tier2-skills-section">Skills</a>
+    <a href="#agent-proposer">Proposer</a>
+  </nav>
+  <p class="context-observation-note">Budget fit and source-instruction load are separate recorded observations; each badge is scoped to the cycle shown. Static ownership notes below describe the interface map, not a historical payload.</p>
+  <div class="context-subject-group context-overview-group" id="context-overview">
     <h3 class="context-subject-heading">Prompt Budget &amp; Fit</h3>
   <div class="context-meter-box">
     <div class="meter-labels"><span>Prompt Budget Utilization: <strong>63%</strong> (22,249 / 35,000 chars)</span><span>2026-11-09 06:59:08 MSK</span></div>
@@ -1535,7 +1549,7 @@
     </div>
   </div>
   <div class="context-indicator-box indicator-alarm"><span class="context-badge badge-danger">TRUNCATION/DROP STREAK: ALARM</span> <span class="indicator-note">healthy: 0 consecutive cycles &bull; 3 recorded cycle(s) checked.</span><div class="indicator-pills"><span class="dropped-pill">TRUNCATED 3/3 consecutive cycles: AGENTS.md</span></div></div>
-  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.3%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 855 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 856 total in the last 24h.</span></div>
+  <div class="context-indicator-box indicator-window-pressure"><span class="context-badge badge-success">WINDOW PRESSURE (24H): WITHIN BUDGET (p99 73.3%)</span> <span class="indicator-note">healthy: &le; 80% &bull; p99 over 843 row(s) with a known context_window &bull; window unknown: 1 rows (excluded, not counted as 0%) of 844 total in the last 24h.</span></div>
   <div class="prompt-fit-events" id="prompt-fit-events">
     <h3>Prompt Fit Event Telemetry</h3>
     <p class="section-sub">Published runtime summary · latest prompt row: 2026-11-09T03:59:08.525589Z · source: published</p>
@@ -1595,7 +1609,7 @@
       </div>
     </div>
   </div>
-  <div class="context-detail-section">
+  <div class="context-detail-section" id="context-instructions">
     <h3>Tier 1: Assembled Context Blocks (Recorded Order) <span class="status-badge status-present">format: post-ADR-022 ontology</span></h3>
     <p class="section-sub">Blocks follow the ledger row's own recorded `sections` order for this cycle -- never a hard-coded assembly order. Click to view exact text.</p>
 <details class="context-block-details"><summary class="block-summary"><span class="block-seq">#1</span><strong class="block-title">identity</strong><span class="block-label"><span class="t1-owner t1-owner-release">release</span> <code>IDENTITY.md</code> &bull; cap shared pool 15,500c (static, runtime not reporting)</span><span class="block-meta">1,244 chars &bull; ~311 tokens &mdash;</span></summary><div class="block-body"><p class="unavailable-note lan-only-note">text on the LAN site only (0 chars)</p></div></details>
@@ -1633,7 +1647,7 @@
     </div>
   </div>
   </div>
-  <div class="context-subject-group context-knowledge-group">
+  <div class="context-subject-group context-knowledge-group" id="context-knowledge">
     <h3 class="context-subject-heading">Reachable Knowledge &amp; Access Paths</h3>
   <div class="tier2-deep-section">
     <h3>Tier 2: Reachable On-Demand Knowledge Base</h3>
@@ -2015,14 +2029,14 @@
                 
         </div>
       </div>
-      <div class="proposer-block">
+      <div class="proposer-block" id="agent-proposer">
         <h3>Proposer</h3>
         <p class="proposer-decision">last decision: <strong>skipped (sizing_rejected)</strong></p><p class="proposer-model-line"><span class="proposer-model">model: an/gemini-3.8-flash-high</span> &middot; 317 calls in the last 7 days</p><table class="skills-table proposer-table"><thead><tr><th>Day</th><th>Calls</th><th>Tokens</th><th>Mean latency</th></tr></thead><tbody><tr><td>2026-11-09</td><td class="skill-reads">27</td><td>153.6K</td><td>13s</td></tr><tr><td>2026-11-08</td><td class="skill-reads">75</td><td>426.9K</td><td>8s</td></tr><tr><td>2026-11-07</td><td class="skill-reads">39</td><td>329.1K</td><td>29s</td></tr><tr><td>2026-11-06</td><td class="skill-reads">58</td><td>497.0K</td><td>30s</td></tr><tr><td>2026-11-05</td><td class="skill-reads">3</td><td>33.54K</td><td>44s</td></tr><tr><td>2026-11-04</td><td class="skill-reads">72</td><td>656.8K</td><td>45s</td></tr><tr><td>2026-11-03</td><td class="skill-reads">43</td><td>398.0K</td><td>38s</td></tr></tbody></table>
       </div>
     </section>
     
 </main>
-<footer class="page-footer">generator ea25ac7 · generated 2026-11-09 08:13:36 UTC &middot; host eeepc &middot; newest source 35s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 11:11:09 MSK</span></footer>
+<footer class="page-footer">generator 2bb7814 · generated 2026-11-09 08:28:16 UTC &middot; host eeepc &middot; newest source 32s old &middot; <span class="footer-computed">scorecard computed 2026-11-09 11:11:09 MSK</span></footer>
 <script>
 document.querySelectorAll('.copyable').forEach(function (el) {
   el.addEventListener('click', function () {
@@ -2053,5 +2067,5 @@ document.querySelectorAll('.copyable').forEach(function (el) {
   setInterval(updateFreshness, 30000);
 })();
 </script>
-<footer class="snapshot-meta">Snapshot 1794212003-bf630cdd4481 · generated 2026-11-09T08:13:23.037037+00:00</footer></body>
+<footer class="snapshot-meta">Snapshot 1794212884-85b8b306649e · generated 2026-11-09T08:28:04.316773+00:00</footer></body>
 </html>
