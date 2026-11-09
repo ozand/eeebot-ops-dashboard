@@ -5899,6 +5899,57 @@ def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Pat
         browser.close()
 
 
+def test_issue439_legacy_title_word_is_searchable(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    row = {
+        'id': 'LEG-42', 'title': 'Distinctive explanatory phrase', 'date': '2026-09-01',
+        'task_id': 'task-meta', 'hypothesis': 'other metadata', 'result': '',
+    }
+    html = tv.render_pages({'lessons': [row]}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-title.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        search.fill('explanatory')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert page.locator('#q-LEG-42').is_visible()
+        assert page.locator('.lessons-match-count').inner_text() == '1 matching published rows'
+        assert 'lesson_q=explanatory' in page.url
+        browser.close()
+
+
+def test_issue439_unknown_source_row_navigation_keeps_unknown_filter(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': f'UNKNOWN-{i:03d}', 'title': f'Unknown source {i}', 'date': '2026-09-01',
+         'source': 'unexpected-source'}
+        for i in range(60)
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'unknown-source.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '#q-UNKNOWN-055')
+        assert page.locator('#q-UNKNOWN-055').is_visible()
+        assert page.locator('.lessons-source-filter').input_value() == 'unknown'
+        page.evaluate("""() => {
+          const link=document.createElement('a');link.href='#q-UNKNOWN-050';link.textContent='jump to lesson';
+          document.querySelector('#panel-lessons').prepend(link);
+        }""")
+        page.get_by_role('link', name='jump to lesson').click()
+        assert page.locator('#q-UNKNOWN-050').is_visible()
+        assert page.locator('.lessons-source-filter').input_value() == 'unknown'
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 2')
+        browser.close()
+
+
 def test_issue73_entries_render_with_cycle_links() -> None:
     data = _fixture()
     data['lessons'] = [

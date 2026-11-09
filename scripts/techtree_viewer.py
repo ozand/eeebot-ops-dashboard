@@ -8044,11 +8044,11 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         hypothesis_size = hypothesis_chars if isinstance(hypothesis_chars, int) and not isinstance(hypothesis_chars, bool) and hypothesis_chars >= 0 else len(str(l.get('hypothesis') or ''))
         hypothesis_html = f'<div class="lesson-hypothesis lan-only-note">Hypothesis: text on the LAN site only ({hypothesis_size:,} chars)</div>' if hypothesis_size > 0 else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
         result_html = result_html if result_size > 0 else '<div class="lesson-result unavailable-note">Result: no text recorded.</div>'
+        legacy_title = str(l.get('title') or '').strip()
         search_text = esc((' '.join([
-            l.get('id') or '', str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
+            l.get('id') or '', legacy_title, str(l.get('task_id') or ''), str(l.get('hypothesis') or ''),
             cid,
         ])).lower())
-        legacy_title = str(l.get('title') or '').strip()
         legacy_title_html = (
             f'<h3 class="lesson-title">{esc(legacy_title)}</h3>'
             if legacy_title and legacy_title != str(l.get('id') or '') else '<h3 class="lesson-title unavailable-note">Descriptive title unavailable; reason not published.</h3>'
@@ -8178,10 +8178,10 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         root.querySelector('.lessons-next').addEventListener('click',function(){{page++;apply(false);}});
         window.addEventListener('popstate',function(){{apply(true);}});
         window.addEventListener('hashchange',function(){{var before=input.value;apply(true);if(input.value===before && location.hash.indexOf('#q-')===0){{input.value='';apply(false);}}}});
-        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link)return;var id=decodeURIComponent(link.hash.slice(3));var target=root.querySelector('#q-'+CSS.escape(id));if(!target)return;source.value=target.getAttribute('data-source')==='live'?'live':'archive';input.value='';sort.value='date-desc';var ix=matches.indexOf(target);if(ix<0){{page=Math.floor(rows.indexOf(target)/pageSize);}}else{{page=Math.floor(ix/pageSize);}}apply(false);target.scrollIntoView();}});
+        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link)return;var id=decodeURIComponent(link.hash.slice(3));var target=root.querySelector('#q-'+CSS.escape(id));if(!target)return;source.value=target.getAttribute('data-source')||'unknown';input.value='';sort.value='date-desc';var ix=matches.indexOf(target);if(ix<0){{page=Math.floor(rows.indexOf(target)/pageSize);}}else{{page=Math.floor(ix/pageSize);}}apply(false);target.scrollIntoView();}});
         apply(true);
         var hashId=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';
-        function revealHash(){{var current=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';if(!current)return;var deep=root.querySelector('#q-'+CSS.escape(current));if(deep){{source.value=deep.getAttribute('data-source')==='live'?'live':'archive';input.value='';sort.value='date-desc';var ix=rows.indexOf(deep);page=Math.floor(ix/pageSize);apply(false);deep.scrollIntoView();}}}}
+        function revealHash(){{var current=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';if(!current)return;var deep=root.querySelector('#q-'+CSS.escape(current));if(deep){{source.value=deep.getAttribute('data-source')||'unknown';input.value='';sort.value='date-desc';var ix=rows.indexOf(deep);page=Math.floor(ix/pageSize);apply(false);deep.scrollIntoView();}}}}
         if(hashId)revealHash();
         window.addEventListener('hashchange',revealHash);
       }})();
