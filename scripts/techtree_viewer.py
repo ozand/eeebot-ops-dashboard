@@ -7458,7 +7458,7 @@ def build_hypotheses_panel(
             ev_str = str(answered_ev)
             target_cid = ev_str if ev_str.startswith('cycle-') else f"cycle-{ev_str}"
             clean_cid = ev_str[6:] if ev_str.startswith('cycle-') else ev_str
-            feed_cid = next((cid for cid in (target_cid, clean_cid, ev_str) if cid in valid_feed_cycles), None)
+            feed_cid = next((cid for cid in (ev_str, target_cid, clean_cid) if cid in valid_feed_cycles), None)
             if feed_cid is not None:
                 ev_html = f'<span class="hypo-ev">evidence: <a href="cycles.html#cycle-{esc(feed_cid)}">{esc(ev_str)}</a></span>'
             else:

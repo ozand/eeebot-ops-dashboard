@@ -469,7 +469,7 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
                 self.ids.add(str(attr_map['id']))
 
     rows = []
-    for cycle_id in ('cycle-a', 'foo'):
+    for cycle_id in ('cycle-a', 'foo', 'cycle-foo'):
         rows.extend([
             {'phase': 'started', 'cycle_id': cycle_id, 'ts': '2026-08-18T00:00:00Z'},
             {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'},
@@ -480,6 +480,8 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
                          'answered_evidence': 'cycle-a', 'answered_at': '2026-08-18T00:00:00Z'},
             'unprefixed': {'title': 'Unprefixed evidence', 'status': 'answered',
                            'answered_evidence': 'foo', 'answered_at': '2026-08-18T00:00:00Z'},
+            'prefixed-collision': {'title': 'Exact prefixed evidence', 'status': 'answered',
+                                   'answered_evidence': 'cycle-foo', 'answered_at': '2026-08-18T00:00:00Z'},
             'missing': {'title': 'Missing evidence', 'status': 'answered',
                         'answered_evidence': 'not-published', 'answered_at': '2026-08-18T00:00:00Z'},
         }},
@@ -488,11 +490,17 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
     hypotheses_html = rendered['hypotheses.html']
     anchors = CycleAnchors()
     anchors.feed(rendered['cycles.html'])
-    for cycle_id in ('cycle-a', 'foo'):
-        target = f'cycles.html#cycle-{cycle_id}'
-        assert f'href="{target}"' in hypotheses_html
-        assert f'id="cycle-{cycle_id}"' in rendered['cycles.html']
-    assert {'cycle-cycle-a', 'cycle-foo'} <= anchors.ids
+    expected_links = {
+        'Prefixed evidence': 'cycles.html#cycle-cycle-a',
+        'Unprefixed evidence': 'cycles.html#cycle-foo',
+        'Exact prefixed evidence': 'cycles.html#cycle-cycle-foo',
+    }
+    for title, target in expected_links.items():
+        row = hypotheses_html.split(title, 1)[1].split('</li>', 1)[0]
+        assert f'href="{target}"' in row
+        anchor_id = target.split('#', 1)[1]
+        assert f'id="{anchor_id}"' in rendered['cycles.html']
+    assert {'cycle-cycle-a', 'cycle-foo', 'cycle-cycle-foo'} <= anchors.ids
     assert 'verification cycle unavailable in published feed' in hypotheses_html
 
 
