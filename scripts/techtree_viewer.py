@@ -8137,14 +8137,17 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
           return {{q: query, source: params.get('lesson_source') || 'all', sort: params.get('lesson_sort') || 'date-desc', page: Math.max(0, Number(params.get('lesson_page') || 0))}};
         }}
         function writeUrl() {{
-          var params = new URLSearchParams();
+          var params = new URLSearchParams(location.search);
+          ['lesson_q','lesson_source','lesson_sort','lesson_page'].forEach(function(key){{params.delete(key);}});
           if (input.value) params.set('lesson_q', input.value);
           if (source.value !== 'all') params.set('lesson_source', source.value);
           if (sort.value !== 'date-desc') params.set('lesson_sort', sort.value);
           if (page) params.set('lesson_page', String(page));
-          history.pushState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash);
+          var hash=location.hash;
+          if(hash.indexOf('#q-')===0){{var id=decodeURIComponent(hash.slice(3));if(root.querySelector('#q-'+CSS.escape(id)))hash='';}}
+          history.pushState(null, '', location.pathname + (params.toString() ? '?' + params.toString() : '') + hash);
         }}
-        function apply(restore) {{
+        function apply(restore, skipUrlWrite) {{
           if (restore) {{ var st=stateFromUrl(); input.value=st.q; source.value=st.source; sort.value=st.sort; page=st.page; }}
           var q=input.value.trim().toLowerCase(), wanted=source.value;
           matches=rows.filter(function(r){{return (!q || (r.getAttribute('data-text')||'').indexOf(q)!==-1) && (wanted==='all'||r.getAttribute('data-source')===wanted);}});
@@ -8169,21 +8172,35 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
           root.querySelector('.lessons-match-count').textContent=matches.length+' matching published rows';
           root.querySelector('.lessons-page-status').textContent='Page '+(page+1)+' of '+pages+' · '+matches.length+' results';
           root.querySelector('.lessons-prev').disabled=page===0; root.querySelector('.lessons-next').disabled=page>=pages-1;
-          if(!restore) writeUrl();
+          if(!restore && !skipUrlWrite) writeUrl();
+        }}
+        function revealHash() {{
+          var id=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';
+          var target=id&&root.querySelector('#q-'+CSS.escape(id));
+          if(!target)return false;
+          var params=new URLSearchParams(location.search);
+          if(['lesson_q','lesson_source','lesson_sort','lesson_page'].some(function(key){{return params.has(key);}}))return false;
+          input.value='';source.value=target.getAttribute('data-source')||'unknown';sort.value='date-desc';
+          apply(false,true);
+          var ix=matches.indexOf(target);
+          if(ix<0)return false;
+          page=Math.floor(ix/pageSize);apply(false,true);target.scrollIntoView();return true;
+        }}
+        function restoreLocation() {{
+          var params=new URLSearchParams(location.search);
+          if(['lesson_q','lesson_source','lesson_sort','lesson_page'].some(function(key){{return params.has(key);}})){{apply(true);return;}}
+          if(revealHash())return;
+          apply(true);
         }}
         input.addEventListener('input',function(){{page=0;apply(false);}});
         source.addEventListener('change',function(){{page=0;apply(false);}});
         sort.addEventListener('change',function(){{page=0;apply(false);}});
         root.querySelector('.lessons-prev').addEventListener('click',function(){{page=Math.max(0,page-1);apply(false);}});
         root.querySelector('.lessons-next').addEventListener('click',function(){{page++;apply(false);}});
-        window.addEventListener('popstate',function(){{apply(true);}});
-        window.addEventListener('hashchange',function(){{var before=input.value;apply(true);if(input.value===before && location.hash.indexOf('#q-')===0){{input.value='';apply(false);}}}});
-        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link)return;var id=decodeURIComponent(link.hash.slice(3));var target=root.querySelector('#q-'+CSS.escape(id));if(!target)return;source.value=target.getAttribute('data-source')||'unknown';input.value='';sort.value='date-desc';var ix=matches.indexOf(target);if(ix<0){{page=Math.floor(rows.indexOf(target)/pageSize);}}else{{page=Math.floor(ix/pageSize);}}apply(false);target.scrollIntoView();}});
-        apply(true);
-        var hashId=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';
-        function revealHash(){{var current=location.hash.indexOf('#q-')===0?decodeURIComponent(location.hash.slice(3)):'';if(!current)return;var deep=root.querySelector('#q-'+CSS.escape(current));if(deep){{source.value=deep.getAttribute('data-source')||'unknown';input.value='';sort.value='date-desc';var ix=rows.indexOf(deep);page=Math.floor(ix/pageSize);apply(false);deep.scrollIntoView();}}}}
-        if(hashId)revealHash();
-        window.addEventListener('hashchange',revealHash);
+        window.addEventListener('popstate',restoreLocation);
+        window.addEventListener('hashchange',restoreLocation);
+        root.addEventListener('click',function(event){{var link=event.target.closest('a[href*="#q-"]');if(!link||link.origin!==location.origin||link.pathname!==location.pathname)return;var id=decodeURIComponent(link.hash.slice(3));if(!root.querySelector('#q-'+CSS.escape(id)))return;event.preventDefault();var params=new URLSearchParams(location.search);['lesson_q','lesson_source','lesson_sort','lesson_page'].forEach(function(key){{params.delete(key);}});history.pushState(null,'',location.pathname+(params.toString()?'?'+params.toString():'')+link.hash);restoreLocation();}});
+        restoreLocation();
       }})();
       </script>
     </section>

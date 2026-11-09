@@ -5878,13 +5878,22 @@ def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Pat
         page.locator('.lessons-source-filter').select_option('archive')
         assert 'lesson_source=archive' in page.url
         assert page.locator('.lesson-row:visible').count() == 50
+        page.locator('.lessons-source-filter').select_option('all')
+        page.locator('.lessons-sort').select_option('date-desc')
+        page.evaluate("location.hash='#q-LESS-111'")
+        assert page.locator('#q-LESS-111').is_visible()
         page.locator('.lessons-filter').fill('LESS-111')
         assert page.locator('.lesson-row:visible').count() == 1
         assert 'lesson_q=LESS-111' in page.url
+        assert '#q-LESS-111' not in page.url
+        page.reload()
+        assert page.locator('.lessons-filter').input_value() == 'LESS-111'
+        assert page.locator('#q-LESS-111').is_visible()
         page.go_back()
         assert page.locator('.lessons-filter').input_value() == ''
-        page.go_back()
-        assert page.locator('.lessons-source-filter').input_value() == 'all'
+        assert page.locator('#q-LESS-111').is_visible()
+        page.go_forward()
+        assert page.locator('.lessons-filter').input_value() == 'LESS-111'
         deep = page.locator('#q-LESS-111')
         page.evaluate("location.hash='#q-LESS-111'")
         assert deep.is_visible()
