@@ -7341,6 +7341,7 @@ def build_hypotheses_panel(
     demand_futility: dict[str, Any] | None = None,
     scorecard: dict[str, Any] | None = None,
     cycle_detail_ids: set[str] | None = None,
+    standalone: bool = False,
 ) -> str:
     # Accept either hypotheses_lifecycle or legacy hypotheses dict
     entries_dict = {}
@@ -7471,8 +7472,9 @@ def build_hypotheses_panel(
             exact_in_feed = ev_str in valid_feed_cycles
             matched_cid = ev_str if exact_in_details or exact_in_feed else next((cid for cid in (target_cid, clean_cid) if cid in valid_feed_cycles or cid in (cycle_detail_ids or set())), None)
             if matched_cid in valid_feed_cycles:
-                ev_html = f'<span class="hypo-ev">evidence: <a href="cycles.html#cycle-{esc(matched_cid)}">{esc(ev_str)}</a></span>'
-            elif matched_cid in (cycle_detail_ids or set()):
+                href = f'#cycle-{esc(matched_cid)}' if standalone else f'cycles.html#cycle-{esc(matched_cid)}'
+                ev_html = f'<span class="hypo-ev">evidence: <a href="{href}">{esc(ev_str)}</a></span>'
+            elif not standalone and matched_cid in (cycle_detail_ids or set()):
                 ev_html = f'<span class="hypo-ev">evidence: <a href="cycle.html?id={quote(matched_cid, safe="")}">{esc(ev_str)}</a> (older cycle details)</span>'
             elif matched_cid is None:
                 ev_html = f'<span class="hypo-ev">evidence {esc(ev_str)} (verification cycle unavailable in published feed)</span>'
@@ -10926,6 +10928,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         demand_futility=data.get('demand_futility'),
         scorecard=data.get('scorecard'),
         cycle_detail_ids=set(cycle_details or {}),
+        standalone=True,
     )
     agent_panel = build_agent_panel(
         agents_md=agents_md,

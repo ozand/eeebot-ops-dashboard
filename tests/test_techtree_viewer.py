@@ -452,7 +452,7 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     # Answered group with evidence anchor
     assert 'Lifecycle registry — answered titles (1)' in html_out
     assert 'Lower temperature increases smoke pass rate' in html_out
-    assert '<a href="cycles.html#cycle-cycle-a">cycle-a</a>' in html_out
+    assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out
 
 
 def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
@@ -502,6 +502,56 @@ def test_hypothesis_evidence_links_target_actual_cycle_feed_rows() -> None:
         assert f'id="{anchor_id}"' in rendered['cycles.html']
     assert {'cycle-cycle-a', 'cycle-foo', 'cycle-cycle-foo'} <= anchors.ids
     assert 'verification cycle unavailable in published feed' in hypotheses_html
+
+    standalone_rows = []
+    for cycle_id in ('cycle-a', 'foo', 'cycle-foo'):
+        standalone_rows.extend([
+            {'phase': 'started', 'cycle_id': cycle_id, 'ts': '2026-08-18T00:00:00Z'},
+            {'phase': 'outcome', 'cycle_id': cycle_id, 'outcome': 'success', 'ts': '2026-08-18T00:01:00Z'},
+        ])
+    standalone = tv.render_page({
+        'hypotheses': {'entries': {
+            'prefixed': {'title': 'Prefixed evidence', 'status': 'answered', 'answered_evidence': 'cycle-a'},
+            'unprefixed': {'title': 'Unprefixed evidence', 'status': 'answered', 'answered_evidence': 'foo'},
+            'collision': {'title': 'Exact unprefixed evidence', 'status': 'answered', 'answered_evidence': 'foo'},
+            'missing': {'title': 'Missing evidence', 'status': 'answered', 'answered_evidence': 'not-published'},
+            'older': {'title': 'Older detail unavailable here', 'status': 'answered', 'answered_evidence': 'older-id'},
+        }},
+        'ledger_tail': standalone_rows,
+        'ledger_history': standalone_rows,
+    }, host='synthetic', generated_at='2026-08-18 00:02:00')
+    for title, anchor_id in (
+        ('Prefixed evidence', 'cycle-cycle-a'),
+        ('Unprefixed evidence', 'cycle-foo'),
+        ('Exact unprefixed evidence', 'cycle-foo'),
+    ):
+        row = standalone.split(title, 1)[1].split('</li>', 1)[0]
+        assert f'href="#{anchor_id}"' in row
+        assert 'cycles.html#cycle-' not in row
+        assert 'cycle.html?id=' not in row
+        assert f'id="{anchor_id}"' in standalone
+    assert 'href="#cycle-foo">foo</a>' in standalone
+    assert 'Older detail unavailable here' in standalone
+    older_row = standalone.split('Older detail unavailable here', 1)[1].split('</li>', 1)[0]
+    assert 'cycle.html?id=' not in older_row
+
+    from playwright.sync_api import sync_playwright
+    from tempfile import TemporaryDirectory
+    from pathlib import Path
+    with TemporaryDirectory() as directory:
+        page_path = Path(directory) / 'standalone.html'
+        page_path.write_text(standalone, encoding='utf-8')
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(page_path.as_uri())
+            page.locator('#q-prefixed').scroll_into_view_if_needed()
+            page.locator('#panel-hypotheses details summary').click()
+            page.locator('#q-prefixed a').click()
+            assert page.url.endswith('#cycle-cycle-a')
+            assert page.locator('#cycle-cycle-a').count() == 1
+            assert '(cycle-a)' in page.locator('#cycle-cycle-a').inner_text()
+            browser.close()
 
     # Feed membership follows actual emitted markup, not every tail cycle ID.
     overflow_rows = [
