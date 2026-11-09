@@ -5820,7 +5820,8 @@ def test_issue73_missing_file_graceful_note() -> None:
     pages = tv.render_pages(data, host='eeepc', generated_at='2026-08-18 12:00:00')
     # Deliberate #246 contract change: this page is a retained-history
     # population, not the full executor retrieval corpus.
-    assert 'no lessons history data recorded' in pages['lessons.html']
+    assert 'No lessons history data recorded in this published view' in pages['lessons.html']
+    assert 'retained-history source completeness unavailable' in pages['lessons.html']
 
 
 def test_issue73_filter_and_hash_markers() -> None:
@@ -5832,6 +5833,285 @@ def test_issue73_filter_and_hash_markers() -> None:
     assert 'lessons-filter' in les
     assert 'location.hash' in les
     assert '#q-' in les
+    assert 'Search lesson IDs, titles and public metadata' in les
+    assert 'legacy (pre-v2, frozen)' in les
+    assert 'aria-live="polite"' in les
+    assert 'bounded' not in les.lower() or 'pageSize = 50' in les
+    assert 'lesson_q' in les and 'lesson_source' in les and 'lesson_sort' in les and 'lesson_page' in les
+
+
+@pytest.mark.parametrize('viewport_width', [390, 1440])
+def test_issue439_lessons_search_sort_pagination_and_url_roundtrip(tmp_path: Path, viewport_width: int) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = []
+    for i in range(120):
+        rows.append({
+            'id': f'LESS-{i:03d}',
+            'title': f'Lesson title {i:03d}',
+            'date': '2026-09-01',
+            'source': 'live' if i % 2 == 0 else None,
+            **({'problem': 'private body sentinel' if i % 3 == 0 else '',
+                'problem_chars': 14 if i % 3 == 0 else 0,
+                'solution': '', 'solution_chars': 15 if i % 3 == 0 else 0}
+               if i % 2 == 0 else {'task_id': f'legacy task {i:03d}', 'hypothesis': 'private hypothesis sentinel', 'result': '', 'result_chars': 14}),
+        })
+    from scripts.two_sinks import _sanitize_public_value
+    public_rows = _sanitize_public_value('lessons', rows)
+    html = tv.render_pages({'lessons': public_rows}, host='synthetic')['lessons.html']
+    path = tmp_path / f'lessons-{viewport_width}.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page(viewport={'width': viewport_width, 'height': 900})
+        page.goto(path.as_uri())
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.count() == 1
+        assert page.locator('.lesson-row:visible').count() == 50
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 1 of 3')
+        page.locator('.lessons-next').click()
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 3')
+        assert page.locator('#q-LESS-100').count() == 1
+        assert page.locator('#q-LESS-100').is_visible()
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert 'lesson_sort=title-asc' in page.url
+        page.locator('.lessons-source-filter').select_option('archive')
+        assert 'lesson_source=archive' in page.url
+        assert page.locator('.lesson-row:visible').count() == 50
+        page.locator('.lessons-source-filter').select_option('all')
+        page.locator('.lessons-sort').select_option('date-desc')
+        page.evaluate("location.hash='#q-LESS-111'")
+        assert page.locator('#q-LESS-111').is_visible()
+        page.locator('.lessons-filter').fill('LESS-111')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert 'lesson_q=LESS-111' in page.url
+        assert '#q-LESS-111' not in page.url
+        page.reload()
+        assert page.locator('.lessons-filter').input_value() == 'LESS-111'
+        assert page.locator('#q-LESS-111').is_visible()
+        page.go_back()
+        assert page.locator('.lessons-filter').input_value() == ''
+        assert page.locator('#q-LESS-111').is_visible()
+        page.go_forward()
+        assert page.locator('.lessons-filter').input_value() == 'LESS-111'
+        deep = page.locator('#q-LESS-111')
+        page.evaluate("location.hash='#q-LESS-111'")
+        assert deep.is_visible()
+        page.locator('.lessons-filter').fill('')
+        page.locator('.lessons-filter').focus()
+        page.keyboard.type('LESS-111')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert page.locator('.lessons-match-count').inner_text() == '1 matching published rows'
+        assert 'private body sentinel' not in page.content()
+        assert 'private hypothesis sentinel' not in page.content()
+        assert page.locator('.lessons-controls').evaluate('(e) => e.getBoundingClientRect().width <= window.innerWidth')
+        browser.close()
+
+
+def test_issue439_control_params_with_record_hash_preserve_sort_and_empty_search(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-ONE', 'title': 'Alpha title', 'date': '2026-09-01', 'source': 'live'},
+        {'id': 'LESS-TWO', 'title': 'Beta title', 'date': '2026-09-02', 'source': 'live'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'record-hash-with-sort.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '?lesson_sort=title-asc#q-LESS-ONE')
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.input_value() == ''
+        assert page.locator('.lessons-sort').input_value() == 'title-asc'
+        assert page.locator('.lesson-row:visible').count() == 2
+        assert page.locator('#q-LESS-ONE').is_visible()
+        page.goto(path.as_uri() + '?lesson_q=Beta&lesson_sort=title-asc#q-LESS-ONE')
+        assert search.input_value() == 'Beta'
+        assert page.locator('.lessons-sort').input_value() == 'title-asc'
+        assert page.locator('.lesson-row:visible .lesson-id').all_text_contents() == ['LESS-TWO']
+        browser.close()
+
+
+def test_issue439_legacy_search_hash_clear_stays_clear_on_reload(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-ONE', 'title': 'Unrelated lesson', 'date': '2026-09-01', 'source': 'live'},
+        {'id': 'LESS-TWO', 'title': 'Another lesson', 'date': '2026-09-02', 'source': 'live'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-search-hash.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '#q-CYCLE-ONLY')
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        assert search.input_value() == 'CYCLE-ONLY'
+        search.fill('')
+        assert search.input_value() == ''
+        assert page.locator('.lesson-row:visible').count() == 2
+        assert 'lesson_q' not in page.url
+        assert 'q-CYCLE-ONLY' not in page.url
+        page.reload()
+        assert search.input_value() == ''
+        assert page.locator('.lesson-row:visible').count() == 2
+        page.go_back()
+        assert page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata').input_value() == 'CYCLE-ONLY'
+        browser.close()
+
+
+def test_issue439_sorted_lessons_follow_visible_order_across_sources(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': 'LESS-Z', 'title': 'Zulu title', 'date': '2026-09-04', 'source': 'live', 'problem_chars': 0},
+        {'id': 'LESS-A', 'title': 'Alpha title', 'date': '2026-09-01', 'source': 'live', 'problem_chars': 0},
+        {'id': 'LEG-Z', 'title': 'Zulu legacy', 'date': '2026-09-03', 'task_id': 'legacy z'},
+        {'id': 'LEG-A', 'title': 'Alpha legacy', 'date': '2026-09-02', 'task_id': 'legacy a'},
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'sorted-order.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        v2rows = page.locator('.lesson-row-v2')
+        legacyrows = page.locator('.lesson-legacy-details .lesson-row')
+        assert v2rows.count() == 2
+        assert legacyrows.count() == 2
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Zulu title', 'Alpha title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Zulu legacy', 'Alpha legacy']
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Alpha title', 'Zulu title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Alpha legacy', 'Zulu legacy']
+        page.locator('.lessons-sort').select_option('date-asc')
+        assert v2rows.locator('.lesson-title').all_text_contents() == ['Alpha title', 'Zulu title']
+        assert legacyrows.locator('.lesson-title').all_text_contents() == ['Alpha legacy', 'Zulu legacy']
+        assert page.locator('.lesson-row:visible').count() == 4
+        browser.close()
+
+
+def test_issue439_sorted_pages_keep_all_records_and_hash_target(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': f'LESS-{i:02d}', 'title': f'Lesson {51-i:02d}', 'date': f'2026-09-{i % 28 + 1:02d}',
+         'source': 'live', 'problem_chars': 0}
+        for i in range(52)
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'sorted-pages.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        page.locator('.lessons-sort').select_option('title-asc')
+        page_one = page.locator('.lesson-row:visible .lesson-id').all_text_contents()
+        assert len(page_one) == 50
+        assert page_one == sorted(page_one, key=lambda lesson_id: int(lesson_id[-2:]), reverse=True)
+        page.locator('.lessons-next').click()
+        page_two = page.locator('.lesson-row:visible .lesson-id').all_text_contents()
+        assert len(page_two) == 2
+        assert len(set(page_one + page_two)) == 52
+        assert set(page_one + page_two) == {row['id'] for row in rows}
+        target = page.locator('#q-LESS-00')
+        page.evaluate("""() => { const link=document.createElement('a');link.href='#q-LESS-00';link.textContent='jump to lesson';document.querySelector('#panel-lessons').prepend(link); }""")
+        page.get_by_role('link', name='jump to lesson').click()
+        assert target.is_visible()
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 2')
+        browser.close()
+
+
+def test_issue439_legacy_title_word_is_searchable(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    row = {
+        'id': 'LEG-42', 'title': 'Distinctive explanatory phrase', 'date': '2026-09-01',
+        'task_id': 'task-meta', 'hypothesis': 'other metadata', 'result': '',
+    }
+    html = tv.render_pages({'lessons': [row]}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-title.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        search = page.get_by_role('searchbox', name='Search lesson IDs, titles and public metadata')
+        search.fill('explanatory')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert page.locator('#q-LEG-42').is_visible()
+        assert page.locator('.lessons-match-count').inner_text() == '1 matching published rows'
+        assert 'lesson_q=explanatory' in page.url
+        browser.close()
+
+
+def test_issue439_legacy_only_counts_records_and_title_sort_updates_url(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    row = {'id': 'LEG-ONLY', 'title': 'Legacy title', 'date': '2026-09-01', 'task_id': 'legacy task'}
+    html = tv.render_pages({'lessons': [row]}, host='synthetic')['lessons.html']
+    path = tmp_path / 'legacy-only.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert '1 matching published rows' in page.locator('.lessons-match-count').inner_text()
+        page.locator('.lessons-sort').select_option('title-asc')
+        assert page.locator('.lesson-row:visible').count() == 1
+        assert 'lesson_sort=title-asc' in page.url
+        browser.close()
+
+
+def test_issue439_no_records_placeholder_is_not_search_result(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    html = tv.render_pages({'lessons': []}, host='synthetic')['lessons.html']
+    path = tmp_path / 'no-lessons.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri())
+        assert page.locator('.lesson-row').count() == 0
+        assert page.locator('.lessons-controls').is_hidden()
+        assert 'No lessons history data recorded' in page.locator('.unavailable-note').inner_text()
+        assert 'retained-history source completeness unavailable' in page.locator('.unavailable-note').inner_text()
+        browser.close()
+
+
+def test_issue439_unknown_source_row_navigation_keeps_unknown_filter(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    rows = [
+        {'id': f'UNKNOWN-{i:03d}', 'title': f'Unknown source {i}', 'date': '2026-09-01',
+         'source': 'unexpected-source'}
+        for i in range(60)
+    ]
+    html = tv.render_pages({'lessons': rows}, host='synthetic')['lessons.html']
+    path = tmp_path / 'unknown-source.html'
+    path.write_text(html, encoding='utf-8')
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(path.as_uri() + '#q-UNKNOWN-055')
+        assert page.locator('#q-UNKNOWN-055').is_visible()
+        assert page.locator('.lessons-source-filter').input_value() == 'unknown'
+        page.evaluate("""() => {
+          const link=document.createElement('a');link.href='#q-UNKNOWN-050';link.textContent='jump to lesson';
+          document.querySelector('#panel-lessons').prepend(link);
+        }""")
+        page.get_by_role('link', name='jump to lesson').click()
+        assert page.locator('#q-UNKNOWN-050').is_visible()
+        assert page.locator('.lessons-source-filter').input_value() == 'unknown'
+        assert page.locator('.lessons-page-status').inner_text().startswith('Page 2 of 2')
+        browser.close()
 
 
 def test_issue73_entries_render_with_cycle_links() -> None:
@@ -5913,7 +6193,7 @@ def test_274_lessons_html_reads_live_corpus_matches_agent_html_count(tmp_path: P
 
     pages = tv.render_pages(state, host='eeepc', generated_at='2026-09-16 12:00:00')
     assert 'Corpus title A' in pages['lessons.html']
-    assert 'Live corpus (lessons/*.md): 2 files' in pages['lessons.html']
+    assert 'Live corpus (lessons/*.md): 2 files in this view (2 v2 cards)' in pages['lessons.html']
 
 
 def test_274_missing_index_falls_back_to_filename_no_silent_drop(tmp_path: Path) -> None:
@@ -5959,9 +6239,9 @@ def test_274_corpus_status_three_distinguishable_states() -> None:
         [{'id': 'LESS-ARCHIVE-1', 'date': '2026-08-01', 'task_id': 't', 'hypothesis': 'h', 'result': 'r'}],
         corpus_status='present',
     )
-    assert 'directory missing on host' in missing
-    assert 'present but unreadable' in unavailable
-    assert 'Live corpus (lessons/*.md): 0 files' in present_empty
+    assert 'directory missing.' in missing
+    assert 'read unavailable' in unavailable
+    assert 'Live corpus (lessons/*.md): 0 files in this view' in present_empty
     assert missing != unavailable != present_empty
 
 
@@ -6374,6 +6654,9 @@ def test_issue134_filter_and_search_empty_state_markup_is_emitted_hidden() -> No
     assert 'data-filter-empty hidden>No matches in the loaded cycle window.' in cycles
     assert 'matching of "+loaded+" loaded cycles"+(k==="all"?"":" for "+k)' in cycles
     assert '0 results for' in lessons
+    assert 'lessons-match-count' in lessons
+    assert 'lessons-source-filter' in lessons
+    assert 'lessons-sort' in lessons
     assert 'data-filter-empty' in lessons
     assert 'needle' not in lessons  # ADR-036 rule 3: problem text is LAN-only
 
@@ -7842,7 +8125,7 @@ def test_issue277_defect4_lesson_kind_chip_rendered() -> None:
 
 def test_issue277_defect5_legacy_details_auto_open_script_present() -> None:
     html = tv.build_lessons_panel([_LEGACY_LESSON])
-    assert 'legacyDetails.open = legacyMatch;' in html
+    assert 'legacy.open = legacyMatch;' in html
 
 
 # ---------------------------------------------------------------------------
