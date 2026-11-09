@@ -1563,11 +1563,11 @@ def test_task3_issue37_hypothesis_evidence_anchors() -> None:
     html_out = tv.build_hypotheses_panel(hypotheses_lifecycle, feed_cycles=feed_cycles)
 
     # Present cycle gets a real link
-    assert '<a href="#cycle-cycle-present">cycle-present</a>' in html_out
+    assert '<a href="cycles.html#cycle-cycle-present">cycle-present</a>' in html_out
     # Absent cycle renders plain text, no <a> link
     assert 'cycle-absent' in html_out
-    assert 'href="#cycle-cycle-absent"' not in html_out
-    assert '<a href="#cycle-absent">' not in html_out
+    assert 'href="cycles.html#cycle-cycle-absent"' not in html_out
+    assert '<a href="cycles.html#cycle-absent">' not in html_out
 
 
 # ====================================================================# Batch 2 Data UX Tests (Issues #40, #41, #42)
