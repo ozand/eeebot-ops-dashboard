@@ -103,7 +103,7 @@ def test_issue440_missing_telemetry_keeps_navigation_and_no_fake_budget():
 
 @pytest.mark.parametrize('viewport_width', [390, 1440])
 def test_issue440_navigation_and_badges_are_reachable_without_overflow(tmp_path, viewport_width):
-    from playwright.sync_api import sync_playwright
+    sync_playwright = pytest.importorskip('playwright.sync_api').sync_playwright
     from scripts.two_sinks import split_render_inputs
 
     mixed = _telemetry_fixture()
