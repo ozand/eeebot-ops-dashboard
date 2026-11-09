@@ -455,6 +455,44 @@ def test_hypotheses_lifecycle_groups_active_and_answered() -> None:
     assert '<a href="#cycle-cycle-a">cycle-a</a>' in html_out or 'href="#cycle-cycle-a"' in html_out or 'href="#cycle-a"' in html_out
 
 
+def test_public_hypothesis_render_withholds_durable_hadi_text() -> None:
+    """Exercise the existing private-text projection with synthetic sentinels."""
+    from scripts.two_sinks import split_render_inputs
+
+    sentinel = "SYNTHETIC_PRIVATE_HADI_SENTINEL"
+    source = {
+        "hypotheses_durable": {
+            "model": "synthetic-model",
+            "entries": [{
+                "hypothesis_id": "durable-synthetic",
+                "title": "Synthetic public title",
+                "selection_status": "candidate",
+                "hadi": {"hypothesis": sentinel, "action": "SYNTHETIC_PRIVATE_ACTION"},
+                "insight_criterion": "SYNTHETIC_PRIVATE_CRITERION",
+            }],
+        },
+        "hypotheses": {"entries": {"visible-synthetic": {
+            "title": "Synthetic lifecycle label", "status": "active",
+        }}},
+    }
+    public, private = split_render_inputs(source)
+    projected_entry = public["hypotheses_durable"]["entries"][0]
+    assert projected_entry["selection_status"] == "candidate"
+    assert projected_entry["title"] == "Synthetic public title"
+    assert projected_entry["hadi"]["hypothesis"] == ""
+    assert projected_entry["hadi"]["hypothesis_chars"] == len(sentinel)
+    assert projected_entry["insight_criterion_chars"] == len("SYNTHETIC_PRIVATE_CRITERION")
+    assert sentinel in str(private)
+
+    pages = tv.render_public_pages(public, "host", generated_at="2026-09-01T00:00:00Z")
+    published = "".join(pages.values())
+    assert "Synthetic public title" in pages["hypotheses.html"]
+    assert "CANDIDATE" in pages["hypotheses.html"]
+    assert sentinel not in published
+    assert "SYNTHETIC_PRIVATE_ACTION" not in published
+    assert "SYNTHETIC_PRIVATE_CRITERION" not in published
+
+
 def test_agent_panel_escapes_agents_md_and_aggregates_skills() -> None:
     fixture = _fixture()
     # Add script injection to AGENTS.md to verify escaping
