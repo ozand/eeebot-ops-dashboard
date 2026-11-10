@@ -1374,7 +1374,7 @@ _PUBLIC_EMPTY: dict[str, object] = {
 
 
 #: fields of the two metadata sections split_render_inputs builds itself
-_META_FIELDS = frozenset({"present", "lines", "chars", "count", "priority_count", "state"})
+_META_FIELDS = frozenset({"present", "lines", "chars", "count", "priority_count", "state", "text"})
 
 
 def public_schema_fields() -> frozenset[str]:

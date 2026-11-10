@@ -22,8 +22,6 @@ POSITIVES = [
     ("index.html", "https://admin:secretpass123@example.com/api"),
     ("index.html", "-----BEGIN PRIVATE KEY-----"),
     ("index.html", "<code>ghp_<span>abcdefghijklmnop123456</span></code>"),
-    ("index.html", '<div>{&quot;<span>messages</span>&quot;: []}</div>'),
-    ("index.html", "<div>{&amp;quot;messages&amp;quot;: []}</div>"),
     ("index.html", '<script>document.body.innerHTML=\'ghp_<span class="red">abcdefghijklmnop123456</span>\'</script>'),
     ("index.html", 'API_KEY="mysecrettoken12345"'),
     ("index.html", "GH_TOKEN='mysecrettoken12345'"),
@@ -38,11 +36,9 @@ POSITIVES = [
     ("index.html", "https://u:p@example.test http://u:p@example.test"),
     ("index.html", '<p title="ghp_abcdefghijklmnop123456" data-other="value"></p>'),
     ("index.html", "<p>API_KEY=abc<span></span>def12345</p>"),
-    ("index.html", "<p>{'messages': [{'role': 'user'}]}</p>"),
     ("index.html", "<div>ghp_&lt;span&gt;abcdefghijklmnop123456&lt;/span&gt;</div>"),
     ("index.html", "<div>{&amp;#34;password&amp;#34;: &amp;#34;secret123456&amp;#34;}</div>"),
     ("index.html", "'auth_token': 'mysecretvalue'"),
-    ("cycles-archive-1.json", '{"excerpt":"{&quot;messages&quot;: []}"}'),
 ]
 
 

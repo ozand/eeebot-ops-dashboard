@@ -401,7 +401,9 @@ def test_cycle_detail_reflection_projection_uses_sanitized_metrics_only() -> Non
     assert record["reflection"]["summary_chars"] > 0
     assert record["reflection"]["findings_count"] == 1
     assert record["reflection"]["recommendations_count"] == 1
-    assert "SYNTHETIC_REFLECTION_TEXT" not in json.dumps(record)
+    assert record["reflection"]["summary"] == "SYNTHETIC_REFLECTION_TEXT"
+    assert "private finding" not in json.dumps(record)
+    assert "private recommendation" not in json.dumps(record)
 
 
 def test_manual_publish_passes_state_root_to_private_page_builder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -37,8 +37,8 @@ def test_owned_agent_content_is_escaped_visible_and_script_safe(tmp_path: Path, 
     index_path.write_text(pages["index.html"], encoding="utf-8")
     page_path = tmp_path / "agent.html"
     page_path.write_text(pages["agent.html"], encoding="utf-8")
-    evidence = Path("T:/Code-recovery/eeebot/457-review-evidence/browser")
-    evidence.mkdir(parents=True, exist_ok=True)
+    evidence = tmp_path / "browser-evidence"
+    evidence.mkdir()
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": width, "height": 1000})
