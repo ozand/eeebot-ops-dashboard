@@ -500,6 +500,49 @@ def read_dir_files(root: Path, matcher: Any) -> tuple[list[Path], str]:
         return [], "unavailable"
 
 
+_MEMORY_FD_WALK_SUPPORTED = (
+    os.open in os.supports_dir_fd
+    and hasattr(os, "O_NOFOLLOW")
+    and hasattr(os, "O_DIRECTORY")
+)
+
+
+def _read_memory_file_beneath(root: Path, path: Path) -> tuple[int, str] | None:
+    """Read one bounded memory file through no-follow directory descriptors."""
+    if not _MEMORY_FD_WALK_SUPPORTED:
+        return None
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        return None
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        return None
+
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    file_flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+    opened_fds: list[int] = []
+    try:
+        current = os.open(root, directory_flags)
+        opened_fds.append(current)
+        for component in parts[:-1]:
+            current = os.open(component, directory_flags, dir_fd=current)
+            opened_fds.append(current)
+        fd = os.open(parts[-1], file_flags, dir_fd=current)
+        opened_fds.append(fd)
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        with os.fdopen(fd, "rb") as stream:
+            opened_fds.remove(fd)
+            content = stream.read(12_001).decode("utf-8", errors="replace")[:12_000]
+        return metadata.st_size, content
+    except (OSError, ValueError):
+        return None
+    finally:
+        for fd in reversed(opened_fds):
+            os.close(fd)
+
+
 def read_lesson_corpus(inst_path: Path | None) -> dict[str, Any]:
     """#274: single source of truth for the live lesson-file count.
 
@@ -627,26 +670,19 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     memory_root = inst_path.resolve() if inst_path else None
     for path in memory_paths:
         try:
-            resolved_path = path.resolve(strict=True)
-            if memory_root is None or not resolved_path.is_relative_to(memory_root):
+            if memory_root is None:
                 memory_status = "unavailable"
                 continue
+            memory_relative = path.relative_to(memory_dir)
+            target = memory_root / "memory" / memory_relative
             rel = path.relative_to(inst_path).as_posix()
-            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
-            fd = os.open(resolved_path, flags)
-            try:
-                opened = os.fstat(fd)
-                if not stat.S_ISREG(opened.st_mode):
-                    memory_status = "unavailable"
-                    continue
-                with os.fdopen(fd, "rb") as stream:
-                    fd = -1
-                    content = stream.read(12_001).decode("utf-8", errors="replace")[:12_000]
-            finally:
-                if fd >= 0:
-                    os.close(fd)
-            total_memory_size += opened.st_size
-            memory_files.append({"name": rel, "size_bytes": opened.st_size,
+            result = _read_memory_file_beneath(memory_root, target)
+            if result is None:
+                memory_status = "unavailable"
+                continue
+            size, content = result
+            total_memory_size += size
+            memory_files.append({"name": rel, "size_bytes": size,
                                  "content_chars": len(content), "content": content})
         except (OSError, ValueError):
             memory_status = "unavailable"

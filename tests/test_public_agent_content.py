@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from scripts import agent_context as ac
 from scripts import techtree_autopublish as ap
 from scripts import techtree_viewer as tv
 from scripts.two_sinks import split_render_inputs
@@ -52,13 +54,19 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     state.mkdir(); repo.mkdir(); publisher_state.mkdir()
     source = _fixtures(state, repo)
     assert "Skill response body" in source["agent_context"]["tier2_skills"][0]["content"]
-    assert "Own memory context" in source["agent_context"]["tier2_memory"]["files"][0]["content"]
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "Own memory context" in source["agent_context"]["tier2_memory"]["files"][0]["content"]
+    else:
+        assert source["agent_context"]["tier2_memory"]["corpus_status"] == "unavailable"
     public, _private = split_render_inputs(source)
     pages = tv.render_public_pages(public, "synthetic")
     from scripts.publish_scan import scan_pages
     scan_pages(pages)
     combined = "".join(pages.values())
-    for marker in ("prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "Release charter quote", "reflection response", "own finding", "Skill response body", "Own memory context", "own issue", "own fix", "Read your own context"):
+    markers = ["prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "legacy absent parent origin", "both origins own", "Release charter quote", "reflection response", "own finding", "Skill response body", "own issue", "own fix", "Read your own context"]
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        markers.append("Own memory context")
+    for marker in markers:
         assert marker in combined
     assert "foreign origin" not in combined
     assert "null origin must not publish" not in combined
@@ -85,7 +93,10 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     assert ap.run(args) == 0
     assert endpoints == []
     assert "Skill response body" in "".join(captured["pages"].values())
-    assert "Own memory context" in "".join(captured["pages"].values())
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "Own memory context" in "".join(captured["pages"].values())
+    else:
+        assert "Own memory context" not in "".join(captured["pages"].values())
     assert "Release charter quote" in captured["pages"]["index.html"]
     from scripts.publish_scan import scan_pages
     scan_pages(captured["pages"])
@@ -154,6 +165,7 @@ def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
     assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
 
 
+@pytest.mark.skipif(not ac._MEMORY_FD_WALK_SUPPORTED, reason="memory fd-relative walk unsupported on this platform")
 def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_path):
     state, repo = tmp_path / "state", tmp_path / "repo"
     state.mkdir(); repo.mkdir()
@@ -172,13 +184,17 @@ def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_pa
     memory = source["agent_context"]["tier2_memory"]
     names = {row["name"] for row in memory["files"]}
     contents = json.dumps(memory)
-    assert "memory/inside.md" in names
     assert "memory/outside.md" not in names
-    assert "SYNTHETIC_INTERNAL_MEMORY" in contents
     assert "SYNTHETIC_EXTERNAL_PRIVATE_SENTINEL" not in contents
+    if ac._MEMORY_FD_WALK_SUPPORTED:
+        assert "memory/inside.md" in names
+        assert "SYNTHETIC_INTERNAL_MEMORY" in contents
+    else:
+        assert memory["corpus_status"] == "unavailable"
 
 
-def test_memory_reader_uses_checked_target_when_alias_changes_after_resolution(tmp_path, monkeypatch):
+@pytest.mark.skipif(not ac._MEMORY_FD_WALK_SUPPORTED, reason="memory fd-relative walk unsupported on this platform")
+def test_memory_reader_rejects_ancestor_replacement_before_open(tmp_path, monkeypatch):
     state, repo = tmp_path / "state", tmp_path / "repo"
     state.mkdir(); repo.mkdir()
     memory = repo / "memory"
@@ -187,27 +203,34 @@ def test_memory_reader_uses_checked_target_when_alias_changes_after_resolution(t
     inside.write_text("SYNTHETIC_INSIDE_TARGET", encoding="utf-8")
     external = tmp_path / "external-private.md"
     external.write_text("SYNTHETIC_RACE_OUTSIDE_SENTINEL", encoding="utf-8")
-    alias = memory / "z-alias.md"
-    alias.symlink_to(inside)
+    ancestor = memory / "ancestor"
+    ancestor.mkdir()
+    ancestor_file = ancestor / "race.md"
+    ancestor_file.write_text("SYNTHETIC_ANCESTOR_OWNED_TARGET", encoding="utf-8")
 
-    original_resolve = Path.resolve
+    import scripts.agent_context as agent_context
+
+    original_open = agent_context.os.open
     swapped = False
 
-    def resolve_then_swap(path, *args, **kwargs):
+    def open_then_swap(path, *args, **kwargs):
         nonlocal swapped
-        resolved = original_resolve(path, *args, **kwargs)
-        if path == alias and not swapped:
+        dir_fd = kwargs.get("dir_fd")
+        if dir_fd is not None and path == "ancestor" and not swapped:
             swapped = True
-            alias.unlink()
-            alias.symlink_to(external)
-        return resolved
+            ancestor.rename(memory / "detached")
+            (memory / "ancestor").symlink_to(tmp_path / "outside")
+        return original_open(path, *args, **kwargs)
 
-    monkeypatch.setattr(Path, "resolve", resolve_then_swap)
+    (tmp_path / "outside").mkdir()
+    (tmp_path / "outside/race.md").write_text("SYNTHETIC_ANCESTOR_OUTSIDE_SENTINEL", encoding="utf-8")
+    monkeypatch.setattr(agent_context.os, "open", open_then_swap)
     source = tv.read_local_state(str(state), str(repo))
     rows = source["agent_context"]["tier2_memory"]["files"]
     assert swapped
     assert any(row["content"] == "SYNTHETIC_INSIDE_TARGET" for row in rows)
-    assert not any(row["content"] == "SYNTHETIC_RACE_OUTSIDE_SENTINEL" for row in rows)
+    assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OWNED_TARGET" for row in rows)
+    assert not any(row["content"] == "SYNTHETIC_ANCESTOR_OUTSIDE_SENTINEL" for row in rows)
 
 
 def test_wrong_shape_tier2_content_drops_but_safe_sibling_survives():
