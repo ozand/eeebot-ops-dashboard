@@ -461,6 +461,30 @@ LEDGER_HISTORY_DAYS = 90
 # Format: exactly 7 hex chars, no surrounding whitespace.  Never edit manually.
 _BAKED_GENERATOR_SHA: str = ''
 
+def _subagent_record_matches_instance(data, state_root, instance_repo):
+    """Exclude explicit subagent producer provenance mismatches."""
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origin = data.get("origin")
+    if origin is None and "origin" not in data:
+        parent = data.get("parent_context")
+        if parent is not None and not isinstance(parent, dict):
+            return False
+        origin = parent.get("origin") if isinstance(parent, dict) else None
+    if origin is not None:
+        if not isinstance(origin, dict):
+            return False
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel not in ("system",) or chat_id not in ("self-evolving-agent",):
+            return False
+    return True
+
+
 # Read every source fail-soft, from a single remote python3 process fed over
 # stdin. This keeps the whole fetch to exactly one SSH round-trip and avoids
 # leaving any temp files behind on the remote host.
@@ -473,6 +497,8 @@ import re
 import subprocess
 import time
 from urllib.parse import unquote
+from pathlib import Path
+from typing import Any
 
 STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"
 INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"
@@ -486,6 +512,28 @@ LEDGER_HISTORY_DAYS = 90
 
 _mtimes = []
 _llm_stats_source_complete = False
+
+
+def _subagent_record_matches_instance(data, state_root, instance_repo):
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origin = data.get("origin")
+    if origin is None and "origin" not in data:
+        parent = data.get("parent_context")
+        if parent is not None and not isinstance(parent, dict):
+            return False
+        origin = parent.get("origin") if isinstance(parent, dict) else None
+    if origin is not None:
+        if not isinstance(origin, dict):
+            return False
+        if origin.get("channel") != "system" or origin.get("chat_id") != "self-evolving-agent":
+            return False
+    return True
 
 
 def read_json(relpath):
@@ -1185,6 +1233,35 @@ _SUBAGENT_TEXT_LIMIT = 400
 _MAX_PROMPT_BYTES = 65536
 
 
+def _subagent_record_matches_instance(data: dict[str, Any], state_root: Path, instance_repo: Path) -> bool:
+    """Exclude records with explicit workspace, state-root, or origin mismatch.
+
+    Legacy records without these optional producer fields remain eligible only
+    because the adapter selected them from this instance's own state/subagents
+    directory; age or content type is not an eligibility signal.
+    """
+    for field, expected in (("workspace", instance_repo), ("runtime_state_root", state_root)):
+        if field in data:
+            value = data[field]
+            if not isinstance(value, str) or not value.strip():
+                return False
+            if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
+                return False
+    origin = data.get("origin")
+    if origin is None and "origin" not in data:
+        parent = data.get("parent_context")
+        if parent is not None and not isinstance(parent, dict):
+            return False
+        origin = parent.get("origin") if isinstance(parent, dict) else None
+    if origin is not None:
+        if not isinstance(origin, dict):
+            return False
+        channel, chat_id = origin.get("channel"), origin.get("chat_id")
+        if channel != "system" or chat_id != "self-evolving-agent":
+            return False
+    return True
+
+
 def read_subagent_records():
     """#272: state/subagents/*.json -- one telemetry file per subagent
     spawn, flat in this directory (the `requests/` and `results/`
@@ -1214,7 +1291,9 @@ def read_subagent_records():
             _mtimes.append(os.path.getmtime(path))
         except Exception:
             continue
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or not _subagent_record_matches_instance(
+            data, Path(STATE_ROOT), Path(INSTANCE_REPO),
+        ):
             continue
         task_text = str(data.get("task") or "")
         summary_text = str(data.get("summary") or "")
@@ -2834,7 +2913,7 @@ def read_local_state(
                 mtimes.append(path.stat().st_mtime)
             except (OSError, ValueError):
                 continue
-            if not isinstance(data, dict):
+            if not isinstance(data, dict) or not _subagent_record_matches_instance(data, root, repo_path):
                 continue
             task_text = str(data.get('task') or '')
             summary_text = str(data.get('summary') or '')

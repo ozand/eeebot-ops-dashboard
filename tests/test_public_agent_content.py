@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -17,7 +19,11 @@ def _fixtures(state: Path, repo: Path, secret: str = "") -> dict:
     (state / "ledger").mkdir(parents=True, exist_ok=True)
     (state / "ledger/cycles.jsonl").write_text(json.dumps({"phase": "system_prompt", "cycle_id": "c1", "chars": 20, "cap": 24000, "sections": {"identity": 20}}) + "\n", encoding="utf-8")
     (state / "subagents").mkdir(exist_ok=True)
-    (state / "subagents/sa.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "sa", "status": "done", "task": "subagent task", "summary": "subagent result", "result": "subagent response"}), encoding="utf-8")
+    (state / "subagents/sa.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "sa", "status": "done", "task": "subagent task", "summary": "subagent result", "result": "subagent response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo), "runtime_state_root": str(state)}), encoding="utf-8")
+    (state / "subagents/legacy.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "legacy", "status": "done", "task": "legacy own task", "summary": "legacy own summary", "result": "legacy own result"}), encoding="utf-8")
+    (state / "subagents/foreign.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign", "status": "done", "task": "foreign origin task", "summary": "foreign origin summary", "result": "foreign origin response", "origin": {"channel": "telegram", "chat_id": "unrelated-chat"}, "workspace": str(repo), "runtime_state_root": str(state)}), encoding="utf-8")
+    (state / "subagents/foreign-workspace.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign-workspace", "status": "done", "task": "foreign workspace task", "summary": "foreign workspace summary", "result": "foreign workspace response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo.parent / "other-project"), "runtime_state_root": str(state)}), encoding="utf-8")
+    (state / "subagents/foreign-root.json").write_text(json.dumps({"cycle_id": "c1", "subagent_id": "foreign-root", "status": "done", "task": "foreign root task", "summary": "foreign root summary", "result": "foreign root response", "origin": {"channel": "system", "chat_id": "self-evolving-agent"}, "workspace": str(repo), "runtime_state_root": str(state.parent / "other-state").replace("\\\\", "/")}), encoding="utf-8")
     (state / "public").mkdir(exist_ok=True)
     (state / "public/derived_view.json").write_text(json.dumps({"status": "present", "charter": {"source": "release_goals_md", "merged": False, "text": "Release charter quote"}}), encoding="utf-8")
     (state / "goals").mkdir(exist_ok=True)
@@ -46,8 +52,14 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     from scripts.publish_scan import scan_pages
     scan_pages(pages)
     combined = "".join(pages.values())
-    for marker in ("prompt", "prompt task", "subagent task", "subagent result", "subagent response", "Release charter quote", "reflection response", "own finding", "Skill response body", "Own memory context", "own issue", "own fix", "Read your own context"):
+    for marker in ("prompt", "prompt task", "subagent task", "subagent result", "subagent response", "legacy own task", "legacy own summary", "legacy own result", "Release charter quote", "reflection response", "own finding", "Skill response body", "Own memory context", "own issue", "own fix", "Read your own context"):
         assert marker in combined
+    assert "foreign origin" not in combined
+    assert "foreign workspace" not in combined
+    assert "foreign root" not in combined
+    assert len(source["subagent_records"]) == 2
+    public_record = public["subagent_records"][0]
+    assert not {"origin", "parent_context", "workspace", "runtime_state_root", "runtime_state_source"} & public_record.keys()
     assert "raw operator goal must stay private" not in combined
     assert "Release charter quote" in pages["index.html"]
     endpoints = []
@@ -67,6 +79,23 @@ def test_owned_content_real_reader_to_public_projection_render_scan_and_dry_run(
     scan_pages(captured["pages"])
     assert "dry-run" in capsys.readouterr().out
     monkeypatch.setattr(tv, "_gh", original_gh)
+
+
+def test_embedded_reader_applies_same_subagent_source_gate(tmp_path):
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    _fixtures(state, repo)
+    script = tv.REMOTE_READER_SCRIPT.replace(
+        'STATE_ROOT = "/var/lib/eeepc-agent/self-evolving-agent/state"', f'STATE_ROOT = {str(state)!r}',
+    ).replace(
+        'INSTANCE_REPO = "/var/lib/eeepc-agent/self-evolving-agent/eeebot-self-evolving"', f'INSTANCE_REPO = {str(repo)!r}',
+    )
+    result = subprocess.run([sys.executable], input=script, capture_output=True, text=True, check=True, timeout=30)
+    remote = json.loads(result.stdout)
+    records = remote["subagent_records"]
+    assert {row["subagent_id"] for row in records} == {"sa", "legacy"}
+    assert "subagent task" in json.dumps(records) and "legacy own task" in json.dumps(records)
+    assert all(not {"origin", "workspace", "runtime_state_root"} & row.keys() for row in records)
 
 
 def test_wrong_shape_tier2_content_drops_but_safe_sibling_survives():
