@@ -178,6 +178,38 @@ def test_memory_reader_rejects_external_symlink_and_keeps_internal_memory(tmp_pa
     assert "SYNTHETIC_EXTERNAL_PRIVATE_SENTINEL" not in contents
 
 
+def test_memory_reader_uses_checked_target_when_alias_changes_after_resolution(tmp_path, monkeypatch):
+    state, repo = tmp_path / "state", tmp_path / "repo"
+    state.mkdir(); repo.mkdir()
+    memory = repo / "memory"
+    memory.mkdir()
+    inside = memory / "inside.md"
+    inside.write_text("SYNTHETIC_INSIDE_TARGET", encoding="utf-8")
+    external = tmp_path / "external-private.md"
+    external.write_text("SYNTHETIC_RACE_OUTSIDE_SENTINEL", encoding="utf-8")
+    alias = memory / "z-alias.md"
+    alias.symlink_to(inside)
+
+    original_resolve = Path.resolve
+    swapped = False
+
+    def resolve_then_swap(path, *args, **kwargs):
+        nonlocal swapped
+        resolved = original_resolve(path, *args, **kwargs)
+        if path == alias and not swapped:
+            swapped = True
+            alias.unlink()
+            alias.symlink_to(external)
+        return resolved
+
+    monkeypatch.setattr(Path, "resolve", resolve_then_swap)
+    source = tv.read_local_state(str(state), str(repo))
+    rows = source["agent_context"]["tier2_memory"]["files"]
+    assert swapped
+    assert any(row["content"] == "SYNTHETIC_INSIDE_TARGET" for row in rows)
+    assert not any(row["content"] == "SYNTHETIC_RACE_OUTSIDE_SENTINEL" for row in rows)
+
+
 def test_wrong_shape_tier2_content_drops_but_safe_sibling_survives():
     from scripts.two_sinks import _sanitize_public_value
     projected = _sanitize_public_value("agent_context", {

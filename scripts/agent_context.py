@@ -9,7 +9,9 @@ from __future__ import annotations
 import html
 import json
 import math
+import os
 import re
+import stat
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
@@ -622,19 +624,30 @@ def read_agent_context_dict(state_root: Path, instance_repo: Path | str | None =
     memory_index_status = corpus_status(memory_index_path)
     memory_files: list[dict[str, Any]] = []
     total_memory_size = 0
-    memory_root = inst_path.resolve()
+    memory_root = inst_path.resolve() if inst_path else None
     for path in memory_paths:
         try:
             resolved_path = path.resolve(strict=True)
-            if not resolved_path.is_relative_to(memory_root) or not resolved_path.is_file():
+            if memory_root is None or not resolved_path.is_relative_to(memory_root):
                 memory_status = "unavailable"
                 continue
             rel = path.relative_to(inst_path).as_posix()
-            size = path.stat().st_size
-            total_memory_size += size
-            memory_files.append({"name": rel, "size_bytes": size,
-                                 "content_chars": min(size, 12_000),
-                                 "content": path.read_text(encoding="utf-8", errors="replace")[:12_000]})
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+            fd = os.open(resolved_path, flags)
+            try:
+                opened = os.fstat(fd)
+                if not stat.S_ISREG(opened.st_mode):
+                    memory_status = "unavailable"
+                    continue
+                with os.fdopen(fd, "rb") as stream:
+                    fd = -1
+                    content = stream.read(12_001).decode("utf-8", errors="replace")[:12_000]
+            finally:
+                if fd >= 0:
+                    os.close(fd)
+            total_memory_size += opened.st_size
+            memory_files.append({"name": rel, "size_bytes": opened.st_size,
+                                 "content_chars": len(content), "content": content})
         except (OSError, ValueError):
             memory_status = "unavailable"
 
