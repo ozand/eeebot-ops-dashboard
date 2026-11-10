@@ -56,7 +56,9 @@ def test_r6_bare_meta_counters_are_validated(tmp_path) -> None:
 
 def test_r6_valid_meta_counters_are_kept() -> None:
     public, _ = split_render_inputs({"agents_md": "line one\nline two\n"})
-    assert public["agents_meta"] == {"present": True, "lines": 2, "chars": len("line one\nline two")}
+    assert public["agents_meta"] == {
+        "present": True, "lines": 2, "chars": len("line one\nline two"), "text": "line one\nline two",
+    }
 
 
 # --- R7 (P2): goal_meta omits unavailable counters -----------------------------
