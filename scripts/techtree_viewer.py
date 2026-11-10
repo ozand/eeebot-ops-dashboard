@@ -470,23 +470,16 @@ def _subagent_record_matches_instance(data, state_root, instance_repo):
                 return False
             if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
                 return False
+    origins = []
     if "origin" in data:
-        origin = data["origin"]
-        if not isinstance(origin, dict):
-            return False
-    elif "parent_context" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
         parent = data["parent_context"]
         if not isinstance(parent, dict):
             return False
         if "origin" in parent:
-            origin = parent["origin"]
-            if not isinstance(origin, dict):
-                return False
-        else:
-            origin = None
-    else:
-        origin = None
-    if origin is not None:
+            origins.append(parent["origin"])
+    for origin in origins:
         if not isinstance(origin, dict):
             return False
         channel, chat_id = origin.get("channel"), origin.get("chat_id")
@@ -532,23 +525,18 @@ def _embedded_subagent_record_matches_instance(data, state_root, instance_repo):
                 return False
             if os.path.normcase(os.path.realpath(value)) != os.path.normcase(os.path.realpath(expected)):
                 return False
+    origins = []
     if "origin" in data:
-        origin = data["origin"]
-        if not isinstance(origin, dict):
-            return False
-    elif "parent_context" in data:
+        origins.append(data["origin"])
+    if "parent_context" in data:
         parent = data["parent_context"]
         if not isinstance(parent, dict):
             return False
-        if "origin" not in parent:
-            origin = None
-        else:
-            origin = parent["origin"]
-            if not isinstance(origin, dict):
-                return False
-    else:
-        origin = None
-    if origin is not None:
+        if "origin" in parent:
+            origins.append(parent["origin"])
+    for origin in origins:
+        if not isinstance(origin, dict):
+            return False
         if origin.get("channel") != "system" or origin.get("chat_id") != "self-evolving-agent":
             return False
     return True
