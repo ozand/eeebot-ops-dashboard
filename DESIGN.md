@@ -138,7 +138,7 @@ No new animation is required; respect reduced-motion preferences if motion is ad
 - Do state population, window, timezone and missingness beside affected metrics.
 - Do retain old deep links and offer list alternatives for graph-heavy workflows.
 - Don't invent evidence, health, money costs or a next selection from missing data.
-- Don't reveal private text to make a public empty state more informative.
+- Don't reveal actual secrets, auth/environment files, or unrelated third-party/private text; bounded owner-authorized own context may be rendered after typed projection, escaping, and publication scanning.
 - Don't install a UI framework or change telemetry solely to implement this style.
 
 Format reference: google-labs-code/design.md alpha spec at

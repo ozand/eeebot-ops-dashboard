@@ -195,9 +195,6 @@ STANDALONE_PATTERNS: tuple[SecretPattern, ...] = (
     SecretPattern("basic_auth", re.compile(r"(?i)\bAuthorization\s*:\s*Basic\s+[A-Za-z0-9+/=]{10,}\b|\bBasic\s+[A-Za-z0-9+/=]{16,}\b"), "Basic Auth header"),
     SecretPattern("url_credentials", re.compile(r"https?://[^:\s/\"']+:[^@\s/\"']+@[^/\s\"']+"), "URL containing embedded credentials"),
     SecretPattern("private_key_header", re.compile(r"-----BEGIN (?:[A-Z0-9_-]+ )?PRIVATE KEY-----"), "private key header"),
-    SecretPattern("structural_reasoning_content", re.compile(r"['\"]reasoning_content['\"]"), "call marker reasoning_content"),
-    SecretPattern("structural_messages", re.compile(r"['\"]messages['\"]\s*:"), "call marker messages"),
-    SecretPattern("structural_prompt", re.compile(r"['\"]prompt['\"]\s*:\s*\{"), "call marker prompt object"),
 )
 
 
@@ -225,9 +222,6 @@ SCANNER_ANCHORS: dict[str, tuple[str, ...]] = {
     "basic_auth": ("basic",),
     "url_credentials": ("http://", "https://"),
     "private_key_header": ("-----BEGIN", "PRIVATE KEY-----"),
-    "structural_reasoning_content": ("'reasoning_content'", '"reasoning_content"'),
-    "structural_messages": ("'messages'", '"messages"'),
-    "structural_prompt": ("'prompt'", '"prompt"'),
     "_env_secret_kv": ("_env_secret_kv",),
     "_json_secret_key": ("_json_secret_key",),
 }

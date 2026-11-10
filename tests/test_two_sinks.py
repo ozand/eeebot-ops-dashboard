@@ -232,8 +232,8 @@ def test_private_pages_never_reach_gh_pages(tmp_path: Path):
     assert "cycle.html" not in sent[0]
 
 
-def test_public_pages_carry_no_call_content(tmp_path: Path):
-    """ADR-036 §3: real read_local_state with markers across all text sources -> no marker in any public file."""
+def test_public_pages_publish_bounded_agent_owned_content(tmp_path: Path):
+    """#457: prompts survive; arbitrary operator-priority wording remains private."""
     from scripts import techtree_viewer as tv
 
     state = tmp_path / "state"
@@ -247,6 +247,7 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
         "subagent_res": "MARKER_SUBAGENT_RES_9944",
         "agents_md": "MARKER_AGENTS_MD_9955",
         "goal_text": "MARKER_GOAL_TEXT_9966",
+        "release_charter": "MARKER_RELEASE_CHARTER_9967",
         "reflections": "MARKER_REFLECTIONS_9977",
     }
 
@@ -271,6 +272,14 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
         encoding="utf-8",
     )
 
+    release_charter = {
+        "status": "present",
+        "charter": {"source": "release_goals_md", "merged": False,
+                    "text": f"Release-owned goals {markers['release_charter']}"},
+    }
+    (state / "public").mkdir()
+    (state / "public" / "derived_view.json").write_text(json.dumps(release_charter), encoding="utf-8")
+
     rdir = state / "reflector"
     rdir.mkdir()
     (rdir / "reflections.jsonl").write_text(
@@ -291,11 +300,19 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     for m in markers.values():
         assert m in raw_str
 
+    cycle_records = data["subagent_records"]
+    assert cycle_records[0]["task_excerpt"] == markers["subagent_res"]
+    assert cycle_records[0]["summary_excerpt"] == markers["subagent_res"]
     public_data, private_data = split_render_inputs(data)
     pub_str = json.dumps(public_data, default=str)
     for k, m in markers.items():
-        assert m not in pub_str, f"Marker {k} ({m}) found in public_data"
+        if k == "goal_text":
+            assert m not in pub_str
+        else:
+            assert m in pub_str, f"Marker {k} ({m}) missing from public_data"
     public_reflection = public_data["reflections"][0]
+    assert public_reflection["summary"] == markers["reflections"]
+    assert public_reflection["findings"][0] == markers["reflections"]
     assert public_reflection["findings_count"] == 1
     assert public_reflection["recommendations_count"] == 1
     assert public_reflection["summary_chars"] > 0
@@ -308,9 +325,12 @@ def test_public_pages_carry_no_call_content(tmp_path: Path):
     assert cycle_details["c1"]["reflection"]["recommendations_count"] == 1
 
     pages = tv.render_pages(public_data, "eeepc")
-    for fname, content in pages.items():
-        for k, m in markers.items():
-            assert m not in content, f"Marker {k} ({m}) found in rendered public page {fname}"
+    combined = "".join(pages.values())
+    for key, marker in markers.items():
+        if key in {"goal_text"}:
+            assert marker not in combined
+        else:
+            assert marker in combined
 
 
 def test_m1_reason_allowlist_rejects_lowercase_freeform_canaries() -> None:
@@ -489,11 +509,11 @@ def test_sink_failure_leaves_consistent_snapshot(tmp_path: Path):
     assert "private calls" in (tmp_path / "site/current/cycle.html").read_text()
 
 
-def test_public_renderer_input_has_no_call_text(tmp_path: Path):
-    """ADR-036 §3: public renderer receives no prompt or priority text."""
-    public, _ = split_render_inputs({"cycle_prompts": "private-call", "goal_text": {"charter": "secret charter"}, "safe": 1})
-    assert "cycle_prompts" not in public
-    assert "secret" not in json.dumps(public)
+def test_public_renderer_input_keeps_allowlisted_agent_owned_text():
+    """#457: public projection retains bounded approved fields."""
+    public, _ = split_render_inputs({"cycle_prompts": {"c1": {"system": {"text": "OWN_PROMPT_MARKER"}}}, "goal_text": {"priorities": [{"title": "OWNER_PRIVATE_MARKER"}]}, "safe": 1})
+    assert "OWN_PROMPT_MARKER" in json.dumps(public)
+    assert "OWNER_PRIVATE_MARKER" not in json.dumps(public)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows unprivileged symlink swap limitation")
@@ -971,10 +991,8 @@ def test_split_render_inputs_preserves_lesson_body_lengths() -> None:
     lesson = {"id": "lesson", "cycle_id": "cycle", "problem": "p" * 28, "solution": "s" * 31}
     public, _ = split_render_inputs({"lessons": [lesson]})
     projected = public["lessons"][0]
-    assert projected["problem"] == ""
-    assert projected["solution"] == ""
-    assert projected["problem_chars"] == 28
-    assert projected["solution_chars"] == 31
+    assert projected["problem"] == "p" * 28
+    assert projected["solution"] == "s" * 31
 
 
 

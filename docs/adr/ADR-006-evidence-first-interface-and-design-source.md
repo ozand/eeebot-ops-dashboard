@@ -68,7 +68,7 @@ Proposed visual defaults are checked at 390px and 1440px with rendered evidence.
 
 No runtime, collector, persistence schema, model, cost, trust/access or deployment
 change. No automatic migration of current styles, new universal health verdict,
-new source of truth for metrics, or private text publication. This ADR neither
+new source of truth for metrics, or publication of unrelated/private content. It does not decide owner-authorized bounded publication of explicitly selected own agent-context content. This ADR neither
 implements its test contract nor clears any existing pilot/release acceptance.
 Routine arithmetic fixes such as #433 do not wait for a visual ADR acceptance.
 

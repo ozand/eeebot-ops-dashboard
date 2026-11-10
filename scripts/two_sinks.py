@@ -86,12 +86,10 @@ PUBLIC_DATA_KEYS = frozenset({
     "compaction", "token_heatmap", "lessons", "subagent_records", "derived_view",
     "reflections", "bridge_exit_streak", "bridge_exits", "bridge_runs", "bridge_active_run", "planning_activity", "strategist_decisions",
     "demand_futility", "systemd_drift", "goal_meta", "agents_meta", "agent_context",
-    "generator_sha", "_newest_source_age_seconds", "_error",
+    "cycle_prompts", "goal_text", "agents_md", "generator_sha", "_newest_source_age_seconds", "_error",
 })
 
-PRIVATE_DATA_KEYS = frozenset({
-    "cycle_prompts", "goal_text", "agents_md",
-})
+PRIVATE_DATA_KEYS = frozenset()
 DEFAULT_SITE_ROOT = "/var/lib/eeebot-site"
 DEFAULT_BIND_ADDRESS = "0.0.0.0"
 DEFAULT_BIND_PORT = 8080
@@ -333,6 +331,10 @@ def _project_meta(key: str, value: object) -> dict[str, Any]:
     for counter in counters:
         if _is_count(value.get(counter)):
             result[counter] = value[counter]
+    if key in {"agents_meta", "goal_meta"}:
+        text = value.get("text")
+        if isinstance(text, str) and len(text) <= _OWN_CONTENT_MAX_CHARS:
+            result["text"] = text
     if key == "goal_meta":
         state = value.get("state")
         result["state"] = state if isinstance(state, str) and state in _GOAL_META_STATES else "unexpected_shape"
@@ -350,6 +352,18 @@ def _project_meta(key: str, value: object) -> dict[str, Any]:
 
 _DROP = object()
 _Node = Callable[[object, "dict[str, int] | None"], object]
+_OWN_CONTENT_MAX_CHARS = 12_000
+
+
+def _own_content(value: object, withheld: dict[str, int] | None) -> object:
+    """Bound one explicitly selected agent-owned text field; unknown shapes drop."""
+    if not isinstance(value, str) or len(value) > _OWN_CONTENT_MAX_CHARS:
+        return _DROP
+    return value
+
+
+def _owned_text(blank: object = "") -> dict[str, _Node]:
+    return {"text": _own_content, "text_chars": _count, "truncated": _bool, "original_bytes": _count}
 
 #: ISO-8601 date or date-time (the loop's writers use ...Z and +00:00);
 #: the components are range-checked by _ts (#378 review P2).
@@ -603,8 +617,12 @@ def _obj(
             if name not in value:
                 continue
             projected = field(value[name], withheld)
+            if projected is _DROP and name in {"prompt_text", "task_text"}:
+                continue
             if projected is not _DROP:
                 out[name] = projected
+            elif name in {"content", "desc"} and value.get(name) == "" and _is_count(value.get(f"{name}_chars")):
+                out[name] = ""
         for name, blank in (sized_text or {}).items():
             if name in value:
                 text = value[name]
@@ -730,23 +748,36 @@ _LESSON_ROW = _obj({
     "source": _enum(*LESSON_SOURCES), "severity": _token, "kind": _token,
     "tags": _one_of(_list(_token, 20), _token), "seen_count": _count,
     "problem_chars": _count, "solution_chars": _count, "insight_chars": _count, "result_chars": _count,
-    "hypothesis_chars": _count,
-}, sized_text={"problem": "", "solution": "", "insight": "", "result": "", "hypothesis": ""},
-    post=_lesson_post)  # #378 review B-F4: hypothesis is model output -- LAN only
+    "hypothesis_chars": _count, "problem": _own_content, "solution": _own_content,
+    "insight": _own_content, "result": _own_content, "hypothesis": _own_content,
+}, post=_lesson_post)  # #378 review B-F4: allowlisted lesson text remains public
 
 _SUBAGENT_ROW = _obj({
     "subagent_id": _ident, "cycle_id": _ident, "goal_id": _ident, "label": _text(200), "status": _token,
     "started_at": _ts, "finished_at": _nullable(_ts), "task_truncated": _bool, "summary_truncated": _bool,
     "result_truncated": _bool, "task_bytes": _count, "iteration_count": _count,
-}, sized_text={name: "" for name in (
-    "task", "summary", "result", "task_excerpt", "summary_excerpt", "result_excerpt")})
+    "task": _own_content, "summary": _own_content, "result": _own_content,
+    "task_excerpt": _own_content, "summary_excerpt": _own_content, "result_excerpt": _own_content,
+})
+
+def _reflection_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
+    text = source.get("summary")
+    if isinstance(text, str):
+        out["summary_chars"] = len(text)
+    for name in ("findings", "recommendations"):
+        value = source.get(name)
+        if isinstance(value, list):
+            out[f"{name}_count"] = len(value)
+
 
 _REFLECTION_ROW = _obj({"cycle_id": _ident, "ts": _ts, "summary_chars": _count,
                         "findings_count": _count, "recommendations_count": _count,
+                        "summary": _own_content, "findings": _list(_own_content),
+                        "recommendations": _list(_own_content),
                         "transcript_coverage": _num(0), "partial_view": _bool,
                         "input_fit": _obj({"status": _token, "transcript": _obj({
                             "chars": _count, "recorder_truncated_chars": _count, "dropped_chars": _count})})},
-                       sized_text={"summary": ""}, sized_list=("findings", "recommendations"))
+                       post=_reflection_post)
 
 
 @_produces("decision", "refused", "reason", "rationale")
@@ -924,7 +955,7 @@ def _derived_view_post(source: dict, out: dict, withheld: dict[str, int] | None)
         # read, and build_derived_view always writes merged=False; anything
         # else -- merged, untagged, goal_text -- fails closed.
         if projected.get("source") == "release_goals_md" and projected.get("merged") is False and text is not _DROP:
-            projected["text"] = text
+            projected["text"] = _own_content(text, withheld)
         elif isinstance(charter.get("text"), str) and charter["text"]:
             _count_withheld(withheld, "derived_charter_text")
         out["charter"] = projected
@@ -1019,13 +1050,13 @@ _project_system_prompt.public_keys = _SYSTEM_PROMPT.public_keys  # type: ignore[
 _project_system_prompt.children = (_SYSTEM_PROMPT,)  # type: ignore[attr-defined]
 
 
-_TIER2_FILE = _obj({"name": _ident, "size_bytes": _count, "content_chars": _count}, sized_text={"content": ""})
+_TIER2_FILE = _obj({"name": _ident, "size_bytes": _count, "content_chars": _count,
+                    "content": _own_content})
 
 
 @_produces("prompt_text", "task_text", "prompt_text_chars", "task_text_chars")
 def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> None:
-    # #356 R4: the prompt and task are private whatever their type; only a
-    # string's size is published.
+    # Keep compatibility size fields while retaining bounded approved text.
     for field in ("prompt_text", "task_text"):
         if field in source:
             saved_chars = source.get(f"{field}_chars")
@@ -1035,16 +1066,46 @@ def _agent_context_post(source: dict, out: dict, _w: dict[str, int] | None) -> N
                 out[f"{field}_chars"] = saved_chars
             elif isinstance(source[field], str):
                 out[f"{field}_chars"] = 0
-            out[field] = None
+            projected_text = _own_content(source[field], _w)
+            if projected_text is not _DROP:
+                out[field] = projected_text
+    for collection in ("tier2_skills",):
+        rows = source.get(collection)
+        if isinstance(rows, list):
+            for index, row in enumerate(rows):
+                if index >= len(out.get(collection, [])) or not isinstance(row, dict):
+                    continue
+                projected = out[collection][index]
+                for field in ("content", "desc"):
+                    text = row.get(field)
+                    if isinstance(text, str) and text and len(text) <= _OWN_CONTENT_MAX_CHARS:
+                        projected[f"{field}_chars"] = len(text)
+                    elif text == "" and _is_count(row.get(f"{field}_chars")):
+                        projected[f"{field}_chars"] = row[f"{field}_chars"]
+    memory = source.get("tier2_memory")
+    if isinstance(memory, dict):
+        source_files = memory.get("files")
+        projected_files = out.get("tier2_memory", {}).get("files", [])
+        if isinstance(source_files, list):
+            for index, row in enumerate(source_files):
+                if index >= len(projected_files) or not isinstance(row, dict):
+                    continue
+                text = row.get("content")
+                if isinstance(text, str) and text and len(text) <= _OWN_CONTENT_MAX_CHARS:
+                    projected_files[index]["content_chars"] = len(text)
+                elif text == "" and _is_count(row.get("content_chars")):
+                    projected_files[index]["content_chars"] = row["content_chars"]
 
 
 _AGENT_CONTEXT = _obj({
     "prompt_text_chars": _count, "task_text_chars": _count,
+    "prompt_text": _own_content, "task_text": _own_content,
     "system_prompt": _project_system_prompt,
     "truncation_streak": _obj({"status": _token, "total_rows": _count, "entries": _list(_obj({
         "kind": _enum("truncated", "dropped"), "name": _ident, "streak": _count}))}),
-    "tier2_skills": _list(_obj({"name": _ident, "size_bytes": _count, "content_chars": _count, "desc_chars": _count},
-                               sized_text={"content": "", "desc": ""})),
+    "tier2_skills": _list(_obj({"name": _ident, "size_bytes": _count,
+                                  "content_chars": _count, "content": _own_content,
+                                  "desc_chars": _count, "desc": _own_content})),
     "tier2_skills_status": _token,
     "tier2_lessons": _obj({"index_status": _token, "corpus_status": _token, "corpus_count": _count,
                            "total_size_bytes": _count, "files": _list(_TIER2_FILE)}),
@@ -1280,6 +1341,10 @@ _PUBLIC_SCHEMA: dict[str, _Node] = {
     "demand_futility": _project_demand_futility,
     "systemd_drift": _SYSTEMD_DRIFT,
     "agent_context": _AGENT_CONTEXT,
+    "cycle_prompts": _map(_ident, _obj({
+        "system": _obj({"text": _own_content, "truncated": _bool, "original_bytes": _count}),
+        "task": _obj({"text": _own_content, "truncated": _bool, "original_bytes": _count}),
+    })),
     "generator_sha": _one_of(_ident, _enum("")),
     "_newest_source_age_seconds": _num(0),
 }
@@ -1331,7 +1396,9 @@ def public_schema_fields() -> frozenset[str]:
 
 def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | None = None) -> object:
     """#356: the typed projection of ONE public key (fresh objects only)."""
-    if key in {"agents_meta", "goal_meta"}:
+    if key == "agents_meta":
+        return _project_meta(key, value)
+    if key == "goal_meta":
         return _project_meta(key, value)
     if key == "_error":
         # #315 R1: the transport/state-read error text can embed host paths
@@ -1355,7 +1422,7 @@ def _sanitize_public_value(key: str, value: object, withheld: dict[str, int] | N
 
 
 def split_render_inputs(data: dict) -> tuple[dict, dict]:
-    """Allowlist public fields and replace private text with derived metadata."""
+    """Project named public fields, admitting only bounded own-context inputs."""
     withheld: dict[str, int] = {}
     if not isinstance(data, dict):
         # #378 review P2: a non-dict input is "no data", never a crash.
@@ -1379,11 +1446,14 @@ def split_render_inputs(data: dict) -> tuple[dict, dict]:
         private.pop("withheld_reason_counts", None)
     raw_agents = data.get("agents_md")
     if isinstance(raw_agents, str):
+        bounded_agents = _own_content(raw_agents.strip(), withheld)
         public["agents_meta"] = {
             "present": True,
             "lines": len(raw_agents.strip().splitlines()),
             "chars": len(raw_agents.strip()),
         }
+        if bounded_agents is not _DROP:
+            public["agents_meta"]["text"] = bounded_agents
     elif raw_agents is not None:
         public["agents_meta"] = {"present": False, "lines": 0, "chars": 0}
 
@@ -1395,8 +1465,6 @@ def split_render_inputs(data: dict) -> tuple[dict, dict]:
     elif not isinstance(raw_goal, dict):
         goal_meta = {"state": "unexpected_shape", "present": False}
     else:
-        # goal_text.json is operator-private. Public metadata comes only from
-        # the repository goals.md charter consumed by the release pipeline.
         p_list = raw_goal.get("priorities")
         goal_meta = {"state": "present", "present": True}
         if isinstance(p_list, list):

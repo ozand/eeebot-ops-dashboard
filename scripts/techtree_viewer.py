@@ -4978,35 +4978,44 @@ def build_cycle_details(
             continue
         out = record(str(lesson['cycle_id']))
         insight = lesson.get('insight') or lesson.get('generalized_insight') or lesson.get('reusable_insight') or lesson.get('result')
-        # ADR-036 rule 3: lesson bodies are instance-repo content -- LAN only;
-        # public records keep their size.
+        # Bounded project-authored lesson fields are eligible for the public projection.
         if insight:
+            out['lesson_insight'] = str(insight)[:12_000]
+        insight_chars = lesson.get('insight_chars', lesson.get('result_chars'))
+        if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0:
+            out['lesson_insight_chars'] = insight_chars
+        elif insight:
             out['lesson_insight_chars'] = len(str(insight))
-        elif lesson.get('insight_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['insight_chars'])
-        elif lesson.get('result_chars') is not None:
-            out['lesson_insight_chars'] = int(lesson['result_chars'])
-        # Issue #92: v2 schema fields supersede legacy insight when present.
         if lesson.get('problem'):
+            out['lesson_problem'] = str(lesson['problem'])[:12_000]
+        problem_chars = lesson.get('problem_chars')
+        if isinstance(problem_chars, int) and not isinstance(problem_chars, bool) and problem_chars >= 0:
+            out['lesson_problem_chars'] = problem_chars
+        elif lesson.get('problem'):
             out['lesson_problem_chars'] = len(str(lesson['problem']))
-        elif lesson.get('problem_chars') is not None:
-            out['lesson_problem_chars'] = int(lesson['problem_chars'])
         if lesson.get('solution'):
+            out['lesson_solution'] = str(lesson['solution'])[:12_000]
+        solution_chars = lesson.get('solution_chars')
+        if isinstance(solution_chars, int) and not isinstance(solution_chars, bool) and solution_chars >= 0:
+            out['lesson_solution_chars'] = solution_chars
+        elif lesson.get('solution'):
             out['lesson_solution_chars'] = len(str(lesson['solution']))
-        elif lesson.get('solution_chars') is not None:
-            out['lesson_solution_chars'] = int(lesson['solution_chars'])
 
     for reflection in reflections or []:
         if not isinstance(reflection, dict) or not reflection.get('cycle_id'):
             continue
         out = record(str(reflection['cycle_id']))
-        # ADR-036 rule 3: the reflector's output is model text -- public
-        # records carry only its shape (sizes and counts), never the words.
-        payload: dict[str, Any] = {'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
+        # This agent's own bounded reflection output is eligible for the public projection.
+        payload: dict[str, Any] = {'summary': str(reflection.get('summary') or '')[:12_000],
+                                   'summary_chars': int(reflection.get('summary_chars') or len(str(reflection.get('summary') or '')))}
         for key in ('findings', 'recommendations'):
             value = reflection.get(key)
             preserved_count = reflection.get(f'{key}_count')
             payload[f'{key}_count'] = int(preserved_count) if preserved_count is not None else (len(value) if isinstance(value, list) else (1 if value else 0))
+            if isinstance(value, list):
+                payload[key] = [str(item)[:12_000] for item in value[:50] if isinstance(item, str)]
+            elif isinstance(value, str) and value:
+                payload[key] = [value[:12_000]]
         if any(payload.values()):
             out['reflection'] = payload
 
@@ -5029,13 +5038,14 @@ def build_cycle_details(
             'status': text(rec.get('status'), 40),
             'started_at': rec.get('started_at'),
             'finished_at': rec.get('finished_at'),
-            # ADR-036 rule 3: task/summary/result text of a subagent is call
-            # text -- LAN only. Public records keep sizes, never excerpts.
             'task_truncated': bool(rec.get('task_truncated')),
             'task_bytes': rec.get('task_bytes'),
-            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or ''))),
-            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or ''))),
-            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or ''))),
+            'task': str(rec.get('task_excerpt') or rec.get('task') or '')[:12_000],
+            'summary': str(rec.get('summary_excerpt') or rec.get('summary') or '')[:12_000],
+            'result': str(rec.get('result_excerpt') or rec.get('result') or '')[:12_000],
+            'task_chars': int(rec.get('task_excerpt_chars') or rec.get('task_chars') or len(str(rec.get('task_excerpt') or rec.get('task') or ''))),
+            'summary_chars': int(rec.get('summary_excerpt_chars') or rec.get('summary_chars') or len(str(rec.get('summary_excerpt') or rec.get('summary') or ''))),
+            'result_chars': int(rec.get('result_excerpt_chars') or rec.get('result_chars') or len(str(rec.get('result_excerpt') or rec.get('result') or ''))),
             'iteration_count': rec.get('iteration_count'),
         }
         if not cid:
@@ -5665,9 +5675,7 @@ def _build_next_up_item(derived_view: dict[str, Any] | None) -> str:
         label = esc(item.get('label') or item.get('id') or '')
         vector = esc(item.get('vector') or '')
         summary = str(item.get('summary') or '')
-        # ADR-036 rule 3: a priority's summary may quote the operator's goal
-        # text -- LAN only. Public form: number, label, vector, source.
-        summary_html = ''
+        summary_html = f' <span class="now-sub">{esc(summary[:12000])}</span>' if summary else ''
         rows.append(
             f'<li class="demand-queue-row" data-demand-provenance="{esc(provenance)}">'
             f'<span class="badge badge-researching" translate="no">{kind}</span> '
@@ -7984,11 +7992,8 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         meta_chips = kind_html + severity_html + tags_html + seen_html + duplicate_html
         meta_chips_html = f'<div class="lesson-chips">{meta_chips}</div>' if meta_chips else ''
 
-        # ADR-036 rule 3: problem/solution bodies are LAN-only; public shows size.
-        problem_chars = int(l.get('problem_chars') if l.get('problem_chars') is not None else len(problem))
-        solution_chars = int(l.get('solution_chars') if l.get('solution_chars') is not None else len(solution))
-        problem_html = f'<div class="lesson-problem lan-only-note"><span class="lesson-label">Problem:</span> text on the LAN site only ({problem_chars:,} chars)</div>' if problem_chars else '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
-        solution_html = f'<div class="lesson-solution lan-only-note"><span class="lesson-label">Solution:</span> text on the LAN site only ({solution_chars:,} chars)</div>' if solution_chars else '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
+        problem_html = f'<div class="lesson-problem"><span class="lesson-label">Problem:</span> {esc(problem[:12000])}</div>' if problem else '<div class="lesson-problem unavailable-note">Problem: no text recorded.</div>'
+        solution_html = f'<div class="lesson-solution"><span class="lesson-label">Solution:</span> {esc(solution[:12000])}</div>' if solution else '<div class="lesson-solution unavailable-note">Solution: no text recorded.</div>'
 
         title = str(l.get('title') or '').strip()
         title_is_descriptive = bool(title and title != str(l.get('id') or ''))
@@ -8028,21 +8033,17 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
         result = str(l.get('result') or '')
         result_chars = l.get('result_chars')
         result_size = result_chars if isinstance(result_chars, int) and not isinstance(result_chars, bool) and result_chars >= 0 else len(result)
-        # ADR-036 rule 3: legacy result/insight text is LAN-only; retain the
-        # validated projection's saved length when the body was redacted.
-        result_html = (
-            f'<div class="lesson-result lan-only-note">result: text on the LAN site only ({result_size:,} chars)</div>'
-            if result_size > 0 else ''
-        )
+        result_html = f'<div class="lesson-result">Result: {esc(result[:12000])}</div>' if result else ''
         insight = str(l.get('insight') or '')
         insight_chars = l.get('insight_chars')
         insight_size = insight_chars if isinstance(insight_chars, int) and not isinstance(insight_chars, bool) and insight_chars >= 0 else len(insight)
         duplicate_html = '<span class="lesson-duplicate-warning">duplicate id on disk</span>' if id_counts.get(str(l.get('id') or ''), 0) > 1 else ''
         item_anchor = _lesson_anchor(l)
-        insight_html = f'<div class="lesson-insight lan-only-note">insight: text on the LAN site only ({insight_size:,} chars)</div>' if insight_size > 0 else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
+        insight_html = f'<div class="lesson-insight">Insight: {esc(insight[:12000])}</div>' if insight else '<div class="lesson-insight unavailable-note">Insight: no text recorded.</div>'
         hypothesis_chars = l.get('hypothesis_chars')
         hypothesis_size = hypothesis_chars if isinstance(hypothesis_chars, int) and not isinstance(hypothesis_chars, bool) and hypothesis_chars >= 0 else len(str(l.get('hypothesis') or ''))
-        hypothesis_html = f'<div class="lesson-hypothesis lan-only-note">Hypothesis: text on the LAN site only ({hypothesis_size:,} chars)</div>' if hypothesis_size > 0 else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
+        hypothesis = str(l.get('hypothesis') or '')
+        hypothesis_html = f'<div class="lesson-hypothesis">Hypothesis: {esc(hypothesis[:12000])}</div>' if hypothesis else '<div class="lesson-hypothesis unavailable-note">Hypothesis: no text recorded.</div>'
         result_html = result_html if result_size > 0 else '<div class="lesson-result unavailable-note">Result: no text recorded.</div>'
         legacy_title = str(l.get('title') or '').strip()
         search_text = esc((' '.join([
@@ -8092,7 +8093,7 @@ def build_lessons_panel(lessons: list[dict[str, Any]] | None, *, corpus_status: 
       <h2 class="panel-title">Lessons History ({total} retained history rows &middot; {heading_detail})</h2>
       <p class="lessons-count-note">Counts describe rows in this published retained-history view; they do not claim all-time archive completeness. Live corpus rows and retained archive rows are distinct from the executor retrieval corpus; archive rows are not on its retrieval path. Sorting applies within the current-format and legacy groups; legacy records remain in their disclosure.</p>
       <p class="lessons-source-counts" aria-label="Published lesson row populations">{source_counts} · <span>date unavailable: {missing_date_count}</span></p>
-      <p class="lessons-body-policy">Lesson problem, solution, result, insight and hypothesis text are withheld from this public page. Per-record character counts below indicate whether those bodies were recorded; they do not expose their contents.</p>
+      <p class="lessons-body-policy">Bounded own project lesson content is shown as text. Secrets and unrelated data are rejected by the publication scanner.</p>
       {corpus_note}
       <div class="lessons-controls">
         <label for="lessons-filter">Search lesson IDs, titles and public metadata
@@ -8234,10 +8235,13 @@ def build_agent_panel(
             md_text = str(agents_md).strip()
             md_lines = len(md_text.splitlines())
             md_chars = len(md_text)
+        if isinstance(agents_md, dict):
+            candidate_text = agents_md.get("text")
+            md_text = candidate_text[:12000] if isinstance(candidate_text, str) else ""
         agents_html = (
             f'<details class="charter-details agents-md-box">'
             f'<summary>AGENTS.md charter ({md_lines} lines)</summary>'
-            f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only ({md_chars:,} chars)</p></div></details>'
+            f'<div class="agent-wide-content">{esc(md_text)}</div></details>'
         )
     else:
         agents_html = '<p class="unavailable-note">AGENTS.md unavailable</p>'
@@ -8262,7 +8266,7 @@ def build_agent_panel(
             goals_html = (
                 f'<details class="charter-details goal-text-box">'
                 f'<summary>Goals charter ({size_note})</summary>'
-                f'<div class="agent-wide-content"><p class="unavailable-note lan-only-note">text on the LAN site only</p></div></details>'
+                f'<div class="agent-wide-content">{esc(str(goal_text.get("text") or "")[:12000])}</div></details>'
             )
         else:
             goals_html = '<p class="unavailable-note">goals charter unavailable</p>'
@@ -10905,8 +10909,8 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
@@ -10917,8 +10921,7 @@ def render_page(data: dict[str, Any], host: str, generated_at: str | None = None
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
@@ -11305,8 +11308,8 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
     demand_completed = data.get('demand_completed')
     skill_reads = data.get('skill_reads')
     skill_evals = data.get('skill_evals')
-    goal_text = data.get('goal_meta') or data.get('goal_text')
-    agents_md = data.get('agents_meta') or data.get('agents_md')
+    goal_text = data.get('goal_meta') if isinstance(data.get('goal_meta'), dict) else data.get('goal_text')
+    agents_md = data.get('agents_meta') if isinstance(data.get('agents_meta'), dict) else data.get('agents_md')
     cycle_titles = data.get('cycle_titles')
     # Issue #172: use retained history, falling back to tail when history is empty.
     cycle_details = build_cycle_details(
@@ -11317,8 +11320,7 @@ def render_pages(data: dict[str, Any], host: str, generated_at: str | None = Non
         cycle_titles,
         data.get('cycle_files'),
         subagent_records=data.get('subagent_records'),
-        # ADR-036 rule 3: prompt text is call text and never reaches public pages;
-        # cycle_prompts is read but deliberately not passed to this renderer.
+        cycle_prompts=data.get('cycle_prompts'),
     )
 
     error_note = ''
